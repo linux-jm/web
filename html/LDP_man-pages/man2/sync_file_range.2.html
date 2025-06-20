@@ -1,0 +1,188 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SYNC_FILE_RANGE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SYNC_FILE_RANGE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/sync_file_range.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sync_file_range - ファイルセグメントをディスクと同期する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
+
+<B>int sync_file_range(int </B><I>fd</I><B>, off64_t </B><I>offset</I><B>, off64_t </B><I>nbytes</I><B>,</B>
+<B>                    unsigned int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>sync_file_range</B>()  を使うと、ファイルディスクリプター <I>fd</I>
+で参照されるオープンされたファイルのディスクとの同期に関して、 きめ細かな制御が可能となる。
+<P>
+
+<I>offset</I> は、同期を行うファイルの領域の開始バイトである。 <I>nbytes</I> には同期を行う領域の長さをバイト単位で指定する。
+<I>nbytes</I> が 0 の場合は、 <I>offset</I> からファイル末尾までの全バイトを同期する。 同期はシステムのページサイズの単位で行われる。
+<I>offset</I> はページ境界にあわせて切り下げられ、 <I>(offset+nbytes-1)</I> はページ境界にあわせて切り上げられる。
+<P>
+
+ビットマスク引数 <I>flags</I> には以下の値を指定することができる:
+<DL COMPACT>
+<DT><B>SYNC_FILE_RANGE_WAIT_BEFORE</B><DD>
+何らかの書き込みを行う前に、指定された領域のページで 書き出しを行うようにデバイスドライバにすでに要求が発行されている
+ページの書き出しが全て完了するのを待つ。
+<DT><B>SYNC_FILE_RANGE_WRITE</B><DD>
+指定された領域のページで、書き出し要求が発行されていない 全ての dirty (キャッシュだけが変更されている) ページの 書き出しを開始する。
+リクエストキューの大きさより多く書き込もうとした場合には、 この処理は停止 (block) する可能性がある点に注意すること。
+<DT><B>SYNC_FILE_RANGE_WAIT_AFTER</B><DD>
+何らかの書き込み後に、指定された領域の全てのページの 書き出しが行われるのを待つ。
+</DL>
+<P>
+
+<I>flags</I> に 0 を指定した場合、何もしないことを表す。
+<A NAME="lbAE">&nbsp;</A>
+<H3>警告</H3>
+
+このシステムコールは非常に危険であり、 移植性が必要なプログラムで使用すべきではない。 これらの操作ではどれもファイルのメタデータの書き出しを行わない。
+したがって、アプリケーションにより作成済みのディスクブロックの 上書きの実行が確実に行われない限り、クラッシュの後でもデータが 利用できる保証はない。
+書き込みが上書きだけであるかを知るためのユーザーインターフェースは存在しない。 (<I>btrfs</I> などの) copy-on-write
+動作を使ったファイルシステムでは、 既存の割り当て済みのブロックに対する上書き自体ができない。 前もって割り当てられた領域に書き込みを行う場合、
+多くのファイルシステムでは block allocator への書き込みも必要となるが、 このシステムコールは block allocator
+のディスクへの同期を行わない。 このシステムコールはディスク書き込みキャッシュのフラッシュを
+行わないので、揮発性のディスク書き込みキャッシュを使ったシステムでは このシステムコールではデータの一貫性を確保できないことになる。
+<A NAME="lbAF">&nbsp;</A>
+<H3>詳細</H3>
+
+<B>SYNC_FILE_RANGE_WAIT_BEFORE</B> と <B>SYNC_FILE_RANGE_WAIT_AFTER</B> は I/O エラーや
+<B>ENOSPC</B> 状態を検出し、呼び出し元にこれらの情報を返す。
+<P>
+
+<I>flags</I> の役に立つビットの組み合わせを以下に示す:
+<DL COMPACT>
+<DT><B>SYNC_FILE_RANGE_WAIT_BEFORE | SYNC_FILE_RANGE_WRITE</B><DD>
+指定された範囲内のページで、 <B>sync_file_range</B>()  が呼び出された際に dirty であった全てのページが、
+確実に書き出し対象となるようにする。 これは、start-write-for-data-integrity 操作
+(データ完全性確保のための書き込み開始の操作) である。
+<DT><B>SYNC_FILE_RANGE_WRITE</B><DD>
+指定された範囲内のページで、現在書き出し中でない全ての dirty ページの 書き出しを開始する。これは非同期のディスクへのフラッシュ
+(flush-to-disk)  操作である。データ完全性確保が必要な操作としては適切ではない。
+<DT><B>SYNC_FILE_RANGE_WAIT_BEFORE</B> (or <B>SYNC_FILE_RANGE_WAIT_AFTER</B>)<DD>
+指定された範囲内の全てのページの書き出しの完了を待つ。 このフラグは、前に行われた操作 <B>SYNC_FILE_RANGE_WAIT_BEFORE |
+SYNC_FILE_RANGE_WRITE</B> の後に使用でき、この操作の完了を待ち、結果を取得することができる。
+<DT><B>SYNC_FILE_RANGE_WAIT_BEFORE | SYNC_FILE_RANGE_WRITE | SYNC_FILE_RANGE_WAIT_AFTER</B><DD>
+これは write-for-data-integrity 操作 (データ完全性確保のための書き込み) であり、指定された範囲内の、
+<B>sync_file_range</B>()  が呼ばれた時点で dirty な全てのページが ディスクに格納されることが保証される。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+成功の場合、 <B>sync_file_range</B>()  は 0 を返す。失敗の場合、-1 を返し、 <I>errno</I> にエラーを示す値を設定する。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>fd</I> が有効なファイルディスクリプターではない。
+<DT><B>EINVAL</B><DD>
+<I>flags</I> に不正なビットが指定されている。または <I>offset</I> か <I>nbytes</I> が不正である。
+<DT><B>EIO</B><DD>
+I/O エラー。
+<DT><B>ENOMEM</B><DD>
+メモリー不足である。
+<DT><B>ENOSPC</B><DD>
+ディスク領域不足である。
+<DT><B>ESPIPE</B><DD>
+<I>fd</I> が、通常のファイル、ブロックデバイス、ディレクトリ以外のものを指している。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>sync_file_range</B>()  はカーネル 2.6.17 で Linux に登場した。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 独自であり、 移植性が必要なプログラムでは使用を避けるべきである。
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>sync_file_range2()</H3>
+
+
+いくつかのアーキテクチャー (例えば、 PowerPC や ARM) では、 64 ビットの引数は適切なレジスターの組に割り当てる必要がある。
+このようなアーキテクチャーでは、 「書式」に書かれている <B>sync_file_range</B>() の呼び出しシグネチャーで、 引数 <I>fd</I> と
+<I>offset</I> の間のパディング (詰めもの) でレジスターが一つ消費されてしまう (詳細は <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2) 参照)。 そのため、
+これらのアーキテクチャーでは引数が適切な順序になった別のシステムコールが定義されている。
+<P>
+
+
+
+<B>int sync_file_range2(int </B><I>fd</I><B>, unsigned int </B><I>flags</I><B>,</B>
+<B>                     off64_t </B><I>offset</I><B>, off64_t </B><I>nbytes</I><B>);</B>
+
+
+<P>
+
+上記の点以外は、このシステムコールの動作は <B>sync_file_range</B>() と
+全く同じである。このシステムコールに対するライブラリによるサポートは
+glibc では提供されていない。
+<P>
+
+このバージョンのシステムコールは、Linux 2.6.20 で ARM アーキテクチャーで
+初めて登場し、 <B>arm_sync_file_range</B>() という名前であった。
+Linux 2.6.22 で、同様のシステムコールが PowerPC 用に追加された際に、
+システムコールの名前が変更された。
+glibc によるサポートが提供されているアーキテクチャーでは、
+glibc のラッパー関数は <B>sync_file_range</B>() という名前で
+<B>sync_file_range2</B>() を適切に使用するようになっている。
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/fdatasync.2.html">fdatasync</A></B>(2), <B><A HREF="../man2/fsync.2.html">fsync</A></B>(2), <B><A HREF="../man2/msync.2.html">msync</A></B>(2), <B><A HREF="../man2/sync.2.html">sync</A></B>(2)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">警告</A><DD>
+<DT><A HREF="#lbAF">詳細</A><DD>
+</DL>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
+<DT><A HREF="#lbAJ">準拠</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAL">sync_file_range2()</A><DD>
+</DL>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

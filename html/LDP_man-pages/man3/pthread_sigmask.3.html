@@ -1,0 +1,202 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_SIGMASK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_SIGMASK</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/pthread_sigmask.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_sigmask - 禁止するシグナルマスクの確認と変更を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+
+<B>int pthread_sigmask(int </B><I>how</I><B>, const sigset_t *</B><I>set</I><B>, sigset_t *</B><I>oldset</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>-pthread</I> を付けてコンパイルとリンクを行う。
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>pthread_sigmask</B>():
+<DL COMPACT><DT><DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;199506L || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pthread_sigmask</B>() 関数は <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2) と全く同様だが、マルチスレッドプログラムでの利用が POSIX.1
+で明示的に規定されている点が異なる。他の違いはこのマニュアルページで説明する。
+<P>
+
+この関数の引数と動作の説明は <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2) を参照。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>pthread_sigmask</B>() は 0 を返す。
+エラーの場合、エラー番号を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2) を参照。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>pthread_sigmask</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+新しいスレッドは、スレッドを作成したスレッドのシグナルマスクのコピーを
+継承する。
+<P>
+
+The glibc <B>pthread_sigmask</B>()  function silently ignores attempts to block
+the two real-time signals that are used internally by the NPTL threading
+implementation.  See <B>nptl</B>(7)  for details.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは、メインスレッドでシグナルのいくつかを禁止 (block)
+するように設定を行い、 <B><A HREF="../man3/sigwait.3.html">sigwait</A></B>(3) 経由でそれらのシグナルを集める
+専用のスレッドを作成する。
+下記のシェルのセッションはその利用例を示したものである。
+<P>
+
+
+
+$<B> ./a.out &amp;</B>
+[1] 5423
+$<B> kill -QUIT %1</B>
+Signal handling thread got signal 3
+$<B> kill -USR1 %1</B>
+Signal handling thread got signal 10
+$<B> kill -TERM %1</B>
+[1]+  Terminated              ./a.out
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+<P>
+/* Simple error handling functions */
+<P>
+#define handle_error_en(en, msg) \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;errno&nbsp;=&nbsp;en;&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+static void *
+sig_thread(void *arg)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigset_t&nbsp;*set&nbsp;=&nbsp;arg;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s,&nbsp;sig;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;sigwait(set,&nbsp;&amp;sig);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;sigwait&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Signal&nbsp;handling&nbsp;thread&nbsp;got&nbsp;signal&nbsp;%d\n&quot;,&nbsp;sig);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;thread;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigset_t&nbsp;set;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Block&nbsp;SIGQUIT&nbsp;and&nbsp;SIGUSR1;&nbsp;other&nbsp;threads&nbsp;created&nbsp;by&nbsp;main()
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;inherit&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;signal&nbsp;mask.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;set);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigaddset(&amp;set,&nbsp;SIGQUIT);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigaddset(&amp;set,&nbsp;SIGUSR1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_sigmask(SIG_BLOCK,&nbsp;&amp;set,&nbsp;NULL);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_sigmask&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_create(&amp;thread,&nbsp;NULL,&nbsp;&amp;sig_thread,&nbsp;&amp;set);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_create&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Main&nbsp;thread&nbsp;carries&nbsp;on&nbsp;to&nbsp;create&nbsp;other&nbsp;threads&nbsp;and/or&nbsp;do
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;other&nbsp;work&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pause();&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Dummy&nbsp;pause&nbsp;so&nbsp;we&nbsp;can&nbsp;test&nbsp;program&nbsp;*/
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2), <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2),
+<B>pthread_attr_setsigmask_np</B>(3), <B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3), <B><A HREF="../man3/pthread_kill.3.html">pthread_kill</A></B>(3),
+<B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7), <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DL>
+<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

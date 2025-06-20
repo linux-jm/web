@@ -1,0 +1,226 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UTF-8</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>UTF-8</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/utf-8.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+UTF-8 - ASCII と互換性のある多バイト Unicode の符号化
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+ユニコード (Unicode) 3.0 文字集合は 16 ビットのコード空間を占める。
+最も単純な Unicode の符号化方法 (UCS-2)
+では、文字は 16 ビットワード (16 ビット文字の列) で構成される。
+この列には、
+'\0' や '/' のような (ファイル名や C のライブラリ関数の引数の内部で)
+特殊な意味を持つ 16 ビット文字が含まれることがある。
+さらに、ほとんどの UNIX ツールは ASCII ファイルを入力として期待するので、
+大幅な変更なしには 16 ビットワードを文字として読むことができない。
+これらの理由から、UCS-2 はファイル名・テキストファイル・環境変数などに用いる、
+外部用の Unicode 符号としては不適切である。
+Unicode のスーパーセットである
+ISO 10646 Universal Character Set (UCS)
+は \(em 31 ビットのような \(em もっと大きなコード空間を占めるが、
+その最も単純な符号化である UCS-4 にも (32 ビットワードの列として) 同じ問題がある。
+<P>
+
+Unicode と UCS の UTF-8 符号化にはこれらの問題がないので、
+UNIX 形式の OS 上で Unicode 文字集合を使用するための一般的な方法となっている。
+<A NAME="lbAD">&nbsp;</A>
+<H3>性質</H3>
+
+UTF-8 符号化は以下のような素晴しい性質を備えている:
+<DL COMPACT>
+<DT>*<DD>
+UCS 文字のうち 0x00000000 から 0x0000007f まで (古典的な US-ASCII の文字) は
+(ASCII との互換性のために) 単純に 0x00 から 0x7f のバイトに符号化する。
+これは 7 ビット ASCII 文字のみを含むファイルや文字列に関しては、
+ASCII と UTF-8 で同じ符号化を行なうことを意味する。
+<DT>*<DD>
+0x7f より大きいのすべての
+UCS 文字は、 0x80 から 0xfd までの範囲のバイトのみを含む
+多バイト文字列に符号化される。
+したがって文字列に
+ASCII バイトが含まれることがなく、'\0' や '/' の問題は発生しない。
+<DT>*<DD>
+UCS-4 文字列では辞書的ソートの順序が保たれる。
+<DT>*<DD>
+2^31 ビットのすべての UCS コード が UTF-8 を使用して符号化できる。
+<DT>*<DD>
+UTF-8 符号化ではバイト 0xc0, 0xc1, 0xfe, 0xff が使用されることはない。
+<DT>*<DD>
+ASCII でない UCS 文字の多バイト列の最初のバイトは、
+常に 0xc2 から 0xfd の範囲で表現され、
+その文字が何バイトで構成されているかを示す。
+多バイト列の残りの部分のバイトは、それぞれ 0x80 から 0xbf の範囲にある。
+これにより同期が容易になり、ステートレスな符号化が可能になり、
+バイトの紛失に対して堅固になる。
+<DT>*<DD>
+UTF-8 を使用した UCS 文字の符号化は最大 6 バイトの長さになる。
+しかし、Unicode 規格では 0x10ffff より先の文字を指定しないので、
+Unicode 文字は UTF-8 では 4 バイトまでにしかならない。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>符号化</H3>
+
+以下のバイト列が文字の表現に使用される。
+どのバイト列を使用するかは文字の UCS コード番号に依存する:
+<DL COMPACT>
+<DT>0x00000000 - 0x0000007F:<DD>
+0<I>xxxxxxx</I>
+<DT>0x00000080 - 0x000007FF:<DD>
+110<I>xxxxx</I> 10<I>xxxxxx</I>
+<DT>0x00000800 - 0x0000FFFF:<DD>
+1110<I>xxxx</I> 10<I>xxxxxx</I> 10<I>xxxxxx</I>
+<DT>0x00010000 - 0x001FFFFF:<DD>
+11110<I>xxx</I> 10<I>xxxxxx</I> 10<I>xxxxxx</I> 10<I>xxxxxx</I>
+<DT>0x00200000 - 0x03FFFFFF:<DD>
+111110<I>xx</I> 10<I>xxxxxx</I> 10<I>xxxxxx</I> 10<I>xxxxxx</I> 10<I>xxxxxx</I>
+<DT>0x04000000 - 0x7FFFFFFF:<DD>
+1111110<I>x</I> 10<I>xxxxxx</I> 10<I>xxxxxx</I> 10<I>xxxxxx</I> 10<I>xxxxxx</I> 10<I>xxxxxx</I>
+</DL>
+<P>
+
+<I>xxx</I> ビットの部分には 2 進数表現の文字コードのビット部分が対応する。 2 進数表では最上位ビット (MSB) が最初に置かれる
+(big-endian)。その文字を表現するのに最も短いバイト列のみが使用できる。
+<P>
+
+0xd800-0xdfff (UTF-16 サロゲート) や 0xfffe, 0xffff (UCS の noncharacter) という
+UCS コードの値は、 UTF-8 に準拠したストリームに入れるべきではない。 RFC 3629 では U+10FFFF
+より上のコードポイントは使用すべきではないとされている。これにより、文字は 4 バイト以内に限定される。
+<A NAME="lbAF">&nbsp;</A>
+<H3>例</H3>
+
+Unicode 文字の 0xa9 = 1010 1001 (コピーライトマーク) は UTF-8 で符号化すると
+以下のようになる。
+<P>
+
+<DL COMPACT><DT><DD>
+11000010 10101001 = 0xc2 0xa9
+</DL>
+
+<P>
+
+0x2260 = 0010 0010 0110 0000 (不等号) は以下の通り。
+<P>
+
+<DL COMPACT><DT><DD>
+11100010 10001001 10100000 = 0xe2 0x89 0xa0
+</DL>
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>アプリケーションにおける注意</H3>
+
+ユーザーはアプリケーションの UTF-8 サポートを有効にするために、
+<P>
+
+<DL COMPACT><DT><DD>
+export LANG=en_GB.UTF-8
+</DL>
+
+<P>
+
+のようにして UTF-8 ロケールを選択しなければならない。
+<P>
+
+使用されている文字符号化を分かっていなければならない
+アプリケーションソフトウェアは、
+以下のようにして常にロケールを設定すべきである。
+<P>
+
+<DL COMPACT><DT><DD>
+setlocale(LC_CTYPE, &quot;&quot;)
+</DL>
+
+<P>
+
+また、プログラマーは
+<P>
+
+<DL COMPACT><DT><DD>
+strcmp(nl_langinfo(CODESET), &quot;UTF-8&quot;) == 0
+</DL>
+
+<P>
+
+という式を評価することで、
+UTF-8 ロケールが選択されていて、プレーンテキストの標準入出力・端末間通信・
+プレーンテキストファイルの内容・ファイル名・環境変数が
+UTF-8 で符号化されているかをチェックすることができる。
+<P>
+
+US-ASCII や ISO 8859
+といったシングルバイトの符号化が習慣になっているプログラマーは、
+これまでの 2 つの仮定が
+UTF-8 ロケールにおいては最早有効ではなくなったことを知っておくべきだ。
+1 番目の変更点は、1 バイトが必ずしも 1 つの文字に対応しないという点である。
+2 番目の変更点は、最近の端末エミュレータは
+UTF-8 モードにおいて中国語・日本語・韓国朝鮮語の
+全角文字やスペースが入らない (nonspacing)
+合成文字 (combining characters) に対応しているので、
+ASCII のときのように 1 文字出力した後で
+カーソルを必ずしも 1 つだけ進めるわけではないという点である。
+今日では、文字やカーソルの位置を数えるのに
+<B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3) や <B><A HREF="../man3/wcswidth.3.html">wcswidth</A></B>(3)
+といったライブラリ関数を使うべきである。
+<P>
+
+(VT100 端末などで使われる) ISO 2022 符号化形式から
+UTF-8 へ切替える公式なエスケープシーケンスは ESC % G (&quot; では、規格に準拠するプログラムは
+最短の表現形式ではない入力を受け付けない、という要求事項が追加された。
+これはセキュリティ上の理由による。
+ユーザー入力がセキュリティ上の危険に対しチェックされる場合、
+プログラムは ASCII 版の &quot;/../&quot; や &quot;;&quot; や &quot;NUL&quot; だけをチェックし、
+最短に符号化されてないこれらの文字を見過ごしてしまうかもしれないからである。
+なぜなら、最短ではない UTF-8 符号化では、これらの文字を表現するような様々な
+ASCII 以外の形式が存在するためである。
+<A NAME="lbAH">&nbsp;</A>
+<H3>標準</H3>
+
+
+
+ISO/IEC 10646-1:2000, Unicode 3.1, RFC&nbsp;3629, Plan 9.
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/locale.1.html">locale</A></B>(1), <B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3), <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3), <B><A HREF="../man7/charsets.7.html">charsets</A></B>(7),
+<B><A HREF="../man7/unicode.7.html">unicode</A></B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">性質</A><DD>
+<DT><A HREF="#lbAE">符号化</A><DD>
+<DT><A HREF="#lbAF">例</A><DD>
+<DT><A HREF="#lbAG">アプリケーションにおける注意</A><DD>
+<DT><A HREF="#lbAH">標準</A><DD>
+</DL>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

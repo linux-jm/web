@@ -1,0 +1,197 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RPC.YPPASSWDD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RPC.YPPASSWDD</H1>
+Section:  (8)<BR>Updated: August 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/ypserv/release/man8/rpc.yppasswdd.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rpc.yppasswdd - NIS パスワード更新デーモン
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>rpc.yppasswdd [-D directory] [-e chsh|chfn] [--port number]</B>
+<BR>
+
+<B>rpc.yppasswdd [-s shadow] [-p passwd] [-e chsh|chfn] [--port number]</B>
+<BR>
+
+<B>rpc.yppasswdd -x program|-E program [-e chsh|chfn] [--port number]</B>
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>rpc.yppasswdd</B> は RPC のサーバーで、 NIS (YP) 環境下でユーザーによるパスワード変更を可能にする。 必ず NIS
+ドメインの NIS マスターサーバーで起動する。
+<P>
+
+<B><A HREF="../../yp-tools/man1/yppasswd.1.html">yppasswd</A></B>(1)  クライアントはサーバーに接続すると、 古いユーザーパスワードと新しいパスワードを送信する。
+<B>rpc.yppasswdd</B> はシステムの <B>passwd</B> ファイルからそのユーザーの名前を探し、古いパスワードがマッチしているか
+どうかを確認し、エントリを更新する。 指定されたユーザーが存在しなかったり、 パスワード, UID, GID のいずれかが
+パスワードファイルの情報とマッチしなかった場合には、 更新要求は拒否され、 クライアントにエラーが返される。
+<P>
+
+このサーバーは、コンパイルの時に CHECKROOT=1 オプションを指定すると、 システムの root
+のパスワードに対しても、パスワードチェックを行うようになる。
+<P>
+
+<B>passwd</B> ファイルの更新とクライアントへの成功通知がすむと、 <B>rpc.yppasswdd</B> は <B>pwupdate</B>
+スクリプトを実行して、 NIS サーバーの <B>passwd.*</B> マップと <B>shadow.byname</B> マップを更新する。
+このスクリプトでは、すべての NIS マップが <B>/var/yp/</B><I>nisdomain</I> ディレクトリ以下に保存されており、 その NIS
+ドメイン向けにカスタマイズされた <B>Makefile</B> もそこに置かれていることを仮定している。 そのような <B>Makefile</B>
+がない場合には、スクリプトは <B>/var/yp</B> にあるジェネリックな <B>Makefile</B> を用いる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+以下のオプションが指定できる。
+<DL COMPACT>
+<DT><B>-D</B><I> directory</I><DD>
+<B>passwd</B> と <B>shadow</B> ファイルが指定したディレクトリに置かれる。 これが指定されると、 <B>rpc.yppasswdd</B> は
+<B>/etc/passwd</B> や <B>/etc/shadow</B> を使わない。 NIS データーベースに存在するユーザーすべてに、 NIS サーバーへの
+アクセスを自動的には付与したくない場合に有効である。
+<DT><B>-E</B><I> program</I><DD>
+rpc.yppasswdd に passwd ファイルや shadow ファイルを直接編集させず、 指定したプログラムを実行して編集を行わせる。
+以下の環境変数が設定され、指定プログラムに渡される: YP_PASSWD_OLD, YP_PASSWD_NEW, YP_USER, YP_GECOS,
+YP_SHELL。 プログラムは変更が成功裏に終了したら 0 を返し、 変更は成功裏に終了したが pwupdate を実行しなくて良い場合は 1
+を返し、 変更に失敗した場合はその他の値を返すようにしなければならない。
+<DT><B>-p</B><I> passwdfile</I><DD>
+<B>rpc.yppasswdd</B> に、 <B>/etc/passwd</B> の代わりに用いるソースファイルを伝える。 NIS
+データーベースに存在するユーザーすべてに、 NIS サーバーへの アクセスを自動的には付与したくない場合に有効である。
+<DT><B>-s</B><I> shadowfile</I><DD>
+<B>rpc.yppasswdd</B> に、 <B>/etc/shadow</B> の代わりに用いるソースファイルを伝える。 shadow
+サポートに関しては、以下で簡単に説明している。
+<DT><B>-e [chsh|chfn]</B><DD>
+デフォルトでは、 <B>rpc.yppasswdd</B> は <B>passwd</B> エントリにおけるシェルや GECOS
+フィールドのユーザーによる変更を許さない。 <B>-e</B> オプションを用いると、これらのそれぞれを有効にできる。 <B><A HREF="../../yp-tools/man1/ypchsh.1.html">ypchsh</A></B>(1)
+のサポートを有効にした場合には、ユーザーが選択できるシェルをすべて <B>/etc/shells</B> に記述する必要があることに注意すること。
+<DT><B>-x program</B><DD>
+-x オプションが指定されると、 rpc.yppasswdd は自分自身では一切の ファイルを変更せず、指定されたプログラムを起動し、その標準入力に
+要求された操作に関する情報を渡そうとする。この外部プログラムとの 通信にはプロトコルが定義されており、変更要求をどのように伝播するかに
+ついては最大限の自由度が確保されている。これに関する詳細は 以降を参照のこと。
+<DT><B>-m</B><DD>
+単に無視される。 Solaris との互換性のためにだけ用意されたオプションである。
+<DT><B>--port number</B><DD>
+rpc.yppasswd はこのポートに登録しようとする。 これを用いると、ルータによって NIS のポートへのパケットをフィルタできるようになる。
+<DT><B>-v --version</B><DD>
+バージョン番号を表示する。また、このパッケージのコンパイル時に、 CHECKROOT オプションが有効にされたかどうかも表示する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>その他</H2>
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>shadow パスワード</H3>
+
+shwdow パスワードを NIS と共に用いてもあまり意味がない。 なぜなら本来アクセス不可能であるべきパスワードが、単に <B><A HREF="../../yp-tools/man1/ypcat.1.html">ypcat</A></B>(1)
+を実行すれば NIS では読めてしまうからである。
+<P>
+
+<B>rpc.yppasswdd</B> における shadow のサポートは、この問題を賢く解決する方法を提供する
+わけではない。単にパスワードエントリをシステムの <B>shadow</B> ファイルから読めるようにする、というだけのことである。 これを用いるには、
+<B>shadow.byname</B> という NIS マップを作って、 NIS クライアントにパスワード情報を 知らせる必要がある。
+<B>rpc.yppasswdd</B> はまず <B>/etc/passwd</B> ファイルからユーザーのパスワードを検索する。ユーザーが見つかり、
+かつパスワードが &quot;x&quot; で、さらに <B>/etc/shadow</B> ファイルが存在していた場合は、 shadow マップの パスワードが更新される。
+<A NAME="lbAH">&nbsp;</A>
+<H3>-x オプションの使い方</H3>
+
+プログラムは標準入力から一行を読むようにする。フォーマットは以下の通り。
+<P>
+
+&lt;username&gt; o:&lt;oldpass&gt; p:&lt;password&gt;
+s:&lt;shell&gt; g:&lt;gcos&gt;\n
+<P>
+
+[p, s, g] の 3 つのフィールドは、いずれもあってもなくてもかまわない。
+<P>
+
+このプログラムは、操作が成功したら標準出力に &quot;OK\n&quot; を返すようにする。 それ以外の場合は、 rpc.yppasswdd
+はクライアントに失敗したと報告する。
+<P>
+
+-x オプションで指定したプログラムは NIS の make とビルドを行わねばならず、 また与えられたシェルと gecos
+フィールドの情報が正当なものかのチェックも このプログラムの役割である。クライアントに与えられるパスワードは UNIX crypt()
+フォーマットになる。
+<A NAME="lbAI">&nbsp;</A>
+<H3>ログ記録</H3>
+
+<B>rpc.yppasswdd</B> はすべてのパスワード更新要求を <B><A HREF="../../sysklogd/man8/syslogd.8.html">syslogd</A></B>(8)  の auth facility
+を通して記録する。ログ情報は要求元ホストの IP アドレスと、 その要求に含まれていたユーザー名および UID である。
+ユーザーによって与えられたパスワードそのものは記録されない。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>セキュリティ</H3>
+
+作者が完全に問題を解決するまでは、 <B>rpc.yppasswdd</B> はシンプルなパスワード認証に依存するプログラムと同程度のセキュリティ しか持たない
+(バージョン 0.5 以前では良かったのだが)。 これが充分でないと思う場合は、新しい <B>portmap</B>(8)  バージョン 3 の
+`securenets' 機能を用いて、 <B>rpc.yppasswdd</B> をアクセス外に置くことをすすめる。あるいは Kerberos を使えば
+さらに良いかも知れない。 <B>rpc.yppasswdd</B> を
+<A NAME="lbAK">&nbsp;</A>
+<H2>著作権</H2>
+
+<B>rpc.yppasswdd</B> is copyright (C) Olaf Kirch. You can use and distribute it
+under the GNU General Public License Version 2. Note that it does <I>not</I>
+contain any code from the shadow password suite.
+<A NAME="lbAL">&nbsp;</A>
+<H2>ファイル</H2>
+
+<B>/usr/sbin/rpc.yppasswdd</B>
+<BR>
+
+<B>/usr/lib/yp/pwupdate</B>
+<BR>
+
+<B>/etc/passwd</B>
+<BR>
+
+<B>/etc/shadow</B>
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man5/passwd.5.html">passwd</A></B>(5), <B><A HREF="../../shadow/man5/shadow.5.html">shadow</A></B>(5), <B><A HREF="../../shadow/man1/passwd.1.html">passwd</A></B>(1), <B><A HREF="../../yp-tools/man1/yppasswd.1.html">yppasswd</A></B>(1), <B><A HREF="../../yp-tools/man1/ypchsh.1.html">ypchsh</A></B>(1),
+<B><A HREF="../../yp-tools/man1/ypchfn.1.html">ypchfn</A></B>(1), <B><A HREF="../man8/ypserv.8.html">ypserv</A></B>(8), <B><A HREF="../../yp-tools/man1/ypcat.1.html">ypcat</A></B>(1)
+<P>
+
+Network Information Service (<FONT SIZE="-1">NIS</FONT>)  は、以前は Sun Yellow Pages
+(<FONT SIZE="-1">YP</FONT>).  と呼ばれていた。 この両者の機能はまったく同じものであり、名前が違うだけである。 Yellow Pages
+という名前は、英国で British Telecommunications plc の登録商標となっており、 許可を得ずに用いることはできない。
+<A NAME="lbAN">&nbsp;</A>
+<H2>作者</H2>
+
+Olaf Kirch, &lt;<A HREF="mailto:okir@monad.swb.de">okir@monad.swb.de</A>&gt;
+<BR>
+
+Thorsten Kukuk, &lt;<A HREF="mailto:kukuk@suse.de">kukuk@suse.de</A>&gt;
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">その他</A><DD>
+<DL>
+<DT><A HREF="#lbAG">shadow パスワード</A><DD>
+<DT><A HREF="#lbAH">-x オプションの使い方</A><DD>
+<DT><A HREF="#lbAI">ログ記録</A><DD>
+<DT><A HREF="#lbAJ">セキュリティ</A><DD>
+</DL>
+<DT><A HREF="#lbAK">著作権</A><DD>
+<DT><A HREF="#lbAL">ファイル</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">作者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:51 GMT, December 05, 2022
+</BODY>
+</HTML>

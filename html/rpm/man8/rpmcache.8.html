@@ -1,0 +1,201 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RPMCACHE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RPMCACHE</H1>
+Section: Red Hat Linux (8)<BR>Updated: 05 July 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/rpm/release/man8/rpmcache.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rpmcache - RPM パッケージのヘッダ情報をキャッシュする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>rpmcache</B> [ <B></B><I>PACKAGE_NAME</I><B></B><I> ...</I> ]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>rpmcache</B>
+
+はファイルツリーを歩きまわり(リモートの<B>FTP</B>かもしれない)、
+<B><A HREF="../../LDP_man-pages/man7/glob.7.html">glob</A></B>(7)
+
+の式を使ってパスをフィルタリングし、rpm パッケージのヘッダを読み込む。
+最新の(すなわち同じパッケージ名のものに対し、
+パッケージのエポック・バージョン・リリースを比較し、
+それが同じであればビルド日付を使って比較した)パッケージのヘッダーが
+他のものと重複しなければ、rpm データベースにキャッシュされる。
+不明な依存性を解消するパッケージの場所を提案するために、rpm データベースの
+キャッシュを利用することができる。
+<P>
+
+<B>rpmcache</B>
+
+固有のオプションはなく、
+<B>rpm</B>
+
+関連のツールで共通のオプションだけである。
+現時点で何が実装されているかについては、
+<B>rpmcache</B>
+
+の使用方法のメッセージ(訳注: &quot;rpmcache --help&quot;)を参照のこと。
+<P>
+
+検索対象のファイルツリーの場所は rpm マクロを使って設定される。
+最終的な場所は、独立した 5 つの要素を結合したものである。
+<B>rpmcache</B>
+
+を設定するのに使用されるマクロ名を以下に示す。
+下記の表示順と同じ順番で各要素が結合されて、
+検索されるファイルツリーの場所が生成される。
+<DL COMPACT>
+<DT><B>%_bhpath</B><DD>
+&quot;path&quot;レベル。
+検索されるファイルツリーのパス(または URL)の先頭部分。
+<B><A HREF="../../LDP_man-pages/man7/glob.7.html">glob</A></B>(7)
+
+の式はここでは使えない。
+<DT><B>%_bhcoll</B><DD>
+&quot;collection&quot; レベル。
+<B>%_bhpath</B> のサブディレクトリーにマッチする文字列(または
+<B><A HREF="../../LDP_man-pages/man7/glob.7.html">glob</A></B>(7)
+
+式)。
+<DT><B>%_bhN</B><DD>
+&quot;name&quot; レベル。
+<B>%_bhcoll</B> のサブディレクトリーにマッチする文字列(または
+<B><A HREF="../../LDP_man-pages/man7/glob.7.html">glob</A></B>(7)
+
+式)。
+Red Hat ビルドシステム内でのいずれかの特定のパッケージ名にマッチするよ
+うな
+<B><A HREF="../../LDP_man-pages/man7/glob.7.html">glob</A></B>(7)
+
+式を構成するために
+<I>PACKAGE_NAME</I>
+
+引数が使用される。
+ほぼ確実に、Red Hat 以外の人間が使用することはないだろう。
+<DT><B>%_bhVR</B><DD>
+&quot;version-release&quot; レベル。
+<B>%_bhN</B> のサブディレクトリーにマッチする文字列(または
+<B><A HREF="../../LDP_man-pages/man7/glob.7.html">glob</A></B>(7)
+
+式)。
+<DT><B>%_bhA</B><DD>
+&quot;arch&quot; レベル。
+<B>%_bhVR</B> のサブディレクトリーにマッチする文字列(または
+<B><A HREF="../../LDP_man-pages/man7/glob.7.html">glob</A></B>(7)
+
+式)。
+</DL>
+<P>
+
+キャッシュデータベースの場所もまた、以下のマクロを使用して設定される。
+<DL COMPACT>
+<DT><B>%_cache_dbpath</B><DD>
+キャッシュデータベースの場所。デフォルトは
+<I>/var/spool/up2date/cache</I>。
+
+</DL>
+<P>
+
+キャッシュデータベースのフォーマットは rpm データベースのものと等しく、
+コマンドラインの
+<B>rpm</B>
+
+から利用することができる。
+例えば、パッケージのインストールに必要な依存性を満たすパッケージを
+提案するためにキャッシュデータベースを利用するには、以下の設定が
+<I>/etc/rpm/macros</I>
+
+または
+<I>~/.rpmmacros</I>
+
+に必要である。
+<DL COMPACT>
+<DT><B>%_solve_dbpath</B><DD>
+依存性を解決する提案のために使用されるデータベースの場所。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>Red Hat beehive ツリーのための(最低限の)設定例</H3>
+
+訳注: beehive は多分、Red Hat 内部の何らかの名前。
+<P>
+
+<PRE>
+%_cache_dbpath  /var/spool/up2date/cache
+%_solve_dbpath  %{_cache_dbpath}
+%_bhpath        <A HREF="file://localhost/mnt/redhat/beehive/comps/dist">file://localhost/mnt/redhat/beehive/comps/dist</A>
+%_bhcoll        7.3
+%_bhN           @(basesystem|bash|filesystem|glibc-common|glibc|ldconfig|libtermcap|mktemp|setup|termcap)
+%_bhVR          *
+%_bhA           @(i[3456]86|noarch)
+</PRE>
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>Red Hat の FTP ツリーのための(最小)設定例</H3>
+
+<PRE>
+%_cache_dbpath  /var/spool/up2date/cache
+%_solve_dbpath  %{_cache_dbpath}
+%_bhpath        <A HREF="ftp://localhost/mnt/dist">ftp://localhost/mnt/dist</A>
+%_bhcoll        @(7.3|7.2|7.1|7.0|6.2|6.1|6.0|5.2|5.1|5.0)
+%_bhN           @(%{_arch})
+%_bhVR          *
+%_bhA           @(i[3456]86|noarch)
+</PRE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+rpm-devel パッケージに対するバグ報告や改善要求は、bugzilla
+
+<A HREF="http://bugzilla.redhat.com/">http://bugzilla.redhat.com/</A>
+
+を使って欲しい。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/rpm.8.html">rpm</A></B>(8),
+
+<B><A HREF="../../LDP_man-pages/man7/glob.7.html">glob</A></B>(7),
+
+
+<B><A HREF="http://www.rpm.org/">http://www.rpm.org/</A></B>
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+Jeff Johnson &lt;<A HREF="mailto:jbj@redhat.com">jbj@redhat.com</A>&gt;
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Red Hat beehive ツリーのための(最低限の)設定例</A><DD>
+<DT><A HREF="#lbAF">Red Hat の FTP ツリーのための(最小)設定例</A><DD>
+</DL>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

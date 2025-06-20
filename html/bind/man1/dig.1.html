@@ -1,0 +1,1476 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DIG</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>DIG</H1>
+Section: User Commands  (1)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/bind/contrib/man1/dig.1">roff page</A><HR>
+<BR>BSD mandoc<BR>
+BSD 4
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+dig - ドメイン名問い合わせパケットをネームサーバに送る
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>dig</B>
+
+[<B>@ </B><I>server</I>
+
+
+
+
+
+]
+
+<I>domain</I>
+
+[Aq <I>query-type</I>
+
+
+
+]
+
+[Aq <I>query-class</I>
+
+
+
+]
+
+[<B>+ Aq </B><I>query-option</I>
+
+
+
+
+
+
+
+]
+
+[-<B>Aq </B><I>dig-option</I>
+
+
+
+
+
+]
+
+[<I>%comment</I>
+
+]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>解説</H2>
+
+<B>dig</B>
+
+(ドメイン情報手探り器; domain information groper) は、
+DNS (Domain Name System) サーバから情報を集めるために使われる
+柔軟なコマンドラインツールです。
+<B>dig</B>
+
+は 2 つのモードを持っています。
+これは、1 つの問い合わせを行う単純な対話的利用モードと、
+いくつかの問い合わせ行のリスト中の各問い合わせを実行するバッチモードです。
+すべての問い合わせオプションは、コマンドラインから利用可能です。
+<P>
+
+普通の簡単な
+<B>dig</B>
+
+の使用法は、以下のような形式です。
+<P>
+
+
+<BLOCKQUOTE>
+
+<B>dig @ </B><I>server  domain   query-type  query-class</I>
+
+
+
+
+
+</BLOCKQUOTE>
+
+<P>
+
+ここで、
+<DL COMPACT>
+<P>
+
+<DT><B></B><I>server</I>
+
+
+<DD>
+は、ドメイン名かドット表記のインターネットアドレスのどちらかです。
+もし、このオプションフィールドが省略された場合、
+<B>dig</B>
+
+は、そのマシンのデフォルトのネームサーバを利用しようとします。
+<P>
+
+<I>注:</I>
+
+ドメイン名が指定された時は、ドメイン名システムリゾルバ
+(つまり、BIND) を使うことで解決しようとします。システムが DNS を
+提供していない時は、ドット形式のアドレスを指定する必要があります。
+利用できるサーバがどこかにある場合は、必要なことは
+/etc/resolv.conf
+
+が存在し、
+<I>server</I>
+
+自身が解決できるように、そのデフォルトネームサーバがどこにあるかが
+記述されていることだけです。
+/etc/resolv.conf
+
+についての情報は
+<A HREF="../man5/resolver.5.html">resolver</A>(5)
+
+
+を参照してください。
+<B>警告:</B>
+
+/etc/resolv.conf
+
+を変更すると、標準のリゾルバライブラリと
+(潜在的に)
+
+それを使ういくつかのプログラムに影響を与えます。
+オプションとして、ユーザは環境変数
+<B>LOCALRES</B>
+
+を設定し、
+/etc/resolv.conf
+
+の代わりに使うファイルの名前を指定できます。
+Po Ns Ev LOCALRES
+
+変数は
+<B>dig</B>
+
+リゾルバ固有のもので、標準のリゾルバでは
+参照されません
+Pc 。
+
+<B>LOCALRES</B>
+
+変数が設定されていないか、
+設定されたファイルが読み込めない場合は、
+/etc/resolv.conf
+
+が使われます。
+<DT><B></B><I>domain</I>
+
+
+<DD>
+は、あなたが情報を要求しているドメイン名です。
+逆アドレスの問い合わせのための便利な方法は、
+-<B>x</B>
+
+オプションを参照してください(この節の
+Sx その他のオプション
+
+の項で述べられています)。
+<DT><B></B><I>query-type</I>
+
+
+<DD>
+は、あなたが要求している情報のタイプ(DNS 問い合わせタイプ)です。
+省略された場合のデフォルトは、
+``<I>a</I>
+
+''
+
+(<B>T_A = アドレス</B>
+
+)
+
+が使われます。以下のタイプが認識されます。
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B></B><I>a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </I><B>T_A</B>
+
+
+
+
+<DD>
+ネットワークアドレス
+<DT><B></B><I>any&nbsp;&nbsp;&nbsp;&nbsp; </I><B>T_ANY</B>
+
+
+
+
+<DD>
+指定されたドメインのすべて/任意の情報
+<DT><B></B><I>mx&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </I><B>T_MX</B>
+
+
+
+
+<DD>
+ドメインのメール交換情報 (MX)
+<DT><B></B><I>ns&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </I><B>T_NS</B>
+
+
+
+
+<DD>
+ネームサーバ
+<DT><B></B><I>soa&nbsp;&nbsp;&nbsp;&nbsp; </I><B>T_SOA</B>
+
+
+
+
+<DD>
+ゾーンの権威者を表すレコード
+<DT><B></B><I>hinfo&nbsp;&nbsp; </I><B>T_HINFO</B>
+
+
+
+
+<DD>
+ホスト情報
+<DT><B></B><I>axfr&nbsp;&nbsp;&nbsp; </I><B>T_AXFR</B>
+
+
+
+
+<DD>
+ゾーン転送情報(権威を持ったサーバに尋ねなければなりません)
+<DT><B></B><I>txt&nbsp;&nbsp;&nbsp;&nbsp; </I><B>T_TXT</B>
+
+
+
+
+<DD>
+任意の数の文字列
+</DL>
+<P>
+
+<P>
+
+(完全なリストは、RFC 1035 を参照してください。)
+<DT><B></B><I>query-class</I>
+
+
+<DD>
+は、問い合わせで要求されるネットワーククラスです。
+省略された場合のデフォルトは、
+``<I>in</I>
+
+''
+
+(<B>C_IN = Internet</B>
+
+)
+
+です。
+以下のクラスが認識されます。
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B></B><I>in&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </I><B>C_IN</B>
+
+
+
+
+<DD>
+インターネットクラスドメイン
+<DT><B></B><I>any&nbsp;&nbsp;&nbsp;&nbsp; </I><B>C_ANY</B>
+
+
+
+
+<DD>
+すべて/任意のクラスの情報
+</DL>
+<P>
+
+<P>
+
+(完全なリストは、RFC 1035 を参照してください。)
+<P>
+
+<I>注:</I>
+
+``<I>any</I>
+
+''
+
+は、
+<I>クラス</I>
+
+や問い合わせの
+<I>タイプ</I>
+
+を指定するために使われます。
+<B>dig</B>
+
+は、最初に現れた
+``<I>any</I>
+
+''
+
+を
+<I>query-type = </I><B>T_ANY</B>
+
+
+
+として解析します。
+<I>query-class = </I><B>C_ANY</B>
+
+
+
+にするためには、
+``any''
+
+を 2 度指定するか、
+-<B>c</B>
+
+オプション(以下参照)を利用して問い合わせクラスを
+指定しなければなりません。
+</DL>
+<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>その他のオプション</H3>
+
+<DL COMPACT>
+<P>
+
+<DT><B>% </B><I>ignored-comment</I>
+
+
+
+
+<DD>
+``%''
+
+は、単に解析されない引数を含むために使われます。
+これは、
+<B>dig</B>
+
+をバッチモードで実行する時に有効です。
+問い合わせリスト中のすべての
+<I>@server-domain-name</I>
+
+を解決する代わりに、
+そのオーバヘッドを避けつつコマンドライン上にドメイン名を書くことが出来ます。
+以下の例を参照。
+<P>
+
+
+<BLOCKQUOTE>
+
+<B>dig  @128.9.0.32  %venera.isi.edu  mx  isi.edu</B>
+
+</BLOCKQUOTE>
+
+<P>
+
+<DT><B>-Aq </B><I>dig option</I>
+
+
+
+
+
+
+<DD>
+``-
+
+''
+
+は、
+<B>dig</B>
+
+の操作に影響を与えるオプションを指定するために
+使われます。以下のオプションが現在利用可能です
+( 便利であるかどうかは保証しません )。
+<DL COMPACT>
+<P>
+
+<DT><B>-x </B><I>dot-notation-address</I>
+
+
+
+
+<DD>
+逆アドレス変換を指定する便利な形式です。
+``<B>dig 32.0.9.128.in-addr.arpa</B>
+
+''
+
+の代わりに、
+``<B>dig -x 128.9.0.32</B>
+
+''
+
+と指定できます。
+<DT><B>-f </B><I>file</I>
+
+
+
+
+<DD>
+<B>dig</B>
+
+のバッチモードのためのファイルです。ファイルは、
+つづいて実行される問い合わせの指定 (
+<B>dig</B>
+
+
+
+のコマンドライン) の
+リストを含んでいます。
+`;'
+
+ 
+`#'
+
+ 
+`\n'
+
+で始まる行は無視されます。その他のオプションは、
+コマンドラインで現れるものは、個々のバッチによる問い合わせでも
+影響があります。
+<DT><B>-T </B><I>time</I>
+
+
+
+
+<DD>
+バッチモードで実行した時、連続した問い合わせの始まる時間間隔を秒で与え
+ます。2 つ以上のバッチ
+<B>dig</B>
+
+コマンドの実行を大体同期することができる
+ようになります。デフォルトは 0 です。
+<DT><B>-p </B><I>port</I>
+
+
+
+
+<DD>
+ポート番号です。標準でないポート番号で待つネームサーバに問い合わせます。
+デフォルトは 53 です。
+<DT><B>-p Bq </B><I>ping-string</I>
+
+
+
+
+
+
+
+
+<DD>
+問い合わせからかえってきた後で、
+<A HREF="../../netkit/man8/ping.8.html">ping</A>(8)
+
+
+コマンドを応答時間の比較のために実行します。これは、美しくないのですが、
+シェルを呼び出します。統計の最後の 3 行がコマンドのために
+表示されます。
+<P>
+
+
+<BLOCKQUOTE>
+
+<B>ping -s server_name 56 3</B>
+
+
+
+</BLOCKQUOTE>
+
+<P>
+
+オプションの
+``<I>ping-string</I>
+
+''
+
+が存在した時は、シェルコマンドでは
+``<B>ping -s</B>
+
+
+
+''
+
+を置き換えます。
+<DT><B>-t </B><I>query-type</I>
+
+
+
+
+<DD>
+問い合わせのタイプを指定します。タイプフィールド内の整数値か、
+上で述べたニーモニック表現 (つまり
+<I>mx = </I><B>T_MX</B>
+
+
+
+) かで
+指定することができます。
+<DT><B>-c </B><I>query-class</I>
+
+
+
+
+<DD>
+問い合わせのクラスを指定します。クラスフィールド内の整数値か、
+上で述べたニーモニック表現 (つまり in = C_IN) で
+指定することができます。
+<DT><B>-k </B><I>keydir:keyname</I>
+
+
+
+
+<DD>
+ディレクトリ keydir 中の TSIG キー名 keyname で、問い合わせます。
+<DT><B>-envsav</B>
+
+
+<DD>
+このフラグを指定すると、すべての引数が解析された後で
+<B>dig 環境 (デフォルトや表示オプション等) を</B>
+
+デフォルト環境としてファイルに保存します。
+標準のデフォルトが気に入らず、
+<B>dig</B>
+
+を使う度にたくさんのオプションを指定することが嫌な場合は便利です。
+環境は、
+<B>dig</B>
+
+出力 (以下参照) で詳しく述べられるフラグと同じように、
+リゾルバの状態変数フラグや、タイムアウト、再試行回数からなります。
+シェル環境変数
+<B>LOCALDEF</B>
+
+がファイルの名前に設定されている場合、
+これが、デフォルトの
+<B>dig</B>
+
+環境が保存される場所となります。
+そうでない場合は、ファイル
+``DiG.env''
+
+が現在の作業ディレクトリに
+作成されます。
+<P>
+
+<I>注:</I>
+
+<B>LOCALDEF</B>
+
+は、
+<B>dig</B>
+
+のリゾルバ固有であり、
+標準のリゾルバライブラリの操作には影響を与えません。
+<P>
+
+<B>dig</B>
+
+が実行される度に、
+``./DiG.env''
+
+またはシェル環境変数
+<B>LOCALDEF</B>
+
+で指定されたファイルが探されます。そのようなファイルが
+存在し読める場合は、引数を解析する前にこのファイルから環境が
+読み込まれます。
+<DT><B>-envset</B>
+
+
+<DD>
+このフラグは、バッチ問い合わせを実行する時にだけ影響があります。
+<B>dig</B>
+
+バッチファイル中で
+``-<B>envset</B>
+
+''
+
+が指定されていると、
+この引数が解析された後の
+<B>dig</B>
+
+環境は、バッチファイルが実行されている間もしくは、次の
+``-<B>envset</B>
+
+''
+
+が指定されるまでの間は、
+デフォルトの環境となります。
+<DT><B>
+</B>
+
+-<B></B>[<B>no</B>
+
+]
+
+
+
+<B>stick</B>
+
+
+
+<DD>
+
+このフラグは、バッチ問い合わせ実行にだけ影響を与えます。
+これは、
+<B>dig</B>
+
+環境を
+<B>dig</B>
+
+バッチファイル中での
+各問い合わせ (行) の前に (初期状態もしくは、
+``-<B>envset</B>
+
+''
+
+で設定された)
+元の状態に戻すことを指定します。
+デフォルトの
+``-<B>nostick</B>
+
+''
+
+は、
+<B>dig</B>
+
+環境を回復しないという意味ですので、
+<B>dig</B>
+
+バッチファイルの各行で指定されたオプションは、
+後の行でもその効果が残ったままになります (つまり
+``sticky''
+
+時のデフォルトのようには回復されません)。
+</DL>
+<P>
+
+<DT><B>+ Aq </B><I>query option</I>
+
+
+
+
+
+
+
+
+<DD>
+``+''
+
+はパケット問い合わせ中のオプション変更や
+<B>dig</B>
+
+出力仕様を変更するために使われます。
+これらの多くは、
+<A HREF="../man8/nslookup.8.html">nslookup</A>(8)
+
+
+で受け入れられるパラメータと同じものです。
+オプションが値を必要とする場合、その指定形式は以下のようになります。
+<P>
+
+
+<BLOCKQUOTE>
+
+<B>+</B>
+
+<B></B><I>keyword</I>
+
+
+
+<B></B>[= <B></B><I>value</I>
+
+
+
+]
+
+
+
+</BLOCKQUOTE>
+
+<P>
+
+ほとんどのキーワードは、省略が可能です。
+``+''
+
+オプションの解釈は非常に単純です。
+値はキーワードとスペースで区切ってはなりません。
+以下のキーワードが現在利用可能です。
+<P>
+
+<P>
+
+キーワード<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>省略形<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>意味 [デフォルト]<BR>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>debug&nbsp;&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>deb</B>
+
+)
+
+<DD>
+
+デバッグモードを変更
+Bq Cm deb
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>d2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B>
+
+
+
+<DD>
+
+追加のデバッグモードを変更
+Bq Cm nod2
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>recurse&nbsp;&nbsp;</B>
+
+
+
+(<B>rec</B>
+
+)
+
+<DD>
+
+再帰的探索を使うかどうか指定
+Bq Cm rec
+
+<DT><B>
+</B>
+
+<B>retry= </B><I>file ...</I>
+
+
+
+
+
+ 
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B>
+
+(<B>ret</B>
+
+)
+
+<DD>
+
+再試行の回数を # に設定
+Bq 4
+
+<DT><B>
+</B>
+
+<B>time= </B><I>file ...</I>
+
+
+
+
+
+ 
+<B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B>
+
+(<B>ti</B>
+
+)
+
+<DD>
+
+タイムアウト時間を # 秒に設定
+Bq 4
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>ko</B>
+
+
+
+<DD>
+
+繋げておくオプション(vc を暗黙指定)
+Bq Cm noko
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>vc</B>
+
+
+
+<DD>
+
+仮想回線を使うかどうか指定
+Bq Cm novc
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>defname&nbsp;&nbsp;</B>
+
+
+
+(<B>def</B>
+
+)
+
+<DD>
+
+デフォルトドメイン名を使うかどうか指定
+Bq Cm def
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>search&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>sea</B>
+
+)
+
+<DD>
+
+ドメインサーチリストを使うかどうか指定
+Bq Cm sea
+
+<DT><B>
+</B>
+
+<B>domain= </B><I>NAME&nbsp;&nbsp;</I>
+
+
+
+
+
+(<B>do</B>
+
+)
+
+<DD>
+
+デフォルトドメイン名を
+<I>NAME</I>
+
+に指定
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>ignore&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>i</B>
+
+)
+
+<DD>
+
+<DD>trunc. エラーを無視するかどうか指定
+Bq Cm noi
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>primary&nbsp;&nbsp;</B>
+
+
+
+(<B>pr</B>
+
+)
+
+<DD>
+
+プライマリサーバを使うかどうか指定
+Bq Cm nopr
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>aaonly&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>aa</B>
+
+)
+
+<DD>
+
+権威を持った問い合わせのみのフラグ
+Bq Cm noaa
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>cmd</B>
+
+
+
+<DD>
+
+解析された引数を表示
+Bq Cm cmd
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>stats&nbsp;&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>st</B>
+
+)
+
+<DD>
+
+問い合わせの統計を表示
+Bq Cm st
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>Header&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>H</B>
+
+)
+
+<DD>
+
+基本的なヘッダを表示
+Bq Cm H
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>header&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>he</B>
+
+)
+
+<DD>
+
+ヘッダフラグを表示
+Bq Cm he
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>ttlid&nbsp;&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>tt</B>
+
+)
+
+<DD>
+
+<DD>TTL を表示
+Bq Cm tt
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>cl</B>
+
+
+
+<DD>
+
+クラス情報を表示
+Bq Cm nocl
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>qr</B>
+
+
+
+<DD>
+
+出て行った問い合わせを表示
+Bq Cm noqr
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>reply&nbsp;&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>rep</B>
+
+)
+
+<DD>
+
+応答節を表示
+Bq Cm rep
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>ques&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>qu</B>
+
+)
+
+<DD>
+
+質問節を表示
+Bq Cm qu
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>answer&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>an</B>
+
+)
+
+<DD>
+
+回答節を表示
+Bq Cm an
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>author&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>au</B>
+
+)
+
+<DD>
+
+権威節を表示
+Bq Cm au
+
+<DT><B>
+</B>
+
+[<B>no</B>
+
+]
+
+<B>addit&nbsp;&nbsp;&nbsp;&nbsp;</B>
+
+
+
+(<B>ad</B>
+
+)
+
+<DD>
+
+追加節を表示
+Bq Cm ad
+
+<DT><B>pfdef</B>
+
+
+<DD>
+デフォルト表示フラグを設定
+<DT><B>pfmin</B>
+
+
+<DD>
+最小のデフォルト表示フラグを設定
+<DT><B>pfset= </B><I>file ...</I>
+
+
+
+
+
+
+<DD>
+ 
+表示フラグを # に設定
+(# は 16 進 /8 進/10 進が可能です)
+<DT><B>pfand= </B><I>file ...</I>
+
+
+
+
+
+
+<DD>
+ 
+表示フラグに # とのビット論理積 (and) 適用
+<DT><B>pfor= </B><I>file ...</I>
+
+
+
+
+
+
+<DD>
+ 
+表示フラグに # とのビット論理和 (or) 適用
+</DL>
+<P>
+
+<P>
+
+<B>再試行回数</B>
+
+と
+<B>時間</B>
+
+のオプションは、問い合わせデータグラムを送る際に、
+リゾルバライブラリによって使われる再送戦略に影響を与えます。
+アルゴリズムは以下の通りです
+<P>
+
+
+<BLOCKQUOTE>
+<PRE>
+<DD>for i = 0 to retry - 1
+    for j = 1 to num_servers
+        send_query
+        wait((time * (2**i)) / num_servers)
+    end
+end
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+(注:
+<B>dig</B>
+
+はいつも
+``<B>num_servers</B>
+
+''
+
+として値 1 を使います。)
+</DL>
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>詳細</H3>
+
+<B>dig</B>
+
+は、かつて BINDの
+<A HREF="../../LDP_man-pages/man3/resolver.3.html">resolver</A>(3)
+
+
+ライブラリの変更版を要求しました。
+BIND のリゾルバは、(BIND 4.9のように)
+<B>dig</B>
+
+を正しく動作させるようになって来ています。本質的には、
+<B>dig</B>
+
+は、引数の解釈と適切なパラメータ設定を(見事にではなく)卒直に行うものです。
+<B>dig</B>
+
+はリゾルバの関数
+Fn res_init ,
+
+Fn res_mkquery ,
+
+Fn res_send
+
+を使い、また
+Ft _res
+
+構造体を操作します。
+<A NAME="lbAG">&nbsp;</A>
+<H2>環境変数</H2>
+
+<DL COMPACT>
+<P>
+
+<DT><B>LOCALRES</B>
+
+
+<DD>
+/etc/resolv.conf
+
+の代わりに使うファイル
+<DT><B>LOCALDEF</B>
+
+
+<DD>
+デフォルトの環境ファイル
+</DL>
+<P>
+
+<P>
+
+上述した
+-<B>envsav</B>
+
+ 
+-<B>envset</B>
+
+ 
+
+
+-<B></B>[<B>no</B>
+
+]
+
+
+
+<B>stick</B>
+
+
+
+
+
+オプションの説明も参照してください。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+<DL COMPACT>
+<P>
+
+<DT><B>/etc/resolv.conf<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>
+
+</B>
+<DD>
+初期状態のドメイン名とネームサーバのアドレス<BR>
+<DT><B>./DiG.env
+
+</B>
+<DD>
+デフォルトオプションを保存するデフォルトファイル
+</DL>
+<P>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man8/named.8.html">named</A>(8),
+
+
+<A HREF="../../LDP_man-pages/man3/resolver.3.html">resolver</A>(3),
+
+
+<A HREF="../man5/resolver.5.html">resolver</A>(5),
+
+
+<A HREF="../man8/nslookup.8.html">nslookup</A>(8)
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>規格</H2>
+
+RFC 1035
+<A NAME="lbAK">&nbsp;</A>
+<H2>作者</H2>
+
+Steve Hotz
+<A HREF="mailto:hotz@isi.edu">hotz@isi.edu</A>
+<A NAME="lbAL">&nbsp;</A>
+<H2>謝辞</H2>
+
+<B>dig</B>
+
+は、Andrew Cherenson によって書かれた
+<A HREF="../man8/nslookup.8.html">nslookup</A>(8)
+
+
+の関数を使っています。
+<A NAME="lbAM">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>dig</B>
+
+は &quot;潜行性機能過多&quot; を患っています。
+これは開発中に潜在的な用途をいくつも考えていた結果です。
+苛酷なダイエットをしたらきっとよくなるでしょう。
+同様に、表示フラグとそれで指定できる表示項目の粗さとから、
+これらがその場限りの必要性から追加されたものだということが
+わかるはずです。
+<P>
+
+リゾルバ中のどこかで問題が発生した時に、
+<B>dig</B>
+
+はうまく (しかるべき終了ステータスで) 終了してくれるとは限りません。
+Po Sy 注:
+
+大概のよくある終了条件はきちんと処理できます
+Pc 。
+
+これは、特にバッチモードで実行している時に頭の痛い問題です。
+異常終了し (さらにそれが捕捉されなかっ) た時には、
+バッチ全体が終了してしまいますが、
+そのようなイベントが捕捉された時には、
+<B>dig</B>
+
+はそのまま次の問い合わせを続けるだけです。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">解説</A><DD>
+<DL>
+<DT><A HREF="#lbAE">その他のオプション</A><DD>
+<DT><A HREF="#lbAF">詳細</A><DD>
+</DL>
+<DT><A HREF="#lbAG">環境変数</A><DD>
+<DT><A HREF="#lbAH">関連ファイル</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">規格</A><DD>
+<DT><A HREF="#lbAK">作者</A><DD>
+<DT><A HREF="#lbAL">謝辞</A><DD>
+<DT><A HREF="#lbAM">バグ</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

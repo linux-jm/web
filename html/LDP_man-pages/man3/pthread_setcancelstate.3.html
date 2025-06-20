@@ -1,0 +1,207 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_SETCANCELSTATE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_SETCANCELSTATE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/pthread_setcancelstate.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_setcancelstate, pthread_setcanceltype - cancelability state と
+cancelability type を設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<B>int pthread_setcancelstate(int </B><I>state</I><B>, int *</B><I>oldstate</I><B>);</B>
+<B>int pthread_setcanceltype(int </B><I>type</I><B>, int *</B><I>oldtype</I><B>);</B>
+
+<I>-pthread</I> でコンパイルしてリンクする。
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pthread_setcancelstate</B>() は、呼び出したスレッドの
+cancelability state に <I>state</I> で指定された
+値を設定する。変更前のスレッドの cancelability state は
+<I>oldstate</I> が指すバッファーで返される。
+<I>state</I> 引数には以下の値のいずれか一つを指定しなければならない。
+<DL COMPACT>
+<DT><B>PTHREAD_CANCEL_ENABLE</B><DD>
+スレッドは取り消し可能 (cancelable) である。
+これが全ての新しく作成されるスレッドでのデフォルトの
+cancelability state である。これには最初のスレッドも含まれる。
+スレッドの cancelability type により、取り消し可能なスレッドが
+取り消し要求にいつ反応するかが決まる。
+<DT><B>PTHREAD_CANCEL_DISABLE</B><DD>
+スレッドは取り消しできない。取り消し要求を受信した際は、
+取り消し可能に設定されるまでその要求はブロックされる。
+</DL>
+<P>
+
+<B>pthread_setcanceltype</B>() は、呼び出したスレッドの
+cancelability type に <I>type</I> で指定された値を設定する。
+変更前のスレッドの cancelability type は
+<I>oldtype</I> が指すバッファーで返される。
+<I>type</I> 引数には以下の値のいずれか一つを指定しなければならない。
+<DL COMPACT>
+<DT><B>PTHREAD_CANCEL_DEFERRED</B><DD>
+そのスレッドが次に取り消しポイント (cancellation point) の関数を
+呼び出すまで取り消し要求が遅延される。これが全ての新しく作成される
+スレッドでのデフォルトの cancelability type である。
+これには最初のスレッドも含まれる。
+<DT><DD>
+Even with deferred cancellation, a cancellation point in an asynchronous
+signal handler may still be acted upon and the effect is as if it was an
+asynchronous cancellation.
+<DT><B>PTHREAD_CANCEL_ASYNCHRONOUS</B><DD>
+スレッドはいつでも取り消すことができる (通常はすぐにキャンセルされるが、
+システムがそのことを保証しているわけではない)。
+</DL>
+<P>
+
+これらの関数により実行される「設定と取得」操作 (set-and-get operation) は、
+同じ関数を呼び出したプロセス内の他のスレッドがあっても、
+アトミックに行われる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、これらの関数は 0 を返す。
+エラーの場合、0 以外のエラー番号を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>pthread_setcancelstate</B>() は以下のエラーで失敗する場合がある。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>state</I> に無効な値が指定された。
+</DL>
+<P>
+
+<B>pthread_setcanceltype</B>() は以下のエラーで失敗する場合がある。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+
+
+<I>type</I> に無効な値が指定された。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>pthread_setcancelstate</B>(),
+<B>pthread_setcanceltype</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Safe
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>pthread_setcancelstate</B>(),
+<B>pthread_setcanceltype</B>()
+</TD><TD>Async-cancel-safety</TD><TD>
+AC-Safe
+<BR></TD></TR>
+</TABLE>
+
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+スレッドが取り消された場合に何が起こるかの詳細については
+<B><A HREF="../man3/pthread_cancel.3.html">pthread_cancel</A></B>(3) を参照。
+<P>
+
+取り消し要求により中断されてはならない重要なアクションをスレッドが
+実行する場合、短い時間だけ cancelability を無効にするのは有用である。
+長い時間 cancelability を無効にしたり、長い時間停止 (block) される
+可能性のある操作の前後で cancelability を無効にしたりする際には
+注意すること。なぜなら、無効にしてしまうと、キャンセル要求に対して
+スレッドが応答しない状態になってしまうからである。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>非同期キャンセル</H3>
+
+cancelability type を <B>PTHREAD_CANCEL_ASYNCHRONOUS</B>
+に設定して役に立つことはめったにない。スレッドは<I>いつでも</I>キャンセルすることができることになるので、スレッドが安全にリソースの確保 (例えば
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3) でメモリーを割り当てる) や
+mutex、セマフォ、ロックなどの獲得を行うことができない。アプリケーションは、スレッドがキャンセルされる際に、これらのリソースがどのような状態にあるかを知る術はないので、リソースの確保が安全ではなくなる。つまり、キャンセルが起こったのが、リソースの確保前なのか、確保中なのか、確保後なのかが分からない。さらに、関数呼び出しの最中にキャンセルが発生すると、いくつかの内部データ構造
+(例えば、<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3) 関連の関数が管理している未使用ブロックのリンクリスト)
+が一貫性のない状態のままになってしまう可能性がある。その結果、クリーンアップハンドラーが役に立たないものになってしまう。
+<P>
+
+非同期で安全にキャンセルできる関数は <I>async-cancel-safe functions</I> と呼ばれる。 POSIX.1-2001 と
+POSIX.1-2008 で、非同期で安全にキャンセルできるように求められている関数は <B><A HREF="../man3/pthread_cancel.3.html">pthread_cancel</A></B>(3),
+<B>pthread_setcancelstate</B>(), <B>pthread_setcanceltype</B>() だけである。
+一般的には、それ以外のライブラリ関数は、非同期にキャンセルできるスレッドから安全に呼び出すことはできない。
+<P>
+
+非同期でのキャンセルが有効な数少ない状況としては、純粋に計算だけを行うループに入っているスレッドをキャンセルするといった場面がある。
+<A NAME="lbAK">&nbsp;</A>
+<H3>移植性に関する注意</H3>
+
+
+Linux のスレッド実装では、 <B>pthread_setcancelstate</B>() の <I>oldstate</I> 引数に NULL
+を指定することを認めている。 NULL が指定された場合、変更前の cancelability state
+の情報が呼び出し側に返されない。他の多くの実装でも <I>oldstate</I> 引数に NULL を指定することを認めているが、 POSIX.1
+ではこの点については規定されていない。したがって、移植性が必要なアプリケーションでは常に <I>oldstate</I> に NULL
+以外の値を指定するようにすべきである。 <B>pthread_setcanceltype</B>() の <I>oldtype</I>
+引数についても、全く同じことが言える。
+<A NAME="lbAL">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man3/pthread_cancel.3.html">pthread_cancel</A></B>(3) を参照。
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/pthread_cancel.3.html">pthread_cancel</A></B>(3), <B><A HREF="../man3/pthread_cleanup_push.3.html">pthread_cleanup_push</A></B>(3), <B><A HREF="../man3/pthread_testcancel.3.html">pthread_testcancel</A></B>(3),
+<B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">非同期キャンセル</A><DD>
+<DT><A HREF="#lbAK">移植性に関する注意</A><DD>
+</DL>
+<DT><A HREF="#lbAL">例</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

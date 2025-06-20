@@ -1,0 +1,195 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of INET_PTON</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>INET_PTON</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/inet_pton.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+inet_pton - IPv4/IPv6 アドレスをテキスト形式からバイナリ形式に変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;</B>
+
+<B>int inet_pton(int </B><I>af</I><B>, const char *</B><I>src</I><B>, void *</B><I>dst</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+This function converts the character string <I>src</I> into a network address
+structure in the <I>af</I> address family, then copies the network address
+structure to <I>dst</I>.  The <I>af</I> argument must be either <B>AF_INET</B> or
+<B>AF_INET6</B>.  <I>dst</I> is written in network byte order.
+<P>
+
+現在サポートされているアドレスファミリーは以下の通りである。
+<DL COMPACT>
+<DT><B>AF_INET</B><DD>
+<I>src</I> はドット区切りの 10 進数形式 &quot;<I>ddd.ddd.ddd.ddd</I>&quot; の IPv4 ネットワークアドレス文字列へのポインターである。
+<I>ddd</I> は 0 から 255 までの範囲の最大 3 桁の 10 進数である。 このアドレスは <I>struct in_addr</I> に変換されて
+<I>dst</I> にコピーされる。 <I>dst</I> の長さは <I>sizeof(struct in_addr)</I> (4) バイト (32ビット)
+でなければならない。
+<DT><B>AF_INET6</B><DD>
+<I>src</I> は IPv6 ネットワークアドレスが格納された文字列へのポインターである。 このアドレスは <I>struct in6_addr</I>
+に変換されて <I>dst</I> にコピーされる。 <I>dst</I> の長さは <I>sizeof(struct in6_addr)</I> (16) バイト (128
+ビット) でなければならない。 以下の 3 つのルールにしたがった形式が IPv6 アドレスとして入力できる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>1.<DD>
+推奨形式は <I>x:x:x:x:x:x:x:x</I> である。この形式は 8 個の 16 進数から構成され、 各々の 16 進数は 16 ビット値を表す
+(<I>x</I> は最大 4 桁の 16 進数である)。
+<DT>2.<DD>
+推奨形式の中の連続する 0 の列は <I>::</I> に短縮できる。アドレス中で使用できる <I>::</I> は 1 個だけである。 例えば、ループバックアドレス
+<I>0:0:0:0:0:0:0:1</I> は <I>::1</I> と短縮できる。 全ビットが 0 で構成されるワイルドカードアドレスは <I>::</I> と記載できる。
+<DT>3.<DD>
+IPv4 をマッピングした IPv6 アドレスを表記するには別の形式が便利である。 この別の形式は <I>x:x:x:x:x:x:d.d.d.d</I>
+と書くことができる。 最初の 6 個の <I>x</I> はアドレスを 16 ビット単位に区切ったときの上位側 6 個分 (つまり 96 ビット分)
+を定義する 16 進数であり、 <I>d</I> の部分はアドレスの下位 32 ビットをドット区切りの 10 進数表記で表したものである。
+<I>::FFFF:204.152.189.116</I> はこの形式の例である。
+</DL>
+</DL>
+
+<DT><DD>
+IPv6 アドレスの表現方法の詳細については RFC 2373 を参照のこと。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功する (ネットワークアドレスが正常に変換される) と、 <B>inet_pton</B>()  は 1 を返す。 <I>src</I>
+が指定されたアドレスファミリーに対する 正しいネットワークアドレス表記でない場合には、 0 を返す。 <I>af</I>
+がサポートされているアドレスファミリーでない場合には、 -1 を返し、 <I>errno</I> に <B>EAFNOSUPPORT</B> を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明は <B>attributes</B>(7) を参照のこと。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>inet_pton</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B><A HREF="../man3/inet_aton.3.html">inet_aton</A></B>(3)  や <B><A HREF="../man3/inet_addr.3.html">inet_addr</A></B>(3)  と異なり、 <B>inet_pton</B>()  は IPv6
+アドレスに対応している。 一方で、 <B>inet_pton</B>()  が受け付ける IPv4 アドレスはドット区切りの 10 進数表記だけである。
+これに対し、 <B><A HREF="../man3/inet_aton.3.html">inet_aton</A></B>(3)  や <B><A HREF="../man3/inet_addr.3.html">inet_addr</A></B>(3)  ではもっと一般的なドット区切りの数字表記 (16 進数や 8
+進数の形式や、 4 バイト全てを明示的に書かなくてもよい形式) が使用できる。 ドット区切りの数字表記で IPv6 アドレスと IPv4
+アドレスの両方を扱える インターフェイスについては、 <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)  を参照のこと。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>AF_INET6</B> は IPv4 アドレスを認識しない。 代わりに IPv4 アドレスをマッピングした IPv6 アドレスを <I>src</I>
+に与えなければならない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは <B>inet_pton</B>()  と <B><A HREF="../man3/inet_ntop.3.html">inet_ntop</A></B>(3)  の使用例を示すものである。 実行すると以下のようになる。
+<P>
+
+
+
+$<B> ./a.out i6 0:0:0:0:0:0:0:0</B>
+::
+$<B> ./a.out i6 1:0:0:0:0:0:0:8</B>
+1::8
+$<B> ./a.out i6 0:0:0:0:0:FFFF:204.152.189.116</B>
+::ffff:204.152.189.116
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;buf[sizeof(struct&nbsp;in6_addr)];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;domain,&nbsp;s;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;str[INET6_ADDRSTRLEN];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;3)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;{i4|i6|&lt;num&gt;}&nbsp;string\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;domain&nbsp;=&nbsp;(strcmp(argv[1],&nbsp;&quot;i4&quot;)&nbsp;==&nbsp;0)&nbsp;?&nbsp;AF_INET&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(strcmp(argv[1],&nbsp;&quot;i6&quot;)&nbsp;==&nbsp;0)&nbsp;?&nbsp;AF_INET6&nbsp;:&nbsp;atoi(argv[1]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;inet_pton(domain,&nbsp;argv[2],&nbsp;buf);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;&lt;=&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Not&nbsp;in&nbsp;presentation&nbsp;format&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;inet_pton&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(inet_ntop(domain,&nbsp;buf,&nbsp;str,&nbsp;INET6_ADDRSTRLEN)&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;inet_ntop&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s\n&quot;,&nbsp;str);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3), <B><A HREF="../man3/inet.3.html">inet</A></B>(3), <B><A HREF="../man3/inet_ntop.3.html">inet_ntop</A></B>(3)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DL>
+<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

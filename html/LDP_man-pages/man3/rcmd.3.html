@@ -1,0 +1,231 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RCMD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RCMD</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/rcmd.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rcmd, rresvport, iruserok, ruserok, rcmd_af, rresvport_af, iruserok_af,
+ruserok_af - リモートコマンドにストリームを返す関数群
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt; &nbsp;&nbsp;</B>/* Or &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt; on some systems */
+
+<B>int rcmd(char **</B><I>ahost</I><B>, unsigned short </B><I>inport</I><B>, const char *</B><I>locuser</I><B>,</B>
+<B>         const char *</B><I>remuser</I><B>, const char *</B><I>cmd</I><B>, int *</B><I>fd2p</I><B>);</B>
+
+<B>int rresvport(int *</B><I>port</I><B>);</B>
+
+<B>int iruserok(uint32_t </B><I>raddr</I><B>, int </B><I>superuser</I><B>,</B>
+<B>             const char *</B><I>ruser</I><B>, const char *</B><I>luser</I><B>);</B>
+
+<B>int ruserok(const char *</B><I>rhost</I><B>, int </B><I>superuser</I><B>,</B>
+<B>            const char *</B><I>ruser</I><B>, const char *</B><I>luser</I><B>);</B>
+
+<B>int rcmd_af(char **</B><I>ahost</I><B>, unsigned short </B><I>inport</I><B>, const char *</B><I>locuser</I><B>,</B>
+<B>            const char *</B><I>remuser</I><B>, const char *</B><I>cmd</I><B>, int *</B><I>fd2p</I><B>,</B>
+<B>            sa_family_t </B><I>af</I><B>);</B>
+
+<B>int rresvport_af(int *</B><I>port</I><B>, sa_family_t </B><I>af</I><B>);</B>
+
+<B>int iruserok_af(const void *</B><I>raddr</I><B>, int </B><I>superuser</I><B>,</B>
+<B>                const char *</B><I>ruser</I><B>, const char *</B><I>luser</I><B>, sa_family_t </B><I>af</I><B>);</B>
+
+<B>int ruserok_af(const char *</B><I>rhost</I><B>, int </B><I>superuser</I><B>,</B>
+<B>               const char *</B><I>ruser</I><B>, const char *</B><I>luser</I><B>, sa_family_t </B><I>af</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>rcmd</B>(),
+<B>rcmd_af</B>(),
+<B>rresvport</B>(),
+<B>rresvport_af</B>(),
+<B>iruserok</B>(),
+<B>iruserok_af</B>(),
+<B>ruserok</B>(),
+<B>ruserok_af</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.19:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.19&nbsp;and&nbsp;earlier:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>rcmd</B>() 関数は、スーパーユーザーがリモートマシンでコマンドを実行するために 用いられる。このとき特権ポート番号をもとにした認証スキームが
+用いられる。 <B>rresvport</B>() 関数は、特権ポート空間のアドレスを持つソケットのファイルディスクリプターを返す。 <B>iruserok</B>()
+関数と <B>ruserok</B>() 関数は、 <B>rcmd</B>() でサービス要求を行ったクライアントの認証を行うために サーバーが用いる関数である。
+以上の 4 つの関数は、 <B><A HREF="../../netkit/man8/rshd.8.html">rshd</A></B>(8) サーバーによって (他の関数とともに) 利用される。
+<A NAME="lbAE">&nbsp;</A>
+<H3>rcmd()</H3>
+
+<B>rcmd</B>()  関数は <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)  を用いて <I>*ahost</I> の参照を行う。ホストが存在しない場合は -1
+を返す。 見つかった場合は <I>*ahost</I> にホストの標準名 (standard name) をセットして、 予約されているインターネットポート
+<I>inport</I> 経由でサーバーへの接続を確立する。
+<P>
+
+接続に成功したら、インターネットドメインに存在するタイプ <B>SOCK_STREAM</B> のソケットが呼び出しもとに返される。
+このソケットの相手側はリモートコマンドの <I>stdin</I> および <I>stdout</I> に接続される。 <I>fd2p</I>
+がゼロでない場合は、制御プロセスへの接続がもう一つ用意され、 そのファイルディスクリプターが <I>*fd2p</I> にセットされる。
+制御プロセスはリモートコマンドからの標準エラー出力 (unit 2) を このチャンネルに返す。 また制御プロセスはこの接続から受け取ったバイトデータを
+UNIX シグナルの番号として扱い、リモートコマンドのプロセス グループへとシグナルを送る。 <I>fd2p</I> がゼロの場合は、 <I>stderr</I>
+(リモートコマンドの unit 2) は <I>stdout</I> と一緒にまとめられる。またこの場合はリモートプロセスへ
+任意のシグナルを送ることはできなくなる。 ただし帯域外 (out-of-band) データを用いれば、
+リモートプロセスの注意を引くことはできるかもしれない。
+<P>
+
+プロトコルの詳細は <B><A HREF="../../netkit/man8/rshd.8.html">rshd</A></B>(8)  に記述されている。
+<A NAME="lbAF">&nbsp;</A>
+<H3>rresvport()</H3>
+
+
+The <B>rresvport</B>()  function is used to obtain a socket with a privileged
+port bound to it.  This socket is suitable for use by <B>rcmd</B>()  and several
+other functions.  Privileged ports are those in the range 0 to 1023.  Only a
+privileged process (on Linux: a process that has the <B>CAP_NET_BIND_SERVICE</B>
+capability in the user namespace governing its network namespace).  is
+allowed to bind to a privileged port.  In the glibc implementation, this
+function restricts its search to the ports from 512 to 1023.  The <I>port</I>
+argument is value-result: the value it supplies to the call is used as the
+starting point for a circular search of the port range; on (successful)
+return, it contains the port number that was bound to.
+<A NAME="lbAG">&nbsp;</A>
+<H3>iruserok() と ruserok()</H3>
+
+<B>iruserok</B>()  と <B>ruserok</B>()  関数は、まず以下の引数を取る: リモートホスト (<B>iruserok</B>()  は IP
+アドレスで、 <B>ruserok</B>()  はホスト名で指定)、 2 つのユーザー名、ローカルユーザーの名前が
+スーパーユーザーのものであるかどうかを示すフラグ、である。 もしユーザーが<B>スーパーユーザーではない</B>場合は、これらの関数は
+<I>/etc/hosts.equiv</I> ファイルをチェックする。ファイルが見つからなかったり、 内容のチェックに失敗した場合には、
+ローカルユーザーのホームディレクトリにある <I>.rhosts</I> ファイルをチェックして、サービス要求が許可されているかどうか調べる。
+<P>
+
+If this file does not exist, is not a regular file, is owned by anyone other
+than the user or the superuser, is writable by anyone other than the owner,
+or is hardlinked anywhere, the check automatically fails.  Zero is returned
+if the machine name is listed in the <I>hosts.equiv</I> file, or the host and
+remote username are found in the <I>.rhosts</I> file; otherwise <B>iruserok</B>()
+and <B>ruserok</B>()  return -1.  If the local domain (as obtained from
+<B><A HREF="../man2/gethostname.2.html">gethostname</A></B>(2))  is the same as the remote domain, only the machine name
+need be specified.
+<P>
+
+リモートホストの IP アドレスがわかっている場合は、 <B>ruserok</B>()  よりも <B>iruserok</B>()<B>を用いる方が良いだろう。</B>
+<B>ruserok</B>()  はリモートホストの所属するドメインの DNS サーバーが信頼できなくても 使用できるからである。
+<A NAME="lbAH">&nbsp;</A>
+<H3>*_af() 版</H3>
+
+上記で述べた関数は全て IPv4 (<B>AF_INET</B>) ソケットで動作する。
+&quot;_af&quot; 版では追加の引数があり、この引数でソケットアドレス
+ファミリーを指定できる。これらの関数では、 <I>af</I> 引数には
+<B>AF_INET</B> か <B>AF_INET6</B> が指定できる。
+<B>rcmd_af</B>() では追加で <B>AF_UNSPEC</B> も指定できる。
+<A NAME="lbAI">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>rcmd</B>()  関数は成功すると有効なソケットディスクリプターを返す。 失敗すると -1 を返し、標準エラー出力に診断メッセージを 表示する。
+<P>
+
+<B>rresvport</B>()  関数は、成功するとバインドされた有効なソケットディスクリプターを返す。 失敗すると -1 を返し、グローバル変数
+<I>errno</I> をエラーの原因に対応する値にセットする。 エラーコード <B>EAGAIN</B>
+は、この関数においては「すべてのネットワークポートが使用中」 という意味を表す。
+<P>
+
+<B>ruserok</B>() と <B>iruserok</B>() の返り値については、上述の説明を参照。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バージョン</H2>
+
+関数 <B>iruserok_af</B>(), <B>rcmd_af</B>(), <B>rresvport_af</B>(),
+<B>ruserok_af</B>() は glibc バージョン 2.2 以降で提供されている。
+<A NAME="lbAK">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明は <B>attributes</B>(7) を参照のこと。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>rcmd</B>(),
+<B>rcmd_af</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>rresvport</B>(),
+<B>rresvport_af</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>iruserok</B>(),
+<B>ruserok</B>(),
+<BR>
+
+<B>iruserok_af</B>(),
+<B>ruserok_af</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAL">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1 にはない。 BSD 系、Solaris や他の多くのシステムに存在する。
+これらの関数は 4.2BSD で登場した。 &quot;_af&quot; が付くバージョンはより最近に
+追加されたもので、あまり多くのシステムには存在しない。
+<A NAME="lbAM">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+<B>iruserok</B>() と <B>iruserok_af</B>() は glibc バージョン 2.12 以降のヘッダー
+でのみ宣言されている。
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../netkit/man1/rlogin.1.html">rlogin</A></B>(1), <B><A HREF="../../netkit/man1/rsh.1.html">rsh</A></B>(1), <B><A HREF="../man3/rexec.3.html">rexec</A></B>(3), <B><A HREF="../../netkit/man8/rexecd.8.html">rexecd</A></B>(8), <B><A HREF="../../netkit/man8/rlogind.8.html">rlogind</A></B>(8),
+<B><A HREF="../../netkit/man8/rshd.8.html">rshd</A></B>(8)
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">rcmd()</A><DD>
+<DT><A HREF="#lbAF">rresvport()</A><DD>
+<DT><A HREF="#lbAG">iruserok() と ruserok()</A><DD>
+<DT><A HREF="#lbAH">*_af() 版</A><DD>
+</DL>
+<DT><A HREF="#lbAI">返り値</A><DD>
+<DT><A HREF="#lbAJ">バージョン</A><DD>
+<DT><A HREF="#lbAK">属性</A><DD>
+<DT><A HREF="#lbAL">準拠</A><DD>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

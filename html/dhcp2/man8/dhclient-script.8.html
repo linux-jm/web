@@ -1,0 +1,317 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of dhclient-script</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>dhclient-script</H1>
+Section: Maintenance Commands (8)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/dhcp2/contrib/man8/dhclient-script.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+dhclient-script - DHCP クライアントのネットワーク設定スクリプト
+<A NAME="lbAC">&nbsp;</A>
+<H2>解説</H2>
+
+DHCP クライアントのネットワーク設定スクリプトは、
+時あるごとに <B><A HREF="../man8/dhclient.8.html">dhclient</A>(8)</B> が呼び出します。
+DHCP クライアントは、本スクリプトを使用することにより、
+アドレス要求に先立つ各インタフェースの初期設定と、
+付与されたアドレスの検査と、
+リース獲得時のインタフェースの最終設定を行います。
+リースが獲得されなかった場合、
+定義済みのリースが存在するならばこれを検査するために本スクリプトは使用され、
+有効なリースが判明しなかった場合にももう 1 回このスクリプトが呼ばれます。
+<P>
+
+本スクリプトは、エンドユーザにカスタマイズされることを意図していません。
+ローカルなカスタマイズが必要な場合、
+これは入 (enter) と出 (exit) というフックを使用することで可能となります
+(詳細はフック参照)。
+これらのフックは、
+<B>/etc/resolv.conf</B>
+
+作成時に、
+クライアントのデフォルト動作をユーザがオーバライドできるようにします。
+<P>
+
+特定のオペレーティングシステムでは、
+クライアントの実体は動作するとしても、
+標準のスクリプトが動作しないかもしれません。
+先駆的なユーザが新規スクリプトを作成したり既存のものを修正したりする必要がある
+ことはもっともなことです。
+一般的には、それぞれのコンピュータに固有のカスタマイズは
+<B>/etc/dhclient.conf</B>
+
+スクリプトで行うべきです。
+<B>/etc/dhclient.conf</B>
+
+のカスタマイズ無しにできないカスタマイズや、
+入と出のフックの使用ではできないカスタマイズに気づいた場合には、
+バグレポートを送ってください。
+<A NAME="lbAD">&nbsp;</A>
+<H2>フック</H2>
+
+開始時に、クライアントスクリプトはまずシェル関数を定義します。その関数は
+<B>make_resolv_conf</B>
+
+であり、後に
+<B>/etc/resolv.conf</B>
+
+ファイルを作成するために使用されます。
+デフォルト動作をオーバライドするには、
+この関数を入のフックスクリプトで再定義してください。
+<P>
+
+make_resolv_conf 関数の定義の後、クライアントスクリプトは
+実行可能な
+<B>/etc/dhclient-enter-hooks</B>
+
+スクリプトの存在を検査し、
+存在する場合には Bourne シェルの '.' コマンドを使用して
+本スクリプトをインラインで起動します。
+操作で記述されているすべての環境が本スクリプトで使用可能であり、
+スクリプトの動作の変更が必要な場合には環境の修正が許されています。
+スクリプト実行中にエラーが発生た場合、
+exit_status 変数を非 0 値に設定することが可能であり、
+クライアントスクリプト終了直後に
+<B>/sbin/dhclient-script</B>
+
+はそのエラーコードで終了します。
+<P>
+
+すべての処理の完了後に、
+<B>/sbin/dhclient-script</B>
+
+は実行可能な
+<B>/etc/dhclient-exit-hooks</B>
+
+スクリプトの存在を検査し、存在する場合には '.' コマンドでこれを起動します。
+終了状態は exit_status シェル変数に渡され、
+起動された仕事にスクリプトが成功した場合には値は常に 0 になります。
+<A NAME="lbAE">&nbsp;</A>
+<H2>操作</H2>
+
+dhclient がクライアント設定スクリプトを起動する必要があるとき、
+様々な変数を定義するシェルスクリプトを /tmp に書き込みます。
+すべての場合において、$reason にはスクリプトが起動される理由名が設定されます。
+次の理由が現在定義されています:
+MEDIUM, PREINIT, ARPCHECK, ARPSEND, BOUND, RENEW, REBIND, REBOOT,
+EXPIRE, FAIL, TIMEOUT。
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>MEDIUM</H2>
+
+DHCP クライアントは、インタフェースのメディアタイプの設定を求めています。
+インタフェース名は $interface で渡され、メディアタイプは $medium で渡されます。
+<A NAME="lbAG">&nbsp;</A>
+<H2>PREINIT</H2>
+
+DHCP クライアントは、
+実際のアドレスを受け取る前にパケットを送信する目的で、
+要求通りにインタフェースが設定されることを求めています。
+BSD のソケットライブラリを使用するクライアントでは、
+IP アドレス 0.0.0.0 かつブロードキャストアドレス 255.255.255.255 で、
+インタフェースを設定することを意味します。
+他のクライアントでは、
+実際に IP アドレスを与えることなく単にインタフェースを設定することで
+実現されるでしょう。
+インタフェース名は $interface で渡され、メディアタイプは $medium で渡されます。
+<P>
+
+IP エイリアスが dhclient.conf で宣言されている場合、
+このアドレスが $alias_ip_address で渡されます。
+本 IP アドレスへの経路とともに、
+本 IP アドレスを対象インタフェースから削除する必要があります。
+<A NAME="lbAH">&nbsp;</A>
+<H2>ARPSEND</H2>
+
+DHCP クライアントは、
+与えられたアドレスを他の誰かが使用しているか確認する目的で、
+本アドレスの ARP 要求の送信を求めています。
+実装方法は明確ではありませんので、例はまだありません。
+確認対象の IP アドレスは $new_ip_address で渡され、
+インタフェース名は $interface で渡されます。
+<A NAME="lbAI">&nbsp;</A>
+<H2>ARPCHECK</H2>
+
+DHCP クライアントは、
+ARPSEND を使用した ARP 要求の送信に対する応答の有無を、知りたがっています。
+応答があった場合、スクリプトは非 0 の状態で終了することにより、
+提供されたアドレスは既に要求されているものであり、
+拒否されるべきであることを示します。
+$new_ip_address および $interface は、ARPSEND と同様に設定されます。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>BOUND</H2>
+
+DHCP クライアントは、新アドレスへの初期の結合を完了しました。
+新しい IP アドレスは $new_ip_address で渡され、
+インタフェース名は $interface で渡されます。
+メディアタイプは $medium で渡されます。
+サーバから獲得したオプションは、<B>dhcp-options</B> で宣言されている
+オプション名で渡されます。
+例外として、 有効なシェル変数とするために
+ダッシュ ('-') はアンダスコア('_')で置き換えられ、
+変数名は new_ で開始します。
+例えば、新しいサブネットマスクは $new_subnet_mask で渡されます。
+<P>
+
+結合が完了すると、
+ネットワークに関する多くのパラメータを設定する必要があるでしょう。
+$new_domain_name および $new_domain_name_servers
+(これには複数のサーバを空白で区切って列挙してあるかもしれません) を使用して、
+新しい /etc/resolv.conf を作成する必要があります。
+デフォルト経路は、$new_routers を使用して設定する必要があります。
+静的経路は、$new_static_routes を使用して設定する必要があるかもしれません。
+<P>
+
+IP エイリアスが宣言されている場合、ここで設定する必要があります。
+エイリアスの IP アドレスは  $alias_ip_address として記述され、
+エイリアス用に設定される他の DHCP オプション (例えばサブネットマスク) は
+前述のように変数で渡されますが、
+$new_ で開始するのではなく $alias_ で開始します。
+エイリアスの IP アドレスが結合された IP アドレス ($new_ip_address) と
+同じ場合、これを使用してはならないことに注意してください。
+なぜなら、この場合には他のエイリアスのパラメータが正しくない可能性がある
+からです。
+<A NAME="lbAK">&nbsp;</A>
+<H2>RENEW</H2>
+
+結合が更新されると、スクリプトは BOUND と同様に呼ばれますが、
+$new_ で開始する全変数に加えて $old で開始する別の変数の組があるという
+例外があります。
+変更された可能性がある永続的な設定は、削除する必要があります。
+例えば、結合されたアドレスに対するローカル経路が設定された場合、
+古いローカル経路を削除する必要があります。
+デフォルト経路が変更された場合、古いデフォルト経路を削除する必要があります。
+静的経路が変更された場合、古いものを削除する必要があります。
+その他については、BOUND と同様に処理可能です。
+<A NAME="lbAL">&nbsp;</A>
+<H2>REBIND</H2>
+
+DHCP クライアントが、新規 DHCP サーバに再結合されました。
+これは RENEW と同様に扱えますが、IP アドレスが変わった場合には、
+ARP 表をクリアする必要があります。
+<A NAME="lbAM">&nbsp;</A>
+<H2>REBOOT</H2>
+
+DHCP クライアントは、リブート後に元のアドレスを再獲得することに成功しました。
+これは BOUND と同様に処理可能です。
+<A NAME="lbAN">&nbsp;</A>
+<H2>EXPIRE</H2>
+
+DHCP クライアントはリース更新と新規リース獲得に失敗し、
+リースの期限が切れました。
+対象 IP アドレスを解放する必要があり、
+RENEW および REBIND と同様に、関連するパラメータを削除する必要があります。
+<A NAME="lbAO">&nbsp;</A>
+<H2>FAIL</H2>
+
+DHCP クライアントは DHCP サーバに接続できず、
+また検査した IP アドレスには有効なものはありませんでした。
+最後に検査したリースのパラメータは、設定解除する必要があります。
+これは、EXPIRE と同様に扱えます。
+<A NAME="lbAP">&nbsp;</A>
+<H2>TIMEOUT</H2>
+
+DHCP クライアントはどの DHCP サーバにも接続できませんでした。
+しかしながら、古いリースが識別され、
+BOUND と同様に、この古いリースのパラメータが渡されました。
+クライアントの設定スクリプトは、このパラメータを検査し、
+これが有効であると信じる理由があるならば、値 0 で終了すべきです。
+そうでないならば、非 0 の値で終了すべきです。
+<P>
+
+リースを検査する通常の方法は、REBIND と同様にネットワークを設定して
+(複数のリースを検査するために呼ばれることがあるからです)、
+$routers で定義される最初のルータに ping することです。
+応答を受信した場合、
+インタフェースが現在接続されているネットワークに対して、リースが有効です。
+$new_static_routers に加えて
+$new_routers に列挙されている全ルータに ping を試すようになれば、
+完全性が増すでしょう。しかし、現在のスクリプトはそうなっていません。
+<A NAME="lbAQ">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+類似したオペレーティングシステムに対するスクリプトファイルは
+似ていたり全く同じかもしれませんが、一般には、
+各オペレーティングシステム用に各々のスクリプトファイルがあるべきです。
+Internet Software Consortium の DHCP 配布に含まれるスクリプトファイルは、
+client/scripts 以下の配布ツリーにあり、
+動作対象オペレーティングシステム名になっています。
+<A NAME="lbAR">&nbsp;</A>
+<H2>バグ</H2>
+
+複数インタフェースを使用する場合、
+サーバが提供する設定パラメータ同士が
+衝突しないようにする明確な方法はありません。
+例えば、
+標準の dhclient-script は /etc/resolv.conf を再度書き換えてしまいます。
+すなわち、複数のインタフェースが設定されている場合、
+あるサーバから提供される値に /etc/resolv.conf が初期化された後に、
+別のサーバから提供される値に初期化されるという動作を繰り返します。
+どちらのサーバから提供される情報も有効である場合には、
+実際上問題とはならないものの、混乱のもとになりえます。
+<A NAME="lbAS">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man5/dhclient.conf.5.html">dhclient.conf</A>(5), <A HREF="../man5/dhclient.leases.5.html">dhclient.leases</A>(5), <A HREF="../man8/dhclient.8.html">dhclient</A>(8), <A HREF="../man8/dhcpd.8.html">dhcpd</A>(8), <A HREF="../man8/dhcrelay.8.html">dhcrelay</A>(8)
+<A NAME="lbAT">&nbsp;</A>
+<H2>作者</H2>
+
+<B><A HREF="../man8/dhclient-script.8.html">dhclient-script</A>(8)</B>
+
+は Ted Lemon &lt;<A HREF="mailto:mellon@fugue.com">mellon@fugue.com</A>&gt; が
+Vixie Enterprises と協力して Internet Software Consortium のために
+書きました。
+Internet Software Consortium についてより詳しくは、
+<B><A HREF="http://www.vix.com/isc">http://www.vix.com/isc</A></B>
+
+をご覧ください。
+Vixie Enterprises についてより詳しくは、
+<B><A HREF="http://www.vix.com">http://www.vix.com</A></B>
+
+をご覧ください。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">解説</A><DD>
+<DT><A HREF="#lbAD">フック</A><DD>
+<DT><A HREF="#lbAE">操作</A><DD>
+<DT><A HREF="#lbAF">MEDIUM</A><DD>
+<DT><A HREF="#lbAG">PREINIT</A><DD>
+<DT><A HREF="#lbAH">ARPSEND</A><DD>
+<DT><A HREF="#lbAI">ARPCHECK</A><DD>
+<DT><A HREF="#lbAJ">BOUND</A><DD>
+<DT><A HREF="#lbAK">RENEW</A><DD>
+<DT><A HREF="#lbAL">REBIND</A><DD>
+<DT><A HREF="#lbAM">REBOOT</A><DD>
+<DT><A HREF="#lbAN">EXPIRE</A><DD>
+<DT><A HREF="#lbAO">FAIL</A><DD>
+<DT><A HREF="#lbAP">TIMEOUT</A><DD>
+<DT><A HREF="#lbAQ">関連ファイル</A><DD>
+<DT><A HREF="#lbAR">バグ</A><DD>
+<DT><A HREF="#lbAS">関連項目</A><DD>
+<DT><A HREF="#lbAT">作者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:37 GMT, December 05, 2022
+</BODY>
+</HTML>

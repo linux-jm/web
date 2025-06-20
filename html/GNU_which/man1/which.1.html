@@ -1,0 +1,161 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of WHICH</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>WHICH</H1>
+Section: User Commands  (1)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_which/release/man1/which.1">roff page</A><HR>
+
+
+
+
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+which - (シェル) コマンドのフルパスを表示
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>which</B> [options] [--] programname [...]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>which</B> は 1 つまたは複数の引数を取ります。
+その引数それぞれに対して、その引数がシェルプロンプトから入力された際に、実行されることになる実行モジュールのフルパスを stdout に出力します。
+これを実現する際には、環境変数 <B>PATH</B> に列記されたディレクトリ内から実行ファイルやスクリプトを検索します。 これは <B><A HREF="../../GNU_bash/man1/bash.1.html">bash</A>(1)</B>
+と同じアルゴリズムを用いています。
+<P>
+このマニュアルページは <I>which.texinfo</I> ファイルから生成されています。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<P>
+<DL COMPACT>
+<DT><B>--all</B>, <B>-a</B><DD>
+<B>PATH</B> 内に見つかった実行ファイルすべてを表示します。 最初に見つかったもの以外も表示します。
+<DT><B>--read-alias</B>, <B>-i</B><DD>
+標準入力からエイリアスを読み込んで、合致したものを標準出力します。 これは which そのものを含む alias
+において、本オプションを合わせて利用すると便利です。 たとえば以下です。
+<BR>
+
+<B>alias which='alias | which -i'</B>.
+<DT><B>--skip-alias</B><DD>
+`--read-alias' が指定されても無視します。 which に対するエイリアスや関数の中で `--read-alias'
+オプションを利用している場合であっても、 明示的に通常の実行ファイルを検索する場合に利用できます。
+<DT><B>--read-functions</B><DD>
+標準入力からシェル関数定義を読み込んで、合致したものを標準出力します。 これはwhich
+そのものを含むシェル関数において、本オプションを合わせて利用すると便利です。 たとえば以下です。
+<BR>
+
+<B>which() { declare -f | which --read-functions $@ }</B>
+<BR>
+
+export -f which
+<DT><B>--skip-functions</B><DD>
+`--read-functions' が指定されても無視します。 which に対するエイリアスや関数の中で
+`--read-functions' オプションを利用している場合であっても、明示的に通常の実行ファイルを検索する場合に利用できます。
+<DT><B>--skip-dot</B><DD>
+<B>PATH</B> 内のディレクトリのうち、ドットで始まるディレクトリは除外します。
+<DT><B>--skip-tilde</B><DD>
+チルダで始まる <B>PATH</B> 内のディレクトリ、および <B>HOME</B> ディレクトリ内に存在する実行ファイルは除外します。
+<DT><B>--show-dot</B><DD>
+<B>PATH</B> 内にドットで始まるディレクトリがあって、合致した実行ファイルがその中に見つかった場合には、フルパスでなく &quot;./programname&quot;
+と表示します。
+<DT><B>--show-tilde</B><DD>
+ディレクトリが <B>HOME</B> に合致した場合、チルダを表示します。 このオプションは root ユーザーが実行した際には無視されます。
+<DT><B>--tty-only</B><DD>
+tty 上でない場合、この右側に指定されたオプションの実行を停止します。
+<DT><B>--version,-v,-V</B><DD>
+バージョン情報を標準出力して正常終了します。
+<DT><B>--help</B><DD>
+利用方法を標準出力して正常終了します。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>which</B> は検索に失敗した引数の数を返します。 また `programname' が指定されなかった場合は -1 を返します。
+<A NAME="lbAG">&nbsp;</A>
+<H2>例</H2>
+
+このユーティリティーのお薦めの使い方は、 <B>which</B> に対するエイリアス (C シェル) やシェル関数 (Bourne シェル)
+を追加して利用する方法です。 たとえば以下です。
+<P>
+[ba]sh の場合:
+<P>
+
+<PRE>
+which ()
+{
+  (alias; declare -f) | /usr/bin/which --tty-only --read-alias --read-functions --show-tilde --show-dot $@
+}
+export -f which
+</PRE>
+
+<P>
+[t]csh の場合:
+<P>
+
+<PRE>
+alias which 'alias | /usr/bin/which --tty-only --read-alias --show-dot --show-tilde'
+</PRE>
+
+<P>
+こうすることで、プロンプトから実行した場合には、見やすいように ~/ や ./ を出力します。
+スクリプトから利用した場合には、そのままフルパスで出力します。
+<P>
+
+<PRE>
+&gt; which q2
+~/bin/q2
+&gt; echo `which q2`
+/home/carlo/bin/q2
+</PRE>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>HOME</B> ディレクトリは、環境変数 <B>HOME</B>
+を調べることで決定されますが、この変数が存在しない場合には、その処理がキャンセルされます。<B>which</B> は 2
+つの同等のディレクトリであっても、その 1 つにシンボリックリンクを使ったパスが含まれている場合に、別のディレクトリと取り扱ってしまいます。
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+<BR>
+
+Carlo Wood &lt;<A HREF="mailto:carlo@gnu.org">carlo@gnu.org</A>&gt;
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../GNU_bash/man1/bash.1.html">bash</A>(1)</B>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">例</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:25 GMT, December 05, 2022
+</BODY>
+</HTML>

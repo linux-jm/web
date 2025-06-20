@@ -1,0 +1,158 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETCPU</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETCPU</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/getcpu.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getcpu - 呼び出し元スレッドが動作している CPU と NUMA ノードを判定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/linux/getcpu.h">linux/getcpu.h</A>&gt;</B>
+
+<B>int getcpu(unsigned *</B><I>cpu</I><B>, unsigned *</B><I>node</I><B>, struct getcpu_cache *</B><I>tcache</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getcpu</B>() システムコールは、呼び出し元のスレッドやプロセスが
+現在動作しているプロセッサやノードの情報を特定し、
+それぞれ引数 <I>cpu</I> と <I>node</I> が指す整数に書き込む。
+プロセッサ情報は CPU を識別するための一意な小さな整数である。
+ノード情報は NUMAノードを識別するための一意な小さな整数である。
+<I>cpu</I> か <I>node</I> のいずれかが NULL であれば、
+その引数に対応する情報の書き込みは行われない。
+<P>
+
+このシステムコールの 3 番目の引数は現在は使われておらず、 Linux 2.6.23 以前への移植性が必要な場合以外は NULL を渡すべきである
+(「注意」を参照)。
+<P>
+
+<I>cpu</I> に格納された情報が最新だと保証できるのは、システムコールが呼ばれ
+た時点だけである。<B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2) を使って CPU affinity が固定
+されていない限り、カーネルはいつでも CPU を変更してもよい (スケジューラ
+はキャッシュが有効に働くように CPU の移動を最小限にしようとするので、
+通常は CPU が変更されることはないが、起きる可能性はある)。
+<I>cpu</I> や <I>node</I> で返された情報が呼び出しが返った時点ですでに
+最新の状況と異なる可能性があり、呼び出し元はこの可能性を考慮して
+おかなければならない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、0 を返す。
+エラーの場合、-1 を返し、 <I>errno</I> にエラーを示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+引数が呼び出したプロセスのアドレス空間外を指している。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>getcpu</B>()  was added in kernel 2.6.19 for x86-64 and i386.  Library
+support was added in glibc 2.29 (Earlier glibc versions did not provide a
+wrapper for this system call, necessitating the use of <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).)
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>getcpu</B>() は Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+Linux makes a best effort to make this call as fast as possible.  (On some
+architectures, this is done via an implementation in the <B><A HREF="../man7/vdso.7.html">vdso</A></B>(7).)  The
+intention of <B>getcpu</B>()  is to allow programs to make optimizations with
+per-CPU data or for NUMA optimization.
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<I>tcache</I> 引数は Linux 2.6.24 以降では使用されない。以前のバージョン
+のカーネルでは、この引数が NULL 以外の場合、この引数には、呼び出し
+元が割り当てたスレッド専用の記憶領域 (thread-local storage) 内のバッファー
+を指すポインターが指定され、このバッファーは <B>getcpu</B>() 用のキャッシュ機構
+を提供するために利用されていた。非常に低い確率だが古い情報を返してしま
+うデメリットはあるものの、このキャッシュを使うことで <B>getcpu</B>() システ
+ムコールを高速化できた。このキャッシュ機構はCPU 間でのスレッドの移動時
+に問題になると考えられ、この引数は今では無視されるようになっている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/mbind.2.html">mbind</A></B>(2), <B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2), <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2),
+<B><A HREF="../man3/sched_getcpu.3.html">sched_getcpu</A></B>(3), <B>cpuset</B>(7), <B><A HREF="../man7/vdso.7.html">vdso</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

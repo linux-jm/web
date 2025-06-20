@@ -1,0 +1,261 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of VFORK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>VFORK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/vfork.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+vfork - 子プロセスを生成し親プロセスを停止させる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>pid_t vfork(void);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>vfork</B>():
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>glibc 2.12 以降:<DD>
+<PRE>
+(_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500) &amp;&amp; ! (_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L)
+    || /* glibc 2.19 以降: */ _DEFAULT_SOURCE
+    || /* glibc 2.19 以前: */ _BSD_SOURCE
+</PRE>
+
+<DT>glibc 2.12 より前:<DD>
+
+<BR>&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+
+</DL>
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>規格の説明</H3>
+
+(POSIX.1 より引用)  <B>vfork</B>()  関数は <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  と同じ働きをするが、 <B>vfork</B>()
+で作成されたプロセスが <B>vfork</B>()  からの返り値を格納している <I>pid_t</I> 型の変数以外を変更したり、 <B>vfork</B>()
+を呼び出している関数から return したり、 <B><A HREF="../man2/_exit.2.html">_exit</A></B>(2)  や <B><A HREF="../man3/exec.3.html">exec</A></B>(3)
+族の関数をコールする前に他の関数をコールした場合の動作が 未定義であるという点が異なる。
+<A NAME="lbAF">&nbsp;</A>
+<H3>LINUX での説明</H3>
+
+<B>vfork</B>()  は <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  と全く同じように呼び出したプロセスの子プロセスを生成する。 詳しい説明と返り値、エラーについては
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  を参照すること。
+<P>
+
+<B>vfork</B>()  は <B><A HREF="../man2/clone.2.html">clone</A></B>(2)  の特殊な場合である。 親プロセスのページテーブルのコピーを行わずに新しいプロセスを
+作成するために使用する。これは性能に敏感なアプリケーションにおいて 子プロセスを生成してすぐに <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  する場合に有用かもしれない。
+<P>
+
+<B>vfork</B>()  differs from <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  in that the calling thread is suspended
+until the child terminates (either normally, by calling <B><A HREF="../man2/_exit.2.html">_exit</A></B>(2), or
+abnormally, after delivery of a fatal signal), or it makes a call to
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).  Until that point, the child shares all memory with its
+parent, including the stack.  The child must not return from the current
+function or call <B><A HREF="../man3/exit.3.html">exit</A></B>(3)  (which would have the effect of calling exit
+handlers established by the parent process and flushing the parent's
+<B><A HREF="../man3/stdio.3.html">stdio</A></B>(3)  buffers), but may call <B><A HREF="../man2/_exit.2.html">_exit</A></B>(2).
+<P>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2) と同様に、 <B>vfork</B>() で作成された子プロセスは、
+(ファイルディスクリプター、シグナル配送定義、カレントワーキングディレクトリなどの)
+呼び出し元のプロセスの各種の属性を継承する。
+<B>vfork</B>() では、上で説明した仮想アドレス空間の扱いだけが異なる。
+<P>
+
+親プロセスへ送られたシグナルは、子プロセスが親プロセスのメモリーを解放した後
+(すなわち、子プロセスが終了するか <B><A HREF="../man2/execve.2.html">execve</A></B>(2) を呼んだ後) に到着する。
+<A NAME="lbAG">&nbsp;</A>
+<H3>歴史的な説明</H3>
+
+Linux において <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  は書き込み時コピー (copy-on-write) ページを使用して実装されている。 そのため
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  を使用することによって被る損害は親プロセスのページテーブルを 複製するために必要な時間とメモリーだけである。
+しかしながら、忌しき昔には <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  は呼び出したプロセスのデータ空間の全てのコピーしていたが、
+これはしばしば不必要であった。なぜなら、たいていはすぐ後に <B><A HREF="../man3/exec.3.html">exec</A></B>(3)  を実行していたからである。 この場合の効率を上げるために BSD は
+<B>vfork</B>()  システムコールを導入して親プロセスのアドレス空間を完全にコピー するかわりに、 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  をコールするか
+exit が起きるまで親プロセスのメモリーと制御スレッド を借りるようにした。 親プロセスは子プロセスがその資源を使用している間は停止された。
+<B>vfork</B>()  は使いにくいものであった: 例えば、親プロセスの変数を変更しな
+いようにするためにはどの変数がレジスターに保持されているかを知らな ければならなかった。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+4.3BSD; POSIX.1-2001 (廃止予定とされている)。
+POSIX.1-2008 では <B>vfork</B>() の規定が削除されている。
+<P>
+
+
+<B>vfork</B>() コールは他のオペレーティングシステムの同名のコールと ちょっと似
+ているかもしれない。規格が <B>vfork</B>() に要求していることは、 <B><A HREF="../man2/fork.2.html">fork</A></B>(2) に要
+求していることよりは弱い。したがって、 両者を同じものとして実装しても、規格に
+準拠していることになる。 特にプログラマーは、子プロセスが終了するか
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2) を呼び出すまで親プロセスが停止していることや、メモリーを共有するこ
+とによる特殊な動作をあてにすべきではない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<B>vfork</B>() の動作は構造的な欠陥と考える人もいるだろうし、
+BSD のマニュアルには、「このシステムコールは妥当なシステム共有機構が実装さ
+れた場合には削除される。ユーザーは <B>vfork</B>() のメモリー共有機能に依存するべき
+ではない。何故ならば、このシステムコール が削除された場合には、それは
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2) の同義語とされるからである。」と書かれている。しかしながら、
+最近のメモリー管理ハードウェアにより <B><A HREF="../man2/fork.2.html">fork</A></B>(2) と <B>vfork</B>() の間の性能差が
+減ったとはいえ、 Linux や他のシステムで <B>vfork</B>() が残されているのには
+いくつか理由がある:
+<DL COMPACT>
+<DT>*<DD>
+性能に厳しいアプリケーションでは、 <B>vfork</B>() により得られる
+小さな性能上のメリットが必要な場合がある。
+<DT>*<DD>
+
+
+
+
+<B>vfork</B>() はメモリー管理ユニット (MMU) を持たないシステムでも実装すること
+ができるが、そのようなシステムで <B><A HREF="../man2/fork.2.html">fork</A></B>(2) を実装することはできない。
+(POSIX.1-2008 では <B>vfork</B>() が標準から削除された。
+<B>posix_spawn</B>(3) 関数の POSIX の原理 (rationale) には、
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)+<B><A HREF="../man3/exec.3.html">exec</A></B>(3) と等価な機能を提供する <B>posix_spawn</B>(3) は、
+MMU を持たないシステムでも実装できるように設計されたとの注記がある。)
+<DT>*<DD>
+
+On systems where memory is constrained, <B>vfork</B>()  avoids the need to
+temporarily commit memory (see the description of
+<I>/proc/sys/vm/overcommit_memory</I> in <B><A HREF="../man5/proc.5.html">proc</A></B>(5))  in order to execute a new
+program.  (This can be especially beneficial where a large parent process
+wishes to execute a small helper program in a child process.)  By contrast,
+using <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  in this scenario requires either committing an amount of
+memory equal to the size of the parent process (if strict overcommitting is
+in force)  or overcommitting memory with the risk that a process is
+terminated by the out-of-memory (OOM) killer.
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Caveats</H3>
+
+The child process should take care not to modify the memory in unintended
+ways, since such changes will be seen by the parent process once the child
+terminates or executes another program.  In this regard, signal handlers can
+be especially problematic: if a signal handler that is invoked in the child
+of <B>vfork</B>()  changes memory, those changes may result in an inconsistent
+process state from the perspective of the parent process (e.g., memory
+changes would be visible in the parent, but changes to the state of open
+file descriptors would not be visible).
+<P>
+
+
+When <B>vfork</B>()  is called in a multithreaded process, only the calling
+thread is suspended until the child terminates or executes a new program.
+This means that the child is sharing an address space with other running
+code.  This can be dangerous if another thread in the parent process changes
+credentials (using <B><A HREF="../man2/setuid.2.html">setuid</A></B>(2)  or similar), since there are now two
+processes with different privilege levels running in the same address
+space.  As an example of the dangers, suppose that a multithreaded program
+running as root creates a child using <B>vfork</B>().  After the <B>vfork</B>(), a
+thread in the parent process drops the process to an unprivileged user in
+order to run some untrusted code (e.g., perhaps via plug-in opened with
+<B><A HREF="../man3/dlopen.3.html">dlopen</A></B>(3)).  In this case, attacks are possible where the parent process
+uses <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  to map in code that will be executed by the privileged
+child process.
+<A NAME="lbAK">&nbsp;</A>
+<H3>Linux での注意</H3>
+
+<B><A HREF="../../glibc-linuxthreads/man3/pthread_atfork.3.html">pthread_atfork</A></B>(3)  を使って設定された fork ハンドラーは NPTL
+スレッドライブラリコールを採用したマルチスレッドプログラムでは 呼び出されない。一方、LinuxThreads スレッドライブラリを使った
+プログラムでは、fork ハンドラーは呼び出される。 (Linux のスレッドライブラリの説明は <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)  を参照。)
+<P>
+
+<B>vfork</B>() の呼び出しは、以下の <I>flags</I> を指定して <B><A HREF="../man2/clone.2.html">clone</A></B>(2) を呼び出す
+のと等価である。
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLONE_VM&nbsp;|&nbsp;CLONE_VFORK&nbsp;|&nbsp;SIGCHLD
+<A NAME="lbAL">&nbsp;</A>
+<H3>歴史</H3>
+
+
+
+<B>vfork</B>()  システムコールは 3.0BSD に現われた。 4.4BSD において <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  の同義語となったが、NetBSD
+では再び導入された。
+
+
+を参照。
+Linux では 2.2.0-pre6 あたりまでは <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  と等価であった。(i386 では) 2.2.0-pre9 から
+(他のアーキテクチャーでは 少し遅れて) 独立したシステムコールとなった。 glibc でのサポートは glibc-2.0.112 で追加された。
+<A NAME="lbAM">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+
+
+
+
+シグナルの扱いの詳細は不明瞭でシステムごとに異っている。 BSD のマニュアルには、 「デッドロック状態になる可能性があるので <B>vfork</B>()
+の途中の子プロセスに <B>SIGTTOU</B> や <B>SIGTTIN</B> シグナルを送信してはならない; さらに出力や <I>ioctl</I>
+は許されるが、入力を試みた場合には結果はファイル終端 (EOF) になる。」 と書かれている。
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2), <B><A HREF="../man2/execve.2.html">execve</A></B>(2), <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man2/unshare.2.html">unshare</A></B>(2), <B><A HREF="../man2/wait.2.html">wait</A></B>(2)
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">規格の説明</A><DD>
+<DT><A HREF="#lbAF">LINUX での説明</A><DD>
+<DT><A HREF="#lbAG">歴史的な説明</A><DD>
+</DL>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">Caveats</A><DD>
+<DT><A HREF="#lbAK">Linux での注意</A><DD>
+<DT><A HREF="#lbAL">歴史</A><DD>
+</DL>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

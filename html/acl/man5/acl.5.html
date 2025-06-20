@@ -1,0 +1,865 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ACL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ACL</H1>
+Section: File Formats (5)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/acl/release/man5/acl.5">roff page</A><HR>
+<BR>BSD mandoc<BR>
+Linux ACL
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<B>acl</B>
+
+ - アクセス制御リスト (Access Control Lists)
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+この man ページは POSIX アクセス制御リストについて説明している。 ACL はファイルとディレクトリに対して、 より洗練された任意アクセス権
+(discretionary access right) を 定義するのに使われる。
+<A NAME="lbAD">&nbsp;</A>
+<H2>ACL タイプ</H2>
+
+全てのオブジェクトは、そのオブジェクトに対する任意のアクセスを決定する ACL に関連付けられていると考えることができる。 この ACL はアクセス
+AC と呼ばれる。 これに加えて、ディレクトリに関連付けられた ACL がある。 この ACL はディレクトリ内で作成されたオブジェクトの
+最初のアクセス ACL を決定する。 この ACL はデフォルト ACL と呼ばれる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>ACL エントリ</H2>
+
+ACL は ACL エントリの集合で構成される。 ACL エントリは、それが関連付けられたオブジェクトの アクセス許可 (permission)
+を指定する。 アクセス許可は、個々のユーザまたはユーザのグループに対する 読み出し・書き込み・検索／実行の許可の組み合わせである。
+<P>
+
+ACL エントリには、エントリタグ型・ オプションとしてのエントリタグ修飾子 (qualifier)・許可の集合が含まれる。
+ここでは、修飾子という単語を ACL エントリのエントリタグ修飾子を表すのに使う。
+<P>
+
+修飾子は、ACL_USER または ACL_GROUP というタグ型のエントリに対して、 それぞれユーザまたはグループの識別子を表す。 ACL_USER
+と ACL_GROUP 以外のタグ型のエントリは、 定義された修飾子を持たない。
+<P>
+
+以下のエントリタグ型が定義されている:
+<DL COMPACT>
+<P>
+
+<DT><B>ACL_USER_OBJ</B>
+<DD>
+ACL_USER_OBJ エントリはファイル所有者に対するアクセス権を表す。
+<DT><B>ACL_USER</B>
+<DD>
+ACL_USER エントリはエントリの修飾子で識別されるユーザに対するアクセス権を表す。
+<DT><B>ACL_GROUP_OBJ</B>
+<DD>
+ACL_GROUP_OBJ エントリはファイルグループに対するアクセス権を表す。
+<DT><B>ACL_GROUP</B>
+<DD>
+ACL_GROUP エントリはエントリの修飾子で識別される グループに対するアクセス権を表す。
+<DT><B>ACL_MASK</B>
+<DD>
+ACL_MASK エントリは ACL_USER, ACL_GROUP_OBJ, ACL_GROUP 型のエントリで 許可される最大のアクセス権を表す。
+<DT><B>ACL_OTHER</B>
+<DD>
+ACL_OTHER エントリは ACL における他のどのエントリともマッチしない プロセスのアクセス権を表す。
+</DL>
+<P>
+
+<P>
+
+アクセスチェックが実行される場合、実効 (effective) ユーザ ID に対して ACL_USER_OBJ と ACL_USER
+エントリがテストされる。 実効グループ ID は、全ての補助 (supplementary) グループ ID と同様に、 ACL_GROUP_OBJ と
+ACL_GROUP エントリに対してテストされる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>有効な ACL</H2>
+
+有効な ACL には ACL_USER_OBJ, ACL_GROUP_OBJ, ACL_OTHER タグ型のうち 何れか 1
+つだけのエントリが含まれる。 ACL_USER と ACL_GROUP タグ型のエントリは、 0 回以上 ACL に出現することができる。
+ACL_USER または ACL_GROUP タグ型のエントリを含む ACL は、 ACL_MASK タグ型のエントリを 1
+つだけ含まなければならない。 ACL_USER または ACL_GROUP タグ型のエントリが ACL に含まれない場合、 ACL_MASK
+エントリはオプションである。
+<P>
+
+
+全てのユーザ ID 修飾子は、ACL_USER タグ型の全てのエントリにおいて 一意でなければならない。 また全てのグループ ID
+修飾子は、ACL_GROUP タグ型の全てのエントリにおいて 一意でなければならない。
+<P>
+
+Fn acl_get_file
+
+関数は、ディレクトリにデフォルト ACL が関連付けられていない場合、
+ディレクトリのデフォルト ACL として、 ACL エントリが 1 つも
+含まれない ACL を返す。
+Fn acl_set_file
+
+関数も、ACL エントリが 1 つも含まない ACL を、 ディレクトリに対する有効
+なデフォルト ACL として受け付ける。 このような ACL はディレクトリに
+デフォルト ACL を関連付けないことを表す。 これは
+Fn acl_delete_def_file
+
+関数を使うのと等価である。
+<A NAME="lbAG">&nbsp;</A>
+<H2>ACL エントリとファイル許可ビットの対応</H2>
+
+ACL で定義される許可は、ファイル許可ビットで指定される許可の上位集合 (superset) である。
+<P>
+
+ファイルの所有者、グループ、その他のユーザに対する許可 (permission) と特定の ACL
+エントリには対応関係がある。ファイル所有者に対して定義される許可は、 ACL_USER_OBJ エントリの許可に対応する。 ACL に ACL_MASK
+エントリがある場合、ファイルグループに対して定義される許可は、 ACL_MASK エントリの許可に対応する。 ACL に ACL_MASK
+エントリがない場合、ファイルグループに対して定義される許可は、 ACL_GROUP_OBJ
+エントリの許可に対応する。その他のユーザに対して定義される許可は、 ACL_OTHER_OBJ エントリの許可に対応する。
+<P>
+
+ファイルの所有者、グループ、その他のユーザに対する許可は、対応する ACL エントリの許可と常に一致する。ファイル許可ビットを変更すると、関連付けられた
+ACL エントリが変更される。 ACL エントリの許可を変更すると、ファイル許可ビットが変更される。
+<A NAME="lbAH">&nbsp;</A>
+<H2>オブジェクトの作成とデフォルト ACL</H2>
+
+ファイルオブジェクトのアクセス ACL は、
+Fn creat ,
+
+Fn mkdir ,
+
+Fn mknod ,
+
+Fn mkfifo ,
+
+Fn open
+
+関数のいずれかでオブジェクトが作られたときに初期化される。 デフォルト ACL
+がディレクトリと関連付けられている場合、 ファイルオブジェクトを作成する関数の
+<I>mode</I>
+
+引き数とディレクトリのデフォルト ACL
+を使って、 新しいオブジェクトの ACL が決定される:
+<OL><P>
+
+<LI>
+
+新しいオブジェクトは、それが含まれるディレクトリのデフォルト ACL を アクセス ACL として継承する。
+<LI>
+
+ファイル許可ビットに対応するアクセス ACL エントリが修正され、
+<I>mode</I>
+
+引き数で指定されていない許可ビットを含まないようにされる。
+</OL><P>
+
+<P>
+
+ディレクトリにデフォルト ACL が関連付けられていない場合、 ファイルオブジェクトを作成する関数の
+<I>mode</I>
+
+引き数とファイル作成マスク
+(umask2
+
+
+を参照) を使って、新しいオブジェクトの ACL が決定される:
+<OL><P>
+
+<LI>
+
+新しいオブジェクトには、タグ型 ACL_USER_OBJ, ACL_GROUP_OBJ, ACL_OTHER の エントリを含むアクセス ACL
+が割り当てられる。 これらのエントリの許可は、ファイル作成マスクで指定された許可に設定される。
+<LI>
+
+ファイル許可ビットに対応するアクセス ACL エントリが修正され、
+<I>mode</I>
+
+引き数で指定されていない許可ビットを含まないようにされる。
+</OL><P>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>アクセスチェックアルゴリズム</H2>
+
+プロセスは、ACL で保護されたファイルオブジェクトに対して、 読み出し・書き込み・実行／検索を要求することができる。 アクセスチェックアルゴリズムは
+オブジェクトへのアクセスを許可するか否かを決定する。
+<OL><P>
+
+<LI>
+
+<B>If </B>プロセスの実効ユーザ ID がファイルオブジェクト所有者のユーザ ID と一致する。
+
+
+
+<B>then</B>
+
+<P>
+
+
+
+
+<B>if</B>
+
+要求された許可が ACL_USER_OBJ エントリに含まれるならば、アクセスは許可される。
+<P>
+
+<B>else</B>
+
+アクセスは拒否される。
+
+
+<LI>
+
+<B>else if</B>
+
+プロセスの実効ユーザ ID が ACL_USER 型の何れかのエントリの修飾子と一致する。
+<B>then</B>
+
+<P>
+
+
+
+
+<B>if</B>
+
+一致した ACL_USER エントリと ACL_MASK エントリに
+要求された許可が含まれるならば、アクセスは許可される。
+<P>
+
+<B>else</B>
+
+アクセスは拒否される。
+
+
+<LI>
+
+<B>else if</B>
+
+プロセスの実効グループ ID または何れかの補助グループ ID が、 ファイルグループまたは ACL_GROUP
+型の何れかのエントリの修飾子と一致する。
+<B>then</B>
+
+<P>
+
+
+
+
+<B>if</B>
+
+ACL が ACL_MASK エントリを含む。
+<B>then</B>
+
+
+
+
+<B>if</B>
+
+ACL_MASK エントリおよび一致する ACL_GROUP_OBJ または ACL_GROUP エントリの
+何れかに、要求された許可が含まれるならば、アクセスは許可される。
+<P>
+
+<B>else</B>
+
+アクセスは拒否される。
+<P>
+
+
+
+<B>else</B>
+
+(ACL_MASK エントリを含まない ACL_GROUP エントリは存在しない点に注意すること)
+
+
+
+<B>if</B>
+
+ACL_GROUP_OBJ エントリが要求された許可を含むならば、アクセスは許可される。
+
+<P>
+
+<B>else</B>
+
+アクセスは拒否される。
+<P>
+
+
+
+<LI>
+
+<B>else if</B>
+
+ACL_OTHER エントリが要求された許可を含むならば、アクセスは許可される。
+<LI>
+
+<B>else</B>
+
+アクセスは拒否される。
+</OL><P>
+
+
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>ACL テキスト形式</H2>
+
+ACL を表現するために長いテキスト形式と短いテキスト形式が定義されている。 両方の形式において、ACL エントリはコロン区切られた 3
+つのフィールド、 ACL エントリタグ型・ACL エントリ修飾子・任意のアクセス許可で表現される。 1
+番目のフィールドは以下のエントリタグ型キーワードの何れかを含む:
+<DL COMPACT>
+<P>
+
+<DT><B>user</B>
+
+
+<DD>
+<B>user</B>
+
+ACL エントリは、ファイル所有者 (エントリタグ型 ACL_USER_OBJ) と 指定されたユーザ (エントリタグ型
+ACL_USER) に対して 許可されるアクセスを指定する。
+<DT><B>group</B>
+
+
+<DD>
+<B>group</B>
+
+ACL エントリは、ファイルグループ (エントリタグ型 ACL_GROUP_OBJ) と 指定されたグループ (エントリタグ型
+ACL_GROUP) に対して 許可されるアクセスを指定する。
+<DT><B>mask</B>
+
+
+<DD>
+<B>mask</B>
+
+ACL エントリは、ファイル所有者に対する
+<B>user</B>
+
+エントリと
+<B>other</B>
+
+エントリを除く、
+全ての ACL (エントリタグ型 ACL_MASK) に対して許可されるアクセスのうち 最大のものを指定する。
+<DT><B>other</B>
+
+
+<DD>
+<B>other</B>
+
+ACL エントリは、どの
+<B>user</B>
+
+ACL エントリにも
+<B>group</B>
+
+ACL
+エントリにもマッチしない (エントリタグ型 ACL_OTHER) の プロセスに対して許可されるアクセスを指定する。
+</DL>
+<P>
+
+<P>
+
+2 番目のフィールドは、 エントリタグ型 ACL_USER または ACL_GROUP のエントリの場合、 ACL
+エントリに関連付けられているユーザまたはグループ識別子を含む。 その他のエントリの場合、このフィールドは空になる。 ユーザ識別子はユーザ名でも 10
+進数のユーザ ID 番号でもよい。 グループ識別子はグループ名でも 10 進数のグループ ID 番号でもよい。
+<P>
+
+3 番目のフィールドは任意のアクセス許可を保持する。 書き出し・読み込み・検索／実行の許可は、
+<B>r</B>
+
+ 
+<B>w</B>
+
+ 
+<B>x</B>
+
+という文字でこの順番で表される。 ACL エントリにこれらの許可がない場合、各文字は
+<B>-</B>
+
+文字で置き換えられる。
+テキスト形式から内部表現に変換する場合、 保持していない許可は指定する必要がない。
+<P>
+
+各 ACL エントリの始めと終わり、そして フィールド区切り文字 (コロン文字) の直前と直後には、 空白を入れることができる。
+<A NAME="lbAK">&nbsp;</A>
+<H3>長いテキスト形式</H3>
+
+長いテキスト形式では、1 行に 1 つの ACL エントリを保持する。 さらにナンバー記号
+<B>( #</B>
+
+
+
+ 
+でコメントを開始することが可能で、行の終りまでがコメントになる。 ACL_MASK エントリに含まれない許可が ACL_USER,
+ACL_GROUP_OBJ, ACL_GROUP ACL エントリに含まれる場合、 そのエントリの後にはナンバー記号と文字列
+"effective:" と そのエントリで定義される実効アクセス許可が続く。 以下は長いテキスト形式の例である:
+
+<BLOCKQUOTE>
+<PRE>
+user::rw-
+user:lisa:rw-         #effective:r--
+group::r--
+group:toolies:rw-     #effective:r--
+mask::r--
+other::r--
+</PRE>
+</BLOCKQUOTE>
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>短いテキスト形式</H3>
+
+短いテキスト形式は、コンマで区切られた ACL エントリの並びであり、 入力として使われる。 コメントはサポートされていない。
+エントリタグ型キーワードは省略されない完全な形式でも 1 文字の省略形でも指定できる。
+<B>user</B>
+
+の省略形は
+<B>u</B>
+
+ 
+<B>group</B>
+
+の省略形は
+<B>g</B>
+
+ 
+<B>mask</B>
+
+の省略形は
+<B>m</B>
+
+ 
+<B>other</B>
+
+の省略形は
+<B>o</B>
+
+である。 許可には、
+<B>r</B>
+
+ 
+<B>w</B>
+
+ 
+<B>x</B>
+
+という文字のうち 1
+つ以上を、任意の順番で含めることができる。 以下は短いテキスト形式の例である:
+
+<BLOCKQUOTE>
+<PRE>
+u::rw-,u:lisa:rw-,g::r--,g:toolies:rw-,m::r--,o::r--
+g:toolies:rw,u:lisa:rw,u::wr,g::r,o::r,m::r
+</PRE>
+</BLOCKQUOTE>
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>理論的根拠</H2>
+
+IEEE 1003.1e draft 17 は、 タグ型 ACL_MASK のエントリを含むアクセス制御リストを定義しており、
+画一的ではないファイル許可ビット間の対応付けを定義している。 標準化作業グループは、IEEE 1003.1 ("POSIX.1")
+と互換性のない アプリケーションが ACL を持つシステム上でも機能することを保証するために、 比較的複雑なインタフェースを定義した。 IEEE
+1003.1e draft 17 には、このインタフェースを選択する理論的根拠が セクション B.23 に書かれている。
+<A NAME="lbAN">&nbsp;</A>
+<H2>ファイルユーティリティの変更</H2>
+
+ACL をサポートするシステムでは、ファイルユーティリティ
+<A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A>(1),
+
+
+<A HREF="../../0MultiFileIdx/man1/cp.1.html">cp</A>(1),
+
+
+<A HREF="../../0MultiFileIdx/man1/mv.1.html">mv</A>(1)
+
+
+は自身の動作を以下のように変更する:
+<UL><P>
+
+<LI>
+
+デフォルト ACL を持つファイル、または必要とされる 3 つ以上の ACL エントリを 保持するアクセス ACL を持つファイルに対して、
+<A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A>(1)
+
+
+ユーティリティを長い形式
+<B>ls -l</B>
+
+で実行すると、 プラス記号
+<B>( +</B>
+
+
+
+ 
+が許可文字列の後に表示される。
+<LI>
+
+-<B>p</B>
+
+フラグが指定された場合、
+<A HREF="../../0MultiFileIdx/man1/cp.1.html">cp</A>(1)
+
+
+ユーティリティは ACL も保存する。 保存できない場合は警告が出される。
+<LI>
+
+<A HREF="../../0MultiFileIdx/man1/mv.1.html">mv</A>(1)
+
+
+ユーティリティは常に ACL を保存する。
+保存できない場合は警告が出される。
+</UL><P>
+
+<P>
+
+<A HREF="../../0MultiFileIdx/man1/chmod.1.html">chmod</A>(1)
+
+
+ユーティリティと
+<A HREF="../../LDP_man-pages/man2/chmod.2.html">chmod</A>(2)
+
+
+システムコールのアクセス ACL に対する影響については、
+Sx 「ACL エントリとファイル許可ビットの対応」
+
+で説明されている。
+<A NAME="lbAO">&nbsp;</A>
+<H2>準拠</H2>
+
+IEEE 1003.1e draft 17 ("POSIX.1e") は、 IEEE 1003.1
+標準に対するいくつかのセキュリティ拡張について記述している。 1003.1e での作業は放棄されたが、多くの UNIX 系システムは POSIX.1e
+draft 17 またはそれ以前のドラフトの一部を実装している。
+<P>
+
+Linux アクセス制御リストは、 POSIX.1e のアクセス制御リストで定義されている全ての関数セットと いくつかの拡張を実装している。 この実装は
+POSIX.1e draft 17 に完全に準拠する。 拡張にはその旨が記されている。 アクセス制御リストの操作関数は、 ACL ライブラリ
+(libacl, -lacl) で定義されている。 POSIX 互換のインタフェースは
+<B>&lt;<A HREF="file:///usr/include/sys/acl.h">sys/acl.h</A>&gt;</B>
+
+ヘッダで宣言されている。 これらの関数に対する Linux 固有の拡張は、
+<B>&lt;<A HREF="file:///usr/include/acl/libacl.h">acl/libacl.h</A>&gt;</B>
+
+ヘッダで宣言されている。
+<A NAME="lbAP">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../../0MultiFileIdx/man1/chmod.1.html">chmod</A>(1),
+
+
+<A HREF="../../LDP_man-pages/man2/creat.2.html">creat</A>(2),
+
+
+<A HREF="../man1/getfacl.1.html">getfacl</A>(1),
+
+
+<A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A>(1),
+
+
+<A HREF="../../LDP_man-pages/man2/mkdir.2.html">mkdir</A>(2),
+
+
+mkfifo(2),
+
+
+<A HREF="../../LDP_man-pages/man2/mknod.2.html">mknod</A>(2),
+
+
+<A HREF="../../LDP_man-pages/man2/open.2.html">open</A>(2),
+
+
+<A HREF="../man1/setfacl.1.html">setfacl</A>(1),
+
+
+<A HREF="../../LDP_man-pages/man2/stat.2.html">stat</A>(2),
+
+
+umask(1)
+
+
+<A NAME="lbAQ">&nbsp;</A>
+<H3>POSIX 1003.1e DRAFT 17</H3>
+
+<A HREF="http://www.guug.de/~winni/posix.1e/download.html">http://www.guug.de/~winni/posix.1e/download.html</A>
+
+
+<A NAME="lbAR">&nbsp;</A>
+<H3>カテゴリによる POSIX 1003.1e 関数の分類</H3>
+
+<DL COMPACT>
+<P>
+
+<DT><B>ACL ストレージの管理</B>
+
+
+<DD>
+acl_dup3,
+
+
+acl_free3,
+
+
+acl_init3
+
+
+<DT><B>ACL エントリの操作</B>
+
+
+<DD>
+acl_copy_entry3,
+
+
+acl_create_entry3,
+
+
+acl_delete_entry3,
+
+
+acl_get_entry3,
+
+
+acl_valid3
+
+
+<P>
+
+acl_add_perm3,
+
+
+acl_calc_mask3,
+
+
+acl_clear_perms3,
+
+
+acl_delete_perm3,
+
+
+acl_get_permset3,
+
+
+acl_set_permset3
+
+
+<P>
+
+acl_get_qualifier3,
+
+
+acl_get_tag_type3,
+
+
+acl_set_qualifier3,
+
+
+acl_set_tag_type3
+
+
+<DT><B>オブジェクトの ACL の操作</B>
+
+
+<DD>
+acl_delete_def_file3,
+
+
+acl_get_fd3,
+
+
+acl_get_file3,
+
+
+acl_set_fd3,
+
+
+acl_set_file3
+
+
+<DT><B>ACL 形式の変換</B>
+
+
+<DD>
+acl_copy_entry3,
+
+
+acl_copy_ext3,
+
+
+acl_from_text3,
+
+
+acl_to_text3,
+
+
+acl_size3
+
+
+</DL>
+<P>
+
+<A NAME="lbAS">&nbsp;</A>
+<H3>有効性による POSIX 1003.1e 関数の分類</H3>
+
+最初の関数のグループは POSIX ライクなアクセス制御リストを持つ 大部分のシステムでサポートされている。 一方、2
+番目の関数のグループをサポートしているシステムは少ない。 移植を予定するアプリケーションでは、2 番目のグループを避けた方が良い。
+<P>
+
+acl_delete_def_file3,
+
+
+acl_dup3,
+
+
+acl_free3,
+
+
+acl_from_text3,
+
+
+acl_get_fd3,
+
+
+acl_get_file3,
+
+
+acl_init3,
+
+
+acl_set_fd3,
+
+
+acl_set_file3,
+
+
+acl_to_text3,
+
+
+acl_valid3
+
+
+<P>
+
+acl_add_perm3,
+
+
+acl_calc_mask3,
+
+
+acl_clear_perms3,
+
+
+acl_copy_entry3,
+
+
+acl_copy_ext3,
+
+
+acl_copy_int3,
+
+
+acl_create_entry3,
+
+
+acl_delete_entry3,
+
+
+acl_delete_perm3,
+
+
+acl_get_entry3,
+
+
+acl_get_permset3,
+
+
+acl_get_qualifier3,
+
+
+acl_get_tag_type3,
+
+
+acl_set_permset3,
+
+
+acl_set_qualifier3,
+
+
+acl_set_tag_type3,
+
+
+acl_size3
+
+
+<A NAME="lbAT">&nbsp;</A>
+<H3>LINUX 拡張</H3>
+
+これらの移植性のない拡張は、Linux システムでのみ有効である。
+<P>
+
+acl_check3,
+
+
+acl_cmp3,
+
+
+acl_entries3,
+
+
+acl_equiv_mode3,
+
+
+acl_error3,
+
+
+acl_extended_fd3,
+
+
+acl_extended_file3,
+
+
+acl_extended_file_nofollow3,
+
+
+acl_from_mode3,
+
+
+acl_get_perm3,
+
+
+acl_to_any_text3
+
+
+<A NAME="lbAU">&nbsp;</A>
+<H2>著者</H2>
+
+Andreas Gruenbacher, &lt;<A HREF="mailto:a.gruenbacher@bestbits.at">a.gruenbacher@bestbits.at</A>&gt;
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">ACL タイプ</A><DD>
+<DT><A HREF="#lbAE">ACL エントリ</A><DD>
+<DT><A HREF="#lbAF">有効な ACL</A><DD>
+<DT><A HREF="#lbAG">ACL エントリとファイル許可ビットの対応</A><DD>
+<DT><A HREF="#lbAH">オブジェクトの作成とデフォルト ACL</A><DD>
+<DT><A HREF="#lbAI">アクセスチェックアルゴリズム</A><DD>
+<DT><A HREF="#lbAJ">ACL テキスト形式</A><DD>
+<DL>
+<DT><A HREF="#lbAK">長いテキスト形式</A><DD>
+<DT><A HREF="#lbAL">短いテキスト形式</A><DD>
+</DL>
+<DT><A HREF="#lbAM">理論的根拠</A><DD>
+<DT><A HREF="#lbAN">ファイルユーティリティの変更</A><DD>
+<DT><A HREF="#lbAO">準拠</A><DD>
+<DT><A HREF="#lbAP">関連項目</A><DD>
+<DL>
+<DT><A HREF="#lbAQ">POSIX 1003.1e DRAFT 17</A><DD>
+<DT><A HREF="#lbAR">カテゴリによる POSIX 1003.1e 関数の分類</A><DD>
+<DT><A HREF="#lbAS">有効性による POSIX 1003.1e 関数の分類</A><DD>
+<DT><A HREF="#lbAT">LINUX 拡張</A><DD>
+</DL>
+<DT><A HREF="#lbAU">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

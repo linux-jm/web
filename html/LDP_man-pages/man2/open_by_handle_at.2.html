@@ -1,0 +1,578 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of OPEN_BY_HANDLE_AT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>OPEN_BY_HANDLE_AT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/open_by_handle_at.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+name_to_handle_at, open_by_handle_at - パス名に対するハンドルの取得とハンドルによるファイルのオープン
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
+
+<B>int name_to_handle_at(int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>,</B>
+<B>                      struct file_handle *</B><I>handle</I><B>,</B>
+<B>                      int *</B><I>mount_id</I><B>, int </B><I>flags</I><B>);</B>
+
+<B>int open_by_handle_at(int </B><I>mount_fd</I><B>, struct file_handle *</B><I>handle</I><B>,</B>
+<B>                      int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+
+システムコール <B>name_to_handle_at</B>() と <B>open_by_handle_at</B>() は <B><A HREF="../man2/openat.2.html">openat</A></B>(2) の機能を
+2 つに分割したものである。 <B>name_to_handle_at</B>() は指定されたファイルに対応するハンドルを返す。
+<B>open_by_handle_at</B>() は <B>name_to_handle_at</B>() が返したハンドルに対応するファイルをオープンし、
+オープンされたファイルディスクリプターを返す。
+<A NAME="lbAE">&nbsp;</A>
+<H3>name_to_handle_at()</H3>
+
+<B>name_to_handle_at</B>() システムコールは、 引数 <I>dirfd</I> と <I>pathname</I>
+で指定されるファイルに対応するファイルハンドルとマウント ID を返す。 ファイルハンドルは引数 <I>handle</I> で返される。 <I>handle</I>
+は以下の形式の構造体へのポインターである。
+<P>
+
+
+
+struct file_handle {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;handle_bytes;&nbsp;&nbsp;&nbsp;/*&nbsp;Size&nbsp;of&nbsp;f_handle&nbsp;[in,&nbsp;out]&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_type;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Handle&nbsp;type&nbsp;[out]&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;f_handle[0];&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;File&nbsp;identifier&nbsp;(sized&nbsp;by
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caller)&nbsp;[out]&nbsp;*/
+};
+
+
+<P>
+
+It is the caller's responsibility to allocate the structure with a size
+large enough to hold the handle returned in <I>f_handle</I>.  Before the call,
+the <I>handle_bytes</I> field should be initialized to contain the allocated
+size for <I>f_handle</I>.  (The constant <B>MAX_HANDLE_SZ</B>, defined in
+<I>&lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</I>, specifies the maximum expected size for a file
+handle.  It is not a guaranteed upper limit as future filesystems may
+require more space.)  Upon successful return, the <I>handle_bytes</I> field is
+updated to contain the number of bytes actually written to <I>f_handle</I>.
+<P>
+
+The caller can discover the required size for the <I>file_handle</I> structure
+by making a call in which <I>handle-&gt;handle_bytes</I> is zero; in this case,
+the call fails with the error <B>EOVERFLOW</B> and <I>handle-&gt;handle_bytes</I>
+is set to indicate the required size; the caller can then use this
+information to allocate a structure of the correct size (see EXAMPLES
+below).  Some care is needed here as <B>EOVERFLOW</B> can also indicate that no
+file handle is available for this particular name in a filesystem which does
+normally support file-handle lookup.  This case can be detected when the
+<B>EOVERFLOW</B> error is returned without <I>handle_bytes</I> being increased.
+<P>
+
+<I>handle_bytes</I> フィールドを使用する以外は、 呼び出し元は <I>file_handle</I> 構造体の内容を意識せずに扱うべきである。
+フィールド <I>handle_type</I> と <I>f_handle</I> は後で <B>open_by_handle_at</B>()
+を呼び出す場合にだけ必要である。
+<P>
+
+<I>flags</I> 引数は、 下記の <B>AT_EMPTY_PATH</B> と <B>AT_SYMLINK_FOLLOW</B> のうち 0
+個以上の論理和を取って構成されるビットマスクである。
+<P>
+
+引数 <I>pathname</I> と <I>dirfd</I> はその組み合わせでハンドルを取得するファイルを指定する。 以下の 4 つのパターンがある。
+<DL COMPACT>
+<DT>*<DD>
+<I>pathname</I> が空でない文字列で絶対パス名を含む場合、 このパス名が参照するファイルに対するハンドルが返される。
+<DT>*<DD>
+<I>pathname</I> が相対パスが入った空でない文字列で、 <I>dirfd</I> が特別な値 <B>AT_FDCWD</B> の場合、 <I>pathname</I>
+は呼び出し元のカレントワーキングディレクトリに対する相対パスと解釈され、 そのファイルに対するハンドルが返される。
+<DT>*<DD>
+<I>pathname</I> が相対パスが入った空でない文字列で、 <I>dirfd</I> がディレクトリを参照するファイルディスクリプターの場合、
+<I>pathname</I> は <I>dirfd</I> が参照するディレクトリに対する相対パスと解釈され、
+そのファイルを参照するハンドルが返される。(なぜ「ディレクトリファイルディスクリプター」が役に立つのかについては <B><A HREF="../man2/openat.2.html">openat</A></B>(2) を参照。)
+<DT>*<DD>
+<I>pathname</I> が空の文字列で <I>flags</I> に <B>AT_EMPTY_PATH</B> が指定されている場合、 <I>dirfd</I>
+には任意の種別のファイルを参照するオープンされたファイルディスクリプターか <B>AT_FDCWD</B> (カレントワーキングディレクトリを意味する)
+を指定でき、 <I>dirfd</I> が参照するファイルに対するハンドルが返される。
+</DL>
+<P>
+
+The <I>mount_id</I> argument returns an identifier for the filesystem mount that
+corresponds to <I>pathname</I>.  This corresponds to the first field in one of
+the records in <I>/proc/self/mountinfo</I>.  Opening the pathname in the fifth
+field of that record yields a file descriptor for the mount point; that file
+descriptor can be used in a subsequent call to <B>open_by_handle_at</B>().
+<I>mount_id</I> is returned both for a successful call and for a call that
+results in the error <B>EOVERFLOW</B>.
+<P>
+
+デフォルトでは、 <B>name_to_handle_at</B>() は <I>pathname</I> がシンボリックリンクの場合にその展開
+(dereference) を行わず、 リンク自身に対するハンドルを返す。 <B>AT_SYMLINK_FOLLOW</B> が <I>flags</I>
+に指定されると、 <I>pathname</I> がシンボリックリンクの場合にリンクの展開が行われる (リンクが参照するファイルに対するハンドルが返される)。
+<P>
+
+
+<B>name_to_handle_at</B>()  does not trigger a mount when the final component of
+the pathname is an automount point.  When a filesystem supports both file
+handles and automount points, a <B>name_to_handle_at</B>()  call on an automount
+point will return with error <B>EOVERFLOW</B> without having increased
+<I>handle_bytes</I>.  This can happen since Linux 4.13 with NFS when accessing a
+directory which is on a separate filesystem on the server.  In this case,
+the automount can be triggered by adding a &quot;/&quot; to the end of the pathname.
+<A NAME="lbAF">&nbsp;</A>
+<H3>open_by_handle_at()</H3>
+
+<B>open_by_handle_at</B>() システムコールは <I>handle</I> が参照するファイルをオープンする。 <I>handle</I> は
+前に呼び出した <B>name_to_handle_at</B>() が返したファイルハンドルである。
+<P>
+
+<I>mount_fd</I> 引数は、 <I>handle</I> がそのファイルシステムに関連すると解釈されるマウントされたファイルシステム内の任意のオブジェクト
+(ファイル、 ディレクトリなど) のファイルディスクリプターである。 特別な値 <B>AT_FDCWD</B> も指定できる。
+この値は呼び出し元のカレントワーキングディレクトリを意味する。
+<P>
+
+引数 <I>flags</I> は <B><A HREF="../man2/open.2.html">open</A></B>(2) と同じである。 <I>handle</I> がシンボリックリンクを参照している場合、 呼び出し元は
+<B>O_PATH</B> フラグを指定しなければならず、 そのシンボリックリンクは展開されない。 <B>O_NOFOLLOW</B> が指定された場合は、
+<B>O_NOFOLLOW</B> は無視される。
+<P>
+
+<B>open_by_handle_at</B>() を呼び出すには、 呼び出し元が <B>CAP_DAC_READ_SEARCH</B>
+ケーパビリティーを持っていなければならない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>name_to_handle_at</B>() は 0 を返し、 <B>open_by_handle_at</B>() はファイルディスクリプター
+(非負の整数) を返す。
+<P>
+
+エラーの場合、 どちらのシステムコールも -1 を返し、 <I>errno</I> にエラーの原因を示す値を設定する。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>name_to_handle_at</B>() と <B>open_by_handle_at</B>() は <B><A HREF="../man2/openat.2.html">openat</A></B>(2) と同じエラーで失敗する。
+また、 これらのシステムコールは以下のエラーで失敗することもある。
+<P>
+
+<B>name_to_handle_at</B>() は以下のエラーで失敗することがある。
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>pathname</I>, <I>mount_id</I>, <I>handle</I> のどれかがアクセス可能なアドレス空間の外を指している。
+<DT><B>EINVAL</B><DD>
+<I>flags</I> に無効なビット値が含まれている。
+<DT><B>EINVAL</B><DD>
+<I>handle-&gt;handle_bytes</I> が <B>MAX_HANDLE_SZ</B> よりも大きい。
+<DT><B>ENOENT</B><DD>
+<I>pathname</I> が空文字列だが、 <I>flags</I> に <B>AT_EMPTY_PATH</B> がされていなかった。
+<DT><B>ENOTDIR</B><DD>
+<I>dirfd</I> で指定されたファイルディスクリプターがディレクトリを参照しておらず、 両方の <I>flags</I> に <B>AT_EMPTY_PATH</B>
+が指定され、 かつ <I>pathname</I> が空文字列である場合でもない。
+<DT><B>EOPNOTSUPP</B><DD>
+ファイルシステムがパス名をファイルハンドルへの変換をサポートしていない。
+<DT><B>EOVERFLOW</B><DD>
+
+
+呼び出しに渡された <I>handle-&gt;handle_bytes</I> の値が小さすぎた。 このエラーが発生した際、
+<I>handle-&gt;handle_bytes</I> はハンドルに必要なサイズに更新される。
+</DL>
+<P>
+
+<B>open_by_handle_at</B>() は以下のエラーで失敗することがある。
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>mount_fd</I> がオープンされたファイルディスクリプターでない。
+<DT><B>EFAULT</B><DD>
+<I>handle</I> がアクセス可能なアドレス空間の外を指している。
+<DT><B>EINVAL</B><DD>
+<I>handle-&gt;handle_bytes</I> が <B>MAX_HANDLE_SZ</B> より大きいか 0 に等しい。
+<DT><B>ELOOP</B><DD>
+<I>handle</I> がシンボリックリンクを参照しているが、 <I>flags</I> に <B>O_PATH</B> がされていなかった。
+<DT><B>EPERM</B><DD>
+呼び出し元が <B>CAP_DAC_READ_SEARCH</B> ケーパビリティを持っていない。
+<DT><B>ESTALE</B><DD>
+指定された <I>handle</I> が有効ではない。 このエラーは、 例えばファイルが削除された場合などに発生する。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>バージョン</H2>
+
+これらのシステムコールは Linux 2.6.39 で初めて登場した。ライブラリによるサポートはバージョン 2.14 以降の glibc
+で提供されている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>準拠</H2>
+
+これらのシステムコールは非標準の Linux の拡張である。
+<P>
+
+FreeBSD には <B>getfh</B>() と <B>openfh</B>() というほとんど同じ機能のシステムコールのペアが存在する。
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+あるプロセスで <B>name_to_handle_at</B>() を使ってファイルハンドルを生成して、 そのハンドルを別のプロセスの
+<B>open_by_handle_at</B>() で使用することができる。
+<P>
+
+いくつかのファイルシステムでは、 パス名からファイルハンドルへの変換がサポートされていない。 例えば、 <I>/proc</I>, <I>/sys</I>
+や種々のネットワークファイルシステムなどである。
+<P>
+
+ファイルハンドルは、 ファイルが削除されたり、 その他のファイルシステム固有の理由で、 無効 (&quot;stale&quot;) になる場合がある。
+無効なハンドルであることは、 <B>open_by_handle_at</B>() からエラー <B>ESTALE</B> が返ることで通知される。
+<P>
+
+
+
+これらのシステムコールは、 ユーザー空間のファイルサーバーでの使用を意図して設計されている。 例えば、 ユーザー空間 NFS
+サーバーがファイルハンドルを生成して、 そのハンドルを NFS クライアントに渡すことができる。 その後、
+クライアントがファイルをオープンしようとした際に、 このハンドルをサーバーに送り返すことができる。 このような機能により、
+ユーザー空間ファイルサーバーは、 そのサーバーが提供するファイルに関してステートレスで (状態を保持せずに) 動作することができる。
+<P>
+
+
+<I>pathname</I> がシンボリックリンクを参照していて、 <I>flags</I> に <B>AT_SYMLINK_FOLLOW</B> が指定されていない場合、
+<B>name_to_handle_at</B>() は (シンボリックが参照するファイルではなく) リンクに対するハンドルを返す。
+ハンドルを受け取ったプロセスは、 <B>open_by_handle_at</B>() の <B>O_PATH</B>
+フラグを使ってハンドルをファイルディスクリプターに変換し、 そのファイルディスクリプターを <B><A HREF="../man2/readlinkat.2.html">readlinkat</A></B>(2) や
+<B><A HREF="../man2/fchownat.2.html">fchownat</A></B>(2) などのシステムコールの <I>dirfd</I> 引数として渡すことで、 そのシンボリックリンクに対して操作を行うことができる。
+<A NAME="lbAL">&nbsp;</A>
+<H3>永続的なファイルシステム ID の取得</H3>
+
+<I>/proc/self/mountinfo</I> のマウント ID は、
+ファイルシステムのアンマウント、マウントが行われるに連れて再利用されることがある。 したがって、 <B>name_to_handle_at</B>() (の
+<I>*mount_id</I>) で返されたマウント ID は対応するマウントされたファイルシステムを表す永続的な ID と考えるべきではない。 ただし、
+アプリケーションは、 マウント ID に対応する  <I>mountinfo</I> レコードの情報を使うことで、 永続的な ID を得ることができる。
+<P>
+
+
+例えば、 <I>mountinfo</I> レコードの 5 番目のフィールドのデバイス名を使って、 <I>/dev/disks/by-uuid</I>
+のシンボリックリンク経由で対応するデバイス UUID を検索できる。 (UUID を取得するもっと便利な方法は <B><A HREF="../../e2fsprogs/man3/libblkid.3.html">libblkid</A></B>(3)
+ライブラリを使用することである。) そのプロセスは、逆に、 この UUID を使ってデバイス名を検索し、 対応するマウントポイントを取得することで、
+<B>open_by_handle_at</B>() で使用する <I>mount_fd</I> 引数を生成することができる。
+<A NAME="lbAM">&nbsp;</A>
+<H2>例</H2>
+
+以下の 2 つのプログラムは <B>name_to_handle_at</B>() と <B>open_by_handle_at</B>()
+の使用例を示したものである。 最初のプログラム (<I>t_name_to_handle_at.c</I>) は <B>name_to_handle_at</B>()
+を使用して、 コマンドライン引数で指定されたファイルに対応するファイルハンドルとマウント ID を取得する。 ハンドルとマウント ID
+は標準出力に出力される。
+<P>
+
+2 つ目のプログラム (<I>t_open_by_handle_at.c</I>) は、 標準入力からマウント ID とファイルハンドルを読み込む。 それから、
+<B>open_by_handle_at</B>() を利用して、 そのハンドルを使ってファイルをオープンする。 追加のコマンドライン引数が指定された場合は、
+<B>open_by_handle_at</B>() の <I>mount_fd</I> 引数は、 この引数で渡された名前のディレクトリをオープンして取得する。
+それ以外の場合、 <I>/proc/self/mountinfo</I> からスキャンして標準入力から読み込んだマウント ID に一致するマウント ID
+を検索し、 そのレコードで指定されているマウントディレクトリをオープンして、 <I>mount_fd</I> を入手する。 (これらのプログラムではマウント
+ID が永続的ではない点についての対処は行わない。)
+<P>
+
+以下のシェルセッションは、これら 2 つのプログラムの使用例である。
+<P>
+
+
+
+$ <B>echo 'Can you please think about it?' &gt; cecilia.txt</B>
+$ <B>./t_name_to_handle_at cecilia.txt &gt; fh</B>
+$ <B>./t_open_by_handle_at &lt; fh</B>
+open_by_handle_at: Operation not permitted
+$ <B>sudo ./t_open_by_handle_at &lt; fh</B>      # Need CAP_SYS_ADMIN
+Read 31 bytes
+$ <B>rm cecilia.txt</B>
+
+
+<P>
+
+
+
+ここで、 ファイルを削除し (すぐに) 再作成する。 同じ内容で (運がよければ) 同じ inode になる。 この場合でも、
+<B>open_by_handle_at</B>() はこのファイルハンドルが参照する元のファイルがすでに存在しないことを認識する。
+<P>
+
+
+
+$ <B>stat --printf=&quot;%i\n&quot; cecilia.txt</B>     # Display inode number
+4072121
+$ <B>rm cecilia.txt</B>
+$ <B>echo 'Can you please think about it?' &gt; cecilia.txt</B>
+$ <B>stat --printf=&quot;%i\n&quot; cecilia.txt</B>     # Check inode number
+4072121
+$ <B>sudo ./t_open_by_handle_at &lt; fh</B>
+open_by_handle_at: Stale NFS file handle
+
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>プログラムのソース: t_name_to_handle_at.c</H3>
+
+
+
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;file_handle&nbsp;*fhp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;mount_id,&nbsp;fhsize,&nbsp;flags,&nbsp;dirfd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*pathname;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;pathname\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pathname&nbsp;=&nbsp;argv[1];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;file_handle&nbsp;構造体を確保する&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhsize&nbsp;=&nbsp;sizeof(*fhp);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhp&nbsp;=&nbsp;malloc(fhsize);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fhp&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;name_to_handle_at()&nbsp;を最初に呼び出して
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ファイルハンドルに必要なサイズを入手する&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;dirfd&nbsp;=&nbsp;AT_FDCWD;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;For&nbsp;name_to_handle_at()&nbsp;calls&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;flags&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;For&nbsp;name_to_handle_at()&nbsp;calls&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhp-&gt;handle_bytes&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(name_to_handle_at(dirfd,&nbsp;pathname,&nbsp;fhp,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;mount_id,&nbsp;flags)&nbsp;!=&nbsp;-1&nbsp;||&nbsp;errno&nbsp;!=&nbsp;EOVERFLOW)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Unexpected&nbsp;result&nbsp;from&nbsp;name_to_handle_at()\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;file_handle&nbsp;構造体を正しいサイズに確保し直す&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhsize&nbsp;=&nbsp;sizeof(*fhp)&nbsp;+&nbsp;fhp-&gt;handle_bytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhp&nbsp;=&nbsp;realloc(fhp,&nbsp;fhsize);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Copies&nbsp;fhp-&gt;handle_bytes&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fhp&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;realloc&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;コマンドラインで指定されたパス名からファイルハンドルを取得&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(name_to_handle_at(dirfd,&nbsp;pathname,&nbsp;fhp,&nbsp;&amp;mount_id,&nbsp;flags)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;name_to_handle_at&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;t_open_by_handle_at.c&nbsp;で後で再利用できるように、マウント&nbsp;ID、
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ファイルハンドルのサイズ、ファイルハンドルを標準出力に書き出す&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%d\n&quot;,&nbsp;mount_id);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%u&nbsp;%d&nbsp;&nbsp;&nbsp;&quot;,&nbsp;fhp-&gt;handle_bytes,&nbsp;fhp-&gt;handle_type);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;fhp-&gt;handle_bytes;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;%02x&quot;,&nbsp;fhp-&gt;f_handle[j]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAO">&nbsp;</A>
+<H3>プログラムのソース: t_open_by_handle_at.c</H3>
+
+
+
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+/* /proc/self/mountinfo をスキャンして、マウント ID が 'mount_id' に
+<BR>&nbsp;&nbsp;&nbsp;一致する行を探す。&nbsp;(もっと簡単な方法は&nbsp;'util-linux'&nbsp;プロジェクト
+<BR>&nbsp;&nbsp;&nbsp;が提供する&nbsp;'libmount'&nbsp;ライブラリをインストールして使うことである)
+<BR>&nbsp;&nbsp;&nbsp;対応するマウントパスをオープンし、得られたファイルディスクリプターを返す。&nbsp;*/
+<P>
+static int
+open_mount_path_by_id(int mount_id)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*linep;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;lsize;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;mount_path[PATH_MAX];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;mi_mount_id,&nbsp;found;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nread;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;FILE&nbsp;*fp;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fp&nbsp;=&nbsp;fopen(&quot;/proc/self/mountinfo&quot;,&nbsp;&quot;r&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fp&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;fopen&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;found&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;linep&nbsp;=&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(!found)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nread&nbsp;=&nbsp;getline(&amp;linep,&nbsp;&amp;lsize,&nbsp;fp);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nread&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nread&nbsp;=&nbsp;sscanf(linep,&nbsp;&quot;%d&nbsp;%*d&nbsp;%*s&nbsp;%*s&nbsp;%s&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;mi_mount_id,&nbsp;mount_path);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nread&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Bad&nbsp;sscanf()\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mi_mount_id&nbsp;==&nbsp;mount_id)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;found&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(linep);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fclose(fp);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!found)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Could&nbsp;not&nbsp;find&nbsp;mount&nbsp;point\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;open(mount_path,&nbsp;O_RDONLY);
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;file_handle&nbsp;*fhp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;mount_id,&nbsp;fd,&nbsp;mount_fd,&nbsp;handle_bytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nread;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[1000];
+#define LINE_SIZE 100
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;line1[LINE_SIZE],&nbsp;line2[LINE_SIZE];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*nextp;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;((argc&nbsp;&gt;&nbsp;1&nbsp;&amp;&amp;&nbsp;strcmp(argv[1],&nbsp;&quot;--help&quot;)&nbsp;==&nbsp;0)&nbsp;||&nbsp;argc&nbsp;&gt;&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;[mount-path]\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;マウント&nbsp;ID&nbsp;とファイルハンドル情報が入った標準入力:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Line&nbsp;1:&nbsp;&lt;mount_id&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Line&nbsp;2:&nbsp;&lt;handle_bytes&gt;&nbsp;&lt;handle_type&gt;&nbsp;&nbsp;&nbsp;&lt;bytes&nbsp;of&nbsp;handle&nbsp;in&nbsp;hex&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;((fgets(line1,&nbsp;sizeof(line1),&nbsp;stdin)&nbsp;==&nbsp;NULL)&nbsp;||
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fgets(line2,&nbsp;sizeof(line2),&nbsp;stdin)&nbsp;==&nbsp;NULL))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Missing&nbsp;mount_id&nbsp;/&nbsp;file&nbsp;handle\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mount_id&nbsp;=&nbsp;atoi(line1);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;handle_bytes&nbsp;=&nbsp;strtoul(line2,&nbsp;&amp;nextp,&nbsp;0);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;handle_bytes&nbsp;があれば、
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_handle&nbsp;構造体をここで割り当てできる&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhp&nbsp;=&nbsp;malloc(sizeof(*fhp)&nbsp;+&nbsp;handle_bytes);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fhp&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhp-&gt;handle_bytes&nbsp;=&nbsp;handle_bytes;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhp-&gt;handle_type&nbsp;=&nbsp;strtoul(nextp,&nbsp;&amp;nextp,&nbsp;0);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;fhp-&gt;handle_bytes;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fhp-&gt;f_handle[j]&nbsp;=&nbsp;strtoul(nextp,&nbsp;&amp;nextp,&nbsp;16);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;マウントポイントのファイルディスクリプターを取得する。
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;取得は、コマンドラインで指定されたパス名をオープンするか、
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/proc/self/mounts&nbsp;をスキャンして標準入力から受け取った
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'mount_id'&nbsp;に一致するマウントを探すことで行う。&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mount_fd&nbsp;=&nbsp;open(argv[1],&nbsp;O_RDONLY);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mount_fd&nbsp;=&nbsp;open_mount_path_by_id(mount_id);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mount_fd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;opening&nbsp;mount&nbsp;fd&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ハンドルとマウントポイントを使ってファイルをオープンする&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open_by_handle_at(mount_fd,&nbsp;fhp,&nbsp;O_RDONLY);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;open_by_handle_at&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;そのファイルからバイトを読み出す&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nread&nbsp;=&nbsp;read(fd,&nbsp;buf,&nbsp;sizeof(buf));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nread&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;read&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Read&nbsp;%zd&nbsp;bytes\n&quot;,&nbsp;nread);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAP">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../../e2fsprogs/man3/libblkid.3.html">libblkid</A></B>(3), <B><A HREF="../../0MultiFileIdx/man8/blkid.8.html">blkid</A></B>(8), <B><A HREF="../../e2fsprogs/man8/findfs.8.html">findfs</A></B>(8), <B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)
+<P>
+
+
+
+で入手できる最新の
+<I>util-linux</I> リリースの <I>libblkid</I> と <I>libmount</I> のドキュメント。
+<A NAME="lbAQ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">name_to_handle_at()</A><DD>
+<DT><A HREF="#lbAF">open_by_handle_at()</A><DD>
+</DL>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
+<DT><A HREF="#lbAJ">準拠</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAL">永続的なファイルシステム ID の取得</A><DD>
+</DL>
+<DT><A HREF="#lbAM">例</A><DD>
+<DL>
+<DT><A HREF="#lbAN">プログラムのソース: t_name_to_handle_at.c</A><DD>
+<DT><A HREF="#lbAO">プログラムのソース: t_open_by_handle_at.c</A><DD>
+</DL>
+<DT><A HREF="#lbAP">関連項目</A><DD>
+<DT><A HREF="#lbAQ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,244 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STRTOK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>STRTOK</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/strtok.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+strtok, strtok_r - 文字列からトークンを取り出す
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;</B>
+
+<B>char *strtok(char *</B><I>str</I><B>, const char *</B><I>delim</I><B>);</B>
+
+<B>char *strtok_r(char *</B><I>str</I><B>, const char *</B><I>delim</I><B>, char **</B><I>saveptr</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>strtok_r</B>():
+_POSIX_C_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Glibc&nbsp;versions&nbsp;&lt;=&nbsp;2.19:&nbsp;*/&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+The <B>strtok</B>()  function breaks a string into a sequence of zero or more
+nonempty tokens.  On the first call to <B>strtok</B>(), the string to be parsed
+should be specified in <I>str</I>.  In each subsequent call that should parse
+the same string, <I>str</I> must be NULL.
+<P>
+
+<I>delim</I> 引数には、解析対象の文字列をトークンに区切るのに使用する
+バイト集合を指定する。同じ文字列を解析する一連の呼び出しにおいて、
+<I>delim</I> に違う文字列を指定してもよい。
+<P>
+
+<B>strtok</B>() のそれぞれの呼び出しでは、次のトークンを格納したヌル終端
+された文字列へのポインターが返される。この文字列には区切りバイトは含まれ
+ない。これ以上トークンが見つからなかった場合には、NULL が返される。
+<P>
+
+同じ文字列に対して操作を行う <B>strtok</B>() を連続して呼び出す場合、 次のトークンを探し始める位置を決めるためのポインターが保持される。
+最初の <B>strtok</B> の呼び出しでは、 このポインターは対象の文字列の最初のバイトにセットされる。 次のトークンの先頭は、 <I>str</I>
+内で次の区切りバイト以外のバイトを前方に検索して決定される。 区切りバイト以外のバイトが見つからなかった場合は、 トークンはこれ以上なく、
+<B>strtok</B>() は NULL を返す (したがって、 空の文字列や区切りバイトだけを含む文字列の場合には、 最初の <B>strtok</B>()
+の呼び出しで NULL が返ることになる)。
+<P>
+
+各トークンの末尾は、次の区切りバイトが見つかるか、終端のヌルバイト ('\0') に達するまで文字列を前方に検索することで見つかる。
+区切りバイトが見つかった場合には、 現在のトークンの終わりを示すために、 見つかった区切りバイトがヌルバイトで上書きされ、 <B>strtok</B>()
+はポインターを次のバイトに設定する。 このポインターは、次のトークンを検索する際の開始点として使用される。 この場合、 <B>strtok</B>()
+は見つかったトークンの先頭へのポインターを返す。
+<P>
+
+上記の説明の通り、 解析対象の文字列に 2 つ以上の区切りバイトが連続している場合には、 一つの区切りバイトとみなされ、
+文字列の先頭や末尾にある区切りバイトは無視される。 言い換えると、 <B>strtok</B>() が返すトークンは必ず空でない文字列となる。
+したがって、例えば &quot;<I>aaa;;bbb,</I>&quot; という文字列が与えられたとすると、 区切り文字列 &quot;<I>;,</I>&quot; を指定した一連の
+<B>strtok</B>() の呼び出しでは、 &quot;<I>aaa</I>&quot; と <I>bbb</I>&quot; が返り、その次にヌルポインターが返る。
+<P>
+
+The <B>strtok_r</B>()  function is a reentrant version of <B>strtok</B>().  The
+<I>saveptr</I> argument is a pointer to a <I>char&nbsp;*</I> variable that is used
+internally by <B>strtok_r</B>()  in order to maintain context between successive
+calls that parse the same string.
+<P>
+
+On the first call to <B>strtok_r</B>(), <I>str</I> should point to the string to be
+parsed, and the value of <I>*saveptr</I> is ignored (but see NOTES).  In
+subsequent calls, <I>str</I> should be NULL, and <I>saveptr</I> (and the buffer that
+it points to)  should be unchanged since the previous call.
+<P>
+
+<B>strtok_r</B>()  の呼び出し時に異なる <I>saveptr</I> 引数を指定することで、 異なる文字列の解析を同時に行うことができる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>strtok</B>()  と <B>strtok_r</B>()  は次のトークンへのポインターか、 トークンがなければ NULL を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>strtok</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:strtok<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>strtok_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+<DL COMPACT>
+<DT><B>strtok</B>()<DD>
+POSIX.1-2001, POSIX.1-2008, C89, C99, SVr4, 4.3BSD.
+<DT><B>strtok_r</B>()<DD>
+POSIX.1-2001, POSIX.1-2008.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+
+On some implementations, <I>*saveptr</I> is required to be NULL on the first
+call to <B>strtok_r</B>()  that is being used to parse <I>str</I>.
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+これらの関数を使うのは慎重に吟味すること。 使用する場合は、以下の点に注意が必要である。
+<DL COMPACT>
+<DT>*<DD>
+これらの関数はその最初の引数を変更する。
+<DT>*<DD>
+これらの関数は const な文字列では使えない。
+<DT>*<DD>
+区切りバイト自体は失われてしまう。
+<DT>*<DD>
+<B>strtok</B>()  関数は文字列の解析に静的バッファーを用いるので、スレッドセーフでない。 これが問題になる場合は <B>strtok_r</B>()
+を用いること。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは、 <B>strtok_r</B>() を利用するループを入れ子にして使用し、
+文字列を 2 階層のトークンに分割するものである。 1番目のコマンドライン
+引数には、解析対象の文字列を指定する。 2 番目の引数には、文字列を
+「大きな」トークンに分割するために 使用する区切りバイトを指定する。
+3 番目の引数には、「大きな」トークンを細かく分割するために使用する
+区切りバイトを指定する。
+<P>
+
+このプログラムの出力例を以下に示す。
+<P>
+
+
+
+$<B> ./a.out 'a/bbb///cc;xxx:yyy:' ':;' '/'</B>
+1: a/bbb///cc
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;&nbsp;a
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;&nbsp;bbb
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;&nbsp;cc
+2: xxx
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;&nbsp;xxx
+3: yyy
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;&nbsp;yyy
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*str1,&nbsp;*str2,&nbsp;*token,&nbsp;*subtoken;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*saveptr1,&nbsp;*saveptr2;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;4)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;string&nbsp;delim&nbsp;subdelim\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;1,&nbsp;str1&nbsp;=&nbsp;argv[1];&nbsp;;&nbsp;j++,&nbsp;str1&nbsp;=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token&nbsp;=&nbsp;strtok_r(str1,&nbsp;argv[2],&nbsp;&amp;saveptr1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(token&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%d:&nbsp;%s\n&quot;,&nbsp;j,&nbsp;token);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(str2&nbsp;=&nbsp;token;&nbsp;;&nbsp;str2&nbsp;=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subtoken&nbsp;=&nbsp;strtok_r(str2,&nbsp;argv[3],&nbsp;&amp;saveptr2);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(subtoken&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;	&nbsp;--&gt;&nbsp;%s\n&quot;,&nbsp;subtoken);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<P>
+
+<B>strtok</B>()  を使った別のプログラム例が <B><A HREF="../man3/getaddrinfo_a.3.html">getaddrinfo_a</A></B>(3)  にある。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/index.3.html">index</A></B>(3), <B><A HREF="../man3/memchr.3.html">memchr</A></B>(3), <B><A HREF="../man3/rindex.3.html">rindex</A></B>(3), <B><A HREF="../man3/strchr.3.html">strchr</A></B>(3), <B><A HREF="../man3/string.3.html">string</A></B>(3),
+<B><A HREF="../man3/strpbrk.3.html">strpbrk</A></B>(3), <B><A HREF="../man3/strsep.3.html">strsep</A></B>(3), <B><A HREF="../man3/strspn.3.html">strspn</A></B>(3), <B><A HREF="../man3/strstr.3.html">strstr</A></B>(3), <B><A HREF="../man3/wcstok.3.html">wcstok</A></B>(3)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DL>
+<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

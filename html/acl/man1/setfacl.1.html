@@ -1,0 +1,271 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETFACL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SETFACL</H1>
+Section: Access Control Lists (1)<BR>Updated: ACL File Utilities<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/acl/release/man1/setfacl.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+setfacl - ファイルのアクセス制御リスト (access control list) を設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<P>
+<B>setfacl</B> [-bkndRLPvh] [{-m|-x} acl_spec] [{-M|-X} acl_file] file ...
+<P>
+<B>setfacl</B> --restore=file
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+このユーティリティはファイルとディレクトリの アクセス制御リスト (Access Control List, ACL) を設定する。
+コマンドラインでは、一連のコマンドの後にファイル群を指定する (さらに別の一連のコマンド、ファイル群、... を続けて指定することができる)。
+<P>
+オプション <I>-m</I> と <I>-x</I> は ACL がコマンドラインで指定されることを想定している。 複数の ACL エントリはコンマ文字 (`,')
+で区切られる。 オプション <I>-M</I> と <I>-X</I> は ACL をファイルまたは標準入力から読み込む。 ACL エントリの書式は、「ACL
+エントリ」のセクションで説明されている。
+<P>
+<I>--set</I> と <I>--set-file</I> オプションはファイルとディレクトリの ACL を設定する。 以前の ACL は置き換えられる。
+この操作で指定される ACL エントリは、 許可 (permission) を含まなければならない。
+<P>
+<I>-m (--modify)</I> と <I>-M (--modify-file)</I> オプションはファイルとディレクトリの ACL を変更する。
+この操作で指定される ACL エントリは、許可を含まなければならない。
+<P>
+<I>-x (--remove)</I> と <I>-X (--remove-file)</I> オプションは ACL
+エントリを削除する。存在しないエントリの削除を行ってもエラーにはならない。 POSIXLY_CORRECT が定義されていない場合は、 <I>perms</I>
+フィールドを持たない ACL エントリだけが引き数として指定できる。
+<P>
+<I>-M</I> と <I>-X</I> オプションで (ACL を) ファイルから読み込む場合、 setfacl は getfacl が生成した出力を受け付ける。
+1 行には最大で 1 つの ACL エントリがある。 シャープ記号 (`#') の後から行末まではコメントとして扱われる。
+<P>
+ACL をサポートしないファイルシステム上で setfacl を使用した場合、 setfacl はファイルモード許可ビットを操作する。 ACL
+が許可ビットと完全には合わない場合、 setfacl はファイルモード許可ビットを ACL に可能な限り近づけるように変更し、
+標準エラー出力にエラーメッセージを書き出して、0 より大きい終了状態で返る。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H3>許可</H3>
+
+ケーパビリティ (capability) CAP_FOWNER を持つファイル所有者とプロセスは、 ファイルの ACL を変更する権限が付与されている。
+これはファイルモードにアクセスするのに必要な許可と類似している (現在の Linux システムでは、CAP_FOWNER ケーパビリティを持つユーザは
+root のみである)。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><I>-b, --remove-all</I><DD>
+全ての拡張 ACL エントリを削除する。 所有者・グループ・その他という基本 (base) ACL エントリは保存される。
+<DT><I>-k, --remove-default</I><DD>
+デフォルト ACL を削除する。 デフォルト ACL が存在しない場合、警告は出されない。
+<DT><I>-n, --no-mask</I><DD>
+実効権 (effective right) マスクを再計算しない。 setfacl のデフォルト動作では、ACL
+マスクエントリが明示的に指定されない限り、 ACL マスクエントリを再計算する。 マスクエントリは所有グループ・指名ユーザ (named
+user)・指名グループの エントリの全ての許可を結合したものに設定される (マスクエントリに影響を受けるエントリは、正にこれらである)。
+<DT><I>--mask</I><DD>
+ACL マスクエントリが明示的に指定されている場合でも、実効権マスクを再計算する (<I>-n</I> オプションを参照)。
+<DT><I>-d, --default</I><DD>
+全ての操作をデフォルト ACL に適用する。 入力セットに含まれる通常の ACL エントリを デフォルト ACL エントリに昇格させる。
+入力セットに含まれるデフォルト ACL エントリは破棄される (これが起こった場合は警告を出す)。
+<DT><I>--restore=file</I><DD>
+`getfacl -R' またはそれと同様なもので作成された 許可のバックアップで復旧する。
+ディレクトリサブツリーの全ての許可が、この方法で復旧される。 入力に所有者コメントまたはグループコメントが含まれている場合、 setfacl
+はファイルの所有者と所有グループを復旧しようとする。入力に (setuid, setgid, sticky ビットを定義する)
+フラグコメントが含まれている場合、入力に従ってこれらのビットを設定する。指定されなかった場合はこれらのビットをクリアする。この操作は `--test'
+以外のオプションと併用できない。
+<DT><I>--test</I><DD>
+テストモード。 ファイルの ACL を変更する代わりに、結果の ACL の一覧を表示する。
+<DT><I>-R, --recursive</I><DD>
+全てのファイルとディレクトリに対して再帰的に操作を適用する。 このオプションは `--restore' と併用できない。
+<DT><I>-L, --logical</I><DD>
+論理的に辿り、ディレクトリへのシンボリックリンクを辿る。 デフォルトの動作では、シンボリックリンク引き数を辿り、
+サブディレクトリで見つかったシンボリックリンクはスキップする。 -R と一緒に使用した場合にのみ効果を持つ。 このオプションは `--restore'
+と併用できない。
+<DT><I>-P, --physical</I><DD>
+物理的に辿り、ディレクトリへのシンボリックリンクをスキップする。 シンボリックリンク引き数もスキップする。 -R
+と一緒に使用した場合にのみ効果を持つ。このオプションは `--restore' と併用できない。
+<DT><I>-v, --version</I><DD>
+setfacl のバージョンを表示し、終了する。
+<DT><I>-h, --help</I><DD>
+コマンドラインオプションを説明するヘルプを表示する。
+<DT><I>--</I><DD>
+コマンドラインオプションの終わり。 残りの引き数は、たとえダッシュ文字で始まっていたとしても、 ファイル名として解釈される。
+<DT><I>-</I><DD>
+ファイル名引き数が 1 つのダッシュ文字である場合、 setfacl は標準入力からファイルのリストを読み込む。
+<P>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>ACL エントリ</H3>
+
+setfacl ユーティリティは以下の ACL エントリ書式を認識する (分かりやすいように空白を挿入してある):
+<P>
+
+<DL COMPACT>
+<DT>[d[efault]:] [u[ser]:]<I>uid </I>[:<I>perms</I>]<DD>
+
+指名ユーザの許可。 <I>uid</I> が空の場合は、ファイル所有者の許可。
+
+<DT>[d[efault]:] g[roup]:<I>gid </I>[:<I>perms</I>]<DD>
+
+指名グループの許可。 <I>gid</I> が空の場合は、所有者グループの許可。
+
+<DT>[d[efault]:] m[ask][:] [:<I>perms</I>]<DD>
+
+実効権マスク。
+
+<DT>[d[efault]:] o[ther][:] [:<I>perms</I>]<DD>
+
+その他の許可。
+</DL>
+<P>
+
+区切り文字と区切り文字以外の間の空白は無視される。
+<P>
+
+<P>
+
+許可を含む正式な ACL エントリは、修正と設定の操作 (オプション <I>-m</I>, <I>-M</I>, <I>--set</I>, <I>--set-file</I>)
+で使用される。 <I>perms</I> フィールドのないエントリは、エントリの<I>削除</I> (オプション <I>-x</I> と <I>-X</I>)  で使用される。
+<P>
+
+<I>uid</I> と <I>gid</I> には名前と数値のどちらも指定できる。
+<P>
+
+<I>perms</I> フィールド許可を表す文字の組み合わせである。 読み込み <I>(r)</I>, 書き込み <I>(w)</I>, 実行 <I>(x)</I>
+は、ファイルがディレクトリであるか何れかのユーザの実行許可 <I>(X)</I> が既にある場合にのみ実行される。 文字の組合わせの代わりに、 <I>perms</I>
+フィールドを 8 進数 (0-7) にすることもできる。
+<P>
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>自動的に作成されるエントリ</H3>
+
+初期状態では、ファイルとディレクトリは所有者・グループ・その他という 3 つの基本 ACL エントリを持つ。 ACL
+が有効であるためには満たさなければならない、いくつかのルールがある。
+<DL COMPACT>
+<DT>*<DD>
+3 つの基本エントリは削除できない。 これらの基本エントリ型のそれぞれに対して、 必ず 1 つのエントリがなければならない。
+<DT>*<DD>
+ACL が指名ユーザエントリまたは指名グループオブジェクトを持つ場合、 実効権マスクも持たなければならない。
+<DT>*<DD>
+ACL がデフォルト ACL エントリを持つ場合、 3 つのデフォルト ACL 基本エントリ (デフォルト所有者・
+デフォルトグループ・デフォルトのその他) が存在しなければならない。
+<DT>*<DD>
+デフォルト ACL が指名ユーザエントリまたは指名グループオブジェクトを持つ場合、 デフォルト実効権マスクも持たなければならない。
+</DL>
+<P>
+
+ユーザがこれらのルールを確実に守るための助けとして、 setfacl は以下の条件で既存のエントリからエントリを作成する:
+<DL COMPACT>
+<DT>*<DD>
+ACL が指名ユーザまたは指名グループのエントリを持ち、 かつマスクエントリが存在しない場合、
+グループエントリと同じ許可を持つマスクエントリが作成される。 <I>-n</I> オプションが指定されない限り、マスクエントリの許可は、
+そのマスクエントリの影響を受ける全ての許可を合わせたもの含めるように、 更に調整される (<I>-n</I> オプションの説明を参照すること)。
+<DT>*<DD>
+デフォルト ACL エントリが作成され、 かつデフォルト ACL が所有者・所有グループ・その他のエントリを持たない場合、 ACL
+所有者・所有グループ・その他のエントリのコピーが デフォルト ACL に追加される。
+<DT>*<DD>
+デフォルト ACL が指名ユーザまたは指名グループのエントリを持ち、 かつマスクエントリが存在する場合、 デフォルト ACL
+のグループエントリと同じ許可を持つマスクエントリが追加される。 <I>-n</I> オプションが指定されない限り、マスクエントリの許可は、
+そのマスクエントリの影響を受ける全ての許可を合わせたもの含めるように、 更に調整される (<I>-n</I> オプションの説明を参照すること)。
+</DL>
+<P>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+<P>
+
+追加のユーザの読み込みアクセスを許可する。
+<DL COMPACT><DT><DD>
+
+setfacl -m u:lisa:r file
+
+</DL>
+
+<P>
+
+全てのグループと全ての指名ユーザの書き込みアクセスを (実効権マスクを使って) 取り消す。
+<DL COMPACT><DT><DD>
+
+setfacl -m m::rx file
+
+</DL>
+
+<P>
+
+ファイルの ACL から指名グループエントリを削除する。
+<DL COMPACT><DT><DD>
+
+setfacl -x g:staff file
+
+</DL>
+
+<P>
+
+あるファイルの ACL を他にコピーする。
+<DL COMPACT><DT><DD>
+
+getfacl file1 | setfacl --set-file=- file2
+
+</DL>
+
+<P>
+
+アクセス ACL をデフォルト ACL にコピーする。
+<DL COMPACT><DT><DD>
+
+getfacl --access dir | setfacl -d -M- dir
+
+</DL>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>POSIX 1003.1e DRAFT STANDARD 17 への準拠</H2>
+
+環境変数 POSIXLY_CORRECT が定義されている場合、 getfacl のデフォルトの動作は、以下のように変わる。
+標準に準拠しない全てのオプションは無効にされる。 ``default:'' プレフィックスは無効にされる。 <I>-x</I> と <I>-X</I>
+オプションは許可フィールドを受け付ける (しかし、無視する)。
+<A NAME="lbAK">&nbsp;</A>
+<H2>著者</H2>
+
+Andreas Gruenbacher, &lt;<I><A HREF="mailto:a.gruenbacher@bestbits.at">a.gruenbacher@bestbits.at</A></I>&gt;.
+<P>
+バグ報告・提案したい機能・意見は上記のアドレスに送ってほしい。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/getfacl.1.html">getfacl</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/chmod.1.html">chmod</A></B>(1), <B>umask</B>(1), <B><A HREF="../man5/acl.5.html">acl</A></B>(5)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">許可</A><DD>
+</DL>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DL>
+<DT><A HREF="#lbAG">ACL エントリ</A><DD>
+<DT><A HREF="#lbAH">自動的に作成されるエントリ</A><DD>
+</DL>
+<DT><A HREF="#lbAI">例</A><DD>
+<DT><A HREF="#lbAJ">POSIX 1003.1e DRAFT STANDARD 17 への準拠</A><DD>
+<DT><A HREF="#lbAK">著者</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

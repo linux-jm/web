@@ -1,0 +1,336 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETUTENT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETUTENT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getutent.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getutent, getutid, getutline, pututline, setutent, endutent, utmpname - utmp
+ファイルのエントリーにアクセスする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;</B>
+<P>
+
+<B>struct utmp *getutent(void);</B>
+<BR>
+
+<B>struct utmp *getutid(const struct utmp *</B><I>ut</I><B>);</B>
+<BR>
+
+<B>struct utmp *getutline(const struct utmp *</B><I>ut</I><B>);</B>
+<P>
+
+<B>struct utmp *pututline(const struct utmp *</B><I>ut</I><B>);</B>
+<P>
+
+<B>void setutent(void);</B>
+<BR>
+
+<B>void endutent(void);</B>
+<P>
+
+<B>int utmpname(const char *</B><I>file</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+新しいアプリケーションでは、これらの関数の &quot;utmpx&quot; 版を使用すべきである。 これらは POSIX.1 で規定されている。「準拠」の節を参照。
+<P>
+
+<B>utmpname</B>()  は、他の utmp 関数がアクセスする (utmp フォーマットの)  ファイルの名前を指定する。他の関数を使う前に
+<B>utmpname</B>()  を使って ファイル名の指定を行わなかった場合は、 <I>&lt;<A HREF="file:///usr/include/path.h">path.h</A>&gt;</I> で 定義されている
+<B>_PATH_UTMP</B> がファイル名とみなされる。
+<P>
+
+<B>setutent</B>()  は、ファイルポインターを utmp ファイルの先頭に移動する。
+一般的には、他の関数を使う前にこの関数を呼び出しておくと良いだろう。
+<P>
+
+<B>endutent</B>()  は utmp ファイルをクローズする。ユーザーコードで
+他の関数を使ってこのファイルにアクセスを行った時は、最後にこの関数を 呼び出すべきである。
+<P>
+
+<B>getutent</B>()  は utmp ファイルの現在のファイル位置から一行読み込み、 行の各フィールドの内容を収めた構造体へのポインターを返す。
+この構造体の定義は <B><A HREF="../man5/utmp.5.html">utmp</A></B>(5)  に書かれている。
+<P>
+
+<B>getutid</B>()  は、 utmp ファイル中の現在の位置から順方向 (末尾に向かう方向) へ <I>ut</I> に基く検索を行う。
+<I>ut</I>-&gt;ut_type が <B>RUN_LVL</B>, <B>BOOT_TIME</B>, <B>NEW_TIME</B>, <B>OLD_TIME</B> の
+いずれかなら、 <B>getutid</B>()  は <B>ut_type</B> フィールドが <I>ut</I>-&gt;ut_type
+に一致する最初のエントリーを探す。 <I>ut</I>-&gt;ut_type が <B>INIT_PROCESS</B>, <B>LOGIN_PROCESS</B>,
+<B>USER_PROCESS</B>, <B>DEAD_PROCESS</B> のいずれかなら、 <B>getutid</B>()  は <I>ut_id</I> フィールドが
+<I>ut</I>-&gt;ut_id に 一致する最初のエントリーを探す。
+<P>
+
+<B>getutline</B>()  は、 utmp ファイルの現在の位置から末尾に向かって検索を行う。 <I>ut_type</I> が
+<B>USER_PROCESS</B> または <B>LOGIN_PROCESS</B> で、 <I>ut_line</I> フィールドが <I>ut</I>-&gt;ut_line
+にマッチする最初の行を返す。
+<P>
+
+<B>pututline</B>()  は <I>utmp</I> 構造体 <I>ut</I> の内容を utmp ファイルに書き出す。 <B>pututline</B>()  は
+<B>getutid</B>()  を用いて、新たなエントリーを 挿入するのにふさわしい場所を探す。 <I>ut</I> を挿入するふさわしい場所が
+見つからない場合は、新たなエントリーをファイルの末尾に追加する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>getutent</B>(), <B>getutid</B>(), <B>getutline</B>()  は、成功すると <I>struct utmp</I>
+へのポインターを返す。 失敗すると NULL を返す (レコードが見つからなかった場合も失敗となる)。 この <I>struct utmp</I>
+は静的な記憶領域に確保され、次にこれらの関数を 呼び出した際に上書きされるかもしれない。
+<P>
+
+<B>pututline</B>()  は成功すると <I>ut</I> を返す。失敗すると NULL を返す。
+<P>
+
+<B>utmpname</B>()  は、新しい名前の格納に成功すると 0 を返し、失敗すると -1 を返す。
+<P>
+
+エラーが発生した場合、これらの関数は <I>errno</I> にエラーの原因を示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>ENOMEM</B><DD>
+メモリー不足。
+<DT><B>ESRCH</B><DD>
+レコードが見つからなかった。
+</DL>
+<P>
+
+関数 <B>setutent</B>(), <B>pututline</B>(), <B>getut*</B>()  は <B><A HREF="../man2/open.2.html">open</A></B>(2)
+に書かれている理由でも失敗することがある。
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/var/run/utmp</I><DD>
+現在ログイン中のユーザーのデータベース
+<DT><I>/var/log/wtmp</I><DD>
+ユーザーログインの履歴データベース
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getutent</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe init race:utent
+<BR>
+
+race:utentbuf sig:ALRM timer
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getutid</B>(),
+<BR>
+
+<B>getutline</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe init race:utent
+<BR>
+
+sig:ALRM timer
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>pututline</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:utent
+<BR>
+
+sig:ALRM timer
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>setutent</B>(),
+<BR>
+
+<B>endutent</B>(),
+<BR>
+
+<B>utmpname</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:utent<BR></TD></TR>
+</TABLE>
+
+<P>
+In the above table, <I>utent</I> in <I>race:utent</I> signifies that if any of the
+functions <B>setutent</B>(), <B>getutent</B>(), <B>getutid</B>(), <B>getutline</B>(),
+<B>pututline</B>(), <B>utmpname</B>(), or <B>endutent</B>()  are used in parallel in
+different threads of a program, then data races could occur.
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+XPG2, SVr4.
+<P>
+
+XPG2 と SVID 2 では、 <B>pututline</B>() 関数は値を返さないとされており、 (AIX, HP-UX などの)
+多くのシステムではそうなっている。 HP-UX では、上述の <B>pututline</B>() と同じプロトタイプを持つ 新しい関数
+<B>_pututline</B>() が導入されている。
+<P>
+
+現在では、Linux 以外のシステムでは、これらの関数は全て廃止されている。 SUSv1 の後に出てきた POSIX.1-2001 と
+POSIX.1-2008 では、もはやこれらの関数はなく、 代わりに以下のものを使う。
+<P>
+
+<DL COMPACT><DT><DD>
+
+<B>#include &lt;<A HREF="file:///usr/include/utmpx.h">utmpx.h</A>&gt;</B>
+<P>
+
+<B>struct utmpx *getutxent(void);</B>
+<B>struct utmpx *getutxid(const struct utmpx *);</B>
+<B>struct utmpx *getutxline(const struct utmpx *);</B>
+<B>struct utmpx *pututxline(const struct utmpx *);</B>
+<B>void setutxent(void);</B>
+<B>void endutxent(void);</B>
+
+</DL>
+
+<P>
+
+これらの関数は glibc により提供されており、 &quot;x&quot; がない関数と同じ処理を行うが、 <I>struct utmpx</I> を使用する。 Linux
+では、この構造体の定義は <I>struct utmp</I> と同じになっている。 完全を期すために、glibc では <B>utmpxname</B>()
+も提供している。この関数は POSIX.1 では規定されていない。
+<P>
+
+Linux 以外のシステムでは、 <I>utmpx</I> 構造体は <I>utmp</I> 構造体の上位集合 (superset) になっていて、
+追加のフィールドがあったり、既存のフィールドのサイズが大きくなっていたり するものもある。複数のファイルが使用されている場合もあり、多くの場合
+<I>/var/*/utmpx</I> と <I>/var/*/wtmpx</I> というファイルが使われる。
+<P>
+
+一方、 Linux glibc では複数の <I>utmpx</I> ファイル は使われていない。
+<I>utmp</I> 構造体が十分に大きいからである。
+上記の名前に &quot;x&quot; が付いた関数は &quot;x&quot; が付いていない対応する関数の別名と
+なっている (例えば <I>getutxent</I>() は <I>getutent</I>() の別名である)。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>glibc での注意</H3>
+
+上記の関数群はスレッドセーフではない。 glibc にはリエントラント版 (reentrant) が追加されている。
+<P>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;</B>
+
+<B>int getutent_r(struct utmp *</B><I>ubuf</I><B>, struct utmp **</B><I>ubufp</I><B>);</B>
+<B>int getutid_r(struct utmp *</B><I>ut</I><B>,</B>
+<B>              struct utmp *</B><I>ubuf</I><B>, struct utmp **</B><I>ubufp</I><B>);</B>
+<B>int getutline_r(struct utmp *</B><I>ut</I><B>,</B>
+<B>                struct utmp *</B><I>ubuf</I><B>, struct utmp **</B><I>ubufp</I><B>);</B>
+</PRE>
+
+<P>
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7) 参照):
+<P>
+
+<B>getutent_r</B>(), <B>getutid_r</B>(), <B>getutline_r</B>():
+<PRE>
+    _GNU_SOURCE
+    || /* since glibc 2.19: */ _DEFAULT_SOURCE
+    || /* glibc &lt;= 2.19: */    _SVID_SOURCE || _BSD_SOURCE
+</PRE>
+
+<P>
+
+これらの関数は GNU での拡張であり、末尾の _r をとった名前の関数と 同様の機能を持つ。 <I>ubuf</I>
+パラメーターは結果を格納する場所を指定する。 成功すると 0 を返し、結果へのポインターを <I>*ubufp</I> に書き込む。エラーの場合 -1 を返す。
+上記の関数に対応する utmpx 版は存在しない (POSIX.1 ではこれらの関数を規定されていない)。
+<A NAME="lbAL">&nbsp;</A>
+<H2>例</H2>
+
+以下の例では、 utmp のレコードの追加・削除を行っている。このコードは、 擬似端末 (pseudo terminal)
+から実行されることを想定している。 実際のアプリケーションでは <B><A HREF="../man3/getpwuid.3.html">getpwuid</A></B>(3)  と <B><A HREF="../man3/ttyname.3.html">ttyname</A></B>(3)
+の戻り値を検査するべきである。
+<P>
+
+
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;utmp&nbsp;entry;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;system(&quot;echo&nbsp;before&nbsp;adding&nbsp;entry:;who&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;entry.ut_type&nbsp;=&nbsp;USER_PROCESS;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;entry.ut_pid&nbsp;=&nbsp;getpid();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strcpy(entry.ut_line,&nbsp;ttyname(STDIN_FILENO)&nbsp;+&nbsp;strlen(&quot;/dev/&quot;));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;only&nbsp;correct&nbsp;for&nbsp;ptys&nbsp;named&nbsp;/dev/tty[pqr][0-9a-z]&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strcpy(entry.ut_id,&nbsp;ttyname(STDIN_FILENO)&nbsp;+&nbsp;strlen(&quot;/dev/tty&quot;));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;time(&amp;entry.ut_time);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strcpy(entry.ut_user,&nbsp;getpwuid(getuid())-&gt;pw_name);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(entry.ut_host,&nbsp;0,&nbsp;UT_HOSTSIZE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;entry.ut_addr&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;setutent();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pututline(&amp;entry);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;system(&quot;echo&nbsp;after&nbsp;adding&nbsp;entry:;who&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;entry.ut_type&nbsp;=&nbsp;DEAD_PROCESS;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(entry.ut_line,&nbsp;0,&nbsp;UT_LINESIZE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;entry.ut_time&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(entry.ut_user,&nbsp;0,&nbsp;UT_NAMESIZE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;setutent();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pututline(&amp;entry);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;system(&quot;echo&nbsp;after&nbsp;removing&nbsp;entry:;who&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;endutent();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/getutmp.3.html">getutmp</A></B>(3), <B><A HREF="../man5/utmp.5.html">utmp</A></B>(5)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAK">glibc での注意</A><DD>
+</DL>
+<DT><A HREF="#lbAL">例</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

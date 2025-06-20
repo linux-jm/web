@@ -1,0 +1,247 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PATH_RESOLUTION</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PATH_RESOLUTION</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/path_resolution.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+path_resolution - ファイルのパス名の解決方法
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+いくつかの UNIX/Linux システムコールは、 1 つ以上のファイル名を引数として持つ。 ファイル名 (またはパス名)
+は以下のようにして解決される。
+<A NAME="lbAD">&nbsp;</A>
+<H3>ステップ 1: 解決過程を開始する</H3>
+
+If the pathname starts with the '/' character, the starting lookup
+directory is the root directory of the calling process.  A process inherits
+its root directory from its parent.  Usually this will be the root directory
+of the file hierarchy.  A process may get a different root directory by use
+of the <B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)  system call, or may temporarily use a different root
+directory by using <B>openat2</B>(2)  with the <B>RESOLVE_IN_ROOT</B> flag set.
+<P>
+
+A process may get an entirely private mount namespace in case it---or one
+of its ancestors---was started by an invocation of the <B><A HREF="../man2/clone.2.html">clone</A></B>(2)  system
+call that had the <B>CLONE_NEWNS</B> flag set.  This handles the '/' part
+of the pathname.
+<P>
+
+If the pathname does not start with the '/' character, the starting
+lookup directory of the resolution process is the current working directory
+of the process --- or in the case of <B><A HREF="../man2/openat.2.html">openat</A></B>(2)-style system calls, the
+<I>dfd</I> argument (or the current working directory if <B>AT_FDCWD</B> is passed
+as the <I>dfd</I> argument).  The current working directory is inherited from
+the parent, and can be changed by use of the <B><A HREF="../man2/chdir.2.html">chdir</A></B>(2)  system call.)
+<P>
+
+'/' 文字で始まるパス名は絶対パス名と呼ばれ、 '/' 文字で始まらないパス名は相対パス名と呼ばれる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>ステップ 2: パスを辿る</H3>
+
+現在の検索ディレクトリをディレクトリ検索の開始点とする。 そして、パス名の最後の構成要素 (component) でない各構成要素について、
+現在の検索ディレクトリで検索を行う。 ここで構成要素は '/' で区切られた部分文字列である。
+<P>
+
+プロセスが現在の検索ディレクトリの検索許可を持たない場合、 <B>EACCES</B> エラーが返される (&quot;Permission denied&quot;)。
+<P>
+
+構成要素が見つからない場合、 <B>ENOENT</B> エラーが返される (&quot;No such file or directory&quot;)。
+<P>
+
+構成要素は見つかったが、ディレクトリでもシンボリックリンクでもない場合、 <B>ENOTDIR</B> エラーが返される (&quot;Not a
+directory&quot;)。
+<P>
+
+構成要素が見つかって、かつディレクトリである場合、 現在の検索ディレクトリをそのディレクトリに設定し、 次の構成要素に移動する。
+<P>
+
+If the component is found and is a symbolic link (symlink), we first resolve
+this symbolic link (with the current lookup directory as starting lookup
+directory).  Upon error, that error is returned.  If the result is not a
+directory, an <B>ENOTDIR</B> error is returned.  If the resolution of the
+symbolic link is successful and returns a directory, we set the current
+lookup directory to that directory, and go to the next component.  Note that
+the resolution process here can involve recursion if the prefix ('dirname')
+component of a pathname contains a filename that is a symbolic link that
+resolves to a directory (where the prefix component of that directory may
+contain a symbolic link, and so on).  In order to protect the kernel against
+stack overflow, and also to protect against denial of service, there are
+limits on the maximum recursion depth, and on the maximum number of symbolic
+links followed.  An <B>ELOOP</B> error is returned when the maximum is exceeded
+(&quot;Too many levels of symbolic links&quot;).
+<P>
+
+
+
+
+
+
+
+
+As currently implemented on Linux, the maximum number of symbolic links that
+will be followed while resolving a pathname is 40.  In kernels before
+2.6.18, the limit on the recursion depth was 5.  Starting with Linux 2.6.18,
+this limit was raised to 8.  In Linux 4.2, the kernel's pathname-resolution
+code was reworked to eliminate the use of recursion, so that the only limit
+that remains is the maximum of 40 resolutions for the entire pathname.
+<P>
+
+The resolution of symbolic links during this stage can be blocked by using
+<B>openat2</B>(2), with the <B>RESOLVE_NO_SYMLINKS</B> flag set.
+<A NAME="lbAF">&nbsp;</A>
+<H3>ステップ 3: 最後のエントリーを見つける</H3>
+
+パス名の最後の構成要素の検索は、前のステップで説明した 他の全ての構成要素と同じように実行されるが、2 つの違いがある。 (i)
+最後の構成要素はディレクトリである必要がない (パス解決過程に関する限りはどちらでも構わない --- 特定のシステムコールが要求するものによって、
+ディレクトリでなければならない場合もあるし、 ディレクトリ以外でなければならない場合もある)。 (ii)
+構成要素が見つからない場合にエラーにする必要はない --- その構成要素を作成するだけでよい場合もある。 最後のエントリーの詳細な扱いは、
+特定のシステムコールの man ページで説明されている。
+<A NAME="lbAG">&nbsp;</A>
+<H3>. と ..</H3>
+
+慣習として、全てのディレクトリはエントリー &quot;.&quot; と &quot;..&quot; を持つ。 これらはそれぞれ、そのディレクトリ自身とその親ディレクトリを参照する。
+<P>
+
+パス解決過程では、これらのエントリーが物理的なファイルシステムに 実際に存在するか否かに関わらず、慣習的な意味を持つと仮定する。
+<P>
+
+ルートより上に辿ることはできない: &quot;/..&quot; は &quot;/&quot; と同じである。
+<A NAME="lbAH">&nbsp;</A>
+<H3>マウント位置</H3>
+
+&quot;mount dev path&quot; コマンドを実行した後、 パス名 &quot;path&quot; はデバイス &quot;dev&quot; 上のファイルシステム階層の
+ルートディレクトリを参照するようになり、以前の位置を参照しない。
+<P>
+
+マウントされたファイルシステムの外に出ることができる: &quot;path/..&quot; は &quot;dev&quot; 上のファイルシステム階層の外である &quot;path&quot;
+の親ディレクトリを参照する。
+<P>
+
+Traversal of mount points can be blocked by using <B>openat2</B>(2), with the
+<B>RESOLVE_NO_XDEV</B> flag set (though note that this also restricts bind mount
+traversal).
+<A NAME="lbAI">&nbsp;</A>
+<H3>末尾のスラッシュ</H3>
+
+パス名が '/' で終わっている場合、 ステップ 2 において、その前にある構成要素の解決法を次のように強制する:
+その構成要素が存在しなければならず、ディレクトリとして解決される。 存在しない場合は、末尾の '/' が無視される。 (また同様に、末尾に
+'/' があるパス名は、 '.' を末尾に加えて得られるパス名と等しい。)
+<A NAME="lbAJ">&nbsp;</A>
+<H3>最後がシンボリックリンクのとき</H3>
+
+パス名の最後の構成要素がシンボリックリンクである場合、 参照されるファイルをシンボリックリンクとするか、 その内容についてパスを解決した結果とするかは、
+システムコールに依存する。 たとえば、システムコール <B><A HREF="../man2/lstat.2.html">lstat</A></B>(2)  はシンボリックリンクに作用する。 一方、 <B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+はシンボリックリンクで指されたファイルに作用する。
+<A NAME="lbAK">&nbsp;</A>
+<H3>長さの制限</H3>
+
+パス名には最大長がある。 パス名 (またはシンボリックリンクを解決するときに得られる中間パス名) が 長すぎる場合、 <B>ENAMETOOLONG</B>
+エラーが返される (&quot;Filename too long&quot;)。
+<A NAME="lbAL">&nbsp;</A>
+<H3>空のパス名</H3>
+
+元々の UNIX では、空のパス名は現在のディレクトリを参照していた。 最近、POSIX では空のパス名を解決するべきではないという決定がなされた。
+この場合、Linux は <B>ENOENT</B> を返す。
+<A NAME="lbAM">&nbsp;</A>
+<H3>許可</H3>
+
+The permission bits of a file consist of three groups of three bits; see
+<B><A HREF="../../0MultiFileIdx/man1/chmod.1.html">chmod</A></B>(1)  and <B><A HREF="../man2/stat.2.html">stat</A></B>(2).  The first group of three is used when the
+effective user ID of the calling process equals the owner ID of the file.
+The second group of three is used when the group ID of the file either
+equals the effective group ID of the calling process, or is one of the
+supplementary group IDs of the calling process (as set by <B><A HREF="../man2/setgroups.2.html">setgroups</A></B>(2)).
+When neither holds, the third group is used.
+<P>
+
+3 ビットが使われる場合、最初のビットは読み込み許可を決定し、 2 番目のビットは書き込み許可を決定する。 また 3
+番目のビットは、通常のファイルの場合は実行許可を表し、 ディレクトリの場合は検索許可を表す。
+<P>
+
+Linux は、許可のチェックにおいて、実効ユーザー ID ではなく fsuid を使う。 通常は fsuid は実効ユーザー ID
+と等しいが、fsuid はシステムコール <B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2)  で変更することができる。
+<P>
+
+(ここで &quot;fsuid&quot; は &quot;file system user ID&quot; を表している。 この概念は「プロセスが同じ実効ユーザー ID を持つプロセスに
+同時にシグナルを送ることができる」というユーザー空間 NFS サーバを 実装する際に必要であった。 これは今では廃れてしまった。
+<B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2)  を使うべきではない。
+<P>
+
+
+同様に、Linux では実効グループ ID の代わりに fsgid (&quot;ファイルシステムグループID&quot;) を使う。 <B><A HREF="../man2/setfsgid.2.html">setfsgid</A></B>(2)
+を参照すること。
+<A NAME="lbAN">&nbsp;</A>
+<H3>許可の確認をスキップする: スーパーユーザーとケーパビリティ</H3>
+
+
+
+
+
+
+
+伝統的な UNIX システムでは、スーパーユーザー (<I>root</I>, ユーザー ID 0) は非常に強力であり、ファイルアクセス時の
+許可による制限を全てスキップする。
+<P>
+
+Linux では、スーパーユーザー権限が複数のケーパビリティに分割されている (<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+参照)。ファイルの許可の確認には、 <B>CAP_DAC_OVERRIDE</B> と <B>CAP_DAC_READ_SEARCH</B> の
+2つのケーパビリティが関係する (プロセスの fsuid が 0 の場合、そのプロセスはこれらのケーパビリティを持つ)。
+<P>
+
+<B>CAP_DAC_OVERRIDE</B> ケーパビリティは全ての許可チェックを上書きする。 実際には、対象となるファイルの 3 つの実行許可ビットのうちの
+少なくとも 1 つが設定されている場合のみ、実行を許可する。
+<P>
+
+
+
+<B>CAP_DAC_READ_SEARCH</B> ケーパビリティは、ディレクトリに対して読み込みと検索を許可し、 通常のファイルに対して読み込みを許可する。
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7), <B><A HREF="../man7/symlink.7.html">symlink</A></B>(7)
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">ステップ 1: 解決過程を開始する</A><DD>
+<DT><A HREF="#lbAE">ステップ 2: パスを辿る</A><DD>
+<DT><A HREF="#lbAF">ステップ 3: 最後のエントリーを見つける</A><DD>
+<DT><A HREF="#lbAG">. と ..</A><DD>
+<DT><A HREF="#lbAH">マウント位置</A><DD>
+<DT><A HREF="#lbAI">末尾のスラッシュ</A><DD>
+<DT><A HREF="#lbAJ">最後がシンボリックリンクのとき</A><DD>
+<DT><A HREF="#lbAK">長さの制限</A><DD>
+<DT><A HREF="#lbAL">空のパス名</A><DD>
+<DT><A HREF="#lbAM">許可</A><DD>
+<DT><A HREF="#lbAN">許可の確認をスキップする: スーパーユーザーとケーパビリティ</A><DD>
+</DL>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

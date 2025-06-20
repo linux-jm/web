@@ -1,0 +1,131 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of IPTABLES-XML</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>IPTABLES-XML</H1>
+Section: iptables 1.4.21 (1)<BR>Updated: <BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/iptables/release/man1/iptables-xml.1">roff page</A><HR>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+iptables-xml --- iptables-xml 形式から XML 形式へ変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>iptables-xml</B> [<B>-c</B>] [<B>-v</B>]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+<B>iptables-xml</B> を使うと、iptables-save の出力をより扱いやすい XML 形式に変換し、標準出力に出力することができる。
+ファイルに書き出すには、シェルで提供されている I/O リダイレクションを使うこと。
+<DL COMPACT>
+<DT><B>-c</B>, <B>--combine</B><DD>
+combine consecutive rules with the same matches but different
+targets. iptables does not currently support more than one target per match,
+so this simulates that by collecting the targets from consecutive iptables
+rules into one action tag, but only when the rule matches are
+identical. Terminating actions like RETURN, DROP, ACCEPT and QUEUE are not
+combined with subsequent targets.
+<DT><B>-v</B>, <B>--verbose</B><DD>
+XML の生成元となった iptables の行を XML コメントとして出力する。
+<P>
+</DL>
+<P>
+
+iptables-xml does a mechanistic conversion to a very expressive xml format;
+the only semantic considerations are for -g and -j targets in order to
+discriminate between &lt;call&gt; &lt;goto&gt; and
+&lt;nane-of-target&gt; as it helps xml processing scripts if they can tell
+the difference between a target like SNAT and another chain.
+<P>
+出力例を以下に示す。
+<P>
+&lt;iptables-rules&gt;
+<BR>&nbsp;&nbsp;&lt;table&nbsp;name=&quot;mangle&quot;&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;chain&nbsp;name=&quot;PREROUTING&quot;&nbsp;policy=&quot;ACCEPT&quot;&nbsp;packet-count=&quot;63436&quot;
+byte-count=&quot;7137573&quot;&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;rule&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;conditions&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;match&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;p&gt;tcp&lt;/p&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/match&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;tcp&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;sport&gt;8443&lt;/sport&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/tcp&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/conditions&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;actions&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;call&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;check_ip/&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/call&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;ACCEPT/&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/actions&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/rule&gt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/chain&gt;
+<BR>&nbsp;&nbsp;&lt;/table&gt;
+&lt;/iptables-rules&gt;
+<P>
+<P>
+
+XML から iptables-save への変換は、以下のように iptables.xslt スクリプトと xsltproc
+を使って行うことができる。 libxsltproc などを使ったカスタムプログラムで行うことができる。
+<P>
+xsltproc iptables.xslt my-iptables.xml | iptables-restore
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>バグ</H2>
+
+iptables-1.3.7 リリースの時点では知られていない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>作者</H2>
+
+Sam Liddicott &lt;<A HREF="mailto:azez@ufomechanic.net">azez@ufomechanic.net</A>&gt;
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/iptables-save.8.html">iptables-save</A></B>(8), <B><A HREF="../man8/iptables-restore.8.html">iptables-restore</A></B>(8), <B><A HREF="../man8/iptables.8.html">iptables</A></B>(8)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">バグ</A><DD>
+<DT><A HREF="#lbAF">作者</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

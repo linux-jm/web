@@ -1,0 +1,230 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETSUBOPT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETSUBOPT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getsubopt.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getsubopt - 文字列中のサブオプション引数の解釈を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+<P>
+
+<B>int getsubopt(char **</B><I>optionp</I><B>, char * const *</B><I>tokens</I><B>, char
+**</B><I>valuep</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>getsubopt</B>():
+
+<DL COMPACT><DT><DD>
+
+
+_XOPEN_SOURCE&nbsp;&gt;= 500
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.12&nbsp;以降:&nbsp;*/&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getsubopt</B>()  は、 <I>optionp</I> で与えられたカンマ区切りのサブオプションリストを解析する。
+(このようなサブオプションリストは <B><A HREF="../man3/getopt.3.html">getopt</A></B>(3)  を使ってコマンドラインを解釈した場合に現れることが多い。 例えば、
+<B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)  の <I>-o</I> オプションを見るとよい。)  それぞれのサブオプションには対応する値を指定することができる。
+サブオプションの名前と対応する値は等号 ('=') で区切られる。 例えば、以下のような文字列を <I>optionp</I> に渡すことができる。
+<P>
+
+
+
+<B>ro,name=xyz</B>
+
+
+<P>
+
+<I>tokens</I> 引数はトークンへのポインターの配列へのポインターで、 配列は NULL で終端される。 <B>getsubopt</B>()
+はこのトークンを <I>optionp</I> 内で探す。 それぞれのトークンは、NULL 終端された 1文字以上の文字列で、
+他のトークンと区別できる必要がある。 また、等号とカンマを含んではならない。
+<P>
+
+<B>getsubopt</B>()  は呼び出されるたびに、 <I>optionp</I> 中の次の未処理のサブオプションの情報を返す。
+サブオプション内に等号があった場合、最初の等号は そのサブオプションの名前と値の区切りと解釈される。 区切りから次のカンマ
+(最後のサブオプションの場合、文字列の末尾)  までが、サブオプションの値となる。 サブオプションの名前が <I>tokens</I>
+内の名前と一致し、値を表す文字列が見つかった場合、 <B>getsubopt</B>()  は <I>*valuep</I> を値を表す文字列のアドレスに設定する。
+<I>optionp</I> 中の最初のカンマはヌルバイトで上書きされる。そのため、 <I>*valuep</I> はそのサブオプションの「値の文字列」そのものとなる。
+<P>
+
+サブオプションが認識されたが、値を表す文字列が見つからなかった場合、 *<I>valuep</I> は NULL に設定される。
+<P>
+
+<B>getsubopt</B>()  が返る時、 <I>optionp</I> は次のサブオプションを指している。 ちょうど最後のサブオプションが処理された場合は、
+文字列末尾のヌルバイト ('\0') を指している。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<I>optionp</I> 内でサブオプションが見つかった場合、 <B>getsubopt</B>()  は最初のサブオプションにマッチする <I>tokens</I>
+の要素の添字を返す。 見つからなかった場合、-1 を返す。この場合、 <I>*valuep</I> は <I>name</I><B>[=</B><I>value</I><B>]</B>
+の文字列全体となる。
+<P>
+
+<I>*optionp</I> は変更されるので、 <B>getsubopt</B>()  を呼び出す前の最初のサブオプションは <B>getsubopt</B>()
+を呼び出し後のサブオプションと必ずしも同じとは限らない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getsubopt</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>getsubopt</B>()  は、文字列 *<I>optionp</I> 中に見つけたカンマを上書きするので、文字列 <I>*optionp</I>
+は書き込み可能でなければならず、 文字列定数にすることはできない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは &quot;-o&quot; オプションに続いてサブオプションがあることを 期待している。
+<P>
+
+
+#define _XOPEN_SOURCE 500
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/assert.h">assert.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+<P>
+int
+main(int argc, char **argv)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;enum&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RO_OPT&nbsp;=&nbsp;0,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RW_OPT,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NAME_OPT
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;};
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*const&nbsp;token[]&nbsp;=&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[RO_OPT]&nbsp;&nbsp;&nbsp;=&nbsp;&quot;ro&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[RW_OPT]&nbsp;&nbsp;&nbsp;=&nbsp;&quot;rw&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[NAME_OPT]&nbsp;=&nbsp;&quot;name&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NULL
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;};
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*subopts;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*value;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;opt;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;readonly&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;readwrite&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*name&nbsp;=&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;errfnd&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((opt&nbsp;=&nbsp;getopt(argc,&nbsp;argv,&nbsp;&quot;o:&quot;))&nbsp;!=&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(opt)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'o':
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subopts&nbsp;=&nbsp;optarg;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(*subopts&nbsp;!=&nbsp;'\0'&nbsp;&amp;&amp;&nbsp;!errfnd)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(getsubopt(&amp;subopts,&nbsp;token,&nbsp;&amp;value))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;RO_OPT:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readonly&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;RW_OPT:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readwrite&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;NAME_OPT:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(value&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Missing&nbsp;value&nbsp;for&nbsp;&quot;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;suboption&nbsp;'%s'\n&quot;,&nbsp;token[NAME_OPT]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errfnd&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;=&nbsp;value;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;No&nbsp;match&nbsp;found&nbsp;&quot;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;for&nbsp;token:&nbsp;/%s/\n&quot;,&nbsp;value);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errfnd&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(readwrite&nbsp;&amp;&amp;&nbsp;readonly)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Only&nbsp;one&nbsp;of&nbsp;'%s'&nbsp;and&nbsp;'%s'&nbsp;can&nbsp;be&nbsp;&quot;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;specified\n&quot;,&nbsp;token[RO_OPT],&nbsp;token[RW_OPT]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errfnd&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errfnd&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errfnd&nbsp;||&nbsp;argc&nbsp;==&nbsp;1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;\nUsage:&nbsp;%s&nbsp;-o&nbsp;&lt;suboptstring&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;suboptions&nbsp;are&nbsp;'ro',&nbsp;'rw',&nbsp;&quot;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;and&nbsp;'name=&lt;value&gt;'\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Remainder&nbsp;of&nbsp;program...&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/getopt.3.html">getopt</A></B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">例</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,172 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LDD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LDD</H1>
+Section: Linux Programmer's Manual (1)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man1/ldd.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ldd - 共有オブジェクトへの依存関係を表示する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>ldd</B> [<I>option</I>]... <I>file</I>...
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>ldd</B> prints the shared objects (shared libraries) required by each program
+or shared object specified on the command line.  An example of its use and
+output (using <B><A HREF="../../GNU_sed/man1/sed.1.html">sed</A></B>(1)  to trim leading white space for readability in this
+page)  is the following:
+<P>
+
+
+
+$ <B>ldd /bin/ls | sed 's/^ */    /'</B>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;linux-vdso.so.1&nbsp;(0x00007ffcc3563000)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;libselinux.so.1&nbsp;=&gt;&nbsp;/lib64/libselinux.so.1&nbsp;(0x00007f87e5459000)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;libcap.so.2&nbsp;=&gt;&nbsp;/lib64/libcap.so.2&nbsp;(0x00007f87e5254000)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;libc.so.6&nbsp;=&gt;&nbsp;/lib64/libc.so.6&nbsp;(0x00007f87e4e92000)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;libpcre.so.1&nbsp;=&gt;&nbsp;/lib64/libpcre.so.1&nbsp;(0x00007f87e4c22000)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;libdl.so.2&nbsp;=&gt;&nbsp;/lib64/libdl.so.2&nbsp;(0x00007f87e4a1e000)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/lib64/ld-linux-x86-64.so.2&nbsp;(0x00005574bf12e000)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;libattr.so.1&nbsp;=&gt;&nbsp;/lib64/libattr.so.1&nbsp;(0x00007f87e4817000)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;libpthread.so.0&nbsp;=&gt;&nbsp;/lib64/libpthread.so.0&nbsp;(0x00007f87e45fa000)
+
+
+<P>
+
+
+In the usual case, <B>ldd</B> invokes the standard dynamic linker (see
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8))  with the <B>LD_TRACE_LOADED_OBJECTS</B> environment variable set
+to 1.  This causes the dynamic linker to inspect the program's dynamic
+dependencies, and find (according to the rules described in <B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8))
+and load the objects that satisfy those dependencies.  For each dependency,
+<B>ldd</B> displays the location of the matching object and the (hexadecimal)
+address at which it is loaded.  (The <I>linux-vdso</I> and <I>ld-linux</I> shared
+dependencies are special; see <B><A HREF="../man7/vdso.7.html">vdso</A></B>(7)  and <B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8).)
+<A NAME="lbAE">&nbsp;</A>
+<H3>セキュリティ</H3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+Be aware that in some circumstances (e.g., where the program specifies an
+ELF interpreter other than <I>ld-linux.so</I>), some versions of <B>ldd</B> may
+attempt to obtain the dependency information by attempting to directly
+execute the program, which may lead to the execution of whatever code is
+defined in the program's ELF interpreter, and perhaps to execution of the
+program itself.  (In glibc versions before 2.27, the upstream <B>ldd</B>
+implementation did this for example, although most distributions provided a
+modified version that did not.)
+<P>
+
+Thus, you should <I>never</I> employ <B>ldd</B> on an untrusted executable, since
+this may result in the execution of arbitrary code.  A safer alternative
+when dealing with untrusted executables is:
+<P>
+
+
+
+$ <B>objdump -p /path/to/program | grep NEEDED</B>
+
+
+<P>
+
+Note, however, that this alternative shows only the direct dependencies of
+the executable, while <B>ldd</B> shows the entire dependency tree of the
+executable.
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>--version</B><DD>
+<B>ldd</B> のバージョン番号を表示する。
+<DT><B>-v</B>, <B>--verbose</B><DD>
+シンボルのバージョン情報などを含めた全ての情報を表示する。
+<DT><B>-u</B>, <B>--unused</B><DD>
+使用されていない直接の依存関係を表示する (glibc 2.3.4 以降)。
+<DT><B>-d</B>, <B>--data-relocs</B><DD>
+リロケーションを実行し、足りないオブジェクトについてレポートする (ELF のみ)。
+<DT><B>-r</B>, <B>--function-relocs</B><DD>
+足りないオブジェクトや関数についてレポートする (ELF のみ)。
+<DT><B>--help</B><DD>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+使用法を表示する。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>ldd</B> は a.out 共有ライブラリでは動作しない。
+<P>
+
+
+
+
+<B>ldd</B> は非常に古い a.out プログラム (<B>ldd</B> のサポートがコンパイラに追加される以前にビルドされたようなプログラム)
+では動作しない。 このようなプログラムに対して <B>ldd</B> を用いると、プログラムは <I>argc</I> = 0 で実行される。結果は予想不可能である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/pldd.1.html">pldd</A></B>(1), <B><A HREF="../man1/sprof.1.html">sprof</A></B>(1), <B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8), <B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8)
+<A NAME="lbAI">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">セキュリティ</A><DD>
+</DL>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

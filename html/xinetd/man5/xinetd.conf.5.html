@@ -1,0 +1,1471 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of XINETD.CONF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>XINETD.CONF</H1>
+Section: File Formats (5)<BR>Updated: 14 June 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/xinetd/release/man5/xinetd.conf.5">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+xinetd.conf - 拡張されたインターネットサービスデーモンの設定ファイル
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<B>xinetd.conf</B>
+
+は <B>xinetd</B> によって提供されるサービスを決定する設定ファイルである。
+行の最初の空白ではない文字が '#' ならばコメント行とみなされる。
+空行は無視される。
+<P>
+
+ファイルは以下の形式のエントリからなる:
+<DL COMPACT><DT><DD>
+<PRE>
+<B>
+service &lt;service_name&gt;
+{
+<DL COMPACT><DT><DD>&lt;属性&gt; &lt;assign_op&gt; &lt;値&gt; &lt;値&gt; ...
+</B><I>...</I>
+</DL>
+<B>}</B>
+</PRE>
+
+</DL>
+
+<P>
+
+代入演算子
+<I>assign_op</I>
+
+は
+<B>'=', </B>
+
+<B>'+=',</B>
+
+<B>'-='</B>
+
+のいずれかである。
+殆んどの属性は単純な代入演算子である
+<B>'='</B>
+
+のみをサポートする。
+値が値の組合せであるような属性は、すべての代入演算子をサポートする。
+そのような属性については、
+<B>'+='</B>
+
+は組合せに値を追加することを、
+<B>'-='</B>
+
+は組合せから値を削除することを意味する。
+どの属性がどの演算子をサポートするかは、
+すべての属性について述べた後に記述する。
+<P>
+
+各エントリは <I>service_name</I> で識別されるサービスについて定義する。
+<DL COMPACT>
+<DT><B>id</B>
+
+<DD>
+この属性はサービスを識別するのに用いられる。
+サービスの中には違うプロトコルを使えるものがあり、
+その場合は設定ファイルの別のエントリに記述されるので、
+そうしたときに有用である。
+デフォルトではサービス id は service_name と同じである。
+<DT><B>type</B>
+
+<DD>
+以下の値の任意の組合せである:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>RPC</B>
+
+<DD>
+RPC を使ったサービスである
+<DT><B>INTERNAL</B>
+
+<DD>
+<B>xinetd</B> によって提供されるサービス
+<DT><B>TCPMUX/TCPMUXPLUS</B>
+
+<DD>
+well-known(良く知られた)TCPMUX ポートを使う、RFC 1078
+プロトコルによって開始されるサービス。
+後述する TCPMUX サービスについて書かれた節を参照のこと。
+<DT><B>UNLISTED</B>
+
+<DD>
+標準的なシステムファイル
+(RPC サービスなら
+<I>/etc/rpc</I>,
+
+RPC でないサービスなら
+<I>/etc/services</I>)
+
+にはないサービス
+</DL>
+</DL>
+
+<DT><B>flags</B>
+
+<DD>
+以下のフラグの任意の組合せである:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>INTERCEPT</B>
+
+<DD>
+パケットまたはすでに受けつけた接続を、
+それが受け付けてよい場所から来ているのかを確かめるために横取りする
+(内部サービスまたはマルチスレッドサービスは横取りできない)。
+<DT><B>NORETRY</B>
+
+<DD>
+フォークに失敗しても再試行しない。
+<DT><B>IDONLY</B>
+
+<DD>
+リモート側が、リモートのユーザを識別しているときのみ接続を受け付ける
+(すなわち、リモートホストは ident サーバを動かさなければならない)。
+ログオプション
+<B>USERID</B>
+
+が使われてない場合には、このフラグは効果がない。
+<DT><B>NAMEINARGS</B>
+
+<DD>
+&quot;server_args&quot; の最初の引き数を、サーバが実行される際の argv[0] にする。
+これにより、普通の inetd のように &quot;server&quot; を tcpd にし、
+サーバー名を &quot;server_args&quot; に入れることで、tcpd を使うことができる。
+<DT><B>NODELAY</B>
+
+<DD>
+サービスが TCP のサービスで NODELAY フラグが立てられている場合、
+ソケットに TCP_NODELAY フラグを立てる。
+サービスが TCP のサービスでなければ、このオプションは効果がない。
+<DT><B>KEEPALIVE</B>
+
+<DD>
+サービスが TCP のサービスで、KEEPALIVE フラグが立てられた場合は、
+ソケットに SO_KEEPALIVE フラグが立てられる。
+サービスが TCP のサービスでなければ、このオプションは効果がない。
+<DT><B>NOLIBWRAP</B>
+
+<DD>
+サービスへのアクセスを判断するのに、tcpwrap の内部呼び出しを行わない。
+xinetd のように長い時間動くプロセスには libwrap 機能が使えないので、
+これは必要になる;
+その様な場合には tcpd プログラムを明示的に起動することができる(NAMEINARGS フラグの項を見よ)。
+<DT><B>SENSOR</B>
+
+<DD>
+サービスの代わりに、指定されたポートへのアクセスを検知するセンサーを使う。
+注意: これはステルススキャンを検知しない。
+必要ないということが分かっているサービスにのみ、このフラグを用いるべきである。
+このサービスのポートへアクセスがあると、IP アドレスが no_access
+リストへ追加される。
+以降の同じ IP アドレスからのアクセスは、deny_time で設定した期限が切れるまで
+拒否される。
+このリストへ費やす時間の長さは、deny_time 属性で設定が可能である。
+また、SENSOR フラグが指定された場合、同じ行に何が書かれていようと、
+サーバに INTERNAL 属性が指定されたと xinetd はみなす。
+あと一つ覚えておくべき重要なことは、socket_type を stream に設定した場合は、
+wait 属性は no に設定されなければならないということである。
+<DT><B>IPv4</B>
+
+<DD>
+サービスを IPv4 サービス(AF_INET)にする。
+<DT><B>IPv6</B>
+
+<DD>
+IPv6 がシステムで有効であれば、サービスを IPv6 サービス(AF_INET6)にする。
+</DL>
+</DL>
+
+<DT><B>disable</B>
+
+<DD>
+&quot;yes&quot; または &quot;no&quot; の真偽値をとる。
+これによりサービスが使用不能になり、起動されなくなる。
+DISABLE フラグに関する記述を見よ。
+
+<DT><B>socket_type</B>
+
+<DD>
+この属性に指定可能な値は以下:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>stream</I>
+
+<DD>
+ストリーム型サービス
+<DT><I>dgram</I>
+
+<DD>
+データグラム型サービス
+<DT><I>raw</I>
+
+<DD>
+IP への直接制御が必要なサービス
+<DT><I>seqpacket</I>
+
+<DD>
+信頼できる連続的なデータグラム交換が必要なサービス
+</DL>
+</DL>
+
+<DT><B>protocol</B>
+
+<DD>
+サービスに使われるプロトコルを指定する。
+プロトコルは
+<I>/etc/protocols</I>
+
+になければならない。
+この属性が指定されなかった場合、サービスのデフォルトのプロトコルが使われる。
+<DT><B>wait</B>
+
+<DD>
+この属性はサービスがシングルスレッドか、マルチスレッドかを決定する。
+値が <I>yes</I> ならシングルスレッドである;
+すなわち <B>xinetd</B> は、サーバーを起動したらそのサーバが死ぬまでは、
+そのサービスへの要求に対する処理を停止する。
+値が <I>no</I> ならサービスはマルチスレッドであり、
+<B>xinetd</B> はサービスへの新たな要求を処理し続ける。
+<DT><B>user</B>
+
+<DD>
+サーバプロセスの uid を指定する。
+ユーザ名は
+<I>/etc/passwd</I>
+
+になければならない。
+<B>xinetd</B> の実効ユーザIDがスーパーユーザーではない場合には、
+この属性は効果がない。
+<DT><B>group</B>
+
+<DD>
+サーバプロセスの gid を指定する。
+グループ名は
+<I>/etc/group</I>
+
+になければならない。
+<B>xinetd</B> の実効ユーザIDがスーパーユーザーではない場合には、
+この属性は効果がない。
+<DT><B>instances</B>
+
+<DD>
+サーバが同時にいくつサービスできるかを指定する(デフォルトは無制限)。
+この属性の値は数値か、もしくは無制限を意味する
+<B>UNLIMITED</B>
+
+のどちらかである。
+<DT><B>nice</B>
+
+<DD>
+サーバーの優先度を指定する。
+値は(負の)数値である; 詳しくは nice(3)(訳注:Linux では <A HREF="../../LDP_man-pages/man2/nice.2.html">nice</A>(2))を見よ。
+<DT><B>server</B>
+
+<DD>
+そのサービスのために実行するプログラムを指定する
+<DT><B>server_args</B>
+
+<DD>
+サーバに渡される引き数を指定する。
+<B>inetd</B> とは違い、サーバ名は <I>server_args</I> には含め<I>ない</I>。
+<DT><B>only_from</B>
+
+<DD>
+そのサービスを可能にするリモートホストを指定する。
+値は IP アドレスのリストで、以下の方法の任意の組合せである:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>a)</B>
+
+<DD>
+%d.%d.%d.%d形式の数値アドレス。
+右端の部分が 0 であればワイルドカードとして扱われる
+(例えば、128.138.12.0 は 128.128.12 サブネットのすべてのホストに合致する)。
+0.0.0.0 はすべてのインターネットアドレスに合致する。
+IPv6 ホストは abcd:ef01::2345:6789 のような形式で指定する。
+IPv4 の場合のワイルドカードに関するルールは、IPv6 アドレスには適用されない
+<DT><B>b)</B>
+
+<DD>
+%d.%d.%d.{%d,%d,...}形式の組合せアドレス。
+4 つすべての部分が必要なわけではない
+(すなわち%d.%d.{%d,%d,...%d}形式も可である)。
+しかし、組合せの部分はアドレスの最後でなければならない。
+この形式は IPv6 ホストでは使えない。
+<DT><B>c)</B>
+
+<DD>
+(<I>/etc/networks</I>
+
+から得られる)ネットワーク名。
+この形式は IPv6 ホストでは使えない。
+<DT><B>d)</B>
+
+<DD>
+ホスト名。
+xinetd への接続がなされると、逆引きが行われ、
+得られた正規名(canonical name)と指定されたホスト名が比較される。
+.domain.com 形式のドメイン名を指定することもできる。
+クライアント IP の逆引き結果が .domain.com 内部なら、
+そのクライアントは合致したことになる。
+<DT><B>e)</B>
+
+<DD>
+1.2.3.4/32 形式の IPアドレス/ネットマスク 範囲指定。
+</DL>
+</DL>
+
+<DT><B></B>
+
+<DD>
+値の指定をせずにこの属性を指定すると、
+いかなるユーザにもサービス使用不可となる。
+<DT><B>no_access</B>
+
+<DD>
+そのサービスが使用できないリモートホストを指定する。
+値の指定方法は <B>only_from</B> と同じである。
+これら二つの属性により <B>xinetd</B> は場所に基づいたアクセス制御を行う。
+サービスに対しこの二つのどちらも指定されない場合には、
+そのサービスは誰でも使用可になる。
+サービスに対しこの二つが共に指定された場合には、
+リモートホストのアドレスがよりよく(より正確に)合致した方に基づき、
+そのサービスがそのホストで使用できるかどうかが決定される
+(例えば、<B>only_from</B> リストに 128.138.209.0 があり、
+<B>no_access</B> リストに 128.138.209.10 があった場合には、
+アドレスが 128.138.209.10 のホストはそのサービスへはアクセスできない)。
+<DT><B>access_times</B>
+
+<DD>
+サービスが使用できる時間間隔を指定する。
+間隔の形式は <I>時:分-時:分</I> である
+(間隔の境界での接続は受け付けられる<I>だろう</I>)。
+時間は 0 から 23 の範囲で、分は 0 から 59 である。
+<DT><B>log_type</B>
+
+<DD>
+サービスのログ出力がどこに送られるかを指定する。
+二つの形式がある:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>SYSLOG  </B><I>syslog_facility [syslog_level]</I>
+
+<DD>
+ログ出力は指定された機能分類(facility)で syslog に送られる。
+指定可能な機能分類は
+<I>daemon</I>, <I>auth</I>, <I>authpriv</I>, <I>user</I>, <I>mail</I>,
+
+<I>lpr</I>, <I>news</I>, <I>uucp</I>, <I>ftp</I>, <I>local0-7</I>
+
+である。
+指定可能なレベル名は
+<I>emerg</I>, <I>alert</I>, <I>crit</I>, <I>err</I>, <I>warning</I>, <I>notice</I>, <I>info</I>, <I>debug</I>
+
+である。
+レベル指定がない場合には、メッセージは
+<I>info</I>
+
+レベルで記録される。
+<DT><B>FILE  </B><I>file [soft_limit [hard_limit]]</I>
+
+<DD>
+ログ出力は <I>file</I> に追加され、そのファイルが無ければ作成される。
+ログファイルのサイズに関しては、二つの制限をオプションで指定できる。
+一つ目の制限は弱い制限(soft_limit)である;
+<B>xinetd</B>
+
+はこの制限を最初に越えたときにログ出力を行う
+(<B>xinetd</B>
+
+が syslog に出力する場合は、メッセージは優先度レベル
+<I>alert</I>
+
+で送られる)。
+二つ目の制限は強い制限(hard_limit)である;
+<B>xinetd</B>
+
+は影響があるサービス
+(ログファイルとして共通のログファイルを使っている場合には、
+二つ以上のサービスが影響受ける)
+のログ出力を中止し、その様にしたというメッセージをログ出力する
+(<B>xinetd</B>
+
+が syslog に出力する場合は、メッセージは優先度レベル
+<I>alert</I>
+
+で送られる)。
+強い制限が指定されていない場合は、デフォルトは弱い制限を 1% 増やした値である。
+ただし、増やすサイズはパラメータ
+<FONT SIZE="-1">LOG_EXTRA_MIN</FONT>
+と
+<FONT SIZE="-1">LOG_EXTRA_MAX</FONT>
+(デフォルトは 5K と 20K で、
+これらの定数は(コンパイル時に) <I>config.h</I> で定義される)
+の間になければならない。
+</DL>
+</DL>
+
+<DT><B>log_on_success</B>
+
+<DD>
+サーバ起動時と終了時にどの情報をログ出力するかを指定する
+(サービス id はログエントリに必ず含まれる)。
+以下の値の任意の組合せが指定可能である:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>PID</B>
+
+<DD>
+サーバのプロセスIDを出力する
+(サービスが <B>xinetd</B> によって実装され、
+他のプロセスへとフォークされない場合には、プロセス ID として 0 が出力される)
+<DT><B>HOST</B>
+
+<DD>
+リモートホストのアドレスを出力する
+<DT><B>USERID</B>
+
+<DD>
+RFC 1413 で示される ident(identification) プロトコルを使って、
+リモートユーザのユーザ ID を出力する。
+このオプションはマルチスレッドなストリームサービスにのみ使用できる。
+<DT><B>EXIT</B>
+
+<DD>
+サーバが終了したことを、終了ステータスまたは終了シグナルと共に出力する
+(<B>PID</B>
+
+オプションが指定されている場合にはプロセスIDも出力される)
+<DT><B>DURATION </B>
+
+<DD>
+サービスセッションの時間を出力する
+</DL>
+</DL>
+
+<DT><B>log_on_failure</B>
+
+<DD>
+サーバが起動できなかった場合
+(リソースが足りなかった場合と、アクセス制御による制限による場合のどちらでも)
+にどの情報をログ出力するかを指定する。
+サービスのidは失敗した理由と共に常にログエントリに含まれる。
+以下の値の任意の組合せが指定可能である:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>HOST</B>
+
+<DD>
+リモートホストのアドレスを出力する
+<DT><B>USERID</B>
+
+<DD>
+RFC 1413 で示されるident プロトコルを使って、
+リモートユーザのユーザ ID を出力する。
+このオプションはマルチスレッドなストリームサービスにのみ使用できる。
+<DT><B>ATTEMPT</B>
+
+<DD>
+失敗があったことを出力する
+(このオプションは他のすべてのオプションに含まれる)。
+</DL>
+</DL>
+
+<DT><B>rpc_version</B>
+
+<DD>
+RPC サービスの RPC バージョンを指定する。
+バージョンには一つの数か、<I>number</I>-<I>number</I> 形式の範囲を指定できる。
+<DT><B>rpc_number</B>
+
+<DD>
+<I>リストにない(UNLISTED)</I>
+
+RPCサービスの番号を指定する
+(サービスが標準的なシステムファイルにリストされているなら、
+この属性は無視される)。
+<DT><B>env</B>
+
+<DD>
+この属性の値は 'name=value' 形式の文字列のリストである。
+これらの文字列はサーバが起動する前に、環境に加えられる
+(すなわち、
+サーバの環境は <B>xinetd</B> の環境に指定された文字列を加えたものである)。
+<DT><B>passenv</B>
+
+<DD>
+この属性の値は <B>xinetd</B> の環境変数のリストで、
+その環境がサーバへと渡される。
+空のリストは、
+<I>env</I>
+
+属性を使って明示的に指定されたものを除いて、
+どの変数もサーバへと渡されないことを意味する
+(この属性と
+<I>env</I>
+
+の組合せによって、
+サーバにどの環境が渡されるかを正確に指定できるということである)
+<DT><B>port</B>
+
+<DD>
+サービスのポートを指定する。
+<I>/etc/services</I>
+
+ファイルにリストされているサービスに対してこの属性が指定された場合、
+その値とファイルにあるポート番号とは等しくなければならない。
+<DT><B>redirect</B>
+
+<DD>
+TCP サービスの他ホストへの転送を指定する。
+このポートへの接続を xinetd が受け取ったら、プロセスを起動し、
+指定されたホストのポート番号への接続を確立し、
+二つのホストの間ですべてのデータを転送する。
+このオプションは、内部マシンが外界から見えない場合に有用である。
+書式は redirect = (IPアドレス) (ポート) である。
+IP アドレスの代わりにホスト名を使うこともできる。
+ホスト名検索は xinetd が起動した時の一回のみ行われ、
+最初に返された IP アドレスが xinetd が再起動されるまで使われる。
+このオプションが指定された場合には &quot;server&quot; 属性は必要ではない。
+&quot;server&quot; 属性が指定されても、こちらの属性の方が優先される。
+<DT><B>bind</B>
+
+<DD>
+マシンの特定のインタフェースにサービスを割り当てることを指定する。
+これは、安全なインタフェースであるローカルインタフェースで待ち(listen)、
+外部インタフェースではそうしないような telnet サーバが
+作成できることを意味する。
+また、あるインタフェースのあるポートで何かしている場合に、
+同時に違うインタフェースの同じポートで全く違ったことができる。
+書式は bind = (インタフェースの IP アドレス) である。
+<DT><B>interface</B>
+
+<DD>
+bind に同じ。
+<DT><B>banner</B>
+
+<DD>
+サービスへの接続が確立された時に、
+リモートホストで表示されるファイルの名前を指定する。
+このバナーはアクセス制御に関係なく表示される。
+接続がなされた場合には *いつでも* これが表示されるはずである。
+<DT><B>banner_success</B>
+
+<DD>
+サービスへの接続が許可された時に、
+リモートホストで表示されるファイルの名前を指定する。
+このバナーはサービスへのアクセスが許可されるとすぐに表示される。
+<DT><B>banner_fail</B>
+
+<DD>
+サービスへの接続が拒否された時に、
+リモートホストで表示されるファイルの名前を指定する。
+このバナーはアクセスが拒否されるとすぐに表示される。
+ユーザに対し、そのユーザが何か悪いことをしたということ、
+そしてこれ以上何もするなということを通知するのに有用である。
+<DT><B>per_source</B>
+
+<DD>
+発信元 IP アドレスごとの、そのサービスに対する最大サービス数を指定する。
+引き数には一つの整数か &quot;UNLIMITED&quot;(無制限) をとる。
+このオプションは、デフォルトセクション(後述)で指定することも可能である。
+<DT><B>cps</B>
+
+<DD>
+入ってくる接続の割合の制限。
+二つの引き数を取る。
+最初の引き数は 1 秒あたりに処理する接続数である。
+入ってくる接続の割合がこの値より大きくなると、
+サービスは一時的に使用不可になる。
+二つ目の引き数は、使用不可になってから再び使用可能になるまでに待つ秒数である。
+この設定のデフォルトは、50 の入ってくる接続と、待つのは 10 秒である。
+<DT><B>max_load</B>
+
+<DD>
+サービスが接続の受け付けを停止するようになる負荷(load)値を、
+浮動小数点数で指定する。
+例えば、2 や 2.5 である。
+負荷がこの値になると、サービスは接続の受け付けを停止する。
+これは 1 分間の平均負荷値(load average)である。
+これは OS に依存した機能で、Linux と Solaris でだけサポートされる。
+<DT><B>groups</B>
+
+<DD>
+
+&quot;yes&quot; または &quot;no&quot; を引き数にとる。
+groups 属性が &quot;yes&quot; の場合、サーバの実効 UID でアクセスできる
+グループにアクセスできるようにサーバが実行される。
+groups 属性が &quot;no&quot; の場合、サーバは他のグループなしで実行される。
+多くの BSD システムでは、この属性は &quot;yes&quot; にされなければならない。
+このオプションは、デフォルトセクションで指定することも可能である。
+<DT><B>umask</B>
+
+<DD>
+サービスが継承する umask を指定する。
+8進数で指定する。
+全てのサービスの umask を設定するために、&quot;defaults&quot; セクションで
+指定することも可能である。
+xinetd は自分自身の umask を、継承した umask と 022 との OR に設定する。
+umask オプションが指定されなければ、この xinetd の umask 値が全ての
+子プロセスに継承される。
+<DT><B>enabled</B>
+
+<DD>
+有効にするサービス名のリストを指定する。
+この属性の引数としてリストされたサービスだけが有効になる。
+すなわち、残りのサービスは無効になる。
+&quot;disable&quot; 属性と &quot;DISABLE&quot; フラグは、この属性でリストされたかに関係なく
+サービスが有効になるのを防ぐことができることに注目せよ。
+<DT><B>include</B>
+
+<DD>
+&quot;include /etc/xinetd/service&quot; という形式で、ファイル名を指定する。
+そのファイルは新たな設定ファイルとして解析(parse)される。
+xinetd.conf の include が指定された場所にファイルを貼り付けるのとは、
+同じではない。
+取り込まれたファイルは xinetd.conf と同じ形式でなければならない。
+サービス定義の内部でこの属性を指定してはいけない。
+サービス定義の外側で指定されなければならない。
+<DT><B>includedir</B>
+
+<DD>
+&quot;includedir /etc/xinetd.d&quot; という形式でディレクトリ名を指定する。
+そのディレクトリのすべてのファイル(ただし名前にドット('.')を含むファイルと、
+名前がチルダ('~')で終わるファイル以外)
+は xinetd 設定ファイルとして解析される。
+ファイルは C ロケールでのアルファベット順で解析される。
+<B>includedir </B>
+
+はサービス定義の内部で指定されてはならない。
+<DT><B>rlimit_as</B>
+
+<DD>
+サービスの、アドレス空間資源の制限を設定する。
+パラメータが一つ必要で、制限するバイト数
+(キロバイト・メガバイトを指定するのに K, M が使える)を表す正の整数か、
+&quot;UNLIMITED&quot; (無制限)を指定する。
+Linux の libc の malloc の実装方法の関係で、
+rlimit_data, rlimit_rss, rlimit_stack よりもこの制限を設定する方が有用である。
+この資源制限は Linux システムでのみ実装されている。
+<DT><B>rlimit_cpu</B>
+
+<DD>
+サービスが使える最大 CPU 時間(秒単位)を設定する。
+パラメータが一つ必要で、CPU 時間を制限する正の整数か、
+&quot;UNLIMITED&quot; (無制限)を指定する。
+<DT><B>rlimit_data</B>
+
+<DD>
+サービスの最大データサイズの制限を設定する。
+パラメータが一つ必要で、バイト数を表す正の整数か、
+&quot;UNLIMITED&quot; (無制限)を指定する。
+<DT><B>rlimit_rss</B>
+
+<DD>
+サービスの最大常駐サイズの制限を設定する。
+この値を小さくすれば、メモリが少ない時に
+プロセスがディスクへとスワップアウトされる候補になりやすくなる。
+パラメータが一つ必要で、バイト数を表す正の整数か、
+&quot;UNLIMITED&quot; (無制限)を指定する。
+<DT><B>rlimit_stack</B>
+
+<DD>
+サービスの最大スタックサイズを設定する。
+パラメータが一つ必要で、バイト数を表す正の整数か、
+&quot;UNLIMITED&quot; (無制限)を指定する。
+<DT><B>deny_time</B>
+
+<DD>
+SENSOR を作動させた何者かの IP アドレスからの、全てのサービスへのアクセスを
+拒否する期間。単位は分。
+指定可能なオプションは FOREVER, NEVER そして数値である。
+FOREVER では、xinetd が再起動されるまでその IP アドレスは消去されない。
+NEVER は迷惑な IP アドレスをログに取る効果だけである。
+典型的な値は 60 分である。
+これなら、正当な目的でその IP アドレスが再利用されるのを許可する一方で、
+殆んどの DoS 攻撃を防ぐことができる。
+このオプションは SENSOR フラグとの組合わせで用いること。
+</DL>
+<P>
+
+それぞれのサービスで以上の属性をすべて指定する必要はない。
+必要な属性は以下の通り:
+<P>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>socket_type</B>
+
+<DD>
+<DT><B>user</B>
+
+<DD>
+(非<I>内部</I>サービスのみ)
+<DT><B>server</B>
+
+<DD>
+(非<I>内部</I>サービスのみ)
+<DT><B>wait</B>
+
+<DD>
+<DT><B>protocol</B>
+
+<DD>
+(<I>RPC</I> と <I>リストにない(UNLISTED)</I>サービスのみ)
+<DT><B>rpc_version</B>
+
+<DD>
+(<I>RPC</I> サービスのみ)
+<DT><B>rpc_number</B>
+
+<DD>
+(<I>リストにない</I> RPC サービスのみ)
+<DT><B>port</B>
+
+<DD>
+(<I>リストにない</I>非 RPC サービスのみ)
+</DL>
+</DL>
+
+
+<P>
+
+以下の属性はすべての代入演算子をサポートする:
+<P>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>only_from</B>
+
+<DD>
+<DT><B>no_access</B>
+
+<DD>
+<DT><B>log_on_success</B>
+
+<DD>
+<DT><B>log_on_failure</B>
+
+<DD>
+<DT><B>passenv</B>
+
+<DD>
+<DT><B>env</B>
+
+<DD>
+(<B>'-='</B>
+
+演算子はサポートしない)
+</DL>
+</DL>
+
+
+<P>
+
+これらの属性は一つのサービスエントリで複数回あらわれてもよい。
+残りの属性は
+<B>'='</B>
+
+演算子のみをサポートし、一つのサービスエントリで一回以下しか現れない。
+<P>
+
+また、設定ファイルは以下の形式のデフォルトエントリを一つ持つ。
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+<B>defaults
+{
+<DL COMPACT><DT><DD>&lt;属性&gt; = &lt;値&gt; &lt;値&gt; ...
+</B><I>...</I>
+</DL>
+<B>}
+</B></PRE>
+
+</DL>
+
+<P>
+
+このエントリは、そのサービスで属性値が指定されなかった場合の、
+デフォルトの属性値を決定する。指定可能なデフォルトの属性は:
+<P>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>log_type</B>
+
+<DD>
+<DT><B>bind </B>
+
+<DD>
+<DT><B>per_source </B>
+
+<DD>
+<DT><B>umask </B>
+
+<DD>
+<DT><B>log_on_success</B>
+
+<DD>
+(積算効果)
+<DT><B>log_on_failure</B>
+
+<DD>
+(積算効果)
+<DT><B>only_from</B>
+
+<DD>
+(積算効果)
+<DT><B>no_access</B>
+
+<DD>
+(積算効果)
+<DT><B>passenv</B>
+
+<DD>
+(積算効果)
+<DT><B>instances</B>
+
+<DD>
+<DT><B>disabled</B>
+
+<DD>
+(積算効果)
+<DT><B>enabled</B>
+
+<DD>
+(積算効果)
+</DL>
+</DL>
+
+
+<P>
+
+積算効果を持つ属性は、複数回指定することができ、その度に積み上げられる
+(すなわち '=' は '+=' と同じことをする)。
+<I>disabled</I>
+
+の例外を除いて、サービスエントリで指定された場合と同じ意味を持つ。
+<I>disabled</I>
+
+は、設定ファイルにエントリがあるものでさえも使用不可にする。
+これにより、コメントアウトする代わりに、
+<I>disabled</I>
+
+属性を使って使用不可にするサービスを、素早く再設定できる。
+この属性の値は、スペースで区切られた、サービス id のリストである。
+<I>enabled</I>
+
+は disabled と同じ特性を持つ。違いは
+<I>enabled</I>
+
+は使用可能にするサービスのリストであるということだ。もし
+<I>enabled</I>
+
+が指定された場合、指定されたサービスだけが使用可能になる。
+<I>enabled</I>
+
+が指定されなかった場合は、すべてのサービスが使用可能と仮定され、
+<I>disabled</I>
+
+にリストされたものが除外される。
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>内部サービス</H2>
+
+<P>
+
+<B>xinetd</B> は以下のサービスを内部的に提供する
+(ストリーム型、データグラム型の両方とも):
+<I>echo</I>, <I>time</I>, <I>daytime</I>, <I>chargen</I>, <I>discard</I>
+
+である。
+<B>xinetd</B> が他のプロセスへと fork する必要がないということを除けば、
+これらのサービスは、他のサービスと同様にアクセス制限の下にある。
+これら
+(<I>time</I>, <I>daytime</I>
+
+と、データグラム型の
+<I>echo</I>, <I>chargen</I>, <I>discard</I>)
+
+は
+<B>instances</B>
+
+の数に制限がない。
+<P>
+
+<B>xinetd</B>
+
+はまた、二つの
+<I>UNLISTED</I>
+
+なストリーム型内部サービスを提供する:
+<I>servers</I>
+
+と
+<I>services</I>
+
+である。
+前者は実行しているサーバの情報を表示し、
+一方後者は現在有効なサービスのリストを提供する。
+一行に一つのサービスで、
+各行はサービス名・プロトコル(例えば &quot;tcp&quot;)・ポート番号からなる。
+<P>
+
+今や管理インタフェースがあり、それは内部サービスである。
+サービス名 &quot;xadmin&quot; は予約されており、それは常に内部サービスである。
+このサービスにはポート番号を指定しなければならず、
+多分 IP ベースのアクセス制御もしなければならないだろう。
+なぜならば、これを執筆している時点では、
+パスワード保護を何も持たないからである。
+このポートに telnet し、xinetd にいくらかの問い合わせをすることができる。
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>TCPMUX サービス</H2>
+
+<P>
+
+<B>xinetd</B>
+
+は RFC 1078 に準拠した TCPMUX サービスをサポートする。
+サービスがそれに対応する well-known ポートを持たなくても、
+well-known ポートである TCPMUX を通じてアクセスができる。
+<P>
+
+TCPMUX を通じてアクセスされるサービスは、それぞれ
+<B>/etc/xinetd.conf</B>
+
+にサービスエントリーを持つか、もしくは
+<B>includedir</B>
+
+ディレクトリの設定ファイルにサービスエントリがなければならない。
+<P>
+
+
+
+<I>service_name</I>
+
+フィールド(各
+<B>xinetd</B>
+
+の設定ファイルで、サービスの最初で定義される)は
+<B>xinetd</B>
+
+に(RFC 1078 プロトコルによって)渡される文字列に等しくなければならない。
+それはリモートのサービス要求者が最初に well-known ポートである TCPMUX に
+アクセスしたときに渡される。
+プライベートなプロトコルは高い確率で一意になるサービス名を使うべきだ。
+ひとつの方法は、ドメイン名の前にサービス名を付加することである、
+<P>
+
+<I>type</I>
+
+フィールドは
+<B>TCPMUX</B>
+
+または
+<B>TCPMUXPLUS</B>
+
+のどちらかである。
+<B>TCPMUXPLUS</B>
+
+が指定された場合、
+<B>xinetd</B>
+
+はサービスを初期化する前にプロセス呼び出して、
+(RFC 1078 で定義される)プロトコルの最初のハンドシェイクを処理する。
+type が
+<B>TCPMUX</B>
+
+の場合は、ハンドシェークを遂行するために開始されているサーバが対処する。
+<P>
+
+サービスが標準的なシステムファイル
+(RPC サービスなら、
+<I>/etc/rpc</I>,
+
+RPCサービスでないなら
+<I>/etc/services</I>
+
+など)
+に無い場合は、
+<I>type</I>
+
+には
+<B>UNLISTED</B>
+
+も指定する。
+<P>
+
+これらのサービスに対する
+<I>socket_type</I>
+
+は
+<B>stream</B>
+
+でなければならず、また
+<I>protocal</I>
+
+は
+<B>tcp</B>
+
+でなければならない。
+<P>
+
+以下は TCPMUX サービス設定のサンプルである。
+
+<DL COMPACT><DT><DD>
+<PRE>
+
+service myorg_server
+{
+<DL COMPACT><DT><DD><DL COMPACT>
+<DT>disable<DD>= no
+<DT>type<DD>= TCPMUX
+<DT>socket_type<DD>= stream
+<DT>protocol<DD>= tcp
+<DT>wait<DD>= no
+<DT>user<DD>= root
+<DT>server<DD>= /usr/etc/my_server_exec
+</DL>
+</DL>
+}
+</PRE>
+
+</DL>
+
+
+<P>
+
+well-known ポートの TCPMUX を通じてアクセスされる各サービスの
+サービスエントリの他に、TCPMUX 自身のサービスエントリも
+<B>xinetd</B>
+
+の設定の中に含まれなければならない。
+以下のサンプルを見よ:
+
+<DL COMPACT><DT><DD>
+<PRE>
+
+service tcpmux
+{
+<DL COMPACT><DT><DD><DL COMPACT>
+<DT>type<DD>= INTERNAL
+<DT>id<DD>= tcpmux
+<DT>socket_type<DD>= stream
+<DT>protocol<DD>= tcp
+<DT>user<DD>= root
+<DT>wait<DD>= no
+</DL>
+</DL>
+}
+</PRE>
+
+</DL>
+
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>注意</H2>
+
+<DL COMPACT>
+<DT>1.<DD>
+以下のサービス属性は、再設定で変更することが<I>できない</I>:
+<B>socket_type</B>, <B>wait</B>, <B>protocol</B>, <B>type</B>
+
+である。
+<DT>2.<DD>
+属性
+<I>only_from</I>
+
+と
+<I>no_access</I>
+
+が(直接、<I>defaults</I>のどちらでも)指定されなかったサービスは、
+アドレスの照合は成功したものとして扱われる
+(すなわち、アクセスは拒否されない)。
+<DT>3.<DD>
+アドレス照合はリモートホストの IP アドレスとを基にしており、
+ドメインアドレスには依らない。
+長い時間がかかるリモートホストの名前検索を避けられるので、そうなっている
+(なぜならば、
+<B>xinetd</B>
+
+は単一スレッドであり、
+名前検索はデーモンがその検索を終えるまで、
+他の全ての要求を受け付けるのを妨げるからである)。
+この枠組の悪い面は、リモートホストの IP アドレスが変わってしまうと
+<B>xinetd</B>
+
+を再設定するまでは、アクセスが拒否されてしまうことである。
+アクセスが実際に供されるかどうかは、
+新たな IP アドレスが許可されたアクセスにあるかどうかによる。
+例えば、ホストの IP アドレスが 1.2.3.4 から 1.2.3.5 に変更され、
+only_from が 1.2.3.0 と指定されていれば、アクセスは拒否されない。
+<DT>4.<DD>
+ログオプション
+<B>USERID</B>
+
+が指定され、もしリモートホストが ident サーバを動かしてないか、または
+ident サーバが壊れた返事を送り返してきたら、
+サービスフラグ
+<I>IDONLY</I>
+
+が使われない限り、アクセスは拒否されない。
+<DT>5.<DD>
+プロセスをフォークし、
+それがリモートホストとローカルサーバの間でフィルタとして振舞うことにより、
+横取りが機能する。
+これは明らかに性能に影響を及ぼすので、
+各サービスごとのセキュリティと性能との間の妥協は、あなたに任されている。
+以下の表は横取りのオーバーヘッドを示す。
+最初の表は様々なデータグラムサイズでの、UDP ベースのサービスにおけるデータグラムあたりのオーバーヘッドである。
+TCP ベースのサービスについては、横取りによるバンド幅の減少を計測した。
+計測の間は、ある量のデータをクライアントからサーバへ送った
+(時間のオーバーヘッドは UDP ベースのサービスと同じはずだが、
+連続するデータ転送の最初のパケットだけにかかる)。
+データ量は表の
+<I>システムコール数</I>x<I>システムコールあたりのデータ量</I>
+
+から得られる。すなわち、各
+<I><A HREF="../../LDP_man-pages/man2/send.2.html">send</A>(2)</I>
+
+システムコールはそれほど多くのデータを転送した。
+バンド幅の減少は、秒あたりのバイト数と、
+横取りが行われなかった場合からの割合で与えられる。
+全ての計測は SunOS 4.1 が走る SparcStation IPC で行われた。
+<P>
+<DL COMPACT><DT><DD>
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>データグラムサイズ(バイト)<DD>
+遅延(ミリ秒)
+<DT>--------------------------<DD>
+------------
+<DT>64<DD>
+1.19
+<DT>256<DD>
+1.51
+<DT>1024<DD>
+1.51
+<DT>4096<DD>
+3.58
+<P>
+<DT>送信バイト<DD>
+バンド幅減少
+<DT>----------<DD>
+------------
+<DT>10000x64<DD>
+941 (1.2%)
+<DT>10000x256<DD>
+4,231 (1.8%)
+<DT>10000x1024<DD>
+319,300 (39.5%)
+<DT>10000x4096<DD>
+824,461 (62.1%)
+</DL>
+</DL>
+
+</DL>
+
+<P>
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>例</H2>
+
+<P>
+
+
+<DL COMPACT><DT><DD>
+<PRE>
+#
+# xinetd のサンプル設定ファイル
+#
+
+defaults
+{
+<DL COMPACT><DT><DD><DL COMPACT>
+<DT>log_type<DD>= FILE /var/log/servicelog
+<DT>log_on_success<DD>= PID
+<DT>log_on_failure<DD>= HOST RECORD
+<DT>only_from<DD>= 128.138.193.0 128.138.204.0
+<DT>only_from<DD>= 128.138.252.1 
+<DT>instances<DD>= 10
+<DT>disabled<DD>= rstatd
+</DL>
+</DL>
+}
+
+#
+# 注意 1: protocol 属性は必要ない
+# 注意 2: instances 属性はデフォルト値を上書き
+#
+service login
+{
+<DL COMPACT><DT><DD><DL COMPACT>
+<DT>socket_type<DD>= stream
+<DT>protocol<DD>= tcp
+<DT>wait<DD>= no
+<DT>user<DD>= root
+<DT>server<DD>= /usr/etc/in.rlogind
+<DT>instances<DD>= UNLIMITED
+</DL>
+</DL>
+}
+
+#
+# 注意 1: instances 属性はデフォルト値を上書き
+# 注意 2: log_on_success フラグは引き数
+#
+service shell
+{
+<DL COMPACT><DT><DD><DL COMPACT>
+<DT>socket_type<DD>= stream
+<DT>wait<DD>= no
+<DT>user<DD>= root
+<DT>instances<DD>= UNLIMITED
+<DT>server<DD>= /usr/etc/in.rshd
+<DT>log_on_success<DD>+= HOST RECORD
+</DL>
+</DL>
+}
+
+service ftp
+{
+<DL COMPACT><DT><DD><DL COMPACT>
+<DT>socket_type<DD>= stream
+<DT>wait<DD>= no
+<DT>nice<DD>= 10
+<DT>user<DD>= root
+<DT>server<DD>= /usr/etc/in.ftpd
+<DT>server_args<DD>= -l
+<DT>instances<DD>= 4
+<DT>log_on_success<DD>+= DURATION HOST USERID
+<DT>access_times<DD>= 2:00-9:00 12:00-24:00
+</DL>
+</DL>
+}
+
+# telnet セッションを、8 メガバイトのメモリーと子プロセスを
+# 合計 20 CPU 秒に制限
+service telnet
+{
+<DL COMPACT><DT><DD><DL COMPACT>
+<DT>socket_type<DD>= stream
+<DT>wait<DD>= no
+<DT>nice<DD>= 10
+<DT>user<DD>= root
+<DT>server<DD>= /usr/etc/in.telnetd
+<DT>rlimit_as<DD>= 8M
+<DT>rlimit_cpu<DD>= 20
+</DL>
+</DL>
+}
+
+#
+# このエントリとその次は、内部サービスを指定する。
+# 違うソケットタイプの同じサービスなので、
+# 各エントリを唯一に識別するために id 属性を用いる
+#
+service echo
+{
+<DL COMPACT><DT><DD><DL COMPACT>
+<DT>id<DD>= echo-stream
+<DT>type<DD>= INTERNAL
+<DT>socket_type<DD>= stream
+<DT>user<DD>= root
+<DT>wait<DD>= no
+</DL>
+</DL>
+}
+
+service echo
+{
+<DL COMPACT><DT><DD><DL COMPACT>
+<DT>id<DD>= echo-dgram
+<DT>type<DD>= INTERNAL
+<DT>socket_type<DD>= dgram
+<DT>user<DD>= root
+<DT>wait<DD>= no
+</DL>
+</DL>
+}
+
+service servers
+{
+<DL COMPACT><DT><DD><DL COMPACT>
+<DT>type<DD>= INTERNAL UNLISTED
+<DT>protocol<DD>= tcp
+<DT>port<DD>= 9099
+<DT>socket_type<DD>= stream
+<DT>wait<DD>= no
+</DL>
+</DL>
+}
+
+#
+# RPC サービスのサンプル
+#
+service rstatd
+{
+<DL COMPACT><DT><DD><DL COMPACT>
+<DT>type<DD>= RPC
+<DT>socket_type<DD>= dgram
+<DT>protocol<DD>= udp
+<DT>server<DD>= /usr/etc/rpc.rstatd
+<DT>wait<DD>= yes
+<DT>user<DD>= root
+<DT>rpc_version<DD>= 2-4
+<DT>env<DD>= LD_LIBRARY_PATH=/etc/securelib
+</DL>
+</DL>
+}
+
+#
+# リストにないサービスのサンプル
+#
+service unlisted
+{
+<DL COMPACT><DT><DD><DL COMPACT>
+<DT>type<DD>= UNLISTED
+<DT>socket_type<DD>= stream
+<DT>protocol<DD>= tcp
+<DT>wait<DD>= no
+<DT>server<DD>= /home/user/some_server
+<DT>port<DD>= 20020
+</DL>
+</DL>
+}
+</DL>
+</PRE><A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<I>xinetd(1L),</I>
+
+<P>
+
+<I><A HREF="../man5/xinetd.log.5.html">xinetd.log</A>(5)</I>
+
+<P>
+
+Postel J.,
+<I>Echo Protocol</I>,
+
+RFC 862,
+May 1983
+<P>
+
+Postel J.,
+<I>Discard Protocol</I>,
+
+RFC 863,
+May 1983
+<P>
+
+Postel J.,
+<I>Character Generator Protocol</I>,
+
+RFC 864,
+May 1983
+<P>
+
+Postel J.,
+<I>Daytime Protocol</I>,
+
+RFC 867,
+May 1983
+<P>
+
+Postel J., Harrenstien K.,
+<I>Time Protocol</I>,
+
+RFC 868,
+May 1983
+<P>
+
+M. Lottor,
+<I>TCP Port Service Multiplexer (TCPMUX)</I>,
+
+RFC 1078,
+Nov 1988
+<P>
+
+StJohns M.,
+<I> Identification Protocol</I>,
+
+RFC 1413,
+February 1993
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+<P>
+
+<B>INTERCEPT</B>
+
+フラグが使われなかった場合、
+<I>wait</I> が <I>yes</I> で <I>socket_type</I> が <I>stream</I> のときは、
+リモートホストアドレスのアクセス制御は行われない。
+<P>
+
+<B>INTERCEPT</B>
+
+フラグが使われなかった場合、
+<I>wait</I> が <I>yes</I> で <I>socket_type</I> が <I>dgram</I> のサービスの
+リモートホストアドレスによるアクセス制御は、最初のパケットにのみ行われる。
+アクセス制御リストにないホストからのパケットをサーバは受け付けてしまう。
+これは
+<B>RPC</B>
+
+サービスの場合に起きる。
+<P>
+
+環境変数に
+<FONT SIZE="-1">空白</FONT>
+を入れる方法がない。
+<P>
+
+<I>wait</I> が <I>yes</I> で <I>socket_type</I> が <I>stream</I> のとき、
+接続が受け付けられた場合のみ、ソケットがサーバへ渡される。
+<P>
+
+<B>INTERCEPT</B>
+
+フラグは、内部サービスとマルチスレッドサービスではサポートされない。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">内部サービス</A><DD>
+<DT><A HREF="#lbAE">TCPMUX サービス</A><DD>
+<DT><A HREF="#lbAF">注意</A><DD>
+<DT><A HREF="#lbAG">例</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:51 GMT, December 05, 2022
+</BODY>
+</HTML>

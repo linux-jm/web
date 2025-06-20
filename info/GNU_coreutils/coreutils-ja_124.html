@@ -1,0 +1,311 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 17.1 tee: 出力を複数のファイルやプロセスにリダイレクトする</title>
+
+<meta name="description" content="GNU Coreutils: 17.1 tee: 出力を複数のファイルやプロセスにリダイレクトする">
+<meta name="keywords" content="GNU Coreutils: 17.1 tee: 出力を複数のファイルやプロセスにリダイレクトする">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="tee-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_123.html#Redirection" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_125.html#File-name-manipulation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_123.html#Redirection" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_123.html#Redirection" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_125.html#File-name-manipulation" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="tee_003a-Chu-Li-woFu-Shu-nohuairuyapurosesuniridairekutosuru"></a>
+<h2 class="section">17.1 <code>tee</code>: 出力を複数のファイルやプロセスにリダイレクトする</h2>
+
+<a name="index-tee"></a>
+<a name="index-pipe-fitting"></a>
+<a name="index-destinations_002c-multiple-output"></a>
+<a name="index-read-from-stdin-and-write-to-stdout-and-files"></a>
+
+<p><code>tee</code> コマンドは、標準入力を標準出力にコピーするとともに、
+引数として指定されたファイル (複数可) にもコピーする。
+これは、あるデータをパイプに送るだけでなく、同時にそのコピーを保存したい場合に、便利である。
+</p>
+<p>書式:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">tee [<var>option</var>]&hellip; [<var>file</var>]&hellip;
+</pre></td></tr></table>
+
+<p>書き出し先のファイルがまだ存在していなければ、作成する。
+書き出し先のファイルがすでに存在している場合は、&lsquo;<samp>-a</samp>&rsquo;
+オプションを使用しないかぎり、ファイルに前からあったデータは上書きされる。
+</p>
+<p>GNU coreutils の従来のバージョンでは (v5.3.0 - v8.23)、
+<var>file</var> として &lsquo;<samp>-</samp>&rsquo; を指定すると、<code>tee</code>
+は入力のコピーをもう一つ標準出力に書き出していた。
+しかし、二重になった出力は、あまり役に立つものではなかったので、
+現在では POSIX の規格に従い、そこではっきりと規定されているように、
+&lsquo;<samp>-</samp>&rsquo; をそういう名前のファイルとして取り扱うようになっている。
+</p>
+<p>このプログラムでは以下のオプションが使用できる。参照: <a href="coreutils-ja_2.html#Common-options">共通オプション</a>.
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>-a</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--append</samp>&rsquo;</dt>
+<dd><a name="index-_002da-11"></a>
+<a name="index-_002d_002dappend"></a>
+<p>指定されたファイルの末尾に標準入力を追加する。すなわち、ファイルを上書きしない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-i</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--ignore-interrupts</samp>&rsquo;</dt>
+<dd><a name="index-_002di-16"></a>
+<a name="index-_002d_002dignore_002dinterrupts"></a>
+<p>割り込みシグナルを無視する。
+</p>
+</dd>
+<dt> &lsquo;<samp>-p</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--output-error[=<var>mode</var>]</samp>&rsquo;</dt>
+<dd><a name="index-_002dp-8"></a>
+<a name="index-_002d_002doutput_002derror"></a>
+<p>出力にエラーがあったときの動作を調整する。
+長い形式のオプションを使えば、下記の <var>mode</var> から動作を選択することができる。
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>warn</samp>&rsquo;</dt>
+<dd><p>パイプを含めて、出力のオープンや書き出しでエラーが起きると、警告メッセージを出す。
+エラー発生後もまだオープンされているファイルやパイプがあれば、それに対する書き込みは続行される。
+出力のいづれかにエラーがあれば、終了ステータスは失敗を示す。
+</p>
+</dd>
+<dt> &lsquo;<samp>warn-nopipe</samp>&rsquo;</dt>
+<dd><p>これが、<var>mode</var> が指定されないときや、短い形式の &lsquo;<samp>-p</samp>&rsquo;
+が使用されたときのデフォルトの <var>mode</var> である。
+パイプ以外について、出力のオープンや書き出しでエラーが起きると、警告メッセージを出す。
+エラー発生後もまだオープンされているファイルやパイプがあれば、それに対する書き込みは続行される。
+パイプ以外の出力にエラーがあれば、終了ステータスは失敗を示す。
+</p>
+</dd>
+<dt> &lsquo;<samp>exit</samp>&rsquo;</dt>
+<dd><p>パイプを含めて、出力のオープンや書き出しでエラーが起きると、終了する。
+</p>
+</dd>
+<dt> &lsquo;<samp>exit-nopipe</samp>&rsquo;</dt>
+<dd><p>パイプ以外について、出力のオープンや書き出しでエラーが起きると、終了する。
+</p></dd>
+</dl>
+
+</dd>
+</dl>
+
+<p>大量のデータの転送を行いながら、同時にそのデータのサマライズも行いたい、
+改めてデータを読み直すようなことはしたくない。<code>tee</code> は、そういうときに便利である。
+たとえば、DVD イメージをダウンロードしているとき、
+その場ですぐ、署名やチェックサムを確認したくなることがよくある。
+単に次のようにするのは、効率が悪い。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">wget http://example.com/some.iso &amp;&amp; sha1sum some.iso
+</pre></td></tr></table>
+
+<p>上記コマンドの問題点の一つは、ただでさえ時間のかかる SHA1 の計算に取りかかる前に、
+ダウンロードが完了するのを待たなければならないことだ。
+たぶん、さらに問題なのは、上記のやり方では、
+DVD イメージを改めて読み直さなければならないことだろう
+(一度目の読み込みは、ネットワークから)。
+</p>
+<p>こうした作業を行う効率的な方法は、ダウンロードと SHA1 の計算を同時に、
+交互に実行することである。そうすれば、プロセス全体が平行してスムーズに進むので、
+無駄な時間を使わずに、チェックサムが手に入る。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example"># ちょっと凝った方法。プロセス置換の実例をご覧に入れるため。
+wget -O - http://example.com/dvd.iso \
+  | tee &gt;(sha1sum &gt; dvd.sha1) &gt; dvd.iso
+</pre></td></tr></table>
+
+<p>こうすれば、<code>tee</code> は、出力を目当てのファイルに書き出すだけでなく、パイプにも書き出す。
+そして、後者では、<code>sha1sum</code> を実行し、最終的なチェックサムを
+&lsquo;<tt>dvd.sha1</tt>&rsquo; という名前のファイルに保存することになる。
+</p>
+<p>しかし、気をつけていただきたい。上記の例は、プロセス置換 (<em>process substitution</em>)
+と呼ばれる最近のシェルの機能を当てにしている (上記の&lsquo;<samp>&gt;(command)</samp>&rsquo;
+という構文のことである。See <a href="../bash/Process-Substitution.html#Process-Substitution">(bash)Process Substitution</a> section &lsquo;Process Substitution&rsquo; in <cite>The Bash Reference Manual</cite>.)。
+そのため、<code>zsh</code>, <code>bash</code>, <code>ksh</code>
+ではうまく動作するが、<code>/bin/sh</code> では動作しない。
+従って、こうしたコードをシェルスクリプトで使用するときは、スクリプトの先頭に
+&lsquo;<samp>#!/bin/bash</samp>&rsquo; などと書くことを忘れてはいけない。
+</p>
+<p>次のことにも気をつけていただきたい。プロセス置換のいづれかが
+(あるいは、パイプに渡された標準出力が)、
+データをすべて処理し尽くす前に終了してしまうことがあるかもしれない。
+そうした場合に、<code>tee</code> が入力の処理を続行して、
+それを残っている出力先に渡すことができるようにするには、
+&lsquo;<samp>-p</samp>&rsquo; オプションが必要になる。
+</p>
+<p>上記の例は、書き出しを 1 個のファイルと 1 個のプロセスに行っているだけだ。
+その程度なら、もっと普通の、もっと移植性のある使い方をした方がずっとよい。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">wget -O - http://example.com/dvd.iso \
+  | tee dvd.iso | sha1sum &gt; dvd.sha1
+</pre></td></tr></table>
+
+<p><code>tee</code> が二つのプロセスに書き込むように、この例を拡張して、MD5 と
+SHA1 のチェックサムを平行して計算させることもできる。
+その場合は、プロセス置換が必要になる。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">wget -O - http://example.com/dvd.iso \
+  | tee &gt;(sha1sum &gt; dvd.sha1) \
+        &gt;(md5sum &gt; dvd.md5) \
+  &gt; dvd.iso
+</pre></td></tr></table>
+
+<p>このテクニックは、パイプから入ってくるデータの圧縮したコピーを作りたいときにも、役に立つ。
+&lsquo;<samp>du -ak</samp>&rsquo; の出力するディスク使用量のデータを要約して、
+グラフィカルに表示するツールを考えていただきたい。
+ディレクトリ階層が膨大だと、&lsquo;<samp>du -ak</samp>&rsquo; は実行に長い時間がかかるだろうし、
+いともたやすくテラバイトのデータを作成してくれるだろう。
+そこで、&lsquo;<samp>du</samp>&rsquo; コマンドをむやみに再実行することはやりたくない。
+また、圧縮されていない出力を保存しておきたくもない。
+</p>
+<p>これを効率の悪い方法でやると、<code>du</code> の出力全部の圧縮を済ませるまで、
+GUI ツールを起動することすらできない。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">du -ak | gzip -9 &gt; /tmp/du.gz
+gzip -dc /tmp/du.gz | xdiskusage -a
+</pre></td></tr></table>
+
+<p><code>tee</code> とプロセス置換を使えば、GUI ツールを直ちに起動できるし、
+圧縮ファイルの展開も全くやらないですむ。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">du -ak | tee &gt;(gzip -9 &gt; /tmp/du.gz) | xdiskusage -a
+</pre></td></tr></table>
+
+<p>最後にもう一つ。常に 2 種類以上の圧縮した tar アーカイブ (tarball)
+を一度に作ることにしている場合は、より効率のよいやり方ができるかもしれない。
+たとえば、<code>make dist</code> が <code>gzip</code> と <code>bzip2</code> の両方で圧縮した
+tar アーカイブを作成するような場合だ。<code>automake</code> が生成する &lsquo;<tt>Makefile</tt>&rsquo;
+のルールは、たいてい、こんなふうにコマンドを連続して実行することで、
+圧縮した tar アーカイブを二つ作成している (少し単純化してある)。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">tardir=your-pkg-M.N
+tar chof - &quot;$tardir&quot; | gzip  -9 -c &gt; your-pkg-M.N.tar.gz
+tar chof - &quot;$tardir&quot; | bzip2 -9 -c &gt; your-pkg-M.N.tar.bz2
+</pre></td></tr></table>
+
+<p>しかしながら、アーカイブの作成・圧縮の対象になっているディレクトリ階層が、
+数メガバイトより大きい場合は &mdash; 使用しているシステムがマルチプロセッサを搭載し、
+メモリがふんだんにある場合はなおさらそうだが &mdash; ディレクトリの中身を 1 回だけ読み込み、
+圧縮プログラムを平行して走らせることで、ずっと効率のよい仕事ができる。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">tardir=your-pkg-M.N
+tar chof - &quot;$tardir&quot; \
+  | tee &gt;(gzip -9 -c &gt; your-pkg-M.N.tar.gz) \
+  | bzip2 -9 -c &gt; your-pkg-M.N.tar.bz2
+</pre></td></tr></table>
+
+<p>プロセス置換が表示する出力をさらに処理したいとしよう。
+もし、そうしたプロセスがアトミックな書き出しをしているならば
+(すなわち、一度の書き出しが、システムの PIPE_BUF サイズよりも小さければ)、
+そういうことも次のような構文で可能である。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">tardir=your-pkg-M.N
+tar chof - &quot;$tardir&quot; \
+  | tee &gt;(md5sum --tag) &gt; &gt;(sha256sum --tag) \
+  | sort | gpg --clearsign &gt; your-pkg-M.N.tar.sig
+</pre></td></tr></table>
+
+<p>終了ステータス 0 は成功を示し、0 以外の値は失敗を示す。
+</p>
+
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_123.html#Redirection" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_125.html#File-name-manipulation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_123.html#Redirection" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_123.html#Redirection" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_125.html#File-name-manipulation" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

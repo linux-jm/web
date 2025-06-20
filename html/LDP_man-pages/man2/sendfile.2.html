@@ -1,0 +1,195 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SENDFILE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SENDFILE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/sendfile.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sendfile - ファイルディスクリプター間でデータを転送する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/sendfile.h">sys/sendfile.h</A>&gt;</B>
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>ssize_t sendfile(int</B><I> out_fd</I><B>, int</B><I> in_fd</I><B>, off_t *</B><I>offset</I><B>,
+size_t</B><I> count</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>sendfile</B>()  は、あるファイルディスクリプターから別の ファイルディスクリプターへのデータのコピーを行う。
+このコピーはカーネル内で行われるので、 <B>sendfile</B>()  は、 <B><A HREF="../man2/read.2.html">read</A></B>(2)  と <B><A HREF="../man2/write.2.html">write</A></B>(2)
+を組み合わせるよりも効率がよい。 <B><A HREF="../man2/read.2.html">read</A></B>(2)  や <B><A HREF="../man2/write.2.html">write</A></B>(2)  ではユーザー空間との間でデータの転送が必要となるからである。
+<P>
+
+<I>in_fd</I> は読み込みのためにオープンされたファイルディスクリプター、 <I>out_fd</I>
+は書き込みのためにオープンされたディスクリプターでなければならない。
+<P>
+
+<I>offset</I> が NULL でない場合、 <I>offset</I> は <B>sendfile</B>()  が <I>in_fd</I>
+のどこからデータを読み始めるかを示すファイルオフセットを保持する変数への ポインターである。 <B>sendfile</B>()
+は復帰する時、この変数に最後に読み込んだバイトの 次のバイトのオフセットを書き込む。 <I>offset</I> が NULL でない場合、
+<B>sendfile</B>()  は <I>in_fd</I> のファイルオフセットを変更しない。 NULL の場合は、ファイルオフセットを <I>in_fd</I>
+から読み込んだバイト数を反映した位置に調整する。
+<P>
+
+<I>offset</I> が NULL の場合、データは <I>in_fd</I> のファイルオフセットから読み出され、
+ファイルオフセットはこの呼び出しで更新される。
+<P>
+
+<I>count</I> は、ファイルディスクリプター間でコピーするバイト数である。
+<P>
+
+<I>in_fd</I> 引数は <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2) 風の操作ができるファイルを指していなければならな
+い (ソケットを指定することはできない)。
+<P>
+
+2.6.33 より前の Linux カーネルでは <I>out_fd</I> はソケットを参照していなければな
+らない。Linux 2.6.33 以降では、任意のファイルを参照することができる。
+通常のファイルの場合には <B>sendfile</B>() はファイルオフセットを適切に変更する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+If the transfer was successful, the number of bytes written to <I>out_fd</I> is
+returned.  Note that a successful call to <B>sendfile</B>()  may write fewer
+bytes than requested; the caller should be prepared to retry the call if
+there were unsent bytes.  See also NOTES.
+<P>
+
+エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+<B>O_NONBLOCK</B> を用いて非ブロック I/O が選択されたが、書き込みがブロックされた。
+<DT><B>EBADF</B><DD>
+入力ファイルが読み込みのためにオープンされていないか、 出力ファイルが書き込みのためにオープンされていない。
+<DT><B>EFAULT</B><DD>
+アドレスがおかしい。
+<DT><B>EINVAL</B><DD>
+ディスクリプターが有効でないか、ロックされている。もしくは <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  風の操作が <I>in_fd</I> では利用できない。もしくは
+<I>count</I> が負である。
+<DT><B>EINVAL</B><DD>
+<I>out_fd</I> has the <B>O_APPEND</B> flag set.  This is not currently supported by
+<B>sendfile</B>().
+<DT><B>EIO</B><DD>
+<I>in_fd</I> から読み込んでいるうちに予期しないエラーが起こった。
+<DT><B>ENOMEM</B><DD>
+<I>in_fd</I> から読み込むための十分なメモリーがない。
+<DT><B>EOVERFLOW</B><DD>
+<I>count</I> is too large, the operation would result in exceeding the maximum
+size of either the input file or the output file.
+<DT><B>ESPIPE</B><DD>
+<I>offset</I> is not NULL but the input file is not seekable.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>sendfile</B> は Linux 2.2 で初めて登場した。 インクルードファイル <I>&lt;<A HREF="file:///usr/include/sys/sendfile.h">sys/sendfile.h</A>&gt;</I> は
+glibc 2.1 から存在している。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001 や他の標準では規定されていない。
+<P>
+
+他の UNIX システムでは、異なった方式やプロトタイプで <B>sendfile</B>()
+を実装している。移植性を考慮したプログラムでは使用すべきではない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+
+<B>sendfile</B>()  will transfer at most 0x7ffff000 (2,147,479,552) bytes,
+returning the number of bytes actually transferred.  (This is true on both
+32-bit and 64-bit systems.)
+<P>
+
+<B>sendfile</B>()  を使って TCP ソケットにファイルを送ろうとしていて、 ファイルの内容の前にヘッダーデータを付け加える必要がある場合は、
+パケット数を最小にして性能を上げるために <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)  に記述されている <B>TCP_CORK</B> オプションを使うといいだろう。
+<P>
+
+In Linux 2.4 and earlier, <I>out_fd</I> could also refer to a regular file; this
+possibility went away in the Linux 2.6.x kernel series, but was restored in
+Linux 2.6.33.
+<P>
+
+元々の Linux <B>sendfile</B>() システムコールは大きなファイルオフセットを
+扱えるように設計されていなかった。その結果、Linux 2.4 で、
+ビット幅の大きな <I>offset</I> 引数を持った <B>sendfile64</B>() が追加された。
+glibc の <B>sendfile</B>() のラッパー関数はカーネルによるこの違いを吸収している。
+<P>
+
+<B>sendfile</B>()  が <B>EINVAL</B> や <B>ENOSYS</B> で失敗するような場合は、 アプリケーションは
+<B><A HREF="../man2/read.2.html">read</A></B>(2)/<B><A HREF="../man2/write.2.html">write</A></B>(2)  に戻すことを考えてもよいかもしれない。
+<P>
+
+If <I>out_fd</I> refers to a socket or pipe with zero-copy support, callers must
+ensure the transferred portions of the file referred to by <I>in_fd</I> remain
+unmodified until the reader on the other end of <I>out_fd</I> has consumed the
+transferred data.
+<P>
+
+The Linux-specific <B><A HREF="../man2/splice.2.html">splice</A></B>(2)  call supports transferring data between
+arbitrary file descriptors provided one (or both) of them is a pipe.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>copy_file_range</B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man2/splice.2.html">splice</A></B>(2)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

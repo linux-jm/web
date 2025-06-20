@@ -1,0 +1,405 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of NSUPDATE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>NSUPDATE</H1>
+Section: Maintenance Commands (8)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/bind/contrib/man8/nsupdate.8">roff page</A><HR>
+<BR>BSD mandoc<BR>
+BSD 4
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+<B>nsupdate</B>
+
+ - 対話的に Internet ネームサーバを更新する
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>nsupdate</B>
+
+[-<B></B><I>k  keydir:keyname</I>
+
+
+
+]
+
+[-<B></B><I>d</I>
+
+
+
+]
+
+[-<B></B><I>v</I>
+
+
+
+]
+
+[<I>filename</I>
+
+]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>解説</H2>
+
+<B>nsupdate</B>
+
+は動的な更新をサポートした Internet ドメインネームサーバを更新する
+ためのプログラムです。
+<B>nsupdate</B>
+
+は DNS のリソースレコード (RR) を追加したり削除したりする
+メッセージを DNS サーバ
+に伝えるために、DNS リゾルバライブラリを使用します。
+<B>nsupdate</B>
+
+は入力を
+<I>filename</I>
+
+もしくは、標準入力から読み取ります。
+<A NAME="lbAE">&nbsp;</A>
+<H2>引数</H2>
+
+<DL COMPACT>
+<P>
+
+<DT><B>-k</B>
+
+
+<DD>
+TSIG を用いて更新に署名します。
+<DT><B>-d</B>
+
+
+<DD>
+デバッグモードを指定します。
+<DT><B>-v</B>
+
+
+<DD>
+バーチャルサーキット - サーバとの通信に TCP を使用します。既定値では UDP を
+使用します。
+</DL>
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>入力書式</H2>
+
+<B>nsupdate</B>
+
+は 1 行ごとに 1 個の入力レコードを読みます。
+それぞれの行は更新要求の対象になるリソースレコードです。
+1 個の更新要求に含まれるすべてのドメイン名は、
+同一の DNS ゾーンに含まれるものであることが必要です。
+更新は、SOA MNAME フィールドで定義されるマスタサーバへ送られます。
+空行は、蓄積されたレコードを 1 個の更新要求としてまとめ、ゾーンの権威を
+もつネームサーバへの送信を指示します。
+追加レコードを続けることが可能です。
+これらは、追加的な、完全に独立した更新要求になります。
+最後の要求が送信されるためには、空行が入力の最後にあることが必要です。
+<P>
+
+レコードはふたつの一般的な形式のうちのどちらかの形式です。
+<I>必要条件 (prerequisite)</I>
+
+レコードは、要求が処理される前に満たされていることが必要な条件を指示します。
+<I>更新情報 (update)</I>
+
+レコードは、DNS データベースになされる変更を指示します。
+更新要求は、0 個以上の必要条件と、1 個以上の更新情報から成ります。
+それぞれの更新要求は、すべての必要条件が満たされることが確認
+されたあとで、すべての更新が実行されるという順番で、原子的に処理されます。
+<P>
+
+<B>nsupdate</B>
+
+は次のような入力レコードの書式を理解します。
+<P>
+
+<P>
+<DL COMPACT>
+<P>
+
+<P>
+<DT><B>prereq nxdomain </B><I>domain-name</I>
+
+
+
+
+<DD>
+<I>domain-name</I>
+
+で指定したドメイン内に、どのような RR もないことを要求します。
+<P>
+<DT><B>prereq yxdomain </B><I>domain-name</I>
+
+
+
+
+<DD>
+<I>domain-name</I>
+
+で指定したドメイン内に、最低 1 個の RR が存在することを要求します。
+<P>
+<DT><B>
+</B>
+
+<B>prereq nxrrset </B><I>domain-name </I>[class]
+
+
+
+
+
+<I>type</I>
+
+<DD>
+
+<I>domain-name</I>
+
+で指定したドメイン内に
+<I>type</I>
+
+で指定した型の RR が存在しないことを要求します。
+<P>
+<DT><B>
+</B>
+
+<B>prereq yxrrset</B>
+
+<I>domain-name </I>[class]
+
+
+
+<I>type </I>[data...]
+
+
+
+<DD>
+
+<I>domain-name</I>
+
+で指定したドメイン内に、
+<I>type</I>
+
+で指定した型の RR が存在することを要求します。
+<I>data</I>
+
+が指定された場合は、正確にチェックが行なわれます。
+<P>
+<DT><B>
+</B>
+
+<B>update delete</B>
+
+<I>domain-name </I>[class]
+
+
+
+<I></I>[type [data...]
+
+]
+
+
+
+<DD>
+
+<I>domain-name</I>
+
+で指定したドメイン名の RR を削除します。
+もし
+<I>type</I>
+
+(と、可能ならば
+<I>data</I>
+
+ 
+が指定されれば、該当されるレコードだけが削除されます。
+<P>
+<DT><B>
+</B>
+
+<B>update add</B>
+
+<I>domain-name ttl </I>[class]
+
+
+
+<I>type data...</I>
+
+<DD>
+
+<I>ttl , type , data</I>
+
+で指定した RR を追加します。
+<P>
+</DL>
+<P>
+
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>使用例</H2>
+
+下記の例は、
+<B>nsupdate</B>
+
+の対話的な使用例を示しています。
+あるドメイン名のすべての A レコードを削除して、新しいレコードを
+追加することによって、IP アドレスを変更します。
+ここでは必要条件が指定されていないので、削除するレコードがなくても新しい
+レコードが追加されます。
+後に続く空行は要求を処理させるために必要であることに注意してください。
+
+<BLOCKQUOTE>
+<PRE>
+$ nsupdate
+&gt; update delete test.example.com A
+&gt; update add test.example.com 3600 A 10.1.1.1
+&gt;
+
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+この例では、対象のドメインに A レコードまたは CNAME レコードがない場合に、
+<DD>CNAME エイリアスがデータベースに追加されます。
+
+<BLOCKQUOTE>
+<PRE>
+$ nsupdate
+&gt; prereq nxrrset <A HREF="http://www.example.com">www.example.com</A> A
+&gt; prereq nxrrset <A HREF="http://www.example.com">www.example.com</A> CNAME
+&gt; update add <A HREF="http://www.example.com">www.example.com</A> 3600 CNAME test.example.com
+&gt;
+
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+この例では、nsupdate はディレクトリ &quot;/var/named/keys&quot; に存在するキー
+&quot;mykey&quot; で署名されます。
+
+<BLOCKQUOTE>
+<PRE>
+$ nsupdate -k /var/named/keys:mykey
+&gt; update add <A HREF="ftp://ftp.example.com">ftp.example.com</A> 60 A 192.168.5.1
+&gt;
+
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>診断</H2>
+
+<DL COMPACT>
+<P>
+
+<P>
+<DT><B>Qq </B>send error
+
+
+<DD>
+一般に、権威のあるネームサーバに到達できなかったことを示します。
+<P>
+<DT><B>Qq </B>failed update packet
+
+
+<DD>
+一般に、ネームサーバが動的更新をサポートしていないためか、認証の失敗のために、
+更新を拒否したことを示します。
+<P>
+<DT><B>Qq </B>res_mkupdate: packet size = <I>size</I>
+
+
+
+
+<DD>
+(また他のメッセージが表示されないとき)
+更新は正常に受信されてネームサーバに認証されました。
+しかし必要条件が更新を妨げたかもしれません。更新が行なわれているか
+を確かめる方法は、デバッグモード
+-<B>( d</B>
+
+ 
+を使用して、ネームサーバからの応答フィールドを確認するしかありません。
+</DL>
+<P>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+<DL COMPACT>
+<P>
+
+<DT><B>/etc/resolv.conf
+
+</B>
+<DD>
+</DL>
+<P>
+
+ドメイン名とネームサーバのアドレスの初期設定。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man8/named.8.html">named</A>(8),
+
+
+<A HREF="../../LDP_man-pages/man3/resolver.3.html">resolver</A>(3),
+
+
+<A HREF="../man5/resolver.5.html">resolver</A>(5);
+
+
+RFC-1034,
+``Domain Names - Concepts and Facilities''
+
+ 
+RFC-1035,
+``Domain Names - Implementation and Specification''
+
+ 
+RFC-2136,
+Dynamic Updates in the Domain Name System.
+<A NAME="lbAK">&nbsp;</A>
+<H2>作者</H2>
+
+Brent Baccala
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">解説</A><DD>
+<DT><A HREF="#lbAE">引数</A><DD>
+<DT><A HREF="#lbAF">入力書式</A><DD>
+<DT><A HREF="#lbAG">使用例</A><DD>
+<DT><A HREF="#lbAH">診断</A><DD>
+<DT><A HREF="#lbAI">関連ファイル</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">作者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

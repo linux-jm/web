@@ -1,0 +1,442 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FTS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FTS</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/fts.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fts, fts_open, fts_read, fts_children, fts_set, fts_close - ファイル階層をたどる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/fts.h">fts.h</A>&gt;</B>
+
+<B>FTS *fts_open(char * const *</B><I>path_argv</I><B>, int </B><I>options</I><B>,</B>
+<B>              int (*</B><I>compar</I><B>)(const FTSENT **, const FTSENT **));</B>
+
+<B>FTSENT *fts_read(FTS *</B><I>ftsp</I><B>);</B>
+
+<B>FTSENT *fts_children(FTS *</B><I>ftsp</I><B>, int </B><I>instr</I><B>);</B>
+
+<B>int fts_set(FTS *</B><I>ftsp</I><B>, FTSENT *</B><I>f</I><B>, int </B><I>instr</I><B>);</B>
+
+<B>int fts_close(FTS *</B><I>ftsp</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+The fts functions are provided for traversing file hierarchies.  A simple
+overview is that the <B>fts_open</B>()  function returns a &quot;handle&quot; (of type
+<I>FTS&nbsp;*</I>)  that refers to a file hierarchy &quot;stream&quot;.  This handle is then
+supplied to the other fts functions.  The function <B>fts_read</B>()  returns a
+pointer to a structure describing one of the files in the file hierarchy.
+The function <B>fts_children</B>()  returns a pointer to a linked list of
+structures, each of which describes one of the files contained in a
+directory in the hierarchy.
+<P>
+
+In general, directories are visited two distinguishable times; in preorder
+(before any of their descendants are visited) and in postorder (after all of
+their descendants have been visited).  Files are visited once.  It is
+possible to walk the hierarchy &quot;logically&quot; (visiting the files that symbolic
+links point to)  or physically (visiting the symbolic links themselves),
+order the walk of the hierarchy or prune and/or revisit portions of the
+hierarchy.
+<P>
+
+Two structures (and associated types) are defined in the include file
+<I>&lt;<A HREF="file:///usr/include/fts.h">fts.h</A>&gt;</I>.  The first type is <I>FTS</I>, the structure that represents
+the file hierarchy itself.  The second type is <I>FTSENT</I>, the structure that
+represents a file in the file hierarchy.  Normally, an <I>FTSENT</I> structure
+is returned for every file in the file hierarchy.  In this manual page,
+&quot;file&quot; and &quot;FTSENT structure&quot; are generally interchangeable.
+<P>
+
+The <I>FTSENT</I> structure contains fields describing a file.  The structure
+contains at least the following fields (there are additional fields that
+should be considered private to the implementation):
+<P>
+
+
+
+
+
+
+
+
+
+typedef struct _ftsent {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;&nbsp;fts_info;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;FTSENT&nbsp;構造体のためのフラグ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*fts_accpath;&nbsp;&nbsp;/*&nbsp;アクセスパス&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*fts_path;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ルートパス&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fts_pathlen;&nbsp;&nbsp;/*&nbsp;strlen(fts_path)&nbsp;+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;strlen(fts_name)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*fts_name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ファイル名&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fts_namelen;&nbsp;&nbsp;/*&nbsp;strlen(fts_name)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fts_level;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;深さ&nbsp;(-1&nbsp;〜&nbsp;N)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fts_errno;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ファイルのエラー番号&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fts_number;&nbsp;&nbsp;&nbsp;/*&nbsp;ローカルな番号&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*fts_pointer;&nbsp;&nbsp;/*&nbsp;ローカルなアドレス番号&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;_ftsent&nbsp;*fts_parent;&nbsp;&nbsp;&nbsp;/*&nbsp;親ディレクトリ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;_ftsent&nbsp;*fts_link;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;次のファイル構造体&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;_ftsent&nbsp;*fts_cycle;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;循環している構造体&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;stat&nbsp;&nbsp;&nbsp;&nbsp;*fts_statp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;<A HREF="../man2/stat.2.html">stat</A>(2)&nbsp;の情報&nbsp;*/
+} FTSENT;
+
+
+<P>
+
+
+これらのフィールドは、次のように定義されている。
+<DL COMPACT>
+<DT><I>fts_info</I><DD>
+
+One of the following values describing the returned <I>FTSENT</I> structure and
+the file it represents.  With the exception of directories without errors
+(<B>FTS_D</B>), all of these entries are terminal, that is, they will not be
+revisited, nor will any of their descendants be visited.
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>FTS_D</B><DD>
+preorder でたどられるディレクトリ。
+<DT><B>FTS_DC</B><DD>
+ツリーの中で循環しているディレクトリ。 (<I>FTSENT</I> 構造体の <I>fts_cycle</I> フィールドも同様に埋められる。)
+<DT><B>FTS_DEFAULT</B><DD>
+ファイルタイプを表現する <I>FTSENT</I> 構造体が、 <I>fts_info</I> の他のいずれかの値で明示的に説明されていない。
+<DT><B>FTS_DNR</B><DD>
+読み込みができないディレクトリ。 これはエラーの場合の返り値であり、 何がエラーを起こしたかを示すために <I>fts_errno</I>
+フィールドが設定される。
+<DT><B>FTS_DOT</B><DD>
+<B>fts_open</B>()  へのファイル名として指定されなかった &quot;.&quot; または &quot;..&quot; という名前のファイル (<B>FTS_SEEDOT</B>
+を参照すること)。
+<DT><B>FTS_DP</B><DD>
+postorder でたどられるディレクトリ。 <I>FTSENT</I> 構造体の内容は、preorder のときに返された状態 (つまり、
+<I>fts_info</I> フィールドが <B>FTS_D</B> に設定されている状態) から変更されない。
+<DT><B>FTS_ERR</B><DD>
+これはエラーの場合の返り値であり、 <I>fts_errno</I> フィールドは、何がエラーを起こしたかを示す値に設定される。
+<DT><B>FTS_F</B><DD>
+通常のファイル。
+<DT><B>FTS_NS</B><DD>
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)  情報が得られなかったファイル。 <I>fts_statp</I> フィールドの内容は定義されない。 これはエラーの場合の返り値であり、
+<I>fts_errno</I> フィールドは、何がエラーを起こしたかを示す値に設定される。
+<DT><B>FTS_NSOK</B><DD>
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)  情報が要求されなかったファイル。 <I>fts_statp</I> フィールドの内容は定義されない。
+<DT><B>FTS_SL</B><DD>
+シンボリックリンク。
+<DT><B>FTS_SLNONE</B><DD>
+
+リンク先の存在しないシンボリックリンク。 <I>fts_statp</I> フィールドの内容は、シンボリックリンクそのもののファイル特性情報を参照する。
+</DL>
+</DL>
+
+<DT><I>fts_accpath</I><DD>
+現在のディレクトリからファイルにアクセスするためのパス。
+<DT><I>fts_path</I><DD>
+階層をたどるときのルートからみたファイルの相対的なパス。 このパスには、 <B>fts_open</B>()  に指定したパスがプレフィックスとして含まれる。
+<DT><I>fts_pathlen</I><DD>
+The sum of the lengths of the strings referenced by <I>fts_path</I> and
+<I>fts_name</I>.
+<DT><I>fts_name</I><DD>
+ファイルの名前。
+<DT><I>fts_namelen</I><DD>
+<I>fts_name</I> で参照される文字列の長さ。
+<DT><I>fts_level</I><DD>
+階層をたどって、このファイルがみつかった深さ。 -1 〜 N の数値で表される。 階層をたどるときの出発点 (ルート) の親ディレクトリを表す
+<I>FTSENT</I> 構造体では -1 となる。 また、ルート自身の <I>FTSENT</I> 構造体では 0 になる。
+<DT><I>fts_errno</I><DD>
+If <B>fts_children</B>()  or <B>fts_read</B>()  returns an <I>FTSENT</I> structure whose
+<I>fts_info</I> field is set to <B>FTS_DNR</B>, <B>FTS_ERR</B>, or <B>FTS_NS</B>, the
+<I>fts_errno</I> field contains the error number (i.e., the <I>errno</I> value)
+specifying the cause of the error.  Otherwise, the contents of the
+<I>fts_errno</I> field are undefined.
+<DT><I>fts_number</I><DD>
+このフィールドは、アプリケーションプログラムから使用するために提供され、 fts 関数群では変更されない。 このフィールドは 0 で初期化される。
+<DT><I>fts_pointer</I><DD>
+このフィールドは、アプリケーションプログラムから使用するために提供され、 fts 関数群では変更されない。 このフィールドは <B>NULL</B>
+で初期化される。
+<DT><I>fts_parent</I><DD>
+A pointer to the <I>FTSENT</I> structure referencing the file in the hierarchy
+immediately above the current file, that is, the directory of which this
+file is a member.  A parent structure for the initial entry point is
+provided as well, however, only the <I>fts_level</I>, <I>fts_number</I>, and
+<I>fts_pointer</I> fields are guaranteed to be initialized.
+<DT><I>fts_link</I><DD>
+<B>fts_children</B>()  から返される場合、 <I>fts_link</I> フィールドはディレクトリメンバーのヌル終端されたリンクリストの形式で、
+次の構造体を指し示す。 それ以外の場合、 <I>fts_link</I> フィールドは定義されない。
+<DT><I>fts_cycle</I><DD>
+2 つのディレクトリにハードリンクが張られているため、 または、シンボリックリンクがあるディレクトリを指しているために、
+ディレクトリが循環する階層構造を作っている場合 (<B>FTS_DC</B> を参照)、 構造体の <I>fts_cycle</I> フィールドは、階層中で現在の
+<I>FTSENT</I> 構造体と同じファイルを参照している <I>FTSENT</I> 構造体を指し示す。 それ以外の場合、 <I>fts_cycle</I>
+フィールドは定義されない。
+<DT><I>fts_statp</I><DD>
+
+このファイルの <B><A HREF="../man2/stat.2.html">stat</A></B>(2)  情報へのポインター。
+</DL>
+<P>
+
+ファイル階層中のすべてのファイルのパスに対して、 ただ 1 つのバッファーが使われる。 したがって、 <I>fts_path</I> と
+<I>fts_accpath</I> フィールドは、 <B>fts_read</B>()
+によって返された最も新しいファイルに対して「のみ」ヌル終端されることが保証される。 これらのフィールドを、他の <I>FTSENT</I>
+構造体で表現されるファイルを参照するために使うには、 <I>FTSENT</I> 構造体の <I>fts_pathlen</I>
+フィールドにある情報を使ってパスのバッファーを修正する必要がある。 これらの修正は、さらに <B>fts_read</B>()
+を呼び出そうとする場合には、元に戻しておかなければならない。 <I>fts_name</I> フィールドは、常に <B>NUL</B> 終端される。
+<A NAME="lbAE">&nbsp;</A>
+<H3>fts_open()</H3>
+
+<B>fts_open</B>()  関数は、文字列ポインターの配列へのポインターを引数に取る。 この文字列ポインターは、論理ファイル階層をつくる 1
+つ以上のパスの名前になる。 配列は、 null ポインターで終端されなければならない。
+<P>
+
+
+多くのオプションがあり、少なくとも 1 つ (<B>FTS_LOGICAL</B> または <B>FTS_PHYSICAL</B>)  が指定されなければならない。
+オプションは以下の値の論理和をとって選択する。
+<DL COMPACT>
+<DT><B>FTS_COMFOLLOW</B><DD>
+このオプションは、 <B>FTS_LOGICAL</B> の指定にかかわらず、 ルートパスに指定されたシンボリックリンクをすぐにたどらせる。
+<DT><B>FTS_LOGICAL</B><DD>
+このオプションは、 fts ルーチンにシンボリックリンクそのものではなく、 シンボリックリンクが指しているファイルの <I>FTSENT</I>
+構造体を返させる。 このオプションが設定された場合、 <I>FTSENT</I> 構造体がアプリケーションに返されるような
+シンボリックリンクのみが、存在しないファイルを参照している。 <B>FTS_LOGICAL</B> または <B>FTS_PHYSICAL</B> のどちらかを、
+<B>fts_open</B>()  関数に与えなければ「ならない」。
+<DT><B>FTS_NOCHDIR</B><DD>
+パフォーマンスの最適化のため、 fts 関数群はファイル階層をたどるときディレクトリを変える。 これには、階層をたどっている間は
+アプリケーションがある特定のディレクトリにいるということに 依存できない、という副作用がある。 <B>FTS_NOCHDIR</B>
+オプションで最適化を無効にすると、 fts 関数群は現在のディレクトリを変更しない。 <B>FTS_NOCHDIR</B> が指定され、かつ
+<B>fts_open</B>()  の引数として絶対パス名が与えられたとき以外、アプリケーションは、 自らカレントディレクトリを変更したり、
+ファイルにアクセスしたりすべきではない、という点に注意すること。
+<DT><B>FTS_NOSTAT</B><DD>
+デフォルトでは、返された <I>FTSENT</I> 構造体は、たどられた各ファイルについてのファイル特徴情報 <I>( statp</I> フィールド) を参照する。
+このオプションは、 fts 関数群が <I>fts_info</I> フィールドを <B>FTS_NSOK</B> に設定し <I>statp</I>
+の内容を定義されないままにすることを許すことにより、 パフォーマンスの最適化に必要なものを緩和する。
+<DT><B>FTS_PHYSICAL</B><DD>
+このオプションは、 fts ルーチンにシンボリックリンクが指しているファイルではなく、 シンボリックリンク自身の <I>FTSENT</I> 構造体を返させる。
+このオプションが設定されると、階層中のすべてのシンボリックリンクの <I>FTSENT</I> 構造体がアプリケーションに返される。
+<B>FTS_LOGICAL</B> または <B>FTS_PHYSICAL</B> のどちらかを <B>fts_open</B>()  関数に与えなければ「ならない」。
+<DT><B>FTS_SEEDOT</B><DD>
+デフォルトでは、 <B>fts_open</B>()  のパス引数として指定されない限り、ファイル階層中にある &quot;.&quot; または &quot;..&quot;
+という名前のファイルは無視される。 このオプションは、 fts ルーチンにこれらのファイルの <I>FTSENT</I> 構造体を返させる。
+<DT><B>FTS_XDEV</B><DD>
+
+このオプションは、 fts が下り始めのファイルとは異なるデバイス番号を持っている ディレクトリに下りるのを阻止する。
+</DL>
+<P>
+
+The argument <B>compar</B>()  specifies a user-defined function which may be
+used to order the traversal of the hierarchy.  It takes two pointers to
+pointers to <I>FTSENT</I> structures as arguments and should return a negative
+value, zero, or a positive value to indicate if the file referenced by its
+first argument comes before, in any order with respect to, or after, the
+file referenced by its second argument.  The <I>fts_accpath</I>, <I>fts_path</I>,
+and <I>fts_pathlen</I> fields of the <I>FTSENT</I> structures may <I>never</I> be used
+in this comparison.  If the <I>fts_info</I> field is set to <B>FTS_NS</B> or
+<B>FTS_NSOK</B>, the <I>fts_statp</I> field may not either.  If the <B>compar</B>()
+argument is NULL, the directory traversal order is in the order listed in
+<I>path_argv</I> for the root paths, and in the order listed in the directory
+for everything else.
+<A NAME="lbAF">&nbsp;</A>
+<H3>fts_read()</H3>
+
+<B>fts_read</B>()  関数は、階層中のファイルを記述する <I>FTSENT</I> 構造体へのポインターを返す。 (読み込み可能で、循環していない)
+ディレクトリは、 1 回は preorder で、もう 1 回は postorder で、少なくとも 2 回たどられる。 他のファイルは、少なくとも 1
+回たどられる。 (ディレクトリ間のハードリンクによって 循環やシンボリックリンクへのシンボリックリンクが起こらない場合、 ファイルは 2
+回以上、ディレクトリは 3 回以上たどられる。)
+<P>
+
+階層中のすべてのメンバーが返された場合、 <B>fts_read</B>()  は <B>NULL</B> を返し、外部変数 <I>errno</I> を 0 にする。
+階層中のファイルに関係しないエラーが起こった場合、 <B>fts_read</B>()  は <B>NULL</B> を返し、 <I>errno</I>
+をエラーに対応した値にする。 階層中のファイルに関係したエラーが起こった場合、 <I>FTSENT</I> 構造体へのポインターが返され、 <I>errno</I>
+は設定される場合と設定されない場合がある (<I>fts_info</I> を参照すること)。
+<P>
+
+<B>fts_read</B>()  によって返される <I>FTSENT</I> 構造体は、同じファイル階層ストリームへの <B>fts_close</B>()
+の呼出しの後に上書きされる。 また、同じファイル階層ストリームへの <B>fts_read</B>()
+の呼出しの後でも、構造体がディレクトリを表現していない限り上書きされる。 この場合、 <B>fts_read</B>()  関数によって postorder で
+<I>FTSENT</I> 構造体が返された後、 <B>fts_read</B>()  の呼出しがあるまで、 これらの構造体は上書きされない。
+<A NAME="lbAG">&nbsp;</A>
+<H3>fts_children()</H3>
+
+<B>fts_children</B>()  関数は、 <I>FTSENT</I> 構造体へのポインターを返す。 この構造体は、( <B>fts_read</B>()
+で最も新しく返された <I>FTSENT</I> 構造体で表現されるディレクトリにあるファイルの) ヌル終端されたリンクリストの最初のエントリーを記述する。
+このリストは、 <I>FTSENT</I> 構造体の <I>fts_link</I> フィールドを使ってリンクされ、
+ユーザー指定の比較関数がある場合は、それで順序づけられる。 <B>fts_children</B>()  の呼出しを繰り返すことで、
+このリンクリストは再生成される。
+<P>
+
+特別な場合として、 <B>fts_read</B>()  がファイル階層について呼ばれていない場合、 <B>fts_children</B>()  は
+<B>fts_open</B>()  に指定された論理ディレクトリ (つまり、 <B>fts_open</B>()  に指定された引数)
+の中にあるファイルへのポインターを返す。 それ以外の場合で、 <B>fts_read</B>()  によって最も新しく返された <I>FTSENT</I> 構造体が
+preorder でたどられたディレクトリでない場合や 何も含んでいないディレクトリの場合は、 <B>fts_children</B>()  は <B>NULL</B>
+を返し、 <I>errno</I> を 0 にする。 エラーが起こった場合、 <B>fts_children</B>()  は <B>NULL</B> を返し、
+<I>errno</I> をエラーに対応した値にする。
+<P>
+
+The <I>FTSENT</I> structures returned by <B>fts_children</B>()  may be overwritten
+after a call to <B>fts_children</B>(), <B>fts_close</B>(), or <B>fts_read</B>()  on the
+same file hierarchy stream.
+<P>
+
+
+The <I>instr</I> argument is either zero or the following value:
+<DL COMPACT>
+<DT><B>FTS_NAMEONLY</B><DD>
+
+ファイル名のみが必要とされている。 返された構造体のリンクリストの <I>fts_name</I>, <I>fts_namelen</I> フィールド以外の
+すべてのフィールドの内容は定義されない。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>fts_set()</H3>
+
+The function <B>fts_set</B>()  allows the user application to determine further
+processing for the file <I>f</I> of the stream <I>ftsp</I>.  The <B>fts_set</B>()
+function returns 0 on success, and -1 if an error occurs.
+<P>
+
+
+The <I>instr</I> argument is either 0 (meaning &quot;do nothing&quot;) or one of the
+following values:
+<DL COMPACT>
+<DT><B>FTS_AGAIN</B><DD>
+ファイルを再びたどる。すべてのファイルタイプが再びたどられる。 次の <B>fts_read</B>()  の呼出しにより、参照されているファイルが返される。
+構造体の <I>fts_stat</I>, <I>fts_info</I> フィールドはこの時に初期化されるが、他のフィールドは変更されない。 このオプションは、
+<B>fts_read</B>()  によって最も新しく返されたファイルについてのみ意味を持つ。 通常は、postorder
+でディレクトリをたどる場合に使用し、 その下の階層と同様に、 ディレクトリを (preorder と postorder の両方で) 再びたどらせる。
+<DT><B>FTS_FOLLOW</B><DD>
+参照されてるファイルは、シンボリックリンクでなければならない。 参照されているファイルが <B>fts_read</B>()
+によって最も新しく返されたものである場合、次の <B>fts_read</B>()  の呼出しでは、シンボリックリンクそのものではなく、
+シンボリックリンクが指している先を反映するように <I>fts_info</I>, <I>fts_statp</I> を再び初期化したファイルが返される。 ファイルが
+<B>fts_children</B>()  によって最も新しく返されたものの 1 つである場合、 <B>fts_read</B>()  によって返されたとき、構造体の
+<I>fts_info</I>, <I>fts_statp</I> フィールドは、シンボリックリンクそのものではなく、 シンボリックリンクが指している先を反映する。
+どちらの場合でも、シンボリックリンクが指している先がないときは、 返された構造体のフィールドは変更されず、 <I>fts_info</I> フィールドが
+<B>FTS_SLNONE</B> に設定される。
+<DT><DD>
+リンク先がディレクトリの場合、 ファイルが preorder で返された後、下の階層のすべてファイルが返され、 その後で postorder
+で返される。
+<DT><B>FTS_SKIP</B><DD>
+
+このファイルの下の階層はたどられない。 このファイルは、 <B>fts_children</B>()  または <B>fts_read</B>()
+のどちらかによって最も新しく返されたものの 1 つである。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H3>fts_close()</H3>
+
+The <B>fts_close</B>()  function closes the file hierarchy stream referred to by
+<I>ftsp</I> and restores the current directory to the directory from which
+<B>fts_open</B>()  was called to open <I>ftsp</I>.  The <B>fts_close</B>()  function
+returns 0 on success, and -1 if an error occurs.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>エラー</H2>
+
+関数 <B>fts_open</B>()  が失敗した場合、 <I>errno</I> は、ライブラリ関数 <B><A HREF="../man2/open.2.html">open</A></B>(2)  と <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+に対して指定されるエラーに設定される。
+<P>
+
+関数 <B>fts_close</B>()  が失敗した場合、 <I>errno</I> は、ライブラリ関数 <B><A HREF="../man2/chdir.2.html">chdir</A></B>(2)  と <B><A HREF="../man2/close.2.html">close</A></B>(2)
+に対して指定されるエラーに設定される。
+<P>
+
+関数 <B>fts_read</B>()  と <B>fts_children</B>()  が失敗した場合、 <I>errno</I> は、ライブラリ関数
+<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3), <B><A HREF="../man3/opendir.3.html">opendir</A></B>(3), <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3), <B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+に対して指定されるエラーに設定される。
+<P>
+
+更に、 <B>fts_children</B>(), <B>fts_open</B>(), <B>fts_set</B>()  が失敗した場合、 <I>errno</I>
+が次の値にされる。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>options</I> or <I>instr</I> was invalid.
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>バージョン</H2>
+
+これらの関数は、Linux では glibc2 から使用可能である。
+<A NAME="lbAL">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>fts_open</B>(),
+<B>fts_set</B>(),
+<B>fts_close</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>fts_read</B>(),
+<B>fts_children</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAM">&nbsp;</A>
+<H2>準拠</H2>
+
+4.4BSD.
+<A NAME="lbAN">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+
+
+
+
+
+
+
+
+In versions of glibc before 2.23, all of the APIs described in this man page
+are not safe when compiling a program using the LFS APIs (e.g., when
+compiling with <I>-D_FILE_OFFSET_BITS=64</I>).
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../GNU_findutils/man1/find.1.html">find</A></B>(1), <B><A HREF="../man2/chdir.2.html">chdir</A></B>(2), <B><A HREF="../man2/stat.2.html">stat</A></B>(2), <B><A HREF="../man3/ftw.3.html">ftw</A></B>(3), <B><A HREF="../man3/qsort.3.html">qsort</A></B>(3)
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">fts_open()</A><DD>
+<DT><A HREF="#lbAF">fts_read()</A><DD>
+<DT><A HREF="#lbAG">fts_children()</A><DD>
+<DT><A HREF="#lbAH">fts_set()</A><DD>
+<DT><A HREF="#lbAI">fts_close()</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">エラー</A><DD>
+<DT><A HREF="#lbAK">バージョン</A><DD>
+<DT><A HREF="#lbAL">属性</A><DD>
+<DT><A HREF="#lbAM">準拠</A><DD>
+<DT><A HREF="#lbAN">バグ</A><DD>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

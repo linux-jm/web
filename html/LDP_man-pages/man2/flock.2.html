@@ -1,0 +1,179 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FLOCK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FLOCK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/flock.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+flock - オープンされたファイルに対するアドバイザリロックの適用、解除を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/file.h">sys/file.h</A>&gt;</B>
+<P>
+
+<B>int flock(int </B><I>fd</I><B>, int </B><I>operation</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+オープンされたファイルにアドバイザリロック (advisory lock) の適用 や解除を行う。 ファイルは <I>fd</I> で指定する。引数
+<I>operation</I> には以下のいずれか一つを指定する:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>LOCK_SH</B><DD>
+共有ロックを適用する。 指定したファイルに対して、 一つ以上のプロセスが同時に共有ロックを保持することができる。
+<DT><B>LOCK_EX</B><DD>
+排他ロックを適用する。 指定したファイルに対して、 ただ一つのプロセスだけが同時に排他ロックを保持することができる。
+<DT><B>LOCK_UN</B><DD>
+このプロセスが保持している既存のロックを解除する。
+</DL>
+</DL>
+
+<P>
+
+<B>flock</B>()  を呼び出したときに、指定したロック種別と異なるロックが別プロセスによって 保持されていると、 <B>flock</B>()  は停止
+(block) されることがある。 非停止 (nonblocking) タイプの要求を行うためには、 上記の操作 (operation) に
+<B>LOCK_NB</B> を論理和の形で指定する。
+<P>
+
+一つのファイルに共有ロックと排他ロックを同時に設定することはできない。
+<P>
+
+<B>flock</B>() によって作られるロックは、 オープンファイル記述 (open file description) (<B><A HREF="../man2/open.2.html">open</A></B>(2) 参照)
+と関連付けられる。 したがって、ファイルディスクリプターの複製 (<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  や <B><A HREF="../man2/dup.2.html">dup</A></B>(2)  などにより作成される)
+は同じロックを参照し、 これらのファイルディスクリプターのどれを使っても このロックを変更したり解放したりできる。 また、ロックの解放は、
+上記の複数のファイルディスクリプターのいずれかに対して 明示的に <B>LOCK_UN</B> 操作を指示した場合か、これらのファイルディスクリプターがすべて
+閉じられた場合に行われる。
+<P>
+
+あるプロセスが <B><A HREF="../man2/open.2.html">open</A></B>(2)  (もしくは同様の方法) を使って同じファイルに対して 複数のファイルディスクリプターを取得した場合、
+<B>flock</B>()  はこれら複数のファイルディスクリプターを各々独立のものとして扱う。
+これらのファイルディスクリプターの一つを使ってファイルをロックしようと
+した際、そのロック要求は、呼び出し元のプロセスがそのファイルの別のファイルディスクリプター経由ですでに設定しているロックによって拒否される場合がある。
+<P>
+
+一つのプロセスは、一つのファイルに対して (共有ロックと排他ロックのうち)  いずれか一種類のロックしか設定できない。 既にロックされたファイルに対して
+<B>flock</B>()  を呼び出すと、既存のロックを新しいロックモードに変更することになる。
+<P>
+
+<B>flock</B>()  により作成されたロックは <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  の前後で保存される。
+<P>
+
+共有ロックも排他ロックも、ファイルがどのモードでオープンされたかに 関係なく適用することができる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>fd</I> がオープンされたファイルディスクリプターではない。
+<DT><B>EINTR</B><DD>
+ロックの獲得を待っている間に、ハンドラーにより捕捉されたシグナルを 受信し、 <B>flock</B>()  が中断された。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EINVAL</B><DD>
+<I>oepration</I> が無効である。
+<DT><B>ENOLCK</B><DD>
+ロックレコードを割り当てるためのメモリーが不足している。
+<DT><B>EWOULDBLOCK</B><DD>
+指定したファイルがロックされており、 <B>LOCK_NB</B> フラグが指定されている。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+4.4BSD (<B>flock</B>()  コールは 4.2BSD で最初に登場した)。 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  で実装されているものなどを含めると、
+<B>flock</B>()  の機能はほとんどの UNIX システムで実装されている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+
+kernel 2.0 以降では、 <B>flock</B>()  は、GNU C ライブラリでの <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+を呼び出してのエミュレーションではなく、 それ自体がシステムコールとして実装されている。 この実装では、 <B>flock</B>()  と
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  で適用されるロックの種別には相互作用がなくなり、 <B>flock</B>()  がデッドロックを検出しなくなる。 (ただし、最近の
+BSD などいくつかのシステムでは、 <B>flock</B>() と <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2) ロックが互いに影響することが「ある」という点に注意すること。)
+<P>
+
+<B>flock</B>()  アドバイザリロックだけを適用する。したがって、ファイルに適切なアクセス権を 付与していれば、プロセスは <B>flock</B>()
+の使用に無視して、ファイルへの入出力を行うことができる。
+<P>
+
+<B>flock</B>()  と <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  は fork されたプロセスと <B><A HREF="../man2/dup.2.html">dup</A></B>(2)  で違った動作をする。 <B>flock</B>()
+を <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  を使って実装しているシステムでは、 <B>flock</B>()
+の動作はこのマニュアルページに記載されているものとは違うだろう。
+<P>
+
+
+
+ロックの変換 (共有ロックから排他ロックへ、もしくはその反対) がアトミックに 行われることは保証されていない:
+既存のロックがまず削除され、それから新しい ロックが設定される。この 2つのステップの間に、他のプロセスからの処理待ちの
+ロック要求が認められるかもしれず、結果として変換は停止 (block) したり、 (<B>LOCK_NB</B> が指定された場合には) 失敗したりする。
+(これは元々の BSD の動作であり、多くの他の実装でも起こる。)
+<A NAME="lbAI">&nbsp;</A>
+<H3>NFS での詳細</H3>
+
+In Linux kernels up to 2.6.11, <B>flock</B>()  does not lock files over NFS
+(i.e., the scope of locks was limited to the local system).  Instead, one
+could use <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  byte-range locking, which does work over NFS, given a
+sufficiently recent version of Linux and a server which supports locking.
+<P>
+
+Since Linux 2.6.12, NFS clients support <B>flock</B>()  locks by emulating them
+as <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  byte-range locks on the entire file.  This means that
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  and <B>flock</B>()  locks <I>do</I> interact with one another over
+NFS.  It also means that in order to place an exclusive lock, the file must
+be opened for writing.
+<P>
+
+
+Since Linux 2.6.37, the kernel supports a compatibility mode that allows
+<B>flock</B>()  locks (and also <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  byte region locks) to be treated as
+local; see the discussion of the <I>local_lock</I> option in <B>nfs</B>(5).
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../../util-linux/man1/flock.1.html">flock</A></B>(1),&nbsp;<B><A HREF="../man2/close.2.html">close</A></B>(2),&nbsp;<B><A HREF="../man2/dup.2.html">dup</A></B>(2),&nbsp;<B><A HREF="../man2/execve.2.html">execve</A></B>(2),&nbsp;<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),&nbsp;<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+<B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man3/lockf.3.html">lockf</A></B>(3), <B>lslocks</B>(8)
+<P>
+
+Linux カーネルソース内の <I>Documentation/filesystems/locks.txt</I> (以前のカーネルでは
+<I>Documentation/locks.txt</I>)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">NFS での詳細</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

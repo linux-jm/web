@@ -1,0 +1,185 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETBUF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SETBUF</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/setbuf.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+setbuf, setbuffer, setlinebuf, setvbuf - ストリームのバッファーリングの操作
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<B>void setbuf(FILE *</B><I>stream</I><B>, char *</B><I>buf</I><B>);</B>
+
+<B>void setbuffer(FILE *</B><I>stream</I><B>, char *</B><I>buf</I><B>, size_t </B><I>size</I><B>);</B>
+
+<B>void setlinebuf(FILE *</B><I>stream</I><B>);</B>
+
+<B>int setvbuf(FILE *</B><I>stream</I><B>, char *</B><I>buf</I><B>, int </B><I>mode</I><B>, size_t </B><I>size</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>setbuffer</B>(),
+<B>setlinebuf</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.19:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.19&nbsp;and&nbsp;earlier:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+バッファーリングには unbuffered, block buffered, line buffered の3つのタイプが
+ある。出力ストリームのタイプが unbuffered の場合、データを書き込むとすぐに出 力先ファイルに書き込まれるかターミナルに表示される。block
+buffered の場合、文 字の読み書きはブロック単位でいっぺんに行われる。line buffered の場合、
+新しい行が出力されるか、ターミナルデバイスに接続しているストリーム (通常、<I>stdin</I>) から新しい行が入力されるまで文字がたくわえられる。
+ブロックを強制的に出力するには <B><A HREF="../man3/fflush.3.html">fflush</A></B>(3)  関数を使う。 (<B><A HREF="../man3/fclose.3.html">fclose</A></B>(3) を参照のこと)
+<P>
+
+通常、ファイルはすべて block buffered である。ストリームがターミナルを参照している場合 (<I>stdout</I>
+は通常ターミナルを参照している)、ストリームは line buffered となる。標準エラー出力 <I>stderr</I> はデフォルトでは常に
+unbuffered である。
+<P>
+
+<B>setvbuf</B>()  関数は、オープンしている任意のストリームに対してバッファーを変更できる。 引数 <I>mode</I> は、次の 3
+つのマクロのうちいずれかである:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>_IONBF</B><DD>
+unbuffered
+<DT><B>_IOLBF</B><DD>
+line buffered
+<DT><B>_IOFBF</B><DD>
+fully buffered
+</DL>
+</DL>
+
+<P>
+
+unbuffered のファイルを除き、 <I>buf</I> 引数は <I>size</I>
+バイト以上の大きさのバッファーを指していなければならない。このバッファーは現在の バッファーの代わりに用いられる。もし、引数 <I>buf</I> が NULL
+ならば、モードだけが変更される。 新しいバッファーは次に読み書きした際に割り当てられる。 <B>setvbuf</B>()
+関数は、ストリームをオープンした後、 そのストリームに対して何らかの操作をする前にのみ使用できる。
+<P>
+
+他の 3 つの関数は <B>setvbuf</B>()  の呼び出しに単純に置き換えることができる。 <B>setbuf</B>()  関数は、
+<P>
+
+
+setvbuf(stream, buf, buf ? _IOFBF : _IONBF, BUFSIZ);
+
+<P>
+
+と全く同等だし、 <B>setbuffer</B>()  関数は、バッファーサイズがデフォルト値 <B>BUFSIZ</B>
+ではなく引数で与えられる点以外は同じである。 <B>setlinebuf</B>()  関数は以下と同じである。
+<P>
+
+
+setvbuf(stream, NULL, _IOLBF, 0);
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>setvbuf</B>()  関数は、成功した場合 0 を返す。 失敗した場合、0 以外の値を返す (失敗とは、 <I>mode</I>
+が不正な場合またはリクエストが条件を満たさない場合である)。 <B>setvbuf</B>()  関数が失敗した場合は <I>errno</I> を設定することもある。
+<P>
+
+その他の関数は値を返さない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<BR>&nbsp;<B>setbuf</B>(),
+<B>setbuffer</B>(),
+<BR>
+
+<BR>&nbsp;<B>setlinebuf</B>(),
+<B>setvbuf</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>setbuf</B>()  関数および <B>setvbuf</B>()  関数は C89 と C99 に準拠している。
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+
+
+
+
+
+
+
+<I>stream</I> を閉じる時 (プログラムを終了する際にもこれは起きる) には、 <I>buf</I>
+が指し示す空間とが存在していることを保証しなければならない。 例えば、次のような使い方は許されない:
+<P>
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+<P>
+int
+main(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[BUFSIZ];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;setbuf(stdin,&nbsp;buf);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Hello,&nbsp;world!\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;
+}
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../GNU_coreutils/man1/stdbuf.1.html">stdbuf</A></B>(1), <B><A HREF="../man3/fclose.3.html">fclose</A></B>(3), <B><A HREF="../man3/fflush.3.html">fflush</A></B>(3), <B><A HREF="../man3/fopen.3.html">fopen</A></B>(3), <B><A HREF="../man3/fread.3.html">fread</A></B>(3),
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3), <B><A HREF="../man3/printf.3.html">printf</A></B>(3), <B><A HREF="../man3/puts.3.html">puts</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

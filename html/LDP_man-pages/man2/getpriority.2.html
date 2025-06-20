@@ -1,0 +1,176 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETPRIORITY</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETPRIORITY</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/getpriority.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getpriority, setpriority - プログラムのスケジューリングの優先度を取得/設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;</B>
+<P>
+
+<B>int getpriority(int </B><I>which</I><B>, id_t </B><I>who</I><B>);</B>
+<BR>
+
+<B>int setpriority(int </B><I>which</I><B>, id_t </B><I>who</I><B>, int </B><I>prio</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+The scheduling priority of the process, process group, or user, as indicated
+by <I>which</I> and <I>who</I> is obtained with the <B>getpriority</B>()  call and set
+with the <B>setpriority</B>()  call.  The process attribute dealt with by these
+system calls is the same attribute (also known as the &quot;nice&quot; value) that is
+dealt with by <B><A HREF="../man2/nice.2.html">nice</A></B>(2).
+<P>
+
+<I>which</I> の値は <B>PRIO_PROCESS</B>, <B>PRIO_PGRP</B>, <B>PRIO_USER</B>, のどれか一つで、 <I>who</I> は
+<I>which</I> に応じて解釈される (<B>PRIO_PROCESS</B> だとプロセス識別子、 <B>PRIO_PGRP</B> だとプロセスグループ識別子、
+<B>PRIO_USER</B> だと UID (ユーザーID) と解釈される)。 <I>who</I> がゼロならば、(それぞれ)呼び出したプロセス、
+呼び出したプロセスのプロセスグループ、 呼び出したプロセスの実UID を意味する。
+<P>
+
+<I>prio</I> 引数は -20 から 19 の範囲の値で (但し以下の「注意」を参照)、 -20 が最高優先度で、 19
+が最低優先度である。優先度をこの範囲外に設定しようとした場合は、値は黙ってこの範囲となる。デフォルトの優先度は 0 である;
+小さな数字ほど、プロセスのスケジューリング優先度が高くなる。
+<P>
+
+<B>getpriority</B>()  コールは指定したプロセスの中の最も高い優先度 (数値的には最小の値) を返す。 <B>setpriority</B>()
+コールは指定したプロセス全ての優先度を指定した値に設定する。
+<P>
+
+Traditionally, only a privileged process could lower the nice value (i.e.,
+set a higher priority).  However, since Linux 2.6.12, an unprivileged
+process can decrease the nice value of a target process that has a suitable
+<B>RLIMIT_NICE</B> soft limit; see <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)  for details.
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+On success, <B>getpriority</B>()  returns the calling thread's nice value, which
+may be a negative number.  On error, it returns -1 and sets <I>errno</I> to
+indicate the cause of the error.
+<P>
+
+<B>getpriority</B>()  は成功した場合にも -1 の値を返す可能性があるので、 呼び出しの前に外部変数の <I>errno</I>
+をクリアし、呼び出しの後に返り値の -1 が正当な値か エラーかを判別する必要がある。
+<P>
+
+成功すると、 <B>setpriority</B>() は 0 を返す。 エラーの場合、-1 を返し、 <I>errno</I> にエラーの原因を示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>which</I> が <B>PRIO_PROCESS</B>, <B>PRIO_PGRP</B>, <B>PRIO_USER</B> のいずれでもない。
+<DT><B>ESRCH</B><DD>
+<I>which</I> と <I>who</I> で指定されたプロセスが存在しない。
+</DL>
+<P>
+
+上記のものに加えて <B>setpriority</B>()  では以下のエラーがある:
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+The caller attempted to set a lower nice value (i.e., a higher process
+priority), but did not have the required privilege (on Linux: did not have
+the <B>CAP_SYS_NICE</B> capability).
+<DT><B>EPERM</B><DD>
+プロセスは見つかったが、そのプロセスの実効 (effective) UID が 呼び出し元の実効UID にも実 (real) UID にも一致せず、
+呼び出し元が特権も持っていなかった (Linux の場合、 <B>CAP_SYS_NICE</B> ケーパビリティがなかった)。 以下の「注意」も参照のこと。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4, 4.4BSD (これらのインターフェースは 4.2BSD で初めて登場した)
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+nice 値の詳細は <B><A HREF="../man7/sched.7.html">sched</A></B>(7) を参照のこと。
+<P>
+
+<I>Note</I>: the addition of the &quot;autogroup&quot; feature in Linux 2.6.38 means that
+the nice value no longer has its traditional effect in many circumstances.
+For details, see <B><A HREF="../man7/sched.7.html">sched</A></B>(7).
+<P>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  で作成された子プロセスは、 親プロセスの nice 値を継承する。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  の前後で nice
+値は保存される。
+<P>
+
+<B>EPERM</B> が発生する条件の詳細はシステムに依存する。 上記の説明は POSIX.1-2001 のものであり、全ての System&nbsp;V
+風システムは これに従っているようである。 2.6.12 より前の Linux カーネルでは、呼び出し元の実 UID または 実効 UID がプロセス
+<I>who</I> の (実効 UID でなく)  実 UID に一致する必要がある。 Linux 2.6.12 以降では、呼び出し元の実行 UID
+がプロセス <I>who</I> の実 UID か実効 UID のいずれかと一致する必要がある。 全ての BSD 風システム (SunOS 4.1.3,
+Ultrix 4.2, 4.3BSD, FreeBSD 4.3, OpenBSD-2.5等) は、 Linux 2.6.12 以降と同じ動作をする。
+<P>
+
+
+現在では <I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I> をインクルードする必要はないが、インクルードすれば移植性を高めることができる (実際には
+<I>&lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;</I> で <I>rusage</I> 構造体が定義されているが、そのフィールドで使用されている
+<I>struct timeval</I> 型は <I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I> で定義されている)。
+<A NAME="lbAI">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+カーネル内部では、nice 値は実際には 40 〜 1 の範囲を使って 表現されており (負の値はエラーコードとなるため)、こちらの値が システムコール
+<B>setpriority</B>()  と <B>getpriority</B>()  で使用されている。 glibc
+のこれらのシステムコールのラッパー関数において、nice 値の ユーザー領域 (user-land) とカーネル表現の間の変換が行われる。 変換式は
+<I>unice&nbsp;=&nbsp;20&nbsp;-&nbsp;knice</I> となる。 (したがって、カーネルの 40..1 の範囲はユーザー空間で見える -20..19
+の範囲に対応する。)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+POSIX では nice 値はプロセス単位の設定となっている。 一方、 現在の POSIX スレッドの Linux/NPTL 実装では、 nice
+値はスレッド単位の属性である。 同じプロセスの別々のスレッドが異なる nice 値を持つ場合がある。 移植性が必要なアプリケーションではこの Linux
+の動作を前提するのは避けるべきである。 Linux の動作は将来標準に準拠した動作になるかもしれない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/nice.1.html">nice</A></B>(1), <B><A HREF="../../util-linux/man1/renice.1.html">renice</A></B>(1), <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/sched.7.html">sched</A></B>(7)
+<P>
+
+Linux カーネルのソースツリー内の <I>Documentation/scheduler/sched-nice-design.txt</I> (Linux
+2.6.23 以降)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

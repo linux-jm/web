@@ -1,0 +1,293 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RANDOM</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RANDOM</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated:  2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man4/random.4">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+random, urandom - カーネル乱数ソースデバイス
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+#include &lt;<A HREF="file:///usr/include/linux/random.h">linux/random.h</A>&gt;
+<P>
+
+<B>int ioctl(</B><I>fd</I><B>, RND</B><I>request</I><B>, </B><I>param</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+(Linux 1.3.30 から提供されている) <I>/dev/random</I> 、 <I>/dev/urandom</I> キャラクタースペシャルファイルは
+カーネル乱数ジェネレーターへのインターフェースを提供する。 <I>/dev/random</I> ファイルはメジャーデバイス番号 1 マイナーデバイス番号 8
+である。 <I>/dev/urandom</I> ファイルはメジャーデバイス番号 1 マイナーデバイス番号 9 である。
+<P>
+
+乱数ジェネレーターはデバイスドライバやその他の源からの環境ノイズを エントロピープールへ集める。
+また、ジェネレーターはエントロピープール内のノイズのビット数の推定値を 保持する。 このエントロピープールから乱数が生成される。
+<P>
+
+Linux 3.17 and later provides the simpler and safer <B>getrandom</B>(2)
+interface which requires no special files; see the <B>getrandom</B>(2)  manual
+page for details.
+<P>
+
+When read, the <I>/dev/urandom</I> device returns random bytes using a
+pseudorandom number generator seeded from the entropy pool.  Reads from this
+device do not block (i.e., the CPU is not yielded), but can incur an
+appreciable delay when requesting large amounts of data.
+<P>
+
+
+
+When read during early boot time, <I>/dev/urandom</I> may return data prior to
+the entropy pool being initialized.  If this is of concern in your
+application, use <B>getrandom</B>(2)  or <I>/dev/random</I> instead.
+<P>
+
+The <I>/dev/random</I> device is a legacy interface which dates back to a time
+where the cryptographic primitives used in the implementation of
+<I>/dev/urandom</I> were not widely trusted.  It will return random bytes only
+within the estimated number of bits of fresh noise in the entropy pool,
+blocking if necessary.  <I>/dev/random</I> is suitable for applications that
+need high quality randomness, and can afford indeterminate delays.
+<P>
+
+エントロピープールが空の時は、<I>/dev/random</I> からの読み出しは、 更なる環境ノイズが得られるまで、ブロックされる。 <B><A HREF="../man2/open.2.html">open</A></B>(2)
+が <I>/dev/random</I> に対して <B>O_NONBLOCK</B> フラグ付きで呼ばれると、 それ以降の <B><A HREF="../man2/read.2.html">read</A></B>(2)
+は要求したバイト数のデータが利用可能になるまで停止しない。 その代わり、 利用可能なデータが返される。 利用可能なバイトが全くない場合、
+<B><A HREF="../man2/read.2.html">read</A></B>(2) は -1 を返し、 <I>errno</I> に <B>EAGAIN</B> が設定される。
+<P>
+
+The <B>O_NONBLOCK</B> flag has no effect when opening <I>/dev/urandom</I>.  When
+calling <B><A HREF="../man2/read.2.html">read</A></B>(2)  for the device <I>/dev/urandom</I>, reads of up to 256 bytes
+will return as many bytes as are requested and will not be interrupted by a
+signal handler.  Reads with a buffer over this limit may return less than
+the requested number of bytes or fail with the error <B>EINTR</B>, if
+interrupted by a signal handler.
+<P>
+
+
+
+Since Linux 3.16, a <B><A HREF="../man2/read.2.html">read</A></B>(2)  from <I>/dev/urandom</I> will return at most 32&nbsp;MB.  A <B><A HREF="../man2/read.2.html">read</A></B>(2)  from <I>/dev/random</I> will return at most 512 bytes (340
+bytes on Linux kernels before version 2.6.12).
+<P>
+
+<I>/dev/random</I> や <I>/dev/urandom</I> に書き込みを行うと、 書き込まれたデータでエントロピープールが更新される。 しかし、
+エントロピーカウントが増えるわけではない。 つまり、 <I>/dev/random</I> と <I>/dev/urandom</I>
+の両方のファイルから読み出される内容に影響があるが、 <I>/dev/random</I> からの読み出しが早くなるわけではないということだ。
+<A NAME="lbAE">&nbsp;</A>
+<H3>使い方</H3>
+
+The <I>/dev/random</I> interface is considered a legacy interface, and
+<I>/dev/urandom</I> is preferred and sufficient in all use cases, with the
+exception of applications which require randomness during early boot time;
+for these applications, <B>getrandom</B>(2)  must be used instead, because it
+will block until the entropy pool is initialized.
+<P>
+
+
+下記で推奨しているように再起動の前後で乱数種ファイルが保存される場合、起動シーケンスにおいて乱数種が
+再ロードされた直後から、その出力はローカルのルートアクセスができない
+攻撃者に対して暗号的に安全なものとなり、ネットワーク暗号化のセッションキーとして使うには完全に最適なものとなる。 (すべての主な Linux
+のディストリビューションは少なくとも 2000 年以降はリブートの前後で乱数種のファイルを保存するようになっている。) <I>/dev/random</I>
+からの読み出しは停止 (block) する可能性があるので、ユーザーは普通 このファイルを非停止 (nonblocking) モードで開こうとし
+(もしくはタイムアウトを指定して読み出しを実行し)、希望するレベルの エントロピーはすぐには利用できない場合には、何らかの通知を行うことだろう。
+<A NAME="lbAF">&nbsp;</A>
+<H3>Configuration</H3>
+
+システムにあらかじめ作成された <I>/dev/random</I> と <I>/dev/urandom</I> が存在しないなら、次のようなコマンドで作成できる。
+<P>
+
+
+
+<BR>&nbsp;mknod&nbsp;-m&nbsp;666&nbsp;/dev/random&nbsp;c&nbsp;1&nbsp;8
+mknod -m 666 /dev/urandom c 1 9
+chown root:root /dev/random /dev/urandom
+
+
+<P>
+
+オペレータの操作なしに Linux システムが起動した直後は、 エントロピープールは意外性の乏しい均一な状態にあるだろう。
+これにより、エントロピープールの実際のノイズ量は評価値より少なくなる。 この効果を打ち消すために、シャットダウンから (次の) 起動時まで持ち越した
+エントロピープールの情報が助けになる。 エントロピープールを持ち越すためには、 Linux システムの起動時に実行される適切なスクリプトに、
+以下の行を追加すればよい:
+<P>
+
+
+
+echo &quot;Initializing random number generator...&quot;
+random_seed=/var/run/random-seed
+# 乱数種を今回のスタートアップから次回のスタートアップまで持ち越す。
+# ロードを行い、その後、全てのエントロピープールを保存する。
+if [ -f $random_seed ]; then
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cat&nbsp;$random_seed&nbsp;&gt;/dev/urandom
+else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;touch&nbsp;$random_seed
+fi
+chmod 600 $random_seed
+poolfile=/proc/sys/kernel/random/poolsize
+[ -r $poolfile ] &amp;&amp; bits=$(cat $poolfile) || bits=4096
+bytes=$(expr $bits / 8)
+dd if=/dev/urandom of=$random_seed count=1 bs=$bytes
+
+
+<P>
+
+また、Linux システムのシャットダウン時に実行される適切なスクリプトに、 以下の行を追加すればよい:
+<P>
+
+
+
+# 乱数種を今回のシャットダウンから次回のスタートアップまで持ち越す。
+# 全てのエントロピープールを保存する。
+echo &quot;Saving random seed...&quot;
+random_seed=/var/run/random-seed
+touch $random_seed
+chmod 600 $random_seed
+poolfile=/proc/sys/kernel/random/poolsize
+[ -r $poolfile ] &amp;&amp; bits=$(cat $poolfile) || bits=4096
+bytes=$(expr $bits / 8)
+dd if=/dev/urandom of=$random_seed count=1 bs=$bytes
+
+
+<P>
+
+
+In the above examples, we assume Linux 2.6.0 or later, where
+<I>/proc/sys/kernel/random/poolsize</I> returns the size of the entropy pool in
+bits (see below).
+<A NAME="lbAG">&nbsp;</A>
+<H3>/proc インターフェース</H3>
+
+ディレクトリ <I>/proc/sys/kernel/random</I> にあるファイル (2.3.16 以降で存在する) で、 <I>/dev/random</I>
+デバイスに関する追加の情報を参照できる。
+<DL COMPACT>
+<DT><I>entropy_avail</I><DD>
+この読み込み専用のファイルは使用可能なエントロピーをビット単位で表示する。値は 0 から 4096 までの範囲の数字である。
+<DT><I>poolsize</I><DD>
+このファイルはエントロピープールのサイズを示す。 このファイルの意味はカーネルバージョンにより異なる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>Linux 2.4:<DD>
+このファイルはエントロピープールのサイズを「バイト」単位で規定する。 通常、このファイルの値は 512 になるが、書き込み可能であり、
+アルゴリズムで利用可能な任意の値に変更できる。 選択可能な値は 32, 64, 128, 256, 512, 1024, 2048 である。
+<DT>Linux 2.6 以降:<DD>
+このファイルは読み出し専用であり、 エントロピープールのサイズを「ビット」単位で規定する。 値は 4096 である。
+</DL>
+</DL>
+
+<DT><I>read_wakeup_threshold</I><DD>
+This file contains the number of bits of entropy required for waking up
+processes that sleep waiting for entropy from <I>/dev/random</I>.  The default
+is 64.
+<DT><I>write_wakeup_threshold</I><DD>
+ファイル <I>write_wakeup_threshold</I> はエントロピーのビット数を保持しており、この値以下になったら <I>/dev/random</I>
+への書き込みアクセスのために <B><A HREF="../man2/select.2.html">select</A></B>(2)  または <B><A HREF="../man2/poll.2.html">poll</A></B>(2)  を実行するプロセスを起こす。
+この値はファイルに書き込みを行うことによって変更できる。
+<DT><I>uuid</I> and <I>boot_id</I><DD>
+
+これらの読み込み専用のファイルは 6fd5a44b-35f4-4ad4-a9b9-6b9be13e1fe9 のような ランダムな文字列を保持している。
+前者は読み込みの度に新たに生成され、 後者は 1 度だけ生成される。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3><A HREF="../man2/ioctl.2.html">ioctl</A>(2) インターフェース</H3>
+
+以下の <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) 要求が <I>/dev/random</I> や <I>/dev/urandom</I>
+に接続されたファイルディスクリプターに対して定義されている。 実行されたすべての要求は、 <I>/dev/random</I> と
+<I>/dev/urandom</I> に影響を与える入力エントロピープールとやり取りを行う。 <B>RNDGETENTCNT</B> 以外のすべての要求には
+<B>CAP_SYS_ADMIN</B> ケーパビリティが必要である。
+<DL COMPACT>
+<DT><B>RNDGETENTCNT</B><DD>
+入力エントロピープールのカウントを取得する。 取得される内容は proc の <I>entropy_avail</I> ファイルと同じである。
+結果は引数が指す整数 (int) に格納される。
+<DT><B>RNDADDTOENTCNT</B><DD>
+入力エントロピープールのカウントを引数が指す値だけ加算または減算する。
+<DT><B>RNDGETPOOL</B><DD>
+Linux 2.6.9 で削除された。
+<DT><B>RNDADDENTROPY</B><DD>
+入力プールに追加のエントロピーを追加し、エントロピーカウントを増やす。 この要求は <I>/dev/random</I> や <I>/dev/urandom</I>
+への書き込みとは異なる。 <I>/dev/random</I> や <I>/dev/urandom</I> への書き込みでは、 何らかのデータが追加されるだけで、
+エントロピーカウントは増やされない。 以下の構造体が使用される。
+<DT><DD>
+
+
+<BR>&nbsp;struct&nbsp;rand_pool_info&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;entropy_count;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;buf_size;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;buf[0];
+};
+
+
+<DT><DD>
+<I>entropy_count</I> はエントロピーカウントに加算 (または減算) する値である。 <I>buf</I> は大きさが <I>buf_size</I>
+のバッファーで、この内容がエントロピープールに追加される。
+<DT><B>RNDZAPENTCNT</B>, <B>RNDCLEARPOOL</B><DD>
+すべてのプールのエントロピーカウントを 0 にし、何らかのシステムデータ (現在の時刻など) をプールに追加する。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>ファイル</H2>
+
+<BR>&nbsp;<I>/dev/random</I>
+<BR>
+
+<BR>&nbsp;<I>/dev/urandom</I>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+For an overview and comparison of the various interfaces that can be used to
+obtain randomness, see <B>random</B>(7).
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+During early boot time, reads from <I>/dev/urandom</I> may return data prior to
+the entropy pool being initialized.
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../../0MultiFileIdx/man1/mknod.1.html">mknod</A></B>(1),&nbsp;<B>getrandom</B>(2),&nbsp;<B>random</B>(7)
+<P>
+
+RFC&nbsp;1750, &quot;Randomness Recommendations for Security&quot;
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">使い方</A><DD>
+<DT><A HREF="#lbAF">Configuration</A><DD>
+<DT><A HREF="#lbAG">/proc インターフェース</A><DD>
+<DT><A HREF="#lbAH">ioctl(2) インターフェース</A><DD>
+</DL>
+<DT><A HREF="#lbAI">ファイル</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

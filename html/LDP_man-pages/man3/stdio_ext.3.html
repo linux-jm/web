@@ -1,0 +1,144 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STDIO_EXT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>STDIO_EXT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-03-02<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/stdio_ext.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+__fbufsize, __flbf, __fpending, __fpurge, __freadable, __freading,
+__fsetlocking, __fwritable, __fwriting, _flushlbf - 標準入出力ファイル構造体へのインターフェース
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/stdio_ext.h">stdio_ext.h</A>&gt;</B>
+
+<B>size_t __fbufsize(FILE *</B><I>stream</I><B>);</B>
+<B>size_t __fpending(FILE *</B><I>stream</I><B>);</B>
+<B>int __flbf(FILE *</B><I>stream</I><B>);</B>
+<B>int __freadable(FILE *</B><I>stream</I><B>);</B>
+<B>int __fwritable(FILE *</B><I>stream</I><B>);</B>
+<B>int __freading(FILE *</B><I>stream</I><B>);</B>
+<B>int __fwriting(FILE *</B><I>stream</I><B>);</B>
+<B>int __fsetlocking(FILE *</B><I>stream</I><B>, int </B><I>type</I><B>);</B>
+<B>void _flushlbf(void);</B>
+<B>void __fpurge(FILE *</B><I>stream</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+Solaris では、 <I>FILE</I> 構造体の内部へポータブルなかたちで アクセスできる手段が導入されており、これらは glibc
+でも実装されている。
+<P>
+
+<B>__fbufsize</B>()  関数は、指定されたストリームが使用しているバッファーサイズを返す。
+<P>
+
+<B>__fpending</B>()  関数は、出力バッファーに入っているデータのバイト数を返す。
+ワイドキャラクターを扱うストリームの場合、ワイドキャラクター単位で計算される。 バッファーが読み出しモードの場合や読み出し専用で開かれている場合の
+この関数の振舞いは未定義である。
+<P>
+
+<B>__flbf</B>()  関数は、ストリームがラインバッファーの場合は 0 以外を、 それ以外の場合は 0 を返す。
+<P>
+
+<B>__freadable</B>()  関数は、ストリームが読み出し可能な場合は 0 以外を、 それ以外の場合は 0 を返す。
+<P>
+
+<B>__fwritable</B>()  関数は、ストリームが書き込み可能な場合は 0 以外を、 それ以外の場合は 0 を返す。
+<P>
+
+<B>__freading</B>()  関数は、ストリームが読み出し専用の場合、またはストリームに対する直前の操作が 読み出し操作であった場合は 0
+以外を返し、それ以外の場合は 0 を返す。
+<P>
+
+<B>__fwriting</B>()  関数は、ストリームが書き込み専用(もしくは追加専用)の場合、
+またはストリームに対する直前の操作が書き込み操作であった場合は 0 以外を返し、 それ以外の場合は 0 を返す。
+<P>
+
+<B>__fsetlocking</B>()  関数は、ストリームのロック形式を選択するために使用できる。 返り値は、現在のロック形式である。 <I>type</I>
+引数は以下の 3 種類の値をとることができる :
+<DL COMPACT>
+<DT><B>FSETLOCKING_INTERNAL</B><DD>
+指定されたストリームに対して操作が行われる度に、操作の前後で 明示的に指示しなくてもストリームのロック処理を行う (但し、*_unlocked
+関数を使用した場合は例外である)。 これがデフォルトのロック形式である。
+<DT><B>FSETLOCKING_BYCALLER</B><DD>
+関数の呼び出し元でロックの面倒をみる。 (おそらく、複数のスレッドが存在する状況では <B><A HREF="../man3/flockfile.3.html">flockfile</A></B>(3)  を使うことになるだろう)
+ロック形式が <B>FSETLOCKING_INTERNAL</B> にリセットされるまでは標準入出力関連の関数はロック処理を行わない。
+<DT><B>FSETLOCKING_QUERY</B><DD>
+ロック形式の変更を行わない。(現在の形式を返すだけである)
+</DL>
+<P>
+
+<B>_flushlbf</B>()  関数は、すべてのラインバッファー (line-buffered) タイプのストリームの 内容を出力(フラッシュ)する。
+(当然ながら、端末への出力が強制的に行われることになるので、 キーボードからの入力を読みこむ前にこの関数を呼んだ方がいいだろう)
+<P>
+
+<B>__fpurge</B>()  関数は、ストリームのバッファーの内容を廃棄する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>__fbufsize</B>(),
+<B>__fpending</B>(),
+<BR>
+
+<B>__fpurge</B>(),
+<B>__fsetlocking</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe race:stream<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>__flbf</B>(),
+<B>__freadable</B>(),
+<BR>
+
+<B>__freading</B>(),
+<B>__fwritable</B>(),
+<BR>
+
+<B>__fwriting</B>(),
+<B>_flushlbf</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/flockfile.3.html">flockfile</A></B>(3), <B><A HREF="../man3/fpurge.3.html">fpurge</A></B>(3)
+<A NAME="lbAG">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">属性</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

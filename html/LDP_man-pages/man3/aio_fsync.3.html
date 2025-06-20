@@ -1,0 +1,120 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of AIO_FSYNC</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>AIO_FSYNC</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/aio_fsync.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+aio_fsync - 非同期ファイルを同期させる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/aio.h">aio.h</A>&gt;</B>
+<P>
+
+<B>int aio_fsync(int </B><I>op</I><B>, struct aiocb *</B><I>aiocbp</I><B>);</B>
+<P>
+
+<I>-lrt</I> でリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>aio_fsync</B>() 関数は、 <I>aiocbp-&gt;aio_fildes</I> で関連付けられているまだ
+完了していない全ての非同期 I/O 操作を同期させる。
+(<I>aiocb</I> 構造体の説明は <B><A HREF="../man7/aio.7.html">aio</A></B>(7) を参照)
+<P>
+
+より正確に言うと、 <I>op</I> が <B>O_SYNC</B> の場合、現在キューに入れられている全て
+の I/O 操作は、 <B><A HREF="../man2/fsync.2.html">fsync</A></B>(2) が呼ばれたかのように完了されるだろう。 また
+<I>op</I> が <B>O_DSYNC</B> の場合、この呼び出しは <B><A HREF="../man2/fdatasync.2.html">fdatasync</A></B>(2) の非同期版となる。
+<P>
+
+この関数はリクエストを行うだけである点に注意すること。
+I/O の完了の待ち合わせは行わない。
+<P>
+
+<I>aiocbp</I> で指される構造体のフィールドのうち、この呼び出しで <I>aio_fildes</I>
+以外に使用されるのは <I>aio_sigevent</I> フィールド (<I>sigevent</I> 構造体、説明は
+<B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7) 参照) のみである。このフィールドは、完了時の非同期通知に使用
+したいタイプを示す。 その他のフィールドは無視される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合 (同期リクエストをキューに入れるのに成功した場合)、 この関数は 0 を返す。 エラーの場合、-1 が返され、 <I>errno</I>
+が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+リソースが足りない。
+<DT><B>EBADF</B><DD>
+<I>aio_fildes</I> が書き込みのためにオープンされた有効なファイルディスクリプターではない。
+<DT><B>EINVAL</B><DD>
+このファイルでは同期 I/O がサポートされていない。
+または <I>op</I> が <B>O_SYNC</B> でも <B>O_DSYNC</B> でもない。
+<DT><B>ENOSYS</B><DD>
+<B>aio_fsync</B>() は実装されていない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+The <B>aio_fsync</B>() 関数は glibc 2.1 以降で利用できる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>aio_fsync</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/aio_cancel.3.html">aio_cancel</A></B>(3), <B><A HREF="../man3/aio_error.3.html">aio_error</A></B>(3), <B><A HREF="../man3/aio_read.3.html">aio_read</A></B>(3), <B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3),
+<B><A HREF="../man3/aio_suspend.3.html">aio_suspend</A></B>(3), <B><A HREF="../man3/aio_write.3.html">aio_write</A></B>(3), <B><A HREF="../man3/lio_listio.3.html">lio_listio</A></B>(3), <B><A HREF="../man7/aio.7.html">aio</A></B>(7),
+<B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:26 GMT, December 05, 2022
+</BODY>
+</HTML>

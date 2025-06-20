@@ -1,0 +1,512 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of BOOTPARAM</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>BOOTPARAM</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/bootparam.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+bootparam - Linux カーネル起動時パラメーターの解説
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+Linux カーネルは起動するときに「コマンドラインオプション」あるいは 「起動時パラメーター」を受け付ける。 これは一般に、
+カーネルには決定できないハードウェアのパラメーターをカーネルに渡したい場合や、
+カーネルが検出するであろう値を意図的に無効にしたり変更したりする場合に用いる。
+<P>
+
+When the kernel is booted directly by the BIOS, you have no opportunity to
+specify any parameters.  So, in order to take advantage of this possibility
+you have to use a boot loader that is able to pass parameters, such as GRUB.
+<A NAME="lbAD">&nbsp;</A>
+<H3>引数リスト</H3>
+
+The kernel command line is parsed into a list of strings (boot arguments)
+separated by spaces.  Most of the boot arguments have the form:
+<P>
+
+
+
+name[=value_1][,value_2]...[,value_10]
+
+
+<P>
+
+ここで 'name' は、それに対応する値がカーネルのどの部分に渡されるものなのかを 識別するための、他と重ならないキーワードである。 書式中の 10
+という制限は実際に存在する。 現在のコードは、キーワードひとつあたり、コンマで区切られたパラメーターを 10 個までしか取り扱うことができない。
+(しかし、事情が非常に複雑な場合には、同じキーワードを再度利用して 10 個以上のパラメーターを与えることができるかもしれない。
+対象となるハードウェアの設定関数がそれをサポートしていれば、だが。)
+<P>
+
+カーネルコマンドラインの識別はほとんどがカーネルソースファイル <I>init/main.c</I> に書かれている。 最初に、カーネルは 'root=',
+'nfsroot=', 'nfsaddrs=', 'ro', 'rw', 'debug', 'init' といった特別な引数があるかをチェックする。
+これらの意味については後述する。
+<P>
+
+Then it walks a list of setup functions to see if the specified argument
+string (such as 'foo') has been associated with a setup function
+('foo_setup()') for a particular device or part of the kernel.  If you
+passed the kernel the line foo=3,4,5,6 then the kernel would search the
+bootsetups array to see if 'foo' was registered.  If it was, then it would
+call the setup function associated with 'foo' (foo_setup()) and hand it the
+arguments 3, 4, 5, and 6 as given on the kernel command line.
+<P>
+
+'foo=bar' という形式の引数のうち、 上記のように設定関数に受け入れられなかったものは、 環境変数と解釈されて設定される。
+(あまり役に立たない?) 例としては、'TERM=VT100' がある。
+<P>
+
+Any remaining arguments that were not picked up by the kernel and were not
+interpreted as environment variables are then passed onto PID 1, which is
+usually the <B>init</B>(1)  program.  The most common argument that is passed to
+the <I>init</I> process is the word 'single' which instructs it to boot the
+computer in single user mode, and not launch all the usual daemons.  Check
+the manual page for the version of <B>init</B>(1)  installed on your system to
+see what arguments it accepts.
+<A NAME="lbAE">&nbsp;</A>
+<H3>一般的な、デバイス固有ではない起動時引数</H3>
+
+<DL COMPACT>
+<DT><B>'init=...'</B><DD>
+カーネルが実行する初期コマンドを設定する。 この指定がなされなかったり、指定したコマンドが見つからなかった場合には、 カーネルは
+<I>/sbin/init</I>, <I>/etc/init</I>, <I>/bin/init</I>, <I>/bin/sh</I> の順で実行を試み、すべてに失敗したら
+panic を起こす。
+<DT><B>'nfsaddrs=...'</B><DD>
+This sets the NFS boot address to the given string.  This boot address is
+used in case of a net boot.
+<DT><B>'nfsroot=...'</B><DD>
+This sets the NFS root name to the given string.  If this string does not
+begin with '/' or ',' or a digit, then it is prefixed by '/tftpboot/'.
+This root name is used in case of a net boot.
+<DT><B>'root=...'</B><DD>
+起動時にルートファイルシステムとして使われるデバイスをカーネルに指定する。 デフォルトはコンパイル時に決定され、
+通常はカーネルを構築したシステムのルートデバイスになる。 この値を無効にして、 例えば 2
+番目のフロッピーディスクドライブをルートデバイスに指定する場合は、 'root=/dev/fd1' とする。
+<DT><DD>
+The root device can be specified symbolically or numerically.  A symbolic
+specification has the form <I>/dev/XXYN</I>, where XX designates the device type
+(e.g., 'hd' for ST-506 compatible hard disk, with Y in 'a'-'d'; 'sd'
+for SCSI compatible disk, with Y in 'a'-'e'), Y the driver letter or
+number, and N the number (in decimal) of the partition on this device.
+<DT><DD>
+なお、これらはファイルシステム上でのデバイスの指定方法とは全く関係ない。 '/dev/' を用いるのは単に慣習に過ぎない。
+<DT><DD>
+扱いにくいし移植性も良くないが、 上記のデバイスを major/minor 番号の数値で指定してもよい。 (例えば <I>/dev/sda3</I> は
+major 番号 8、minor 番号 3 なので、 'root=0x803' と記述できる。)
+<DT><B>'rootdelay='</B><DD>
+このパラメーターは root ファイルシステムのマウントを行う前に停止する遅延時間 (秒単位) を指定する。
+<DT><B>'rootflags=...'</B><DD>
+このパラメーターは root ファイルシステムのマウントオプション文字列を指定する (<B><A HREF="../../util-linux/man5/fstab.5.html">fstab</A></B>(5) も参照)。
+<DT><B>'rootfstype=...'</B><DD>
+'rootfstype' オプションが指定されると、 カーネルは、 指定されたタイプであるとみなしてルートファイルシステムをマウントする。
+このオプションは、 例えば、ext3 ファイルシステムを ext2 としてマウントし、 ルートファイルシステムのジャーナルを削除する場合に便利である。
+こうすると、 別のメディアからマシンを起動することなく ext3 から ext2 へ戻すことができる。
+<DT><B>'ro'</B> と <B>'rw'</B><DD>
+'ro' オプションは、 ルートファイルシステムを 「読み出し専用」でマウントするようカーネルに指示し、 fsck
+プログラムがファイルシステムの矛盾を検査できるようにする。 ファイルシステムが「読み書き可能」として再マウントされる (つまり 'mount -w -n
+-o remount /') までの間は、 いかなるプロセスもこのファイルシステム上のファイルに書き込むことはできない。 (<B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)
+も参照。)
+<DT><DD>
+rw オプションはルートファイルシステムを 「読み書き可能」でマウントするようカーネルに指示する。 こちらがデフォルトである。
+<DT><B>'resume=...'</B><DD>
+This tells the kernel the location of the suspend-to-disk data that you want
+the machine to resume from after hibernation.  Usually, it is the same as
+your swap partition or file.  Example:
+<DT><DD>
+
+
+resume=/dev/hda2
+
+
+<DT><B>'reserve=...'</B><DD>
+デバイスの自動検出から I/O ポートを保護するために用いる。 コマンドの形式は以下の通り。
+<DT><DD>
+
+
+<B>reserve=</B><I>iobase,extent[,iobase,extent]...</I>
+
+
+<DT><DD>
+機種によっては、 デバイスドライバによるデバイスの自動検出を、 特定の範囲に対しては禁止しなければならないことがある。
+ハードウェアが検出動作によって深刻な問題を引き起こす場合や、 誤認識される可能性がある場合、
+また単にカーネルにハードウェアを初期化させたくない場合などがありうるだろう。
+<DT><DD>
+この起動時引数 reserve は、自動検出の対象外とする I/O ポートの範囲を指定する。 デバイスドライバは、
+他の起動時引数によって明示的に指定されない限り、 予約された範囲に対して自動検出動作を行わない。
+<DT><DD>
+例えばブート時のコマンドラインに
+<DT><DD>
+
+
+reserve=0x300,32  blah=0x300
+
+
+<DT><DD>
+と指定すると、'blah' を除くすべてのデバイスドライバは 0x300 から 0x31f の範囲を自動検出の対象外とする。
+<DT><B>'panic=N'</B><DD>
+By default, the kernel will not reboot after a panic, but this option will
+cause a kernel reboot after N seconds (if N is greater than zero).  This
+panic timeout can also be set by
+<DT><DD>
+
+
+echo N &gt; /proc/sys/kernel/panic
+
+
+<DT><B>'reboot=[warm|cold][,[bios|hard]]'</B><DD>
+Since Linux 2.0.22, a reboot is by default a cold reboot.  One asks for the
+old default with 'reboot=warm'.  (A cold reboot may be required to reset
+certain hardware, but might destroy not yet written data in a disk cache.  A
+warm reboot may be faster.)  By default, a reboot is hard, by asking the
+keyboard controller to pulse the reset line low, but there is at least one
+type of motherboard where that doesn't work.  The option 'reboot=bios' will
+instead jump through the BIOS.
+<DT><B>'nosmp'</B> と <B>'maxcpus=N'</B><DD>
+(カーネルのコンパイル時に __SMP__ が指定されたときのみ有効。)  コマンドラインオプションに 'nosmp' または 'maxcpus=0'
+を指定すると、 SMP (Symmetric Multi Processing) を完全に無効にする。 'maxcpus=N' オプションは、
+SMP モードで有効にする CPU の最大数を N に制限する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>カーネル開発者用の起動時引数</H3>
+
+<DL COMPACT>
+<DT><B>'debug'</B><DD>
+Kernel messages are handed off to a daemon (e.g., <B><A HREF="../../sysklogd/man8/klogd.8.html">klogd</A></B>(8)  or similar)
+so that they may be logged to disk.  Messages with a priority above
+<I>console_loglevel</I> are also printed on the console.  (For a discussion of
+log levels, see <B><A HREF="../man2/syslog.2.html">syslog</A></B>(2).)  By default, <I>console_loglevel</I> is set to
+log messages at levels higher than <B>KERN_DEBUG</B>.  This boot argument will
+cause the kernel to also print messages logged at level <B>KERN_DEBUG</B>.  The
+console loglevel can also be set on a booted system via the
+<I>/proc/sys/kernel/printk</I> file (described in <B><A HREF="../man2/syslog.2.html">syslog</A></B>(2)), the
+<B><A HREF="../man2/syslog.2.html">syslog</A></B>(2)  <B>SYSLOG_ACTION_CONSOLE_LEVEL</B> operation, or <B>dmesg</B>(8).
+<DT><B>'profile=N'</B><DD>
+カーネルがどこで CPU サイクルを消費しているか調べたい場合には、 カーネルのプロファイリング機能を有効にすればこれを実現できる。
+カーネルプロファイリングは、変数 <I>prof_shift</I> を 0 以外の値にセットすると有効になる。 この値はコンパイル時に
+<B>CONFIG_PROFILE</B> で指定するか、 この 'prifile=N' オプションで指定できる。 <I>prof_shift</I> の値は N
+が指定されれば N となり、N が指定されなかった場合は <B>CONFIG_PROFILE_SHIFT</B> の値が用いられる。
+どちらも指定されなければデフォルト値の 2 が用いられる。 この変数が重要なのは、 カーネルプロファイリングの粒度を決定するところにある。
+すなわち、各クロックの割込みごとに、システムがカーネルコードを実行していれば、 以下のようにカウンターの値がインクリメントされる。
+<DT><DD>
+
+
+profile[address &gt;&gt; prof_shift]++;
+
+
+<DT><DD>
+生のプロファイリング情報は、 <I>/proc/profile</I> から見ることができるが、readprofile.c
+のような情報を加工するツールを使ったほうが良いだろう。 <I>/proc/profile</I> に任意のデータを書込むと、 カウンターはリセットされる。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>RAM ディスク関連の起動時引数</H3>
+
+(Only if the kernel was compiled with <B>CONFIG_BLK_DEV_RAM</B>.)  In general it
+is a bad idea to use a ramdisk under Linux---the system will use available
+memory more efficiently itself.  But while booting, it is often useful to
+load the floppy contents into a ramdisk.  One might also have a system in
+which first some modules (for filesystem or hardware) must be loaded before
+the main disk can be accessed.
+<DL COMPACT>
+<DT><DD>
+In Linux 1.3.48, ramdisk handling was changed drastically.  Earlier, the
+memory was allocated statically, and there was a 'ramdisk=N' parameter to
+tell its size.  (This could also be set in the kernel image at compile
+time.)  These days ram disks use the buffer cache, and grow dynamically.
+For a lot of information on the current ramdisk setup, see the kernel source
+file <I>Documentation/blockdev/ramdisk.txt</I> (<I>Documentation/ramdisk.txt</I> in
+older kernels).
+<DT><DD>
+4 つのパラメーターがある。論理値をとるものが 2 つ、整数値をとるものが 2 つ。
+<DT><B>'load_ramdisk=N'</B><DD>
+N=1 なら RAM ディスクをロードする。N=0 ならロードしない (デフォルト)。
+<DT><B>'prompt_ramdisk=N'</B><DD>
+N=1 ならフロッピー挿入を促すプロンプトを出す (デフォルト)。 N=0 ならプロンプトを出さない。
+(従って、このパラメーターを指定する必要はまず無いであろう。)
+<DT><B>'ramdisk_size=N'</B> もしくは (古い形式の) <B>'ramdisk=N'</B><DD>
+Set the maximal size of the ramdisk(s) to N kB.  The default is 4096 (4&nbsp;MB).
+<DT><B>'ramdisk_start=N'</B><DD>
+開始ブロック番号 (フロッピー先頭からのオフセットで指定した RAM ディスクの開始点)  を N にセットする。 これはカーネルイメージのあとに
+RAM ディスクイメージを置く場合に必要となる。
+<DT><B>'noinitrd'</B><DD>
+(カーネルのコンパイル時に <B>CONFIG_BLK_DEV_RAM</B> と <B>CONFIG_BLK_DEV_INITRD</B>
+が指定されているときのみ有効。)  最近は initrd を使用するようにカーネルをコンパイルできる。 このオプションが指定されると、
+ブートプロセスはカーネルと RAM ディスクをロードし、 カーネルは initrd を「普通の」 RAM ディスクに変換し、 この RAM
+ディスクがルートデバイスとして「読み書き可能」でマウントされる。 次に <I>/linuxrc</I> が実行される。
+その後「真の」ルートファイルシステムがマウントされ、 initrd ファイルシステムは <I>/initrd</I> に移される。 最後に通常のブートシーケンス
+(具体的には <I>/sbin/init</I> の呼び出し) が実行される。
+<DT><DD>
+
+For a detailed description of the initrd feature, see the kernel source file
+<I>Documentation/admin-guide/initrd.rst</I> (or <I>Documentation/initrd.txt</I>
+before Linux 4.10).
+<DT><DD>
+'noinitrd' オプションを用いると、 カーネルは (initrd 動作を行うようにコンパイルされている場合でも)
+上記の動作を行なわず、代わりに initrd のデータを <I>/dev/initrd</I> に残す。 (このデバイスは一度しか使えない。
+データは、そのデータを使った最後のプロセスが <I>/dev/initrd</I> をクローズするとすぐに解放される。)
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>SCSI デバイス用の起動時引数</H3>
+
+この節における用語：
+<P>
+
+<I>iobase</I> -- SCSI ホストアダプターが占有する I/O ポートの先頭アドレス。 16 進表記で指定し、通常 0x200 から 0x3ff
+の範囲に位置する。
+<P>
+
+<I>irq</I> -- カードが利用するハードウェア割り込み。有効な値はカードに よって異なるが、通常は 5, 7, 9, 10, 11, 12, 15
+である。 これ以外の値は通常、IDE ハードディスク、フロッピー、 シリアルポートといった一般的な周辺機器によって使用される。
+<P>
+
+<I>scsi-id</I> -- SCSI バス上のホストアダプターが自分自身を識別するために使用する ID 番号。
+この値を変更できるホストアダプターもごく希に存在するが、 ほとんどはアダプター内部で固定されている。 よく使われるデフォルト値は 7
+であるが、Seagate もしくは Future Domain 製の TMC-950 ボードでは 6 が使われる。
+<P>
+
+<I>parity</I> -- SCSI ホストアダプターが取り付けられたデバイスとの通信に際して パリティ値を必要とするかどうか。 1
+を指定するとパリティチェックが有効になり、 0 でパリティチェックが無効になる。 しかし、すべてのデバイスがこの起動時引数によるパリティの選択を
+サポートするわけではない。
+<DL COMPACT>
+<DT><B>'max_scsi_luns=...'</B><DD>
+SCSI デバイスは複数の「サブデバイス」を自分自身の内部に持つことができる。 最もよくある例として、一時に 1 枚以上のディスクを扱うことができる
+(チェンジャー機能付の) SCSI CD-ROM がある。 それぞれの CD はそのデバイスの 「論理ユニット番号 (LUN)」によって特定される。
+しかしほとんどのデバイス (例えばハードディスクやテープドライブ) は、 LUN 番号 0 が割り当てられた、ただひとつのデバイスからなる。
+<DT><DD>
+設計が不十分な SCSI デバイスでは 0 以外の LUN 番号への自動検出を 扱えないことがある。 したがって、コンパイル時に
+<B>CONFIG_SCSI_MULTI_LUN</B> オプションが指定されていないと、 最近のカーネルではデフォルトでは LUN 番号 0 のみを検出する。
+<DT><DD>
+起動時に調べる LUN 番号を指定する場合、起動時引数として 'max_scsi_luns=n' を指定する。n は 1 から 8 の間で指定する。
+n=1 以上の値を使用しないようにすれば、 このようないかれた機械にひどい目にあわされずにすむだろう。
+<DT><B>SCSI テープドライブの設定</B><DD>
+SCSI テープドライバの起動時設定の一部は以下のようにして行なうことができる。
+<DT><DD>
+
+
+<B>st=</B><I>buf_size[,write_threshold[,max_bufs]]</I>
+
+
+<DT><DD>
+The first two numbers are specified in units of kB.  The default <I>buf_size</I>
+is 32k&nbsp;B, and the maximum size that can be specified is a ridiculous 16384&nbsp;kB.  The <I>write_threshold</I> is the value at which the buffer is committed to
+tape, with a default value of 30&nbsp;kB.  The maximum number of buffers varies
+with the number of drives detected, and has a default of two.  An example
+usage would be:
+<DT><DD>
+
+
+st=32,30,2
+
+
+<DT><DD>
+詳細は Linux カーネルソース内の <I>Documentation/scsi/st.txt</I> (古いカーネルの場合は
+<I>drivers/scsi/README.st</I>) に書かれている。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H3>ハードディスク</H3>
+
+<DL COMPACT>
+<DT><B>IDE Disk/CD-ROM ドライバのパラメーター</B><DD>
+The IDE driver accepts a number of parameters, which range from disk
+geometry specifications, to support for broken controller chips.
+Drive-specific options are specified by using 'hdX=' with X in 'a'-'h'.
+<DT><DD>
+あるドライブに特有なものではないオプションは、hd= を前に付けて指定する。 ドライブ特有でないオプションに対してドライブ指定 ('hdX=')
+を前置しても問題はない。 そのオプションは期待通りそのドライブに適用される。
+<DT><DD>
+
+Also note that 'hd=' can be used to refer to the next unspecified drive in
+the (a, ..., h) sequence.  For the following discussions, the 'hd=' option
+will be cited for brevity.  See the file <I>Documentation/ide/ide.txt</I> (or
+<I>Documentation/ide.txt</I> in older kernels, or <I>drivers/block/README.ide</I> in
+ancient kernels) in the Linux kernel source for more details.
+<DT><B>'hd=cyls,heads,sects[,wpcom[,irq]]' オプション</B><DD>
+これらのオプションはディスクの物理的なジオメトリを指定するために使う。 最初の 3 つの値以降は省略できる。 シリンダ (cyls)、ヘッド
+(heads)、セクタ (sects) の各値は fdisk で用いられるものと同じである。 書き込み補正 (wpcom) 値は IDE
+ディスクでは無視される。 IRQ 値には、そのドライブが接続されているインターフェースが用いる IRQ を指定する
+(本来の意味では「ドライブに特有」のパラメーターではない)。
+<DT><B>'hd=serialize' オプション</B><DD>
+デュアル IDE インターフェースである CMD-640 チップには設計上の問題があって、 セカンダリインターフェース上のドライブと
+プライマリインターフェース上のドライブを 同時に使用するとデータが破壊されることがある。 このオプションを使用すると、
+ドライバは両方のインターフェースが 同時に使用されることが絶対にないようにする。
+<DT><B>'hd=noprobe' オプション</B><DD>
+このドライブの自動検出をしない。 例えば
+<DT><DD>
+
+
+hdb=noprobe hdb=1166,7,17
+
+
+<DT><DD>
+とすると自動検出が無効になる。 しかしドライブのジオメトリを指定しているので、 このドライブは正しいブロックデバイスとして登録され、使用可能になる。
+<DT><B>'hd=nowerr' オプション</B><DD>
+ドライブによっては、書き込みエラー (<B>WRERR_STAT</B>)  ビットがクリアできなくなることがある。 このオプションを指定すると、
+このような壊れたデバイスに対する回避機能が有効になる。
+<DT><B>'hd=cdrom' オプション</B><DD>
+このオプションは、通常の IDE ハードディスクの代わりに、 ATAPI 互換の CDROM が続されていることを IDE ドライバに伝える。
+CD-ROM はたいてい自動的に認識されるが、 うまく行かない場合に試してみると良い。
+<DT><B>スタンダード ST-506 ディスクドライバのオプション ('hd=')</B><DD>
+スタンダードディスクドライバは IDE ドライバと同様のジオメトリ指定を引数にとることができる。 ただし受け付ける値はちょうど 3 つ (C/H/S)
+に限られる。 それ以上の値やそれ以下の値を指定すると、ドライバは黙ってその指定を無視する。 また引数として受け入れられるのは 'hd='
+の形式だけである。 つまり 'hda=' のような指定はここでは正しくない。 書式は次の通り。
+<DT><DD>
+
+
+hd=cyls,heads,sects
+
+
+<DT><DD>
+2 台のディスクが接続されてい場合は、 2 番目のディスクに対しても上記のジオメトリが設定される。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>イーサネットデバイス</H3>
+
+ドライバが異なると用いるパラメーターも異なるが、 すべてのドライバは、少なくとも割り込み番号 (irq)、 I/O ポートのベースアドレス
+(iobase)、名前 (name) を持つ。 最も一般的な形式は以下の通り。
+<P>
+
+
+
+ether=irq,iobase[,param_1[,...param_8]],name
+
+
+<P>
+
+最初の数字でない値は名前として使用される。 param_n の値はカード (ドライバ) ごとに異なる意味を持つ。
+よくある目的は、共有メモリーアドレスの指定、インターフェースの選択、 DMA チャネルなどである。
+<P>
+
+このパラメーターの最もよくある利用法は、 2 番目の Ethernet カードを強制的に検出させる場合である (デフォルトでは 1 枚しか検出しない)。
+これは簡単で、次のようにすればよい。
+<P>
+
+
+
+ether=0,0,eth1
+
+
+<P>
+
+この例で IRQ と I/O ベースアドレスに 0 を指定しているのは、 ドライバに自動検出をするよう伝えているのである。
+<P>
+
+Ethernet-HOWTO では、複数のカードを使うやり方や、 カードやドライバに特有の param_n 値の意味について、
+ずっと詳細に解説されている。 興味を持った読者は、この文書にあたり、 自分のカードに関して書かれているセクションを参照すると良い。
+<A NAME="lbAK">&nbsp;</A>
+<H3>フロッピーディスクドライバ</H3>
+
+There are many floppy driver options, and they are all listed in
+<I>Documentation/blockdev/floppy.txt</I> (or <I>Documentation/floppy.txt</I> in
+older kernels, or <I>drivers/block/README.fd</I> for ancient kernels) in the
+Linux kernel source.  See that file for the details.
+<A NAME="lbAL">&nbsp;</A>
+<H3>サウンドドライバ</H3>
+
+The sound driver can also accept boot arguments to override the compiled-in
+values.  This is not recommended, as it is rather complex.  It is described
+in the Linux kernel source file <I>Documentation/sound/oss/README.OSS</I>
+(<I>drivers/sound/Readme.linux</I> in older kernel versions).  It accepts a boot
+argument of the form:
+<P>
+
+
+
+sound=device1[,device2[,device3...[,device10]]]
+
+
+<P>
+
+各 deviceN はそれぞれ 0xTaaaId という形式で指定する。 各バイトの意味は以下の通り。
+<P>
+
+T - デバイスのタイプ: 1=FM, 2=SB, 3=PAS, 4=GUS, 5=MPU401, 6=SB16, 7=SB16-MPU401
+<P>
+
+aaa - I/O ポートアドレス (16進値)
+<P>
+
+I - interrupt line in hex (i.e., 10=a, 11=b, ...)
+<P>
+
+d - DMA チャネル
+<P>
+
+As you can see, it gets pretty messy, and you are better off to compile in
+your own personal values as recommended.  Using a boot argument of
+'sound=0' will disable the sound driver entirely.
+<A NAME="lbAM">&nbsp;</A>
+<H3>ラインプリンタドライバ</H3>
+
+<DL COMPACT>
+<DT><B>'lp='</B><DD>
+<BR>
+
+構文は以下の通り。
+<DT><DD>
+
+
+lp=0
+lp=auto
+lp=reset
+lp=port[,port...]
+
+
+<DT><DD>
+プリンタドライバには、どのポートを使うか、 どのポートを使ってはいけないかを伝えることができる。 後者は、
+利用可能なあらゆるパラレルポートをプリンタドライバが要求しないようにして、 他のドライバ (PLIP や PPA など) から
+それらを使えるようにしたい場合に便利である。
+<DT><DD>
+
+
+引数の書式は、複数のポート名である。 例えば lp=none,parport0 とすると、 最初のパラレルポートを lp1 として使い、 lp0
+は無効にする。プリンタードライバを完全に無効にするには lp=0 とすればよい。
+</DL>
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../sysklogd/man8/klogd.8.html">klogd</A></B>(8), <B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)
+<P>
+
+For up-to-date information, see the kernel source file
+<I>Documentation/admin-guide/kernel-parameters.txt</I>.
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">引数リスト</A><DD>
+<DT><A HREF="#lbAE">一般的な、デバイス固有ではない起動時引数</A><DD>
+<DT><A HREF="#lbAF">カーネル開発者用の起動時引数</A><DD>
+<DT><A HREF="#lbAG">RAM ディスク関連の起動時引数</A><DD>
+<DT><A HREF="#lbAH">SCSI デバイス用の起動時引数</A><DD>
+<DT><A HREF="#lbAI">ハードディスク</A><DD>
+<DT><A HREF="#lbAJ">イーサネットデバイス</A><DD>
+<DT><A HREF="#lbAK">フロッピーディスクドライバ</A><DD>
+<DT><A HREF="#lbAL">サウンドドライバ</A><DD>
+<DT><A HREF="#lbAM">ラインプリンタドライバ</A><DD>
+</DL>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:27 GMT, December 05, 2022
+</BODY>
+</HTML>

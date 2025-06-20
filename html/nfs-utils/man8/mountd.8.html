@@ -1,0 +1,286 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of rpc.mountd</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>rpc.mountd</H1>
+Section: Maintenance Commands (8)<BR>Updated: 31 Aug 2004<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/nfs-utils/release/man8/mountd.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rpc.mountd - NFS マウントデーモン
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/usr/sbin/rpc.mountd [</B><I>options</I><B>]</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>rpc.mountd</B>
+
+プログラムは NFS のマウントプロトコルを実装している。
+<B>rpc.mountd</B>
+
+は NFS クライアントから MOUNT リクエストを受け取ると、
+現在エクスポートされているファイルシステムのリストを参照し、
+そのリクエストが正当なものかどうかをチェックする。
+クライアントがそのファイルシステムのマウントを許可されている場合には、
+<B>rpc.mountd</B>
+
+は要求されたディレクトリのファイルハンドルを取得し、
+それをクライアントに返す。
+<A NAME="lbAE">&nbsp;</A>
+<H3>NFS ファイルシステムのエクスポート</H3>
+
+ファイルシステムを NFS クライアントが使用できるようにすることを、
+<I>エクスポート</I>という。
+<P>
+
+通常 NFS の使用を許可するファイルシステムとホストは
+<B>/etc/exports</B>
+
+ファイルにリストされ、システムのブート時に
+<B>exportfs -a</B>
+
+で有効にされる。
+<B><A HREF="../man8/exportfs.8.html">exportfs</A></B>(8)
+
+コマンドは、カーネル NFS サーバーモジュールと
+<B>rpc.mountd</B>
+
+デーモンとの両方に対して、エクスポート情報を利用可能にする。
+<P>
+
+もしくは、
+<B>exportfs</B>
+
+の
+<I>host</I><B>:</B><I>/directory</I>
+
+という書式を使って、個別のディレクトリを一時的にエクスポートすることもできる。
+<A NAME="lbAF">&nbsp;</A>
+<H3>rmtab ファイル</H3>
+
+NFS クライアントからマウント・リクエストを受けとるごとに、
+<B>rpc.mountd</B>
+
+は
+<B>/var/lib/nfs/rmtab</B>
+
+ファイルにエントリを追加する。
+アンマウント・リクエストを受け取ると、そのエントリは削除される。
+<P>
+
+ただし、このファイルはほとんど飾りのようなものである。
+ひとつには、
+<B>rpc.mountd </B>
+
+の UMOUNT プロシージャが呼ばれた後でも
+クライアントはファイルハンドルを使い続けることができてしまうし、
+またもうひとつには、
+<B>mountd</B>
+
+に知らせずにリブートすると、
+<B>rmtab</B>
+
+に古いエントリが残ってしまう。
+<A NAME="lbAG">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-d kind  または  --debug kind</B>
+
+<DD>
+デバッグを有効にする。
+kind として指定可能な値は以下の通り: all, auth, call, parse.
+<DT><B>-F  または  --foreground</B>
+
+<DD>
+フォアグラウンドで実行する (デーモン化しない)。
+<DT><B>-f  または  --exports-file</B>
+
+<DD>
+このオプションはエクスポートファイルを指定する。
+エクスポートファイルには、このサーバーがサービスを提供するクライアントと、
+それぞれのマウントに対して適用されるパラメータがリストされている
+(<B><A HREF="../man5/exports.5.html">exports</A></B>(5)
+
+を見よ)。デフォルトのエクスポートファイルは
+<I>/etc/exports</I>
+
+である。
+<DT><B>-h  または  --help</B>
+
+<DD>
+使用法のメッセージを表示する。
+<DT><B>-o num  または  --descriptors num</B>
+
+<DD>
+オープンするファイルディスクリプタの上限を num にする。
+デフォルトでは上限を変更しない。
+<DT><B>-N  または  --no-nfs-version</B>
+
+<DD>
+このオプションを使うと、
+<B>rpc.mountd</B>
+
+に特定のバージョンの NFS を提供させないようにできる。
+<B>rpc.mountd</B>
+
+の現在のバージョンでは、NFS バージョン 2 と
+より新しいバージョン 3 の両方をサポートしている。
+NFS カーネルモジュールが NFSv3 に対応するようにコンパイルされていない場合、
+<B>rpc.mountd</B>
+
+をオプション
+<B>--no-nfs-version 3</B>
+
+で起動しなければならない。
+<DT><B>-n  または  --no-tcp</B>
+
+<DD>
+mount の際に TCP に広報しない。
+<DT><B>-P</B>
+
+<DD>
+無視される (unfsd との互換性のためにある)。
+<DT><B>-p  または  --port num</B>
+
+<DD>
+<B>rpc.mountd</B>
+
+を特定のポート num にバインドさせる。
+portmapper によって割り当てられるランダムなポートを使わない。
+<DT><B>-H  または  --ha-callout prog</B>
+
+<DD>
+高可用性コールアウトプログラムを指定する。
+このプログラムは全てのクライアントのマウント要求とアンマウント要求の
+コールアウトを受け付ける。
+これにより、高可用性 NFS (High Availability NFS, HA-NFS) 環境で
+<B>rpc.mountd</B>
+
+を使用することができる。
+このコールアウトは 2.6 以降のカーネルでは必要ない
+(使用すべきではない)。
+(代わりに、nfsd ファイルシステムを
+<B>/proc/fs/nfsd</B>
+
+にマウントすること)。
+このプログラムは 4 つの引き数を付けて呼ばれる。
+1 番目の引き数は
+<B>mount</B>
+
+または
+<B>unmount</B>
+
+である。これはコールアウトの理由に依存する。
+2 番目の引き数はマウントを実行しているクライアントの名前である。
+3 番目の引き数はクライアントがマウントしているパスである。
+最後の引き数は同時マウント数である。
+これは mountd が把握している、
+そのパスをマウントしているクライアントの数である。
+<DT><B>-V  または  --nfs-version</B>
+
+<DD>
+このオプションを使うと、
+<B>rpc.mountd</B>
+
+に特定のバージョンの NFS を提供させることができる。
+<B>rpc.mountd</B>
+
+の現在のバージョンでは、NFS バージョン 2 と
+より新しいバージョン 3 の両方に対応することができる。
+<DT><B>-v  または  --version</B>
+
+<DD>
+<B>rpc.mountd</B>
+
+のバージョンを表示して終了する。
+<P>
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>TCP_WRAPPERS のサポート</H2>
+
+このバージョンの
+<B>rpc.mountd</B>
+
+は
+<B>tcp_wrapper</B>
+
+ライブラリによって保護することができる。
+クライアントに
+<B>rpc.mountd</B>
+
+の使用を許可するためには、アクセス権を与えなければならない。
+.bar.com ドメインのクライアントからの接続を許可するためには、
+以下の行を /etc/hosts.allow に記述する。
+<P>
+mountd: .bar.com
+<P>
+デーモン名としては (バイナリの名前がこれとは違っても)
+<B>mountd</B>
+
+を使わなければならない。
+<P>
+より詳しい情報については、
+<B><A HREF="../../tcp_wrappers/man8/tcpd.8.html">tcpd</A></B>(8),
+
+<B><A HREF="../../tcp_wrappers/man5/hosts_access.5.html">hosts_access</A></B>(5)
+
+の man ページを参照してほしい。
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/rpc.nfsd.8.html">rpc.nfsd</A></B>(8),
+
+<B><A HREF="../man8/exportfs.8.html">exportfs</A></B>(8),
+
+<B><A HREF="../man5/exports.5.html">exports</A></B>(5),
+
+<B><A HREF="../man8/rpc.rquotad.8.html">rpc.rquotad</A></B>(8).
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>ファイル</H2>
+
+<B>/etc/exports</B>,
+
+<B>/var/lib/nfs/xtab</B>.
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>著者</H2>
+
+Olaf Kirch, H. J. Lu, G. Allan Morris III, その他の多くの人々。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">NFS ファイルシステムのエクスポート</A><DD>
+<DT><A HREF="#lbAF">rmtab ファイル</A><DD>
+</DL>
+<DT><A HREF="#lbAG">オプション</A><DD>
+<DT><A HREF="#lbAH">TCP_WRAPPERS のサポート</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">ファイル</A><DD>
+<DT><A HREF="#lbAK">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:41 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,184 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FPATHCONF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FPATHCONF</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated:  2017-07-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/fpathconf.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fpathconf, pathconf - ファイルの設定値を取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+ <B>long fpathconf(int </B><I>fd</I><B>, int </B><I>name</I><B>);</B>
+<B>long pathconf(const char *</B><I>path</I><B>, int </B><I>name</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>fpathconf</B>()  はオープンされているファイルディスクリプター <I>fd</I> に対して設定されているオプション <I>name</I>
+の値を取得する。
+<P>
+
+<B>pathconf</B>()  はファイル名 <I>path</I> に対して設定されているオプション <I>name</I> の値を取得する。
+<P>
+
+対応するマクロのうち <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> で定義されているものは最小値である。アプリケーションによってはこれらの
+値を変更してより有利な動作を行おうとするものがある。この場合でも <B>fpathconf</B>()  または <B>pathconf</B>()
+は呼び出すことができる。この場合はより大きな値が返ることになろう。
+<P>
+
+<I>name</I> を以下の定数のどれかにすると、対応する設定オプションが返される。
+<DL COMPACT>
+<DT><B>_PC_LINK_MAX</B><DD>
+ファイルへのリンクの最大数。 <I>fd</I> または <I>path</I> がディレクトリの場合は、この値はディレクトリ全体に適用される。対応する マクロは
+<B>_POSIX_LINK_MAX</B> である。
+<DT><B>_PC_MAX_CANON</B><DD>
+フォーマット付き入力行の最大長。このとき <I>fd</I> または <I>path</I> は端末を参照していなければならない。 対応するマクロは
+<B>_POSIX_MAX_CANON</B> である。
+<DT><B>_PC_MAX_INPUT</B><DD>
+入力行の最大長。このとき <I>fd</I> または <I>path</I> は端末を参照していなければならない。 対応するマクロは
+<B>_POSIX_MAX_INPUT</B> である。
+<DT><B>_PC_NAME_MAX</B><DD>
+ディレクトリ <I>path</I> または <I>fd</I> 内に、そのプロセスが作成することができるファイル名の最大長。 対応するマクロは
+<B>_POSIX_NAME_MAX</B> である。
+<DT><B>_PC_PATH_MAX</B><DD>
+<I>path</I> または <I>fd</I> がカレントディレクトリの場合、相対パス名の最大長。 対応するマクロは <B>_POSIX_PATH_MAX</B> である。
+<DT><B>_PC_PIPE_BUF</B><DD>
+The maximum number of bytes that can be written atomically to a pipe of
+FIFO.  For <B>fpathconf</B>(), <I>fd</I> should refer to a pipe or FIFO.  For
+<B>fpathconf</B>(), <I>path</I> should refer to a FIFO or a directory; in the latter
+case, the returned value corresponds to FIFOs created in that directory.
+The corresponding macro is <B>_POSIX_PIPE_BUF</B>.
+<DT><B>_PC_CHOWN_RESTRICTED</B><DD>
+This returns a positive value if the use of <B><A HREF="../man2/chown.2.html">chown</A></B>(2)  and <B><A HREF="../man2/fchown.2.html">fchown</A></B>(2)
+for changing a file's user ID is restricted to a process with appropriate
+privileges, and changing a file's group ID to a value other than the
+process's effective group ID or one of its supplementary group IDs is
+restricted to a process with appropriate privileges.  According to POSIX.1,
+this variable shall always be defined with a value other than -1.  The
+corresponding macro is <B>_POSIX_CHOWN_RESTRICTED</B>.
+<DT><DD>
+If <I>fd</I> or <I>path</I> refers to a directory, then the return value applies to
+all files in that directory.
+<DT><B>_PC_NO_TRUNC</B><DD>
+アクセス中のファイル名が <B>_POSIX_NAME_MAX</B> よりも長く、エラーとなる場合には 0 以外の値を返す。 対応するマクロは
+<B>_POSIX_NAME_MAX</B> である。
+<DT><B>_PC_VDISABLE</B><DD>
+特殊文字 (special character) の処理が許されていない場合は 0 以外の値を 返す。このとき <I>fd</I> または <I>path</I>
+は端末を参照していなければならない。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+The return value of these functions is one of the following:
+<DL COMPACT>
+<DT>*<DD>
+On error, -1 is returned and <I>errno</I> is set to indicate the cause of the
+error (for example, <B>EINVAL</B>, indicating that <I>name</I> is invalid).
+<DT>*<DD>
+If <I>name</I> corresponds to a maximum or minimum limit, and that limit is
+indeterminate, -1 is returned and <I>errno</I> is not changed.  (To distinguish
+an indeterminate limit from an error, set <I>errno</I> to zero before the call,
+and then check whether <I>errno</I> is nonzero when -1 is returned.)
+<DT>*<DD>
+If <I>name</I> corresponds to an option, a positive value is returned if the
+option is supported, and -1 is returned if the option is not supported.
+<DT>*<DD>
+Otherwise, the current value of the option or limit is returned.  This value
+will not be more restrictive than the corresponding value that was described
+to the application in <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> or <I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I> when
+the application was compiled.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+(<B>pathconf</B>())  Search permission is denied for one of the directories in
+the path prefix of <I>path</I>.
+<DT><B>EBADF</B><DD>
+(<B>fpathconf</B>()) <I>fd</I> が適切なファイルディスクリプターでない。
+<DT><B>EINVAL</B><DD>
+<I>name</I> が無効である。
+<DT><B>EINVAL</B><DD>
+The implementation does not support an association of <I>name</I> with the
+specified file.
+<DT><B>ELOOP</B><DD>
+(<B>pathconf</B>()) <I>path</I> を解決する際に遭遇したシンボリックリンクが多過ぎる。
+<DT><B>ENAMETOOLONG</B><DD>
+(<B>pathconf</B>()) <I>path</I> が長過ぎる。
+<DT><B>ENOENT</B><DD>
+(<B>pathconf</B>())  A component of <I>path</I> does not exist, or <I>path</I> is an
+empty string.
+<DT><B>ENOTDIR</B><DD>
+(<B>pathconf</B>()) <I>path</I> のディレクトリ部分が実際にはディレクトリでない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<BR>&nbsp;<B>fpathconf</B>(),
+<B>pathconf</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<I>name</I> に <B>_PC_NAME_MAX</B> を入れて返された値よりも長いファイル名を持つファイルが、与えられたディ
+レクトリに存在するかもしれない。
+<P>
+
+いくつかの返り値はとても大きくなることがある。これらを使って メモリーの割り当てを行うのは適当ではない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>getconf</B>(1), <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man2/statfs.2.html">statfs</A></B>(2), <B><A HREF="../man3/confstr.3.html">confstr</A></B>(3), <B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

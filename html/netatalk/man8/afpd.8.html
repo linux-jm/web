@@ -1,0 +1,604 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of AFPD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>AFPD</H1>
+Section: Maintenance Commands (8)<BR>Updated: 23 Feb 1999<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/netatalk/release/man8/afpd.8">roff page</A><HR>
+
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+afpd - AppleTalk ファイリングプロトコルデーモン
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>afpd</B>
+
+[
+<B>-duptDTvI</B>
+
+]
+[
+<B>-f</B>
+
+<I>defaultvolumes</I>
+
+]
+[
+<B>-s</B>
+
+<I>systemvolumes</I>
+
+]
+[
+<B>-n</B>
+
+<I>nbpname</I>
+
+]
+[
+<B>-c</B>
+
+<I>maxconnections</I>
+
+]
+[
+<B>-g</B>
+
+<I>guest</I>
+
+]
+[
+<B>-P</B>
+
+<I>pidfile</I>
+
+]
+[
+<B>-S</B>
+
+<I>port</I>
+
+]
+[
+<B>-L</B>
+
+<I>message</I>
+
+]
+[
+<B>-F</B>
+
+<I>config</I>
+
+]
+[
+<B>-U</B>
+
+<I>uams</I>
+
+]
+[
+<B>-m</B>
+
+<I>umask</I>
+
+]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>afpd</B>
+
+は AppleTalk ファイリングプロトコル (AppleTalk Filing Protocol, AFP) の
+インターフェースを Unix ファイルシステムに提供する。
+このデーモンは、通常、ブート時に
+<B>/etc/rc</B>
+
+から起動される。
+ユーザーに提供されるボリュームの一覧は、
+<B>/etc/netatalk/AppleVolumes.system</B>
+
+および
+<B>/etc/netatalk/AppleVolumes.default</B>,
+
+<B>~/AppleVolumes</B>,
+
+<B>~/.AppleVolumes</B>
+
+のうちの 1 つから作成される。
+<P>
+
+<B>AppleVolumes</B>
+
+ファイルは、マウントするボリュームや
+ファイル名拡張子の対応付けを指定するために使われる。
+以下のようなフォーマットで、1 行に 1 つを指定する:
+<DL COMPACT><DT><DD>
+<P>
+<I>pathname</I>
+
+[
+<I>volumename</I>
+
+]
+<BR>
+
+.<I>extension</I>
+
+[
+<I>type</I>
+
+[
+<I>creator</I>
+
+]
+]
+<P>
+</DL>
+
+<I>volumename</I>
+
+が指定されない場合、
+<I>pathname</I>
+
+の最後の '/' より後の部分が使われる。
+ボリューム名として同じ名前を重複して使うことはできない。
+<I>type</I>
+
+が指定されない場合、
+'<B>????</B>'
+
+が使われる。
+<I>creator</I>
+
+が指定されない場合、
+'<B>UNIX</B>'
+
+が使われる。
+拡張子
+'<B>.</B>'
+
+は、タイプが設定されていない Unix ファイルに対して、
+デフォルトのクリエータとタイプを設定する。
+空行と `#' で始まる行は無視される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-d</B>
+
+<DD>
+デーモンを fork せず、全ての AFP コマンドを標準出力に書き出すように指定する。
+<DT><B>-f</B><I> defaultvolumes</I>
+
+<DD>
+デフォルトで提供するボリュームの一覧を、
+<B>/etc/netatalk/AppleVolumes.default</B>
+
+ではなく
+<I>defaultvolumes</I>
+
+から読み込む。
+<DT><B>-s</B><I> systemvolumes</I>
+
+<DD>
+全てのユーザーに提供するボリュームの一覧を、
+<B>/etc/netatalk/AppleVolumes.system</B>
+
+ではなく
+<I>systemvolumes</I>
+
+から読み込む。
+<DT><B>-u</B>
+
+<DD>
+ユーザーの
+<B>AppleVolumes</B>
+
+ファイルを最初に読み込む。
+このオプションにより、ユーザーの
+<B>AppleVolumes</B>
+
+ファイルにあるボリューム名が、システムの
+<B>AppleVolumes</B>
+
+ファイルにあるボリューム名よりも優先される。
+デフォルトではシステムの
+<B>AppleVolumes</B>
+
+が最初に読まれる。
+このオプションがファイル名拡張子の対応付けの優先順位には
+影響しない点に注意すること:
+ユーザーの AppleVolumes ファイルが常に優先される。
+<DT><B>-n</B><I> nbpname</I>
+
+<DD>
+NBP の登録に、
+ローカルゾーンのホスト名からドメイン部をとった最初の部分ではなく、
+<I>nbpname</I>
+
+を使うように指定する。
+<DT><B>-c</B><I> maxconnections</I>
+
+<DD>
+<B>afpd</B>
+
+に許可する最大接続数を指定する。
+デフォルトは 5 である。
+<DT><B>-g</B><I> guest</I>
+
+<DD>
+ゲストアカウントの名前を指定する。デフォルトは ``nobody'' である。
+<DT><B>-P</B><I> pidfile</I>
+
+<DD>
+<B>afpd</B>
+
+が自身のプロセス ID を格納するファイルを指定する。
+<DT><B>-p</B>
+
+<DD>
+クライアントがパスワードを保存しないようにさせる
+(<B>afpd.conf</B>
+
+における
+<I>-nosavepasswd</I>
+
+と等価である)。
+<DT><B>-t</B>
+
+<DD>
+クライアントがパスワードを変更できるようにする
+(<B>afpd.conf</B>
+
+における
+<I>-setpasswd</I>
+
+と等価である)。
+<DT><B>-D</B>
+
+<DD>
+トランスポートプロトコルとして DDP (AppleTalk) を使う
+(<B>afpd.conf</B>
+
+における
+<I>-ddp</I>
+
+と等価である)。
+<DT><B>-T</B>
+
+<DD>
+トランスポートプロトコルとして TCP/IP を使う
+(<B>afpd.conf</B>
+
+における
+<I>-tcp</I>
+
+と等価である)。
+<DT><B>-S</B><I> port</I>
+
+<DD>
+AFPoverTCP を実行するときに登録するポートを指定する。
+デフォルトは
+<I>548</I>
+
+である
+(<B>afpd.conf</B>
+
+における
+<I>-port</I>
+
+と等価である)。
+<DT><B>-L</B><I> message</I>
+
+<DD>
+クライアントに送られるログインメッセージを指定する
+(<B>afpd.conf</B>
+
+における
+<I>-loginmsg</I>
+
+と等価である)。
+<DT><B>-F</B><I> config</I>
+
+<DD>
+使用する設定ファイルを指定する
+(デフォルトは
+<I>/etc/netatalk/afpd.conf</I>
+
+である)。
+<DT><B>-U</B><I> uams</I>
+
+<DD>
+認証プロセスで使用する UAM
+(訳註: User Authentication Method, ユーザ認証法) の
+コンマで区切られたリスト
+(<B>afpd.conf</B>
+
+における
+<I>-uamlist</I>
+
+と等価である)。
+<DT><B>-I</B>
+
+<DD>
+プラットフォーム固有のアイコンを使う
+(<B>afpd.conf</B>
+
+における
+<I>-icon</I>
+
+と等価である)。
+<DT><B>-m</B> umask
+
+<DD>
+Netatalk でフォルダを作成する際に、この umask を使う。
+<DT><B>-v</B>
+
+<DD>
+バージョン情報を表示して、終了する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>認証</H2>
+
+<B>afpd</B>
+
+は、現在のところ、
+<B>NoUserAuthent </B>(ゲスト),
+
+<B>Cleartxt passwrd</B>,
+
+<B>Kerberos IV</B>
+
+という 3 つのユーザー認証法 (UAM) を使うことができる。
+ユーザーが
+<B>NoUserAuthent</B>
+
+を使った場合、デフォルトのボリュームのみをマウントできる。
+また、ゲストユーザーに許可されたファイルについてのみ読み書きが可能である。
+<B>-G</B>
+
+オプションは
+<B>NoUserAuthent</B>
+
+を使用不可にする。
+<B>Cleartxt passwd</B>
+
+や
+<B>Kerberos IV</B>
+
+が使われた場合、
+<B>afpd</B>
+
+は
+<B>~/AppleVolumes</B>
+
+にリストされている全てのボリュームをユーザーに提供する。
+ユーザーは通常読み書きできる全てのファイルの読み書きができる。
+AFS を使う際に
+<B>Cleartxt passwd</B>
+
+は推奨されず、
+<B>Kerberos IV</B>
+
+が推奨される。
+アメリカ国外用に、簡略化した UAM,
+<B>AFS Kerberos</B>
+
+が配布の中に含まれている。
+<A NAME="lbAG">&nbsp;</A>
+<H2>警告</H2>
+
+<B>afpd</B>
+
+のディレクトリ ID は、セッションの間を通して固定である。
+これは Mac エイリアスが必ずしも常に正しく動作しないことを意味する。
+<P>
+
+アプリケーションが対応付けられているフォルダの名前が変更されると、
+そのアプリケーションの
+<B>APPL</B>
+
+対応付けは使用不能になる。
+これは、アプリケーションが作った文書をダブルクリックしても、
+そのアプリケーションが起動しなくなることを意味する。
+<B>APPL</B>
+
+対応付けは、次に Finder がアプリケーションを参照したときに、
+Mac によって再構築される。
+<P>
+
+<B>afpd</B>
+
+が Macintosh ファイル名を小文字化するように設定されている場合、
+大文字と小文字の混ざった Unix ファイル名は使うことができない。
+<P>
+
+キャリッジリターン / ラインフィードの変換が有効にされている場合、
+Unix のバイナリファイルを Macintosh にコピーするのは安全でない。
+<P>
+
+デバイス間でディレクトリを移動することはできない。
+<P>
+
+既存のボリュームの親ボリュームをマウントした場合、
+既存のボリュームのデスクトップデータベースは
+親ボリュームからは使えない。
+<B>APPL</B>
+
+対応付けや
+<B>BNDL</B>
+
+ビットセットを使ったアプリケーションのアイコンは、
+Finder がアプリケーションを参照したときに親ボリューム内に作成される。
+<P>
+
+ユーザーが自分の
+<B>~/AppleVolumes</B>
+
+を編集して自分のディレクトリを提供しないようにした場合、
+ユーザーは Macintosh から自分の
+<B>~/AppleVolumes</B>
+
+を編集できなくなる。
+<P>
+
+`.' で始まる Unix ファイルは、Mac からアクセスできない。
+<P>
+
+<I>pathname</I>
+
+が
+<B>~/AppleVolumes</B>
+
+ファイルにない場合、そのボリュームはセレクタに現れない。
+<P>
+
+Microsoft Word の
+<B>TEXT</B>
+
+文書はキャリッジリターン / ラインフィードの変換が行われない。
+なぜなら、MS Word は文書を書き込むときに
+<B>TEXT</B>
+
+ではないタイプを使い、その後でタイプを
+<B>TEXT</B>
+
+に変更するためである。
+ユーザーが自分の
+<B>~/AppleVolumes</B>
+
+を編集できるように、
+<B>afpd</B>
+
+はファイルの行末文字が (NL, LF の) どちらであっても理解する。
+<P>
+
+31 文字より長い Unix ファイル名は、Macintosh からアクセスできない。
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>シグナル</H2>
+
+メインの
+<B>afpd</B>
+
+プロセスに送られたシグナルは、子プロセスにも伝えられて、
+全てに影響を与える。
+<DL COMPACT>
+<DT><B>SIGHUP</B>
+
+<DD>
+<B>afpd</B>
+
+プロセスは &quot;The server is going down for maintenance.&quot; という
+メッセージをクライアントに送り、5 分以内にシャットダウンする。
+新規の接続は許可されない。
+子の
+<B>afpd</B>
+
+にシグナルが送られても、他の子プロセスには影響しない。
+だだしメインプロセスは終了し、新規の接続はできない。
+<DT><B>SIGUSR1</B>
+
+<DD>
+configure オプション
+<B>--with-message-dir</B>
+
+が指定された場合、
+<B>afpd</B>
+
+プロセスは
+<B>debug</B>
+
+オプションを設定し、メッセージを
+/var/tmp/afpd-debug-<I>pid</I>
+
+にリダイレクトする。
+このシグナルは子の
+<B>afpd</B>
+
+にのみ送るべきである。
+<B>警告:</B>
+
+<B>--with-message-dir</B>
+
+オプションが指定されていない場合、
+このシグナルは
+<B>afpd</B>
+
+プロセスを kill する。
+<DT><B>SIGUSR2</B>
+
+<DD>
+<B>afpd</B>
+
+プロセスは
+<I>msg</I>
+
+ディレクトリで
+message.<I>pid</I>
+
+という名前のファイルを探す。
+ファイルが見つかると、それに対応する AFP クライアントに
+ファイルの内容をメッセージとして送る。
+メッセージが送られた後、ファイルは削除される。
+<P>
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><B>/etc/netatalk/AppleVolumes.default</B>
+
+<DD>
+マウントするデフォルトのボリュームの一覧
+<DT><B>/etc/netatalk/AppleVolumes.system</B>
+
+<DD>
+全てのユーザーに提供するボリュームの一覧
+<DT><B>~/AppleVolumes</B>
+
+<DD>
+各ユーザーがマウントするボリュームの一覧
+<DT><B>/etc/netatalk/msg/message.</B><I>pid</I>
+
+<DD>
+ユーザーに送られるメッセージ
+<DT><B>/var/tmp/afpd-debug-</B><I>pid</I>
+
+<DD>
+(SIGUSR1 で呼び出された場合の) デバッグ出力
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+いくつかの AFP の仕様は、Macintosh で使用されていないので、実装されていない。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">認証</A><DD>
+<DT><A HREF="#lbAG">警告</A><DD>
+<DT><A HREF="#lbAH">シグナル</A><DD>
+<DT><A HREF="#lbAI">ファイル</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:40 GMT, December 05, 2022
+</BODY>
+</HTML>

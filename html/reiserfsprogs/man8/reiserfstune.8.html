@@ -1,0 +1,239 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of REISERFSTUNE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>REISERFSTUNE</H1>
+Section: Maintenance Commands (8)<BR>Updated: February 2004<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/reiserfsprogs/release/man8/reiserfstune.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+reiserfstune - ReiserFS ファイルシステムのチューニングツール
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>reiserfstune</B>
+
+[ <B>-f</B> ]
+[ <B>-j</B> | <B>--journal-device</B> <I>FILE</I> ]
+[ <B>--no-journal-available</B> ]
+[ <B>--journal-new-device</B> <I>FILE</I> ] [ <B>--make-journal-standard</B> ]
+[ <B>-s</B> | <B>--journal-new-size</B> <I>N</I> ]
+[ <B>-o</B> | <B>--journal-new-offset</B> <I>N</I> ]
+[ <B>-t</B> | <B>--max-transaction-size</B> <I>N</I> ]
+[ <B>-b</B> | <B>--add-badblocks</B> <I>file</I> ]
+[ <B>-B</B> | <B>--badblocks</B> <I>file</I> ]
+[ <B>-u</B> | <B>--uuid </B><I>UUID</I> ]
+[ <B>-l</B> | <B>--label </B><I>LABEL</I> ]
+<I>device</I>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>reiserfstune</B> は ReiserFS を調整するために使われる。
+このプログラムは (ジャーナルサイズと最大トランザクションサイズという)
+2 つのジャーナルパラメータを変更可能で、
+ジャーナルの場所を指定された新しいブロックデバイスに移動できる
+(以前の ReiserFS ジャーナルを使用しないままにすることもできるし、
+ユーザーオプションにより破棄することもできる)。
+それに加え、<B>reiserfstune</B> は不正ブロックのリストを
+ReiserFS に格納したり、UUID や LABEL を設定できる。
+注意: これを書いている時点では、ジャーナルの再配置は
+ReiserFS の特別リリース用に実装されており、
+Linux 2.5 あたりまでは、
+メインストリームのカーネルに入れる予定はない。
+つまり現在持っているカーネルに特別なパッチを適用する必要がある。
+このパッチを適用しない場合、
+カーネルは新しく修正されたファイルシステムのマウントを拒否する。
+なぜこれが動作しないかを説明してほしければ、$25 いただきたい。
+<P>
+
+このコードのもっとも重要な応用としては、
+ソリッドステートディスクにジャーナルを置くことが考えられる。
+<DL COMPACT>
+<DT><I>device<DD>
+デバイスに対応するスペシャルファイル
+(例えば、/dev/hdXX は IDE ディスクパーティションで、 
+/dev/sdXX は SCSI ディスクパーティションである)。
+</DL>
+</I><A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-j</B> | <B>--journal-device</B> <I>FILE<DD>
+FILE</I> はファイルシステムが現在 (reiserfstune を実行する前に)
+ジャーナルを置いているブロックデバイスのファイル名である。
+このオプションは、メインデータデバイスとは別のデバイスに
+既にジャーナルが置かれている場合に必要になる
+(<B>--no-journal-available</B> を指定すれば、使わないこともできる)。
+このオプションでジャーナルデバイスを指定しない場合、
+reiserfstune はジャーナルがメインデバイスにあると仮定する。
+<DT><B>--no-journal-available<DD>
+現在のジャーナルのブロックデバイスが既に使用不能な場合でも、
+reiserfstune</B> に処理を実行させる。
+このようなケースは、ディスクが故障してジャーナルを削除し
+(その後に fsck をしている) といった場合に起る。
+<DT><B>--journal-new-device </B><I>FILE<DD>
+FILE</I> はファイルシステムの新しいジャーナルを入れる
+ブロックデバイスのファイル名である。
+このオプションを指定しない場合、
+reiserfstune はジャーナルデバイスが以前と同じものであると仮定する。
+<DT><B> -s</B> | <B>--journal-new-size </B><I>N<DD>
+N</I> は新しいジャーナルのサイズパラメータである。
+ジャーナルが別のデバイスにある場合、
+ジャーナルデバイスのブロック数がデフォルトサイズになる。
+ジャーナルがファイルシステムと同じデバイスにある場合、
+<I>mkreiserfs</I> で作成されたジャーナルの総ブロック数がデフォルトになる。
+どちらの場合でも最小値は 513 である。
+<DT><B> -o</B> | <B>--journal-new-offset </B><I>N<DD>
+N</I> は、ジャーナルが別のデバイスにある場合の
+ジャーナルの開始オフセット (バイト単位) である。
+デフォルトは 0 である。
+ジャーナルがファイルシステムと同じデバイスにある場合は何も影響しない。
+ほとんどのユーザーには、この機能は必要ない。
+このオプションは、
+複数のファイルシステムのジャーナルを同じデバイス上に置きたいが、
+そのデバイスをパーティション分割したくない、
+または分割できないといった場合に使える。
+<DT><B> -t</B> | <B>--maximal-transaction-size </B><I>N<DD>
+N</I> は新しいジャーナルのトランザクションサイズパラメータの最大値である。
+デフォルト値と指定可能な最大値は 1024 ブロックである。
+ジャーナルサイズの半分以下にすべきである。
+不正な値が指定された場合は調整される。
+<DT><B> -b</B> | <B>--add-badblocks</B> <I>file</I><DD>
+<I>file</I> は、ファイルシステム上で不正とマークされる予定の
+ブロックのリストが書かれたファイルの名前である。
+このリストはファイルシステムの不正ブロックのリストに追加される。
+<DT><B> -B</B> | <B>--badblocks</B> <I>file</I><DD>
+<I>file</I> は、ファイルシステム上で不正とマークされる予定の
+ブロックのリストが書かれたファイルの名前である。
+ファイルシステム上の不正ブロックのリストは、
+<I>file</I> で指定されたリストがファイルシステムに追加される前に削除される。
+<DT><B>-f</B> | <B>--force</B> <DD>
+通常 <B>reiserfstune</B> は、ジャーナルの再配置コードより以前に作成された
+ファイルシステムのジャーナルの変更はしない。
+これはジャーナルを変更すると、
+(特別なオプション <B>--make-journal-standard</B> を使わずに)
+以前のカーネルに戻すことが出来なくなるためである。
+以前のカーネルでは今ある機能が存在せず、
+ファイルシステムが使うことができなくなる。
+このオプションは強制的にジャーナルの変更を行う。
+このオプションを 2 つ以上指定すると、
+確認を行わないようにすることができる。
+<DT><B>--make-journal-standard</B> <DD>
+上で述べたように、ファイルシステムに標準的なジャーナルがない場合、
+ジャーナルの再配置コードがないカーネルではマウントできない。
+このような問題を解決することもできるが、
+標準ジャーナルのメインデバイスの予約領域が
+8193 ブロックがなければいけないという唯一の条件がある
+(標準ジャーナルを非標準ジャーナルに変換する場合などに必要である)。
+ジャーナルを以前のものに再配置し直す場合は、
+単にこのオプションを指定すれば良い。
+メインデバイスに既にジャーナルが存在する場合、再配置はしない。
+<DT><B>-u</B> | <B>--uuid </B><I>UUID</I><DD>
+ファイルシステムの universally unique identifier (<B>UUID</B>)
+(汎システム的に他とは重ならない識別子) を <I>UUID</I> に設定する。
+(<B>uuidgen(8)</B> を参照)。
+UUID のフォーマットはハイフンで区切った 16 進数の文字列であり、
+&quot;c1b9d5a2-f162-11cf-9ece-0020afc76f16&quot; のようなフォーマットである。
+<DT><B>-l</B> | <B>--label </B><I>LABEL</I><DD>
+ファイルシステムのボリュームラベルを設定する。
+<I>LABEL</I> は最大 16 文字である。
+17 文字以上の場合、mkreiserfs は文字列を切り詰める。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>REISERFSTUNE を使用する可能性のあるシナリオ:</H2>
+
+1. ReiserFS が /dev/hda1 にあり、
+デバイス /dev/journal にジャーナルを置いて動作させたい場合。
+<PRE>
+<DL COMPACT>
+<DT><DD>特別な「ジャーナル再配置のサポート」パッチを適用した
+カーネルでブートし、
+reiserfstune /dev/hda1 --journal-new-device /dev/journal -f
+mount /dev/hda1
+として使用すること。
+
+トランザクションサイズの最大値を 512 ブロックに変更する場合は、
+以下のようにすること。
+reiserfstune -t 512 /dev/hda1
+
+再配置可能ジャーナルをサポートしていない別のカーネルで
+ファイルシステムを使おうとする場合は、
+umount /dev/hda1
+reiserfstune /dev/hda1 -j /dev/journal \
+  --journal-new-device /dev/hda1 --make-journal-standard
+mount /dev/hda1
+として使用すること。
+</DL>
+
+2. /dev/hda1 を ReiserFS にして、別のジャーナルに切り替えたい場合
+(ファイルシステムがあるデバイスにジャーナルを置くことも含む)。
+<DL COMPACT>
+<DT><DD>特別な「ジャーナル再配置のサポート」パッチを適用した
+カーネルでブートし、
+mkreiserfs /dev/hda1
+を行う。
+
+ソリッドステートディスクを使う
+(SCSI ディスクと見なされるので、多分 /dev/sda などになる)。
+reiserfstune --journal-new-device /dev/sda1 -f /dev/hda1
+
+早朝 3 時に SCSI デバイスが死んで、
+IDE デバイスが余っている場合は、
+reiserfsck --no-journal-available /dev/hda1
+または
+reiserfsck --rebuild-tree --no-journal-available /dev/hda1
+reiserfstune --no-journal-available \
+  --journal-new-device /dev/hda1 /dev/hda1
+を実行して、パッチを適用したカーネルで /dev/hda1 を使用する。
+</DL>
+</PRE><A NAME="lbAG">&nbsp;</A>
+<H2>著者</H2>
+
+このバージョンの <B>reiserfstune</B> は、
+Vladimir Demidov &lt;<A HREF="mailto:vova@namesys.com">vova@namesys.com</A>&gt; と
+Edward Shishkin &lt;<A HREF="mailto:edward@namesys.com">edward@namesys.com</A>&gt; によって書かれた。
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+バグは、できる限り多くの情報 (ハードウェア・カーネル・パッチ・設定・
+表示された全てのメッセージ) とともに、
+ReiserFS の開発者 &lt;<A HREF="mailto:reiserfs-dev@namesys.com">reiserfs-dev@namesys.com</A>&gt; に報告してほしい。
+関連する情報があるかもしれないので syslog を調べてほしい。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/reiserfsck.8.html">reiserfsck</A></B>(8),
+
+<B><A HREF="../man8/debugreiserfs.8.html">debugreiserfs</A></B>(8),
+
+<B><A HREF="../man8/mkreiserfs.8.html">mkreiserfs</A></B>(8)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">REISERFSTUNE を使用する可能性のあるシナリオ:</A><DD>
+<DT><A HREF="#lbAG">著者</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

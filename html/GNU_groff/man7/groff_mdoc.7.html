@@ -1,0 +1,8320 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GROFF_MDOC</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>GROFF_MDOC</H1>
+Section: Environments, Tables, and Troff Macros (7)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_groff/contrib/man7/groff_mdoc.7">roff page</A><HR>
+<BR>BSD mandoc<BR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+<B>groff_mdoc</B>
+
+ - groff mdoc の実装に関するリファレンス
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>groff -m doc </B><I>file ...</I>
+
+
+
+
+
+
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>解説</H2>
+
+<B>GNU</B>
+
+<A HREF="../man1/troff.1.html">troff</A>(1)
+
+
+用の
+<I>コンテントベース</I>
+
+でかつ
+<I>領域ベース</I>
+
+な整形用パッケージである
+<B>-mdoc</B>
+
+マクロパッケージを使って
+UNIX
+マニュアルページを書くための完全なリファレンスです。
+前身である
+-man7
+
+
+パッケージは、フォントの操作や他の写植方法の詳細は個々の作者に任せ、
+ページのレイアウトを取り扱ってきました。
+<B>-mdoc</B>
+
+では、ページレイアウトマクロは
+タイトル、セクションのヘッダ、ディスプレイ、リストのマクロからなる
+<I>ページ構造領域</I>
+
+を形成しています。本質的にこれらの要素は整形されたページにおける
+テキストの物理的位置に影響を与えます。
+ページ構造領域に加え、さらに
+<I>マニュアル</I>
+
+領域および
+<I>一般</I>
+
+テキスト領域の 2 つの領域があります。
+一般テキスト領域は、テキストの一部をクォートしたり強調したりと
+いったような作業を実行するマクロとして定義されています。
+マニュアル領域はコマンドやルーチン、それに
+UNIX
+の関連ファイルを記述するための日常使用されるインフォーマルな言葉の
+サブセットであるマクロとして定義されています。
+マニュアル領域のマクロはコマンド名、コマンド行の引数とオプション、
+関数名、関数のパラメータ、パス名、変数名、他のマニュアルページへの
+クロスリファレンスなどを扱います。
+これらの領域の項目は作者とマニュアルページの将来のユーザの両者に
+とって価値のあるものです。
+マニュアル間で一貫性を高めることによって将来のドキュメントツールへの
+移行が容易になることが期待されます。
+<P>
+
+UNIX
+マニュアルページ全体を通して、マニュアルのエントリは単純に
+マニュアルページ (a man page) とみなされます。
+これは実際のページ数と関係ありませんし、性差別をする意図もありません。
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>さあ、始めよう</H2>
+
+このドキュメントの残りの部分で説明されている題材は以下のような構成に
+なっています。
+<OL><P>
+
+<LI>
+
+<B>TROFF に特有な表現</B>
+
+<DL COMPACT>
+<P>
+
+<DT><B>&quot;マクロの使用方法&quot; </B>
+<DD>
+<DT><B>&quot;引数に空白文字を指定する&quot;</B>
+<DD>
+<DT><B>&quot;行末の空白文字&quot;</B>
+<DD>
+<DT><B>&quot;特殊文字のエスケープ&quot;</B>
+<DD>
+<DT><B>&quot;その他の注意点&quot;</B>
+<DD>
+</DL>
+<P>
+
+<LI>
+
+<B>マニュアルページのテンプレート</B>
+
+<LI>
+
+<B>使用法</B>
+
+<LI>
+
+<B>タイトルマクロ</B>
+
+<LI>
+
+<B>マニュアル領域および一般テキスト領域の紹介</B>
+
+<DL COMPACT>
+<P>
+
+<DT><B>&quot;この名前には何が&quot; ...</B>
+
+
+<DD>
+<DT><B>&quot;一般的な構文&quot;</B>
+<DD>
+</DL>
+<P>
+
+<LI>
+
+<B>マニュアル領域</B>
+
+<DL COMPACT>
+<P>
+
+<DT><B>&quot;アドレス&quot;</B>
+<DD>
+<DT><B>&quot;作者名&quot;</B>
+<DD>
+<DT><B>&quot;引数&quot;</B>
+<DD>
+<DT><B>&quot;コンフィギュレーション宣言 (セクション 4 のみ)&quot;</B>
+<DD>
+<DT><B>&quot;コマンド修飾子&quot;</B>
+<DD>
+<DT><B>&quot;定義済みの変数&quot;</B>
+<DD>
+<DT><B>&quot;errno  (セクション 2 のみ)&quot;</B>
+<DD>
+<DT><B>&quot;環境変数&quot;</B>
+<DD>
+<DT><B>&quot;フラグ&quot;</B>
+<DD>
+<DT><B>&quot;関数の宣言&quot;</B>
+<DD>
+<DT><B>&quot;関数の型&quot;</B>
+<DD>
+<DT><B>&quot;関数 (ライブラリルーチン)&quot;</B>
+<DD>
+<DT><B>&quot;関数の引数&quot;</B>
+<DD>
+<DT><B>&quot;戻り値&quot;</B>
+<DD>
+<DT><B>&quot;終了ステータス&quot;</B>
+<DD>
+
+<DT><B>&quot;対話的なコマンド&quot;</B>
+<DD>
+<DT><B>&quot;ライブラリ名&quot;</B>
+<DD>
+<DT><B>&quot;リテラル&quot;</B>
+<DD>
+<DT><B>&quot;名称&quot;</B>
+<DD>
+<DT><B>&quot;オプション&quot;</B>
+<DD>
+<DT><B>&quot;パス名&quot;</B>
+<DD>
+<DT><B>&quot;標準&quot;</B>
+<DD>
+<DT><B>&quot;変数の型&quot;</B>
+<DD>
+<DT><B>&quot;変数&quot;</B>
+<DD>
+<DT><B>&quot;マニュアルページのクロスリファレンス&quot;</B>
+<DD>
+</DL>
+<P>
+
+<LI>
+
+<B>一般テキスト領域</B>
+
+<DL COMPACT>
+<P>
+
+<DT><B>&quot;AT&amp;T マクロ&quot;</B>
+<DD>
+<DT><B>&quot;BSD マクロ&quot;</B>
+<DD>
+<DT><B>&quot;NetBSD マクロ&quot;</B>
+<DD>
+<DT><B>&quot;FreeBSD マクロ&quot;</B>
+<DD>
+<DT><B>&quot;OpenBSD マクロ&quot;</B>
+<DD>
+<DT><B>&quot;BSD/OS マクロ&quot;</B>
+<DD>
+<DT><B>&quot;UNIX マクロ&quot;</B>
+<DD>
+<DT><B>&quot;強調マクロ&quot;</B>
+<DD>
+<DT><B>&quot;フォントモード&quot;</B>
+<DD>
+<DT><B>&quot;囲い/クォート マクロ&quot;</B>
+<DD>
+<DT><B>&quot;無操作もしくは通常テキストマクロ&quot;</B>
+<DD>
+<DT><B>&quot;空白なしマクロ&quot;</B>
+<DD>
+<DT><B>&quot;セクションのクロスリファレンス&quot;</B>
+<DD>
+<DT><B>&quot;記号&quot;</B>
+<DD>
+<DT><B>&quot;数式記号&quot;</B>
+<DD>
+<DT><B>&quot;参考文献と引用&quot;</B>
+<DD>
+<DT><B>&quot;商標名 (頭字語とタイプ名)&quot;</B>
+<DD>
+<DT><B>&quot;拡張引数&quot;</B>
+<DD>
+</DL>
+<P>
+
+<LI>
+
+<B>ページ構造領域</B>
+
+<DL COMPACT>
+<P>
+
+<DT><B>&quot;セクションヘッダ&quot;</B>
+<DD>
+<DT><B>&quot;サブセクションヘッダ&quot;</B>
+<DD>
+<DT><B>&quot;段落と行スペース&quot;</B>
+<DD>
+<DT><B>&quot;キープ&quot;</B>
+<DD>
+<DT><B>&quot;例示とディスプレイ&quot;</B>
+<DD>
+<DT><B>&quot;リストとカラム&quot;</B>
+<DD>
+</DL>
+<P>
+
+<LI>
+
+<B>その他のマクロ</B>
+
+<LI>
+
+<B>定義済みの文字列</B>
+
+<LI>
+
+<B>診断</B>
+
+<LI>
+
+<B>GROFF, TROFF および NROFF を使用した整形</B>
+
+<LI>
+
+<B>関連ファイル</B>
+
+<LI>
+
+<B>関連項目</B>
+
+<LI>
+
+<B>バグ</B>
+
+</OL><P>
+
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>TROFF に特有な表現</H2>
+
+<B>-mdoc</B>
+
+パッケージは、マニュアルページを記述するプロセスを簡単にすることを
+目的としています。
+<B>-mdoc</B>
+
+を使うために
+<B>GNU</B>
+
+<A HREF="../man1/troff.1.html">troff</A>(1)
+
+
+のゴタゴタした詳細を学ぶ必要がないのが理想ですが、
+いくつか片付けるべき避けられない制限事項があります。
+また、このパッケージは高速で
+<I>ない</I>
+
+ということも予め警告しておきます。
+<A NAME="lbAG">&nbsp;</A>
+<H3>マクロの使用方法</H3>
+
+<B>GNU</B>
+
+<A HREF="../man1/troff.1.html">troff</A>(1)
+
+
+のように、マクロは
+`.'
+
+(ドット)
+を行頭に置き、それに続けて 2 文字 (または 3 文字) からなる
+マクロの名称を指定することによって呼び出されます。
+ドットとマクロの間にはスペースを置くことができます
+(ただし、タブを置くことは
+<I>できません</I>
+
+)。
+引数はマクロの後にスペースで区切って指定することができます
+(やはり、タブは使用できません)。
+行頭にドットを指定することによって
+<B>GNU</B>
+
+<A HREF="../man1/troff.1.html">troff</A>(1)
+
+
+にそれに続く 2 文字 (あるいはそれより多い文字) を
+マクロ名として解釈するよう指示しています。
+最初にドット 1 文字をとり、その後ろに何も来ない場合は
+無視されます。
+マクロを起動させたくないような文脈で、入力行の先頭に
+`.'
+
+(ドット)
+を置くためには、
+`.'
+
+(ドット) の前にエスケープシーケンス
+`\&amp;'
+
+を指定します。
+`\&amp;'
+
+は文字通りスペース幅が 0 として解釈され、出力には現れません。
+<P>
+
+一般的に
+<B>GNU</B>
+
+<A HREF="../man1/troff.1.html">troff</A>(1)
+
+
+マクロは取り得る引数の数に制限はありません (9 つ以上の
+引数を扱うことのできない他のバージョンの troff とは違います)。
+限られた場合ではありますが、引数を次の行に続けたり、拡張したり
+することができます
+(後述の
+Sx 拡張引数
+
+のセクションを参照)。
+ほとんどすべてのマクロで引用符に囲まれた引数を扱うことができます
+(後述の
+Sx 引数に空白文字を指定する
+
+のセクションを参照)。
+<P>
+
+<B>-mdoc</B>
+
+での一般テキスト領域とマニュアル領域のほとんどのマクロは、
+呼び出し可能なマクロ名を決定するためにその引数のリストが
+<I>構文解析</I>
+
+されるという点で特別なものです。
+これはつまり、一般テキスト領域またはマニュアル領域のマクロ名に一致し、
+かつ、呼び出し可能であると判断された引数リスト中の引数は、
+処理される時に実行されるか、もしくは呼び出されるということです。
+この場合、引数がマクロの名前であっても
+`.'
+
+(ドット)
+で前置されません。
+このようにしてたくさんのマクロを入れ子にすることができます。
+例えばオプションマクロ
+`.[はフラグマクロおよび引数マクロ]
+
+'
+
+`-
+
+'
+
+と
+`<I>file ...</I>
+
+'
+
+を
+<I>呼び出し</I>
+
+て、オプションのフラグを引数とともに指定することができます:
+<DL COMPACT>
+<P>
+
+<DT><B></B>[-<B>s </B><I>bytes</I>
+
+
+
+]
+
+
+<DD>
+は
+`.[-<B>s</B>
+
+]
+
+'
+
+Ar bytes
+で生成されます。
+</DL>
+<P>
+
+<P>
+
+文字列がマクロ名と解釈されないようにするには、
+その文字列の前にエスケープシーケンス
+`\&amp;'
+
+を指定します。
+<DL COMPACT>
+<P>
+
+<DT><B></B>[-<B>s </B><I>bytes</I>
+
+
+
+]
+
+
+<DD>
+は
+`.[\&amp;-<B>s</B>
+
+]
+
+'
+
+\&amp;Ar bytes
+で生成されます。
+</DL>
+<P>
+
+<P>
+
+ここで文字列
+`-
+
+'
+
+と
+`<I>file ...</I>
+
+'
+
+はマクロとして解釈されていません。
+このドキュメントを通じて、
+呼び出し可能な引数を調べるために引数リストが構文解析されるマクロは
+<I>構文解析される</I>
+
+マクロとして参照し、
+引数リストから呼び出されることができるマクロは
+<I>呼び出し可能</I>
+
+なマクロとして参照します。
+<B>-mdoc</B>
+
+のマクロはほとんどすべてが構文解析されるのですから、これは技術的には
+<I>適当でない</I>
+
+表現ですが、常にマクロを「呼び出し可能である」とか「他のマクロを
+呼び出すことができる」と表現するのは面倒なことであるため、
+「構文解析される」という用語を使います。
+<A NAME="lbAH">&nbsp;</A>
+<H3>引数に空白文字を指定する</H3>
+
+1 つ以上の空白文字を含む文字列を引数として指定したい
+場合があります。
+引数リスト中の要素が特定の並びをしていることを
+期待しているマクロに引数を指定する時に必要になることがあります。
+さらに、こうすると
+<B>-mdoc</B>
+
+が速く実行されるようになるのです。
+例えば、関数マクロ
+`.Fn では第
+
+'
+
+1 引数は関数名であり、残りの引数が関数のパラメータであると
+想定されています。
+<B>ANSI~C</B>
+
+では、関数のパラメータ宣言を括弧で囲まれたパラメータリスト中に
+明示することを規定しているので、
+各パラメータは最低でも 2 語の文字列となります。
+例えば、
+Fa int foo
+
+のようになります。
+<P>
+
+空白を含む引数を指定するには 2 通りの方法があります。
+1 つは、空白を含む文字列を渡すのに、固定の空白、
+つまりパディングされない空白文字
+`\'
+
+を使う方法です。すなわち、空白の前にエスケープ文字
+`\'
+
+を指定します。
+この方法はどのマクロでも使うことができますが、1 行が長くなり過ぎた
+テキストを調整するときの邪魔になるという副作用があります。
+troff
+
+
+では、固定の空白は他の印刷可能な文字と同様に扱われ、通常期待されるように
+その箇所で文字列を空白や改行で分けることは行われなくなります。
+この方法は文字列が行の境界にまたがることが好ましくない場合に有用です。
+代替案としては、
+パディング可能 (すなわち伸長可能) で分割不可能な空白
+`\~'
+
+<P>
+を使うことがあります (これは、
+<B>GNU</B>
+
+<A HREF="../man1/troff.1.html">troff</A>(1)
+
+
+拡張です)。
+2 つ目の方法は、文字列をダブルクォートで括ることです。
+<P>
+
+例えば、次のようにします:
+<DL COMPACT>
+<P>
+
+<DT><B>Fn </B>fetch char&nbsp;*str
+
+
+<DD>
+は
+`.Fn fetch
+
+'
+
+char\ *str
+で生成されます。
+<DT><B>Fn </B>fetch char *str
+
+
+<DD>
+も
+`.Fn fetch
+
+'
+
+&quot;char *str&quot;
+で生成することができます。
+</DL>
+<P>
+
+<P>
+
+もし、空白およびダブルクォートの前の
+`\'
+
+が省略されていた場合には
+`.Fn は引数が
+
+'
+
+3 つであるとみなし、その結果は
+<P>
+
+
+<BLOCKQUOTE><TT>Fn </TT>fetch char *str
+
+</BLOCKQUOTE>
+<P>
+
+となります。
+
+
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>行末の空白文字</H3>
+
+Troff
+
+
+は行末に空白文字があると混乱してしまうことがあります。
+Ao 空白 Ac Ns Ao 行末 Ac
+
+の文字の並びからすべての空白文字を取り除くのは良い予防策です。
+どうしても行末に空白文字をおく必要性が出てきた場合は、
+パディングされない空白とエスケープ文字
+`\&amp;'
+
+を使用することによって対応できます。
+例えば、
+`string\\&amp;'
+
+のようにします。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>特殊文字のエスケープ</H3>
+
+改行
+`\n'
+
+のような特殊文字は、バックスラッシュを保存するために
+`\'
+
+を
+`\e'
+
+で置き換え
+(たとえば
+`\en'
+
+とする) て扱います。
+<A NAME="lbAK">&nbsp;</A>
+<H3>その他の注意点</H3>
+
+表示領域外で空の入力行が見つかった場合には警告が発生します
+(後述)。
+代わりに
+`.sp'
+
+を使用してください
+(
+<B>-mdoc</B>
+
+マクロを使用して、低レベルコマンドを使用しないようにすると
+ずっと良いです)。
+<P>
+
+先頭に空白を置くと行分割が生じ、そのまま出力されてしまいます。
+可能ならばこうなることを避けてください。
+同様に、通常のテキスト行において単語間に 2 つ以上の空白文字を
+使用しないでください。これは、他のテキストフォーマッタとは
+対照的です。空白文字を 2 つ以上置いても 1 つの空白文字に
+<I>置き換わりません</I>
+
+。
+<P>
+
+引数として
+`&quot;'
+
+を直接渡すことはできません。
+代わりに
+`\*[q]'
+
+(あるいは
+`\*q'
+
+)
+を使用してください。
+<P>
+
+デフォルトでは、
+<A HREF="../man1/troff.1.html">troff</A>(1)
+
+
+は文を終了させる句読点の後に空白文字を 2 つ挿入します。
+つまり、
+`)'
+
+あるいは
+`''
+
+などの文字はそのまま扱われ、文の終了には影響を与えません。
+この動作を変更するには、
+ドットの前あるいは後に
+`\&amp;'
+
+を挿入してください。
+
+<BLOCKQUOTE>
+<PRE>
+The
+.Ql .
+character.
+.Pp
+The
+.Ql \&amp;.
+character.
+.Pp
+.No test .
+test
+.Pp
+.No test.
+test
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+は、
+
+<BLOCKQUOTE>
+
+The
+`.'
+
+character.
+<P>
+
+The
+`.'
+
+character.
+<P>
+
+<B>test</B>
+
+ 
+test
+<P>
+
+<B>test.</B>
+
+test
+</BLOCKQUOTE>
+
+<P>
+
+となります。
+<P>
+
+1 行目および 3 行目にみられるように、
+<B>-mdoc</B>
+
+はマクロ引数の中では句読点を特別に扱います。
+これについては、後述の
+Sx 一般的な構文
+
+の節で述べます。
+同様の方法で、幅 0 の空白を続けることで、
+省略形の後に続いたピリオドを保護しなくてはなりません。
+例えば
+`e.g.\&amp;'
+
+のようにします。
+<P>
+
+マニュアルページのソースファイル中のコメントは、
+独立した行では
+`.\'
+
+、何らかの入力があった後では
+`\'
+
+を、あるいはどのような場所でも使いたい場合は
+`\#'
+
+を使うことができます
+(後者は
+<B>GNU</B>
+
+<A HREF="../man1/troff.1.html">troff</A>(1)
+
+
+拡張です)。このような行の残りの部分は無視されます。
+<A NAME="lbAL">&nbsp;</A>
+<H2>マニュアルページのテンプレート</H2>
+
+マニュアルページの中身は次のような基本的なテンプレートから
+簡単に作成できます。
+
+<BLOCKQUOTE>
+<PRE>
+.\&quot; 以下の項目はすべてのマニュアルページで必要な項目です。
+.Dd 月 日, 年
+.Os [オペレーティングシステム] [バージョン/リリース]
+.Dt ドキュメントタイトル [セクション番号] [アーキテクチャ/ボリューム]
+.Sh NAME
+.Nm 名称
+.Nd 名称についての 1 行での説明
+.\&quot; 次の項目はセクション 2, 3 でのみ必要なものです。
+.\&quot; .Sh LIBRARY
+.Sh SYNOPSIS
+.Sh DESCRIPTION
+.\&quot; 以下の項目については、必要に応じてコメントをはずして使用してく
+.\&quot; ださい。
+.\&quot; .Sh IMPLEMENTATION NOTES
+.\&quot; この次の項目はセクション 2, 3, 9 でのみ必要な、関数の
+.\&quot; 戻り値です。
+.\&quot; .Sh RETURN VALUES
+.\&quot; 次の項目はセクション 1, 6, 7, 8, 9 でのみ必要なものです。
+.\&quot; .Sh ENVIRONMENT
+.\&quot; .Sh FILES
+.\&quot; .Sh EXAMPLES
+.\&quot; 次の項目はセクション 1, 6, 7, 8, 9 でのみ必要なものです。
+.\&quot;     ((シェルへの)コマンドの戻り値と
+.\&quot;       fprintf/stderr タイプの診断です)
+.\&quot; .Sh DIAGNOSTICS
+.\&quot; .Sh COMPATIBILITY
+.\&quot; 次の項目はセクション 2, 3, 9 でのみ必要な、
+.\&quot;     エラーハンドリングとシグナルハンドリングです。
+.\&quot; .Sh ERRORS
+.\&quot; .Sh SEE ALSO
+.\&quot; .Sh STANDARDS
+.\&quot; .Sh HISTORY
+.\&quot; .Sh AUTHORS
+.\&quot; .Sh BUGS
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+このテンプレートにおける最初の項目はマクロ
+`.,
+
+'
+
+`.,
+
+'
+
+および
+`.
+'
+
+であり、それぞれドキュメントの日付、
+マニュアルページもしくは題材となっているソースの開発や変更の
+対象となったオペレーティングシステム、そして
+マニュアルページのタイトルを属するマニュアルのセクション番号と
+ともに (
+<I>大文字で</I>
+
+) 指定したもの、となっています。
+これらのマクロはそのページを識別するものであり、後述の
+Sx タイトルマクロ
+
+で解説されます。
+<P>
+
+テンプレート中の残りの項目はセクションのヘッダ
+( <B>.</B><A NAME="lbAM">&nbsp;</A>
+<H2>)</H2>
+
+
+
+
+
+であり、それらのうち
+Sx NAME ,
+
+Sx SYNOPSIS ,
+
+および
+Sx DESCRIPTION
+
+は必須項目です。
+これらのヘッダについては
+Sx マニュアル領域
+
+を説明した後、
+Sx ページ構造領域
+
+で解説されます。
+いくつかのコンテントマクロはページレイアウトマクロの説明に
+使用されていますので、ページレイアウトマクロの前にコンテントマクロに
+ついて読むことを推奨します。
+<A NAME="lbAN">&nbsp;</A>
+<H2>使用法</H2>
+
+次に説明するマクロはすべて、オプションの引数は
+角括弧 ([]) で括られます。
+省略符号
+( `...'
+
+
+
+ 
+はさらに 0 個以上の引数があることを表しています。
+パラメータの代替値は
+`|'
+
+で区切って示します。
+必須パラメータに代替値がある場合は、
+(
+`|'
+
+<P>
+と一緒に)
+中括弧 ({}) を用い、値の組を括ります。
+メタ変数は山括弧 (&lt;&gt;) の中で指定されます。
+<P>
+
+例:
+<DL COMPACT>
+<P>
+
+<DT><B>.Xx </B>
+
+
+
+
+
+
+Aq foo 
+
+Br q bar1 | bar2
+
+[-test1 [-test2 | -test3]
+
+]
+
+<B>...</B>
+
+<DD>
+
+</DL>
+<P>
+
+<P>
+
+とくに明示しない限り、すべてのマクロは
+構文解析され、呼び出し可能なものです。
+<P>
+
+大部分のマクロはデフォルトの幅の値を持っており、これを
+`.<DL COMPACT>
+<P>
+
+'
+
+および
+`.
+
+'
+
+マクロ用にラベル
+<DD>width
+( -<B>width</B>
+
+
+
+ 
+あるいは offset
+( -<B>offset</B>
+
+
+
+ 
+を指定するのに使用することができます。
+<B>-mdoc</B>
+
+パッケージのローカルな変更に依存することのないように、
+このとても曖昧な機能は使わないことを推奨します。
+</DL>
+</DL>
+<A NAME="lbAO">&nbsp;</A>
+<H2>タイトルマクロ</H2>
+
+タイトルマクロはページ構造領域の一部ですが、
+マニュアルページを昨日書き始めようと思ったという人のために、
+最初に、他のとは別に記述されています。
+3 つのヘッダマクロでドキュメントまたはマニュアルページのタイトル、
+オペレーティングシステム、および原著の日付を指定します。
+これらのマクロはドキュメントの最初で一度だけ呼び出されるもので、
+ヘッダとフッタを構成するためだけに使用されます。
+<DL COMPACT>
+<P>
+
+<DT><B>.
+</B>
+
+
+<DD>
+[Aq ドキュメントタイトル
+
+]
+
+[Aq セクション番号
+
+]
+
+[Aq ボリューム
+
+]
+
+
+
+ドキュメントタイトルはマニュアルページの主題であり、
+troff の制限により
+<B>大文字</B>
+
+でなければいけません。
+省略された場合、
+`<B>UNTITLED</B>
+
+'
+
+が使われます。
+セクション番号は
+<B>1,~ ... ,~9</B>
+
+
+
+
+
+の範囲の番号もしくは
+`unass'
+
+,
+`draft'
+
+,
+`paper'
+
+のいずれかを取ることができます。
+セクション番号が指定されており、ボリューム名が与えられていない
+場合には、デフォルトのボリューム名が使用されます。
+<P>
+
+<B></B>
+
+では、次のセクションが定義されています:
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>1   Ta </B>
+
+
+
+
+<DD>
+<DT><B>2   Ta </B>
+
+
+
+
+<DD>
+<DT><B>3   Ta </B>
+
+
+
+
+<DD>
+<DT><B>4   Ta </B>
+
+
+
+
+<DD>
+<DT><B>5   Ta </B>
+
+
+
+
+<DD>
+<DT><B>6   Ta </B>
+
+
+
+
+<DD>
+<DT><B>7   Ta </B>
+
+
+
+
+<DD>
+<DT><B>8   Ta </B>
+
+
+
+
+<DD>
+<DT><B>9   Ta </B>
+
+
+
+
+<DD>
+</DL>
+<P>
+
+<P>
+
+ボリューム名は任意であるか、もしくは次のものを
+取ることができます:
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>USD   Ta </B>
+
+
+
+
+<DD>
+<DT><B>PS1   Ta </B>
+
+
+
+
+<DD>
+<DT><B>AMD   Ta </B>
+
+
+
+
+<DD>
+<DT><B>SMM   Ta </B>
+
+
+
+
+<DD>
+<DT><B>URM   Ta </B>
+
+
+
+
+<DD>
+<DT><B>PRM   Ta </B>
+
+
+
+
+<DD>
+<DT><B>KM    Ta </B>
+
+
+
+
+<DD>
+<DT><B>IND   Ta </B>
+
+
+
+
+<DD>
+<DT><B>LOCAL Ta </B>
+
+
+
+
+<DD>
+<DT><B>CON   Ta </B>
+
+
+
+
+<DD>
+</DL>
+<P>
+
+<P>
+
+互換性を保つため、
+`IND'
+
+の代わりに
+`MMI'
+
+を使用することができ、
+`LOCAL'
+
+の代わりに
+`LOC'
+
+を使用できます。
+先の表の値は、新しいボリューム名を指定します。
+第 3 パラメータがコンピュータアーキテクチャを表すキーワードで
+ある場合、その値は第 2 パラメータで指定したようにボリューム名に
+追加されます。デフォルトでは次のアーキテクチャに関するキーワードが
+定義されています:
+# we use `No' to avoid hyphenation
+
+<BLOCKQUOTE>
+
+<B>alpha , amiga , arc , arm26 , arm32 , atari , bebox , cobalt , evbsh3</B>
+
+ 
+<B>hp300 , hpcmips , i386 , luna68k , m68k , mac68k , macppc , mips</B>
+
+ 
+<B>mmeye , mvme68k , news68k , newsmips , next68k , ofppc , pc532 , pmax</B>
+
+ 
+<B>powerpc , prep , sgimips , sh3 , sparc , sparc64 , sun3 , tahoe , vax</B>
+
+ 
+<B>x68k</B>
+
+</BLOCKQUOTE>
+
+<P>
+
+次の例では、マニュアルページのヘッダの左側 (これは右側と同じものです) と
+中央に書かれる文字列を示しています。
+
+
+<DL COMPACT>
+<P>
+
+<DT><B>.
+</B>
+
+
+<DD>
+`FOO(7)'
+
+`System'
+
+Reference Manual
+<DT><B>.
+</B>
+
+
+<DD>
+`FOO(2)'
+
+`System'
+
+Programmer's Manual (mac68k Architecture)
+<DT><B>.
+</B>
+
+
+<DD>
+`FOO'
+
+`bar'
+
+</DL>
+<P>
+
+
+<P>
+
+ローカルな追加項目や OS に特化した追加項目が、ファイル
+mdoc.local
+
+にあるかもしれません。このファイル中で
+`volume-ds-XXX'
+
+(前者のタイプについて) および
+`volume-as-XXX'
+
+(後者のタイプについて)
+という名前の文字列を検索してください。ここで
+`XXX'
+
+は
+`.
+'
+
+マクロで使用されるキーワードを表しています。
+<P>
+
+このマクロは呼び出し不可能であり、構文解析もされません。
+<DT><B>.
+
+
+</B>
+
+
+
+[Aq オペレーティングシステム
+
+]
+
+[Aq リリース番号
+
+]
+
+<DD>
+
+第 1 パラメータが空の場合、
+デフォルト値
+`<B></B>
+
+'
+
+が使用されます。
+これは、ローカルの設定ファイル
+mdoc.local
+
+で上書きできます。一般的には、
+オペレーティングシステムの名称には一般的な頭字語 (略称) を
+使わなければなりません。
+例えば
+<B>BSD</B>
+
+や
+<B>ATT</B>
+
+といったものです。
+リリース番号は、各システムでの標準のリリースの命名法を使用します。
+次の表では、いくつか事前に定義されているオペレーティングシステムに
+対して取り得る第 2 引数をリストしています。
+`.
+'
+
+と同じように、ローカルな追加項目が
+mdoc.local
+
+に定義されているかもしれません。このファイル中で
+`operating-system-XXX-YYY'
+
+という名前の文字列を検索してください。ここで
+`XXX'
+
+はオペレーティングシステムの頭字語 (略称) そして
+`YYY'
+
+がリリース ID です。
+
+
+<DL COMPACT>
+<P>
+
+<DT><B>ATT</B>
+<DD>
+<DD>7th, 7, III, 3, V, V.2, V.3, V.4
+<DT><B>BSD</B>
+<DD>
+3, 4, 4.1, 4.2, 4.3, 4.3t, 4.3T, 4.3r, 4.3R, 4.4
+<DT><B>NetBSD</B>
+<DD>
+0.8, 0.8a, 0.9, 0.9a, 1.0, 1.0a, 1.1, 1.2, 1.2a, 1.2b, 1.2c, 1.2d, 1.2e,
+1.3, 1.3a, 1.4, 1.5
+<DT><B>FreeBSD</B>
+<DD>
+1.0, 1.1, 1.1.5, 1.1.5.1, 2.0, 2.0.5, 2.1, 2.1.5, 2.1.6, 2.1.7, 2.2, 2.2.1,
+2.2.2, 2.2.5, 2.2.6, 2.2.7, 2.2.8, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 4.0, 4.1,
+4.2, 5.0
+</DL>
+<P>
+
+
+<P>
+
+<B>ATT</B>
+
+に関しては、判別できない第 2 パラメータがある時には
+それを文字列
+<B>UNIX</B>
+
+に置き換えます。事前に定義されているその他の頭字語 (略称) に
+ついては、そのようなパラメータは無視され、警告メッセージが
+出力されます。
+認識できない引数は、ページフッタ中に記述された通りに
+表示されます。例えば、典型的なフッタは次のようになるでしょう:
+<P>
+
+
+<BLOCKQUOTE><TT>.BSD 4.3
+
+</TT></BLOCKQUOTE>
+<P>
+
+は
+`4.3~Berkeley'
+
+Distribution
+となります。また、ローカルで作られたセットの例では、
+<P>
+
+
+<BLOCKQUOTE><TT>.CS Department
+
+</TT></BLOCKQUOTE>
+<P>
+
+は
+`CS~Department'
+
+となります。
+<P>
+
+`.マクロがない場合、ページの左下隅は見苦しくなってしまうでしょう。
+
+'
+
+<P>
+
+このマクロは呼び出し不可能であり、構文解析もされません。
+<DT><B>.</B>[Aq 月
+
+
+
+
+
+
+
+<DD>
+Aq 日 ,
+
+Aq 年
+
+]
+`に引数がない場合は、日付には
+
+'
+
+`基準時点'
+
+(協定世界時 1970年1月1日 00:00:00)
+が使用されます。
+ちょうど 3 つ引数がある場合には、それらは連結され、
+分割できない空白で分けられたものになります。
+<P>
+
+
+<BLOCKQUOTE><TT>.January 25, 2001
+
+</TT></BLOCKQUOTE>
+<P>
+
+それ以外の場合は現在の日付が使用され、パラメータは無視されます。
+<P>
+
+このマクロは呼び出し不可能であり、構文解析もされません。
+</DL>
+<P>
+
+<A NAME="lbAP">&nbsp;</A>
+<H2>マニュアル領域および一般テキスト領域の紹介</H2>
+
+<A NAME="lbAQ">&nbsp;</A>
+<H3>この名前には何が <B>...</B>
+
+</H3>
+
+マニュアル領域のマクロ名はコマンドやサブルーチン、それに関連ファイルを
+説明するために使われている日常のインフォーマルな言葉から取られています。
+この言葉と少し違うバリエーションのものがマニュアルページを書く上での
+3 つの異なった側面を記述するのに使われます。
+最初のものは、
+<B>-mdoc</B>
+
+マクロ使用方法の説明です。2 番目は
+<B>-mdoc</B>
+
+マクロを
+<I>用いた</I>
+
+UNIX
+コマンドの記述です。
+3 番目はコマンドを通常の言葉の感覚でユーザに示したものです。
+これはすなわち、マニュアルページのテキスト中でのコマンドの
+説明となります。
+<P>
+
+最初のケースでは、
+<A HREF="../man1/troff.1.html">troff</A>(1)
+
+
+マクロはそれ自身、一種のコマンドとなっています。
+troff コマンドは一般的に以下のような形式をとります。
+
+<BLOCKQUOTE>
+
+<B>.Xx </B>argument1 argument2 ...
+
+
+
+</BLOCKQUOTE>
+
+<P>
+
+`.Xx はマクロコマンドもしくは要求を示しており、それに続くものは
+
+'
+
+すべて処理されるべき引数として処理されます。
+2 番目のケースでは、コンテントマクロを使用する
+UNIX
+コマンドの記述がもう少し含まれます。
+典型的な
+Sx SYNOPSIS
+
+コマンド行はこのように表示されます。
+
+<BLOCKQUOTE>
+
+<B>filter</B>
+
+[-<B>flag</B>
+
+]
+
+Ao Ar infile Ac Ao Ar outfile Ac
+
+</BLOCKQUOTE>
+
+<P>
+
+ここで
+<B>filter</B>
+
+はコマンド名であり、角括弧で囲まれた文字列
+-<B>flag</B>
+
+は
+<I>フラグ</I>
+
+引数で、これは角括弧で囲むことによってオプションであることを
+示しています。
+<B>-mdoc</B>
+
+の用語では、
+Ao Ar infile Ac
+
+および
+Ao Ar outfile Ac
+
+は
+<I>メタ引数</I>
+
+と称されています。
+この例では、ユーザは山括弧 (&lt;&gt;) の中で与えられたメタ引数を
+実際のファイル名に置き換えなくてはなりません。
+このドキュメントでは、メタ引数は
+<B>-mdoc</B>
+
+コマンドを記述するのに使用していることに注意してください。
+多くのマニュアルページでは、メタ変数はわざわざ山括弧を使って
+書かれていません。
+上の例を整形したマクロは以下のものです。
+
+<BLOCKQUOTE>
+<PRE>
+.Nm filter
+.Op Fl flag
+.Ao Ar infile Ac Ao Ar outfile Ac
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+3 番目のケースでは、コマンドの説明や構文に上記の例の両方が使われ、
+さらに細かい記述が追加されるでしょう。
+上の例での引数
+Ao Ar infile Ac
+
+および
+Ao Ar outfile Ac
+
+は
+<I>オペランド</I>
+
+もしくは
+<I>ファイル引数</I>
+
+として参照されます。
+コマンド行の引数のリストはかなり長くなる場合もあります。
+
+
+<DL COMPACT>
+<P>
+
+<DT><B>make</B>
+
+
+<DD>
+[-<B>eiknqrstv</B>
+
+]
+
+[-<B>D </B><I>variable</I>
+
+
+
+]
+
+[-<B>d </B><I>flags</I>
+
+
+
+]
+
+[-<B>f </B><I>makefile</I>
+
+
+
+]
+
+[-<B>I </B><I>directory</I>
+
+
+
+]
+
+[-<B>j </B><I>max_jobs</I>
+
+
+
+]
+
+[<I>variable </I><B>= </B><I>value</I>
+
+
+
+
+
+
+
+]
+
+[<I>target ...</I>
+
+]
+
+
+
+</DL>
+<P>
+
+
+
+
+<P>
+
+ここではコマンド
+<B>make</B>
+
+について記述しており、
+<I>makefile</I>
+
+をフラグ
+-<B>f</B>
+
+の引数としています。
+またオプションのファイルオペランドである
+<I>target</I>
+
+についても言及しています。
+言葉での説明では、こういった詳細な記述が混乱を防いでくれますが、
+<B>-mdoc</B>
+
+パッケージにはフラグ
+<I>への</I>
+
+引数のためのマクロがありません。
+その代わりに
+<I>target</I>
+
+のようなオペランドやファイル引数に使われる引数マクロ
+`<I>file ...</I>
+
+'
+
+が
+<I>variable</I>
+
+のようなフラグへの引数と同様に使われます。
+この make コマンド行は次の指定により生成されています。
+
+<BLOCKQUOTE>
+<PRE>
+.Nm make
+.Op Fl eiknqrstv
+.Op Fl D Ar variable
+.Op Fl d Ar flags
+.Op Fl f Ar makefile
+.Op Fl I Ar directory
+.Op Fl j Ar max_jobs
+.Op Ar variable Ns = Ns Ar value
+.Bk
+.Op Ar target ...
+.Ek
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+マクロ
+`.および
+
+'
+
+`.は
+
+'
+
+Sx キープ
+
+セクションにおいて解説されています。
+<A NAME="lbAR">&nbsp;</A>
+<H3>一般的な構文</H3>
+
+マニュアル領域のマクロと一般テキスト領域のマクロとはいくつか
+小さな違いがあるものの、同様な構文を使用しています。とりわけ、
+`.<I>file ...</I>
+
+'
+
+ 
+`.-
+
+'
+
+ 
+`.<B></B>
+
+'
+
+ 
+および
+`.は引数なしで呼び出された時の違いしかありません。また、
+
+'
+
+`.Fn および
+
+'
+
+`.は引数のリストの順番が異なります。
+
+'
+
+すべてのコンテントマクロが句読点を認識し、それを正しく扱うには、
+各々の句読点文字が先行する空白で分離されている必要があります。
+次のように指定されている場合、
+<P>
+
+
+<BLOCKQUOTE><TT>.</TT><I>sptr, ptr),</I>
+
+</BLOCKQUOTE>
+<P>
+
+その結果は以下のようになります。
+<P>
+
+
+<BLOCKQUOTE><TT></TT><I>sptr, ptr),</I>
+
+</BLOCKQUOTE>
+<P>
+
+ここでは句読点は認識されず、すべての出力は
+`.<I>file ...</I>
+
+'
+
+で使用されるフォントで行われています。
+句読点が空白文字で区切られている場合、
+<P>
+
+
+<BLOCKQUOTE><TT>.</TT><I>sptr , ptr ) ,</I>
+
+</BLOCKQUOTE>
+<P>
+
+結果は以下のようになります。
+<P>
+
+
+<BLOCKQUOTE><TT></TT><I>sptr , ptr</I>
+
+ </BLOCKQUOTE>
+ 
+<P>
+
+今度は句読点が認識され、出力はデフォルトのフォントで行われ
+引数文字列とは区別されています。
+句読点文字の特別な意味を取り除くには、
+`\&amp;'
+
+でエスケープしてください。
+<P>
+
+troff
+
+
+はマクロ言語としての限界から、以下のような、数学、論理学、引用符の
+集合のメンバを含んだ文字列を表現するのは困難です。
+
+<BLOCKQUOTE>
+<PRE>
+{+,-,/,*,%,&lt;,&gt;,&lt;=,&gt;=,=,==,&amp;,`,',&quot;}
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+問題なのは、文字によって示唆されている操作もしくは評価が、
+実行されるべきであると
+troff
+
+
+が仮定する場合があることです。
+これらの文字が予期しない形で評価されないようにするには、
+`\&amp;'
+
+でこれらをエスケープしてください。
+最初のコンテントマクロは、以下の
+`.<I>において、その典型的な構文が示されています。</I>
+
+'
+
+<A NAME="lbAS">&nbsp;</A>
+<H2>マニュアル領域</H2>
+
+<A NAME="lbAT">&nbsp;</A>
+<H3>アドレス</H3>
+
+アドレスマクロはアドレスの構成を識別します。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><I>Ao </I>アドレス Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.</B><I>addr1</I>
+
+
+
+
+<DD>
+<I>addr1</I>
+
+<DT><B>.</B><I>addr1 .</I>
+
+
+
+
+<DD>
+<I>addr1</I>
+
+ 
+<DT><B>.</B><I>addr1 , file2</I>
+
+
+
+
+<DD>
+<I>addr1 , file2</I>
+
+<DT><B>.</B><I>f1 , f2 , f3 :</I>
+
+
+
+
+<DD>
+<I>f1 , f2 , f3</I>
+
+ 
+<DT><B>.</B><I>addr ) ) ,</I>
+
+
+
+
+<DD>
+<I>addr ) )</I>
+
+ 
+</DL>
+<P>
+
+<P>
+
+デフォルトの文字幅は 12n です。
+<A NAME="lbAU">&nbsp;</A>
+<H3>作者名</H3>
+
+`.An マクロは文書化されている項目の作者の名前、もしくは実際の
+
+'
+
+マニュアルページの作者の名前を指定するために使われます。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .An </TT>Ao 作者名 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.An </B>&quot;Joe Author&quot;
+
+
+
+
+<DD>
+An Joe Author
+
+<DT><B>.An </B>&quot;Joe Author&quot; ,
+
+
+
+
+<DD>
+An Joe Author ,
+
+<DT><B>.An </B>&quot;Joe Author&quot; Aq <A HREF="mailto:nobody@FreeBSD.org">nobody@FreeBSD.org</A>
+
+
+
+
+
+
+<DD>
+An Joe Author Aq <A HREF="mailto:nobody@FreeBSD.org">nobody@FreeBSD.org</A>
+
+<DT><B>.An </B>&quot;Joe Author&quot; ) ) ,
+
+
+
+
+<DD>
+An Joe Author ) ) ,
+
+</DL>
+<P>
+
+<P>
+
+デフォルトの文字幅は 12n です。
+<P>
+
+Sx AUTHORS
+
+セクションでは、
+`.An リクエストは改行を引き起こし、新しい名前がそれぞれの行に表示されます。
+
+'
+
+この動作が望ましくない場合、
+
+<BLOCKQUOTE>
+<PRE>
+.An -nosplit
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+を呼び出すことで無効にできます。
+それぞれの行に表示させる動作に戻したい場合は、
+
+<BLOCKQUOTE>
+<PRE>
+.An -split
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+と記述します。
+<A NAME="lbAV">&nbsp;</A>
+<H3>引数</H3>
+
+引数マクロ
+<B>.</B><I>file ...</I>
+
+
+
+はコマンド行の引数を参照する際にはいつでも使用することができます。
+引数なしで呼ばれた場合、
+`<I>file ...</I>
+
+'
+
+が出力になります。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><I></I>[Ao 引数 Ac ...]
+
+
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.</B><I>file ...</I>
+
+
+
+
+<DD>
+<I>file ...</I>
+
+
+<DT><B>.</B><I>file1</I>
+
+
+
+
+<DD>
+<I>file1</I>
+
+<DT><B>.</B><I>file1 .</I>
+
+
+
+
+<DD>
+<I>file1</I>
+
+ 
+<DT><B>.</B><I>file1 file2</I>
+
+
+
+
+<DD>
+<I>file1 file2</I>
+
+<DT><B>.</B><I>f1 f2 f3 :</I>
+
+
+
+
+<DD>
+<I>f1 f2 f3</I>
+
+ 
+<DT><B>.</B><I>file ) ) ,</I>
+
+
+
+
+<DD>
+<I>file ) )</I>
+
+ 
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 12n です。
+<A NAME="lbAW">&nbsp;</A>
+<H3>コンフィギュレーション宣言 (セクション 4 のみ)</H3>
+
+`.<B>マクロはセクション</B>
+
+'
+
+4 のマニュアルにおいて、デバイスインタフェースの
+config(8)
+
+
+による宣言の説明に使われます。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><B>Ao </B>引数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.&quot;device le0 at scode?&quot;</B>
+
+
+
+
+<DD>
+<B>device le0 at scode?</B>
+
+</DL>
+<P>
+
+<P>
+
+Sx SYNOPSIS
+
+セクションでは
+`.<B>リクエストはその引数が表示される前後で改行を入れます。</B>
+
+'
+
+<P>
+
+デフォルト幅は 12n です。
+<A NAME="lbAX">&nbsp;</A>
+<H3>コマンド修飾子</H3>
+
+コマンド修飾子は
+`.<B>マクロがすべての引数の前にダッシュ文字を付けないことを除いて、</B>
+
+'
+
+`.-
+
+'
+
+(フラグ)
+コマンドと同じです。
+伝統的にフラグはダッシュ文字に引き続いて指定されますが、
+この方法を使わないコマンドやコマンドのサブセットもあります。
+コマンド修飾子はエディタコマンドのような対話的なコマンドでも
+指定されることがあります。
+Sx フラグ
+
+セクションを参照してください。
+<P>
+
+デフォルト幅は 10n です。
+<A NAME="lbAY">&nbsp;</A>
+<H3>定義済みの変数</H3>
+
+インクルードファイルにおいて定義されている変数 (もしくは定数) は
+マクロ
+`.<B>によって指定します。</B>
+
+'
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><B>Ao </B>定義済みの変数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.MAXHOSTNAMELEN</B>
+
+
+
+
+<DD>
+<B>MAXHOSTNAMELEN</B>
+
+<DT><B>.TIOCGPGRP )</B>
+
+
+
+
+<DD>
+<B>TIOCGPGRP</B>
+
+ 
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 12n です。
+<A NAME="lbAZ">&nbsp;</A>
+<H3>errno</H3>
+
+`.Er errno
+
+'
+
+マクロは、セクション 2, 3, 9 のライブラリルーチンにおける
+エラーの戻り値を指定します。
+下記の 2 番目の例では
+`.Er は一般テキスト領域マクロである
+
+'
+
+`.Bq (これはセクション
+
+'
+
+2 のマニュアルページで使われています) と共に
+使われています。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Er </TT>Ao errno のタイプ Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Er </B>ENOENT
+
+
+
+
+<DD>
+Er ENOENT
+
+<DT><B>.Er </B>ENOENT ) ;
+
+
+
+
+<DD>
+Er ENOENT ) ;
+
+<DT><B>.Bq </B>Er ENOTDIR
+
+
+
+
+
+
+<DD>
+Bq Er ENOTDIR
+
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 17n です。
+<A NAME="lbBA">&nbsp;</A>
+<H3>環境変数</H3>
+
+`.<B>マクロは環境変数を指定します。</B>
+
+'
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><B>Ao </B>引数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.DISPLAY</B>
+
+
+
+
+<DD>
+<B>DISPLAY</B>
+
+<DT><B>.PATH .</B>
+
+
+
+
+<DD>
+<B>PATH</B>
+
+ 
+<DT><B>.PRINTER ) ) ,</B>
+
+
+
+
+<DD>
+<B>PRINTER ) )</B>
+
+ 
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 15n です。
+<A NAME="lbBB">&nbsp;</A>
+<H3>フラグ</H3>
+
+`.-
+
+'
+
+マクロはコマンド行のフラグを扱います。
+フラグの前にはダッシュ
+`-'
+
+が挿入されます。
+ダッシュがつかない対話的なコマンドのために
+`.<B>(コマンド修飾子)</B>
+
+'
+
+マクロが用意されています。
+これはダッシュを付けないことを除いて同じ働きをします。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .-</TT><B>Ao </B>引数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.-
+
+</B>
+
+
+<DD>
+-
+
+
+<DT><B>.-cfv</B>
+
+
+
+
+<DD>
+-<B>cfv</B>
+
+<DT><B>.-cfv .</B>
+
+
+
+
+<DD>
+-<B>cfv</B>
+
+ 
+<DT><B>.cfv .</B>
+
+
+
+
+<DD>
+<B>cfv</B>
+
+ 
+<DT><B>.-s v t</B>
+
+
+
+
+<DD>
+-<B>s v t</B>
+
+<DT><B>.-- ,</B>
+
+
+
+
+<DD>
+-<B>-</B>
+
+ 
+<DT><B>.-xyz ) ,</B>
+
+
+
+
+<DD>
+-<B>xyz )</B>
+
+ 
+<DT><B>.-|</B>
+
+
+
+
+<DD>
+-<B>|</B>
+
+</DL>
+<P>
+
+<P>
+
+引数なしで
+`.-
+
+'
+
+マクロを指定すると、標準入力/標準出力を意味するダッシュとなります。
+`.-
+
+'
+
+マクロにダッシュを
+1 つ与えると、2 つのダッシュとなることに
+注意して下さい。
+<P>
+
+デフォルト幅は 12n です。
+<A NAME="lbBC">&nbsp;</A>
+<H3>関数の宣言</H3>
+
+`.Fd マクロは
+
+'
+
+Sx SYNOPSIS
+
+セクションにおいて、セクション 2 または 3 の関数の説明で使われます。
+このマクロは呼び出し不可能であり、構文解析もされせん。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Fd </TT>Ao 引数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Fd </B>&quot;#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;&quot;
+
+
+
+
+<DD>
+Fd #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+
+</DL>
+<P>
+
+<P>
+
+Sx SYNOPSIS
+
+セクションでは、
+関数がすでに示されており、改行がまだされていない場合には
+`.Fd リクエストは改行を入れます。
+
+'
+
+これによって前の関数呼び出しと次の関数の宣言の間に
+最適な行間が設定されます。
+<P>
+
+`.In <B>(</B>
+
+
+
+'
+
+#include
+文)
+マクロは、以上の例を短く記述したものです。
+このマクロは C プログラム中でインクルードされる
+C ヘッダファイルを指定します。
+このマクロも改行を挿入し、
+呼び出し不可能であり、構文解析されることもありません。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .In </TT>Ao ヘッダファイル Ac <P>
+
+
+
+
+
+
+
+</BLOCKQUOTE>
+<DL COMPACT>
+<P>
+
+<DT><B>.In </B>stdio.h
+
+
+
+
+<DD>
+In stdio.h
+
+</DL>
+<P>
+
+<A NAME="lbBD">&nbsp;</A>
+<H3>関数の型</H3>
+
+このマクロは
+Sx SYNOPSIS
+
+セクションで使うものです。
+マニュアルページ中の他の場所でも問題なく使うことができますが、
+セクション 2 と 3 の
+Sx SYNOPSIS
+
+セクションにおいてカーネルの通常の形式で関数の型を示すことが
+このマクロの目的です
+(このマクロは関数名が次の行に置かれるように改行を挿入します)。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Ft </TT>Ao 型 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Ft </B>struct stat
+
+
+
+
+<DD>
+Ft struct stat
+
+</DL>
+<P>
+
+<A NAME="lbBE">&nbsp;</A>
+<H3>関数 (ライブラリルーチン)</H3>
+
+`.Fn マクロは
+
+'
+
+<B>ANSI~C</B>
+
+の記法を規範としています。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Fn </TT>Ao 関数 Ac [Ao パラメータ Ac ...]
+
+
+
+
+
+
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Fn </B>getchar
+
+
+
+
+<DD>
+Fn getchar
+
+<DT><B>.Fn </B>strlen ) ,
+
+
+
+
+<DD>
+Fn strlen ) ,
+
+<DT><B>.Fn </B>align &quot;char *ptr&quot; ,
+
+
+
+
+<DD>
+Fn align char *ptr ,
+
+</DL>
+<P>
+
+<P>
+
+他のマクロを呼び出すと
+`.Fn 呼び出しの終了を意味することに注意してください
+
+'
+
+(閉じ括弧がその箇所に挿入されます)。
+<P>
+
+多くのパラメータをとる関数 (これは滅多にないことですが) では、
+`.Fo マクロ
+
+'
+
+(関数マクロの開始) と
+`.Fc マクロ
+
+'
+
+(関数マクロの終了) を
+`.Fa (関数の引数)
+
+'
+
+と共に使って、この制限を回避することができます。
+<P>
+
+使用例:
+
+<BLOCKQUOTE>
+<PRE>
+.Ft int
+.Fo res_mkquery
+.Fa &quot;int op&quot;
+.Fa &quot;char *dname&quot;
+.Fa &quot;int class&quot;
+.Fa &quot;int type&quot;
+.Fa &quot;char *data&quot;
+.Fa &quot;int datalen&quot;
+.Fa &quot;struct rrec *newrr&quot;
+.Fa &quot;char *buf&quot;
+.Fa &quot;int buflen&quot;
+.Fc
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+生成結果:
+
+<BLOCKQUOTE>
+
+Ft int
+
+Fo res_mkquery
+
+Fa int op
+
+Fa char *dname
+
+Fa int class
+
+Fa int type
+
+Fa char *data
+
+Fa int datalen
+
+Fa struct rrec *newrr
+
+Fa char *buf
+
+Fa int buflen
+
+Fc </BLOCKQUOTE>
+
+
+
+<P>
+
+Sx SYNOPSIS
+
+セクションでは、関数は常に行の先頭から開始されます。
+Sx SYNOPSIS
+
+セクションにおいて複数の関数が示されており、関数の型が
+示されない場合、改行が挿入され、現在の関数名とその前の
+関数名の間に最適な改行量が設定されます。
+<P>
+
+`.Fn および
+
+'
+
+`.Fo のデフォルト幅の値はそれぞれ
+
+'
+
+12n と 16n です。
+<A NAME="lbBF">&nbsp;</A>
+<H3>関数の引数</H3>
+
+`.Fa マクロは関数の引数
+
+'
+
+(パラメータ) を
+マニュアルの
+Sx SYNOPSIS
+
+のセクション外で参照する場合、あるいは
+`.Fn の代わりに
+
+'
+
+`.Fo および
+
+'
+
+`.Fc 囲いマクロを使用した場合には
+
+'
+
+Sx SYNOPSIS
+
+のセクション内で参照する場合にも使われます。
+`.Fa は構造体のメンバを参照する場合にも使われます。
+
+'
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Fa </TT>Ao 関数の引数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Fa </B>d_namlen ) ) ,
+
+
+
+
+<DD>
+Fa d_namlen ) ) ,
+
+<DT><B>.Fa </B>iov_len
+
+
+
+
+<DD>
+Fa iov_len
+
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 12n です。
+<A NAME="lbBG">&nbsp;</A>
+<H3>戻り値</H3>
+
+`.Rv マクロは
+
+'
+
+Sx RETURN VALUES
+
+のセクションで使うテキストを生成します。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Rv </TT>[-std [Ao 関数 Ac ...
+
+
+
+]
+
+]
+
+
+
+</BLOCKQUOTE>
+<P>
+
+例えば、
+`.Rv -std
+
+'
+
+atexit
+は次のテキストを生成します。
+
+
+# a small hack to suppress a warning message
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Rv -std atexit
+
+
+
+<P>
+
+-<B>std</B>
+
+オプションはセクション 2 と 3 のマニュアルページでのみ有効です。
+現在のところ、このマクロは
+-<B>std</B>
+
+フラグなしで使用しても何も起こりません。
+<A NAME="lbBH">&nbsp;</A>
+<H3>終了ステータス</H3>
+
+`.Ex マクロは
+
+'
+
+Sx DIAGNOSTICS
+
+のセクションで使うテキストを生成します。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Ex </TT>[-std [Ao ユーティリティ Ac ...
+
+
+
+]
+
+]
+
+
+
+</BLOCKQUOTE>
+<P>
+
+例えば
+`.Ex -std
+
+'
+
+cat
+は次のテキストを生成します。
+
+
+# a small hack to suppress a warning message
+
+
+
+
+
+
+
+
+
+
+
+Ex -std cat
+
+
+
+<P>
+
+-<B>std</B>
+
+オプションはセクション 1 と 6 と 8 のマニュアルページでのみ有効です。
+現在のところ、このマクロは
+-<B>std</B>
+
+フラグなしで使用しても何も起こりません。
+<A NAME="lbBI">&nbsp;</A>
+<H3>対話的なコマンド</H3>
+
+`.<B>マクロは対話的なコマンド、もしくは内部コマンドを指定します。</B>
+
+'
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><B>Ao </B>引数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.:wq</B>
+
+
+
+
+<DD>
+<B>:wq</B>
+
+<DT><B>.&quot;do while {...}&quot;</B>
+
+
+
+
+<DD>
+<B>do while {...}</B>
+
+<DT><B>.setenv , unsetenv</B>
+
+
+
+
+<DD>
+<B>setenv , unsetenv</B>
+
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 12n です。
+<A NAME="lbBJ">&nbsp;</A>
+<H3>ライブラリ名</H3>
+
+`.Lb マクロは、関数がどのライブラリに組み込まれるかを指定します。
+
+'
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Lb </TT>Ao 引数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+`.Lb マクロに対して使用可能な引数と結果は次の通りです:
+
+'
+
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>libarm32</B>
+
+
+<DD>
+Lb libarm32
+
+<DT><B>libc</B>
+
+
+<DD>
+Lb libc
+
+<DT><B>libcompat</B>
+
+
+<DD>
+Lb libcompat
+
+<DT><B>libcrypt</B>
+
+
+<DD>
+Lb libcrypt
+
+<DT><B>libcurses</B>
+
+
+<DD>
+Lb libcurses
+
+<DT><B>libedit</B>
+
+
+<DD>
+Lb libedit
+
+<DT><B>libi386</B>
+
+
+<DD>
+Lb libi386
+
+<DT><B>libipsec</B>
+
+
+<DD>
+Lb libipsec
+
+<DT><B>libkvm</B>
+
+
+<DD>
+Lb libkvm
+
+<DT><B>libm</B>
+
+
+<DD>
+Lb libm
+
+<DT><B>libmenu</B>
+
+
+<DD>
+Lb libmenu
+
+<DT><B>libossaudio</B>
+
+
+<DD>
+Lb libossaudio
+
+<DT><B>libposix</B>
+
+
+<DD>
+Lb libposix
+
+<DT><B>libresolv</B>
+
+
+<DD>
+Lb libresolv
+
+<DT><B>libtermcap</B>
+
+
+<DD>
+Lb libtermcap
+
+<DT><B>libutil</B>
+
+
+<DD>
+Lb libutil
+
+<DT><B>libz</B>
+
+
+<DD>
+Lb libz
+
+</DL>
+<P>
+
+<P>
+
+ローカルな追加項目や OS 特有の追加項目が、ファイル
+mdoc.local
+
+にあるかもしれません。
+`str-Lb-XXX'
+
+という名前の文字列を検索してください。ここで
+`XXX'
+
+は
+`.Lb マクロとともに使用されるキーワードを示しています。
+
+'
+
+<A NAME="lbBK">&nbsp;</A>
+<H3>リテラル</H3>
+
+リテラルマクロ
+`.<B>は特殊文字や変数定数、その他タイプされた通りに表示する必要があるものに</B>
+
+'
+
+使用することができます。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><B>Ao </B>引数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.\en</B>
+
+
+
+
+<DD>
+<B>\n</B>
+
+<DT><B>.M1 M2 M3 ;</B>
+
+
+
+
+<DD>
+<B>M1 M2 M3</B>
+
+ 
+<DT><B>.cntrl-D ) ,</B>
+
+
+
+
+<DD>
+<B>cntrl-D )</B>
+
+ 
+<DT><B>.1024 ...</B>
+
+
+
+
+<DD>
+<B>1024 ...</B>
+
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 16n です。
+<A NAME="lbBL">&nbsp;</A>
+<H3>名称</H3>
+
+`.<B></B>
+
+'
+
+マクロは文書のタイトルやサブジェクト名を指定するために使われます。
+このマクロは呼び出された時の第 1 引数を覚えておくという
+変わった特性を持っており、
+それは常にそのページのサブジェクト名であるべきです。
+引数なしで呼び出されると
+`.<B></B>
+
+'
+
+は作者のために最低限の仕事をするという意味で、
+この初期化された名称を出力します。
+注:
+セクション 2 または 3 のドキュメントの関数名は
+Sx NAME
+
+セクションにおいて
+`.<B></B>
+
+'
+
+で指定され、
+Sx SYNOPSIS
+
+セクションや残りのセクションでは
+`.Fn で指定されます。
+
+'
+
+csh(1)
+
+
+での
+`while'
+
+コマンドのキーワードのような対話的なコマンドでは
+`.<B>マクロを使う必要があります。</B>
+
+'
+
+`.<B>はほとんど</B>
+
+'
+
+`.<B></B>
+
+'
+
+と同一ですが、
+それが使われたときの第 1 引数を記憶することはできません。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><B></B>[Ao 引数 Ac ...]
+
+
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.groff_mdoc</B>
+
+
+
+
+<DD>
+<B>groff_mdoc</B>
+
+<DT><B>.\-mdoc</B>
+
+
+
+
+<DD>
+<B>-mdoc</B>
+
+<DT><B>.foo ) ) ,</B>
+
+
+
+
+<DD>
+<B>foo ) )</B>
+
+ 
+<DT><B>.:</B>
+
+
+
+
+<DD>
+<B>:</B>
+
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 10n です。
+<A NAME="lbBM">&nbsp;</A>
+<H3>オプション</H3>
+
+`.[マクロはコマンド行の残りのすべての引数を]
+
+'
+
+オプションであることを示す角括弧で囲み、
+末尾の句読点は角括弧の外に置きます。
+`.[マクロと
+'
+
+`.]
+'
+
+マクロ
+(それぞれ開き角括弧と閉じ角括弧を生成します) は
+複数行に渡って使うことができ、また閉じ括弧の正確な位置を
+指定するのに使うことができます。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT>[[Ao オプション Ac ...]
+
+
+
+
+
+]
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.</B>[[<DT><B>.</B>[-<B>k</B>
+
+]
+
+
+
+
+<DD>
+]
+
+]
+
+
+
+
+<DD>
+[-<B>k</B>
+
+]
+
+<DT><B>.</B>[-<B>k ) .</B>
+
+]
+
+
+
+
+<DD>
+[-<B>k</B>
+
+ ]
+
+ 
+<DT><B>.</B>[-<B>k </B><I>kookfile</I>
+
+
+
+]
+
+
+
+
+<DD>
+[-<B>k </B><I>kookfile</I>
+
+
+
+]
+
+<DT><B>.</B>[-<B>k </B><I>kookfile ,</I>
+
+
+
+]
+
+
+
+
+<DD>
+[-<B>k </B><I>kookfile</I>
+
+
+
+]
+
+ 
+<DT><B>.</B>[<I>objfil </I>[<I>corfil</I>
+
+]
+
+
+
+]
+
+
+
+
+<DD>
+[<I>objfil </I>[<I>corfil</I>
+
+]
+
+
+
+]
+
+<DT><B>.</B>[-<B>c </B><I>objfil </I>[<I>corfil ,</I>
+
+]
+
+
+
+
+
+]
+
+
+
+
+<DD>
+[-<B>c </B><I>objfil </I>[<I>corfil</I>
+
+]
+
+
+
+
+
+]
+
+ 
+<DT><B>.</B>[word1 word2]
+
+
+
+
+<DD>
+[word1 word2]
+
+<DT><B>..</B>[[Ao option Ac ...]
+
+
+
+
+
+]
+
+
+
+
+
+
+<DD>
+<B>.</B>[[Ao options Ac ...]
+
+
+
+
+
+]
+
+
+
+</DL>
+<P>
+
+<P>
+
+これは、
+`.[マクロと
+'
+
+`.]
+'
+
+マクロを使った典型的な例です:
+
+<BLOCKQUOTE>
+<PRE>
+.Oo
+.Op Fl k Ar kilobytes
+.Op Fl i Ar interval
+.Op Fl c Ar count
+.Oc
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+出力結果:
+
+<BLOCKQUOTE>
+
+[[-<B>k </B><I>kilobytes</I>
+
+
+
+]
+
+
+[-<B>i </B><I>interval</I>
+
+
+
+]
+
+[-<B>c </B><I>count</I>
+
+
+
+]
+
+]
+</BLOCKQUOTE>
+
+<P>
+
+`.[マクロおよび]
+
+'
+
+`.[マクロのデフォルト幅はそれぞれ
+'
+
+14n と 10n です。
+<A NAME="lbBN">&nbsp;</A>
+<H3>パス名</H3>
+
+`.マクロはパス名もしくはファイル名を整形します。
+
+'
+
+引数なしで呼ばれた場合、
+`文字列が出力となり、これは現在のユーザのホームディレクトリを
+
+'
+
+表しています。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT>[Ao パス名 Ac ...]
+
+
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.<DT>./usr/share
+
+</B>
+
+
+<DD>
+
+
+
+
+
+
+
+<DD>
+/usr/share
+
+<DT><B>./tmp/fooXXXXX ) .
+
+</B>
+
+
+<DD>
+/tmp/fooXXXXX )
+
+ 
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 32n です。
+<A NAME="lbBO">&nbsp;</A>
+<H3>規格</H3>
+
+`.St マクロは、規格の短縮名称を正式名称に置換します。
+
+'
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .St </TT>Ao 短縮名称 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+使用可能な
+``短縮名称/正式名称''
+
+の組は次の通りです:
+<P>
+
+<B>ANSI/ISO C</B>
+
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>-ansiC</B>
+
+
+<DD>
+St -ansiC
+
+<DT><B>-ansiC-89</B>
+
+
+<DD>
+St -ansiC-89
+
+<DT><B>-isoC</B>
+
+
+<DD>
+St -isoC
+
+<DT><B>-isoC-99</B>
+
+
+<DD>
+St -isoC-99
+
+</DL>
+<P>
+
+<P>
+
+<B>POSIX</B>
+
+パート 1: System API
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>-iso9945-1-90</B>
+
+
+<DD>
+St -iso9945-1-90
+
+<DT><B>-iso9945-1-96</B>
+
+
+<DD>
+St -iso9945-1-96
+
+<DT><B>-p1003.1</B>
+
+
+<DD>
+St -p1003.1
+
+<DT><B>-p1003.1-88</B>
+
+
+<DD>
+St -p1003.1-88
+
+<DT><B>-p1003.1-90</B>
+
+
+<DD>
+St -p1003.1-90
+
+<DT><B>-p1003.1-96</B>
+
+
+<DD>
+St -p1003.1-96
+
+<DT><B>-p1003.1b-93</B>
+
+
+<DD>
+St -p1003.1b-93
+
+<DT><B>-p1003.1c-95</B>
+
+
+<DD>
+St -p1003.1c-95
+
+<DT><B>-p1003.1g-2000</B>
+
+
+<DD>
+St -p1003.1g-2000
+
+<DT><B>-p1003.1i-95</B>
+
+
+<DD>
+St -p1003.1i-95
+
+</DL>
+<P>
+
+<P>
+
+<B>POSIX</B>
+
+パート 2: シェルとユーティリティ
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>-iso9945-2-93</B>
+
+
+<DD>
+St -iso9945-2-93
+
+<DT><B>-p1003.2</B>
+
+
+<DD>
+St -p1003.2
+
+<DT><B>-p1003.2-92</B>
+
+
+<DD>
+St -p1003.2-92
+
+<DT><B>-p1003.2a-92</B>
+
+
+<DD>
+St -p1003.2a-92
+
+</DL>
+<P>
+
+<P>
+
+X/Open
+<DL COMPACT>
+<P>
+
+<P>
+
+<DT><B>-susv2</B>
+
+
+<DD>
+St -susv2
+
+<DT><B>-svid4</B>
+
+
+<DD>
+St -svid4
+
+<DT><B>-xbd5</B>
+
+
+<DD>
+St -xbd5
+
+<DT><B>-xcu5</B>
+
+
+<DD>
+St -xcu5
+
+<DT><B>-xcurses4.2</B>
+
+
+<DD>
+St -xcurses4.2
+
+<DT><B>-xns5</B>
+
+
+<DD>
+St -xns5
+
+<DT><B>-xns5.2</B>
+
+
+<DD>
+St -xns5.2
+
+<DT><B>-xpg3</B>
+
+
+<DD>
+St -xpg3
+
+<DT><B>-xpg4</B>
+
+
+<DD>
+St -xpg4
+
+<DT><B>-xpg4.2</B>
+
+
+<DD>
+St -xpg4.2
+
+<DT><B>-xsh5</B>
+
+
+<DD>
+St -xsh5
+
+</DL>
+<P>
+
+<P>
+
+その他
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>-ieee754</B>
+
+
+<DD>
+St -ieee754
+
+<DT><B>-iso8802-3</B>
+
+
+<DD>
+St -iso8802-3
+
+</DL>
+<P>
+
+<A NAME="lbBP">&nbsp;</A>
+<H3>変数の型</H3>
+
+`.Vt マクロは型を参照するときにはいつでも使用することができます。
+
+'
+
+Sx SYNOPSIS
+
+セクションでは改行が挿入されます
+(古いスタイルの変数宣言では便利です)。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Vt </TT>Ao 型 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Vt </B>extern char *optarg ;
+
+
+
+
+<DD>
+Vt extern char *optarg ;
+
+<DT><B>.Vt </B>FILE *
+
+
+
+
+<DD>
+Vt FILE *
+
+</DL>
+<P>
+
+<A NAME="lbBQ">&nbsp;</A>
+<H3>変数</H3>
+
+一般的な変数への参照です。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><I>Ao </I>変数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.</B><I>count</I>
+
+
+
+
+<DD>
+<I>count</I>
+
+<DT><B>.</B><I>settimer ,</I>
+
+
+
+
+<DD>
+<I>settimer</I>
+
+ 
+<DT><B>.</B><I>&quot;int *prt&quot; ) :</I>
+
+
+
+
+<DD>
+<I>int *prt )</I>
+
+ 
+<DT><B>.</B><I>&quot;char s&quot; ] ) ) ,</I>
+
+
+
+
+<DD>
+<I>char s ] ) )</I>
+
+ 
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 12n です。
+<A NAME="lbBR">&nbsp;</A>
+<H3>マニュアルページのクロスリファレンス</H3>
+
+`.マクロは最初の引数にマニュアルページの名称をとります。
+
+'
+
+オプションである第 2 引数は、文字列
+(マニュアルセクションを定義します) であれば
+括弧で囲われます。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Aoマニュアルページの名称AcOoAoセクションAcOc...
+
+</TT></BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.mdoc
+
+</B>
+
+
+<DD>
+mdoc
+
+
+<DT><B>.mdoc,
+
+</B>
+
+
+<DD>
+mdoc,
+
+
+<DT><B>.mdoc(7)
+
+</B>
+
+
+<DD>
+mdoc(7)
+
+
+<DT><B>.xinit(1x);
+
+</B>
+
+
+<DD>
+xinit(1x);
+
+
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 10n です。
+<A NAME="lbBS">&nbsp;</A>
+<H2>一般テキスト領域</H2>
+
+<A NAME="lbBT">&nbsp;</A>
+<H3>AT&amp;T マクロ</H3>
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .AT&amp;T System
+</TT>[Ao バージョン Ac ...]
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.AT&amp;T System
+</B>
+
+
+<DD>
+AT&amp;T System
+
+<DT><B>.AT&amp;T System
+v6 .</B>
+
+
+<DD>
+AT&amp;T System
+v6 .
+</DL>
+<P>
+
+<P>
+
+Ao バージョン Ac
+
+には次の値をとることができます:
+<P>
+
+
+<BLOCKQUOTE><TT>32v, v1, v2, v3, v4, v5, v6, v7, V, V.1, V.2, V.3, V.4</TT></BLOCKQUOTE>
+<A NAME="lbBU">&nbsp;</A>
+<H3>BSD マクロ</H3>
+
+<P>
+
+
+<BLOCKQUOTE><TT>&quot;使い方: .Bx&quot; Bro -alpha | -beta | -devel Brc ...</TT></BLOCKQUOTE>
+
+<BLOCKQUOTE><TT>&quot;       .Bx&quot; </TT>[Ao バージョン Ac [Ao リリース Ac ...]
+]
+
+
+
+
+
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.BSD BSD <DT>.BSD 4.3 .
+</B>
+
+
+<DD>
+
+
+
+
+
+<DD>
+BSD 4.3
+ 
+<DT><B>.BSD -devel
+</B>
+
+
+<DD>
+BSD -devel
+</DL>
+<P>
+
+<P>
+
+Ao バージョン Ac
+
+が文字列
+`BSD の前につきます。
+'
+
+Ao リリース Ac
+
+には次の値をとることができます:
+<P>
+
+
+<BLOCKQUOTE><TT>Reno, reno, Tahoe, tahoe, Lite, lite, Lite2, lite2</TT></BLOCKQUOTE>
+<A NAME="lbBV">&nbsp;</A>
+<H3>NetBSD マクロ</H3>
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Nx </TT>[Ao バージョン Ac ...]
+
+
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Nx </B>Nx <DT><B>.Nx </B>1.4 .
+
+
+
+
+<DD>
+
+
+
+
+
+
+
+<DD>
+Nx 1.4 .
+
+</DL>
+<P>
+
+<P>
+
+Ao バージョン Ac
+
+にとり得る値については前述の
+Sx タイトルマクロ
+
+セクションの
+`.リクエストの説明を参照してください。
+
+'
+
+<A NAME="lbBW">&nbsp;</A>
+<H3>FreeBSD マクロ</H3>
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Fx </TT>[Ao バージョン Ac ...]
+
+
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Fx </B>Fx <DT><B>.Fx </B>2.2 .
+
+
+
+
+<DD>
+
+
+
+
+
+
+
+<DD>
+Fx 2.2 .
+
+</DL>
+<P>
+
+<P>
+
+Ao バージョン Ac
+
+にとり得る値については前述の
+Sx タイトルマクロ
+
+セクションの
+`.リクエストの説明を参照してください。
+
+'
+
+<A NAME="lbBX">&nbsp;</A>
+<H3>OpenBSD マクロ</H3>
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Ox </TT>[Ao バージョン Ac ...]
+
+
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Ox </B>1.0
+
+
+
+
+<DD>
+Ox 1.0
+
+</DL>
+<P>
+
+<A NAME="lbBY">&nbsp;</A>
+<H3>BSD/OS マクロ</H3>
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Bsx </TT>[Ao バージョン Ac ...]
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Bsx 1.0</B>
+
+
+<DD>
+Bs x 1.0
+
+</DL>
+<P>
+
+<A NAME="lbBZ">&nbsp;</A>
+<H3>UNIX マクロ</H3>
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .UNIX
+</TT></BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.UNIX
+</B>
+
+
+<DD>
+UNIX
+</DL>
+<P>
+
+<A NAME="lbCA">&nbsp;</A>
+<H3>強調マクロ</H3>
+
+テキストは
+`.<I>マクロを用いて強調することができます。</I>
+
+'
+
+通常強調に用いられるフォントはイタリック体です。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><I>Ao </I>引数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.</B><I>does not</I>
+
+
+
+
+<DD>
+<I>does not</I>
+
+<DT><B>.</B><I>exceed 1024 .</I>
+
+
+
+
+<DD>
+<I>exceed 1024</I>
+
+ 
+<DT><B>.</B><I>vide infra ) ) ,</I>
+
+
+
+
+<DD>
+<I>vide infra ) )</I>
+
+ 
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 10n です。
+<A NAME="lbCB">&nbsp;</A>
+<H3>フォントモード</H3>
+
+`.Bf フォントモードは
+
+'
+
+`.Ef マクロで終了しなくてはなりません
+
+'
+
+(後者のマクロは引数をとりません)。
+フォントモードは別のフォントモード内に入れ子にできます。
+<P>
+
+`.Bf は次の文法をもっています:
+
+'
+
+<P>
+
+
+<BLOCKQUOTE><TT>.Bf </TT>Ao フォントモード Ac <P>
+
+
+
+
+
+
+
+</BLOCKQUOTE>
+Ao フォントモード Ac
+
+は次の 3 種類のうちのいずれかでなくてはなりません。
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B></B><I>| -</I><B>emphasis</B>
+
+
+
+
+
+
+<DD>
+`.<I>マクロがテキストのブロック全体に対して使用された場合と</I>
+
+'
+
+同じになります。
+<DT><B>| -literal</B>
+
+
+
+
+
+
+<DD>
+`.<B>マクロがテキストのブロック全体に対して使用された場合と</B>
+
+'
+
+同じになります。
+<DT><B>| -symbolic</B>
+
+
+
+
+
+
+<DD>
+`.<B>マクロがテキストのブロック全体に対して使用された場合と</B>
+
+'
+
+同じになります。
+</DL>
+<P>
+
+<P>
+
+いずれのマクロも呼び出し不可能であり、構文解析もされません。
+<A NAME="lbCC">&nbsp;</A>
+<H3>囲い/クォートマクロ</H3>
+
+囲いの概念はクォートと似たものです。
+1 つ以上の文字列が引用符や括弧のような文字のペアで囲まれている
+オブジェクトを指します。
+クォートと囲いという用語はこの文書を通して同じ意味で使われます。
+ほとんどの 1 行の囲いマクロはクォートであることをほのめかすために、
+小文字の
+`q'
+
+で終了しますが、例外もいくつかあります。
+各々の囲いマクロに対し、開始マクロと終了マクロのペアもあり、
+それぞれ小文字の
+`o'
+
+と
+`c'
+
+で終了します。
+<P>
+
+# XXX
+
+
+
+<DL COMPACT>
+<P>
+
+<I>クォート Ta </I><I>開始 Ta </I><I>終了 Ta </I><I>機能                 Ta </I><I>結果</I>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>.Aq </B>Ta .Ao Ta .Ac Ta 山括弧による囲い        Ta Ao string Ac <B>.Bq </B>Ta .Bo Ta .Bc Ta 角括弧による囲い        Ta Bo string Bc <B>.Brq  Ta </B>.Bro Ta .Brc  Ta 中括弧による囲い        Ta Bro string Brc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>.``Ta </B>.Do Ta .Dc Ta 2 重引用符              Ta Do string Dc <B>.Eq </B>Ta .Eo Ta .Ec Ta 囲い文字列 (XX による)  Ta XXstringXX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+''
+
+
+
+<B>.(Ta </B>.Po Ta .Pc Ta 括弧による囲い          Ta Po string Pc <B>.`Ta </B>Ta Ta クォートされたリテラル
+
+
+
+
+
+'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+)
+
+
+
+<BR>&nbsp;Ta&nbsp;So&nbsp;string&nbsp;Sc&nbsp;もしくは&nbsp;Li&nbsp;string
+<B>.Qq </B>Ta .Qo Ta .Qc Ta まっすぐな 2 重引用符   Ta Qo string Qc <B>.`Ta </B>.So Ta .Sc Ta 1 重引用符              Ta So string Sc </DL>
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<P>
+
+`q'
+
+および
+`o'
+
+で終わるマクロはすべてデフォルト幅が 12n です。
+<DL COMPACT>
+<P>
+
+<DT><B>.Eo </B>, .Ec これらのマクロはそれぞれ第 1 引数に囲い始めに使う文字列と
+
+
+
+
+
+
+<DD>
+囲い終わりに使う文字列をとります。
+<DT><B>.Es </B>, .En オリジナルの troff プログラムでは、引数の数が 9 つまでという
+
+
+
+
+
+
+<DD>
+制限がありましたので、(Eo, Ec とは) 別の 2 つのマクロが
+実装されています。現在は非推奨になっています。
+`.Es は第
+
+'
+
+1 引数と第 2 引数に左囲い文字列および右囲い文字列を
+とります。この文字列は、
+`.En の引数を囲うのに使用されます。
+
+'
+
+デフォルト幅は、どちらのマクロも 12n です。
+<DT><B>.Eq </B>このマクロの第 1、第 2 引数はそれぞれ囲い始めに使う文字列と
+
+
+
+
+<DD>
+囲い終わりに使う文字列であり、この文字列の後に
+囲われる引数が続きます。
+<DT><B>.`クォートされたリテラルマクロは'
+
+</B>
+
+
+<DD>
+troff モードと nroff モードで
+違った挙動をします。
+nroff
+
+
+で整形された場合、
+クォートされたリテラルは常にクォートされます。
+troff で整形された場合、その要素の幅が固定幅文字 3 文字分の幅よりも
+小さいときのみクォートされます。
+これにより、リテラル (固定幅) フォントへフォントを変更すると
+目立たなくなってしまうような短い文字列がより見やすくなります。
+<P>
+
+デフォルト幅は 16n です。
+<DT><B>.プレフィックスマクロは第 1 引数と第 2 引数の間の
+
+</B>
+
+
+<DD>
+ホワイトスペースをなくします:
+<DL COMPACT>
+<P>
+
+<DT><B>.( Fa </B>name2
+
+
+
+
+
+
+<DD>
+( Fa name2
+
+
+
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 12n です。
+<P>
+
+`.<B>マクロ</B>
+
+'
+
+(後述参照) は同じようにサフィックスに働きます。
+<DT><B>.Ap </B>`.Ap マクロはアポストロフィを追加し、特別なテキストモードから
+
+'
+
+
+
+
+
+
+<DD>
+抜けます。そして
+`.<B>モードで続けます。</B>
+
+'
+
+</DL>
+<P>
+
+<P>
+
+クォートの例:
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Aq </B>Aq <DT><B>.Aq </B>ctype.h ) ,
+
+
+
+
+
+
+<DD>
+
+
+
+
+
+
+
+<DD>
+Aq Pa ctype.h ) ,
+
+<DT><B>.Bq </B>Bq <DT><B>.Bq </B><I>Greek , French .</I>
+
+
+
+
+
+
+<DD>
+
+
+
+
+
+
+
+<DD>
+Bq Em Greek , French .
+
+<DT><B>.````<DT>.``string abc .''
+
+</B>
+
+
+<DD>
+''
+
+''
+
+
+
+
+<DD>
+``string abc''
+
+ 
+<DT><B>.``'^[A-Z]'''
+
+</B>
+
+
+<DD>
+``'^[A-Z]'''
+
+<DT><B>.`man'
+
+</B>
+
+
+<DD>
+mdoc
+`man'
+
+mdoc
+<DT><B>.Qq </B>Qq <DT><B>.Qq </B>string ) ,
+
+
+
+
+<DD>
+
+
+
+
+
+
+
+<DD>
+Qq string ) ,
+
+<DT><B>.Qq </B>string <B>),</B>
+
+
+
+
+
+
+<DD>
+Qq string Ns ),
+
+<DT><B>.``<DT>.`string'
+
+</B>
+
+
+<DD>
+'
+
+'
+
+
+
+
+<DD>
+`string'
+
+<DT><B>.</B><I>or Ap </I>ing
+
+
+
+
+
+
+<DD>
+<I>or Ap </I>ing
+
+
+
+</DL>
+<P>
+
+<P>
+
+囲いマクロの入れ子についての良い例については、
+オプションマクロ
+`.[を参照してください。]
+
+'
+
+このマクロは上でリストされているような囲いマクロと同じベースの上に
+作られています。
+`.
+'
+
+と
+`.
+'
+
+拡張引数リストマクロについては後で述べます。
+<A NAME="lbCD">&nbsp;</A>
+<H3>無操作もしくは通常テキストマクロ</H3>
+
+`.<B>マクロは、マクロコマンド行において整形されては</B>
+
+'
+
+<I>ならない</I>
+
+パラメータ用に使用できます。
+この英単語 (マクロでなく) をパラメータとして
+本当に使いたい場合は、この単語
+`<B>に</B>
+
+'
+
+`\&amp;'
+
+を足すように注意してください。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><B>Ao </B>引数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.test Ta </B>with Ta tabs
+
+
+
+
+
+
+
+
+<DD>
+<B>test Ta </B>with Ta tabs
+
+
+
+
+
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 12n です。
+<A NAME="lbCE">&nbsp;</A>
+<H3>空白なしマクロ</H3>
+
+`.<B>マクロは、現在の位置とマクロの第</B>
+
+'
+
+1 パラメータとの間に
+空白を挿入するのを抑止します。
+例えば、フラグと引数の間に空白を含まない古いスタイルの
+引数リストを使う場合に便利です:
+<P>
+
+
+<BLOCKQUOTE><TT>&quot;使い方:&quot; ... Ao </TT>引数 Ac <B></B>[Ao 引数 Ac ...]
+
+
+
+
+
+
+
+
+
+
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE><TT>&quot;       &quot; .</TT><B>Ao </B>引数 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.</B>[-<B>I </B><I>directory</I>
+
+
+
+
+
+]
+
+
+
+
+<DD>
+[-<B>I </B><I>directory</I>
+
+
+
+
+
+]
+
+</DL>
+<P>
+
+<P>
+
+注:
+`.<B>マクロは他のマクロ名が続かなければ、スペースを除去したあとに</B>
+
+'
+
+`.<B>マクロを常に起動します。</B>
+
+'
+
+リクエストとして使用される場合 (つまり、
+`使い方'
+
+の行での 2 番目の形式です)、
+`.<B>マクロは</B>
+
+'
+
+`.<B>と同一です。</B>
+
+'
+
+<A NAME="lbCF">&nbsp;</A>
+<H3>セクションのクロスリファレンス</H3>
+
+`.Sx マクロは同一文書内でのセクションのヘッダへの参照を指定します。
+
+'
+
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Sx </TT>Ao セクションの参照 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Sx </B>FILES
+
+
+
+
+<DD>
+Sx FILES
+
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 16n です。
+<A NAME="lbCG">&nbsp;</A>
+<H3>記号</H3>
+
+記号体強調マクロは、記号の意味でも伝統的な英語の
+使い方においても通常はボールド体マクロとなっています。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><B>Ao </B>記号 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.Important Notice</B>
+
+
+
+
+<DD>
+<B>Important Notice</B>
+
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 6n です。
+<A NAME="lbCH">&nbsp;</A>
+<H3>数学記号</H3>
+
+数学記号やそれに似たものについては、このマクロを使用して
+ください。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><B>Ao </B>数学記号 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.sigma</B>
+
+
+
+
+<DD>
+<B>sigma</B>
+
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 6n です。
+<A NAME="lbCI">&nbsp;</A>
+<H3>参考文献と引用</H3>
+
+次のマクロは多少なりとも参考文献を扱えるようにと意図したものです。
+これらのマクロは、せいぜい
+<A HREF="../man1/refer.1.html">refer</A>(1)
+
+
+スタイルの参考文献のサブセットを手動で
+作成しやすくする程度です。
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.<DL COMPACT><DT><DD>
+</B>
+
+
+<DD>
+参考文献の開始 (引数はとりません)。
+Sx SEE ALSO
+
+セクションでは改行を挿入し、参考文献の終了マクロが
+読み込まれるまで参考文献の情報を収集します。
+
+Li .Re
+参考文献の終了 (引数はとりません)。
+参考文献が表示されます。
+
+Li .%A
+参考文献の作者名。1 回の呼び出しにつき、作者名をひとつ指定します。
+
+Li .%B
+書籍のタイトル。
+
+Li .%C
+市 / 場所 (まだ実装されていません)。
+
+Li .%D
+日付。
+
+Li .%I
+発行者/出版社名。
+
+Li .%J
+定期刊行物の名称。
+
+Li .%N
+発行番号。
+
+Li .%O
+追加情報。
+
+Li .%P
+ページ番号。
+
+Li .%Q
+組織内部、あるいは外部の著者。
+
+Li .%R
+報告書の名称。
+
+Li .%T
+記事のタイトル。
+
+Li .%V
+巻数。
+<P>
+
+<P>
+
+`%'
+
+で始まるマクロは呼び出し不可能ですが、
+通常の方法で複数の引数をとることができます。
+パラメータとしては
+`.<B>マクロのみ扱います。その他のマクロを使うと</B>
+
+'
+
+奇妙な出力が得られてしまいます。
+`.%B'
+
+および
+`.%T'
+
+を
+`.Rs/.</DL>
+</DL>
+
+'
+
+環境の外側では使用することができます。
+<P>
+
+使用例:
+
+<BLOCKQUOTE>
+<PRE>
+.Rs
+.%A &quot;Matthew Bar&quot;
+.%A &quot;John Foo&quot;
+.%T &quot;Implementation Notes on foobar(1)&quot;
+.%R &quot;Technical Report ABC-DE-12-345&quot;
+.%Q &quot;Drofnats College, Nowhere&quot;
+.%D &quot;April 1991&quot;
+.Re
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+出力結果
+
+<BLOCKQUOTE>
+
+<DL COMPACT><DT><DD>
+&quot;Matthew Bar&quot;
+&quot;John Foo&quot;
+<I>&quot;Implementation Notes on foobar(1)&quot;</I>
+<I>&quot;Technical Report ABC-DE-12-345&quot;</I>
+&quot;Drofnats College, Nowhere&quot;
+&quot;April 1991&quot;
+</DL>
+
+</BLOCKQUOTE>
+
+<A NAME="lbCJ">&nbsp;</A>
+<H3>商標名 (頭字語とタイプ名)</H3>
+
+商標名マクロは、引数をより小さなフォントで出力します。
+意図される使い方は、大文字の頭字語用に小さな大文字フォントを
+似せて作ることです。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .</TT><B>Ao </B>シンボル Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.DEC</B>
+
+
+
+
+<DD>
+<B>DEC</B>
+
+<DT><B>.ASCII</B>
+
+
+
+
+<DD>
+<B>ASCII</B>
+
+</DL>
+<P>
+
+<P>
+
+デフォルト幅は 10n です。
+<A NAME="lbCK">&nbsp;</A>
+<H3>拡張引数</H3>
+
+<B>.
+</B>
+
+と
+<B>.
+</B>
+
+マクロによって、
+`.
+'
+
+マクロ
+(後述) についてマクロ境界での引数リストを
+拡張することができます。
+<B>.
+</B>
+
+と
+<B>.
+</B>
+
+マクロは囲いを開いたり閉じたりする他のすべてのマクロに
+対して同じように実装されている (もちろん文字は挿入しません) 
+ということに注意してください。
+つまり、次の例もこれらのマクロには当てはまります。
+<P>
+
+次は、スペーシングをオフにするために
+空白モードマクロを使った
+`.
+'
+
+の使用例です。
+
+<BLOCKQUOTE>
+<PRE>
+.Sm off
+.It Xo Sy I Ar operation
+.No \en Ar count No \en
+.Xc
+.Sm on
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+これは以下のような結果になります。
+
+<BLOCKQUOTE>
+
+<DL COMPACT>
+<P>
+
+
+<DT><B>
+I </B><I>operation</I>
+
+
+
+
+
+<B>\n </B><I>count </I><B>\n</B>
+
+
+
+
+
+<DD>
+
+
+</DL>
+<P>
+
+</BLOCKQUOTE>
+
+<P>
+
+例をもうひとつ:
+
+<BLOCKQUOTE>
+<PRE>
+.Sm off
+.It Cm S No / Ar old_pattern Xo
+.No / Ar new_pattern
+.No / Op Cm g
+.Xc
+.Sm on
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+これは以下のような結果になります。
+
+<BLOCKQUOTE>
+
+<DL COMPACT>
+<P>
+
+
+<DT><B>S / </B><I>old_pattern 
+</I>
+
+
+
+
+
+
+
+<B>/ </B><I>new_pattern</I>
+
+
+
+<B>/ </B>[<B>g</B>
+
+]
+
+
+
+<DD>
+
+
+</DL>
+<P>
+
+</BLOCKQUOTE>
+
+<P>
+
+囲いマクロを使った
+`.
+'
+
+の他の例:
+変数の値をテストして下さい。
+
+<BLOCKQUOTE>
+<PRE>
+.It Xo
+.Ic .ifndef
+.Oo \&amp;! Oc Ns Ar variable Oo
+.Ar operator variable ...
+.Oc Xc
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+結果は以下の通りです。
+
+<BLOCKQUOTE>
+
+<DL COMPACT>
+<P>
+
+<DT><B>
+</B>
+
+<B>.ifndef</B>
+
+[! <B></B><I>variable </I>[<I>operator variable ...</I>
+
+
+
+
+
+
+]
+
+<DD>
+]
+</DL>
+<P>
+
+</BLOCKQUOTE>
+
+<P>
+
+<A NAME="lbCL">&nbsp;</A>
+<H2>ページ構造領域</H2>
+
+<A NAME="lbCM">&nbsp;</A>
+<H3>セクションヘッダ</H3>
+
+次の
+`.<A NAME="lbCN">&nbsp;</A>
+<H2>セクションヘッダマクロは、すべてのマニュアルページで必須のものです。</H2>
+
+'
+
+残りのセクションヘッダはマニュアルページの作者の裁量において、
+推奨されているものです。
+`.<A NAME="lbCO">&nbsp;</A>
+<H2>マクロは構文解析されますが、一般的には呼び出し不可能です。</H2>
+
+'
+
+`.<A NAME="lbCP">&nbsp;</A>
+<H2>を呼び出すときだけは、このマクロは引数として使用することができます。</H2>
+
+'
+
+この場合、
+`.<A NAME="lbCQ">&nbsp;</A>
+<H2>用のデフォルトフォントを再度有効にします。</H2>
+
+'
+
+<P>
+
+デフォルト幅は 8n です。
+<DL COMPACT>
+<P>
+
+<DT><B>.</DL>
+</DL>
+</B><A NAME="lbCR">&nbsp;</A>
+<H2>NAME</H2>
+
+
+
+
+<DD>
+`.<A NAME="lbCS">&nbsp;</A>
+<H2>NAME</H2>
+
+'
+
+マクロは必須です。
+これが指定されていないと、ヘッダとフッタ、それにデフォルトの
+ページレイアウトが設定されず、結果はかなり好ましくないものに
+なるでしょう。
+Sx NAME
+
+セクションは最低 3 つの項目からなります。
+最初のものは名称マクロ
+`.<B></B>
+
+'
+
+であり、マニュアルページのサブジェクトとなります。
+<DD>2 番目のものは名称説明マクロ
+`. - であり、サブジェクト名を
+
+'
+
+3 つめの項目、
+すなわちその名称の説明と分離します。
+説明に割り当てられるスペースは小さいものですので、
+できるだけ簡潔で分かりやすいものでなければなりません。
+<P>
+
+`. - は全ての引数の頭に
+
+'
+
+`-'
+
+,
+を印字します。
+
+Li &quot;.Sh LIBRARY&quot;
+このセクションは、セクション 2 および 3 の関数呼び出しの
+ためにあります。
+このセクションには、
+`.Lb マクロ呼び出し
+
+'
+
+1 つのみが含まれている必要があります。
+Sx ライブラリ名
+
+を参照してください。
+
+Li &quot;.Sh SYNOPSIS&quot;
+Sx SYNOPSIS
+
+セクションはそのマニュアルページのサブジェクトとなっている項目の
+典型的な使用法を説明します。
+`.<B></B>
+
+'
+
+ 
+`.<B>,</B>
+
+'
+
+あるいは
+`.Fn です
+
+'
+
+(他には
+`.Fo ,
+
+'
+
+`.Fc ,
+
+'
+
+`.Fd ,
+
+'
+
+`.Ft のマクロも必要な場合があります)。
+
+'
+
+関数名マクロ
+`.Fn はセクション
+
+'
+
+2 と 3 のマニュアルページにおいて必須のもので、
+コマンドと一般名称マクロ
+`.<B></B>
+
+'
+
+はセクション
+1, 5, 6, 7, 8 で必須の項目です。
+セクション 4 のマニュアルでは
+`.<B></B>
+
+'
+
+か
+`.Fd 、もしくは設定デバイス使用法マクロ
+
+'
+
+`.<B>が必要です。</B>
+
+'
+
+その他のいくつかのマクロが次に示すような書式行を生成するために
+必要なことがあります:
+
+<BLOCKQUOTE>
+
+<B>cat</B>
+
+[-<B>benstuv</B>
+
+]
+
+[-
+
+]
+
+<I>file ...</I>
+
+
+</BLOCKQUOTE>
+
+<P>
+
+次のマクロが使われています:
+<P>
+
+
+<BLOCKQUOTE><TT>&quot;.</TT><B>cat</B>
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE><TT>&quot;.</TT>[-<B>benstuv</B>
+
+]
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE><TT>&quot;.</TT>[Fl]
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE><TT>.</TT><I>file ...</I>
+
+</BLOCKQUOTE>
+
+Li &quot;.Sh DESCRIPTION&quot;
+ほとんどの場合、
+Sx DESCRIPTION
+
+セクションでの最初のテキストはそのコマンド、関数もしくは
+ファイルについての短い段落で、オプションの構文リストと
+それぞれの説明がそれに続きます。
+そのようなリストを作成するには
+`.<DL COMPACT>
+<P>
+
+'
+
+(リスト開始マクロ)、
+`.<DT><B>(リスト項目マクロ)、</B>
+<DD>
+'
+
+`.</DL>
+<P>
+
+'
+
+(リスト終了マクロ)
+を使用します (後述の
+Sx リストとカラム
+
+セクションを参照)。
+
+Li &quot;.Sh IMPLEMENTATION NOTES&quot;
+特定の実装に関する情報はここに置く必要があります。
+
+Li &quot;.Sh RETURN VALUES&quot;
+セクション 2, 3, 9 の関数の戻り値はここに来る必要があります。
+`.Rv を使用して、セクション
+
+'
+
+2 および 3 のライブラリ関数の
+Sx RETURN VALUES
+
+セクションを生成することができます。
+Sx 戻り値 
+
+の項を参照してください。
+<P>
+
+<P>
+
+次の
+`.<A NAME="lbCT">&nbsp;</A>
+<H2>セクションヘッダはマニュアルページの好ましいレイアウトの一部であり、</H2>
+
+'
+
+一貫性を保つために適切に使われなければなりません。
+これらは使われる順番にリストされています。
+<DL COMPACT>
+<P>
+
+<DT><B>.</DL>
+</DL>
+</B><A NAME="lbCU">&nbsp;</A>
+<H2>ENVIRONMENT</H2>
+
+
+
+
+<DD>
+Sx ENVIRONMENT
+
+セクションでは関連する環境変数および
+それらの振るまいや使用方法に関する手がかりを明らかにする
+必要があります。
+
+Li &quot;.Sh FILES&quot;
+マニュアルページのサブジェクトによって使用されるか生成されるファイルで、
+Sx FILES
+
+セクション中でマクロ
+`.によってリストする必要があります。
+
+'
+
+
+Li &quot;.Sh EXAMPLES&quot;
+使用例を生成するにはいくつか方法があります。
+詳細は後述の
+Sx 使用例
+
+セクションを参照してください。
+
+Li &quot;.Sh DIAGNOSTICS&quot;
+コマンドからの診断メッセージはこのセクションに置く必要があります。
+
+Li &quot;.Sh COMPATIBILITY&quot;
+知られている互換性の問題 (例えば、非推奨になったオプションや
+パラメータ) をここにリストする必要があります。
+
+Li &quot;.Sh ERRORS&quot;
+特定のエラーハンドリング、特にライブラリ関数
+(マニュアルページのセクション 2, 3, 9) でのエラーハンドリングは
+ここで説明する必要があります。
+`.Er マクロはエラー
+
+'
+
+(errno) を指定するのに使用されます。
+
+Li &quot;.Sh SEE ALSO&quot;
+Sx SEE ALSO
+
+セクションには、そのマニュアルページの題材に関する資料への参照と
+他の関連するマニュアルページへのクロスリファレンスが記載されます。
+クロスリファレンスは
+`.マクロによって指定されます。
+
+'
+
+現在、
+<A HREF="../man1/refer.1.html">refer</A>(1)
+
+
+スタイルのリファレンスには適合していません。
+<P>
+
+クロスリファレンスはセクション番号順、同一セクションにあるものは
+アルファベット順に並べ、カンマで区切ることを推奨します。
+以下に例を示します:
+<P>
+
+<A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A>(1),
+
+
+<A HREF="../../procps/man1/ps.1.html">ps</A>(1),
+
+
+<A HREF="../../LDP_man-pages/man5/group.5.html">group</A>(5),
+
+
+<A HREF="../../0MultiFileIdx/man5/passwd.5.html">passwd</A>(5)
+
+
+
+Li &quot;.Sh STANDARDS&quot;
+コマンドやライブラリ関数やファイルが、
+St -p1003.2
+
+や
+St -ansiC
+
+のような特定の実装によるものであれば、ここで記述します。
+もしコマンドがどの規格にも基づいていなければ、その歴史は
+Sx HISTORY
+
+のセクションで説明されなければなりません。
+
+Li &quot;.Sh HISTORY&quot;
+特定の規格に基づいていないコマンドは、
+このセクションでその歴史の概要を説明する必要があります。
+
+Li &quot;.Sh AUTHORS&quot;
+クレジットはここに置く必要があります。
+人物名を指定するには
+`.An マクロを使用する必要があります。
+
+'
+
+
+Li &quot;.Sh BUGS&quot;
+あきらかな問題はここで記述します。
+<P>
+
+<P>
+
+ユーザ指定の
+`.<A NAME="lbCV">&nbsp;</A>
+<H2>セクションを追加することができます。</H2>
+
+'
+
+例えば、このセクションは以下のように設定されています。
+
+<PRE>
+.Sh &quot;ページ構造領域&quot;
+</PRE>
+
+<A NAME="lbCW">&nbsp;</A>
+<H3>サブセクションヘッダ</H3>
+
+サブセクションヘッダはセクションヘッダとまったく同じ文法を
+しています。
+`.<A NAME="lbCX">&nbsp;</A>
+<H3>は構文解析されますが、一般的に呼び出し不可能です。</H3>
+
+'
+
+このマクロは、
+`.<A NAME="lbCY">&nbsp;</A>
+<H3>の呼び出し時にのみ引数として使用できます。このとき、</H3>
+
+'
+
+`.<A NAME="lbCZ">&nbsp;</A>
+<H3>のデフォルトフォントが再度有効になります。</H3>
+
+'
+
+<P>
+
+デフォルト幅は 8n です。
+<A NAME="lbDA">&nbsp;</A>
+<H3>段落と行スペース</H3>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.<P>
+
+</B>
+
+
+<DD>
+`.<P>
+
+'
+
+段落コマンドは必要な場合に行スペースを指定するために使われます。
+このマクロは
+`.</DL>
+</DL>
+<A NAME="lbDB">&nbsp;</A>
+<H2>マクロや</H2>
+
+'
+
+`.<A NAME="lbDC">&nbsp;</A>
+<H3>マクロの後、ならびに</H3>
+
+'
+
+`.<DL COMPACT>
+<P>
+
+'
+
+マクロや
+`.
+
+'
+
+マクロの前では必要ありません
+(いずれのマクロも
+-<B>compact</B>
+
+フラグが指定されていなければ垂直方向の距離を宣言します)。
+<P>
+
+このマクロは呼び出し不可能であり、構文解析もされません。そして
+引数をとりません。別名は
+`.Lp です。
+
+'
+
+</DL>
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbDD">&nbsp;</A>
+<H3>キープ</H3>
+
+現在実装されているキープは単語に対するものだけです。
+マクロは
+`.(キープ開始)
+
+'
+
+と
+`.(キープ終了)
+
+'
+
+です。
+現在
+`.が受け付けるオプションは
+
+'
+
+-<B>words</B>
+
+のみで (オプションを何も与えていなければこれがデフォルトでもあります)
+オプションの途中で改行が入らないようにするのに便利です。
+make コマンド行の引数を生成する例 (
+Sx この名前には何が
+
+の項を参照) において、キープは
+nroff
+
+
+がフラグと引数を別の行に分けないように使われています。
+<P>
+
+いずれのマクロも呼び出し不可能であり、構文解析もされません。
+<P>
+
+キープマクロについてはもっと作業をする必要があります。
+特に
+-<B>line</B>
+
+オプションは追加する必要があるでしょう。
+<A NAME="lbDE">&nbsp;</A>
+<H3>例示とディスプレイ</H3>
+
+ディスプレイには 7 つのタイプがあります。
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.D1</B>
+
+
+<DD>
+(D-いちです)
+インデントされたテキストを 1 行表示します。
+このマクロは構文解析されますが、呼び出し不可能です。
+<P>
+
+
+<P>
+
+これは次の指定で生成されたものです:
+<B>.D1 -ldghfstru</B>
+
+
+
+<DT><B>.
+<BLOCKQUOTE></B><TT>(D-エルです)</TT></BLOCKQUOTE>
+
+
+
+<DD>
+インデントされた
+<I>リテラル</I>
+
+テキストを 1 行表示します。
+`.
+<BLOCKQUOTE><TT>マクロの例は本ファイル中にわたって使われています。</TT></BLOCKQUOTE>
+'
+
+これによって 1 行のテキストのインデント (表示) が可能になります。
+デフォルトフォントは固定幅 (リテラル) に設定されます。
+`.
+<BLOCKQUOTE><TT>は構文解析されますが、呼び出し不可能です。</TT></BLOCKQUOTE>
+'
+
+<P>
+
+
+<BLOCKQUOTE><TT>% ls -ldg /usr/local/bin</TT></BLOCKQUOTE>
+<P>
+
+これは、次の指定で生成されたものです:
+<B>.
+<BLOCKQUOTE></B><TT>% ls -ldg /usr/local/bin</TT></BLOCKQUOTE>
+
+
+<DT><B>.
+
+</B>
+
+
+<DD>
+ディスプレイ開始。
+`.
+
+'
+
+ディスプレイは
+`.
+'
+
+マクロで終了しなければなりません。
+これは、次の書式をとります:
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.
+
+</B>
+
+
+<DD>
+Br o -literal | -filled | -unfilled | -ragged | -centered Brc
+
+[-offset Ao 文字列 Ac [-file Ao ファイル名 Ac [-compact 
+]
+
+]
+
+
+
+
+
+]
+
+
+
+
+
+</DL>
+<P>
+
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>-ragged</B>
+
+
+<DD>
+行詰めされますが、右マージンは調整しません (左マージンのみです)。
+<DT><B>-centered</B>
+
+
+<DD>
+現在の左マージンと右マージン間の中央線です。
+線それぞれが中央揃えになるということに注意してください。
+<DT><B>-unfilled</B>
+
+
+<DD>
+行詰めしません。テキストのブロックを入力されたままの状態で
+表示します。改行もユーザが指定した通りに使われます。
+このため、何の警告メッセージも出さずに長過ぎる行を
+生成する可能性があります。
+<DT><B>-filled</B>
+
+
+<DD>
+行詰めされたブロックを表示します。
+テキストブロックが整形されます (つまり、
+テキストは左右どちら側にも揃えられます)。
+<DT><B>-literal</B>
+
+
+<DD>
+リテラルフォント (通常固定幅) でブロックを表示します。
+ソースコードや、単純にタブもしくは空白で整えられた
+テキストには便利です。
+<DT><B>-file Ao </B><I>ファイル名 Ac </I>-<B>file</B>
+
+
+
+
+
+
+
+
+
+
+<DD>
+フラグに続いた名前を持ったファイルが読み込まれ、
+指定されたディスプレイタイプで
+`.
+
+'
+
+と
+`.
+'
+
+マクロで囲まれたデータよりも前に表示されます。
+ファイル中の
+troff/NsNm-mdoc
+
+
+コマンドはどんなものでも処理されます。
+<DT><B>-offset Ao </B><I>文字列 Ac </I>-<B>offset</B>
+
+
+
+
+
+
+
+
+
+
+<DD>
+が以下の文字列のいずれかとともに指定されていると、
+その文字列は次のテキストのブロックのインデントのレベルを示すものとして
+解釈されます。
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B></B><I>left</I>
+
+
+<DD>
+ブロックを現在の左マージンに揃えます。
+これは
+`.
+
+'
+
+のデフォルトのモードです。
+<DT><B></B><I>center</I>
+
+
+<DD>
+ブロックを中央揃えにします。
+残念ながら現時点では、
+単にブロックの左側を仮想的な中央マージンに揃えるだけです。
+<DT><B></B><I>indent</I>
+
+
+<DD>
+デフォルトのインデント値もしくはタブの分だけインデントします。
+デフォルトのインデント値は
+`.D1'
+
+および
+`.
+<BLOCKQUOTE><TT>マクロでも使われていますので、この</TT></BLOCKQUOTE>
+'
+
+2 つのディスプレイと
+行が揃うことが保証されています。
+インデント値は通常 6n つまり約 2/3 インチ (固定幅文字 6 つ分) です。
+<DT><B></B><I>indent-two</I>
+
+
+<DD>
+デフォルトのインデント値の 2 倍分インデントします。
+<DT><B></B><I>right</I>
+
+
+<DD>
+これはブロックをページの右端から約 2 インチ離して
+<I>左</I>
+
+揃えします。
+このマクロはちゃんと動作する必要があるのですが、
+troff
+
+
+ではまったくちゃんと動作してくれていません。
+</DL>
+<P>
+
+<P>
+
+Ao 文字列 Ac
+
+がそれ以外で正しい数値表現をしている場合
+( `<I>u </I>
+
+'
+
+
+
+<I>以外のスケール指示子を伴う)、</I>
+
+インデント用にその値を使用します。
+スケール指示子のなかで最も役に立つものは
+`m'
+
+および
+`n'
+
+です。これらはいわゆる
+<I>と</I>
+
+
+
+<I>En </I>square
+
+
+
+を指定します。
+これは、現在のフォントでの文字
+`m'
+
+および文字
+`n'
+
+の幅とほぼ同じです ( nroff の出力については、
+どちらのスケール指示子でも同じ値が得られます )。
+Ao 文字列 Ac
+
+が数値表現をしていない場合、文字列は
+<B>-mdoc</B>
+
+マクロ名であるかどうか検査され、このマクロに関連する
+デフォルトのオフセット値が使われます。
+最終的にすべてのテストが失敗した場合
+the width of
+Ao 文字列 Ac
+
+の幅
+(固定幅フォントでのタイプセット) がオフセットと見なされます。
+<DT><B>-compact</B>
+
+
+<DD>
+ディスプレイを開始するときに垂直方向の空白を挿入しないようにします。
+</DL>
+<P>
+
+<DT><B>.
+</B>
+
+
+<DD>
+ディスプレイの終了 (引数はとりません)。
+</DL>
+<P>
+
+<A NAME="lbDF">&nbsp;</A>
+<H3>リストとカラム</H3>
+
+リスト開始マクロ
+`.<DL COMPACT>
+<P>
+
+'
+
+で開始できるリストには何種類かあります。
+リスト中の項目は項目マクロ
+`.<DT><B>で指定され、各リストは</B>
+<DD>
+'
+
+`.</DL>
+<P>
+
+'
+
+マクロで終了しなければなりません。
+リストはリスト自身やディスプレイの中で入れ子にすることができます。
+リスト中でカラムを使ったり、カラムの中でリストを使ったりすることに
+ついては検証されていません。
+<P>
+
+さらに、タグ幅、リストのオフセット、コンパクトの度合
+(項目間の空白行が許されているかどうか) のような
+リストの属性をいくつか指定することができます。
+本ドキュメントのほとんどはタグ
+( -<B>tag</B>
+
+
+
+ 
+スタイルリストで整形されています。
+<P>
+
+このマクロは次の文法規則を持っています:
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>.<DL COMPACT>
+<P>
+
+</B>
+
+
+<DD>
+Br o -hang | -ohang | -tag | -diag | -inset Brc
+
+[-width Ao 文字列 Ac ]
+
+
+
+
+
+[-offset Ao 文字列 Ac [-compact 
+]
+
+]
+
+
+
+
+
+<DT><B>.<DL COMPACT>
+<P>
+
+</B>
+
+
+<DD>
+<B>-column </B>[-offset Ao 文字列 Ac ]
+
+
+
+
+
+
+
+Ao 文字列1 Ac Ao 文字列2 Ac ... Xc
+
+<DT><B>.<DL COMPACT>
+<P>
+
+</B>
+
+
+<DD>
+Br o -item | -enum Oo -nested Oc | -bullet | -hyphen | -dash Brc
+
+[-offset Ao 文字列 Ac [-compact 
+]
+
+]
+
+
+
+
+
+</DL>
+<P>
+
+<P>
+
+次に、このリストタイプの詳細な解説を行います。
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>-bullet</B>
+
+
+<DD>
+ビュレットリストです。
+
+<BLOCKQUOTE>
+<PRE>
+.Bl -bullet -offset indent -compact
+.It
+1 つ目のビュレットはここにきます。
+.It
+2 つ目のビュレットはここにきます。
+.El
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+生成結果は次の通りです:
+<P>
+
+<UL><P>
+
+<LI>
+
+1 つ目のビュレットはここにきます。
+<LI>
+
+2 つ目のビュレットはここにきます。
+</UL><P>
+
+<P>
+
+<DT><B>-dash ( または -hyphen</B>
+
+
+
+
+
+
+<DD>
+ 
+ダッシュ文字によるリストです。
+
+<BLOCKQUOTE>
+<PRE>
+.Bl -dash -offset indent -compact
+.It
+1 つ目のダッシュはここにきます。
+.It
+2 つ目のダッシュはここにきます。
+.El
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+生成結果は次の通りです:
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>1 つ目のダッシュはここにきます。</B>
+<DD>
+<DT><B>2 つ目のダッシュはここにきます。</B>
+<DD>
+</DL>
+<P>
+
+<P>
+
+<DT><B>-enum</B>
+
+
+<DD>
+箇条書きリストです。
+
+<BLOCKQUOTE>
+<PRE>
+.Bl -enum -offset indent -compact
+.It
+1 つ目の項目はここにきます。
+.It
+2 つ目の項目はここにきます。
+.El
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+生成結果は次の通りです:
+<P>
+
+<OL><P>
+
+<LI>
+
+1 つ目の項目はここにきます。
+<LI>
+
+2 つ目の項目はここにきます。
+</OL><P>
+
+<P>
+
+箇条書きリストを入れ子にしたい場合、
+-<B>nested</B>
+
+フラグを使用してください
+(第 2 レベルのリストが開始されます):
+
+<BLOCKQUOTE>
+<PRE>
+.Bl -enum -offset indent -compact
+.It
+1 つ目の項目はここにきます。
+.Bl -enum -nested -compact
+.It
+2 つ目の項目はここにきます。
+.It
+3 つ目の項目はここにきます。
+.It
+.El
+.It
+4 つ目の項目はここにきます。
+.El
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+生成結果は次の通りです:
+<P>
+
+<OL><P>
+
+<LI>
+
+1 つ目の項目はここにきます。
+<OL><P>
+
+<LI>
+
+2 つ目の項目はここにきます。
+<LI>
+
+3 つ目の項目はここにきます。
+</OL><P>
+
+<LI>
+
+4 つ目の項目はここにきます。
+</OL><P>
+
+<P>
+
+<DT><B>-item</B>
+
+
+<DD>
+リストの印をつけない
+-<B>item</B>
+
+タイプのリストです。
+
+<BLOCKQUOTE>
+<PRE>
+.Bl -item -offset indent
+.It
+1 つ目の項目はここにきます。
+1 つ目の項目はここにきます。
+1 つ目の項目はここにきます。
+.It
+2 つ目の項目はここにきます。
+2 つ目の項目はここにきます。
+2 つ目の項目はここにきます。
+.El
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+生成結果は次の通りです:
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>1 つ目の項目はここにきます。</B>
+<DD>
+1 つ目の項目はここにきます。
+1 つ目の項目はここにきます。
+<DT><B>2 つ目の項目はここにきます。</B>
+<DD>
+2 つ目の項目はここにきます。
+2 つ目の項目はここにきます。
+</DL>
+<P>
+
+<P>
+
+<DT><B>-tag</B>
+
+
+<DD>
+タグつきリストです。
+タグ幅を指定するには
+-<B>width</B>
+
+を使用してください。
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>SL</B>
+<DD>
+プロセスが sleep している時間 (ブロックされた秒数)
+<DT><B>PAGEIN</B>
+<DD>
+そのプロセスによって、まだメモリにロードされていないページへの参照が
+起こることにより生じたディスク
+<B>I/O </B>
+
+の回数
+<DT><B>UID</B>
+<DD>
+数値表記によるプロセス所有者のユーザ ID
+<DT><B>PPID</B>
+<DD>
+数値表記による親プロセスの ID、プロセスの優先度
+(割り込み不可の待機状態のときには、正でない値になる)
+</DL>
+<P>
+
+<P>
+
+元のテキストは次の通りです:
+
+<BLOCKQUOTE>
+<PRE>
+.Bl -tag -width &quot;PPID&quot; -compact -offset indent
+.It SL
+プロセスが sleep している時間 (ブロックされた秒数)
+.It PAGEIN
+そのプロセスによって、まだメモリにロードされていないページへの参照が
+起こることにより生じたディスク
+.Tn I/O 
+の回数
+.It UID
+数値表記によるプロセス所有者のユーザ ID
+.It PPID
+数値表記による親プロセスの ID、プロセスの優先度
+(割り込み不可の待機状態のときには、正でない値になる)
+.El
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+<DT><B>-diag</B>
+
+
+<DD>
+診断リストはセクション 4 の診断リストを生成するもので、
+呼び出し可能なマクロが無視されることを除き、inset リストと似ています。
+フラグ
+-<B>width</B>
+
+は、この文脈では意味がありません。
+<P>
+
+使用例:
+
+<BLOCKQUOTE>
+<PRE>
+.Bl -diag
+.It ここで Sy を使うことはできません。
+このメッセージはすべて出力されます。
+.El
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+生成結果
+<DL COMPACT>
+<P>
+
+<DT><B>ここで を使うことはできません。</B>
+
+
+<DD>
+このメッセージはすべて出力されます。
+</DL>
+<P>
+
+<P>
+
+<DT><B>-hang</B>
+
+
+<DD>
+ぶら下がりタグつきリストです。
+<DL COMPACT>
+<P>
+
+<DT><B></B><I>Hanged</I>
+
+
+<DD>
+ラベル幅よりもラベルが小さい場合には
+ぶら下げられたラベルはタグつきリストと同じように見えます。
+<DT><B></B><I>Longer hanged list labels</I>
+
+
+<DD>
+ラベル幅より長いぶら下がりリストのラベルは、
+タグつき段落ラベルとは違い、段落に溶け込みます。
+</DL>
+<P>
+
+<P>
+
+以上の文章を生成した、整形前のテキストは
+次の通りです:
+
+<BLOCKQUOTE>
+<PRE>
+.Bl -hang -offset indent
+.It Em Hanged
+ラベル幅よりもラベルが小さい場合には
+ぶら下げられたラベルはタグつきリストと同じようにみえます。
+.It Em Longer Hanged list labels
+ラベル幅より長いぶら下がりリストのラベルは、
+タグつき段落ラベルとは違い、段落に溶け込みます。
+.El
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+<DT><B>-ohang</B>
+
+
+<DD>
+オーバハングタグ (overhanging tags) を用いたリストは
+項目に対してインデントを使いません。
+タグは別の行に出力されます。
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>SL</B>
+
+
+<DD>
+プロセスが sleep している時間 (ブロックされた秒数)
+<DT><B>PAGEIN</B>
+
+
+<DD>
+そのプロセスによって、まだメモリにロードされていないページへの参照が
+起こることで生じたディスク
+<B>I/O </B>
+
+の回数
+<DT><B>UID</B>
+
+
+<DD>
+数値表記によるプロセス所有者のユーザ ID
+<DT><B>PPID</B>
+
+
+<DD>
+数値表記による親プロセスの ID、プロセスの優先度
+(割り込み不可の待機状態のときには、正でない値になる)
+</DL>
+<P>
+
+<P>
+
+元のテキストは次の通りです:
+
+<BLOCKQUOTE>
+<PRE>
+.Bl -ohang -offset indent
+.It Sy SL
+プロセスが sleep している時間 (ブロックされた秒数)
+.It Sy PAGEIN
+そのプロセスによって、まだメモリにロードされていないページへの参照が
+起こることで生じたディスク
+.Tn I/O 
+の回数
+.It Sy UID
+数値表記によるプロセス所有者のユーザ ID
+.It Sy PPID
+数値表記による親プロセスの ID、プロセスの優先度
+(割り込み不可の待機状態のときには、正でない値になる)
+.El
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+<DT><B>-inset</B>
+
+
+<DD>
+次は、inset ラベルの例です:
+<DL COMPACT>
+<P>
+
+<DT><B></B><I>tag</I>
+
+
+<DD>
+タグリスト (タグ段落とも呼びます) は
+バークレーのマニュアルで使われている最も一般的な
+種類のリストです。
+後で述べるように、
+-<B>width</B>
+
+属性を使用してください。
+<DT><B></B><I>diag</I>
+
+
+<DD>
+診断リストはセクション 4 の診断リストを生成し、
+呼び出し可能なマクロを無視するという点を除けば
+inset リストと似ています。
+<DT><B></B><I>hang</I>
+
+
+<DD>
+ぶら下がりラベルは気分の問題です。
+<DT><B></B><I>ohang</I>
+
+
+<DD>
+オーバハングラベルは空白に制限がある場合には良いです。
+<DT><B></B><I>inset</I>
+
+
+<DD>
+inset ラベルは段落ブロックを制御するのに便利で、
+<B>-mdoc</B>
+
+マニュアルを別のフォーマットに変換するのに有用です。
+</DL>
+<P>
+
+<P>
+
+上の例を生成したソーステキストはこうなっています:
+
+<BLOCKQUOTE>
+<PRE>
+.Bl -inset -offset indent
+.It Em tag
+タグリスト (タグ段落とも呼びます) は
+バークレーのマニュアルで使われている最も一般的な
+種類のリストです。
+後で述べるように、
+.Fl width
+属性を使用してください。
+.It Em diag
+診断リストはセクション 4 の診断リストを生成し、
+呼び出し可能なマクロを無視するという点を除けば
+inset リストと似ています。
+.It Em hang
+ぶら下がりラベルは気分の問題です。
+.It Em ohang
+オーバハングラベルは空白に制限がある場合には良いです。
+.It Em inset
+inset ラベルは段落ブロックを制御するのに便利で、
+.Nm -mdoc
+マニュアルを別のフォーマットに変換するのに有用です。
+.El
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+<DT><B>-column</B>
+
+
+<DD>
+この種類のリストは複数カラムを生成します。
+カラムの数および各カラムの幅は
+-<B>column</B>
+
+リストへの引数、
+Aq Ar string1 ,
+
+Aq Ar string2
+
+等によって決定されます。
+Aq Ar stringN
+
+が
+`.'
+
+(ドット) で開始し直後に有効な
+<B>-mdoc</B>
+
+マクロ名が続く場合、
+Aq Ar stringN
+
+を解釈して結果の幅を使用します。
+そうでない場合、
+Aq Ar stringN
+
+(固定幅フォントでのタイプセット) は
+<I>N</I>
+
+番目の桁の幅になります。
+<P>
+
+`.<DT><B>引数はそれぞれ構文解析され行を生成します。</B>
+<DD>
+'
+
+行中の各列はタブや
+`.Ta マクロで分けられた引数です。
+
+'
+
+<P>
+
+次の表、
+<DL COMPACT>
+<P>
+
+<DT><B>文字列 Ta </B><B>nroff Ta </B><B>troff</B>
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>&lt;= Ta </B>&lt;= Ta &lt;=
+
+
+
+
+
+
+<DD>
+<DT><B>&gt;= Ta </B>&gt;= Ta &gt=;
+
+
+
+
+
+
+<DD>
+</DL>
+<P>
+
+<P>
+
+は次のようにして生成されています:
+
+<BLOCKQUOTE>
+<PRE>
+.Bl -column -offset indent &quot;.Sy 文字列&quot; &quot;.Sy nroff&quot; &quot;.Sy troff&quot;
+.It Sy 文字列 Ta Sy nroff Ta Sy troff
+.It Li &lt;= Ta &lt;= Ta \*(&lt;=
+.It Li &gt;= Ta &gt;= Ta \*(&gt;=
+.El
+</PRE>
+</BLOCKQUOTE>
+
+</DL>
+<P>
+
+<P>
+
+その他のキーワード:
+<DL COMPACT>
+<P>
+
+<DT><B>-width Ao </B><I>文字列 Ac </I>Aq <I>文字列</I>
+
+
+
+
+
+
+
+
+
+
+
+
+<DD>
+が
+`.'
+
+(ドット) で開始し直後に有効な
+<B>-mdoc</B>
+
+マクロ名が続く場合、
+Aq Ar 文字列
+
+を解釈し、その結果の幅を使います。
+本ドキュメントのほとんどすべてのリストは
+このオプションを使用しています。
+<P>
+
+使用例:
+
+<BLOCKQUOTE>
+<PRE>
+.Bl -tag -width &quot;.Fl test Ao Ar 文字列 Ac&quot;
+.It Fl test Ao Ar 文字列 Ac
+これは、
+.Fl width
+フラグをタグリストと一緒に使うとどのように
+働くかを見るためのもっと長い文です。
+.El
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+生成結果:
+<DL COMPACT>
+<P>
+
+<DT><B>-test Ao </B><I>文字列 Ac </I>これは、
+
+
+
+
+
+
+
+
+<DD>
+-<B>width</B>
+
+フラグをタグリストと一緒に使うとどのように
+働くかを見るためのもっと長い文です。
+</DL>
+<P>
+
+<P>
+
+Ao 文字列 Ac
+
+が解釈される前に現在の
+<B>-mdoc</B>
+
+の状態が保存されることに注意してください。
+文字列が解釈された後ですべての変数が再度復元されます。
+しかし、ボックス (囲いに使用される) は
+<B>GNU</B>
+
+<A HREF="../man1/troff.1.html">troff</A>(1)
+
+
+では保存されません。結果としては、醜いエラーを防ぐためには
+引数は常に
+<I>平衡がとれて</I>
+
+いなくてはなりません。
+例えば、本当に開き山括弧だけが必要である場合には
+`.Ao <I>文字列</I>
+
+
+
+'
+
+と書いてはだめで、代わりに
+`.Ao <I>文字列</I>
+
+
+
+'
+
+Xc
+と書かなくてはなりません。
+<P>
+
+そうでない場合、
+Aq Ar 文字列
+
+が正当な数値表現である場合
+`( <I>u </I>
+
+'
+
+<I>以外のスケール指示子を伴う)、</I>
+
+インデント用にその値を使用します。
+最も有用なスケール指示子は
+`m'
+
+と
+`n'
+
+です。これらはいわゆる
+<I>および</I>
+
+
+
+<I>En </I>square 
+
+
+
+を指定します。
+これは、現在のフォントでの文字
+`m'
+
+および文字
+`n'
+
+の幅とほぼ同じです (nroff の出力については、
+どちらのスケール指示子でも同じ値が得られます)。
+Aq Ar 文字列
+
+が数値表現をしていない場合、文字列は
+<B>-mdoc</B>
+
+マクロ名であるかどうか検査され、このマクロに関連する
+デフォルトのオフセット値が使われます。
+最終的にすべてのテストが失敗した場合
+Aq Ar 文字列
+
+の幅
+(固定幅フォントでのタイプセット) がオフセットと見なされます。
+<P>
+
+タグリストタイプ用に幅が指定されていない場合、
+`.<DT><B>が起動される度に適切な幅を決定しようと試みます。</B>
+<DD>
+'
+
+`.<DT><B>の第</B>
+<DD>
+'
+
+1 引数が呼び出し可能なマクロである場合、
+そのマクロのデフォルト幅が使われます。
+そうでなければ、
+`.<B>のデフォルト幅が使われます。</B>
+
+'
+
+<P>
+
+<DT><B>-offset Ao </B><I>文字列 Ac </I>Aq <I>文字列</I>
+
+
+
+
+
+
+
+
+
+
+
+
+<DD>
+が
+<I>indent</I>
+
+である場合、デフォルトのインデント値 (通常 6n に設定されており、
+`.
+<BLOCKQUOTE><TT>または</TT></BLOCKQUOTE>
+'
+
+`.
+
+'
+
+で使われる値と似ています)
+が使われます。
+Aq Ar 文字列
+
+が正当な数値表現である場合
+( `<I>u</I>
+
+'
+
+
+
+以外のスケール指示子を伴う )、
+その値をインデントに使用します。
+最も有用なスケール指示子は
+`m'
+
+と
+`n'
+
+であり、これらはいわゆる
+<I>および</I>
+
+
+
+<I>En </I>square
+
+
+
+です。
+これは、それぞれ現在のフォントでの
+`m'
+
+と
+`n'
+
+の幅とほぼ同じです (nroff の出力については、
+どちらのスケール指示子も同じ値をとります)。
+Ao 文字列 Ac
+
+が数値表現でない場合、その文字列が
+<B>-mdoc</B>
+
+のマクロ名であるかどうか検査され、このマクロに関連する 
+デフォルトのオフセット値が使われます。
+最終的にすべてのテストが失敗した場合、
+Aq Ar 文字列
+
+の幅 (固定幅フォントでのタイプセット) がオフセットとして
+とられます。
+<DT><B>-compact</B>
+
+
+<DD>
+リストの前およびリスト項目間に垂直方向の空白を挿入しないように
+します。
+</DL>
+<P>
+
+</DL>
+</DL>
+</DL>
+</DL>
+</DL>
+</DL>
+<A NAME="lbDG">&nbsp;</A>
+<H2>その他のマクロ</H2>
+
+ここには、いままでのセクションにはうまく当てはまらなかった
+残りのマクロのリストがあります。
+次のマクロに対しては本物の使用例を見つけられませんでした。
+それは
+`.Me と
+
+'
+
+`.Ot です。この
+
+'
+
+2 つについても完璧を期するためにここに
+文書化はしています。もしこの 2 つのマクロの
+適切な使い方をご存知であれば
+Mt <A HREF="mailto:bug-groff@gnu.org">bug-groff@gnu.org</A>
+
+までメールを送ってください (例つきで)。
+<DL COMPACT>
+<P>
+
+<DT><B>. is currently in beta test.
+</B>
+
+
+<DD>
+は
+
+<BLOCKQUOTE>
+
+ is currently in beta test.
+
+</BLOCKQUOTE>
+
+<P>
+
+を表示します。
+<P>
+
+このマクロは呼び出し不可能であり、構文解析もされません。
+また引数もとりません。
+<DT><B>.<P>
+
+</B>
+
+
+
+
+<DD>
+
+<BLOCKQUOTE><TT>使い方: .</TT><B>Ao </B>関数の戻り値 Ac ...
+
+
+
+
+
+</BLOCKQUOTE>
+<P>
+
+このマクロは使わないでください。
+このマクロは戻り値 (通常は数字 1 個) の直前での
+改行を許してしまいます。
+印刷時の振る舞いとしては悪いことです。
+直前の単語と戻り値とを結合させるには
+`\~'
+
+を使用してください。
+<DT><B>.Hf </B>(ヘッダ) ファイルをそのまま含めるにはこのマクロを
+
+
+
+
+<DD>
+使ってください。
+このマクロは、最初に
+`File:'
+
+とファイル名を表示し、その後で
+Ao ファイル Ac 
+
+の内容を表示します。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .Hf </TT>Ao ファイル Ac <P>
+
+
+
+
+
+
+
+</BLOCKQUOTE>
+このマクロは呼び出し不可能であり、構文解析もされません。
+<DT><B>.Lk </B>将来書かれる予定です。
+
+
+
+
+<DD>
+<DT><B>.Me </B>正確な使用方法は分かりません。
+
+
+
+
+<DD>
+<B>-mdoc</B>
+
+ソースファイル中の記述では
+``メニューエントリ ''
+
+となっています。
+<P>
+
+デフォルト幅は 6n です。
+<DT><B>.Mt </B>将来書かれる予定です。
+
+
+
+
+<DD>
+<DT><B>.Ot </B>正確な使用方法は分かりません。
+
+
+
+
+<DD>
+<B>-mdoc</B>
+
+ソースファイル中の記述では
+``古い関数タイプ (fortran) ''
+
+となっています。
+<DT><B>.
+</B>
+
+
+<DD>
+空白モードを有効に (トグル) します。
+<P>
+
+
+<BLOCKQUOTE><TT>使い方: .
+</TT></BLOCKQUOTE>
+<P>
+
+空白モードが off の場合、マクロ引数の間に空白は
+挿入されません。引数なしで呼ばれた場合 (あるいは
+次の引数が
+`on'
+
+でも
+`off'
+
+でもない場合)
+`.
+'
+
+マクロは空白モードに入ります。
+<DT><B>.Ud </B>マクロは
+
+
+
+
+<DD>
+
+<BLOCKQUOTE>
+
+Ud </BLOCKQUOTE>
+
+
+
+<P>
+
+を表示します。
+<P>
+
+このマクロは呼び出し不可能であり、構文解析もされません。
+また引数もとりません。
+</DL>
+<P>
+
+<A NAME="lbDH">&nbsp;</A>
+<H2>定義済み文字列</H2>
+
+次の文字列が定義済みです:
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>文字列 Ta </B><B>nroff Ta </B><B>troff Ta </B><B>意味</B>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>&lt;=     Ta </B>&lt;=       Ta &lt;=   Ta 以下
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>&gt;=     Ta </B>&gt;=       Ta &gt=;   Ta 以上
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>Rq </B>Ta ''       Ta &rdquo;   Ta 右側のダブルクォート
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>Lq </B>Ta ``       Ta &ldquo;   Ta 左側のダブルクォート
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>ua     Ta </B>^        Ta ^   Ta 上向き矢印
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>aa     Ta </B>'       Ta '   Ta アキュートアクセント
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>ga     Ta </B>`       Ta `   Ta グレーブアクセント
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>q      Ta </B>      Ta &quot;    Ta まっすぐなダブルクォート
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>Pi </B>Ta pi       Ta Pi   Ta ギリシャ語のパイ
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>Ne </B>Ta !=       Ta !=   Ta 不等号
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>Le </B>Ta &lt;=       Ta &lt;=   Ta 以下
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>Ge </B>Ta &gt;=       Ta &gt=;   Ta 以上
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>Lt </B>Ta &lt;        Ta &lt;   Ta 小なり
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>Gt </B>Ta &gt;        Ta &gt;   Ta 大なり
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>Pm </B>Ta +-      Ta &plusmn;   Ta プラスマイナス
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>If </B>Ta infinity Ta &infin;   Ta 無限
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>Na </B>Ta NaN   Ta NaN   Ta 非数値
+
+
+
+
+
+
+
+
+
+
+<DD>
+<DT><B>Ba </B>Ta |   Ta |   Ta 垂直線
+
+
+
+
+
+
+
+
+
+
+<DD>
+</DL>
+<P>
+
+<P>
+
+カラムの名前
+<B>nroff</B>
+
+と
+<B>troff</B>
+
+は少々誤解を招くものです。
+<B>nroff</B>
+
+は
+<B>ASCII</B>
+
+文字を表示しますが、
+<B>troff</B>
+
+では利用可能なもののうち一番良いグリフ形式を
+表示します。
+例えば、Unicode を使用可能にした
+<B>TTY</B>
+
+デバイスはすべての文字列に対して適切なグリフ表現を
+持っていますが、それに対して Latin1 に対して機能を強化した
+<B>TTY</B>
+
+デバイスはプラスマイナス記号しか持っていません。
+<P>
+
+文字を 2 つ含んだ文字列名は
+`\*(xx'
+
+<P>
+として表記できます。
+文字を 1 文字だけ含んだ文字列名は
+`\*x'
+
+<P>
+と表記できます。
+どのような長さの文字列名に対しても、一般的な文法は
+`\*[xxx]'
+
+となります ( これは
+<B>GNU</B>
+
+<A HREF="../man1/troff.1.html">troff</A>(1)
+
+
+拡張です)。
+#
+#=====================================================================
+#
+<A NAME="lbDI">&nbsp;</A>
+<H2>診断</H2>
+
+以前のバージョンの
+<B>-mdoc</B>
+
+パッケージでは利用可能だったデバッグ用マクロ
+`.Db は取り除かれました。なぜなら、
+
+'
+
+<B>GNU</B>
+
+<A HREF="../man1/troff.1.html">troff</A>(1)
+
+
+ではパラメータをチェックするのにもっと良いファシリティを
+提供しているからです。さらに、このマクロパッケージには
+エラーや警告メッセージが多数追加されており、よりロバストで
+饒舌なものになっています。
+<P>
+
+唯一残ったデバッグ用マクロは
+`.Rd であり、これはすべてのグローバルレジスタならびに文字列の
+
+'
+
+レジスタダンプを出力するものです。
+通常のユーザが使う必要は決してないでしょう。
+<A NAME="lbDJ">&nbsp;</A>
+<H2>GROFF, TROFF, および NROFF を使用した整形</H2>
+
+デフォルトでは、このパッケージでは
+`latin1'
+
+や
+`unicode'
+
+のような
+<B>TTY</B>
+
+デバイスで表示する場合には改ページやヘッダ、フッタは
+禁止されており、マニュアルをオンラインで効率良く
+見ることができるようになっています。
+この振る舞いは、
+groff
+
+
+を呼んでいるときにレジスタ
+
+に 0 を指定することで変更することができます
+(例えば、
+<B>TTY</B>
+
+出力のハードコピーを作成したいときなど)。
+<P>
+
+
+<BLOCKQUOTE><TT>groff -Tlatin1 -rcR=0 -mdoc foo.man &gt; foo.txt</TT></BLOCKQUOTE>
+<P>
+
+両面印刷用には、レジスタ
+`D'
+
+を 1 に設定してください:
+<P>
+
+
+<BLOCKQUOTE><TT>groff -Tps -rD1 -mdoc foo.man &gt; foo.ps</TT></BLOCKQUOTE>
+<P>
+
+ドキュメントのフォントサイズを 11pt や 12pt に変更したい
+場合は、レジスタ
+`S'
+
+をそれに合わせて設定してください:
+<P>
+
+
+<BLOCKQUOTE><TT>groff -Tdvi -rS11 -mdoc foo.man &gt; foo.dvi</TT></BLOCKQUOTE>
+<P>
+
+レジスタ
+`S'
+
+は
+<B>TTY</B>
+
+デバイスに対しては無視されます。
+<A NAME="lbDK">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+<DL COMPACT>
+<P>
+
+<DT><B>doc.tmac
+
+</B>
+<DD>
+主なマニュアル用マクロパッケージです。
+<DT><B>mdoc.tmac
+
+</B>
+<DD>
+doc.tmac
+
+を呼ぶラッパファイルです。
+<DT><B>mdoc/doc-common
+
+</B>
+<DD>
+共通する文字列、定義、および印刷出力に関連する項目です。
+<DT><B>mdoc/doc-nroff
+
+</B>
+<DD>
+<B>TTY</B>
+
+出力デバイス用に使用される定義です。
+<DT><B>mdoc/doc-ditroff
+
+</B>
+<DD>
+その他すべてのデバイス用に使用される定義です。
+<DT><B>mdoc.local
+
+</B>
+<DD>
+ローカルマシンでの追加項目およびカスタマイズ項目です。
+<DT><B>andoc.tmac
+
+</B>
+<DD>
+このファイルは
+<B>-mdoc</B>
+
+パッケージと
+<B>-man</B>
+
+パッケージのどちらを使用すべきかをチェックします。
+</DL>
+<P>
+
+<A NAME="lbDL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man1/groff.1.html">groff</A>(1),
+
+
+<A HREF="../../0MultiFileIdx/man1/man.1.html">man</A>(1),
+
+
+<A HREF="../man1/troff.1.html">troff</A>(1),
+
+
+groff_man7
+
+
+<A NAME="lbDM">&nbsp;</A>
+<H2>バグ</H2>
+
+セクション 3f はヘッダルーチンには追加されていません。
+<P>
+
+`.<B></B>
+
+'
+
+Sx NAME
+
+セクションにおいては、フォントを変更するべきです。
+<P>
+
+行の長さが短すぎる場合に行が分割されるのを防ぐために
+`.Fn がチェックを行う必要があります。
+
+'
+
+ときどき、最後の括弧が分割されることがあり、
+行詰めモードであるときにおかしな結果になることがあります。
+<P>
+
+リストマクロおよびディスプレイマクロは何のキープも
+行いませんが、これはキープを行うべきです。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">解説</A><DD>
+<DT><A HREF="#lbAE">さあ、始めよう</A><DD>
+<DT><A HREF="#lbAF">TROFF に特有な表現</A><DD>
+<DL>
+<DT><A HREF="#lbAG">マクロの使用方法</A><DD>
+<DT><A HREF="#lbAH">引数に空白文字を指定する</A><DD>
+<DT><A HREF="#lbAI">行末の空白文字</A><DD>
+<DT><A HREF="#lbAJ">特殊文字のエスケープ</A><DD>
+<DT><A HREF="#lbAK">その他の注意点</A><DD>
+</DL>
+<DT><A HREF="#lbAL">マニュアルページのテンプレート</A><DD>
+<DT><A HREF="#lbAM">)</A><DD>
+<DT><A HREF="#lbAN">使用法</A><DD>
+<DT><A HREF="#lbAO">タイトルマクロ</A><DD>
+<DT><A HREF="#lbAP">マニュアル領域および一般テキスト領域の紹介</A><DD>
+<DL>
+<DT><A HREF="#lbAQ">この名前には何が Ns ...</A><DD>
+<DT><A HREF="#lbAR">一般的な構文</A><DD>
+</DL>
+<DT><A HREF="#lbAS">マニュアル領域</A><DD>
+<DL>
+<DT><A HREF="#lbAT">アドレス</A><DD>
+<DT><A HREF="#lbAU">作者名</A><DD>
+<DT><A HREF="#lbAV">引数</A><DD>
+<DT><A HREF="#lbAW">コンフィギュレーション宣言 (セクション 4 のみ)</A><DD>
+<DT><A HREF="#lbAX">コマンド修飾子</A><DD>
+<DT><A HREF="#lbAY">定義済みの変数</A><DD>
+<DT><A HREF="#lbAZ">errno</A><DD>
+<DT><A HREF="#lbBA">環境変数</A><DD>
+<DT><A HREF="#lbBB">フラグ</A><DD>
+<DT><A HREF="#lbBC">関数の宣言</A><DD>
+<DT><A HREF="#lbBD">関数の型</A><DD>
+<DT><A HREF="#lbBE">関数 (ライブラリルーチン)</A><DD>
+<DT><A HREF="#lbBF">関数の引数</A><DD>
+<DT><A HREF="#lbBG">戻り値</A><DD>
+<DT><A HREF="#lbBH">終了ステータス</A><DD>
+<DT><A HREF="#lbBI">対話的なコマンド</A><DD>
+<DT><A HREF="#lbBJ">ライブラリ名</A><DD>
+<DT><A HREF="#lbBK">リテラル</A><DD>
+<DT><A HREF="#lbBL">名称</A><DD>
+<DT><A HREF="#lbBM">オプション</A><DD>
+<DT><A HREF="#lbBN">パス名</A><DD>
+<DT><A HREF="#lbBO">規格</A><DD>
+<DT><A HREF="#lbBP">変数の型</A><DD>
+<DT><A HREF="#lbBQ">変数</A><DD>
+<DT><A HREF="#lbBR">マニュアルページのクロスリファレンス</A><DD>
+</DL>
+<DT><A HREF="#lbBS">一般テキスト領域</A><DD>
+<DL>
+<DT><A HREF="#lbBT">AT&amp;T マクロ</A><DD>
+<DT><A HREF="#lbBU">BSD マクロ</A><DD>
+<DT><A HREF="#lbBV">NetBSD マクロ</A><DD>
+<DT><A HREF="#lbBW">FreeBSD マクロ</A><DD>
+<DT><A HREF="#lbBX">OpenBSD マクロ</A><DD>
+<DT><A HREF="#lbBY">BSD/OS マクロ</A><DD>
+<DT><A HREF="#lbBZ">UNIX マクロ</A><DD>
+<DT><A HREF="#lbCA">強調マクロ</A><DD>
+<DT><A HREF="#lbCB">フォントモード</A><DD>
+<DT><A HREF="#lbCC">囲い/クォートマクロ</A><DD>
+<DT><A HREF="#lbCD">無操作もしくは通常テキストマクロ</A><DD>
+<DT><A HREF="#lbCE">空白なしマクロ</A><DD>
+<DT><A HREF="#lbCF">セクションのクロスリファレンス</A><DD>
+<DT><A HREF="#lbCG">記号</A><DD>
+<DT><A HREF="#lbCH">数学記号</A><DD>
+<DT><A HREF="#lbCI">参考文献と引用</A><DD>
+<DT><A HREF="#lbCJ">商標名 (頭字語とタイプ名)</A><DD>
+<DT><A HREF="#lbCK">拡張引数</A><DD>
+</DL>
+<DT><A HREF="#lbCL">ページ構造領域</A><DD>
+<DL>
+<DT><A HREF="#lbCM">セクションヘッダ</A><DD>
+</DL>
+<DT><A HREF="#lbCN">セクションヘッダマクロは、すべてのマニュアルページで必須のものです。</A><DD>
+<DT><A HREF="#lbCO">マクロは構文解析されますが、一般的には呼び出し不可能です。</A><DD>
+<DT><A HREF="#lbCP">を呼び出すときだけは、このマクロは引数として使用することができます。</A><DD>
+<DT><A HREF="#lbCQ">用のデフォルトフォントを再度有効にします。</A><DD>
+<DT><A HREF="#lbCR">NAME</A><DD>
+<DT><A HREF="#lbCS">NAME</A><DD>
+<DT><A HREF="#lbCT">セクションヘッダはマニュアルページの好ましいレイアウトの一部であり、</A><DD>
+<DT><A HREF="#lbCU">ENVIRONMENT</A><DD>
+<DT><A HREF="#lbCV">セクションを追加することができます。</A><DD>
+<DL>
+<DT><A HREF="#lbCW">サブセクションヘッダ</A><DD>
+<DT><A HREF="#lbCX">は構文解析されますが、一般的に呼び出し不可能です。</A><DD>
+<DT><A HREF="#lbCY">の呼び出し時にのみ引数として使用できます。このとき、</A><DD>
+<DT><A HREF="#lbCZ">のデフォルトフォントが再度有効になります。</A><DD>
+<DT><A HREF="#lbDA">段落と行スペース</A><DD>
+</DL>
+<DT><A HREF="#lbDB">マクロや</A><DD>
+<DL>
+<DT><A HREF="#lbDC">マクロの後、ならびに</A><DD>
+<DT><A HREF="#lbDD">キープ</A><DD>
+<DT><A HREF="#lbDE">例示とディスプレイ</A><DD>
+<DT><A HREF="#lbDF">リストとカラム</A><DD>
+</DL>
+<DT><A HREF="#lbDG">その他のマクロ</A><DD>
+<DT><A HREF="#lbDH">定義済み文字列</A><DD>
+<DT><A HREF="#lbDI">診断</A><DD>
+<DT><A HREF="#lbDJ">GROFF, TROFF, および NROFF を使用した整形</A><DD>
+<DT><A HREF="#lbDK">関連ファイル</A><DD>
+<DT><A HREF="#lbDL">関連項目</A><DD>
+<DT><A HREF="#lbDM">バグ</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:24 GMT, December 05, 2022
+</BODY>
+</HTML>

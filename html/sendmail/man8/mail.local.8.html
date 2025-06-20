@@ -1,0 +1,198 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MAIL.LOCAL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>MAIL.LOCAL</H1>
+Section: Maintenance Commands (8)<BR>Updated: $Date: 2001/07/29 05:15:28 $<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/sendmail/contrib/man8/mail.local.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+<B>mail.local</B>
+
+- メールボックスにメールを格納する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>mail.local</B>
+
+[<B>-7</B>] [<B>-B</B>] [<B>-b</B>] [<B>-d</B>] [<B>-l</B>] [<B>-s</B>] [<B>-f</B>
+
+<I>from</I>] 
+
+[<B>-r</B>
+
+<I>from</I>] <I>user ...</I>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>解説</H2>
+
+<B>mail.local</B>
+
+は EOF がくるまで標準入力から読み込みを行い、
+それらを各
+<I>user</I>
+
+の
+<B>mail</B>
+
+ファイルに追加します。
+<I>user</I>
+
+は、有効なユーザ名でなければなりません。
+<P>
+
+オプション:
+<DL COMPACT>
+<DT><B>-7</B>
+
+<DD>
+LMTP モードにおいて 8BITMIME サポートを通知しません。
+<DT><B>-B</B>
+
+<DD>
+<B>biff</B>
+
+サービスに通知する事をやめます。
+<DT><B>-b</B>
+
+<DD>
+メールボックスが制限を越えた場合に、
+一時的なエラーを返すのではなく永続的なエラーを返します。
+<DT><B>-d</B>
+
+<DD>
+これが配送であることを指定します (後方互換性のためです)。
+<DT><B>-f</B><I> from</I>
+
+<DD>
+送信者名を指定します。
+<DT><B>-l</B>
+
+<DD>
+LMTP モードをオンにします。
+<DT><B>-s</B>
+
+<DD>
+<B>success</B>
+
+状態を返す前にメールボックスをディスクにコミットするために使用する、
+<A HREF="../../LDP_man-pages/man2/fsync.2.html">fsync</A>(2)
+呼び出しを無効にします。
+<DT><B>-r</B><I> from</I>
+
+<DD>
+送信者名を指定します (後方互換性のためです)。
+</DL>
+<P>
+
+メールボックスのなかの個々のメッセージは、
+空行に続く
+``From ''
+という文字列からはじまる行によって区切られます。
+``From'' 、送り手 (sender) の名前、
+時刻 (time stamp) を含む行が配送された各メッセージの前に
+付加されます。
+メッセージのあとには空行が追加されます。
+メッセージ中に ``From '' デリミタ行と勘違いされそうな行があったときには
+(つまり、空白行に続いて ``From '' の 5 文字があったとき)
+大なり記号 (``&gt;'') がそれらの行頭に付加されます。
+<P>
+
+メールファイルはメールが追加されている間は
+<A HREF="../../LDP_man-pages/man2/flock.2.html">flock</A>(2)
+によって排他的にロックされます。
+メールボックスがロックされている間、
+<B>user.lock</B>
+
+が作成されますが、これは古い MUA との互換性のためです。
+<P>
+
+<A HREF="../../LDP_man-pages/man3/getservbyname.3.html">getservbyname</A>(3)
+が ``biff'' を返すと、
+biff サーバにメールの配送が伝えられます。
+<P>
+
+<B>mail.local</B>
+
+は成功すれば 0 を、失敗すれば 0 より大きな値を返します。
+<A NAME="lbAE">&nbsp;</A>
+<H2>環境変数</H2>
+
+<DL COMPACT>
+<DT>TZ<DD>
+タイムスタンプを記録する際に適切なタイムゾーンを設定します。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+
+<DL COMPACT>
+<DT>/tmp/local.XXXXXX<DD>
+テンポラリファイル
+<DT>/var/mail/user<DD>
+ユーザのメールボックスディレクトリ
+<DT>/var/mail/user.lock<DD>
+ユーザメールボックスのロックファイル
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+mail(1),
+<A HREF="../../LDP_man-pages/man2/flock.2.html">flock</A>(2),
+<A HREF="../../LDP_man-pages/man3/getservbyname.3.html">getservbyname</A>(3),
+<A HREF="../../netkit/man8/comsat.8.html">comsat</A>(8),
+<A HREF="../man8/sendmail.8.html">sendmail</A>(8)
+<A NAME="lbAH">&nbsp;</A>
+<H2>警告</H2>
+
+<B>mail.local</B>
+
+は、空行に続く &quot;^From &quot; 行のみをエスケープします。
+&quot;From &quot; で開始するすべての行をエスケープすべき場合には、
+sendmail.cf ファイル中のローカルメーラ用 'E'フラグを使用してください。
+<A NAME="lbAI">&nbsp;</A>
+<H2>歴史</H2>
+
+<B>mail.local</B>
+
+のスーパセット
+(メールを配送するだけでなく、メールボックスを読むこともできます) は
+Version 7 AT&amp;T UNIX
+から、
+<B>mail</B>
+
+として現れました。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">解説</A><DD>
+<DT><A HREF="#lbAE">環境変数</A><DD>
+<DT><A HREF="#lbAF">関連ファイル</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">警告</A><DD>
+<DT><A HREF="#lbAI">歴史</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

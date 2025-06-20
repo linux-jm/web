@@ -1,0 +1,158 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RTNETLINK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RTNETLINK</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/rtnetlink.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rtnetlink - rtnetlink メッセージを操作するマクロ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/asm/types.h">asm/types.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/netlink.h">linux/netlink.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/rtnetlink.h">linux/rtnetlink.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<P>
+
+<B>rtnetlink_socket = socket(AF_NETLINK, int </B><I>socket_type</I><B>,
+NETLINK_ROUTE);</B>
+<P>
+
+<B>int RTA_OK(struct rtattr *</B><I>rta</I><B>, int </B><I>rtabuflen</I><B>);</B>
+<P>
+
+<B>void *RTA_DATA(struct rtattr *</B><I>rta</I><B>);</B>
+<P>
+
+<B>unsigned int RTA_PAYLOAD(struct rtattr *</B><I>rta</I><B>);</B>
+<P>
+
+<B>struct rtattr *RTA_NEXT(struct rtattr *</B><I>rta</I><B>, unsigned int
+</B><I>rtabuflen</I><B>);</B>
+<P>
+
+<B>unsigned int RTA_LENGTH(unsigned int </B><I>length</I><B>);</B>
+<P>
+
+<B>unsigned int RTA_SPACE(unsigned int </B><I>length</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+全ての <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)  メッセージは <B><A HREF="../man7/netlink.7.html">netlink</A></B>(7)  メッセージヘッダーと追加属性からなる。
+属性の操作は、必ずここに挙げたマクロだけを使って行うべきである。
+<P>
+
+<B>RTA_OK(</B><I>rta</I><B>, </B><I>attrlen</I><B>)</B> は <I>rta</I> が有効なルーティング属性へのポインターであれば真を返す。
+<I>attrlen</I> は属性バッファーの実働時の長さ (running length) である。 真でなければ、例え <I>attrlen</I>
+がゼロでなくても、 メッセージ中にはもうそれ以上属性は無いと考えなければならない。
+<P>
+
+<B>RTA_DATA(</B><I>rta</I><B>)</B> はこの属性データの先頭へのポインターを返す。
+<P>
+
+<B>RTA_PAYLOAD(</B><I>rta</I><B>)</B> はこの属性データの長さを返す。
+<P>
+
+<B>RTA_NEXT(</B><I>rta</I><B>, </B><I>attrlen</I><B>)</B> は <I>rta</I> の次にある属性を取得する。 このマクロを呼ぶと
+<I>attrlen</I> が更新される。 <B>RTA_OK</B> を使って、返されたポインターが正しいかをチェックすべきである。
+<P>
+
+<B>RTA_LENGTH(</B><I>len</I><B>)</B> は <I>len</I> バイトのデータ + ヘッダーに必要な長さを返す。
+<P>
+
+<B>RTA_SPACE(</B><I>len</I><B>)</B> は <I>len</I> バイトのデータを持つメッセージに必要とされる容量を返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>準拠</H2>
+
+これらのマクロは非標準で、Linux での拡張である。
+<A NAME="lbAF">&nbsp;</A>
+<H2>バグ</H2>
+
+このマニュアルは完全ではない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>例</H2>
+
+
+デバイスの MTU をセットする rtnetlink メッセージを生成する
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/linux/rtnetlink.h">linux/rtnetlink.h</A>&gt;
+<P>
+...
+<P>
+struct {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;nlmsghdr&nbsp;&nbsp;nh;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;ifinfomsg&nbsp;if;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attrbuf[512];
+} req;
+<P>
+struct rtattr *rta;
+unsigned int mtu = 1000;
+<P>
+int rtnetlink_sk = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
+<P>
+memset(&amp;req, 0, sizeof(req));
+req.nh.nlmsg_len = NLMSG_LENGTH(sizeof(req.if));
+req.nh.nlmsg_flags = NLM_F_REQUEST;
+req.nh.nlmsg_type = RTM_NEWLINK;
+req.if.ifi_family = AF_UNSPEC;
+req.if.ifi_index = INTERFACE_INDEX;
+req.if.ifi_change = 0xffffffff; /* ??? */
+rta = (struct rtattr *)(((char *) &amp;req) +
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NLMSG_ALIGN(req.nh.nlmsg_len));
+rta-&gt;rta_type = IFLA_MTU;
+rta-&gt;rta_len = RTA_LENGTH(sizeof(mtu));
+req.nh.nlmsg_len = NLMSG_ALIGN(req.nh.nlmsg_len) +
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RTA_LENGTH(sizeof(mtu));
+memcpy(RTA_DATA(rta), &amp;mtu, sizeof(mtu));
+send(rtnetlink_sk, &amp;req, req.nh.nlmsg_len, 0);
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/netlink.3.html">netlink</A></B>(3), <B><A HREF="../man7/netlink.7.html">netlink</A></B>(7), <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)
+<A NAME="lbAI">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">準拠</A><DD>
+<DT><A HREF="#lbAF">バグ</A><DD>
+<DT><A HREF="#lbAG">例</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

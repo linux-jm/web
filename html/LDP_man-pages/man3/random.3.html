@@ -1,0 +1,171 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RANDOM</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RANDOM</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/random.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+random, srandom, initstate, setstate - 乱数を生成する関数
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>long random(void);</B>
+
+<B>void srandom(unsigned </B><I>seed</I><B>);</B>
+
+<B>char *initstate(unsigned </B><I>seed</I><B>, char *</B><I>state</I><B>, size_t </B><I>n</I><B>);</B>
+
+<B>char *setstate(char *</B><I>state</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>random</B>(), <B>srandom</B>(), <B>initstate</B>(), <B>setstate</B>():
+<DL COMPACT><DT><DD>
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Glibc&nbsp;since&nbsp;2.19:&nbsp;*/&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Glibc&nbsp;versions&nbsp;&lt;=&nbsp;2.19:&nbsp;*/&nbsp;_SVID_SOURCE&nbsp;||&nbsp;_BSD_SOURCE
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>random</B>()  関数は、非線形加法フィードバックを用いた乱数生成関数である。 この関数は、0 から 2^31&nbsp;-&nbsp;1
+までの疑似乱数を返す。 そのために 31 個のロング整数からなるデフォルトの表を使用する。 この乱数を生成する関数の周期はとても長く、およそ <I>16&nbsp;*&nbsp;((2^31)&nbsp;-&nbsp;1)</I> である。
+<P>
+
+<B>srandom</B>()  関数は、 <B>random</B>()  で返される疑似乱数整数系列の種を設定する。 そのためには新しい種を引数にして
+<B>srandom</B>()  を呼べばよい。 <B>random</B>()  で生成される系列は、 引数に同じ種の値を用いて <B>srandom</B>()
+を呼ぶことで再現可能である。 種の値が与えられない場合には <B>random</B>()  関数は、自動的に 1 を種に設定する。
+<P>
+
+The <B>initstate</B>()  function allows a state array <I>state</I> to be initialized
+for use by <B>random</B>().  The size of the state array <I>n</I> is used by
+<B>initstate</B>()  to decide how sophisticated a random number generator it
+should use---the larger the state array, the better the random numbers will
+be.  Current &quot;optimal&quot; values for the size of the state array <I>n</I> are 8,
+32, 64, 128, and 256 bytes; other amounts will be rounded down to the
+nearest known amount.  Using less than 8 bytes results in an error.  <I>seed</I>
+is the seed for the initialization, which specifies a starting point for the
+random number sequence, and provides for restarting at the same point.
+<P>
+
+<B>setstate</B>()  関数は、 <B>random</B>()  で使用される状態配列を変更する。 状態配列 <I>state</I> は、
+<B>initstate</B>()  または <B>setstate</B>()  が 次に呼び出されるまで、乱数の生成に使用される。 <I>state</I> は
+<B>initstate</B>()  を用いて最初に初期化されているか、 以前に呼び出した <B>setstate</B>()  の結果でなければならない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+関数 <B>random</B>() と <B>rand_r</B>() は 0 以上 <I>(2^31)&nbsp;-&nbsp;1</I> 以下の数を返す。関数 <B>srandom</B>()
+は値を返さない。
+<P>
+
+関数 <B>initstate</B>() は、変更前の状態配列へのポインターを返す。エラーの場合、 <I>errno</I> に原因を示す値が設定される。
+<P>
+
+関数 <B>setstate</B>() は、成功すると 0 を返す。 エラーの場合、-1 を返し、 <I>errno</I> にエラーの原因を示す値が設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<B>setstate</B>() の引数 <I>state</I> が NULL であった。
+<DT><B>EINVAL</B><DD>
+<B>initstate</B>()  で8バイトよりも小さい状態配列を指定した。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>random</B>(),
+<B>srandom</B>(),
+<BR>
+
+<B>initstate</B>(),
+<B>setstate</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, 4.3BSD.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+The <B>random</B>()  function should not be used in multithreaded programs where
+reproducible behavior is required.  Use <B><A HREF="../man3/random_r.3.html">random_r</A></B>(3)  for that purpose.
+<P>
+
+乱数の生成は複雑な話題である。 <I>Numerical Recipes in C: The Art of Scientific Computing</I>
+(William H. Press, Brian P. Flannery, Saul A. Teukolsky, William T.
+Vetterling; New York: Cambridge University Press, 2007, 3rd ed.)
+では実用的な乱数生成を論点とした優れた議論が第 7 章 (乱数) で展開されている。
+<P>
+
+より理論的な議論については Donald E. Knuth の <I>The Art of Computer Programming</I>, volume
+2 (Seminumerical Algorithms), 2nd ed.; Reading, Massachusetts:
+Addison-Wesley Publishing Company, 1981 の第 3 章 (乱数) を見よ。ここでは、
+たくさんの実用的な話題についても深く網羅されている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+
+POSIX では、エラー時に <B>initstate</B>() は NULL を返すべきとされている。 glibc の実装では、エラー時に <I>errno</I>
+は仕様通りに設定されるが、関数の返り値は NULL ではない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>getrandom</B>(2), <B><A HREF="../man3/drand48.3.html">drand48</A></B>(3), <B><A HREF="../man3/rand.3.html">rand</A></B>(3), <B><A HREF="../man3/random_r.3.html">random_r</A></B>(3), <B><A HREF="../man3/srand.3.html">srand</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

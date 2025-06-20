@@ -1,0 +1,150 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of AIO_WRITE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>AIO_WRITE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/aio_write.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+aio_write - 非同期で書き込む
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/aio.h">aio.h</A>&gt;</B>
+<P>
+
+<B>int aio_write(struct aiocb *</B><I>aiocbp</I><B>);</B>
+<P>
+
+<I>-lrt</I> でリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>aio_write</B>() 関数は、<I>aiocbp</I> が指すバッファーに記載された I/O リクエストをキューに入れる。この関数は
+<B><A HREF="../man2/write.2.html">write</A></B>(2) の非同期版である。
+呼び出し
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;write(fd,&nbsp;buf,&nbsp;count)
+<P>
+
+の各引数は <I>aiocb</I> が指す構造体の <I>aio_fildes</I>, <I>aio_buf</I>, <I>aio_nbytes</I>
+に (この順序で) 対応する (<I>aiocb</I> 構造体の説明は <B><A HREF="../man7/aio.7.html">aio</A></B>(7) を参照)。
+<P>
+
+<B>O_APPEND</B> が設定されない場合、ファイルオフセットに関係なく、 データは絶対位置 <I>aiocbp-&gt;aio_offset</I>
+を開始点として書き込まれる。 <B>O_APPEND</B> が設定されている場合、データはファイルの末尾に、 <B>aio_write</B>()
+の呼び出しが行われたのと同じ順序で書き込まれる。この呼び出しの後のファイルオフセットは規定されていない。
+<P>
+
+「非同期」とは「リクエストがキューに入れられたら、この呼び出しはすぐに返る」
+ということである。 呼び出しから戻った時に、書き込みは完了しているかも知れないし、
+完了していないかも知れない。 <B><A HREF="../man3/aio_error.3.html">aio_error</A></B>(3) を使うことで完了したかをテストできる。
+完了した I/O 操作の返り値は <B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3) で取得できる。
+<I>aiocbp-&gt;aio_sigevent</I> を適切に設定することで、
+I/O 完了の非同期通知は受けることもできる。詳細は <B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7) を参照。
+<P>
+
+<B>_POSIX_PRIORITIZED_IO</B> が定義されていて、 かつファイルがこれをサポートしている場合、
+非同期操作は呼び出したプロセスの優先度から <I>aiocbp-&gt;aio_reqprio</I> を引いた優先度で登録 (submit) される。
+<P>
+
+フィールド <I>aiocbp-&gt;aio_lio_opcode</I> は無視される。
+<P>
+
+最大オフセットを超えた通常のファイルには、何もデータが書き込まれない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、0 が返される。 エラーの場合、リクエストはキューに入れられず、
+-1 が返されて、 <I>errno</I> が適切に設定される。 エラーは後でのみ検知された場合は、
+エラーは <B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3) と <B><A HREF="../man3/aio_error.3.html">aio_error</A></B>(3) 経由で報告されることになる
+(<B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3) は状態 -1 を返し、<B><A HREF="../man3/aio_error.3.html">aio_error</A></B>(3) でエラー状態---
+<I>errno</I> で取得できる <B>EBADF</B> のようなエラー状態が返される)。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+リソースが足りない。
+<DT><B>EBADF</B><DD>
+<I>aio_fildes</I> が書き込みのためにオープンされた有効なファイルディスクリプターではない。
+<DT><B>EFBIG</B><DD>
+ファイルは通常のファイルであり、少なくとも 1 バイトを書き込もうとしている。 しかし開始位置が、このファイルの最大オフセットと同じかそれを超えている。
+<DT><B>EINVAL</B><DD>
+<I>aio_offset</I>, <I>aio_reqprio</I>, <I>aio_nbytes</I> のうち 1 つ以上が無効である。
+<DT><B>ENOSYS</B><DD>
+<B>aio_write</B>() は実装されていない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+The <B>aio_write</B>() 関数は glibc 2.1 以降で利用できる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>aio_write</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+
+使用する前に制御ブロックを 0 にしておくのは、よい考えである。 この制御ブロックは、読み込み操作が進行している間は変更すべきでない。
+読み込まれるバッファー領域は 操作の最中にアクセスすべきではない。 さもないと起こる結果が不定になる。
+これに含まれるメモリー領域は、有効なままにしなければならない。
+<P>
+
+同じ <I>aiocb</I> 構造体を指定して同時に複数の I/O 操作を行った場合、
+どのような結果になるかは不定である。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/aio_cancel.3.html">aio_cancel</A></B>(3), <B><A HREF="../man3/aio_error.3.html">aio_error</A></B>(3), <B><A HREF="../man3/aio_fsync.3.html">aio_fsync</A></B>(3), <B><A HREF="../man3/aio_read.3.html">aio_read</A></B>(3),
+<B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3), <B><A HREF="../man3/aio_suspend.3.html">aio_suspend</A></B>(3), <B><A HREF="../man3/lio_listio.3.html">lio_listio</A></B>(3), <B><A HREF="../man7/aio.7.html">aio</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:26 GMT, December 05, 2022
+</BODY>
+</HTML>

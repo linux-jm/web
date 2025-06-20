@@ -1,0 +1,283 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of XINETD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>XINETD</H1>
+Section: Maintenance Commands (8)<BR>Updated: 14 June 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/xinetd/release/man8/xinetd.8">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+xinetd - 拡張されたインターネットサービスデーモン
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>xinetd</B>
+
+[<I>options</I>]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>xinetd</B> は、<B>inetd</B>と同じ機能を提供する。
+すなわち、インターネットサービスを提供するプログラムを起動させる。
+インターネットサーバがシステムの初期化時に起動し、接続要求があるまで
+休眠する代わりに、<B>xinetd</B> はデーモンプロセスのみを起動させ、
+設定ファイルに記載された全てのサービスに対応したポートをリッスンする。
+（リッスンしているポートの一つに）要求があったときに、
+<B>xinetd</B> は適切なサーバを起動する。このような管理を行う事から、
+<B>xinetd</B> は(<B>inetd</B> と同様に) スーパーサーバとも呼ばれる。
+<P>
+
+<B>xinetd</B> の設定ファイルに記載されたサービスは、2つのグループに
+分けられる。1つ目は 
+<I>マルチスレッド</I>
+
+と呼ばれ、新しい接続要求がある度に新しいサーバプロセスをフォークする
+必要がある。新しいサーバが新しい接続を処理する。
+このようなサービスの場合、新しいサーバーをつくる事ができるように
+<B>xinetd</B> は新しい要求をリッスンしつづける。
+一方、2つ目のグループは、一つのサービスデーモンがすべての新しい
+接続要求を処理する。このようなサービスは
+<I>シングルスレッド</I>
+
+と呼ばれ、<B>xinetd</B> はサーバが終了するまで新しい要求の受付を中断する。
+このグループのサービスは通常データグラム上のものである。
+<P>
+
+今までは、スーパーサーバの存在理由は、ほとんどの生存時間を休眠している
+多くのプロセスによるシステムリソースのフォークを避けて節約することにあった。
+<B>xinetd</B> はこの機能を満たすだけでなく、スーパーサーバの概念を利用し、
+アクセスコントロールやログ等の機能を提供する。さらにその上、
+<B>xinetd</B> は
+<I>/etc/services</I>
+
+に記載されているサービスに制限されない。
+したがって、だれでも特殊な目的のサービスを起動させるために
+<B>xinetd</B> を利用できる。
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-d</B>
+
+<DD>
+デバッグモード。これは、多くのデバッグ出力を行なう。<B>xinetd</B> 上で
+デバッガを使用可能にする。
+<DT><B>-syslog</B><I> syslog_facility</I>
+
+<DD>
+このオプションは指定された syslog 機能分類(facility)を利用して、
+<B>xinetd</B>からの出力を syslog で記録する。
+以下の機能分類がサポートされている。
+<I>daemon</I>,
+
+<I>auth</I>,
+
+<I>user</I>,
+
+<I>local[0-7]</I>
+
+(それぞれの意味は<I><A HREF="../../sysklogd/man5/syslog.conf.5.html">syslog.conf</A>(5)</I> で確認のこと)。
+このオプションは、デバッグモードでは無効である。
+デバッグモードでは、すべての関連するメッセージは端末に送られる。
+<DT><B>-filelog</B><I> logfile</I>
+
+<DD>
+<B>xinetd</B>からの出力は指定されたファイルに保存される。
+出力は終始ファイルに追加される。
+(指定された名前の)ファイルが存在しない場合は、新しく作成される。
+このオプションは、デバッグモードでは無効である。
+デバッグモードでは、すべての関連するメッセージは端末に送られる。
+<DT><B>-f</B><I> config_file</I>
+
+<DD>
+<B>xinetd</B> が設定に使用するファイルを指定する。デフォルトでは
+<I>/etc/xinetd.conf</I> が使用される。
+<DT><B>-pidfile</B> pid_file
+
+<DD>
+プロセス ID はファイルに記述される。このオプションは、デバッグモードでは
+無効である。
+<DT><B>-stayalive</B>
+
+<DD>
+サービスが一つも指定されていなくても、xinetd に動作しつづけるよう命令する。
+<DT><B>-limit</B><I> proc_limit</I>
+
+<DD>
+このオプションは
+<B>xinetd</B>
+
+が、同時に動作させられるプロセス数の上限を定める。
+プロセステーブルのオーバーフローを防止する目的がある。
+<DT><B>-logprocs</B><I> limit</I>
+
+<DD>
+このオプションはリモートのユーザ ID 取得の為に動作させるサーバ数の、
+同時に動作する上限を定める。
+<DT><B>-version</B>
+
+<DD>
+xinetd にバージョン情報を表示させる。
+<DT><B>-inetd_compat</B>
+
+<DD>
+標準的な xinetd の設定ファイルに加え、
+/etc/inetd.conf も追加で読み込むようにする。
+/etc/inetd.conf は標準的な xinetd の設定ファイルの後に読み込まれる。
+<DT><B>-cc</B><I> interval</I>
+
+<DD>
+このオプションは
+<B>xinetd</B>
+
+の内部状態の定期的な整合性チェックを
+<I>interval</I>
+
+秒毎に
+行なう。
+</DL>
+<P>
+
+<I>syslog</I>と<I>filelog</I>オプションは相互に排他的である。
+どちらも設定されていない場合、デフォルトではsyslogの機能分類
+<I>daemon</I>
+
+を利用する。
+<B>xinetd</B> のメッセージと、関連するサービスによるメッセージを混同しないよう
+気をつけること。後者は設定ファイルによって指定された場合にのみログが残る。
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>XINETD の制御</H2>
+
+<P>
+
+<B>xinetd</B> は一定のシグナルを受け取った時に、一定の動作をする。
+特定のシグナルに関連した動作は、<I>config.h</I>を変更し、リコンパイル
+する事で再定義できる。
+<DL COMPACT>
+<DT><B>SIGHUP</B>
+
+<DD>
+<B>SIGHUP は再設定を行なわせる。これは、設定ファイルを再読み込みし、</B>
+
+使用可能でなくなったサービスのサーバを停止する。
+実行中のサーバに対しては、再びアクセスコントロールがなされ、
+接続元、アクセス時間、サーバの実行数がチェックされる。
+サーバ実行数の制限値が低くなった場合には、制限を満たすためにいくつかの
+任意のサーバが killされる。
+これは、接続元・アクセス時間のチェックに失敗したサーバを
+終了させた<I>後に</I>行われる。
+また、
+<B>INTERCEPT</B>
+
+フラグが新規に設定された場合、そのサービスのために動作中のサーバは
+すべて停止される。
+<I>この目的は、再設定の後に、アクセス制御基準に合わないアドレスからの
+パケットを受け取る事が可能な動作中のサーバがないことを確実にするため
+である</I>。
+<DT><B>SIGQUIT</B>
+
+<DD>
+はプログラムを終了させる。
+<DT><B>SIGTERM</B>
+
+<DD>
+は <B>xinetd</B>を終了する前にすべての起動しているサーバを終了する。
+<DT><B>SIGUSR1</B>
+
+<DD>
+は内部状態をダンプさせる(デフォルトのダンプファイルは
+<I>/tmp/xinetd.dump</I>
+であり、ファイル名を変更したい場合には、<I>config.h</I> の内容を
+変更し、再コンパイルする)。
+<DT><B>SIGIOT</B>
+
+<DD>
+はプログラムが利用しているデータ構造に問題がないかを確認するために
+内部の一貫性チェックを行なわせる。
+チェックが終了すると、
+<B>xinetd</B>
+
+は、チェックが成功したかあるいは失敗したかのメッセージを出力する。
+</DL>
+<P>
+
+再設定時、ログファイルは一旦閉じられ、再び開かれる。これは古いログファ
+イルの削除を許可する。
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+<P>
+
+
+<DL COMPACT>
+<DT><B>/etc/xinetd.conf</B>
+
+<DD>
+デフォルト設定ファイル
+<DT><B>/var/run/xinetd.dump</B>
+
+<DD>
+デフォルトダンプファイル
+
+
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<I><A HREF="../../netkit/man8/inetd.8.html">inetd</A>(8),</I>
+
+<P>
+
+<I><A HREF="../man5/xinetd.conf.5.html">xinetd.conf</A>(5),</I>
+
+<P>
+
+<I><A HREF="../man5/xinetd.log.5.html">xinetd.log</A>(5)</I>
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>作者</H2>
+
+Panos Tsirigotis, CS Dept, University of Colorado, Boulder
+Rob Braun
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>発音</H2>
+
+zy-net-d
+(訳注: ザイ-ネット-ディー)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">XINETD の制御</A><DD>
+<DT><A HREF="#lbAG">関連ファイル</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">作者</A><DD>
+<DT><A HREF="#lbAJ">発音</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:51 GMT, December 05, 2022
+</BODY>
+</HTML>

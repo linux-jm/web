@@ -1,0 +1,312 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PAPD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PAPD</H1>
+Section: Maintenance Commands (8)<BR>Updated: 06 Mar 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/netatalk/release/man8/papd.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+papd - AppleTalk プリントサーバデーモン
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/usr/sbin/papd</B>
+
+[
+<B>-d</B>
+
+] [
+<B>-f</B>
+
+<I>configfile</I>
+
+] [
+<B>-p</B>
+
+<I>printcap</I>
+
+]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>papd</B>
+
+は AppleTalk プリンタデーモンである。
+このデーモンは、
+AppleTalk クライアント (通常は Macintosh コンピュータ) から
+プリンタアクセスプロトコル (Printer Access Protocol, PAP) を使って
+印刷ジョブを受け付ける。
+<B>papd</B>
+
+はネットワークからジョブを受け取ると、
+そのジョブを直接
+<B><A HREF="../../lpr-linux/man8/lpd.8.html">lpd</A></B>(8)
+
+のスプールディレクトリにスプールし、
+<B>lpd</B>
+
+を起動する。
+すると
+<B>lpd</B>
+
+は、対応する適切なスプールディレクトリがあるかどうかを再検査する。
+実際の印刷とスプールは、
+<B>lpd</B>
+
+が全て処理する。
+<B>papd</B>
+
+は印刷ジョブを外部プログラムにパイプで渡して処理させることができる。
+使っている lpd のくせによる互換性の問題を避けるには、
+この方法を用いると良い。
+<P>
+
+通常
+<B>papd</B>
+
+は、システムの init スクリプトからブート時に起動される。
+初めに設定ファイル
+<B>/etc/netatalk/papd.conf</B>
+
+を読み込む。
+このファイルは
+<B>/etc/printcap</B>
+
+と同じフォーマットである。
+詳細は
+<B><A HREF="../../lpr-linux/man5/printcap.5.html">printcap</A></B>(5)
+
+を参照すること。
+エントリの名前は
+<B>NBP</B>
+
+で登録されている。
+以下のオプションがサポートされている:
+<P>
+
+<TABLE>
+<TR VALIGN=top><TD ALIGN=center>名前</TD><TD ALIGN=center>タイプ</TD><TD>デフォルト</TD><TD>説明<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><B>pd</B></TD><TD>str</TD><TD>`.ppd'</TD><TD>PPD ファイルのパス名<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><B>pr</B></TD><TD>str</TD><TD>`lp'</TD><TD>LPD プリンタ名 (または、印刷コマンドへのパイプ)<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><B>op</B></TD><TD>str</TD><TD>`operator'</TD><TD>LPD スプーリングのオペレータ名<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><B>ca</B></TD><TD>str</TD><TD>NULL</TD><TD>CAP 形式認証に使うファイルのパス名<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><B>sp</B></TD><TD>bool</TD><TD>false</TD><TD>PSSP 形式認証<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><B>am</B></TD><TD>str</TD><TD>NULL</TD><TD>認証に使う UAM (ユーザー認証モジュール)<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><B>pa</B></TD><TD>str</TD><TD>NULL</TD><TD>プリンタの AppleTalk アドレス?<BR></TD></TR>
+</TABLE>
+
+<P>
+
+設定ファイルが指定されない場合、
+ホスト名が NBP 名として使われ、全てのオプションがデフォルトの値になる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-d</B>
+
+<DD>
+fork しない。または端末から切り離さない。
+デバッグ情報を標準エラーに書き出す。
+<DT>
+<B>-f</B>
+
+<I>configfile</I>
+
+<DD>
+設定情報として
+<B>/etc/netatalk/papd.conf</B>
+
+ではなく
+<I>configfile</I>
+
+を読み込む。
+<DT>
+<B>-p</B>
+
+<I>printcap</I>
+
+<DD>
+<DD>LPD 設定情報として
+<B>/etc/printcap</B>
+
+ではなく
+<I>printcap</I>
+
+を読み込む。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>例</H2>
+
+以下の papd 設定ファイルは 3 つのプリントスプーラを設定する。
+1 番目のスプーラは NBP 名が
+<B>Mac Printer Spooler</B>
+
+で、/usr/share/lib/ppd にある PPD ファイルを使う。
+さらに、ユーザー mcs がスプールされる全てのジョブの所有者になる。
+2 番目のスプーラは
+<B>HP Printer</B>
+
+という名前で、全てのオプションがデフォルトである。
+3 番目のスプーラは
+<B>HP 8100</B>
+
+という名前である。
+このスプーラは印刷ジョブを行うために lpr を使う。
+PSSP 認証印刷が CAP 形式認証印刷と同様に有効にされている。
+'am' オプションが指定されているので、
+どちらの認証法でも guest と平文の認証が使える。
+使用される PPD は /etc/atalk/ppds/hp8100.ppd である。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+Mac Printer Spooler:\ 
+        :pr=ps:\
+        :pd=/usr/share/lib/ppd/HPLJ_4M.PPD:\
+        :op=mcs:
+
+HP Printer:\ 
+        :
+
+HP 8100:\
+        :pr=|/usr/bin/lpr -Plp:\
+        :sp:\
+        :ca=/tmp/print:\
+        :am=uams_guest.so,uams_pam.so:\
+        :pd=/etc/atalk/ppds/hp8100.ppd:
+</PRE>
+
+</DL>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+PSSP (Print Server Security Protocol) はプリントサーバーに
+PostScript プリンタの問い合わせをさせる認証プロトコルである。
+PSSP を使うにはクライアント Mac 上に LaserWriter 8.6.1 以降が必要である。
+印刷を行う前に、ユーザー名とパスワードを入力するプロンプトが出る。
+PSSP を初めて有効にしたときは、
+各クライアント上のプリンタを再設定する必要があるかもしれない。
+これによりクライアントは印刷に認証が必要とされることを理解することができる。
+プリンタ毎に PSSP を有効にすることができる。
+PSSP は以下で説明する CAP 形式認証より堅牢なので、
+プリンタの認証にはこちらを使うと良い。
+<P>
+
+CAP 形式認証は、Mac クライアントでの印刷の認証で使われる
+CAP (Columbia APpletalk) パッケージの方法を用いて、
+ユーザー名を取得する。
+この方法では、印刷をする前に
+ユーザーがファイル共有にログインしている必要がある。
+<B>afpd</B>
+
+はユーザー名をクライアントの Appletalke アドレスにちなんだ
+テンポラリファイルに記録し、
+ユーザーが接続を切ると、このファイルを削除する。
+<B>papd</B>
+
+は接続してきているマシンの Appletalk アドレスと
+同じ名前のファイルからユーザー名を取得する。
+CAP 形式認証はどの Mac クライアントに対しても動作するだろう。
+あるプリンタに対して CAP と PSSP がともに有効になっている場合、
+最初に CAP が試みられ、(失敗した場合は) 次に PSSP を試みる。
+<P>
+
+<P>
+('am' オプションで指定されて) 認証に使われる
+UAM (ユーザー認証モジュール) の一覧は全てのプリンタに適用される。
+各プリンタ毎に別の認証法を定義することはできない。
+UAM のリストを複数回指定することもできるが、
+最後の設定のみが使われる。
+現在のところ、プリンタの認証法としては
+uams_guest.so, uams_passwd.so, uams_pam.so のみがサポートされている。
+guest による方法では、有効なユーザー名が必要であるが、パスワードは必要ない。
+passwd と pam による方法では、
+有効なユーザー名と正しいパスワードの両方が必要である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><B>/etc/netatalk/papd.conf</B>
+
+<DD>
+デフォルトの設定ファイル。
+<DT><B>/etc/printcap</B>
+
+<DD>
+プリンタ機能のデータベース。
+<DT><B>.ppd</B>
+
+<DD>
+PostScript プリンタ記述ファイル。
+<B>papd</B>
+
+は、設定情報や印刷を行っているクライアントからのフォント要求を、
+設定された PPD ファイルに基づいて答える。
+このようなファイルは、Adobe, Inc のサイト
+<A HREF="ftp://ftp.adobe.com">ftp.adobe.com</A> の /pub/adobe/printerdrivers/mac/all/ppdfiles/ から
+匿名 ftp (<A HREF="ftp://ftp.adobe.com//pub/adobe/printerdrivers/mac/all/ppdfiles/)">ftp://ftp.adobe.com//pub/adobe/printerdrivers/mac/all/ppdfiles/)</A> によって、
+あるいはプリンタの製造メーカからも入手できる。
+PPD ファイルが設定されていない場合、
+<B>papd</B>
+
+はデフォルトの返答をする。
+これは、クライアントに非常に大きなジョブを送信させる可能性がある。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/lpr.1.html">lpr</A></B>(1),
+
+<B><A HREF="../../0MultiFileIdx/man1/lprm.1.html">lprm</A></B>(1),
+
+
+<B><A HREF="../../lpr-linux/man5/printcap.5.html">printcap</A></B>(5),
+
+<B><A HREF="../../0MultiFileIdx/man8/lpc.8.html">lpc</A></B>(8),
+
+<B><A HREF="../../lpr-linux/man8/lpd.8.html">lpd</A></B>(8).
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>警告</H2>
+
+<I>papd</I>
+
+は、クライアントから送られる
+ハイビットセット (フル 8 ビット) の文字を受け付ける。
+しかし、(Apple Computer の LaserWriter ファミリーを含む)
+PostScript プリンタの中には、
+デフォルトではシリアルインターフェース上から
+7 ビット文字しか受け付けないものがある。
+この場合は、プリンタがフル 8 ビットを受け付けるように
+プリンタを設定する必要がある。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">例</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DT><A HREF="#lbAH">ファイル</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">警告</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:40 GMT, December 05, 2022
+</BODY>
+</HTML>

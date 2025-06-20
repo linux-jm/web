@@ -1,0 +1,924 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UNIX</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>UNIX</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/unix.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+unix - ローカルな プロセス間通信用のソケット
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/un.h">sys/un.h</A>&gt;</B>
+<P>
+
+<I>unix_socket</I><B> = socket(AF_UNIX, type, 0);</B>
+<BR>
+
+<I>error</I><B> = socketpair(AF_UNIX, type, 0, int *</B><I>sv</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>AF_UNIX</B> (<B>AF_LOCAL</B> とも言われる) ソケットファミリーは、同じマシン上で
+プロセス同士が 効率的に通信するために用いられる。伝統的に、UNIX ドメイン
+ソケットは、名前なしにもできるし、 (ソケット型であると印のついた) ファイル
+システムのパス名に 結び付けることもできる。さらに Linux では、ファイル
+システムに依存しない抽象名前空間 (abstract namespace) もサポートしている。
+<P>
+
+Valid socket types in the UNIX domain are: <B>SOCK_STREAM</B>, for a
+stream-oriented socket; <B>SOCK_DGRAM</B>, for a datagram-oriented socket that
+preserves message boundaries (as on most UNIX implementations, UNIX domain
+datagram sockets are always reliable and don't reorder datagrams); and
+(since Linux 2.6.4)  <B>SOCK_SEQPACKET</B>, for a sequenced-packet socket that
+is connection-oriented, preserves message boundaries, and delivers messages
+in the order that they were sent.
+<P>
+
+UNIX ドメインソケットでは、補助データを使って ファイルディスクリプターや
+プロセスの信任状 (credential) を 送受信することもできる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>アドレスのフォーマット</H3>
+
+UNIX ドメインソケットのアドレスは以下の構造体で表現される。
+<P>
+
+
+
+
+
+struct sockaddr_un {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa_family_t&nbsp;sun_family;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;AF_UNIX&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sun_path[108];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Pathname&nbsp;*/
+};
+
+
+<P>
+
+The <I>sun_family</I> field always contains <B>AF_UNIX</B>.  On Linux, <I>sun_path</I>
+is 108 bytes in size; see also NOTES, below.
+<P>
+
+様々なシステムコール (例えば <B><A HREF="../man2/bind.2.html">bind</A></B>(2), <B><A HREF="../man2/connect.2.html">connect</A></B>(2), <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2)) は入力として
+<I>sockaddr_un</I> 引数を取る。 他のいくつかのシステムコール (例えば <B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
+<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2), <B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2), <B><A HREF="../man2/accept.2.html">accept</A></B>(2)) はこの型の引数を返す。
+<P>
+
+<I>sockaddr_un</I> 構造体では 3 種類のアドレスが区別される。
+<DL COMPACT>
+<DT>*<DD>
+<I>pathname (パス名)</I>: <B><A HREF="../man2/bind.2.html">bind</A></B>(2) を使って、UNIX ドメインソケットを、
+ヌル終端されたファイルシステム上のパス名に結び付けることができる。 (上述のいずれかのシステムコールにより) ソケットのアドレスが返される際、
+その長さは
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;offsetof(struct&nbsp;sockaddr_un,&nbsp;sun_path)&nbsp;+&nbsp;strlen(sun_path)&nbsp;+&nbsp;1
+<DT><DD>
+であり、 <I>sun_path</I> にはヌル終端されたパス名が格納される。 (Linux では、上記の <B>offsetof</B>() 式は
+<I>sizeof(sa_family_t)</I> の値と同じだが、 他の実装では <I>sun_path</I> の前に他のフィールドが含まれる場合もある。
+そのため、 <B>offsetof</B>() 式を使う方がより移植性のある方法でアドレス構造体のサイズを知ることができる。)
+<DT><DD>
+パス名ソケットの詳細については、後で説明する。
+<DT>*<DD>
+
+
+<I>unnamed (名前なし)</I>: <B><A HREF="../man2/bind.2.html">bind</A></B>(2)  を使ってパス名に結び付けることができないストリーム型のソケットは 名前を持たない。同様に、
+<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2)  で作成される 2 つのソケットも名前を持たない。 名前なしのソケットのアドレスを返す際には、 その長さは
+<I>sizeof(sa_family_t)</I> であり、 <I>sun_path</I> は検査すべきではない。
+<DT>*<DD>
+<I>abstract (抽象)</I>: 抽象ソケットアドレスは、 <I>sun_path[0]</I> がヌルバイト ('\0') であることから
+(パス名ソケットから) 区別できる。 この名前空間におけるソケットのアドレスは、 <I>sun_path</I> の残りのバイトの、
+アドレス構造体の指定された長さの範囲で表される (名前中のヌルバイトには特別な意味はない)。 この名前はファイルシステムのパス名とは何の関係もない。
+抽象ソケットのアドレスを返される際には、 返される <I>addrlen</I> は <I>sizeof(sa_family_t)</I> より大きく (つまり 2
+より大きく)、 ソケットの名前は <I>sun_path</I> の最初の <I>(addrlen - sizeof(sa_family_t))</I>
+バイトに格納される。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>パス名ソケット</H3>
+
+ソケットにパス名を結びつける際に、 最大限の移植性を持たせ、コーディングを簡単にするためのルールがいくつかある。
+<DL COMPACT>
+<DT>*<DD>
+<I>sun_path</I> のパス名はヌル終端すべきである。
+<DT>*<DD>
+終端のヌルバイトを含めたパス名の長さは <I>sun_path</I> の大きさを超えないようにすべきである。
+<DT>*<DD>
+<I>sockaddr_un</I> 構造体の終わりを示す <I>addrlen</I> 引数は最低でも以下の値を持つべきである。
+<DT><DD>
+<PRE>
+    offsetof(struct sockaddr_un, sun_path)+strlen(addr.sun_path)+1
+</PRE>
+
+<DT><DD>
+もしくは、もっと簡単には、 <I>addrlen</I> に <I>sizeof(struct sockaddr_un)</I> を指定することもできる。
+</DL>
+<P>
+
+
+
+UNIX ドメインソケットアドレスの扱いが上記のルールに従っていない実装もいくつかある。 (全部ではないが) いくつかの実装では、
+<I>sun_path</I> に文字列終端の NULL がなかった場合に終端の NULL が追加される。
+<P>
+
+
+
+
+移植性があるアプリケーションを作成する際には、 いくつかの実装では <I>sun_path</I> は 92 バイトしかないという点にも留意しておくとよい。
+<P>
+
+
+様々なシステムコール (<B><A HREF="../man2/accept.2.html">accept</A></B>(2), <B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2), <B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
+<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2)) がソケットアドレス構造体を返す。 これらのシステムコールが UNIX ドメインソケットに対して呼ばれた際には、
+これらの呼び出しに渡す <I>addrlen</I> 引数は上記の説明のように初期化すべきである。
+リターン時には、この引数にはアドレス構造体の「実際の」サイズが設定される。 呼び出し側ではこの引数で返された値を確認すべきである。
+返された値が入力値よりも大きい場合、 <I>sun_path</I> に終端の NULL バイトが存在する保証はない (「バグ」を参照)。
+<A NAME="lbAG">&nbsp;</A>
+<H3>Pathname socket ownership and permissions</H3>
+
+In the Linux implementation, pathname sockets honor the permissions of the
+directory they are in.  Creation of a new socket fails if the process does
+not have write and search (execute) permission on the directory in which the
+socket is created.
+<P>
+
+On Linux, connecting to a stream socket object requires write permission on
+that socket; sending a datagram to a datagram socket likewise requires write
+permission on that socket.  POSIX does not make any statement about the
+effect of the permissions on a socket file, and on some systems (e.g., older
+BSDs), the socket permissions are ignored.  Portable programs should not
+rely on this feature for security.
+<P>
+
+When creating a new socket, the owner and group of the socket file are set
+according to the usual rules.  The socket file has all permissions enabled,
+other than those that are turned off by the process <B><A HREF="../man2/umask.2.html">umask</A></B>(2).
+<P>
+
+
+
+The owner, group, and permissions of a pathname socket can be changed (using
+<B><A HREF="../man2/chown.2.html">chown</A></B>(2)  and <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2)).
+<A NAME="lbAH">&nbsp;</A>
+<H3>抽象ソケット</H3>
+
+Socket permissions have no meaning for abstract sockets: the process
+<B><A HREF="../man2/umask.2.html">umask</A></B>(2)  has no effect when binding an abstract socket, and changing the
+ownership and permissions of the object (via <B><A HREF="../man2/fchown.2.html">fchown</A></B>(2)  and <B><A HREF="../man2/fchmod.2.html">fchmod</A></B>(2))
+has no effect on the accessibility of the socket.
+<P>
+
+Abstract sockets automatically disappear when all open references to the
+socket are closed.
+<P>
+
+
+The abstract socket namespace is a nonportable Linux extension.
+<A NAME="lbAI">&nbsp;</A>
+<H3>ソケットオプション</H3>
+
+歴史的な理由により、これらのオプションは たとえ <B>AF_UNIX</B> 固有のオプションであっても <B>SOL_SOCKET</B> 型で指定する。
+ソケットファミリーとして <B>SOL_SOCKET</B> を指定すると、 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  でオプションが設定でき、
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  で取得ができる。
+<DL COMPACT>
+<DT><B>SO_PASSCRED</B><DD>
+Enabling this socket option causes receipt of the credentials of the sending
+process in an <B>SCM_CREDENTIALS ancillary</B> message in each subsequently
+received message.  The returned credentials are those specified by the
+sender using <B>SCM_CREDENTIALS</B>, or a default that includes the sender's
+PID, real user ID, and real group ID, if the sender did not specify
+<B>SCM_CREDENTIALS</B> ancillary data.
+<DT><DD>
+このオプションがセットされていて、まだソケットが接続されていないと、抽象名前空間に他と重ならない名前が自動的に生成される。
+<DT><DD>
+The value given as an argument to <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  and returned as the
+result of <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  is an integer boolean flag.
+<DT><B>SO_PASSSEC</B><DD>
+Enables receiving of the SELinux security label of the peer socket in an
+ancillary message of type <B>SCM_SECURITY</B> (see below).
+<DT><DD>
+The value given as an argument to <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  and returned as the
+result of <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  is an integer boolean flag.
+<DT><DD>
+
+
+The <B>SO_PASSSEC</B> option is supported for UNIX domain datagram sockets since
+Linux 2.6.18; support for UNIX domain stream sockets was added in Linux 4.2.
+<DT><B>SO_PEEK_OFF</B><DD>
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7) を参照。
+<DT><B>SO_PEERCRED</B><DD>
+This read-only socket option returns the credentials of the peer process
+connected to this socket.  The returned credentials are those that were in
+effect at the time of the call to <B><A HREF="../man2/connect.2.html">connect</A></B>(2)  or <B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2).
+<DT><DD>
+The argument to <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  is a pointer to a <I>ucred</I> structure;
+define the <B>_GNU_SOURCE</B> feature test macro to obtain the definition of
+that structure from <I>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</I>.
+<DT><DD>
+The use of this option is possible only for connected <B>AF_UNIX</B> stream
+sockets and for <B>AF_UNIX</B> stream and datagram socket pairs created using
+<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2).
+<DT><B>SO_PEERSEC</B><DD>
+This read-only socket option returns the security context of the peer socket
+connected to this socket.  By default, this will be the same as the security
+context of the process that created the peer socket unless overridden by the
+policy or by a process with the required permissions.
+<DT><DD>
+The argument to <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  is a pointer to a buffer of the specified
+length in bytes into which the security context string will be copied.  If
+the buffer length is less than the length of the security context string,
+then <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  returns -1, sets <I>errno</I> to <B>ERANGE</B>, and returns
+the required length via <I>optlen</I>.  The caller should allocate at least
+<B>NAME_MAX</B> bytes for the buffer initially, although this is not guaranteed
+to be sufficient.  Resizing the buffer to the returned length and retrying
+may be necessary.
+<DT><DD>
+The security context string may include a terminating null character in the
+returned length, but is not guaranteed to do so: a security context &quot;foo&quot;
+might be represented as either {'f','o','o'} of length 3 or
+{'f','o','o','\0'} of length 4, which are considered to be
+interchangeable.  The string is printable, does not contain non-terminating
+null characters, and is in an unspecified encoding (in particular, it is not
+guaranteed to be ASCII or UTF-8).
+<DT><DD>
+
+
+The use of this option for sockets in the <B>AF_UNIX</B> address family is
+supported since Linux 2.6.2 for connected stream sockets, and since Linux
+4.18 also for stream and datagram socket pairs created using
+<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2).
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>自動バインド (autobind) 機能</H3>
+
+
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2) 呼び出しで <I>sizeof(sa_family_t)</I> として <I>addrlen</I> を指定するか、
+アドレスに明示的にバインドされていないソケットに対して
+<B>SO_PASSCRED</B> ソケットオプションが指定されていた場合、
+そのソケットは抽象アドレスに自動的にバインドされる。
+このアドレスは、1 個のヌルバイトの後に、文字集合 <I>[0-9a-f]</I> のバイトが
+5 個続く形式である。したがって、自動的にバインドされるアドレス数には
+2^20 個という上限が存在する。
+(Linux 2.1.15 以降で、自動バインド機能が追加されたときには、
+8 バイトが使われており、自動バインドアドレス数の上限は 2^32 であった。
+Linux 2.3.15 で 5 バイトに変更された。)
+<A NAME="lbAK">&nbsp;</A>
+<H3>ソケット API</H3>
+
+この節では、Linux の UNIX ドメインソケットでの、ドメイン固有の詳細仕様と
+ソケット API でサポートされていない機能について説明する。
+<P>
+
+UNIX ドメインソケットでは、帯域外データ (out-of-band data) の 送信
+(<B><A HREF="../man2/send.2.html">send</A></B>(2) と <B><A HREF="../man2/recv.2.html">recv</A></B>(2) の <B>MSG_OOB</B> フラグ) はサポートされていない。
+<P>
+
+<B><A HREF="../man2/send.2.html">send</A></B>(2) <B>MSG_MORE</B> フラグは UNIX ドメインソケットではサポートされていない。
+<P>
+
+
+Linux 3.4 より前では、 <B><A HREF="../man2/recv.2.html">recv</A></B>(2) の <I>flags</I> 引数での <B>MSG_TRUNC</B> の使用は UNIX
+ドメインソケットではサポートされていなかった。
+<P>
+
+<B>SO_SNDBUF</B> ソケットオプションは UNIX ドメインソケットで効果を持つが、
+<B>SO_RCVBUF</B> は効果がない。 データグラムソケットでは、 <B>SO_SNDBUF</B> の値が
+出力データグラムの上限サイズとなる。 実際の上限値は、 <B>SO_SNDBUF</B> オプション
+として設定された値の 2倍 (<B><A HREF="../man7/socket.7.html">socket</A></B>(7) 参照) からオーバヘッドとして使用される
+32 バイトを引いた値となる。
+<A NAME="lbAL">&nbsp;</A>
+<H3>補助メッセージ</H3>
+
+補助データを送受するには、 <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  や <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)  を使用する。
+歴史的な理由により、以下に示す補助メッセージの型は たとえ <B>AF_UNIX</B> 固有のものであっても <B>SOL_SOCKET</B> 型で指定する。
+これらを送るには、構造体 <I>cmsghdr</I> の <I>cmsg_level</I> フィールドに <B>SOL_SOCKET</B> をセットし、
+<I>cmsg_type</I> フィールドにタイプをセットする。 詳細は <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)  を見よ。
+<DL COMPACT>
+<DT><B>SCM_RIGHTS</B><DD>
+他のプロセスでオープンされたファイルディスクリプターのセットを送受信する。 データ部分にファイルディスクリプターの整数配列が入っている。
+<DT><DD>
+Commonly, this operation is referred to as &quot;passing a file descriptor&quot; to
+another process.  However, more accurately, what is being passed is a
+reference to an open file description (see <B><A HREF="../man2/open.2.html">open</A></B>(2)), and in the receiving
+process it is likely that a different file descriptor number will be used.
+Semantically, this operation is equivalent to duplicating (<B><A HREF="../man2/dup.2.html">dup</A></B>(2))  a
+file descriptor into the file descriptor table of another process.
+<DT><DD>
+If the buffer used to receive the ancillary data containing file descriptors
+is too small (or is absent), then the ancillary data is truncated (or
+discarded)  and the excess file descriptors are automatically closed in the
+receiving process.
+<DT><DD>
+If the number of file descriptors received in the ancillary data would cause
+the process to exceed its <B>RLIMIT_NOFILE</B> resource limit (see
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)), the excess file descriptors are automatically closed in
+the receiving process.
+<DT><DD>
+
+The kernel constant <B>SCM_MAX_FD</B> defines a limit on the number of file
+descriptors in the array.  Attempting to send an array larger than this
+limit causes <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  to fail with the error <B>EINVAL</B>.  <B>SCM_MAX_FD</B>
+has the value 253 (or 255 in kernels before 2.6.38).
+<DT><B>SCM_CREDENTIALS</B><DD>
+UNIX 信任状を送受信する。これは認証に用いることができる。
+信任状は <I>struct ucred</I> の補助メッセージとして渡される。
+この構造体は <I>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</I> で以下のように定義されている。
+<DT><DD>
+
+
+struct ucred {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;pid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Process&nbsp;ID&nbsp;of&nbsp;the&nbsp;sending&nbsp;process&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid_t&nbsp;uid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;User&nbsp;ID&nbsp;of&nbsp;the&nbsp;sending&nbsp;process&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;gid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Group&nbsp;ID&nbsp;of&nbsp;the&nbsp;sending&nbsp;process&nbsp;*/
+};
+
+
+<DT><DD>
+glibc 2.8 以降では、この構造体の定義を得るためには
+(<I>どの</I>ヘッダーファイルをインクルードするよりも前に)
+機能検査マクロ <B>_GNU_SOURCE</B> を定義しなければならない。
+<DT><DD>
+The credentials which the sender specifies are checked by the kernel.  A
+privileged process is allowed to specify values that do not match its own.
+The sender must specify its own process ID (unless it has the capability
+<B>CAP_SYS_ADMIN</B>, in which case the PID of any existing process may be
+specified), its real user ID, effective user ID, or saved set-user-ID
+(unless it has <B>CAP_SETUID</B>), and its real group ID, effective group ID, or
+saved set-group-ID (unless it has <B>CAP_SETGID</B>).
+<DT><DD>
+To receive a <I>struct ucred</I> message, the <B>SO_PASSCRED</B> option must be
+enabled on the socket.
+<DT><B>SCM_SECURITY</B><DD>
+Receive the SELinux security context (the security label)  of the peer
+socket.  The received ancillary data is a null-terminated string containing
+the security context.  The receiver should allocate at least <B>NAME_MAX</B>
+bytes in the data portion of the ancillary message for this data.
+<DT><DD>
+To receive the security context, the <B>SO_PASSSEC</B> option must be enabled on
+the socket (see above).
+</DL>
+<P>
+
+When sending ancillary data with <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2), only one item of each of the
+above types may be included in the sent message.
+<P>
+
+At least one byte of real data should be sent when sending ancillary data.
+On Linux, this is required to successfully send ancillary data over a UNIX
+domain stream socket.  When sending ancillary data over a UNIX domain
+datagram socket, it is not necessary on Linux to send any accompanying real
+data.  However, portable applications should also include at least one byte
+of real data when sending ancillary data over a datagram socket.
+<P>
+
+When receiving from a stream socket, ancillary data forms a kind of barrier
+for the received data.  For example, suppose that the sender transmits as
+follows:
+<P>
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>1.<DD>
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  of four bytes, with no ancillary data.
+<DT>2.<DD>
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  of one byte, with ancillary data.
+<DT>3.<DD>
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  of four bytes, with no ancillary data.
+
+</DL>
+</DL>
+
+<P>
+
+Suppose that the receiver now performs <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)  calls each with a
+buffer size of 20 bytes.  The first call will receive five bytes of data,
+along with the ancillary data sent by the second <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  call.  The
+next call will receive the remaining four bytes of data.
+<P>
+
+
+If the space allocated for receiving incoming ancillary data is too small
+then the ancillary data is truncated to the number of headers that will fit
+in the supplied buffer (or, in the case of an <B>SCM_RIGHTS</B> file descriptor
+list, the list of file descriptors may be truncated).  If no buffer is
+provided for incoming ancillary data (i.e., the <I>msg_control</I> field of the
+<I>msghdr</I> structure supplied to <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)  is NULL), then the incoming
+ancillary data is discarded.  In both of these cases, the <B>MSG_CTRUNC</B> flag
+will be set in the <I>msg.msg_flags</I> value returned by <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2).
+<A NAME="lbAM">&nbsp;</A>
+<H3>ioctl</H3>
+
+以下の <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) 呼び出しは <I>value</I> に情報を入れて返す。
+正しい書式は以下の通り。
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+<B>int</B><I> value</I><B>;</B>
+<I>error</I><B> = ioctl(</B><I>unix_socket</I><B>, </B><I>ioctl_type</I><B>, &amp;</B><I>value</I><B>);</B>
+</PRE>
+
+</DL>
+
+<P>
+
+<I>ioctl_type</I> には以下を指定できる:
+<DL COMPACT>
+<DT><B>SIOCINQ</B><DD>
+
+
+
+
+
+
+
+
+For <B>SOCK_STREAM</B> sockets, this call returns the number of unread bytes in
+the receive buffer.  The socket must not be in LISTEN state, otherwise an
+error (<B>EINVAL</B>)  is returned.  <B>SIOCINQ</B> is defined in
+<I>&lt;<A HREF="file:///usr/include/linux/sockios.h">linux/sockios.h</A>&gt;</I>.  Alternatively, you can use the synonymous
+<B>FIONREAD</B>, defined in <I>&lt;<A HREF="file:///usr/include/sys/ioctl.h">sys/ioctl.h</A>&gt;</I>.  For <B>SOCK_DGRAM</B>
+sockets, the returned value is the same as for Internet domain datagram
+sockets; see <B><A HREF="../man7/udp.7.html">udp</A></B>(7).
+</DL>
+<A NAME="lbAN">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EADDRINUSE</B><DD>
+指定したローカルアドレスが既に使用されているか、ファイルシステムの
+ソケットオブジェクトが既に存在している。
+<DT><B>EBADF</B><DD>
+This error can occur for <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  when sending a file descriptor as
+ancillary data over a UNIX domain socket (see the description of
+<B>SCM_RIGHTS</B>, above), and indicates that the file descriptor number that is
+being sent is not valid (e.g., it is not an open file descriptor).
+<DT><B>ECONNREFUSED</B><DD>
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2) により指定されたリモートアドレスが接続待ちソケットではなかった。
+このエラーはターゲットのパス名がソケットでなかった場合にも発生する。
+<DT><B>ECONNRESET</B><DD>
+リモートソケットが予期しないかたちでクローズされた。
+<DT><B>EFAULT</B><DD>
+ユーザーメモリーアドレスが不正。
+<DT><B>EINVAL</B><DD>
+渡した引数が不正。よくある原因としては、渡したアドレスの <I>sun_type</I> フィール
+ドに <B>AF_UNIX</B> が指定されていなかった、行おうとした操作に対してソケットが有
+効な状態ではなかった、など。
+<DT><B>EISCONN</B><DD>
+既に接続されているソケットに対して <B><A HREF="../man2/connect.2.html">connect</A></B>(2)  が呼ばれた。または、指定したターゲットアドレスが 既に接続済みのソケットだった。
+<DT><B>ENOENT</B><DD>
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2) に指定されたリモートアドレスのパス名が存在しなかった。
+<DT><B>ENOMEM</B><DD>
+メモリーが足りない。
+<DT><B>ENOTCONN</B><DD>
+ソケット操作にターゲットアドレスが必要だが、 このソケットは接続されていない。
+<DT><B>EOPNOTSUPP</B><DD>
+ストリーム指向でないソケットに対してストリーム操作が呼び出された。 または帯域外データオプションを用いようとした。
+<DT><B>EPERM</B><DD>
+送信者が <I>struct ucred</I> に不正な信任状を渡した。
+<DT><B>EPIPE</B><DD>
+リモートソケットがストリームソケット上でクローズされた。 可能な場合は <B>SIGPIPE</B> も同時に送られる。これを避けるには
+<B>MSG_NOSIGNAL</B> フラグを <B><A HREF="../man2/send.2.html">send</A></B>(2)  や <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  に渡す。
+<DT><B>EPROTONOSUPPORT</B><DD>
+渡されたプロトコルが <B>AF_UNIX</B> でない。
+<DT><B>EPROTOTYPE</B><DD>
+リモートソケットとローカルソケットのタイプが一致していなかった (<B>SOCK_DGRAM</B> と <B>SOCK_STREAM</B>)。
+<DT><B>ESOCKTNOSUPPORT</B><DD>
+未知のソケットタイプ。
+<DT><B>ESRCH</B><DD>
+While sending an ancillary message containing credentials
+(<B>SCM_CREDENTIALS</B>), the caller specified a PID that does not match any
+existing process.
+<DT><B>ETOOMANYREFS</B><DD>
+This error can occur for <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  when sending a file descriptor as
+ancillary data over a UNIX domain socket (see the description of
+<B>SCM_RIGHTS</B>, above).  It occurs if the number of &quot;in-flight&quot; file
+descriptors exceeds the <B>RLIMIT_NOFILE</B> resource limit and the caller does
+not have the <B>CAP_SYS_RESOURCE</B> capability.  An in-flight file descriptor
+is one that has been sent using <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  but has not yet been accepted
+in the recipient process using <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2).
+<DT><DD>
+
+This error is diagnosed since mainline Linux 4.5 (and in some earlier kernel
+versions where the fix has been backported).  In earlier kernel versions, it
+was possible to place an unlimited number of file descriptors in flight, by
+sending each file descriptor with <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  and then closing the file
+descriptor so that it was not accounted against the <B>RLIMIT_NOFILE</B>
+resource limit.
+</DL>
+<P>
+
+他にも汎用のソケット層でエラーが起こったり、 ファイルシステム上にソケットオブジェクトを作ろうとした場合に ファイルシステムのエラーが起こることがある。
+それぞれの詳細は適切な man ページを参照すること。
+<A NAME="lbAO">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>SCM_CREDENTIALS</B> と抽象名前空間は、Linux 2.2 で導入された。 移植性が必要なプログラムでは使うべきではない。 (BSD
+由来のシステムの中にも信任状の送受信をサポートしているものがあるが、 その実装の詳細はシステムによって異なる)
+<A NAME="lbAP">&nbsp;</A>
+<H2>注意</H2>
+
+ファイル名を指定してソケットにバインドすると、ファイルシステムにソケットが
+生成される。これは必要なくなったときに呼びだしたユーザーが削除しなければ
+ならない (<B><A HREF="../man2/unlink.2.html">unlink</A></B>(2) を用いる)。 UNIX で通常使われる「背後で閉じる方式」
+が適用される。ソケットはいつでも unlink することができ、最後の参照が
+クローズされたときにファイルシステムから削除される。
+<P>
+
+<B>SOCK_STREAM</B> ソケット上でファイルディスクリプターや信任状を渡すためには、同じ <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  や
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)  コールで補助データ以外のデータを少なくとも 1 バイト送信/受信しなければならない。
+<P>
+
+
+UNIX ドメインのストリームソケットでは、 帯域外データの概念はサポートされない。
+<A NAME="lbAQ">&nbsp;</A>
+<H2>バグ</H2>
+
+
+ソケットをアドレスに結びつける際、 Linux は終端の NULL が <I>sun_path</I> になかった場合に追加する実装の一つである。
+ほとんどの場合、 これは問題にならない。 ソケットアドレスが取得された際、ソケットをバインドしたときに指定したものより 1 バイト長くなるだけである。
+しかしながら、紛らわしい動作が起こる場合が一つある。 ソケットをバインドした際に 108 個の NULL でないバイトを指定した場合、 終端の NULL
+が追加されるとパス名の長さが <I>sizeof(sun_path)</I> を超えてしまう。 結果として、(例えば <B><A HREF="../man2/accept.2.html">accept</A></B>(2) で)
+ソケットアドレスを取得した際に、 値を取得する呼び出しの入力の <I>address</I> 引数に <I>sizeof(struct sockaddr_un)</I>
+を指定したとすると、 返されるアドレス構造体は <I>sun_path</I> に終端の NULL を「含まない」ことになる。
+<P>
+
+
+さらに、 いくつかの実装では、ソケットをバインドする際に終端の NULL が必要ではなく (<I>addrlen</I> 引数を使って <I>sun_path</I>
+の長さが判定される)、 このような実装でソケットアドレスを取得する際には、 <I>sun_path</I> に終端の NULL は存在しない。
+<P>
+
+ソケットアドレスを取得するアプリケーションでは、 <I>sun_path</I> に終端の NULL が存在しないという移植性の問題を、
+パス名の有効なバイト数が以下のようになると事実を考慮することで取り扱うことができる。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strnlen(addr.sun_path,&nbsp;addrlen&nbsp;-&nbsp;offsetof(sockaddr_un,&nbsp;sun_path))
+<P>
+
+他の方法としては、 アプリケーションがソケットアドレスを取得する際、 取得の呼び出しを行う前に、 大きさが <I>sizeof(struct
+sockaddr_un)+1</I> のバッファーを割り当てることもできる。 取得の呼び出しでは <I>addrlen</I> に <I>sizeof(struct
+sockaddr_un)</I> を指定すると、 余分な一つの 0 バイトにより <I>sun_path</I> で返される文字列に終端の NULL
+が含まれることが保証される。
+<P>
+
+
+
+void *addrp;
+<P>
+addrlen = sizeof(struct sockaddr_un);
+addrp = malloc(addrlen + 1);
+if (addrp == NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Handle&nbsp;error&nbsp;*/&nbsp;;
+memset(addrp, 0, addrlen + 1);
+<P>
+if (getsockname(sfd, (struct sockaddr *) addrp, &amp;addrlen)) == -1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;handle&nbsp;error&nbsp;*/&nbsp;;
+<P>
+printf(&quot;sun_path = %s\n&quot;, ((struct sockaddr_un *) addrp)-&gt;sun_path);
+
+
+<P>
+
+アプリケーションが「パス名ソケット」の節で説明したルールにしたがってパス名を「作成」していれば、 このような分かりにくさは避けることができる。
+<A NAME="lbAR">&nbsp;</A>
+<H2>例</H2>
+
+The following code demonstrates the use of sequenced-packet sockets for
+local interprocess communication.  It consists of two programs.  The server
+program waits for a connection from the client program.  The client sends
+each of its command-line arguments in separate messages.  The server treats
+the incoming messages as integers and adds them up.  The client sends the
+command string &quot;END&quot;.  The server sends back a message containing the sum of
+the client's integers.  The client prints the sum and exits.  The server
+waits for the next client to connect.  To stop the server, the client is
+called with the command-line argument &quot;DOWN&quot;.
+<P>
+
+The following output was recorded while running the server in the background
+and repeatedly executing the client.  Execution of the server program ends
+when it receives the &quot;DOWN&quot; command.
+<A NAME="lbAS">&nbsp;</A>
+<H3>出力例</H3>
+
+
+
+$ <B>./server &amp;</B>
+[1] 25887
+$ <B>./client 3 4</B>
+Result = 7
+$ <B>./client 11 -5</B>
+Result = 6
+$ <B>./client DOWN</B>
+Result = 0
+[1]+  Done                    ./server
+$
+
+
+<A NAME="lbAT">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+/*
+<BR>&nbsp;*&nbsp;File&nbsp;connection.h
+<BR>&nbsp;*/
+<P>
+#define SOCKET_NAME &quot;/tmp/9Lq7BNBnBycd6nxy.socket&quot;
+#define BUFFER_SIZE 12
+<P>
+/*
+<BR>&nbsp;*&nbsp;File&nbsp;server.c
+<BR>&nbsp;*/
+<P>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/un.h">sys/un.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &quot;connection.h&quot;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_un&nbsp;name;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;down_flag&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;connection_socket;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;data_socket;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;result;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buffer[BUFFER_SIZE];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;local&nbsp;socket.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;connection_socket&nbsp;=&nbsp;socket(AF_UNIX,&nbsp;SOCK_SEQPACKET,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(connection_socket&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;socket&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;For&nbsp;portability&nbsp;clear&nbsp;the&nbsp;whole&nbsp;structure,&nbsp;since&nbsp;some
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;implementations&nbsp;have&nbsp;additional&nbsp;(nonstandard)&nbsp;fields&nbsp;in
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;the&nbsp;structure.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;name,&nbsp;0,&nbsp;sizeof(name));
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Bind&nbsp;socket&nbsp;to&nbsp;socket&nbsp;name.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;name.sun_family&nbsp;=&nbsp;AF_UNIX;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strncpy(name.sun_path,&nbsp;SOCKET_NAME,&nbsp;sizeof(name.sun_path)&nbsp;-&nbsp;1);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;bind(connection_socket,&nbsp;(const&nbsp;struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;name,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(name));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;bind&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Prepare&nbsp;for&nbsp;accepting&nbsp;connections.&nbsp;The&nbsp;backlog&nbsp;size&nbsp;is&nbsp;set
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;to&nbsp;20.&nbsp;So&nbsp;while&nbsp;one&nbsp;request&nbsp;is&nbsp;being&nbsp;processed&nbsp;other&nbsp;requests
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;can&nbsp;be&nbsp;waiting.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;listen(connection_socket,&nbsp;20);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;listen&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;This&nbsp;is&nbsp;the&nbsp;main&nbsp;loop&nbsp;for&nbsp;handling&nbsp;connections.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;incoming&nbsp;connection.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data_socket&nbsp;=&nbsp;accept(connection_socket,&nbsp;NULL,&nbsp;NULL);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(data_socket&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;accept&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;next&nbsp;data&nbsp;packet.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;read(data_socket,&nbsp;buffer,&nbsp;sizeof(buffer));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;read&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Ensure&nbsp;buffer&nbsp;is&nbsp;0-terminated.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buffer[sizeof(buffer)&nbsp;-&nbsp;1]&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Handle&nbsp;commands.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!strncmp(buffer,&nbsp;&quot;DOWN&quot;,&nbsp;sizeof(buffer)))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;down_flag&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!strncmp(buffer,&nbsp;&quot;END&quot;,&nbsp;sizeof(buffer)))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Add&nbsp;received&nbsp;summand.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result&nbsp;+=&nbsp;atoi(buffer);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Send&nbsp;result.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf(buffer,&nbsp;&quot;%d&quot;,&nbsp;result);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;write(data_socket,&nbsp;buffer,&nbsp;sizeof(buffer));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;write&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Close&nbsp;socket.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(data_socket);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Quit&nbsp;on&nbsp;DOWN&nbsp;command.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(down_flag)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;close(connection_socket);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Unlink&nbsp;the&nbsp;socket.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unlink(SOCKET_NAME);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+<P>
+/*
+<BR>&nbsp;*&nbsp;File&nbsp;client.c
+<BR>&nbsp;*/
+<P>
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/un.h">sys/un.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &quot;connection.h&quot;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_un&nbsp;addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;data_socket;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buffer[BUFFER_SIZE];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;local&nbsp;socket.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;data_socket&nbsp;=&nbsp;socket(AF_UNIX,&nbsp;SOCK_SEQPACKET,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(data_socket&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;socket&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;For&nbsp;portability&nbsp;clear&nbsp;the&nbsp;whole&nbsp;structure,&nbsp;since&nbsp;some
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;implementations&nbsp;have&nbsp;additional&nbsp;(nonstandard)&nbsp;fields&nbsp;in
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;the&nbsp;structure.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;addr,&nbsp;0,&nbsp;sizeof(addr));
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Connect&nbsp;socket&nbsp;to&nbsp;socket&nbsp;address&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sun_family&nbsp;=&nbsp;AF_UNIX;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strncpy(addr.sun_path,&nbsp;SOCKET_NAME,&nbsp;sizeof(addr.sun_path)&nbsp;-&nbsp;1);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;connect(data_socket,&nbsp;(const&nbsp;struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;addr,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(addr));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;The&nbsp;server&nbsp;is&nbsp;down.\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Send&nbsp;arguments.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;1;&nbsp;i&nbsp;&lt;&nbsp;argc;&nbsp;++i)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;write(data_socket,&nbsp;argv[i],&nbsp;strlen(argv[i])&nbsp;+&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;write&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Request&nbsp;result.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strcpy(buffer,&nbsp;&quot;END&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;write(data_socket,&nbsp;buffer,&nbsp;strlen(buffer)&nbsp;+&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;write&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Receive&nbsp;result.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;read(data_socket,&nbsp;buffer,&nbsp;sizeof(buffer));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;read&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Ensure&nbsp;buffer&nbsp;is&nbsp;0-terminated.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;buffer[sizeof(buffer)&nbsp;-&nbsp;1]&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Result&nbsp;=&nbsp;%s\n&quot;,&nbsp;buffer);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Close&nbsp;socket.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;close(data_socket);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<P>
+
+<B>SCM_RIGHTS</B> の使用例については <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3) を参照。
+<A NAME="lbAU">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2), <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2), <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2), <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3),
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7), <B><A HREF="../man7/socket.7.html">socket</A></B>(7), <B><A HREF="../man7/udp.7.html">udp</A></B>(7)
+<A NAME="lbAV">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">アドレスのフォーマット</A><DD>
+<DT><A HREF="#lbAF">パス名ソケット</A><DD>
+<DT><A HREF="#lbAG">Pathname socket ownership and permissions</A><DD>
+<DT><A HREF="#lbAH">抽象ソケット</A><DD>
+<DT><A HREF="#lbAI">ソケットオプション</A><DD>
+<DT><A HREF="#lbAJ">自動バインド (autobind) 機能</A><DD>
+<DT><A HREF="#lbAK">ソケット API</A><DD>
+<DT><A HREF="#lbAL">補助メッセージ</A><DD>
+<DT><A HREF="#lbAM">ioctl</A><DD>
+</DL>
+<DT><A HREF="#lbAN">エラー</A><DD>
+<DT><A HREF="#lbAO">バージョン</A><DD>
+<DT><A HREF="#lbAP">注意</A><DD>
+<DT><A HREF="#lbAQ">バグ</A><DD>
+<DT><A HREF="#lbAR">例</A><DD>
+<DL>
+<DT><A HREF="#lbAS">出力例</A><DD>
+<DT><A HREF="#lbAT">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAU">関連項目</A><DD>
+<DT><A HREF="#lbAV">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

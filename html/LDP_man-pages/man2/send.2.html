@@ -1,0 +1,298 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SEND</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SEND</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/send.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+send, sendto, sendmsg - ソケットへメッセージを送る
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<B>ssize_t send(int </B><I>sockfd</I><B>, const void *</B><I>buf</I><B>, size_t </B><I>len</I><B>, int </B><I>flags</I><B>);</B>
+
+<B>ssize_t sendto(int </B><I>sockfd</I><B>, const void *</B><I>buf</I><B>, size_t </B><I>len</I><B>, int </B><I>flags</I><B>,</B>
+<B>               const struct sockaddr *</B><I>dest_addr</I><B>, socklen_t </B><I>addrlen</I><B>);</B>
+
+<B>ssize_t sendmsg(int </B><I>sockfd</I><B>, const struct msghdr *</B><I>msg</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+システムコール <B>send</B>(), <B>sendto</B>(), <B>sendmsg</B>()  は、もう一方のソケットへメッセージを転送するのに使用される。
+<P>
+
+<B>send</B>()  は、ソケットが <I>接続された (connected)</I> 状態にある場合にのみ使用できる
+(つまり、どの相手に送信するかは既知である)。 <B>send</B>()  と <B><A HREF="../man2/write.2.html">write</A></B>(2)  の違いは、引数に <I>flags</I>
+があるかどうかだけである。 引数 <I>flags</I> にフラグが指定されない場合、 <B>send</B>()  は <B><A HREF="../man2/write.2.html">write</A></B>(2)  と等価である。
+また、
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;send(sockfd,&nbsp;buf,&nbsp;len,&nbsp;flags);
+<P>
+
+は以下と等価である。
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sendto(sockfd,&nbsp;buf,&nbsp;len,&nbsp;flags,&nbsp;NULL,&nbsp;0);
+<P>
+
+引数 <I>sockfd</I> は、データを送信するパケットのファイルディスクリプターである。
+<P>
+
+<B>sendto</B>()  は、接続型 (connection-mode) のソケット (<B>SOCK_STREAM</B>,
+<B>SOCK_SEQPACKET</B>)  で 使用された場合、引数 <I>dest_addr</I> と <I>addrlen</I> は無視される (各々の引数が
+NULL と 0 でない場合は <B>EISCONN</B> エラーも返される)。 また、ソケットが実際には接続されていなかった時には <B>ENOTCONN</B>
+エラーが返される。 接続型のソケット以外で使用された場合は、接続先のアドレスは <I>dest_addr</I> で与えられ、そのサイズは <I>addrlen</I>
+で指定される。 <B>sendmsg</B>()  では、接続先のアドレスは <I>msg.msg_name</I> で与えられ、そのサイズは
+<I>msg.msg_namelen</I> で指定される。
+<P>
+
+<B>send</B>()  と <B>sendto</B>()  では、メッセージは <I>buf</I> に格納されており、その長さは <I>len</I> であると解釈される。
+<B>sendmsg</B>()  では、メッセージは 配列 <I>msg.msg_iov</I> の各要素が指す位置に格納されている。 <B>sendmsg</B>()
+では、補助データ (制御情報とも呼ばれる) を送信することもできる。
+<P>
+
+メッセージ長が長過ぎるために、そのソケットが使用するプロトコルでは、 メッセージをソケットに渡されたままの形で送信することができない場合、
+<B>EMSGSIZE</B> エラーが返され、そのメッセージは転送されない。
+<P>
+
+<B>send</B>()  では、配送の失敗の通知は明示的に行われる。 ローカル側でエラーが検出された場合は、返り値 -1 として通知される。
+<P>
+
+メッセージがソケットの送信バッファーに入れることができない場合、 <B>send</B>()  は通常は停止 (block) する (ソケットが非停止
+(nonblocking) I/O モード でない場合)。非停止モードの場合にはエラー <B>EAGAIN</B> か <B>EWOULDBLOCK</B>
+で失敗する。 いつデータをさらに送信できるようになるかを知るために、 <B><A HREF="../man2/select.2.html">select</A></B>(2)  コールを使用することができる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>フラグ引数</H3>
+
+
+<I>flags</I> 引数は、以下のフラグの (0 個以上の) ビット単位の論理和を とったものを指定する。
+<DL COMPACT>
+<DT><B>MSG_CONFIRM</B> (Linux 2.3.15 以降)<DD>
+転送処理に進展があった、つまり相手側から成功の応答を受けたことをリンク層に 知らせる。リンク層がこの通知を受け取らなかった場合には、通常どおり
+(ユニキャスト ARP を使うなどの方法で) 近傍 (neighbor) の再検索を行う。 <B>SOCK_DGRAM</B> と <B>SOCK_RAW</B>
+のソケットに対してのみ有効で、現在のところ IPv4 と IPv6 のみ実装されている。 詳しくは <B><A HREF="../man7/arp.7.html">arp</A></B>(7)  参照のこと。
+<DT><B>MSG_DONTROUTE</B><DD>
+パケットを送り出すのにゲートウェイを使用せず、 直接接続されているネットワーク上のホストだけに送る。 通常、このフラグは診断 (diagnostic)
+やルーティングプログラムに よってのみ使用される。このフラグは、経路制御が行われるプロトコルファミリー
+に対してのみ定義されている。パケットソケットには定義されていない。
+<DT><B>MSG_DONTWAIT</B> (Linux 2.2 以降)<DD>
+Enables nonblocking operation; if the operation would block, <B>EAGAIN</B> or
+<B>EWOULDBLOCK</B> is returned.  This provides similar behavior to setting the
+<B>O_NONBLOCK</B> flag (via the <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  <B>F_SETFL</B> operation), but differs
+in that <B>MSG_DONTWAIT</B> is a per-call option, whereas <B>O_NONBLOCK</B> is a
+setting on the open file description (see <B><A HREF="../man2/open.2.html">open</A></B>(2)), which will affect all
+threads in the calling process and as well as other processes that hold file
+descriptors referring to the same open file description.
+<DT><B>MSG_EOR</B> (Linux 2.2 以降)<DD>
+レコードの終了を指示する (<B>SOCK_SEQPACKET</B> のようにこの概念に対応しているソケット種別のときに有効)。
+<DT><B>MSG_MORE</B> (Linux 2.4.4 以降)<DD>
+呼び出し元にさらに送るデータがあることを示す。 このフラグは TCP ソケットとともに使用され、 <B>TCP_CORK</B>
+ソケットオプションと同じ効果が得られる (<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)  を参照)。 <B>TCP_CORK</B> との違いは、このフラグを使うと呼び出し単位で
+この機能を有効にできる点である。
+<DT><DD>
+Linux 2.6 以降では、このフラグは UDP ソケットでもサポートされており、
+このフラグ付きで送信された全てのデータを一つのデータグラムにまとめて 送信することを、カーネルに知らせる。まとめられたデータグラムは、
+このフラグを指定せずにこのシステムコールが実行された際に初めて送信される (<B><A HREF="../man7/udp.7.html">udp</A></B>(7)  に記載されているソケットオプション
+<B>UDP_CORK</B> も参照)。
+<DT><B>MSG_NOSIGNAL</B> (Linux 2.2 以降)<DD>
+Don't generate a <B>SIGPIPE</B> signal if the peer on a stream-oriented socket
+has closed the connection.  The <B>EPIPE</B> error is still returned.  This
+provides similar behavior to using <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)  to ignore <B>SIGPIPE</B>,
+but, whereas <B>MSG_NOSIGNAL</B> is a per-call feature, ignoring <B>SIGPIPE</B> sets
+a process attribute that affects all threads in the process.
+<DT><B>MSG_OOB</B><DD>
+<I>帯域外 (out-of-band)</I> データをサポートするソケット (例えば <B>SOCK_STREAM</B>)  で <I>帯域外</I>
+データを送る。下位プロトコルも <I>帯域外</I> データをサポートしている必要がある。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>sendmsg()</H3>
+
+<B>sendmsg</B>() で利用されている <I>msghdr</I> 構造体は以下の通り。
+<P>
+
+
+
+struct msghdr {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*msg_name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;追加のアドレス&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;socklen_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_namelen;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;アドレスのサイズ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;iovec&nbsp;*msg_iov;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;scatter/gather&nbsp;配列&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_iovlen;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;msg_iov&nbsp;の要素数&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*msg_control;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;補助データ&nbsp;(後述)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_controllen;&nbsp;/*&nbsp;補助データバッファー長&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_flags;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;フラグ&nbsp;(未使用)&nbsp;*/
+};
+
+
+<P>
+
+フィールド <I>msg_name</I> は、 未接続のソケットでデータグラムの宛先アドレスを指定するのに使用される。
+このフィールドはアドレスを格納したバッファーを指す。 フィールド <I>msg_namelen</I> にはアドレスの大きさを設定しなければならない。
+接続済のソケットについては、これらのフィールドにはそれぞれ NULL と 0 を指定しなければならない。
+<P>
+
+フィールド <B>msg_iov</B> と <I>msg_iovlen</I> は scatter-gather 用の場所を指定する。 <B><A HREF="../man2/writev.2.html">writev</A></B>(2)
+と同じ。
+<P>
+
+You may send control information (ancillary data) using the <I>msg_control</I>
+and <I>msg_controllen</I> members.  The maximum control buffer length the kernel
+can process is limited per socket by the value in
+<I>/proc/sys/net/core/optmem_max</I>; see <B><A HREF="../man7/socket.7.html">socket</A></B>(7).  For further information
+on the use of ancillary data in various socket domains, see <B><A HREF="../man7/unix.7.html">unix</A></B>(7)  and
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7).
+<P>
+
+
+
+
+フィールド <I>msg_flags</I> は無視される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、これらのシステムコールは送信されたバイト数を返す。 エラーの場合、 -1 を返し、 <I>errno</I> を適切に設定にする。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+これらはソケット層で発生する一般的なエラーである。これ以外に、下層の プロトコルモジュールで生成されたエラーが返されるかもしれない。
+これらについては、それぞれのマニュアルを参照すること。
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+(UNIX ドメインソケットの場合; パス名で識別される。)
+<P>
+ソケットファイルへの書き込み許可がなかったか、パス名へ到達するまでの
+ディレクトリのいずれかに対する検索許可がなかった。
+(<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7) も参照のこと)
+<DT><DD>
+(UDP ソケットの場合) ユニキャストアドレスであるかのように、
+ネットワークアドレスやブロードキャストアドレスへの送信が試みられた。
+<DT><B>EAGAIN</B> または <B>EWOULDBLOCK</B><DD>
+
+ソケットが非停止に設定されており、 要求された操作が停止した。 POSIX.1-2001 は、この場合にどちらのエラーを返すことも認めており、 これら
+2 つの定数が同じ値を持つことも求めていない。 したがって、移植性が必要なアプリケーションでは、両方の可能性を 確認すべきである。
+<DT><B>EAGAIN</B><DD>
+(インターネットドメインデータグラムソケットの場合) <I>sockfd</I> が参照するソケットがそれ以前にアドレスにバインドされておらず、
+そのソケットに一時ポートをバインドしようとした際に、 一時ポートとして使用する範囲のポート番号がすべて使用中であった。 <B><A HREF="../man7/ip.7.html">ip</A></B>(7) の
+<I>/proc/sys/net/ipv4/ip_local_port_range</I> の議論を参照のこと。
+<DT><B>EALREADY</B><DD>
+Another Fast Open is in progress.
+<DT><B>EBADF</B><DD>
+<I>sockfd</I> が有効なオープンされたファイルディスクリプターでない。
+<DT><B>ECONNRESET</B><DD>
+接続が接続相手によりリセットされた。
+<DT><B>EDESTADDRREQ</B><DD>
+ソケットが接続型 (connection-mode) ではなく、 かつ送信先のアドレスが設定されていない。
+<DT><B>EFAULT</B><DD>
+ユーザー空間として不正なアドレスがパラメーターとして指定された。
+<DT><B>EINTR</B><DD>
+データが送信される前に、シグナルが発生した。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EINVAL</B><DD>
+不正な引数が渡された。
+<DT><B>EISCONN</B><DD>
+接続型ソケットの接続がすでに確立していたが、受信者が指定されていた。 (現在のところ、この状況では、このエラーが返されるか、
+受信者の指定が無視されるか、のいずれかとなる)
+<DT><B>EMSGSIZE</B><DD>
+
+そのソケット種別 ではソケットに渡されたままの形でメッセージを送信する必要があるが、 メッセージが大き過ぎるため送信することができない。
+<DT><B>ENOBUFS</B><DD>
+ネットワークインターフェースの出力キューが一杯である。 一般的には、一時的な輻輳 (congestion) のためにインターフェースが
+送信を止めていることを意味する。 (通常、Linux ではこのようなことは起こらない。デバイスのキューが
+オーバーフローした場合にはパケットは黙って捨てられる)
+<DT><B>ENOMEM</B><DD>
+メモリーが足りない。
+<DT><B>ENOTCONN</B><DD>
+ソケットが接続されておらず、接続先も指定されていない。
+<DT><B>ENOTSOCK</B><DD>
+ファイルディスクリプター <I>sockfd</I> がソケットを参照していない。
+<DT><B>EOPNOTSUPP</B><DD>
+引数 <I>flags</I> のいくつかのビットが、そのソケット種別では不適切なものである。
+<DT><B>EPIPE</B><DD>
+接続指向のソケットでローカル側が閉じられている。 この場合、 <B>MSG_NOSIGNAL</B> が設定されていなければ、プロセスには <B>SIGPIPE</B>
+も同時に送られる。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+4.4BSD, SVr4, POSIX.1-2001.  (これらのインターフェースは 4.2BSD で最初に登場した)。
+<P>
+
+POSIX.1-2001 には、 <B>MSG_OOB</B> と <B>MSG_EOR</B> フラグだけが記載されている。 POSIX.1-2008 では
+<B>MSG_NOSIGNAL</B> が規格に追加されている。 <B>MSG_CONFIRM</B> フラグは Linux での拡張である。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+
+
+
+
+According to POSIX.1-2001, the <I>msg_controllen</I> field of the <I>msghdr</I>
+structure should be typed as <I>socklen_t</I>, and the <I>msg_iovlen</I> field
+should be typed as <I>int</I>, but glibc currently types both as <I>size_t</I>.
+<P>
+
+<B><A HREF="../man2/sendmmsg.2.html">sendmmsg</A></B>(2)  には、一度の呼び出しでの複数のデータグラムの送信に使用できる
+Linux 固有の システムコールに関する情報が書かれている。
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+Linux は <B>ENOTCONN</B> を返す状況で <B>EPIPE</B> を返すことがある。
+<A NAME="lbAL">&nbsp;</A>
+<H2>例</H2>
+
+<B>sendto</B>()  の利用例が <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)  に記載されている。
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2), <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2), <B><A HREF="../man2/recv.2.html">recv</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/sendfile.2.html">sendfile</A></B>(2),
+<B><A HREF="../man2/sendmmsg.2.html">sendmmsg</A></B>(2), <B><A HREF="../man2/shutdown.2.html">shutdown</A></B>(2), <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3),
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7), <B><A HREF="../man7/ipv6.7.html">ipv6</A></B>(7), <B><A HREF="../man7/socket.7.html">socket</A></B>(7), <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7), <B><A HREF="../man7/udp.7.html">udp</A></B>(7), <B><A HREF="../man7/unix.7.html">unix</A></B>(7)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">フラグ引数</A><DD>
+<DT><A HREF="#lbAF">sendmsg()</A><DD>
+</DL>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">例</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

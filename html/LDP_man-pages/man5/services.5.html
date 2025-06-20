@@ -1,0 +1,170 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SERVICES</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SERVICES</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man5/services.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+services - インターネット ネットワークサービス リスト
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<B>services</B> は、人が分かりやすい形のインターネットサービスの名前と、 それらのサービスに割り当てられたポート番号や
+プロトコル種別の対応関係が書かれているテキストファイルである。 ネットワーク上で動作するプログラムはすべて、 そのサービスに対応するポート番号
+(とプロトコル) を得るために、 このファイルを調べる必要がある。 C ライブラリ関数である <B><A HREF="../man3/getservent.3.html">getservent</A></B>(3),
+<B><A HREF="../man3/getservbyname.3.html">getservbyname</A></B>(3), <B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3), <B><A HREF="../man3/setservent.3.html">setservent</A></B>(3), <B><A HREF="../man3/endservent.3.html">endservent</A></B>(3)
+を利用することで、プログラムはこのファイルを調べることができる。
+<P>
+
+ポート番号は、IANA (Internet Assigned Numbers Authority) によって
+割り当てられており、現在はポート番号を割り当てる際に TCP と UDP の両方のプロトコルを割り当てることになっている。
+そのため、ほとんどのサービスに対して、 たとえ TCP だけのサービスの場合であっても、対応する項目が二つあることになる。
+<P>
+
+1024 より小さいポート番号 (いわゆる &quot;low numbered&quot; ポート) は 管理者 (root) 権限によってのみ使用することができる
+(<B><A HREF="../man2/bind.2.html">bind</A></B>(2), <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7), <B><A HREF="../man7/udp.7.html">udp</A></B>(7)  参照)。 これは、これらのポートに接続するクライアントに対して、
+そのポートで動いているサービスが標準的な実装であり、 その計算機のユーザーが動かしている 不正なサービスではないことを保証するためである。 IANA
+に明記されているよく使用されるポート番号は、 通常このような管理者だけが使用できる範囲に配置される。
+<P>
+
+<B>services</B> ファイルにあるサービスに対する項目があっても、必ずしもそのサービスが現
+在その計算機で動いている訳ではない。利用可能なインターネットサービスの設定に ついては <B>inetd.conf</B>(5)
+に記述されている。ただし、すべてのサービスが <B><A HREF="../../netkit/man8/inetd.8.html">inetd</A></B>(8)  によって起動されるわけではないので、 <B>inetd.conf</B>(5)
+には書かれていないサービスもあることに注意する必要がある。 特に、ネットニュース (NNTP) や メール (SMTP) のサーバーは、システム起動時の
+スクリプトから起動されることが多い。
+<P>
+
+<B>services</B> ファイルの場所は、 <I>&lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</I> 中の <B>_PATH_SERVICES</B> によって定義されている。
+この値は通常 <I>/etc/services</I> に設定されている。
+<P>
+
+1 行につき 1 サービスが記述されており、以下の形式である。
+<DL COMPACT>
+<DT><DD>
+<I>service-name&nbsp;&nbsp;&nbsp;port</I><B>/</B><I>protocol&nbsp;&nbsp;&nbsp;</I>[<I>aliases ...</I>]
+<DT>各項目は以下の通り。<DD>
+<DT><I>service-name</I><DD>
+サービスを表す分かりやすい名前であり、検索の際にも使用される。 大文字と小文字は区別される。 クライアントプログラムは <I>service-name</I>
+にちなんで名付けられることが多い。
+<DT><I>port</I><DD>
+サービスに対して使用されるポート番号。10 進数で指定する。
+<DT><I>protocol</I><DD>
+使用されるプロトコルの種類。この欄は、 <B><A HREF="../man5/protocols.5.html">protocols</A></B>(5)  ファイルの中の項目と一致している必要がある。 通常使用される値は、
+<B>tcp</B> と <B>udp</B> である。
+<DT><I>aliases</I><DD>
+サービスに対する別名のリスト (区切はスペースまたはタブ) で、この欄は 必要にならば書くことができる。 また、別名は大文字と小文字は区別される。
+</DL>
+<P>
+
+それぞれの欄の区切りには、スペースまたはタブが使用される。
+<P>
+
+コメントはシャープ (#) で始まり、その行の終わりまでがコメントとみなされる。 空行は飛ばされる。
+<P>
+
+行の始めのスペースは無視されないので、 <I>service-name</I> は、行頭から書かなければならない。 <I>service-names</I>
+は、スペースとタブ以外の印字可能な文字なら何でもよいが、しかしながら 互換性の問題を少なくするような文字を選択すべきである。 例えば、a-z 、0-9
+、ハイフォン (-) を使用するのが無難と思われる。
+<P>
+
+指定された形式に合わない行はあってはならない (現在は、そのような行は <B><A HREF="../man3/getservent.3.html">getservent</A></B>(3), <B><A HREF="../man3/getservbyname.3.html">getservbyname</A></B>(3),
+<B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3)  によって無視される。しかし、その場合の挙動は信頼できない)。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+このファイルは Yellow Pages/NIS や BIND/Hesiod
+のようなネットワーク上の名前サービスを用いて、ネットワークを通じて配布される可能性もある。
+<P>
+
+<B>services</B> ファイルの見本を以下に示す。
+<P>
+
+
+
+netstat         15/tcp
+qotd            17/tcp          quote
+msp             18/tcp          # message send protocol
+msp             18/udp          # message send protocol
+chargen         19/tcp          ttytst source
+chargen         19/udp          ttytst source
+ftp             21/tcp
+# 22 - unassigned
+telnet          23/tcp
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/etc/services</I><DD>
+インターネット ネットワークサービスのリスト
+<DT><I>&lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</I><DD>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>_PATH_SERVICES</B> の定義
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/listen.2.html">listen</A></B>(2), <B><A HREF="../man3/endservent.3.html">endservent</A></B>(3), <B><A HREF="../man3/getservbyname.3.html">getservbyname</A></B>(3), <B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3),
+<B><A HREF="../man3/getservent.3.html">getservent</A></B>(3), <B><A HREF="../man3/setservent.3.html">setservent</A></B>(3), <B>inetd.conf</B>(5), <B><A HREF="../man5/protocols.5.html">protocols</A></B>(5),
+<B><A HREF="../../netkit/man8/inetd.8.html">inetd</A></B>(8)
+<P>
+
+ポート番号の割り当てを定めている RFC (最新版は RFC&nbsp;1700、別名 STD0002)
+<A NAME="lbAF">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">ファイル</A><DD>
+<DT><A HREF="#lbAE">関連項目</A><DD>
+<DT><A HREF="#lbAF">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

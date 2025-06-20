@@ -1,0 +1,167 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ypbind</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ypbind</H1>
+Section: Maintenance Commands (8)<BR>Updated: April 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/ypbind-mt/release/man8/ypbind.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ypbind - NIS バインドプロセス
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>ypbind</B> [ <B>-c</B> ] [ <B>-d</B>|<B>-debug</B> ] [ <B>-broadcast</B> ] [
+<B>-broken-server</B> ] [ <B>-ypset</B> ] [ <B>-ypsetme</B> ] [ <B>-no-ping</B> ] [ <B>-f</B>
+configfile ]
+<P>
+
+<B>ypbind</B> <B>--version</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>ypbind</B> は NIS ドメインのサーバを探して接続し、その NIS バインド情報を 保持する。クライアント (通常は標準 C ライブラリの
+NIS ルーチン)  は <B>ypbind</B> への RPC を用いて、あるいはバインドファイルを読むことによって
+この情報を入手することができる。バインドファイルは <B>/var/yp/binding</B> に置かれており、慣習にしたがって
+<B>[domainname].[version]</B> のような名前が付けられている。 サポートされているバージョンは 1 と 2 である。
+このようなファイルが複数存在することもあり得る。なぜなら NIS クライアントは複数のドメインにバインドすることもできるからである。
+<P>
+
+バインドが確立すると、 <B>ypbind</B> は YPPROC_DOMAIN リクエストを 20 秒間隔で現在の NIS サーバに送信する。
+返信が返ってこなかったり、NIS サーバから「当該ドメインの情報はもう 保持していない」旨の返信が来た場合には、 <B>ypbind</B> は新しい NIS
+サーバを探す。 <B>ypbind</B> は 15 分ごとに、 現在の NIS サーバがもっとも高速であるかどうかのチェックを行う。
+もしより高速なサーバがあれば、そちらに接続を切り替える。 新しいサーバを探すときには、 <B>ypbind</B>
+にネットワークブロードキャストを用いるようにさせることも できるし (これは安全でない)、または安全なことがわかっている
+サーバのリストを与え、その中から探すようにさせることもできる。 後者の場合は、 <B>ypbind</B> はすべてのサーバに ping
+を送り、最初に答えたサーバにバインドする。
+<P>
+
+<B>-debug</B> オプションが指定されなかった場合は、 <B>ypbind</B> は自分自身を制御端末から分離してバックグラウンドへ置く。
+<B>ypbind</B> はエラーや警告メッセージの記録に <B><A HREF="../../LDP_man-pages/man3/syslog.3.html">syslog</A></B>(3)  を用いる。 起動時や SIGHUP シグナルを受け取ると、
+<B>ypbind</B> は <B>/etc/yp.conf</B> ファイルをパースして、そのエントリを用いて最初のバインドを
+行おうとする。有効なエントリは以下のようなものである。
+<P>
+<B>domain</B> <I>nisdomain</I> <B>server</B> <I>hostname</I>
+<DL COMPACT><DT><DD>
+ドメイン <I>nisdomain</I> の情報をサーバー <I>hostname</I> から取得する。 この指定は、一つのドメインに対して複数回行ってかまわない。
+</DL>
+
+<P>
+<B>domain</B> <I>nisdomain</I> <B>broadcast</B>
+<DL COMPACT><DT><DD>
+ドメイン <I>nisdomain</I> に対してはローカルネットにブロードキャストを行う。
+</DL>
+
+<P>
+<B>ypserver</B> <I>hostname</I>
+<DL COMPACT><DT><DD>
+ローカルドメインの情報をサーバー <I>server</I> から取得する。
+</DL>
+
+<P>
+設定ファイルに broadcast エントリがあった場合は、 ypserver/hostname エントリは上書きされる。 boradcast
+エントリがなかった場合は、その他の エントリで与えられたサーバ全てがダウンしている場合でも、 <B>ypbind</B> はブロードキャストは<B>用いない</B>。
+<B>ypbind</B> が <B>/etc/yp.conf</B> で与えられたホスト名の解決をする際には、まず <B>/etc/hosts</B> を試し、次に
+<B>DNS</B> を用いようとする。 <B>ypbind</B> は検索順序の再設定ができない場合には、 <B>DNS</B> だけを用いる。 <B>DNS</B>
+が使えない場合には、 <B>/etc/hosts</B> に IP アドレスの書かれているホストしか指定できない。 <B>ypbind</B>
+で検索順序の再設定をするためには glibc 2.x が必要である。 <B>-boradcast</B> オプションが指定された場合には、 <B>ypbind</B>
+は設定ファイルを無視する。 設定ファイルが存在しなかったり、有効なエントリがひとつもなかった 場合には、 <B>ypbind</B> は終了する。
+<P>
+
+この <B>ypbind</B> は <B>pthreads</B> を用いた特殊なバージョンである。この <B>ypbind</B> は 2
+つのスレッドを新たに生成する。マスタープロセスは バインド情報を尋ねてくる RPC リクエストにサービスする。
+最初のスレッドはバインドを初期化して、それを定期的にチェックする。 障害が起こった場合にはバインドは無効となり、このプロセスは
+有効なサーバを再び見つけようとする。二つめのスレッドは すべてのシグナルを処理する。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-broadcast</B><DD>
+適切な NIS サーバにバインドするために必要な情報を収集するため、 ブロードキャストを送る。このオプションを指定すると <B>/etc/yp.conf</B>
+は無視される。
+<DT><B>-ypset</B><DD>
+任意のリモートマシンから、 <B><A HREF="../../yp-tools/man8/ypset.8.html">ypset</A></B>(8)  を用いてドメインに対するバインドを変更する許可を <B>root</B>
+に与える。デフォルトではバインドを変更することは誰にもできない。 このオプションは非常に危険である。ドメインに対するバインドを
+変更すると、認識していたそのドメインのサーバを全て忘れてしまう。 もしその新しいサーバがダウンした場合には、 <B>ypbind</B>
+は古い検索リストを用いることになる。
+<DT><B>-ypsetme</B><DD>
+<B>-ypset</B> と同じだが、ローカルマシンの <B>root</B> だけがバインドを変更できる。そのような要求は <B>loopback</B>
+からのみ許される。
+<DT><B>-c</B><DD>
+設定ファイルに文法エラーがないかどうかをチェックして、 そのまま単に終了する。
+<DT><B>-debug</B><DD>
+<B>ypbind</B> をデバッグモードで起動する。 <B>ypbind</B> は自身をバックグラウンドに送らず、エラーメッセージと
+デバッグ出力を標準エラー出力に書き出す。
+<DT><B>-broken-server</B><DD>
+正しくないポート番号で動作しているサーバからの返事を受け取る。 これは通常用いるべきでないが、 <B><A HREF="../../ypserv/man8/ypserv.8.html">ypserv</A></B>(8)
+のバージョンによっては必要とされることもある。
+<DT><B>-no-ping</B><DD>
+バインドが持続しているかをチェックしない。 このオプションはダイアルアップ接続の場合に便利である。 <B>ypbind</B>
+のみによる不必要な接続を切ったり、オートダイアルをしないようにできる。
+<DT><B>-f</B> configfile<DD>
+<B>/etc/yp.conf</B> の代わりに <B>configfile</B> を用いる。
+<DT><B>--version</B><DD>
+バージョン番号を表示する。
+</DL>
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>注意</H2>
+
+複数ドメインへのバインドもテストされており、動作する。 単一ドメインにおける複数サーバへの負荷分散はサポートされていない。 <B>ypbind</B>
+は常にドメインをサーバへバインドしようとする。 リストに有効なサーバがない場合や、ブロードキャストに対する
+反応がない場合には、ドメインへのバインドは解除される。
+<P>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><B>/etc/yp.conf</B><DD>
+設定ファイル。
+<DT><B>/var/yp/binding/[domainname].[version]</B><DD>
+各々の NIS ドメインに関する情報を含むバインドファイル。
+<DT><B>/var/run/ypbind.pid</B><DD>
+現在動作している <B>ypbind</B> マスタープロセスのプロセス id が書かれているファイル。
+</DL>
+<P>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../LDP_man-pages/man3/syslog.3.html">syslog</A></B>(3), <B><A HREF="../../net-tools/man1/domainname.1.html">domainname</A></B>(1), <B><A HREF="../../yp-tools/man8/ypdomainname.8.html">ypdomainname</A></B>(8), <B><A HREF="../../yp-tools/man1/ypwhich.1.html">ypwhich</A></B>(1),
+<B><A HREF="../../ypserv/man8/ypserv.8.html">ypserv</A></B>(8), <B><A HREF="../../yp-tools/man8/ypset.8.html">ypset</A></B>(8)
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>作者</H2>
+
+<B>ypbind-mt</B> は Thorsten Kukuk &lt;<A HREF="mailto:kukuk@suse.de">kukuk@suse.de</A>&gt; によって書かれた。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">注意</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">作者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:51 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,1961 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of EBTABLES</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>EBTABLES</H1>
+Section: Maintenance Commands (8)<BR>Updated: December 2011<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/ebtables/release/man8/ebtables-legacy.8">roff page</A><HR>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ebtables-legacy (2.0.11@) - Ethernet bridge frame table の管理 (legacy)
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>ebtables </B>[<B>-t</B> table ] <B>-</B>[<B>ACDI</B>] chain rule specification [match extensions] [watcher extensions] target
+
+<BR>
+
+<B>ebtables </B>[<B>-t</B> table ] <B>-P</B> chain <B>ACCEPT</B> | <B>DROP</B> | <B>RETURN</B>
+
+<BR>
+
+<B>ebtables </B>[<B>-t</B> table ] <B>-F</B> [chain]
+
+<BR>
+
+<B>ebtables </B>[<B>-t</B> table ] <B>-Z</B> [chain]
+
+<BR>
+
+<B>ebtables </B>[<B>-t</B> table ] <B>-L</B> [<B>-Z</B>] [chain] [ [<B>--Ln</B>] | [--Lx<B>] ] [</B>--Lc<B>] [</B>--Lmac2<B>]</B>
+
+<BR>
+
+<B>ebtables </B>[<B>-t</B> table ] <B>-N</B> chain [<B>-P ACCEPT </B>|<B> DROP </B>|<B> RETURN</B>]
+
+<BR>
+
+<B>ebtables </B>[<B>-t</B> table ] <B>-X</B> [chain]
+
+<BR>
+
+<B>ebtables </B>[<B>-t</B> table ] <B>-E</B> old-chain-name new-chain-name
+
+<BR>
+
+<B>ebtables </B>[<B>-t</B> table ] <B>--init-table</B>
+
+<BR>
+
+<B>ebtables </B>[<B>-t</B> table ] [<B>--atomic-file</B> file] <B>--atomic-commit</B>
+
+<BR>
+
+<B>ebtables </B>[<B>-t</B> table ] [<B>--atomic-file</B> file] <B>--atomic-init</B>
+
+<BR>
+
+<B>ebtables </B>[<B>-t</B> table ] [<B>--atomic-file</B> file] <B>--atomic-save</B>
+
+<BR>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>LEGACY</H2>
+
+This tool uses the old xtables/setsockopt framework, and is a legacy version
+of ebtables. That means that a new, more modern tool exists with the same
+functionality using the nf_tables framework and you are encouraged to migrate now.
+The new binaries (known as ebtables-nft and formerly known as ebtables-compat)
+uses the same syntax and semantics than this legacy one.
+<P>
+You can still use this legacy tool. You should probably get some specific
+information from your Linux distribution or vendor.
+More docs are available at <A HREF="https://wiki.nftables.org">https://wiki.nftables.org</A>
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+<B>ebtables</B>
+
+は (Linux カーネル内にある) Ethernet フレームの検査ルールを設定管理するプロ
+グラムである。
+<B>iptables</B>
+
+に類似しているが、 Ethernet プロトコルは IP プロトコルよりもずっと単純な
+ので、
+それほど込み入ってはいない。
+<A NAME="lbAF">&nbsp;</A>
+<H3>チェイン</H3>
+
+Linux カーネルには 3 つの ebtables テーブルがあり、各テーブルには
+組み込みチェインがある。
+これらのテーブルを使って、機能ごとに別々のルールセットに分類されている。
+それぞれのルールセットのことをチェインと呼んでいる。
+チェインとは Ethernet フレームにマッチングする順序付きのルールのリスト
+である。
+あるルールが Ethernet フレームにマッチングすると、処理の指定により
+その対象フレームにどういった処理を施すかが決まる。
+処理の指定は「ターゲット」と呼ばれている。現在のルールにマッチングしな
+かった場合は、
+次のルールが検査される。「ターゲット」として、 (ユーザ独自の) 新しいチェ
+インを作ることもできる。
+ユーザ定義チェインを使うと、ルールを線形検索するのと比べてパフォーマンス
+を改善したり、
+管理しやすい構造化されたフィルタリングルールを構成したりできる。
+<A NAME="lbAG">&nbsp;</A>
+<H3>ターゲット</H3>
+
+Ethernet フレームに対するファイアウォールルール指定や処理は、ターゲット
+と呼ばれる。
+フレームがルールにマッチングしたときにカーネルが次に行う処理は、ターゲッ
+トで指定される。
+ターゲットは次のいずれかの値をとる:
+<B>ACCEPT</B>,
+
+<B>DROP</B>,
+
+<B>CONTINUE</B>,
+
+<B>RETURN</B>,
+
+<BR>&nbsp;'extension'&nbsp;の&nbsp;1&nbsp;つ&nbsp;(後述)&nbsp;あるいはユーザ定義チェインへのジャンプ。
+<P>
+
+<B>ACCEPT</B>
+
+はフレームを通過させることを意味する。
+<B>DROP</B>
+
+はフレームを破棄することを意味する。
+<B>BROUTING</B>
+
+チェイン内では、
+<B>ACCEPT</B>
+
+と
+<B>DROP</B>
+
+は異なる意味を持つ
+(<B>-t</B>
+
+オプションで表示される情報を参照すること) 。
+<B>CONTINUE</B>
+
+は次のルールをチェックすることを意味する。このターゲットは、例えば、
+ある地点を通過したフレームの数を数えたり、ログを取ったり、
+フレームに複数のターゲットを適用するのに便利である。
+<B>RETURN</B>
+
+はそのチェインの探索を打ち切り、前の (呼び出し元の) チェインの次のルールから
+再開することを意味する。
+target extension については、この man ページの
+<B>TARGET EXTENSION</B>
+
+セクションを参照すること。
+<A NAME="lbAH">&nbsp;</A>
+<H3>テーブル</H3>
+
+前述のとおり Linux カーネルには 3 つの ebtables テーブルがある。
+<B>filter</B>,
+
+<B>nat</B>,
+
+<B>broute</B>
+
+という名前がついている。これら 3 つのテーブルのうち、filter
+テーブルがコマンドのデフォルトのテーブルである。つまり filter
+テーブルについては ebtables の '-t filter' 引数を省略できる。その他 2 つ
+のテーブルについては
+-t 引数が必要である。また -t 引数を使う際は、 ebtables コマンドの最初の
+引数でなければならない。
+<DL COMPACT>
+<DT><B>-t, --table</B>
+
+<DD>
+<BR>
+
+<B>filter</B>
+
+がデフォルトのテーブルで、3 つの組み込みチェインがある:
+<B>INPUT</B>
+
+(送信先 MAC アドレスのレベルでブリッジ自身に送られたフレームに対してマッチする),
+<B>OUTPUT</B>
+
+(local で生成された、あるいは (b)route されたフレームに対してマッチする) と
+<B>FORWARD</B>
+
+(ブリッジで転送されるフレームに対してマッチする) である。
+<BR>
+
+<BR>
+
+<B>nat</B>
+
+は MAC アドレスを変更するために使われるもので、3 つの組み込みチェインが
+ある。
+<B>PREROUTING</B>
+
+(フレームが入ってきた時点で変更するため),
+<B>OUTPUT</B>
+
+(local で生成された、あるいは (b)route されたフレームをブリッジする前に
+変更するため) と
+<B>POSTROUTING</B>
+
+(フレームが出力される時点で変更するため) である。PREROUTING と POSTROUTING
+の名称については、より正確には PREFORWARDING, POSTFORWARDING と呼ばれる
+べきものだが、
+iptables と ebtables の用語を合わせたほうが簡単だということで、このよう
+になっている。
+もしこのデフォルトの名称が気に入らない場合は、
+(<B>-E</B>
+
+オプションで) 変更できる。
+<BR>
+
+<BR>
+
+<B>broute</B>
+
+で brouter を作ることができて、このテーブルには
+<B>BROUTING</B>
+
+という組み込みチェインが 1 つだけある。
+<B>DROP</B>
+
+と
+<B>ACCEPT</B>
+
+ターゲットは broute テーブル内では特殊な意味を持っている (実装を単純化す
+るために、
+説明的な名称をあえて使っていない) 。
+<B>DROP</B>
+
+はフレームが route されることを意味し、
+<B>ACCEPT</B>
+
+はフレームがブリッジされることを意味する。
+<B>BROUTING</B>
+
+チェインは、とても早い段階で検査される。
+ただしブリッジポートに入ってきて転送状態になっているフレームについてのみ
+検査される。
+通常これらのフレームはブリッジされるが、ここでその処理を変更できる。
+<B>redirect</B>
+
+ターゲットが便利だ。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>EBTABLES コマンドライン引数</H2>
+
+最初の '-t table' コマンド引数の後に続く引数は、いくつかのグループに分類できる。
+「コマンド」「その他コマンド」「ルール指定 (rule specification) 」
+「match extension」「watch extension」と「target extension」である。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>コマンド</H3>
+
+ebtables コマンドは -t 引数で定義されたテーブルに対して行う処理を指定する。
+-t 引数を使わなかった場合、デフォルトの filter テーブルに適用される。
+一度には 1 つのコマンドしか使えない。
+<B>-L</B>
+
+と
+<B>-Z</B>
+
+の組み合わせ、
+<B>-N</B>
+
+と
+<B>-P</B>
+
+の組み合わせ、あるいは
+<B>--atomic-file</B>
+
+を使ったときは例外として複数のコマンドを使える。
+<DL COMPACT>
+<DT><B>-A, --append</B>
+
+<DD>
+チェインの最後にルールを追加する。
+<DT><B>-D, --delete</B>
+
+<DD>
+チェインから指定したルールを削除する。二通りの使い方がある。一つ目の使い
+方は、ルール番号の範囲を
+(<B>-D</B>
+
+直後に) 指定する方法である。構文: <I>start_nr</I>[<I>:end_nr</I>]
+(<B>-L --Ln</B>
+
+を使ってルール番号を表示できる) <I>end_nr</I> が省略された場合
+は、<I>start_nr</I>
+以降のルールすべてが削除される。負の数も使えるが、詳細は
+<B>-I</B>
+
+引数を参照すること。二つ目の使い方は、追加時と全く同じ完全なルールを使っ
+て指定する方法である。
+合致するルールのうち、一番最初に見つかったもの、つまり最も小さな (正の)
+ルール番号のもののみが削除される。
+<DT><B>-C, --change-counters</B>
+
+<DD>
+チェイン内の指定したルールのカウンタを変更する。二通りの使い方がある。一つ目
+はルール番号の範囲を使って
+(<B>-C</B>
+
+直後に) 指定する方法である。
+構文: <I>start_nr</I>[<I>:end_nr</I>]
+(<B>-L --Ln</B>
+
+を使ってルール番号を表示できる) 詳細は
+<B>-D</B>
+
+と同様である。二つ目の使い方は、追加時と全く同じ完全なルールを使って指定
+する方法である。
+合致するルールのうち、一番最初に見つかったもの、つまり最も小さな (正の)
+ルール番号のカウンタのみが変更される。
+カウンタ値は、一つ目の方法ではルール番号の範囲の直後に指定し、二つ目の方法では
+<B>-C</B>
+
+の直後に指定する。最初にパケットカウンタ値を指定し、次にバイトカウンタ値
+を指定する。
+カウンタ値が '+' で始まっている場合、カウンタ値は現在値にそれぞれ追加し
+た値になる。
+カウンタ値が '-' で始まる場合は、現在値から差し引いた値になる。境界値の
+検査は行われない。
+<BR>&nbsp;'+'&nbsp;や&nbsp;'-'&nbsp;で始まらなかった場合は、指定した値そのものに変更される。
+<DT><B>-I, --insert</B>
+
+<DD>
+指定したルール番号の位置にルールを追加する。ルール番号が未指定の場合、
+チェインの先頭に追加される。ルールが
+<I>N</I>
+
+個あった場合、
+<I>-N</I>
+
+から
+<I>N+1</I>
+
+の間の数を指定できる。正の数
+<I>i</I>
+
+があったとして、
+<I>i</I>
+
+と
+<I>i-N-1</I>
+
+はチェイン上での同じ挿入位置となる。ルール番号 0 はチェインの最後のルー
+ルを示し、
+<B>-A</B>
+
+コマンドを使ったときと同じになる。0 より小さいルール番号は複数のルールを
+一つのチェインに挿入する際に便利である。
+<DT><B>-P, --policy</B>
+
+<DD>
+チェインのポリシーを、指定したターゲットに設定する。ポリシーは
+<B>ACCEPT</B>,
+
+<B>DROP</B>,
+
+<B>RETURN</B>
+
+のいずれかである。
+<DT><B>-F, --flush</B>
+
+<DD>
+指定したチェインを flush する。チェイン指定がない場合、全てのチェインが
+flush される。
+flush ではチェインのポリシーは変更されない。
+<DT><B>-Z, --zero</B>
+
+<DD>
+指定したチェインのカウンタを 0 にする。チェイン指定がない場合、全ての
+チェインでのカウンタが 0 になる。
+<B>-Z</B>
+
+コマンドは
+<B>-L</B>
+
+と組み合わせて使える。
+<B>-Z</B>
+
+と
+<B>-L</B>
+
+を同時に使うと、0 にされる前のカウンタ値が出力される。
+<DT><B>-L, --list</B>
+
+<DD>
+指定したチェインにあるルールリストを出力する。チェイン指定がない場合、
+全てのチェインについてリストが出力される。
+<BR>
+
+<B>-L</B>
+
+コマンドの出力形式には次のオプションがある。
+<BR>
+
+<B>--Ln</B>
+
+<BR>
+
+全てのルールの行頭にルール番号を出力する。
+<B>--Lx</B>
+
+とは組み合わせられない。
+<BR>
+
+<B>--Lc</B>
+
+<BR>
+
+全てのルールの行末にルール番号を出力する。フレームカウンタ値 (pcnt) とバ
+イトカウンタ値 (bcnt)
+の両方が表示される。フレームカウンタ値は、そのルールにマッチングした回数
+を示していて、
+バイトカウンタ値はこれらのフレームのサイズを合計した値となる。
+<B>--Lx</B>
+
+オプションと組み合わせると、カウンタ値は
+<B>-c &lt;pcnt&gt; &lt;bcnt&gt;</B>
+
+の形式で出力される。
+<BR>
+
+<B>--Lx</B>
+
+<BR>
+
+チェインの内容を再構築できるような ebtables コマンドの形式で出力する。
+チェイン指定がない場合、
+(もしあれば) ユーザ定義のチェインを作成するコマンドも含めて、
+テーブル全体を構築できる ebtables コマンドが出力される。
+このコマンドを使って ebtables の起動・再起動スクリプトを作成できる。
+例えばこのコマンドの出力をシステム起動時に使える。
+<B>--Lx</B>
+
+オプションは
+<B>--Ln</B>
+
+オプションと互換性がない。
+<B>--Lx</B>
+
+を
+<B>--Lc</B>
+
+と同時に使うと、カウンタが
+<B>-c &lt;pcnt&gt; &lt;bcnt&gt;</B>
+
+の形式で出力される。
+<BR>
+
+<B>--Lmac2</B>
+
+<BR>
+
+必要に応じてアドレス先頭に 0 パディングして、全 MAC アドレスを同じ長さで表示する。
+デフォルトの表示形式では、アドレス先頭の 0 は省略される。
+<DT><B>-N, --new-chain</B>
+
+<DD>
+指定した名前の新しいユーザ定義チェインを作る。ユーザ定義チェインの個数の
+上限は、
+作り得る名前の数に限られる。ユーザ定義のチェイン名は 31 文字までである。
+ユーザ定義チェインのデフォルトのポリシーは ACCEPT である。
+<B>-P</B>
+
+コマンドを
+<B>-N</B>
+
+コマンドと同時に使うことで新規チェインのポリシーを標準のターゲットと異な
+るもので初期化できる。
+この場合
+<B>-P</B>
+
+コマンドにチェイン名の指定は不要である。
+<DT><B>-X, --delete-chain</B>
+
+<DD>
+ユーザ定義チェインを削除する。対象チェインを参照している (jump してくる)
+ものが残っていてはいけない。
+残っていると ebtables は削除を拒否する。
+チェイン指定がない場合、参照されていない全てのユーザ定義チェインが削除される。
+<DT><B>-E, --rename-chain</B>
+
+<DD>
+指定したチェインを新しい名前に変更する。ユーザ定義チェインの名前を変更で
+きるのはもちろんのこと、
+標準チェインの名前を好きなものに変更することもできる。例えば PREROUTING ではなく
+PREFORWARDING にしたい場合、-E コマンドで PREROUTING チェインの名前を変更できる。
+標準チェインの名前を変更していたら、ebtables メーリングリストに投稿する際には、
+そのことについて言及すること。この ebtables 標準チェインの名称変更では、
+カーネル ebtables テーブルの構造は影響を受けない。
+<DT><B>--init-table</B>
+
+<DD>
+現在のテーブルデータを初期テーブルデータで置き換える。
+<DT><B>--atomic-init</B>
+
+<DD>
+テーブルのカーネルの初期データを指定したファイルにコピーする。
+ルールがファイルに追加された後の最初の処理にできる。ファイル名は
+<B>--atomic-file</B>
+
+コマンドを使った指定か、あるいは
+<I>EBTABLES_ATOMIC_FILE</I>
+
+環境変数で指定できる。
+<DT><B>--atomic-save</B>
+
+<DD>
+カーネルの現在のテーブルデータを指定したファイルにコピーする。
+ルールがファイルに追加された後の最初の処理にできる。ファイル名は
+<B>--atomic-file</B>
+
+コマンドを使った指定か、あるいは
+<I>EBTABLES_ATOMIC_FILE</I>
+
+環境変数で指定できる。
+<DT><B>--atomic-commit</B>
+
+<DD>
+カーネルテーブルデータを指定したファイルにあるデータで置き換える。ある
+テーブルの全ルールを
+カーネルに一度にロードし、カーネル時間を大幅に節約しつつもアトミックなテー
+ブルの更新を行うことができるので、
+便利なコマンドである。テーブルデータが入っているファイルは
+<B>--atomic-init</B>
+
+や
+<B>--atomic-save</B>
+
+コマンドで出力した起動ファイルで構成する。その後
+<B>--atomic-file</B>
+
+コマンドでルールを構成したり
+<I>EBTABLES_ATOMIC_FILE</I>
+
+環境変数を使うことで、ファイルを拡張したりして完全なテーブルを組み上げた
+後にカーネルに登録できる。
+このコマンドは boot スクリプトで ebtables を高速に組み上げるのに大変便利である。
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H3>その他コマンド</H3>
+
+<DL COMPACT>
+<DT><B>-V, --version</B>
+
+<DD>
+ebtables ユーザスペースプログラムのバージョンを表示する。
+<DT><B>-h, --help </B>[<I>list of module names</I>]
+
+<DD>
+コマンドの構文についての簡単な説明を出力する。extension の名前を指定する
+こともできて、そうすると
+ebtables はこれらの extension のヘルプを表示する。例えば
+<I>ebtables -h snat log ip arp</I>
+
+である。
+<I>list_extensions</I>
+
+と指定すると、ユーザスペースユーティリティでサポートされている全
+extension を出力する。
+<DT><B>-j, --jump </B><I>target</I>
+
+<DD>
+ルールのターゲットである。これは次のいずれかの値をとる:
+<B>ACCEPT</B>,
+
+<B>DROP</B>,
+
+<B>CONTINUE</B>,
+
+<B>RETURN</B>,
+
+target extension
+(<B>TARGET EXTENSION</B>
+
+を参照すること) あるいはユーザ定義チェイン名。
+<DT><B>--atomic-file </B><I>file</I>
+
+<DD>
+指定したファイルに対してコマンドを実行する。
+操作対象のテーブルのデータはファイルから読み取って構築し、操作した結果は
+再びファイルに書き戻される。
+指定する際はコマンド指定の前に置くべきである。他のやり方としては、
+<I>EBTABLES_ATOMIC_FILE</I>
+
+環境変数を使う方法がある。
+<DT><B>-M, --modprobe </B><I>program</I>
+
+<DD>
+カーネルとやり取りする際に、指定した
+<I>program</I>
+
+がロードされていないカーネルモジュールを自動的にロードするようにする。
+<DT><B>--concurrent</B>
+
+<DD>
+ebtables カーネルテーブルを更新するスクリプトが同時に複数実行されても
+大丈夫なように、ファイルロックを使用する。
+<P>
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H3>ルール指定</H3>
+
+ルール指定は次のコマンドライン引数で (追加、削除のコマンドで使うことで)
+構築される。
+&quot;!&quot; オプションを指定の前につけると、その否定の意味になる。
+下記の標準ルール指定の他にもいくつか興味深い引数がある。
+<B>MATCH EXTENSION</B>
+
+と
+<B>WATCHER EXTENSION</B>
+
+を参照すること。
+<DL COMPACT>
+<DT><B>-p, --protocol </B>[!] <I>protocol</I>
+
+<DD>
+フレームを構成しているプロトコル。
+<I>0x0600</I>
+
+より大きい hex の数値か、名前 (例えば
+<I>ARP</I>)、
+
+<B>LENGTH</B>
+
+を指定できる。(802.2/802.3ネットワークにおいては) Ethernet フレームのプ
+ロトコルフィールドは、
+ヘッダの長さを表すこともできる。値が
+<I>0x0600</I>
+
+より小さいか等しいときは、その値はヘッダサイズと等しく、プロトコル番号と
+して扱ってはいけない。
+そのかわり、プロトコルフィールドが長さフィールドとして使われている全ての
+フレームは、同じ 'protocol' として扱われる。
+ebtables では、これらのフレームのプロトコルを表す名前は
+<B>LENGTH</B>
+
+である。
+<BR>
+
+<B>/etc/ethertypes</B>
+
+を使って、プロトコルを指定する hex 数値の代わりに可読な文字列を
+指定することができる。例えば
+<I>0x0800</I>
+
+は
+<I>IPV4</I>
+
+で表現できる。このファイルでは大文字小文字は区別されない。
+詳細はファイルを参照すること。
+<B>--proto</B>
+
+フラグはこのオプションのエイリアスである。
+<DT><B>-i, --in-interface </B>[!] <I>name</I>
+
+<DD>
+フレームを受信したインターフェース (ブリッジポート) を指定する
+(このオプションは
+<B>INPUT</B>,
+
+<B>FORWARD</B>,
+
+<B>PREROUTING ,</B>
+
+<B>BROUTING</B>
+
+チェインで有効) 。インターフェース名が '+' で終わっている場合、
+その名前で始まる ('+' 自体は除く) インターフェース名全てがマッチングする。
+<B>--in-if</B>
+
+はこのオプションのエイリアスである。
+<DT><B>--logical-in </B>[!] <I>name</I>
+
+<DD>
+will match.
+フレームを受信した (論理的な) ブリッジインターフェースを指定する
+(このオプションは
+<B>INPUT</B>,
+
+<B>FORWARD</B>,
+
+<B>PREROUTING</B>,
+
+<B>BROUTING</B>
+
+チェインで有効) 。インターフェース名が '+' で終わっている場合、
+その名前で始まる ('+' 自体は除く) インターフェース名全てがマッチングする。
+<DT><B>-o, --out-interface </B>[!] <I>name</I>
+
+<DD>
+フレームが送出されるインターフェース (ブリッジポート) を指定する
+(このオプションは
+<B>OUTPUT</B>,
+
+<B>FORWARD</B>,
+
+<B>POSTROUTING</B>
+
+チェインで有効) 。インターフェース名が '+' で終わっている場合、
+その名前で始まる ('+' 自体は除く) インターフェース名全てがマッチングする。
+<B>--out-if</B>
+
+はこのオプションのエイリアスである。
+<DT><B>--logical-out </B>[!] <I>name</I>
+
+<DD>
+フレームが送出される (論理的な) ブリッジインターフェースを指定する
+(このオプションは
+<B>OUTPUT</B>,
+
+<B>FORWARD</B>,
+
+<B>POSTROUTING</B>
+
+チェインで有効) 。インターフェース名が '+' で終わっている場合、
+その名前で始まる ('+' 自体は除く) インターフェース名全てがマッチングする。
+<DT><B>-s, --source </B>[!] <I>address</I>[/<I>mask</I>]
+
+<DD>
+送信元 MAC アドレス。マスクとアドレスの両方とも hex 数値 6 つをコロン区
+切りで記述する。あるいは
+Unicast, Multicast, Broadcast, BGA (Bridge Group Address) も指定できる:
+<BR>
+
+<I>Unicast</I>=00:00:00:00:00:00/01:00:00:00:00:00,
+
+<I>Multicast</I>=01:00:00:00:00:00/01:00:00:00:00:00,
+
+<I>Broadcast</I>=ff:ff:ff:ff:ff:ff/ff:ff:ff:ff:ff:ff,
+
+<I>BGA</I>=01:80:c2:00:00:00/ff:ff:ff:ff:ff:ff
+
+である。ブロードキャストアドレスはマルチキャストアドレスにも
+マッチングする点に注意すること。
+<B>--src</B>
+
+はこのオプションのエイリアスである。
+<DT><B>-d, --destination </B>[!] <I>address</I>[/<I>mask</I>]
+
+<DD>
+送信先 MAC アドレス。MAC アドレスの詳細については
+<B>-s</B>
+
+オプションを参照すること。
+<B>--dst</B>
+
+フラグはこのオプションのエイリアスである。
+<DT><B>-c, --set-counter </B><I>pcnt bcnt</I>
+
+<DD>
+<B>-A</B>
+
+や
+<B>-I</B>
+
+と組み合わせた場合、新しいルールの
+<I>pcnt</I>,
+
+<I>bcnt</I>
+
+それぞれが指定した値になる。
+<B>-C</B>
+
+や
+<B>-D</B>
+
+コマンドと組み合わせた場合、
+<I>pcnt</I>
+
+と
+<I>bcnt</I>
+
+がパケットカウント値とバイトカウント値と等しいルールのみがマッチングする。
+<P>
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H3>MATCH EXTENSION</H3>
+
+ebtables extension はユーザスペースツールに動的に組み込まれる。iptables
+コマンドで -m オプションを使っていた時のように、明示的にロードする必要はない。
+これらの extension は、ebtables core コードを補足するものとして、
+カーネルモジュールでサポートされている機能を扱っている。
+<A NAME="lbAN">&nbsp;</A>
+<H3>802_3</H3>
+
+802.3 DSAP/SSAP フィールドあるいは SNAP タイプを指定する。プロトコルは
+<I>LENGTH</I>
+
+として指定されていなければならない (上記
+<I>-p</I>
+
+オプションを参照) 。
+<DL COMPACT>
+<DT><B>--802_3-sap </B>[!] <I>sap</I>
+
+<DD>
+DSAP と SSAP は 802.3 中の 2 つの 1 バイトフィールドである。これらのバイ
+トは常に同じなので、
+1 バイト (hex 数値で) の指定のみ必要である。
+<DT><B>--802_3-type </B>[!] <I>type</I>
+
+<DD>
+802.3 DSAP と SSAP の値が 0xaa の場合、SNAP タイプフィールドがペイロード
+プロトコルを決定する。
+これは 2 つの 1 バイト引数である (hex 数値で) 。802.3 DSAP/SSAP 0xaa フ
+レームのみが検査される。
+</DL>
+<A NAME="lbAO">&nbsp;</A>
+<H3>among</H3>
+
+MAC アドレスあるいは MAC/IP アドレスの組に対して、 MAC アドレスあるいは
+MAC/IP アドレスの組のリストをマッチングさせる。
+リストのエントリは
+<I>xx:xx:xx:xx:xx:xx[=ip.ip.ip.ip][,]</I>
+
+の書式で指定する。
+リストのエントリはコンマで区切る。
+IP アドレスを MAC アドレスと組み合わせるのはオプションである。
+同一 MAC アドレスで IP アドレスが異なるという複数の MAC/IP アドレスの組を登録
+しても構わない。
+MAC アドレスがリストのどのエントリともマッチングしなかった場合、
+フレームはそのルールにマッチングしなかったことになる
+(&quot;!&quot; が使われていない場合) 。
+<DL COMPACT>
+<DT><B>--among-dst </B>[!] <I>list</I>
+
+<DD>
+送信先 MAC とリストを比較する。もし Ethernet フレームが
+<I>IPv4</I>
+
+あるいは
+<I>ARP</I>
+
+であれば、リスト中にある送信先 MAC/IP アドレスペアとの比較も可能である。
+<DT><B>--among-src </B>[!] <I>list</I>
+
+<DD>
+送信元 MAC とリストを比較する。もし Ethernet フレームが
+<I>IPv4</I>
+
+あるいは
+<I>ARP</I>
+
+であれば、リストにある送信元 MAC/IP アドレスペアとの比較も可能である。
+<DT><B>--among-dst-file </B>[!] <I>file</I>
+
+<DD>
+<B>--among-dst</B>
+
+と同様だが、指定したファイルからリストを読み込む。
+<DT><B>--among-src-file </B>[!] <I>file</I>
+
+<DD>
+<B>--among-src</B>
+
+と同様だが、指定したファイルからリストを読み込む。
+</DL>
+<A NAME="lbAP">&nbsp;</A>
+<H3>arp</H3>
+
+(R)ARP フィールドを指定する。プロトコルは
+<I>ARP</I>
+
+あるいは
+<I>RARP</I>
+
+でなければならない。
+<DL COMPACT>
+<DT><B>--arp-opcode </B>[!] <I>opcode</I>
+
+<DD>
+(R)ARP opcode (10 進数か文字列。詳細は
+<B>ebtables -h arp</B>
+
+参照すること)
+<DT><B>--arp-htype </B>[!] <I>hardware type</I>
+
+<DD>
+ハードウェアタイプで、10 進数か文字列
+<I>Ethernet</I>
+
+(<I>type</I>
+
+1 になる)。ほとんどの (R)ARP パケットではハードウェアタイプが Ethernet
+になる。
+<DT><B>--arp-ptype </B>[!] <I>protocol type</I>
+
+<DD>
+(R)ARP で使われているプロトコルタイプ (hex あるいは 0x0800 を意味する文字列
+<I>IPv4</I>)。
+
+ほとんどの (R)ARP パケットではプロトコルタイプは IPv4 になる。
+<DT><B>--arp-ip-src </B>[!] <I>address</I>[/<I>mask</I>]
+
+<DD>
+(R)ARP 送信元 IP アドレス指定。
+<DT><B>--arp-ip-dst </B>[!] <I>address</I>[/<I>mask</I>]
+
+<DD>
+(R)ARP 送信先 IP アドレス指定。
+<DT><B>--arp-mac-src </B>[!] <I>address</I>[/<I>mask</I>]
+
+<DD>
+(R)ARP 送信元 MAC アドレス指定。
+<DT><B>--arp-mac-dst </B>[!] <I>address</I>[/<I>mask</I>]
+
+<DD>
+(R)ARP 送信先 MAC アドレス指定。
+<DT><B></B>[!]<B> --arp-gratuitous</B>
+
+<DD>
+ARP gratuitous パケットを検査する: ARP ヘッダ中の送信元 IPv4 アドレスと
+送信先
+IPv4 アドレスが等しいものを検査する。
+</DL>
+<A NAME="lbAQ">&nbsp;</A>
+<H3>ip</H3>
+
+IPv4 フィールドを指定する。プロトコルは
+<I>IPv4</I>
+
+でなければならない。
+<DL COMPACT>
+<DT><B>--ip-source </B>[!] <I>address</I>[/<I>mask</I>]
+
+<DD>
+送信元 IP アドレス。
+<B>--ip-src</B>
+
+フラグはこのオプションのエイリアスである。
+<DT><B>--ip-destination </B>[!] <I>address</I>[/<I>mask</I>]
+
+<DD>
+<B>--ip-dst</B>
+
+送信先 IP アドレス。
+<B>--ip-dst</B>
+
+フラグはこのオプションのエイリアスである。
+<DT><B>--ip-tos </B>[!] <I>tos</I>
+
+<DD>
+IP サービスタイプを、hex 表記の数値で。
+<B>IPv4</B>
+
+のものである。
+<DT><B>--ip-protocol </B>[!] <I>protocol</I>
+
+<DD>
+IP プロトコル。
+<B>--ip-proto</B>
+
+フラグはこのオプションのエイリアスである。
+<DT><B>--ip-source-port </B>[!] <I>port1</I>[:<I>port2</I>]
+
+<DD>
+IP プロトコル 6 (TCP), 17 (UDP), 33 (DCCP), 132 (SCTP) における、送信元
+ポートあるいはポートの範囲。
+<B>--ip-protocol</B>
+
+オプションで
+<I>TCP</I>,
+
+<I>UDP</I>,
+
+<I>DCCP</I>,
+
+<I>SCTP</I>
+
+のいずれかが指定されていなければならない。
+<I>port1</I>
+
+が省略された場合は
+<I>0:port2</I>
+
+が使われる。
+<I>port2</I>
+
+が省略されたがコロンが指定された場合は
+<I>port1:65535</I>
+
+が使われる。
+<B>--ip-sport</B>
+
+フラグはこのオプションのエイリアスである。
+<DT><B>--ip-destination-port </B>[!] <I>port1</I>[:<I>port2</I>]
+
+<DD>
+IP プロトコル 6 (TCP), 17 (UDP), 33 (DCCP), 132 (SCTP) における、送信先
+ポートあるいはポートの範囲。
+<B>--ip-protocol</B>
+
+オプションで
+<I>TCP</I>,
+
+<I>UDP</I>,
+
+<I>DCCP</I>,
+
+<I>SCTP</I>
+
+のいずれかが指定されていなければならない。
+<I>port1</I>
+
+が省略された場合は
+<I>0:port2</I>
+
+が使われる。
+<I>port2</I>
+
+が省略されたがコロンが指定された場合は
+<I>port1:65535</I>
+
+が使われる。
+<B>--ip-dport</B>
+
+フラグはこのオプションのエイリアスである。
+</DL>
+<A NAME="lbAR">&nbsp;</A>
+<H3>ip6</H3>
+
+IPv6 のフィールドを指定する。プロトコルは
+<I>IPv6</I>
+
+でなければならない。
+<DL COMPACT>
+<DT><B>--ip6-source </B>[!] <I>address</I>[/<I>mask</I>]
+
+<DD>
+送信元 IPv6 アドレス。
+<B>--ipv6-src</B>
+
+フラグはこのオプションのエイリアスである。
+<DT><B>--ip6-destination </B>[!] <I>address</I>[/<I>mask</I>]
+
+<DD>
+送信先 IPv6 アドレス。
+<B>--ipv6-dst</B>
+
+フラグはこのオプションのエイリアスである。
+<DT><B>--ip6-tclass </B>[!] <I>tclass</I>
+
+<DD>
+IPv6 トラフィッククラスを hex 表記の数値で。
+<DT><B>--ip6-protocol </B>[!] <I>protocol</I>
+
+<DD>
+IP プロトコル。
+<B>--ip6-proto</B>
+
+フラグはこのオプションのエイリアスである。
+<DT><B>--ip6-source-port </B>[!] <I>port1</I>[:<I>port2</I>]
+
+<DD>
+IP プロトコル 6 (TCP), 17 (UDP), 33 (DCCP), 132 (SCTP) における、送信元
+ポートあるいはポートの範囲。
+<B>--ip6-protocol</B>
+
+オプションで
+<I>TCP</I>,
+
+<I>UDP</I>,
+
+<I>DCCP</I>,
+
+<I>SCTP</I>
+
+のいずれかが指定されていなければならない。
+<I>port1</I>
+
+が省略された場合は
+<I>0:port2</I>
+
+が使われる。
+<I>port2</I>
+
+が省略されたがコロンが指定された場合は
+<I>port1:65535</I>
+
+が使われる。
+<B>--ip6-sport</B>
+
+はこのオプションのエイリアスである。
+<DT><B>--ip6-destination-port </B>[!] <I>port1</I>[:<I>port2</I>]
+
+<DD>
+IP プロトコル 6 (TCP), 17 (UDP), 33 (DCCP), 132 (SCTP) における、送信先
+ポートあるいはポートの範囲。
+<B>--ip6-protocol</B>
+
+オプションで
+<I>TCP</I>,
+
+<I>UDP</I>,
+
+<I>DCCP</I>,
+
+<I>SCTP</I>
+
+のいずれかが指定されていなければならない。
+<I>port1</I>
+
+が省略された場合は
+<I>0:port2</I>
+
+が使われる。
+<I>port2</I>
+
+が省略されたがコロンが指定された場合は
+<I>port1:65535</I>
+
+が使われる。
+<B>--ip6-sport</B>
+
+フラグはこのオプションのエイリアスである。
+<DT><B>--ip6-icmp-type </B>[!]
+
+<DD>
+{<I>type</I>[:<I>type</I>]/<I>code</I>[:<I>code</I>]|<I>typename</I>}&quot;
+マッチングさせる ipv6-icmp タイプとコード。タイプとコードのどちらも範囲
+指定できる。
+タイプとコードはスラッシュで区切る。
+タイプとコードとして有効な数値は 0 から 255 の範囲である。
+あるタイプのすべてのコードにマッチングさせるには、数値の代わりにシンボル
+名を使って指定することもできる。
+既知のタイプ名については次のコマンドでリストが表示される。
+<PRE>
+  ebtables --help ip6
+</PRE>
+
+このオプションは --ip6-protocol ipv6-icmp についてのみ有効である。
+</DL>
+<A NAME="lbAS">&nbsp;</A>
+<H3>limit</H3>
+
+このモジュールは token bucket フィルタを使って、マッチングにレートリミッ
+トを付ける。この
+extension を使っているルールは、リミットに到達するまではマッチングする。
+例えば
+<B>--log</B>
+
+watcher と組み合わせて使うと、レートリミットのついたロギングを行うことが
+できる。
+iptables における limit マッチングと同様に使える。
+<DL COMPACT>
+<DT><B>--limit </B>[<I>value</I>]
+
+<DD>
+マッチングレート最大平均値: 数値指定で、
+<I>/second</I>,
+
+<I>/minute</I>,
+
+<I>/hour</I>,
+
+<I>day</I>
+
+サフィックスを付けることができる; デフォルト値は
+<I>3/hour</I>
+
+である。
+<DT><B>--limit-burst </B>[<I>number</I>]
+
+<DD>
+マッチングする初期パケット最大値: 上記のリミットに到達しなかった場合、
+毎回指定した数値までリチャージされる; デフォルト値は
+<I>5</I>
+
+である。
+</DL>
+<A NAME="lbAT">&nbsp;</A>
+<H3>mark_m</H3>
+
+<DL COMPACT>
+<DT><B>--mark </B>[!] [<I>value</I>][/<I>mask</I>]
+
+<DD>
+符号なし数値の mark でフレームにマッチングする。
+<I>value</I>
+
+と
+<I>mask</I>
+
+が指定されている場合、フレームの mark 値とユーザ指定の
+<I>mask</I>
+
+値の論理和 (AND) が計算されてから、ユーザ指定の mark
+<I>value</I>
+
+値と比較される。
+<I>value</I>
+
+のみが指定された場合、ユーザ指定の mark
+<I>value</I>
+
+と同一の値の mark を持ったパケットのみがマッチングする。
+<I>mask</I>
+
+のみが指定された場合、フレームの mark 値とユーザ指定の
+<I>mask</I>
+
+値の論理和 (AND) が計算され、結果が非 0 であるフレームがマッチングする。
+<I>mask</I>
+
+のみ指定する方法は、複数の mark 値とマッチングさせるのに便利である。
+</DL>
+<A NAME="lbAU">&nbsp;</A>
+<H3>pkttype</H3>
+
+<DL COMPACT>
+<DT><B>--pkttype-type </B>[!] <I>type</I>
+
+<DD>
+フレームの Ethernet &quot;class&quot; にマッチングし、これは一般的なネットワーク
+コードによって決まる。取りうる値は、
+<I>broadcast</I>
+
+(送信先 MAC アドレスがブロードキャストアドレス),
+<I>multicast</I>
+
+(送信先 MAC アドレスがマルチキャストアドレス),
+<I>host</I>
+
+(送信先 MAC アドレスが受信ネットワークデバイス),
+<I>otehrhost</I>
+
+(それ以外) のいずれかである。
+</DL>
+<A NAME="lbAV">&nbsp;</A>
+<H3>stp</H3>
+
+stp BPDU (bridge protocol data unit) フィールドを指定する。送信先アドレス
+(<B>-d</B>)
+
+は bridge group address
+(<I>BGA</I>)
+
+が指定されていなければならない。
+数値の範囲指定ができるオプションでは、下限を省略した際は取りうる最小値が
+使われ、
+上限を省略した際 (コロンがついている場合) は取りうる最大値が使われる。
+<DL COMPACT>
+<DT><B>--stp-type </B>[!] <I>type</I>
+
+<DD>
+BPDU type (0-255) である。数値以外で認識できるタイプは、
+configuration BPDU (=0) を表す
+<I>config</I>
+
+と、topology change notification BPDU (=128) を表す
+<I>tcn</I>
+
+である。
+<DT><B>--stp-flags </B>[!] <I>flag</I>
+
+<DD>
+BPDU flag (0-255) である。数値以外で認識できるフラグは、
+topology change flag (=1) を表す
+<I>topology-change</I>
+
+と、 topology change acknowledgement flag (=128) を表す
+<I>topology-change-ack</I>
+
+である。
+<DT><B>--stp-root-prio </B>[!] [<I>prio</I>][:<I>prio</I>]
+
+<DD>
+root 優先度 (0-65535) の範囲。
+<DT><B>--stp-root-addr </B>[!] [<I>address</I>][/<I>mask</I>]
+
+<DD>
+root MAC アドレス。詳細は
+<B>-s</B>
+
+オプション参照すること。
+<DT><B>--stp-root-cost </B>[!] [<I>cost</I>][:<I>cost</I>]
+
+<DD>
+root path コスト (0-4294967295) の範囲。
+<DT><B>--stp-sender-prio </B>[!] [<I>prio</I>][:<I>prio</I>]
+
+<DD>
+BPDU 送信者優先度 (0-65535) の範囲。
+<DT><B>--stp-sender-addr </B>[!] [<I>address</I>][/<I>mask</I>]
+
+<DD>
+BPDU 送信者の MAC アドレス。詳細は
+<B>-s</B>
+
+オプション参照すること。
+<DT><B>--stp-port </B>[!] [<I>port</I>][:<I>port</I>]
+
+<DD>
+port 識別子の範囲 (0-65535)。
+<DT><B>--stp-msg-age </B>[!] [<I>age</I>][:<I>age</I>]
+
+<DD>
+メッセージ age timer の範囲 (0-65535)。
+<DT><B>--stp-max-age </B>[!] [<I>age</I>][:<I>age</I>]
+
+<DD>
+max age time の範囲 (0-65535)。
+<DT><B>--stp-hello-time </B>[!] [<I>time</I>][:<I>time</I>]
+
+<DD>
+hello time timer の範囲 (0-65535)。
+<DT><B>--stp-forward-delay </B>[!] [<I>delay</I>][:<I>delay</I>]
+
+<DD>
+forward delay timer の範囲 (0-65535)。
+</DL>
+<A NAME="lbAW">&nbsp;</A>
+<H3>string</H3>
+
+This module matches on a given string using some pattern matching strategy.
+<DL COMPACT>
+<DT><B>--string-algo </B><I>algorithm</I>
+
+<DD>
+The pattern matching strategy. (bm = Boyer-Moore, kmp = Knuth-Pratt-Morris)
+<DT><B>--string-from </B><I>offset</I>
+
+<DD>
+The lowest offset from which a match can start. (default: 0)
+<DT><B>--string-to </B><I>offset</I>
+
+<DD>
+The highest offset from which a match can start. (default: size of frame)
+<DT><B>--string </B>[!] <I>pattern</I>
+
+<DD>
+Matches the given pattern.
+<DT><B>--string-hex </B>[!] <I>pattern</I>
+
+<DD>
+Matches the given pattern in hex notation, e.g. '|0D 0A|', '|0D0A|', 'www|09|netfilter|03|org|00|'
+<DT><B>--string-icase</B>
+
+<DD>
+Ignore case when searching.
+</DL>
+<A NAME="lbAX">&nbsp;</A>
+<H3>vlan</H3>
+
+802.1Q タグ制御情報フィールドを指定する。プロトコルは
+<I>802_1Q</I>
+
+(0x8100) でなければならない。
+<DL COMPACT>
+<DT><B>--vlan-id </B>[!] <I>id</I>
+
+<DD>
+VLAN 識別子フィールド (VID)。0 から 4095 の間の 10 進数の数字。
+<DT><B>--vlan-prio </B>[!] <I>prio</I>
+
+<DD>
+優先度フィールドで、0 から 7 までの 10 進数の数字。VID は 0 (&quot;null VID&quot;)
+か、無指定であるべきです (後者の無指定の場合 VID は 0 であるとされる) 。
+<DT><B>--vlan-encap </B>[!] <I>type</I>
+
+<DD>
+格納されている Ethernet フレームの type/length の値。0x0000 から 0xFFFF
+の範囲の hex 数値か
+<B>/etc/ethertypes</B>
+
+にあるシンボル名で指定する。
+<P>
+</DL>
+<A NAME="lbAY">&nbsp;</A>
+<H3>WATCHER EXTENSIONS</H3>
+
+watchers は通過するフレームを観測するだけで、
+フレームを変更したり許可するかどうかの判断を行ったりはしない。
+これらの watcher はフレームがルールにマッチングするかどうかを見るだけで、
+それはターゲットが実行される前に行われる。
+<A NAME="lbAZ">&nbsp;</A>
+<H3>log</H3>
+
+log watcher はフレームの説明を syslog に書き出す。
+<DL COMPACT>
+<DT><B>--log</B>
+
+<DD>
+<BR>
+
+デフォルトの logging オプションでロギングを行う: log-leve=
+<I>info</I>
+
+, log-prefix=&quot;&quot;, ip ログなし, arp ログなし。
+<DT><B>--log-level </B><I>level</I>
+
+<DD>
+<BR>
+
+logging レベルを定義する。取りうる値は
+<B>ebtables -h log</B>
+
+を参照すること。デフォルトのレベルは
+<I>info</I>
+
+である。
+<DT><B>--log-prefix</B> <I>text</I>
+
+<DD>
+<BR>
+
+ログ情報の行頭にプリントする
+<I>text</I>
+
+プレフィックスを定義する。
+<DT><B>--log-ip</B>
+
+<DD>
+<BR>
+
+ルールで ip プロトコルにマッチングした際に生成されるフレームの ip
+情報をログする。デフォルトでは ip 情報はログされない。
+<DT><B>--log-ip6</B>
+
+<DD>
+<BR>
+
+ルールで ipv6 プロトコルにマッチングした際に生成されるフレームの ipv6
+情報をログする。デフォルトでは ipv6 情報はログされない。
+<DT><B>--log-arp</B>
+
+<DD>
+<BR>
+
+ルールで (r)arp プロトコルマッチングした際に生成されるフレームの (r)arp
+情報をログする。デフォルトでは (r)arp 情報はログされない。
+</DL>
+<A NAME="lbBA">&nbsp;</A>
+<H3>nflog</H3>
+
+nflog watcher はパケットをログするためにロードされた logging バックエン
+ドにパケットを渡す。
+これは通常 logging バックエンド nfnetlink_log との組み合わせで使用され、
+これが netlink
+ソケット経由でパケットを指定したマルチキャストグループにマルチキャストする。
+1 つあるいは複数のユーザスペースプロセスがそのグループに参加してパケット
+を受け取ることができる。
+<DL COMPACT>
+<DT><B>--nflog</B>
+
+<DD>
+<BR>
+
+デフォルトの logging オプションでログする。
+<DT><B>--nflog-group </B><I>nlgroup</I>
+
+<DD>
+<BR>
+
+パケットが送出先である netlink グループ (1 から 2^32-1 の間)
+(nfnetlink_log でのみ有効)。デフォルト値は 1。
+<DT><B>--nflog-prefix </B><I>prefix</I>
+
+<DD>
+<BR>
+
+ログメッセージに含まれるプレフィックス文字列で、最大 30 文字まで。
+ログの中でメッセージを区別するのに便利。
+<DT><B>--nflog-range </B><I>size</I>
+
+<DD>
+<BR>
+
+ユーザスペースにコピーされるバイト数 (nfnetlink_log でのみ有効)。
+nfnetlink_log インスタンスでも範囲指定可能で、
+このオプションはそれを上書きする。
+<DT><B>--nflog-threshold </B><I>size</I>
+
+<DD>
+<BR>
+
+ユーザスペースに送る前にカーネル内のキューイングするパケットの数
+(nfnetlink_log でのみ有効)。
+大きな数値にすると 1 パケットあたりのオーバーヘッドは小さくなるが、
+ユーザスペースにパケットが届くまでの遅延は大きくなる。デフォルト値は 1。
+</DL>
+<A NAME="lbBB">&nbsp;</A>
+<H3>ulog</H3>
+
+ulog watcher は netlink マルチキャストソケットを使ってユーザランド logging
+デーモンにパケットを渡す。
+log watcher との違いは、
+パケットの説明ではなくパケット全体がユーザスペースに送信されるという点と
+syslog ではなく netlink マルチキャストソケットが使われるという点である。
+この watcher ではユーザスペースのプログラムでパケットを解析することができ、
+物理ブリッジの入出力ポートの情報も netlink メッセージに含まれている。
+ulog watcher モジュールは、(modprobe などで) カーネルに
+ロードされる際にパラメータを 2 つ受け取ることができる。
+<B>nlbufsiz</B>
+
+で各 netlink マルチキャストグループが持つバッファの大きさを指定できる。例えば
+<I>nlbufsiz=8192</I>
+
+では、ユーザスペースに送り出す前に 8kB の数のパケットまでカーネル内に
+溜めることができる。
+128kB より大きな値を設定することはできない。ここでのバッファサイズは nlgroup そ
+れぞれについて確保されるということにも注意。
+つまり消費カーネルメモリはその倍数で増えていく。デフォルト値は 4096 である。
+<B>flushtimeout</B>
+
+で、キューが一杯にならなかった場合に、どれだけの間待ってから flush するかを、
+100 分の 1 秒刻みで指定する。デフォルト値は 10 である (0.1秒) 。
+<DL COMPACT>
+<DT><B>--ulog</B>
+
+<DD>
+<BR>
+
+デフォルトの設定を使う: ulog-prefix=&quot;&quot;, ulog-nlgroup=1,
+ulog-cprange=4096, ulog-qthreshold=1
+<DT><B>--ulog-prefix </B><I>text</I>
+
+<DD>
+<BR>
+
+ユーザスペースに送られるパケットに含まれるプレフィックスを定義する。
+<DT><B>--ulog-nlgroup</B> <I>group</I>
+
+<DD>
+<BR>
+
+どの netlink グループ番号を使うかを定義する (1 から 32 の間の数字) 。
+iptables ULOG ターゲットで使われている netlink グループ番号と
+ebtables ulog watcher のものとは異なるものにすること。
+デフォルトのグループ番号は 1 である。
+<DT><B>--ulog-cprange</B> <I>range</I>
+
+<DD>
+<BR>
+
+ルールにマッチングしたパケットについて、ユーザスペースにコピーされる範囲
+の最大値を定義する。
+デフォルトの範囲は 0 で、これは
+<B>nlbufsiz</B>
+
+で指定された範囲の最大値を意味する。128*1024 より大きな値を指定しても意
+味はない。
+なぜなら、ユーザスペースに送られるパケットサイズの上限は 128*1024
+だからである。
+<DT><B>--ulog-qthreshold</B> <I>threshold</I>
+
+<DD>
+<BR>
+
+netlink ソケット経由でユーザスペースに送りだす前に
+<I>threshold</I>
+
+の数までパケットをキューイングする。
+キューが埋まる以前であってもパケットは送出されることがあることに注意すること。
+これは ulog カーネルタイマが達した際に起こる (このタイマの周期は
+<B>flushtimeout</B>
+
+により決まる)。
+</DL>
+<A NAME="lbBC">&nbsp;</A>
+<H3>TARGET EXTENSIONS</H3>
+
+<A NAME="lbBD">&nbsp;</A>
+<H3>arpreply</H3>
+
+<B>arpreply</B>
+
+ターゲットは
+<B>nat</B>
+
+テーブルの
+<B>PREROUTING</B>
+
+チェインで使うことができる。ターゲットが ARP リクエストを発見すると、
+自動的に ARP reply
+を返す。reply に使う MAC アドレスを指定することができる。プロトコルは
+<I>ARP</I>
+
+でなければならない。ARP メッセージが ARP リクエストではなかったり、ARP
+リクエストが
+Ethernet ネットワーク上の IP アドレスに対するものではなかった場合、この
+ターゲットでは無視される
+(<B>CONTINUE</B>)。
+
+ARP リクエストが不正だった場合、破棄される
+(<B>DROP</B>)。
+
+<DL COMPACT>
+<DT><B>--arpreply-mac </B><I>address</I>
+
+<DD>
+reply に返す MAC アドレスを指定する。Ethernet 送信元 MAC アドレスと ARP
+ペイロード中の送信元 MAC アドレスの両方がこのアドレスになる。
+<DT><B>--arpreply-target </B><I>target</I>
+
+<DD>
+標準のターゲットを指定する。ARP reply を送信した後に、ebtables がその
+ARP request
+に対してさらに何を行うかを指定する。デフォルトのターゲットは
+<B>DROP</B>
+
+である。
+</DL>
+<A NAME="lbBE">&nbsp;</A>
+<H3>dnat</H3>
+
+<B>dnat</B>
+
+は
+<B>broute</B>
+
+テーブルの
+<B>BROUTING</B>
+
+チェインと、
+<B>nat</B>
+
+テーブルの
+<B>PREROUTING</B>
+
+と
+<B>OUTPUT</B>
+
+チェインでのみ使える。送信先 MAC アドレスを変更するときに指定する。
+<DL COMPACT>
+<DT><B>--to-destination </B><I>address</I>
+
+<DD>
+<BR>
+
+送信先 MAC アドレスを指定した
+<I>address</I>
+
+に変更する。
+<B>--to-dst</B>
+
+フラグはこのオプションのエイリアスである。
+<DT><B>--dnat-target </B><I>target</I>
+
+<DD>
+<BR>
+
+標準のターゲットを指定する。dnat を行った後に、ebtables がその
+フレームに対してさらに何を行うかを指定する。デフォルトのターゲットは
+<B>ACCEPT</B>
+
+である。
+<B>CONTINUE</B>
+
+にすると、同一フレームに対して複数の target extension を使える。
+<B>DROP</B>
+
+は
+<B>BROUTING</B>
+
+チェインで
+<B>redirect</B>
+
+ターゲットと使うときにのみ意味がある。
+<B>RETURN</B>
+
+を基本チェインで使うことはできない (理由は明らかでしょう)。
+</DL>
+<A NAME="lbBF">&nbsp;</A>
+<H3>mark</H3>
+
+<B>mark</B>
+
+ターゲットはどのテーブルのどのチェインでも使える。bridge-nf がカーネルに
+組み込まれていれば
+ebtables と iptables の両方で mark できる。どちらも同じ場所に mark を記
+録するので、
+ebtables と iptables 間の通信にもなる。
+<DL COMPACT>
+<DT><B>--mark-set </B><I>value</I>
+
+<DD>
+<BR>
+
+フレームに非負数の
+<I>value</I>
+
+を mark する。
+<DT><B>--mark-or </B><I>value</I>
+
+<DD>
+<BR>
+
+フレームに非負数の
+<I>value</I>
+
+で OR した値を記録する。
+<DT><B>--mark-and </B><I>value</I>
+
+<DD>
+<BR>
+
+フレームに非負数の
+<I>value</I>
+
+で AND した値を記録する。
+<DT><B>--mark-xor </B><I>value</I>
+
+<DD>
+<BR>
+
+フレームに非負数の
+<I>value</I>
+
+で XOR した値を記録する。
+<DT><B>--mark-target </B><I>target</I>
+
+<DD>
+<BR>
+
+標準のターゲットを指定する。mark を行った後に、ebtables がその
+フレームに対してさらに何を行うかを指定する。デフォルトのターゲットは
+<B>ACCEPT</B>
+
+である。
+<B>CONTINUE</B>
+
+にすると、後続のチェインのルールでフレームに対して何らかの他の処理ができる。
+</DL>
+<A NAME="lbBG">&nbsp;</A>
+<H3>redirect</H3>
+
+<B>redirect</B>
+
+ターゲットは　MAC ターゲットアドレスをフレームが到達したブリッジデバイス
+のものに変更する。
+このターゲットは
+<B>broute</B>
+
+テーブルの
+<B>BROUTING</B>
+
+チェインと
+<B>nat</B>
+
+テーブルの
+<B>PREROUTING</B>
+
+チェインでのみ使える。
+<B>BROUTING</B>
+
+チェインではブリッジポートの MAC アドレスが送信先アドレスとして使われ、
+<B>PREROUTING</B>
+
+チェインではブリッジの MAC アドレスが使われる。
+<DL COMPACT>
+<DT><B>--redirect-target </B><I>target</I>
+
+<DD>
+<BR>
+
+標準のターゲットを指定する。MAC リダイレクトを行った後に、ebtables がさ
+らに何を行うかを指定する。
+デフォルトのターゲットは
+<B>ACCEPT</B>
+
+である。
+<B>CONTINUE</B>
+
+にすると、同一フレームに対して複数の target extension を使える。
+<B>BROUTING</B>
+
+チェイン中で
+<B>DROP</B>
+
+を使うと、そのフレームは route される。
+<B>RETURN</B>
+
+も使うことができる。
+<B>RETURN</B>
+
+を基本チェインで使うことはできない。
+</DL>
+<A NAME="lbBH">&nbsp;</A>
+<H3>snat</H3>
+
+<B>snat</B>
+
+ターゲットは
+<B>nat</B>
+
+テーブルの
+<B>POSTROUTING</B>
+
+でのみ使うことができる。送信元 MAC アドレスを変更する際に使いる。
+<DL COMPACT>
+<DT><B>--to-source </B><I>address</I>
+
+<DD>
+<BR>
+
+送信元 MAC アドレスを指定した
+<I>address</I>
+
+に変更する。
+<B>--to-src</B>
+
+フラグはこのオプションのエイリアスである。
+<DT><B>--snat-target </B><I>target</I>
+
+<DD>
+<BR>
+
+標準のターゲットを指定する。snat を行った後に、ebtables がさらに何を行う
+かを指定する。
+デフォルトのターゲットは
+<B>ACCEPT</B>
+
+である。
+<B>CONTINUE</B>
+
+にすると、同一フレームに対して複数の target extension を使える。
+<B>DROP</B>
+
+は 意味をなさないが、実行することはできる。
+<B>RETURN</B>
+
+も使える。
+<B>RETURN</B>
+
+を基本チェインで使うことはできない。
+<BR>
+
+<DT><B>--snat-arp </B>
+
+<DD>
+<BR>
+
+パケットが arp メッセージであり、かつ、arp ヘッダ中のハードウェアアドレ
+スの長さが 6 バイトであった場合に、arp ヘッダ中のハードウェア送信元アドレスも変
+更する。
+<BR>
+
+</DL>
+<A NAME="lbBI">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/etc/ethertypes</I>
+
+<I>/var/lib/ebtables/lock</I>
+
+<A NAME="lbBJ">&nbsp;</A>
+<H2>環境変数</H2>
+
+<I>EBTABLES_ATOMIC_FILE</I>
+
+<A NAME="lbBK">&nbsp;</A>
+<H2>メーリングリスト</H2>
+
+<B><A HREF="http://netfilter.org/mailinglists.html">http://netfilter.org/mailinglists.html</A></B> 参照
+
+<A NAME="lbBL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../iptables/man8/iptables.8.html">iptables</A></B>(8), <B>brctl</B>(8), <B><A HREF="../../net-tools/man8/ifconfig.8.html">ifconfig</A></B>(8), <B><A HREF="../../net-tools/man8/route.8.html">route</A></B>(8)
+
+<P>
+
+<B><A HREF="http://ebtables.sf.net">http://ebtables.sf.net</A></B> 参照
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">LEGACY</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAF">チェイン</A><DD>
+<DT><A HREF="#lbAG">ターゲット</A><DD>
+<DT><A HREF="#lbAH">テーブル</A><DD>
+</DL>
+<DT><A HREF="#lbAI">EBTABLES コマンドライン引数</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">コマンド</A><DD>
+<DT><A HREF="#lbAK">その他コマンド</A><DD>
+<DT><A HREF="#lbAL">ルール指定</A><DD>
+<DT><A HREF="#lbAM">MATCH EXTENSION</A><DD>
+<DT><A HREF="#lbAN">802_3</A><DD>
+<DT><A HREF="#lbAO">among</A><DD>
+<DT><A HREF="#lbAP">arp</A><DD>
+<DT><A HREF="#lbAQ">ip</A><DD>
+<DT><A HREF="#lbAR">ip6</A><DD>
+<DT><A HREF="#lbAS">limit</A><DD>
+<DT><A HREF="#lbAT">mark_m</A><DD>
+<DT><A HREF="#lbAU">pkttype</A><DD>
+<DT><A HREF="#lbAV">stp</A><DD>
+<DT><A HREF="#lbAW">string</A><DD>
+<DT><A HREF="#lbAX">vlan</A><DD>
+<DT><A HREF="#lbAY">WATCHER EXTENSIONS</A><DD>
+<DT><A HREF="#lbAZ">log</A><DD>
+<DT><A HREF="#lbBA">nflog</A><DD>
+<DT><A HREF="#lbBB">ulog</A><DD>
+<DT><A HREF="#lbBC">TARGET EXTENSIONS</A><DD>
+<DT><A HREF="#lbBD">arpreply</A><DD>
+<DT><A HREF="#lbBE">dnat</A><DD>
+<DT><A HREF="#lbBF">mark</A><DD>
+<DT><A HREF="#lbBG">redirect</A><DD>
+<DT><A HREF="#lbBH">snat</A><DD>
+</DL>
+<DT><A HREF="#lbBI">ファイル</A><DD>
+<DT><A HREF="#lbBJ">環境変数</A><DD>
+<DT><A HREF="#lbBK">メーリングリスト</A><DD>
+<DT><A HREF="#lbBL">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:37 GMT, December 05, 2022
+</BODY>
+</HTML>

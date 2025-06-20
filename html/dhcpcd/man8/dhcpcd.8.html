@@ -1,0 +1,596 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of dhcpcd</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>dhcpcd</H1>
+Section: Linux System Manager's Manual (8)<BR>Updated: 31 January 1998<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/dhcpcd/release/man8/dhcpcd.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+dhcpcd - DHCP クライアントデーモン
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+
+<BR>
+
+dhcpcd
+[-dknrBCDHNRSTY]
+[-t&nbsp;&lt;timeout&gt;]
+[-c&nbsp;&lt;ExecFilePath&gt;]
+[-h&nbsp;&lt;hostname&gt;]
+[-i&nbsp;&lt;vendorClassID&gt;]
+[-I&nbsp;&lt;clientID&gt;]
+[-l&nbsp;&lt;leasetime&gt;]
+[-s&nbsp;[ipaddr]]
+[-G&nbsp;[gateway]]
+[-w&nbsp;&lt;windowsize&gt;]
+[-L&nbsp;&lt;ConfigDir&gt;]
+[interface]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>dhcpcd</B>
+
+は
+<B>RFC2131</B>
+
+(-r オプションが指定されなかった場合) と
+<B>RFC1541</B>
+
+(-r オプションが指定された場合) に基づく DHCP クライアントの実装である。
+<P>
+DHCP サーバからホストの情報 (IP アドレス、ネットマスク、
+ブロードキャストアドレスなど) を取得し、
+そのマシンのネットワークインタフェースを設定する。
+また、
+<B>RFC2131</B>
+
+または
+<B>RFC1541</B>
+
+(obsolete;すでに廃止された) に基づく貸し出し期間 (lease time) を
+更新しようと試みる。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-d</B>
+
+<DD>
+このフラグにより
+<B>dhcpcd</B>
+
+は、各実行ステップごとに syslog(LOG_DEBUG,...) でログを出力する。
+あまり多くの出力は行わないが、
+何か問題が起きた場合には解決の大きな助けとなるので、
+このオプションの利用が推奨される。
+<B>dhcpcd</B>
+
+は、その出力に syslog 機能分類 (facility)
+<I>LOCAL0</I>
+
+を使う。
+<B>dhcpcd</B>
+
+のデバッグ出力を捕捉するには、
+<I>/etc/syslog.conf</I>
+
+ファイルに
+<P>
+local0.*     /var/log/dhcpcd.log
+<P>
+という行を追加し、
+<P>
+kill -1 `cat /var/run/syslogd.pid`
+<P>
+によって syslogd デーモンをリフレッシュすること。
+<P>
+<DT><B>-k</B>
+
+<DD>
+現在動いている
+<B>dhcpcd</B>
+
+プロセスへ
+<B>SIGHUP</B>
+
+シグナルを送る。
+<B>SIGHUP</B>
+
+シグナルを
+<B>dhcpcd</B>
+
+が受け取ると、
+<B>DHCP_RELEASE</B>
+
+メッセージをサーバへ送り、dhcpcd のキャッシュを破棄する。
+<B>SIGTERM</B>
+
+シグナルは、普通、システムを再起動する時に
+<B><A HREF="../../SysVinit/man8/shutdown.8.html">shutdown</A></B>(8)
+
+が送るが、そのシグナルを
+<B>dhcpcd</B>
+
+が受け取った場合は、
+<B>dhcpcd</B>
+
+は
+<B>DHCP_RELEASE</B>
+
+メッセージを送らず、キャッシュを破棄しない。
+そしてシステムが起動する時に
+<B>dhcpcd</B>
+
+は、システムが落ちる前に DHCP サーバから割り当てられていたのと
+同じ IP アドレスを要求するために、キャッシュを用いる。
+<DT><B>-n</B>
+
+<DD>
+現在動いている
+<B>dhcpcd</B>
+
+プロセスに
+<B>SIGALRM</B>
+
+シグナルを送り、貸し出し期間を更新させる。
+<B>dhcpcd</B>
+
+が稼働していない場合は、このフラグは無視され、通常の起動手順で 
+<B>dhcpcd</B>
+
+が起動される。
+<DT><B>-r</B>
+
+<DD>
+dhcpcd を RFC1541 (obsolete) 準拠で動かす。
+<B>dhcpcd</B>
+
+はこのオプションが指定されない限り RFC2131 に準拠する。
+<DT><B>-B</B>
+
+<DD>
+DHCP サーバにブロードキャストでの応答を要求する。
+<DT><B>-C</B>
+
+<DD>
+dhcpcd に受信したパケットのチェックサム (checksum) を計算させる。
+<DT><B>-D</B>
+
+<DD>
+<B>dhcpcd</B>
+
+に対して、そのマシンのドメイン名を、
+DHCP サーバから提供されるドメイン名オプション
+(domainname option) に設定させる。
+<DT><B>-H</B>
+
+<DD>
+<B>dhcpcd</B>
+
+に対して、そのマシンのホスト名を、
+DHCP サーバから提供されるホスト名オプション
+(hostname option) に設定させる。
+デフォルトでは
+<B>dhcpcd</B>
+
+はそのマシンのホスト名を、
+DHCP サーバから受け取ったホスト名オプションには設定しない。
+<DT><B>-L</B><I>&nbsp;&lt;ConfigDir&gt;</I>
+
+<DD>
+<B>dhcpcd</B>
+
+は、設定情報を格納するために、デフォルトの
+<I>/etc/dhcpc</I>
+
+ではなく
+<I>&lt;ConfigDir&gt;</I>
+
+ディレクトリを使う。
+<DT><B>-S</B>
+
+<DD>
+<B>dhcpcd</B>
+
+が最初の DHCP_DISCOVER メッセージに対して
+DHCP_OFFER メッセージを受信した後であっても、
+2 回目の DHCP_DISCOVER メッセージを送信させる。
+「クライアントは DHCP_REQUEST を返答する前に
+2 回目の DHCP_DISCOVER を送信する」と仮定している DHCP サーバもある。
+<DT><B>-R</B>
+
+<DD>
+すでに存在するファイル
+<I>/etc/resolv.conf</I>
+
+を
+<B>dhcpcd</B>
+
+が置き換えないようにする。
+<DT><B>-Y</B>
+
+<DD>
+<B>dhcpcd</B>
+
+が既存の
+<I>/etc/yp.conf</I>
+
+ファイルを置き換えないようにする。
+<B>-D</B> を指定しない限り、ドメイン名は更新されない。
+<DT><B>-N</B>
+
+<DD>
+<B>dhcpcd</B>
+
+が既存の
+<I>/etc/ntp.conf</I>
+
+ファイルを置き換えないようにする。
+<DT><B>-T</B>
+
+<DD>
+テスト用。
+<B>dhcpcd</B>
+
+は DHCP ネゴシエーションシーケンスに入るが、
+実際にはインターフェースを設定しない。
+しかし、ファイル
+<I>&lt;ConfigDir&gt;/dhcpcd-&lt;interface&gt;.info</I>
+
+と
+<I>&lt;ConfigDir&gt;/dhcpcd-&lt;interface&gt;.cache</I>
+
+を書き込み、
+<I>&lt;ConfigDir&gt;/dhcpcd.exe</I>
+
+スクリプトを実行しようとする。
+実行可能スクリプト
+<I>dhcpcd.exe</I>
+
+のパス名は、
+<I>-c &nbsp;&lt;ExecFilePath&gt;</I>
+
+オプションで変更できる。
+<B>-T</B>
+
+オプションは主に DHCP サーバのテストに使われる。
+同じダミーインタフェースのための複数の IP アドレスを取得したり、
+<I>-L &nbsp;&lt;ConfigDir&gt;</I>
+
+や
+<I>-I &nbsp;&lt;ClientID&gt;</I>
+
+オプション
+<DT><B>-t</B><I>&nbsp;&lt;timeout&gt;</I>
+
+<DD>
+どれくらいの時間
+<B>dhcpcd</B>
+
+が IP アドレスを取得しようと試みるかを (秒数で) 指定する。
+デフォルトは 60 秒。
+<B>dhcpcd</B>
+
+は使用可能な IP アドレスを取得し、親プロセスへ 0 を返すまでは
+バックグラウンドへと fork しない。
+<B>dhcpcd</B>
+
+が使用可能な IP アドレスを DHCP サーバから受け取る前にタイムアウトした場合は、
+<B>dhcpcd</B>
+
+は親プロセスへ終了コード 1 を返す。
+<DT><B>-c</B><I>&nbsp;&lt;ExecFilePath&gt;</I>
+
+<DD>
+<B>dhcpcd</B>
+
+はインタフェースが設定または落される度に、
+デフォルトの
+<I>&lt;ConfigDir&gt;/dhcpcd.exe</I>
+
+スクリプトではなく、
+<I>&lt;ExecFilePath&gt;</I>
+
+スクリプトを実行しようとする。
+下記の「<B>ファイル</B>」セクションにおけるスクリプト
+<I>dhcpcd.exe</I>
+
+についての説明を参照すること。
+<DT><B>-h</B><I>&nbsp;&lt;hostname&gt;</I>
+
+<DD>
+<B>dhcpcd</B>
+
+が送る DHCP メッセージのホスト名オプションに使われる文字列を指定する。
+クライアントからの DHCP メッセージの中で、
+ホスト名オプションが指定されていることを要求する DHCP サーバもある
+(特に家庭内ネットワークで使われる DHCP サーバ)。
+<DT><B>-i</B><I>&nbsp;&lt;vendorClassID&gt;</I>
+
+<DD>
+ベンダークラス識別子 (vendor class identifier) を指定する。
+何も指定されなかった場合、
+<B>dhcpcd</B>
+
+はデフォルトのベンダークラス識別子 (システム名、システムリリース、
+マシンタイプ) を用いる。
+<DT><B>-I</B><I>&nbsp;&lt;ClientID&gt;</I>
+
+<DD>
+クライアント識別子 (client identifier) を指定する。
+何も指定されなかった場合、
+<B>dhcpcd</B>
+
+はデフォルトのクライアント識別子
+(ネットワークインタフェースの MAC アドレス) を用いる。
+<DT><B>-l</B><I>&nbsp;&lt;leasetime&gt;</I>
+
+<DD>
+サーバへ推奨する貸し出し時間を (秒数で) 指定する。
+(サーバはこの値を、適切な値へと上書きできることに注意)。
+この値は
+<B>DHCP_DISCOVER</B>
+
+メッセージに使われる。デフォルトは無限大 (0xffffffff)。
+<DT><B>-s</B><I>&nbsp;[ipaddr]</I>
+
+<DD>
+DHCP_INFORM メッセージを ipaddr を使って DHCP サーバへ送る。
+省略可能なパラメータ ipaddr は xxx.xxx.xxx.xxx という形式でなければならない。
+もし、コマンドラインで ipaddr パラメータが与えられなければ、
+<B>dhcpcd</B>
+
+は現在インタフェースに割り当てられている IP アドレスを用いる。
+もし現在、インタフェースに IP アドレスが割り当てられていなければ、
+<B>dhcpcd</B>
+
+はファイル
+<I>&lt;ConfigDir&gt;/dhcpcd-&lt;interface&gt;.cache</I>
+
+に記録されている、以前に獲得した IP アドレスを用いる。
+<DT><B>-G</B><I>&nbsp;[gateway]</I>
+
+<DD>
+DHCP サーバによって提供されたデフォルトの経路を
+<B>dhcpcd</B>
+
+にインストールさせないようにする。
+オプションでゲートウェイ ip アドレスパラメータが指定された場合、
+それをデフォルトの経路として使う。
+<DT><B>-w</B><I>&nbsp;&lt;windowsize&gt;</I>
+
+<DD>
+ゲートウェイ経路のウインドウサイズを指定する。
+デフォルトは 32768 である。
+<DT><B>interface</B>
+
+<DD>
+ネットワークインタフェースの名前 (eth0, eth1 など) を指定する。
+名前が明示されなかった場合、
+<B>dhcpcd</B>
+
+はネットワークインタフェースとして
+<I>eth0</I>
+
+を用いる。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+
+<DL COMPACT>
+<DT><B>/etc/dhcpc</B>
+
+<DD>
+<B>dhcpcd</B>
+
+によって作成されたファイルを保存するのに用いられるデフォルトの
+<I>&lt;ConfigDir&gt;</I>
+
+ディレクトリ。
+上記の
+<I>-L &lt;ConfigDir&gt;</I>
+
+オプションを参照すること。
+
+<DT><B>&lt;ConfigDir&gt;/dhcpcd-&lt;interface&gt;.info</B>
+
+<DD>
+<B>dhcpcd</B>
+
+がホスト情報を記録するファイル。
+<I>interface</I>
+
+は、実際には
+<I>eth0</I>
+
+のような、dhcpcd で管理されている
+ネットワークインタフェースの名前で置き換えられる。
+<DT><B>&lt;ConfigDir&gt;/dhcpcd.exe</B>
+
+<DD>
+インタフェースを設定または落す度に、
+<B>dhcpcd</B>
+
+が実行しようとするスクリプトファイル。
+この実行可能スクリプトへのパスは、
+<I>-c &nbsp;&lt;ExecFilePath&gt;</I>
+
+オプションで変更できる。
+<B>dhcpcd</B>
+
+は
+<I>dhcpcd.exe</I>
+
+スクリプトに 3 つのパラメータを渡す。
+<DT><I>dhcpcd.exe &lt;HostInfoFilePath&gt; &lt;up|down|new&gt; [-d]</I>
+
+<DD>
+最初のパラメータ
+<I>&lt;HostInfoFilePath&gt;</I>
+
+は
+<I>dhcpcd-&lt;interface&gt;.info</I>
+
+ファイルへのパスである。
+<I>&lt;interface&gt;</I>
+
+は、実際には &quot;eth0&quot; のような dhcpcd で管理されている
+ネットワークインタフェースの名前で置き換えられる。
+2 番目のパラメータ値
+<I>&lt;up|down|new&gt;</I>
+
+は、前と同じ IP アドレスでインタフェースを上げる (&quot;up&quot;)、
+新しい IP アドレスでインタフェースを上げる (&quot;new&quot;)、
+インタフェースを落す (&quot;down&quot;) という意味である。
+パラメータ
+<I>-d</I>
+
+は、
+<B>dhcpcd</B>
+
+をデバッグフラグ
+<I>-d</I>
+
+で起動する場合に渡す。
+<DT><B>&lt;ConfigDir&gt;/dhcpcd-&lt;interface&gt;.cache</B>
+
+<DD>
+以前に割り当てられた IP アドレスなどを含むキャッシュファイル。
+<I>&lt;interface&gt;</I>
+
+は、実際には
+<I>eth0</I>
+
+のような、dhcpcd で管理されている
+ネットワークインタフェースの名前で置き換えられる。
+<DT><B>/etc/resolv.conf</B>
+
+<DD>
+クライアントが DNS とドメイン名オプションを受け取った時に
+<B>dhcpcd</B>
+
+が作成するファイル。
+既に
+<B>/etc/resolv.conf</B>
+
+が存在する場合、元のファイルは 
+<B>/etc/resolv.conf.sv</B>
+
+という名前に変更され、何らかの理由で
+<B>dhcpcd</B>
+
+が終了した時には元に戻される。
+<DT><B>/etc/yp.conf</B>
+
+<DD>
+クライアントが NIS オプションを受信した場合に、
+<B>dhcpcd</B>
+
+によって作成されるファイル。
+既に
+<B>/etc/yp.conf</B>
+
+が存在する場合、元のファイルは 
+<B>/etc/yp.conf.sv</B>
+
+という名前に変更され、何らかの理由で
+<B>dhcpcd</B>
+
+が終了した時には元に戻される。
+<DT><B>/etc/ntp.conf</B>
+
+<DD>
+クライアントが NTP オプションを受信した場合に、
+<B>dhcpcd</B>
+
+によって作成されるファイル。
+既に
+<B>/etc/ntp.conf</B>
+
+が存在する場合、元のファイルは 
+<B>/etc/ntp.conf.sv</B>
+
+という名前に変更され、何らかの理由で
+<B>dhcpcd</B>
+
+が終了した時には元に戻される。
+<DT><B>&lt;ConfigDir&gt;/dhcpcd-&lt;interface&gt;.pid</B>
+
+<DD>
+<B>dhcpcd</B>
+
+のプロセス ID を格納するファイル。
+<I>&lt;interface&gt;</I>
+
+は、実際には
+<I>eth0</I>
+
+のような、dhcpcd で管理されている
+ネットワークインタフェースの名前で置き換えられる。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<I>Dynamic Host Configuration Protocol,</I>
+
+RFC2131 および RFC1541 (obsolete)
+<I>DHCP Options and BOOTP Vendor Extensions,</I>
+
+RFC2132
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>dhcpcd</B>
+
+は貸し出しの終了期限を計算するのに
+<B>time(3)</B>
+
+を用いる。クライアントの実行中にシステム時刻が変更されると、
+貸し出しの終了期限は予測不可能となる。
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+
+バージョン 1.3 未満
+<P>
+
+Yoichi Hariguchi &lt;<A HREF="mailto:yoichi@fore.com">yoichi@fore.com</A>&gt;
+<P>
+
+バージョン 1.3
+<P>
+
+Sergei Viznyuk &lt;<A HREF="mailto:sv@phystech.com">sv@phystech.com</A>&gt;
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:37 GMT, December 05, 2022
+</BODY>
+</HTML>

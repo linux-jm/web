@@ -1,0 +1,187 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of BTREE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>BTREE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/btree.3">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+btree - btree データベースへのアクセスメソッド
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>大事な注意</I>:
+このページは、バージョン 2.1 までの glibc が提供するインターフェースに
+ついて説明している。バージョン 2.2 以降の glibc では、もはやこれらの
+インターフェースは提供されていない。おそらく、このページではなく、
+<I>libdb</I> ライブラリが提供する API をお探しなのだろう。
+<P>
+
+ルーチン <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  はデータベースファイルに対するライブラリインターフェースである。 サポートされているファイルフォーマットのひとつに
+btree ファイルがある。 データベースへのアクセスメソッドに関する一般的な記述は <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  に書かれている。
+このマニュアルページでは btree 特有の情報についてのみ記述する。
+<P>
+
+btree データ構造では、ソートされたバランスツリー構造に 互いに関連づけられたキー/データ対を格納している。
+<P>
+
+<B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  に渡される btree アクセスメソッドに特有のデータ構造体は、 <I>&lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;</I>
+インクルードファイルで次のように定義されている。
+<P>
+
+
+
+typedef struct {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;flags;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;cachesize;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;maxkeypage;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;minkeypage;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;psize;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(*compare)(const&nbsp;DBT&nbsp;*key1,&nbsp;const&nbsp;DBT&nbsp;*key2);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(*prefix)(const&nbsp;DBT&nbsp;*key1,&nbsp;const&nbsp;DBT&nbsp;*key2);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lorder;
+} BTREEINFO;
+
+
+<P>
+
+この構造体の要素を以下に示す。
+<DL COMPACT>
+<DT><I>flags</I><DD>
+<I>flags</I> の値は以下の値の論理和で指定される。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>R_DUP</B><DD>
+ツリーの中にキーの重複を許す。すなわちツリーの中に挿入されようとしている キーが既に存在していても、その挿入を許可する。デフォルトの動作は
+<B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  に記述されているように、新しいキーが挿入されると一致したキーを上書きする。 あるいは <B>R_NOOVERWRITE</B>
+フラグが指定されていると挿入に失敗する。 <B>R_DUP</B> フラグは <B>R_NOOVERWRITE</B> フラグによって上書きされる。つまり
+<B>R_NOOVERWRITE</B> フラグが指定された場合、ツリーに複製キーを挿入しようとすると失敗する。
+<DT><DD>
+データベースにキーの重複があると、 <I>get</I> ルーチンを使った場合のキー/データ対の取得順は未定義である。それに対し、 <B>R_CURSOR</B>
+フラグをセットして <I>seq</I> ルーチンを使うと、複製キーのグループの中の 論理的に「最初」のキーを必ず返してくる。
+</DL>
+</DL>
+
+<DT><I>cachesize</I><DD>
+想定されるメモリーキャッシュの最大サイズ (バイト単位)。 この値は <I>あくまで</I> 参考であり、アクセスメソッドはこの値を越えたメモリーの
+割り当てに成功することもある。 加えて、物理的な書き込みは可能な限り遅延されるので、 キャッシュの大きさを適度にしておけば I/O
+操作の回数をかなり減らすこと ができる。 あきらかにキャッシュを使うと、ツリーが変更されている途中で
+システムがクラッシュした場合のデータ破壊やデータロストの可能性は 増える (まあでもそれだけのこと)。 <I>cachesize</I> が 0
+(サイズが指定されていない) の場合、デフォルトのキャッシュが使われる。
+<DT><I>maxkeypage</I><DD>
+
+
+
+
+
+
+
+
+単一ページに納められる最大キー数である。現在実装されていない。
+<DT><I>minkeypage</I><DD>
+単一ページに納められる最小キー数である。この値は、どのキーを オーバーフローページ に納めるか決めるのに使われる。すなわちキーまたはデータが
+minkeypage の値で分割されたページサイズより大きい時、そのページに納め る代わりにオーバーフローページに納めるということである。
+<I>minkeypage</I> が 0 (キーの最小値が指定されていない) の場合、値として 2 が使われる。
+<DT><I>psize</I><DD>
+ツリーの中のノードに使われるページサイズ (バイト単位)。 最小値は 512 バイトで、最大値は 64&nbsp;KiB である。 <I>psize</I> が 0
+(ページサイズが指定されていない) の場合、 ファイルシステムの I/O ブロックサイズに基づいて決められる。
+<DT><I>compare</I><DD>
+<I>compare</I> はキーの比較関数である。 最初のキー引数に対し、二番目のキー引数が大きい場合には正の整数を、
+同じ場合にはゼロを、小さい場合には負の整数を返す。 ツリーを開く際には、常に同じ比較関数が使われなければならない。 <I>compare</I> が NULL
+(比較関数が指定されていない) の場合、 辞書的に比較される。短いキーは長いキーより小さいことになる。
+<DT><I>prefix</I><DD>
+<I>prefix</I> は前置比較関数である。 このルーチンは (指定された場合には)、二番目のキー引数の
+バイト数を返さなくてはならない。これは二番目のキー引数が 一番目のキー引数より大きいかどうか決めるのに必要である。
+キーが同じ場合、キーの長さが返る。このルーチンが有用かどうかは、 データに強く依存する。しかしデータセットによっては、明らかにツリー
+のサイズと検索時間を減らしてくれる。 <I>prefix</I> が NULL (prefix 関数が指定されていない) で、 <I>かつ</I>
+比較関数が指定されていないと、デフォルトの辞書比較ルーチンが使われる。 <I>prefix</I> が NULL
+で比較関数が指定されている場合は、前置比較は行われない。
+<DT><I>lorder</I><DD>
+データベースに格納されているメタデータの整数値のバイトオーダー。 この数字は、順序を整数で表したものである。 例えばビッグエンディアンなら、この数値は
+4,321 となる。 <I>lorder</I> が 0 (指定されていない) の場合、現在のホスト で使われているバイトオーダーが使われる。
+</DL>
+<P>
+
+ファイルが既に存在している (または <B>O_TRUCT</B> フラグが指定されていない) と、 引数 <I>flag</I>, <I>lorder</I>,
+<I>psize</I> に指定された値は無視され、 ツリーが作られた時に使った値が用いられる。
+<P>
+
+ツリーの前方順検索は、最小キーから最大キーに向かって行われる。
+<P>
+
+ツリーからキー/データ対が削除されることによってできたスペースは、 通常再利用できる形になっているが再利用されることは無い。 つまり brtee
+記憶構造は肥大する一方である。 対策は過度の削除を避けるか、 存在するツリーを調べて定期的に新しいツリーを作るか、だけである。
+<P>
+
+Searches, insertions, and deletions in a btree will all complete in O lg
+base N where base is the average fill factor.  Often, inserting ordered data
+into btrees results in a low fill factor.  This implementation has been
+modified to make ordered insertion the best case, resulting in a much better
+than normal page fill factor.
+<A NAME="lbAE">&nbsp;</A>
+<H2>エラー</H2>
+
+<I>btree</I> アクセスメソッドルーチンは失敗すると、ライブラリルーチン <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  で定義されているエラーのいずれかを
+<I>errno</I> として返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>バグ</H2>
+
+バイトオーダーとしてはビッグエンディアンとリトルエンディアンのみが サポートされている。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3), <B><A HREF="../man3/hash.3.html">hash</A></B>(3), <B><A HREF="../man3/mpool.3.html">mpool</A></B>(3), <B><A HREF="../man3/recno.3.html">recno</A></B>(3)
+<P>
+
+<I>The Ubiquitous B-tree</I>, Douglas Comer, ACM Comput. Surv. 11, 2 (June
+1979), 121-138.
+<P>
+
+<I>Prefix B-trees</I>, Bayer and Unterauer, ACM Transactions on Database
+Systems, Vol. 2, 1 (March 1977), 11-26.
+<P>
+
+<I>The Art of Computer Programming Vol. 3: Sorting and Searching</I>,
+D.E. Knuth, 1968, pp 471-480.
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">エラー</A><DD>
+<DT><A HREF="#lbAF">バグ</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:27 GMT, December 05, 2022
+</BODY>
+</HTML>

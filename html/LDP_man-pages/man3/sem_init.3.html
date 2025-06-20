@@ -1,0 +1,121 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SEM_INIT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SEM_INIT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/sem_init.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sem_init - 名前なしセマフォを初期化する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/semaphore.h">semaphore.h</A>&gt;</B>
+
+<B>int sem_init(sem_t *</B><I>sem</I><B>, int </B><I>pshared</I><B>, unsigned int </B><I>value</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>-pthread</I> とリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>sem_init</B>()  は、 <I>sem</I> が指すアドレスにある名前なしセマフォを初期化する。 <I>value</I>
+引数はそのセマフォの初期値を指定する。
+<P>
+
+<I>pshared</I> 引数は、このセマフォがプロセス内のスレッド間で共有されるのか、 プロセス間で共有されるのか、を示す。
+<P>
+
+<I>pshared</I> が 0 の場合、セマフォはプロセス内のスレッド間で共有される。 セマフォはすべてのスレッドから参照可能なアドレスに配置すべきである
+(例えば、大域変数や、ヒープ上に動的に割り当てられた変数など)。
+<P>
+
+<I>pshared</I> が 0 以外の場合、セマフォはプロセス間で共有される。セマフォは 共有メモリー領域に配置すべきである
+(<B><A HREF="../man3/shm_open.3.html">shm_open</A></B>(3), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/shmget.2.html">shmget</A></B>(2)  参照)。 (<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+で生成された子プロセスは親プロセスのメモリーマッピングを継承するため、 子プロセスもセマフォにアクセスできる。)
+共有メモリー領域にアクセスできるプロセスならば、どのプロセスでも <B><A HREF="../man3/sem_post.3.html">sem_post</A></B>(3)  や <B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3)
+などを使ってセマフォを操作できる。
+<P>
+
+すでに初期化済のセマフォを初期化した場合の挙動は定義されていない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>sem_init</B>()  は 0 を返す。エラーの場合、-1 を返し、 <I>errno</I> にエラーを示す値をセットする。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>value</I> が <B>SEM_VALUE_MAX</B> を超えている。
+<DT><B>ENOSYS</B><DD>
+<I>pshared</I> が 0 以外だが、システムがプロセス共有セマフォをサポートしていない (<B><A HREF="../man7/sem_overview.7.html">sem_overview</A></B>(7)  参照)。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>sem_init</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+妙なことに、POSIX.1-2001 は <B>sem_init</B>()  が成功した場合に返すべき値を規定していない。 POSIX.1-2008
+ではこれが修正され、成功時には 0 を返すことが規定された。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man3/sem_open.3.html">sem_open</A></B>(3) と <B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3) を参照。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/sem_destroy.3.html">sem_destroy</A></B>(3), <B><A HREF="../man3/sem_post.3.html">sem_post</A></B>(3), <B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3), <B><A HREF="../man7/sem_overview.7.html">sem_overview</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

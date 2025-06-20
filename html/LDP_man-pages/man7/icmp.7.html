@@ -1,0 +1,185 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ICMP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ICMP</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2017-11-26<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/icmp.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+icmp - Linux IPv4 ICMP カーネルモジュール
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+このカーネルモジュールは RFC&nbsp;792 で定義されている Internet Control Message Protocol を実装したものである。
+このプロトコルはエラー状況を知らせたり診断を行うために用いられる。 ユーザーはこのモジュールとは直接には通信できない。
+このモジュールはカーネルの他のプロトコルと通信し、 それらのプロトコルが ICMP エラーをアプリケーションレイヤに渡す。 カーネルの ICMP
+モジュールは ICMP リクエストに対する応答も行う。
+<P>
+
+raw ソケットをプロトコル <B>IPPROTO_ICMP</B> でオープンすれば、 ユーザープロトコルはローカルなソケット全てに対する ICMP
+パケットを受信することができる。 詳細は <B><A HREF="../man7/raw.7.html">raw</A></B>(7)  を参照のこと。 ソケットに渡される ICMP パケットのタイプは
+<B>ICMP_FILTER</B> オプションによってフィルターできる。 ICMP パケットは (たとえユーザーソケットに渡される場合でも)、
+常にカーネルによって (も) 処理される。
+<P>
+
+Linux では ICMP エラーパケットのレートをそれぞれの送り先に対して 制限している。 <B>ICMP_REDIRECT</B> と
+<B>ICMP_DEST_UNREACH</B> も到着したパケットの行き先経路 (destination route) を制限する。
+<A NAME="lbAD">&nbsp;</A>
+<H3>/proc インターフェース</H3>
+
+
+ICMP では、いくつかのグローバルパラメーターを設定するための <I>/proc</I> ファイル群が用意されている。 これらのパラメーターには、
+<I>/proc/sys/net/ipv4/</I> ディレクトリ内のファイルの読み書きでアクセスできる。 これらのパラメーターのほとんどは特定の ICMP
+タイプに対するレート制限 (rate limitation) である。 Linux 2.2 は ICMP の制限にトークンバケットフィルタ (token
+bucket filter) を用いる。 それぞれの値は、バーストの後にトークンバケットフィルタがクリア
+されるまでのタイムアウトを秒単位で表したものである。最小単位(jiffy)は システム依存の単位で i386 システムは通常 10ms、alpha や
+ia64 では 1ms である。
+<DL COMPACT>
+<DT><I>icmp_destunreach_rate</I> (Linux 2.2 から 2.4.9 まで)<DD>
+
+ICMP 不達パケット (Destination Unreachable packet) を送る最大レート。
+これは特定のルートまたは行き先にパケットを送信するレートを制限する。 この制限は、 path MTU discovery に必要な
+<B>ICMP_FRAG_NEEDED</B> パケットの送信には影響しない。
+<DT><I>icmp_echo_ignore_all</I> (Linux 2.2 以降)<DD>
+
+この値が非ゼロの場合は、 Linux はすべての <B>ICMP_ECHO</B> 要求を無視する。
+<DT><I>icmp_echo_ignore_broadcasts</I> (Linux 2.2 以降)<DD>
+
+この値が非ゼロの場合は、 Linux はブロードキャストアドレスに送られたすべての <B>ICMP_ECHO</B> 要求を無視する。
+<DT><I>icmp_echoreply_rate</I> (Linux 2.2 から 2.4.9 まで)<DD>
+
+<B>ICMP_ECHOREQUEST</B> パケットに応答する <B>ICMP_ECHOREPLY</B> パケットの最大送信レート。
+<DT><I>icmp_errors_use_inbound_ifaddr</I> (ブール値; デフォルト: 無効; Linux 2.6.12 以降)<DD>
+
+これを無効にすると、ICMP エラーメッセージは、 出力インターフェースのプライマリアドレスで送信される。
+<DT><DD>
+これを有効にすると、エラーメッセージは ICMP エラーの原因となったパケットを 受信したインターフェースのプライマリアドレスで送信される。
+この動作は、多くのネットワーク管理者がルーターに対して期待しているものであり、 これにより複雑なネットワークレイアウトのデバッグがより容易になる。
+<DT><DD>
+選択されたインターフェースでプライマリアドレスが存在しない場合は、 この設定に関わらず、最初のループバック以外のインターフェースで、
+プライマリアドレスを持つインターフェースのプライマリアドレスが使用される点に 注意すること。
+<DT><I>icmp_ignore_bogus_error_responses</I> (ブール値; デフォルト: 無効; Linux 2.2 以降)<DD>
+
+
+ルーターの中には、RFC1122 に違反し、ブロードキャストフレームに対して 偽の応答を送信するものがある。
+このような違反は通常カーネルの警告としてログに記録される。 このパラメーターを有効にすると、カーネルはこのような警告を出さなくなり、
+ログファイルに雑音のような情報が記録されるのを避けることができる。
+<DT><I>icmp_paramprob_rate</I> (Linux 2.2 から 2.4.9 まで)<DD>
+
+<B>ICMP_PARAMETERPROB</B> パケットの最大送信レート。 これらのパケットは不正な IP ヘッダーを持つパケットが到着した場合に
+送信される。
+<DT><I>icmp_ratelimit</I> (integer; default: 1000; Linux 2.4.10 以降)<DD>
+
+種別が <I>icmp_ratemask</I> (下記参照) にマッチした ICMP パケットの、 特定の送信先への送信レートの最大値を制限する。 0
+はレート制限を無効にすることを、 0 以外の値は応答間の最小間隔 (ミリ秒単位) を示す。
+<DT><I>icmp_ratemask</I> (integer; default: 下記参照; Linux 2.4.10 以降)<DD>
+
+レート制限を行う ICMP タイプを決めるマスク。
+<DT><DD>
+有効ビット: IHGFEDCBA9876543210
+<BR>
+
+デフォルトマスク: 0000001100000011000 (0x1818)
+<DT><DD>
+ビット定義 (Linux カーネルソースファイル <I>include/linux/icmp.h</I> を参照):
+<DL COMPACT><DT><DD>
+<TABLE>
+<TR VALIGN=top><TD>0 Echo Reply</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>3 Destination Unreachable *</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>4 Source Quench *</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>5 Redirect</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>8 Echo Request</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>B Time Exceeded *</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>C Parameter Problem *</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>D Timestamp Request</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>E Timestamp Reply</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>F Info Request</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>G Info Reply</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>H Address Mask Request</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>I Address Mask Reply</TD><TD><BR></TD></TR>
+</TABLE>
+
+</DL>
+
+</DL>
+<P>
+
+アスタリスク印 (*) が付いたビットは、 デフォルトでレート制限が有効になっている (上記のマスクのデフォルトも参照)。
+<DL COMPACT>
+<DT><I>icmp_timeexceed_rate</I> (Linux 2.2 から 2.4.9 まで)<DD>
+<B>ICMP_TIME_EXCEEDED</B> パケットの最大送信レート。 これらのパケットはパケットがあまりに多くの hop を通過した場合に、
+ループを防ぐために送られる。
+<DT><I>ping_group_range</I> (two integers; default: see below; since Linux 2.6.39)<DD>
+Range of the group IDs (minimum and maximum group IDs, inclusive)  that are
+allowed to create ICMP Echo sockets.  The default is &quot;1 0&quot;, which means no
+group is allowed to create ICMP Echo sockets.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>ICMP_ADDRESS</B> 要求に対するサポートは 2.2 で削除された。
+<P>
+
+<B>ICMP_SOURCE_QUENCH</B> は Linux 2.2 で削除された。
+<A NAME="lbAF">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+
+他の多くの実装では、 <B>IPPROTO_ICMP</B> raw ソケットがサポートされていない。 この機能は移植性が必要なプログラムでは用いるべきでない。
+<P>
+
+Linux がルーターとして動作していないときには、 <B>ICMP_REDIRECT</B> パケットは送信されない。
+またこれらが受け取られるのも、発信元がルーティングテーブルに定義されている 古いゲートウェイで、リダイレクトルート (redirect route) が
+適当な時間の後に期限切れになっている場合に限られる。
+<P>
+
+<B>ICMP_TIMESTAMP</B> から返される 64 ビットのタイムスタンプは、 紀元 (Epoch) である 1970-01-01 00:00:00
++0000 (UTC)  からの経過時間をミリ秒単位で表したものである。
+<P>
+
+Linux ICMP は ICMP を送るために内部で raw ソケットを用いる。 raw ソケットは <B><A HREF="../../net-tools/man8/netstat.8.html">netstat</A></B>(8)  の出力に 0
+inode として出力される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7), <B>rdisc</B>(8)
+<P>
+
+<B>RFC&nbsp;792</B>: ICMP プロトコルの説明
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">/proc インターフェース</A><DD>
+</DL>
+<DT><A HREF="#lbAE">バージョン</A><DD>
+<DT><A HREF="#lbAF">注意</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

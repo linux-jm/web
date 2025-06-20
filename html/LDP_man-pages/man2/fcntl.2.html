@@ -1,0 +1,1156 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FCNTL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FCNTL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/fcntl.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fcntl - ファイルディスクリプターの操作を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
+
+<B>int fcntl(int </B><I>fd</I><B>, int </B><I>cmd</I><B>, ... /* </B><I>arg</I><B> */ );</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>fcntl</B>()  は、オープンされたファイルディスクリプター <I>fd</I> に関して下記の操作を行う。操作は <I>cmd</I> によって決まる:
+<P>
+
+<B>fcntl</B>() はオプションとして第三引数をとることができる。 第三引数が必要
+かどうかは <I>cmd</I> により決まる。必要な引数の型は <I>cmd</I> 名の後ろの括弧内で
+指定されている (ほとんどの場合、必要な型は <I>int</I> であり、この引数を表すの
+に <I>arg</I> という名前を使っている)。引数が必要ない場合には <I>void</I> が指定さ
+れている。
+<P>
+
+下記のいくつかの操作は特定のバージョンの Linux カーネルでのみサポートされている。
+ホストカーネルが特定の操作をサポートしているかを確認する推奨の方法は、 <B>fcntl</B>() を所望の <I>cmd</I> 値で呼び出し、 <B>EINVAL</B>
+で失敗するかを検査することである。 <B>EINVAL</B> が返った場合、カーネルがこの値を認識していないことを示す。
+<A NAME="lbAE">&nbsp;</A>
+<H3>ファイルディスクリプターの複製</H3>
+
+<DL COMPACT>
+<DT><B>F_DUPFD</B> (<I>int</I>)<DD>
+Duplicate the file descriptor <I>fd</I> using the lowest-numbered available file
+descriptor greater than or equal to <I>arg</I>.  This is different from
+<B><A HREF="../man2/dup2.2.html">dup2</A></B>(2), which uses exactly the file descriptor specified.
+<DT><DD>
+成功すると、新しいファイルディスクリプターが返される。
+<DT><DD>
+詳細は <B><A HREF="../man2/dup.2.html">dup</A></B>(2)  を参照のこと。
+<DT><B>F_DUPFD_CLOEXEC</B> (<I>int</I>; Linux 2.6.24 以降)<DD>
+<B>F_DUPFD</B> と同様だが、それに加えて複製されたファイルディスクリプターに対して close-on-exec フラグをセットする。
+このフラグを指定することで、プログラムは <B>FD_CLOEXEC</B> フラグをセットするために <B>fcntl</B>()  の <B>F_SETFD</B>
+操作を追加で行う必要がなくなる。 このフラグがなぜ有用かについては、 <B><A HREF="../man2/open.2.html">open</A></B>(2)  の <B>O_CLOEXEC</B> の説明を参照のこと。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>ファイルディスクリプターフラグ</H3>
+
+The following commands manipulate the flags associated with a file
+descriptor.  Currently, only one such flag is defined: <B>FD_CLOEXEC</B>, the
+close-on-exec flag.  If the <B>FD_CLOEXEC</B> bit is set, the file descriptor
+will automatically be closed during a successful <B><A HREF="../man2/execve.2.html">execve</A></B>(2).  (If the
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  fails, the file descriptor is left open.)  If the
+<B>FD_CLOEXEC</B> bit is not set, the file descriptor will remain open across an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+<DL COMPACT>
+<DT><B>F_GETFD</B> (<I>void</I>)<DD>
+Return (as the function result) the file descriptor flags; <I>arg</I> is
+ignored.
+<DT><B>F_SETFD</B> (<I>int</I>)<DD>
+ファイルディスクリプターフラグに <I>arg</I> で指定した値を設定する。
+</DL>
+<P>
+
+マルチスレッドプログラムでは、 <B>fcntl</B>() の <B>F_SETFD</B> を使って close-on-exec フラグを設定するのと同時に、
+別のスレッドで <B><A HREF="../man2/execve.2.html">execve</A></B>(2) と <B><A HREF="../man2/fork.2.html">fork</A></B>(2) を実行することは、競合条件次第では、
+そのファイルディスクリプターが子プロセスで実行されるプログラムに意図せず見えてしまうという危険性がある。 詳細とこの問題への対処法については
+<B><A HREF="../man2/open.2.html">open</A></B>(2) の <B>O_CLOEXEC</B> フラグの議論を参照のこと。
+<A NAME="lbAG">&nbsp;</A>
+<H3>ファイル状態フラグ</H3>
+
+
+
+オープンファイル記述 (open file description) には、 ファイル記述毎に設定される状態フラグがいくつかある。これらのフラグは
+<B><A HREF="../man2/open.2.html">open</A></B>(2)  によって初期化され、 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  により変更することもできる。これらは、 (<B><A HREF="../man2/dup.2.html">dup</A></B>(2),
+<B>fcntl</B>(F_DUPFD), <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  などで) 複製されたファイルディスクリプター同士は 同じオープンファイル記述を参照する。
+そのため、 同じファイル状態フラグが共有される。
+<P>
+
+ファイル状態フラグとその意味は <B><A HREF="../man2/open.2.html">open</A></B>(2)  で説明されている。
+<DL COMPACT>
+<DT><B>F_GETFL</B> (<I>void</I>)<DD>
+Return (as the function result)  the file access mode and the file status
+flags; <I>arg</I> is ignored.
+<DT><B>F_SETFL</B> (<I>int</I>)<DD>
+ファイル状態フラグに <I>arg</I> で指定された値を設定する。 <I>arg</I> のうち、ファイルのアクセスモード (<B>O_RDONLY</B>,
+<B>O_WRONLY</B>, <B>O_RDWR</B>)  とファイル作成フラグ (すなわち <B>O_CREAT</B>, <B>O_EXCL</B>,
+<B>O_NOCTTY</B>, <B>O_TRUNC</B>)  に関するビットは無視される。 Linux では、このコマンドで変更できるのは
+<B>O_APPEND</B>, <B>O_ASYNC</B>, <B>O_DIRECT</B>, <B>O_NOATIME</B>, <B>O_NONBLOCK</B>
+フラグだけである。フラグ <B>O_DSYNC</B>, <B>O_SYNC</B> を変更することはできない。下記の「バグ」を参照。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>アドバイザリーレコードロック</H3>
+
+Linux は昔からある (「プロセスに関連付けられる」) UNIX のレコードロックを実装している。 このレコードロックは POSIX
+で標準化されている。 Linux 固有のより良い動作を行うロックについては、下記のオープンファイル記述ロックの議論を参照のこと。
+<P>
+
+<B>F_SETLK</B>, <B>F_SETLKW</B>, <B>F_GETLK</B> は、レコードロックの獲得／解放／テストのために使用する
+(レコードロックは、バイト範囲ロック、ファイルセグメントロック、ファイル領域ロックとも呼ばれる)。 三番目の引数 <I>lock</I>
+は、以下に示すフィールドを含む構造体へのポインターである (フィールドの順序は関係なく、構造体に他のフィールドがあってもよい)。
+<P>
+
+
+
+struct flock {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;...
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;l_type;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Type&nbsp;of&nbsp;lock:&nbsp;F_RDLCK,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;F_WRLCK,&nbsp;F_UNLCK&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;l_whence;&nbsp;&nbsp;/*&nbsp;How&nbsp;to&nbsp;interpret&nbsp;l_start:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SEEK_SET,&nbsp;SEEK_CUR,&nbsp;SEEK_END&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;off_t&nbsp;l_start;&nbsp;&nbsp;&nbsp;/*&nbsp;Starting&nbsp;offset&nbsp;for&nbsp;lock&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;off_t&nbsp;l_len;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;bytes&nbsp;to&nbsp;lock&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;l_pid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;PID&nbsp;of&nbsp;process&nbsp;blocking&nbsp;our&nbsp;lock
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(set&nbsp;by&nbsp;F_GETLK&nbsp;and&nbsp;F_OFD_GETLK)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;...
+};
+
+
+<P>
+
+この構造体の <I>l_whence</I>, <I>l_start</I>, <I>l_len</I> フィールドで、ロックを行いたいバイト範囲を指定する。
+ファイルの末尾より後ろのバイトをロックすることはできるが、 ファイルの先頭より前のバイトをロックすることはできない。
+<P>
+
+<I>l_start</I> はロックを行う領域の開始オフセットである。 その意味は <I>l_whence</I> により異なる: <I>l_whence</I> が
+<B>SEEK_SET</B> の場合はファイルの先頭からのオフセット、 <I>l_whence</I> が <B>SEEK_CUR</B>
+の場合は現在のファイルオフセットからのオフセット、 <I>l_whence</I> が <B>SEEK_END</B>
+の場合はファイルの末尾からのオフセットと解釈される。 後ろの２つの場合には、 ファイルの先頭より前にならない範囲で、 <I>l_start</I>
+に負の値を指定することができる。
+<P>
+
+<I>l_len</I> はロックしたいバイト数を示す。 <I>l_len</I> が正の場合、ロックされるバイト範囲は <I>l_start</I> 以上
+<I>l_start</I>+<I>l_len</I>-1 以下となる。 <I>l_len</I> に 0 を指定した場合は特別な意味を持つ: <I>l_whence</I> and
+<I>l_start</I> で指定される位置からファイルの末尾までの全てのバイトをロックする
+(ファイルがどんなに大きくなったとしてもファイルの末尾までロックする)。
+<P>
+
+POSIX.1-2001 では、負の値の <I>l_len</I> をサポートする実装を認めている (必須ではない)。 <I>l_len</I>
+が負の場合、ロックされるバイト範囲は <I>l_start</I>+<I>l_len</I> 以上 <I>l_start</I>-1 以下となる。 この動作はカーネル
+2.4.21 以降および 2.5.49 以降の Linux で サポートされている。
+<P>
+
+<I>l_type</I> フィールドは、ファイルに対して読み出しロック (<B>F_RDLCK</B>)  と書き込みロック (<B>F_WRLCK</B>)  のどちらを
+設定するかを指定する。 ファイルのある領域に対して、読み出しロック (共有ロック) を保持できる プロセス数に制限はないが、書き込みロック
+(排他ロック) を保持できる のは一つのプロセスだけである。排他ロックを設定すると、(共有ロックか 排他ロックにかかわらず)
+他のロックは何も設定できない。 一つのプロセスは、ファイルのある領域に対して一種類のロックしか保持できない。
+新規のロックがロックが設定されている領域に対して適用されると、既存のロック は新規のロックの種別に変換される
+(新規のロックで指定されたバイト範囲が既存ロックの範囲と一致する場合以外では、 変換の過程で既存のロックの分割、縮小、結合が行われることがある)。
+<DL COMPACT>
+<DT><B>F_SETLK</B> (<I>struct flock *</I>)<DD>
+(<I>l_type</I> が <B>F_RDLCK</B> か <B>F_WRLCK</B> の場合は) ロックの獲得を、 (<B>F_UNLCK</B> の場合は)
+ロックの解放を、 <I>flock</I> 構造体のフィールド <I>l_whence</I>, <I>l_start</I>, <I>l_len</I>
+で指定された範囲のバイトに対して行う。 指定されたロックが他のプロセスが設定しているロックと衝突する場合は、 -1 を返し、 <I>errno</I> に
+<B>EACCES</B> か <B>EAGAIN</B> を設定する。 (この場合に返されるエラーは実装により異なる。 そのため、 POSIX
+では移植性が必要なアプリケーションでは、 これらの両方のエラーをチェックすることが必要としている。)
+<DT><B>F_SETLKW</B> (<I>struct flock *</I>)<DD>
+<B>F_SETLK</B> と同様だが、こちらではそのファイルに対して衝突するロックが 適用されていた場合に、そのロックが解放されるのを待つ点が異なる。
+待っている間にシグナルを受けた場合は、システムコールは中断され、 (シグナルハンドラーが戻った直後に) 返り値 -1 を返す (また <I>errno</I>
+に <B>EINTR</B> が設定される; <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照)。
+<DT><B>F_GETLK</B> (<I>struct flock *</I>)<DD>
+このコールの呼び出し時には、 <I>lock</I> にはそのファイルに適用しようとするロックに関する情報が入っている。 ロックを適用できる場合には、
+<B>fcntl</B>()  は実際にはロックを行わず、 構造体 <I>lock</I> の <I>l_type</I> フィールドに <B>F_UNLCK</B> を返し、
+他のフィールドは変更しない。
+<DT><DD>
+違う種別のロックが (一つもしくは複数) 適用されていてロックを適用できないような場合には、 <B>fcntl</B>() は、
+原因となったロックの一つについての詳細を、 <I>lock</I> のフィールド <I>l_type</I>, <I>l_whence</I>, <I>l_start</I>,
+<I>l_len</I> で返す。 衝突するロックが昔からある (プロセスに関連付けられる) レコードロックの場合、 <I>l_pid</I>
+フィールドにロックを保持しているプロセスの PID が設定される。 衝突するロックがオープンファイル記述ロックの場合、 <I>l_pid</I> に -1
+が設定される。 呼び出し元がその内容を参照した時点では、 返された情報はすでに古いものとなっている可能性がある点に注意すること。
+</DL>
+<P>
+
+読み出しロックを適用するには、 <I>fd</I> は読み出し用にオープンされていなければならない。 書き込みロックを適用するには、 <I>fd</I>
+は書き込み用にオープンされていなければならない。 読み書き両方のロックを適用するには、読み書き両用で ファイルをオープンしなければならない。
+<P>
+
+<B>F_SETLKW</B> でロックを適用する際、 カーネルは<I>デッドロック</I>の検出を行う。 2 つ以上のプロセスが、
+他のプロセスが保持するロックにより互いにブロックされるようなロック要求を行っているかを検査する。 例えば、 プロセス A があるファイルのバイト 100
+に対して書き込みロックを保持していて、 プロセス B がバイト 200 に対して書き込みロックを保持しているとする。 各プロセスが
+<B>F_SETLKW</B> を使って他のプロセスによるすでにロックされているバイトをロックしようとすると、 デッドロック検出がない場合、
+両方のプロセスが無限に停止することになる。 カーネルはこのようなデッドロックを検出すると、 停止していたロック要求の一つをエラー <B>EDEADLK</B>
+ですぐに失敗させる。 このエラーを受け取ったアプリケーションは、 必要なロックを再度獲得しようとする前に、
+他のアプリケーションが実行できるように自分が保持するロックのいくつかを解放する必要がある。 3
+つ以上のプロセスが関連する循環するデッドロックも検出される。 ただし、 カーネルのデッドロック検出アルゴリズムには制限がある点に注意すること。
+「バグ」を参照。
+<P>
+
+レコードロックは <B>F_UNLCK</B> で明示的に削除されるだけでなく、 そのプロセスが終了した際には自動的に解放される。
+<P>
+
+レコードのロックは <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  で作成された子プロセスには継承されないが、 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  の前後では保存される。
+<P>
+
+<B><A HREF="../man3/stdio.3.html">stdio</A></B>(3)  ではバッファーリングが行われるので、 stdio 関連の関数ではレコードのロックの使用は回避される; 代わりに
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  や <B><A HREF="../man2/write.2.html">write</A></B>(2)  を使用すること。
+<P>
+
+上記で説明したレコードロックはプロセスと関連付けられる (以下で説明するオープンファイル記述ロックと異なる点である)。 そのため、
+残念ながら以下のようなことが起こる。
+<DL COMPACT>
+<DT>*<DD>
+
+
+
+プロセスがロックが適用されているファイルを参照しているファイルディスクリプターの「いずれか」をクローズした場合、
+そのファイルに対するそのプロセスのすべてのロックが解放される。 この動作はまずい。 あるプロセスが <I>/etc/passwd</I> や
+<I>/etc/mtab</I> といったファイルにロックを適用しているときに、 あるライブラリ関数が何かの理由で同じファイルを open, read,
+close すると、そのファイルへのロックが失われることになる。
+<DT>*<DD>
+1 つのプロセス内のスレッドはロックを共有する。 言い換えると、 マルチスレッドのプログラムで、 レコードロックを使って、 複数のスレッドが同時に 1
+つのファイルの同じ領域にアクセスしないようにすることはできないということだ。
+</DL>
+<P>
+
+オープンファイル記述ロックを使うとこれらの問題が解決できる。
+<A NAME="lbAI">&nbsp;</A>
+<H3>オープンファイル記述ロック (非 POSIX)</H3>
+
+
+
+Open file description locks are advisory byte-range locks whose operation is
+in most respects identical to the traditional record locks described above.
+This lock type is Linux-specific, and available since Linux 3.15.  (There is
+a proposal with the Austin Group to include this lock type in the next
+revision of POSIX.1.)  For an explanation of open file descriptions, see
+<B><A HREF="../man2/open.2.html">open</A></B>(2).
+<P>
+
+2 つのロック種別の主な違いは、 昔からあるレコードロックはプロセスに関連付けられるのに対して、
+オープンファイル記述ロックはロックが獲得されるオープンファイル記述に関連付けられる点である。 この動作は <B><A HREF="../man2/flock.2.html">flock</A></B>(2)
+で獲得されるロックによく似ている。 結果として (昔からあるアドバイザリーレコードロックと違い)、 オープンファイル記述ロックは <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+(や <B>CLONE_FILES</B> 付きの <B><A HREF="../man2/clone.2.html">clone</A></B>(2)) の前後で継承され、 ファイルのクローズ時に解放されるのではなく、
+オープンファイル記述の最後のクローズ時にのみ自動的に解放される。
+<P>
+
+Conflicting lock combinations (i.e., a read lock and a write lock or two
+write locks)  where one lock is an open file description lock and the other
+is a traditional record lock conflict even when they are acquired by the
+same process on the same file descriptor.
+<P>
+
+同じオープンファイル記述経由 (同じファイルディスクリプター経由や <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man2/dup.2.html">dup</A></B>(2), <B>fcntl</B>()
+<B>F_DUPFD</B> などで作成されたファイルディスクリプターの複製経由) で適用されたオープンファイル記述ロックは常に互換性がある。 つまり、
+すでにロックされている領域に対して新しいロックが適用された場合、 既存のロックは新しいロック種別に変換される。 (上記で説明した通り、
+このような変換の結果、 既存のロックの分割、 縮小、 結合が行われることがある。)
+<P>
+
+一方、 異なるオープンファイル記述経由で獲得されると、 オープンファイル記述ロックは互いに競合する。 したがって、
+マルチスレッドプログラムのスレッドは、 各スレッドがそれぞれ自分で <B><A HREF="../man2/open.2.html">open</A></B>(2) を実行し、
+得られたファイルディスクリプター経由でロックを適用することで、
+オープンファイル記述ロックを使って一つのファイル領域えのアクセスを同期させることができる。
+<P>
+
+昔からあるレコードロックの場合と同様、 <B>fcntl</B>() の第 3 引数 <I>lock</I> は <I>flock</I> 構造体へのポインターである。
+昔からあるレコードロックと違い、 下記で説明するコマンドを使う際には、 この構造体のフィールド <I>l_pid</I> に 0 を設定しなければならない。
+<P>
+
+オープンファイル記述ロックで使用できるコマンドは、 昔からあるロックのコマンドと同じである。
+<DL COMPACT>
+<DT><B>F_OFD_SETLK</B> (<I>struct flock *</I>)<DD>
+(<I>l_type</I> が <B>F_RDLCK</B> か <B>F_WRLCK</B> の場合は) オープンファイル記述のロックの獲得を、 (<B>F_UNLCK</B>
+の場合は) オープンファイル記述のロックの解放を、 <I>flock</I> 構造体のフィールド <I>l_whence</I>, <I>l_start</I>,
+<I>l_len</I> で指定された範囲のバイトに対して行う。 指定されたロックが他のプロセスが設定しているロックと衝突する場合は、 -1 を返し、
+<I>errno</I> に <B>EAGAIN</B> を設定する。
+<DT><B>F_OFD_SETLKW</B> (<I>struct flock *</I>)<DD>
+<B>F_OFD_SETLK</B> と同様だが、こちらではそのファイルに対して衝突するロックが
+適用されていた場合に、そのロックが解放されるのを待つ点が異なる。 待っている間にシグナルを受けた場合は、システムコールは中断され、
+(シグナルハンドラーが戻った直後に) 返り値 -1 を返す (また <I>errno</I> に <B>EINTR</B> が設定される; <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+参照)。
+<DT><B>F_OFD_GETLK</B> (<I>struct flock *</I>)<DD>
+このコールの呼び出し時には、 <I>lock</I> にはそのファイルに適用しようとするロックに関する情報が入っている。 ロックを適用できる場合には、
+<B>fcntl</B>()  は実際にはロックを行わず、 構造体 <I>lock</I> の <I>l_type</I> フィールドで <B>F_UNLCK</B> を返し、
+他のフィールドは変更しない。 違う種別のロックが (一つもしくは複数) 適用されていてロックを適用できないような場合には、
+原因となったロックの一つについての詳細が <I>lock</I> で返される。 詳細は上記の <B>F_GETLK</B> を参照。
+</DL>
+<P>
+
+
+
+現在の実装では、 オープンファイル記述ロクではデッドロックの検出は行われない。 (これがプロセスと関連付けられるレコードロックとは異なる点である。
+プロセスと関連付けられるレコードロックではカーネルはデッドロックの検出を行う。)
+<A NAME="lbAJ">&nbsp;</A>
+<H3>強制ロック (mandatory locking)</H3>
+
+<I>Warning</I>: the Linux implementation of mandatory locking is unreliable.
+See BUGS below.  Because of these bugs, and the fact that the feature is
+believed to be little used, since Linux 4.5, mandatory locking has been made
+an optional feature, governed by a configuration option
+(<B>CONFIG_MANDATORY_FILE_LOCKING</B>).  This is an initial step toward removing
+this feature completely.
+<P>
+
+デフォルトでは、 昔からある (プロセスに関連付けられる) レコードロックも、 オープンファイル記述のレコードロックも、 アドバイザリーロックである。
+アドバイザリーロックに強制力はなく、協調して動作するプロセス間でのみ有効である。
+<P>
+
+両方のタイプのロックも強制ロックにすることもできる。 強制ロックは全てのプロセスに対して効果がある。
+あるプロセスが互換性のない強制ロックが適用されたファイル領域に対して (<B><A HREF="../man2/read.2.html">read</A></B>(2)  や <B><A HREF="../man2/write.2.html">write</A></B>(2)  により)
+互換性のないアクセスを実行しようとした場合、 アクセスの結果は そのファイルのオープンファイル記述で <B>O_NONBLOCK</B>
+フラグが有効になっているかにより決まる。 <B>O_NONBLOCK</B> フラグが有効になっていないときは、ロックが削除されるか、
+ロックがアクセスと互換性のあるモードに変換されるまで、 システムコールは停止 (block) される。 <B>O_NONBLOCK</B>
+フラグが有効になっているときは、システムコールはエラー <B>EAGAIN</B> で失敗する。
+<P>
+
+強制ロックを使用するためには、ロック対象のファイルが含まれるファイルシステム
+と、ロック対象のファイル自身の両方について、強制ロックが有効になっていなけれ ばならない。ファイルシステムについて強制ロックを有効にするには、
+<B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)  に &quot;-o mand&quot; オプションを渡すか、 <B><A HREF="../man2/mount.2.html">mount</A></B>(2)  に <B>MS_MANDLOCK</B>
+フラグを指定する。ファイルについて強制ロックを有効にするには、 そのファイルのグループ実行許可 (group execute permission)
+を無効とし、 かつ set-group-ID 許可ビットを有効にする (<B><A HREF="../../0MultiFileIdx/man1/chmod.1.html">chmod</A></B>(1)  と <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2)  を参照)。
+<P>
+
+
+強制ロックは POSIX では規定されていない。 他のいくつかのシステムでも強制ロックはサポートされているが、
+強制ロックをどのようにして有効にするかの詳細はシステムより異なる。
+<A NAME="lbAK">&nbsp;</A>
+<H3>Lost locks</H3>
+
+When an advisory lock is obtained on a networked filesystem such as NFS it
+is possible that the lock might get lost.  This may happen due to
+administrative action on the server, or due to a network partition (i.e.,
+loss of network connectivity with the server)  which lasts long enough for
+the server to assume that the client is no longer functioning.
+<P>
+
+
+When the filesystem determines that a lock has been lost, future <B><A HREF="../man2/read.2.html">read</A></B>(2)
+or <B><A HREF="../man2/write.2.html">write</A></B>(2)  requests may fail with the error <B>EIO</B>.  This error will
+persist until the lock is removed or the file descriptor is closed.  Since
+Linux 3.12, this happens at least for NFSv4 (including all minor versions).
+<P>
+
+
+Some versions of UNIX send a signal (<B>SIGLOST</B>)  in this circumstance.
+Linux does not define this signal, and does not provide any asynchronous
+notification of lost locks.
+<A NAME="lbAL">&nbsp;</A>
+<H3>シグナルの管理</H3>
+
+<B>F_GETOWN</B>, <B>F_SETOWN</B>, <B>F_GETOWN_EX</B>, <B>F_SETOWN_EX</B>, <B>F_GETSIG</B>,
+<B>F_SETSIG</B> は、I/O が利用可能になったことを示すシグナルを管理するために使用される。
+<DL COMPACT>
+<DT><B>F_GETOWN</B> (<I>void</I>)<DD>
+ファイルディスクリプター <I>fd</I> のイベントに対するシグナル <B>SIGIO</B> および <B>SIGURG</B> を受けているプロセスのプロセス ID
+かプロセスグループ ID を (関数の結果として) 返す。 プロセス ID は正の値として返される。 プロセスグループ ID は負の値として返される
+(下記のバグの章を参照)。 <I>arg</I> は無視される。
+<DT><B>F_SETOWN</B> (<I>int</I>)<DD>
+Set the process ID or process group ID that will receive <B>SIGIO</B> and
+<B>SIGURG</B> signals for events on the file descriptor <I>fd</I>.  The target
+process or process group ID is specified in <I>arg</I>.  A process ID is
+specified as a positive value; a process group ID is specified as a negative
+value.  Most commonly, the calling process specifies itself as the owner
+(that is, <I>arg</I> is specified as <B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)).
+<DT><DD>
+As well as setting the file descriptor owner, one must also enable
+generation of signals on the file descriptor.  This is done by using the
+<B>fcntl</B>()  <B>F_SETFL</B> command to set the <B>O_ASYNC</B> file status flag on the
+file descriptor.  Subsequently, a <B>SIGIO</B> signal is sent whenever input or
+output becomes possible on the file descriptor.  The <B>fcntl</B>()  <B>F_SETSIG</B>
+command can be used to obtain delivery of a signal other than <B>SIGIO</B>.
+<DT><DD>
+Sending a signal to the owner process (group) specified by <B>F_SETOWN</B> is
+subject to the same permissions checks as are described for <B><A HREF="../man2/kill.2.html">kill</A></B>(2),
+where the sending process is the one that employs <B>F_SETOWN</B> (but see BUGS
+below).  If this permission check fails, then the signal is silently
+discarded.  <I>Note</I>: The <B>F_SETOWN</B> operation records the caller's
+credentials at the time of the <B>fcntl</B>()  call, and it is these saved
+credentials that are used for the permission checks.
+<DT><DD>
+
+
+
+
+
+
+
+
+
+
+ファイルディスクリプターがソケットを参照している場合は、 <B>F_SETOWN</B> を使用して、ソケットに帯域外 (out-of-band)
+データが届いた時に <B>SIGURG</B> シグナルを配送する相手を選択することもできる (<B>SIGURG</B> が送られた場合には <B><A HREF="../man2/select.2.html">select</A></B>(2)
+がソケットが「特別な状態」にあると報告することだろう)。
+<DT><DD>
+バージョン 2.6.11 以前の 2.6.x カーネルでは、以下に示す動作であった。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><DD>
+
+
+
+
+
+
+スレッドグループをサポートしているスレッドライブラリ (例えば NPTL) を 使って動作しているマルチスレッドプロセスで <B>F_SETSIG</B> に
+0 以外の値を指定した場合、 <B>F_SETOWN</B> に正の値を渡すと、その意味が違ってくる: プロセス全体を示すプロセスID
+ではなく、プロセス内の特定の スレッドを示すスレッドID と解釈される。 したがって、 <B>F_SETSIG</B>
+を使う場合には、きちんと結果を受け取るには、 <B>F_SETOWN</B> に渡す値を <B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)  ではなく <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2)
+の返り値にする必要があるだろう。 (現状の Linux スレッド実装では、メインスレッドのスレッドID は そのスレッドのプロセスID
+と同じである。つまり、 シグナルスレッドのプログラムではこの場合 <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2)  と <B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)
+は全く同じように使うことができる。)  ただし、注意すべき点として、この段落で述べたことは、 ソケットの帯域外データが届いたときに生成される
+<B>SIGURG</B> シグナルにはあてはまらない。 このシグナルは常にプロセスかプロセスグループに送られ、 送信先は <B>F_SETOWN</B>
+に渡された値にしたがって決められる。
+</DL>
+</DL>
+
+<DT><DD>
+上記の動作は、Linux 2.6.12 で図らずも削除され、 元に戻されない予定である。 Linux 2.6.32 以降で、特定のスレッド宛にシグナル
+<B>SIGIO</B> と <B>SIGURG</B> を送るには <B>F_SETOWN_EX</B> を使うこと。
+<DT><B>F_GETOWN_EX</B> (<I>struct f_owner_ex *</I>) (Linux 2.6.32 以降)<DD>
+直前の <B>F_SETOWN_EX</B> 操作で定義された現在のファイルディスクリプターの所有者設定 を返す。情報は <I>arg</I>
+が指す構造体に格納されて返される。構造体は以下の通りである。
+<DT><DD>
+
+
+struct f_owner_ex {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;type;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;pid;
+};
+
+
+<DT><DD>
+<I>type</I> フィールドは、 <B>F_OWNER_TID ,</B> <B>F_OWNER_PID ,</B> <B>F_OWNER_PGRP</B>
+のいずれか一つの値となる。 <I>pid</I> フィールドは、スレッド ID、プロセス ID、プロセスグループ ID を 表す正の整数である。詳細は
+<B>F_SETOWN_EX</B> を参照。
+<DT><B>F_SETOWN_EX</B> (<I>struct f_owner_ex *</I>) (Linux 2.6.32 以降)<DD>
+この操作は <B>F_SETOWN</B> と同様の処理を行う。 この操作を使うと、I/O が利用可能になったことを示すシグナルを、
+特定のスレッド、プロセス、プロセスグループに送ることができる ようになる。 呼び出し元は、 <I>arg</I> 経由でシグナルの配送先を指定する。
+<I>arg</I> は <I>f_owner_ex</I> 構造体へのポインターである。 <I>type</I> フィールドは以下のいずれかの値を取り、 この値により
+<I>pid</I> がどのように解釈されるかが規定される。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>F_OWNER_TID</B><DD>
+スレッド ID が <I>pid</I> で指定された値のスレッドにそのシグナルを送る (スレッド ID は <B><A HREF="../man2/clone.2.html">clone</A></B>(2)  や
+<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2)  の呼び出しで返される値である)。
+<DT><B>F_OWNER_PID</B><DD>
+ID が <I>pid</I> で指定された値のプロセスにそのシグナルを送る。
+<DT><B>F_OWNER_PGRP</B><DD>
+ID が <I>pid</I> で指定された値のプロセスグループにそのシグナルを送る。 (<B>F_SETOWN</B> と異なり、プロセスグループ ID
+には正の値を指定する点に注意すること。)
+</DL>
+</DL>
+
+<DT><B>F_GETSIG</B> (<I>void</I>)<DD>
+入力や出力が可能になった場合に送るシグナルを (関数の結果として) 返す。 値ゼロは <B>SIGIO</B> を送ることを意味する。 (<B>SIGIO</B>
+を含む) 他の値はいずれも、 <B>SIGIO</B> の代わりに送るシグナル番号を表す。 後者の場合、シグナルハンドラーを <B>SA_SIGINFO</B>
+フラグ付きで設定すれば、ハンドラーで追加の情報を得ることができる。 <I>arg</I> は無視される。
+<DT><B>F_SETSIG</B> (<I>int</I>)<DD>
+
+
+
+
+
+
+
+
+
+
+入力や出力が可能になった場合に送るシグナルを <I>arg</I> に指定された値に設定する。 値ゼロは <B>SIGIO</B> を送ることを意味する。
+(<B>SIGIO</B> を含む) 他の値はいずれも、 <B>SIGIO</B> の代わりに送るシグナル番号を表す。 後者の場合、シグナルハンドラーを
+<B>SA_SIGINFO</B> フラグ付きで設定すれば、 ハンドラーで追加の情報を得ることができる。
+<DT><DD>
+<B>F_SETSIG</B> にゼロ以外の値を設定し、シグナルハンドラーに <B>SA_SIGINFO</B> フラグを設定すると、 (<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
+を参照) I/O イベントに関する追加の情報が <I>siginfo_t</I> 構造体でシグナルハンドラーへ渡される。 <I>si_code</I>
+フィールドが示すシグナルの原因が <B>SI_SIGIO</B> である場合、 <I>si_fd</I>
+フィールドにはイベントに対応するファイルディスクリプターが入っている。 それ以外の場合は、どのファイルディスクリプターが利用可能かを示す情報は
+ないので、どのファイルディスクリプターで I/O が可能かを判断するためには 通常の機構 (<B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2),
+<B>O_NONBLOCK</B> を設定した <B><A HREF="../man2/read.2.html">read</A></B>(2)  など) を使用しなければならない。
+<DT><DD>
+Note that the file descriptor provided in <I>si_fd</I> is the one that was
+specified during the <B>F_SETSIG</B> operation.  This can lead to an unusual
+corner case.  If the file descriptor is duplicated (<B><A HREF="../man2/dup.2.html">dup</A></B>(2)  or similar),
+and the original file descriptor is closed, then I/O events will continue to
+be generated, but the <I>si_fd</I> field will contain the number of the now
+closed file descriptor.
+<DT><DD>
+リアルタイムシグナル (値が <B>SIGRTMIN</B> 以上) を選択している場合は、 同じシグナル番号を持つ複数の I/O
+イベントがキューに入ることがある (キューに入れるかどうかは利用可能なメモリーに依存している)。 上記と同様、 <B>SA_SIGINFO</B>
+が設定されている場合、シグナルハンドラーのための追加の情報が得られる。
+<DT><DD>
+
+以下の点に注意すること。 Linux では一つのプロセスに対してキューに入れられるリアルタイム シグナルの数に上限が設けられており
+(<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)  と <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  を参照)、この上限に達するとカーネルは <B>SIGIO</B> シグナルを配送する。この
+<B>SIGIO</B> シグナルは、指定されたスレッドではなくプロセス全体に送られる。
+</DL>
+<P>
+
+これらの機構を使用することで、ほとんどの場合で <B><A HREF="../man2/select.2.html">select</A></B>(2)  や <B><A HREF="../man2/poll.2.html">poll</A></B>(2)  を使用せずに完全な非同期 I/O
+を実装することができる。
+<P>
+
+<B>O_ASYNC</B> の使用方法は BSD と Linux に特有である。 POSIX.1 で規定されている <B>F_GETOWN</B> と
+<B>F_SETOWN</B> の使用方法は、ソケットに対する <B>SIGURG</B> シグナルとの組み合わせだけである (POSIX は <B>SIGIO</B>
+シグナルは規定していない)。 <B>F_GETOWN_EX</B>, <B>F_SETOWN_EX</B>, <B>F_GETSIG</B>, <B>F_SETSIG</B> は
+Linux 固有である。POSIX には、同様のことを行うために、非同期 I/O と <I>aio_sigevent</I> 構造体がある。Linux
+では、GNU C ライブラリ (Glibc) の一部として これらも利用可能である。
+<A NAME="lbAM">&nbsp;</A>
+<H3>リース (leases)</H3>
+
+(Linix 2.4 以降で利用可能)  <B>F_SETLEASE</B> は、 <I>fd</I>
+が参照するオープンファイル記述に対して新しいリースを設定するのに使用される。 <B>F_GETLEASE</B> は、 <I>fd</I>
+が参照するオープンファイル記述に対して設定されている 現在のリースを取得するのに使用される。 ファイルのリースにより、 あるプロセス (&quot;lease
+breaker&quot;) がそのファイルディスクリプターが参照 しているファイルに対して <B><A HREF="../man2/open.2.html">open</A></B>(2)  や <B><A HREF="../man2/truncate.2.html">truncate</A></B>(2)
+を行おうとした際に、リースを保持しているプロセス (&quot;lease holder&quot;) へ (シグナルの配送による) 通知が行われるという機構が提供される。
+<DL COMPACT>
+<DT><B>F_SETLEASE</B> (<I>int</I>)<DD>
+<I>arg</I> の内容に基いてファイルのリースの設定、削除を行う。整数 <I>arg</I> には以下の値が指定できる:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>F_RDLCK</B><DD>
+
+
+読み出しリースを取得する。これにより、 そのファイルが書き込み用にオープンされたり、ファイルが切り詰められた場合に、
+呼び出し元のプロセスに通知が行われるようになる。 読み出しリースを設定できるのは、読み出し専用でオープンされている
+ファイルディスクリプターに対してのみである。
+<DT><B>F_WRLCK</B><DD>
+書き込みリースを取得する。これにより、 (読み出し用か書き込み用にかかわらず) そのファイルがオープンされたり、
+ファイルが切り詰められた場合に、呼び出し元のプロセスに通知が行われるようになる。
+書き込みリースは、そのファイルに対するオープンされたファイルディスクリプターが 他にない場合にのみ設定できる。
+<DT><B>F_UNLCK</B><DD>
+そのファイルからリースを削除する。
+</DL>
+</DL>
+
+</DL>
+<P>
+
+リースはオープンファイル記述に対して関連付けられる (<B><A HREF="../man2/open.2.html">open</A></B>(2)  参照)。 つまり、 (<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  や <B><A HREF="../man2/dup.2.html">dup</A></B>(2)
+などにより作成された) ファイルディスクリプターの複製は同じリースを参照し、 複製も含めたどのファイルディスクリプターを使ってもこのリースを変更したり
+解放したりできる。 また、これらのファイルディスクリプターのいずれかに対して <B>F_UNLCK</B>
+操作が明示的に実行された場合や、すべてのファイルディスクリプターが 閉じられた場合にも、リースは解放される。
+<P>
+
+リースの取得は通常のファイル (regular file) に対してのみ可能である。 非特権プロセスがリースを取得できるのは、UID (所有者)
+がプロセスの ファイルシステム UID と一致するファイルに対してだけである。 <B>CAP_LEASE</B>
+ケーパビリティを持つプロセスは任意のファイルに対してリースを取得できる。
+<DL COMPACT>
+<DT><B>F_GETLEASE</B> (<I>void</I>)<DD>
+ファイルディスクリプター <I>fd</I> に対して設定されているリースの種別を取得する。 <B>F_RDLCK</B>, <B>F_WRLCK</B>,
+<B>F_UNLCK</B> のいずれかが返される。 <B>F_RDLCK</B>, <B>F_WRLCK</B>
+はそれぞれ、読み出しリース、書き込みリースが設定されていることを示し、 <B>F_UNLCK</B> はリースが何も設定されていないことを示す。 <I>arg</I>
+は無視される。
+</DL>
+<P>
+
+あるプロセス (&quot;lease breaker&quot;) が <B>F_SETLEASE</B> で設定されたリースと矛
+盾するような <B><A HREF="../man2/open.2.html">open</A></B>(2) や <B><A HREF="../man2/truncate.2.html">truncate</A></B>(2) を実行した場合、 そのシステム
+コールはカーネルによって停止され、 カーネルは lease holder にシグナル
+(デフォルトでは <B>SIGIO</B>) を送って通知を行う。 lease holder はこのシグ
+ナルを受信したときにはきちんと対応すべきである。 具体的には、別のプロセ
+スがそのファイルにアクセスするための準備として 必要な後片付け (例えば、
+キャッシュされたバッファーのフラッシュ) を すべて行ってから、そのファイル
+のリースの削除または格下げを行う。リースを削除をするには、 <I>arg</I> に
+<B>F_UNLCK</B> を指定して <B>F_SETLEASE</B> を実行する。lease holder がファイル
+に書き込みリースを保持していて、 lease breaker が読み出し用にそのファイ
+ルをオープンしている場合、 lease holder が保持しているリースを読み出し
+リースに格下げすれば 十分である。これをするには、 <I>arg</I> に <B>F_RDLCK</B>
+を指定して <B>F_SETLEASE</B> を実行する。
+<P>
+
+If the lease holder fails to downgrade or remove the lease within the number
+of seconds specified in <I>/proc/sys/fs/lease-break-time</I>, then the kernel
+forcibly removes or downgrades the lease holder's lease.
+<P>
+
+いったん lease break が開始されると、 lease holder が自発的にそのリース
+の格下げか削除を行うか、lease break timer の満了後にカーネルが強制的に
+リースの格下げか削除を行うまで、 <B>F_GETLEASE</B> は対象となるリースの型を
+返す (リースの型は <B>F_RDLCK</B> か <B>F_UNLCK</B> のどちらであり、lease
+breaker と互換性のある型となる)。
+<P>
+
+一度リースの削除か格下げが自発的もしくは強制的に行われると、 lease breaker がまだシステムコールを再開していない場合には、 カーネルが
+lease breaker のシステムコールの続行を許可する。
+<P>
+
+lease breaker が実行した <B><A HREF="../man2/open.2.html">open</A></B>(2)  や <B><A HREF="../man2/truncate.2.html">truncate</A></B>(2)  が停止中にシグナルハンドラーにより中断された場合、
+そのシステムコールは <B>EINTR</B> エラーで失敗するが、上で述べた他の処理は そのまま行われる。 <B><A HREF="../man2/open.2.html">open</A></B>(2)  や
+<B><A HREF="../man2/truncate.2.html">truncate</A></B>(2)  が停止中に lease breaker がシグナルにより kill された場合、 上で述べた他の処理はそのまま行われる。
+lease breaker が <B><A HREF="../man2/open.2.html">open</A></B>(2)  を呼ぶ際に <B>O_NONBLOCK</B> フラグを指定した場合、そのシステムコールは
+<B>EWOULDBLOCK</B> エラーで直ちに失敗するが、上で述べた他の処理はそのまま行われる。
+<P>
+
+lease holder への通知に使われるデフォルトのシグナルは <B>SIGIO</B> だが、 <B>fcntl</B>()  の <B>F_SETSIG</B>
+コマンドで変更することができる。 <B>F_SETSIG</B> コマンドが実行され (<B>SIGIO</B> を指定された場合も含む)、 <B>SA_SIGINFO</B>
+フラグ付きでシグナルハンドラーが設定されている場合には、 ハンドラーの第二引数として <I>siginfo_t</I> 構造体が渡され、この引数の
+<I>si_fd</I> フィールドには別のプロセスがアクセスしたリース設定済みファイルのファイルディスクリプターが入っている
+(この機能は複数のファイルに対してリースを設定する場合に有用である)。
+<A NAME="lbAN">&nbsp;</A>
+<H3>ファイルやディレクトリの変更の通知 (dnotify)</H3>
+
+<DL COMPACT>
+<DT><B>F_NOTIFY</B> (<I>int</I>)<DD>
+(Linux 2.4 以降)  <I>fd</I> で参照されるディレクトリか、その中にあるファイルに変更があった場合に 通知を行う。どのイベントを通知するかは
+<I>arg</I> で指定する。 <I>arg</I> はビットマスクで、以下のビットの 0個以上の論理和をとったものを指定する。
+</DL>
+<P>
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT><B>DN_ACCESS</B><DD>
+ファイルへのアクセスがあった (<B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/pread.2.html">pread</A></B>(2), <B><A HREF="../man2/readv.2.html">readv</A></B>(2) や同様のシステムコール)
+<DT><B>DN_MODIFY</B><DD>
+ファイルの内容が変更された (<B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man2/pwrite.2.html">pwrite</A></B>(2), <B><A HREF="../man2/writev.2.html">writev</A></B>(2), <B><A HREF="../man2/truncate.2.html">truncate</A></B>(2),
+<B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2) や同様のシステムコール)
+<DT><B>DN_CREATE</B><DD>
+ファイルが作成された (<B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man2/creat.2.html">creat</A></B>(2), <B><A HREF="../man2/mknod.2.html">mknod</A></B>(2), <B><A HREF="../man2/mkdir.2.html">mkdir</A></B>(2), &quot;
+&quot;<B><A HREF="../man2/link.2.html">link</A></B>(2), <B><A HREF="../man2/symlink.2.html">symlink</A></B>(2), このディレクトリへの <B><A HREF="../man2/rename.2.html">rename</A></B>(2))
+<DT><B>DN_DELETE</B><DD>
+ファイルが削除 (unlink) された (<B><A HREF="../man2/unlink.2.html">unlink</A></B>(2), 別のディレクトリへの <B><A HREF="../man2/rename.2.html">rename</A></B>(2), <B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2))
+<DT><B>DN_RENAME</B><DD>
+ディレクトリ内でのファイル名の変更があった (<B><A HREF="../man2/rename.2.html">rename</A></B>(2))
+<DT><B>DN_ATTRIB</B><DD>
+ファイル属性が変更された (<B><A HREF="../man2/chown.2.html">chown</A></B>(2), <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2), <B><A HREF="../man2/utime.2.html">utime</A></B>(2), <B><A HREF="../man2/utimensat.2.html">utimensat</A></B>(2)
+や同様のシステムコール)
+
+</DL>
+</DL>
+
+<DL COMPACT>
+<DT><DD>
+(上記の定義を利用するには、<I>どの</I> ヘッダーファイルをインクルードするより前に、
+<B>_GNU_SOURCE</B> 機能検査マクロを定義しなければならない。)
+<DT><DD>
+ディレクトリの変更通知は通常「一回限り (one-shot)」であり、 アプリケーション側でその後さらに通知を受信したい場合は
+再登録しなければならない。 <I>arg</I> に <B>DN_MULTISHOT</B> が含まれていた場合には、
+変更通知は明示的に解除されるまで有効状態が継続する。
+<DT><DD>
+
+<B>F_NOTIFY</B> 要求は積算されていく。つまり、 <I>arg</I> で指定されたイベントがすでにモニタされている イベント集合に加算される形になる。
+すべてのイベントの通知を無効にするには、 <I>arg</I> に 0 を指定して <B>F_NOTIFY</B> を呼び出す必要がある。
+<DT><DD>
+通知はシグナルの配送で行われる。 デフォルトのシグナルは <B>SIGIO</B> だが、 <B>fcntl</B>()  の <B>F_SETSIG</B>
+コマンドで変更することができる。 (<B>SIGIO</B> はキューイングされない標準のシグナルの一つである点に注意。
+リアルタイムシグナルを使うように変更すると、 複数の通知がそのプロセス宛のキューに入ることがあることを意味する。) 後者の場合には、
+(<B>SA_SIGINFO</B> フラグ付きでシグナルハンドラーが設定されている場合には)  ハンドラーの第二引数として <I>siginfo_t</I>
+構造体が渡され、この構造体の <I>si_fd</I> フィールドには通知の行われたファイルディスクリプターが入っている
+(この機能は複数のディレクトリに対して通知を設定する場合に有用である)。
+<DT><DD>
+特に <B>DN_MULTISHOT</B> を使う場合は、通知にはリアルタイムシグナルを使うべきである。
+それは、リアルタイムシグナルを使うことで、複数の通知をキューに入れる ことができるからである。
+<DT><DD>
+<B>注意:</B> 新しくアプリケーションを書く際には、(カーネル 2.6.13 以降で利用可能となった)  <I>inotify</I>
+インターフェースを使用すべきである。 <I>inotify</I> はファイルシステムイベントの通知を取得するための ずっと優れたインターフェースである。
+<B><A HREF="../man7/inotify.7.html">inotify</A></B>(7)  を参照。
+</DL>
+<A NAME="lbAO">&nbsp;</A>
+<H3>パイプの容量の変更</H3>
+
+<DL COMPACT>
+<DT><B>F_SETPIPE_SZ</B> (<I>int</I>; Linux 2.6.35 以降)<DD>
+<I>fd</I> が参照するパイプの容量を少なくとも <I>arg</I> バイトに変更する。
+非特権プロセスは、パイプの容量として、
+システムのページサイズと <I>/proc/sys/fs/pipe-max-size</I> で定義される
+上限値 (<B><A HREF="../man5/proc.5.html">proc</A></B>(5) 参照) の間の任意の値を設定できる。
+パイプの容量をページサイズよりも小さな値に設定しようとした場合は、
+暗黙のうちにページサイズに切り上げられる。
+非特権プロセスがパイプの容量を <I>/proc/sys/fs/pipe-max-size</I> で定義
+された上限より大きな値に設定しようとした場合は、エラー <B>EPERM</B> が
+発生する。特権プロセス (<B>CAP_SYS_RESOURCE</B> ケーパビリティを持つ
+プロセス) はこの上限を上書きできる。
+<DT><DD>
+When allocating the buffer for the pipe, the kernel may use a capacity
+larger than <I>arg</I>, if that is convenient for the implementation.  (In the
+current implementation, the allocation is the next higher power-of-two
+page-size multiple of the requested size.)  The actual capacity (in bytes)
+that is set is returned as the function result.
+<DT><DD>
+パイプの容量を現在データを格納するのに使用されているバッファーのサイズよりも小さくしようとした場合は、エラー <B>EBUSY</B> が発生する。
+<DT><DD>
+Note that because of the way the pages of the pipe buffer are employed when
+data is written to the pipe, the number of bytes that can be written may be
+less than the nominal size, depending on the size of the writes.
+<DT><B>F_GETPIPE_SZ</B> (<I>void</I>; Linux 2.6.35 以降)<DD>
+
+<I>fd</I> が参照するパイプの容量を (関数の結果として) 返す。
+</DL>
+<A NAME="lbAP">&nbsp;</A>
+<H3>File Sealing</H3>
+
+file seal は指定されたファイルで許可される操作の集合を制限する。 ファイルに設定される seal 毎に対応する操作の集合が規定されており、
+それ以降のそのファイルに対する対応する操作は <B>EPERM</B> で失敗する。 このようなファイルは sealed (seal が適用されている)
+と呼ばれる。 デフォルトの seal の集合は、適用されるファイルやファイルシステムに依存する。 file seal の概要、 その目的、
+サンプルコードについては <B><A HREF="../man2/memfd_create.2.html">memfd_create</A></B>(2) を参照。
+<P>
+
+Currently, file seals can be applied only to a file descriptor returned by
+<B><A HREF="../man2/memfd_create.2.html">memfd_create</A></B>(2)  (if the <B>MFD_ALLOW_SEALING</B> was employed).  On other
+filesystems, all <B>fcntl</B>()  operations that operate on seals will return
+<B>EINVAL</B>.
+<P>
+
+seal は inode の属性である。 したがって、 同じ inode を参照するすべてのオープンされたファイルディスクリプターは、 同じ seal
+の集合を共有する。 さらに、 seal は削除することはできず、 追加のみ可能である。
+<DL COMPACT>
+<DT><B>F_ADD_SEALS</B> (<I>int</I>; Linux 3.17 以降)<DD>
+ビットマスク引数 <I>arg</I> で指定された seal を、 ファイルディスクリプター <I>fd</I> が参照する inode の seal
+の集合に追加する。 一度追加した seal を削除することはできない。 この呼び出しが成功すると、 seal はただちにカーネルにより適用される。
+現在の seal の集合に <B>F_SEAL_SEAL</B> (下記参照) が含まれている場合、 この呼び出しは <B>EPERM</B> で拒否される。
+すでに設定されている seal を追加した場合、 <B>F_SEAL_SEAL</B> がまだ設定されていない場合は no-op (何もしない) となる。
+seal を設定するには、 ファイルディスクリプター <I>fd</I> が書き込み可能でなければならない。
+<DT><B>F_GET_SEALS</B> (<I>void</I>; Linux 3.17 以降)<DD>
+(関数の結果として) <I>fd</I> が参照する inode の seal の現在の集合を返す。 seal が何も設定されていない場合、 0 が返される。
+ファイルが sealing をサポートしていない場合、 -1 が返され、 <I>errno</I> に <B>EINVAL</B> が設定される。
+</DL>
+<P>
+
+以下の seal が利用できる。
+<DL COMPACT>
+<DT><B>F_SEAL_SEAL</B><DD>
+この seal が設定されると、  これ以降の <B>F_ADD_SEALS</B> を指定した <B>fcntl</B>() の呼び出しはすべて <B>EPERM</B>
+エラーで失敗する。 したがって、 この seal を設定すると seal の集合自身の変更を防止できる。 ファイルの最初の seal の集合に
+<B>F_SEAL_SEAL</B> が含まれていた場合、 結果的に seal の集合が定数になりロックされることになる。
+<DT><B>F_SEAL_SHRINK</B><DD>
+この seal が設定されると、 設定されたファイルのサイズを小さくできなくなる。 この seal は <B><A HREF="../man2/open.2.html">open</A></B>(2) の <B>O_TRUNC</B>
+フラグに影響する。 <B><A HREF="../man2/truncate.2.html">truncate</A></B>(2) と <B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2) についても同様である。
+対象のファイルのサイズを小さくしようとした場合、 これらの呼び出しは <B>EPERM</B> で失敗する。
+ファイルサイズを増やすことはこの場合でも可能である。
+<DT><B>F_SEAL_GROW</B><DD>
+この seal が設定されると、 設定されたファイルのサイズを増やせなくなる。 この seal はファイルの末尾を超えての <B><A HREF="../man2/write.2.html">write</A></B>(2) や
+<B><A HREF="../man2/truncate.2.html">truncate</A></B>(2), <B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2), <B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2) に影響する。
+対象のファイルのサイズを大きくしようとした場合、 これらの呼び出しは <B>EPERM</B> で失敗する。 ファイルサイズが変わらない場合、
+小さくなる場合は、 これらの呼び出しはそのまま動作する。
+<DT><B>F_SEAL_WRITE</B><DD>
+
+
+
+
+
+
+
+
+この seal が設定されていると、 ファイルの内容を変更できない。 ファイルのサイズを縮小したり伸張したりすることは可能で許可されている。
+したがって、 この seal は通常は他の seal のいずれかと組み合わせて使用される。 この seal は <B><A HREF="../man2/write.2.html">write</A></B>(2) と
+<B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2) (<B>FALLOC_FL_PUNCH_HOLE</B> フラグとの組み合わせの場合のみ) に影響する。 この seal
+が設定されると、 これらの呼び出しは <B>EPERM</B> で失敗する。 また、 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+による新しい書き込み可能な共有メモリーマッピングの作成も <B>EPERM</B> で失敗する。
+<DT><DD>
+<B>F_SEAL_WRITE</B> seal を設定するのに <B>F_ADD_SEALS</B> 操作を使った場合、書き込み可能な共有マッピングが存在すると
+<B>EBUSY</B> で失敗する。 このようなマッピングは、 この seal を追加する前にアンマップしなければならない。 また、
+ファイルに対して処理待ちの非同期 I/O 操作 (<B><A HREF="../man2/io_submit.2.html">io_submit</A></B>(2) がある場合、 処理されていない書き込みは破棄される。
+<DT><B>F_SEAL_FUTURE_WRITE</B> (Linux 5.1 以降)<DD>
+The effect of this seal is similar to <B>F_SEAL_WRITE</B>, but the contents of
+the file can still be modified via shared writable mappings that were
+created prior to the seal being set.  Any attempt to create a new writable
+mapping on the file via <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  will fail with <B>EPERM</B>.  Likewise, an
+attempt to write to the file via <B><A HREF="../man2/write.2.html">write</A></B>(2)  will fail with <B>EPERM</B>.
+<DT><DD>
+
+Using this seal, one process can create a memory buffer that it can continue
+to modify while sharing that buffer on a &quot;read-only&quot; basis with other
+processes.
+</DL>
+<A NAME="lbAQ">&nbsp;</A>
+<H3>File read/write hints</H3>
+
+Write lifetime hints can be used to inform the kernel about the relative
+expected lifetime of writes on a given inode or via a particular open file
+description.  (See <B><A HREF="../man2/open.2.html">open</A></B>(2)  for an explanation of open file
+descriptions.)  In this context, the term &quot;write lifetime&quot; means the
+expected time the data will live on media, before being overwritten or
+erased.
+<P>
+
+An application may use the different hint values specified below to separate
+writes into different write classes, so that multiple users or applications
+running on a single storage back-end can aggregate their I/O patterns in a
+consistent manner.  However, there are no functional semantics implied by
+these flags, and different I/O classes can use the write lifetime hints in
+arbitrary ways, so long as the hints are used consistently.
+<P>
+
+The following operations can be applied to the file descriptor, <I>fd</I>:
+<DL COMPACT>
+<DT><B>F_GET_RW_HINT</B> (<I>uint64_t *</I>; Linux 4.13 以降)<DD>
+Returns the value of the read/write hint associated with the underlying
+inode referred to by <I>fd</I>.
+<DT><B>F_SET_RW_HINT</B> (<I>uint64_t *</I>; Linux 4.13 以降)<DD>
+Sets the read/write hint value associated with the underlying inode referred
+to by <I>fd</I>.  This hint persists until either it is explicitly modified or
+the underlying filesystem is unmounted.
+<DT><B>F_GET_FILE_RW_HINT</B> (<I>uint64_t *</I>; Linux 4.13 以降)<DD>
+Returns the value of the read/write hint associated with the open file
+description referred to by <I>fd</I>.
+<DT><B>F_SET_FILE_RW_HINT</B> (<I>uint64_t *</I>; Linux 4.13 以降)<DD>
+Sets the read/write hint value associated with the open file description
+referred to by <I>fd</I>.
+</DL>
+<P>
+
+If an open file description has not been assigned a read/write hint, then it
+shall use the value assigned to the inode, if any.
+<P>
+
+The following read/write hints are valid since Linux 4.13:
+<DL COMPACT>
+<DT><B>RWH_WRITE_LIFE_NOT_SET</B><DD>
+No specific hint has been set.  This is the default value.
+<DT><B>RWH_WRITE_LIFE_NONE</B><DD>
+No specific write lifetime is associated with this file or inode.
+<DT><B>RWH_WRITE_LIFE_SHORT</B><DD>
+Data written to this inode or via this open file description is expected to
+have a short lifetime.
+<DT><B>RWH_WRITE_LIFE_MEDIUM</B><DD>
+Data written to this inode or via this open file description is expected to
+have a lifetime longer than data written with <B>RWH_WRITE_LIFE_SHORT</B>.
+<DT><B>RWH_WRITE_LIFE_LONG</B><DD>
+Data written to this inode or via this open file description is expected to
+have a lifetime longer than data written with <B>RWH_WRITE_LIFE_MEDIUM</B>.
+<DT><B>RWH_WRITE_LIFE_EXTREME</B><DD>
+Data written to this inode or via this open file description is expected to
+have a lifetime longer than data written with <B>RWH_WRITE_LIFE_LONG</B>.
+</DL>
+<P>
+
+All the write-specific hints are relative to each other, and no individual
+absolute meaning should be attributed to them.
+<A NAME="lbAR">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合の返り値は操作の種類により違う:
+<DL COMPACT>
+<DT><B>F_DUPFD</B><DD>
+新規のファイルディスクリプター。
+<DT><B>F_GETFD</B><DD>
+ファイルディスクリプターフラグの値
+<DT><B>F_GETFL</B><DD>
+ファイル状態フラグの値
+<DT><B>F_GETLEASE</B><DD>
+ファイルディスクリプターに対して保持されているリースの種別を返す。
+<DT><B>F_GETOWN</B><DD>
+ファイルディスクリプターの所有者。
+<DT><B>F_GETSIG</B><DD>
+読み込みや書き出しが可能になった時に送られるシグナルの値、もしくは 伝統的な <B>SIGIO</B> 動作の場合にはゼロを返す。
+<DT><B>F_GETPIPE_SZ</B>, <B>F_SETPIPE_SZ</B><DD>
+パイプの容量。
+<DT><B>F_GET_SEALS</B><DD>
+<I>fd</I> が参照する inode に設定されている seal を示すビットマスク。
+<DT>他の全てのコマンド<DD>
+0 を返す。
+</DL>
+<P>
+
+エラーの時は -1 が返され、 <I>errno</I> に適切な値が設定される。
+<A NAME="lbAS">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B> か <B>EAGAIN</B><DD>
+他のプロセスが保持しているロックによって操作が禁止されている。
+<DT><B>EAGAIN</B><DD>
+そのファイルは他のプロセスによってメモリーマップされているため、 操作が禁止されている。
+<DT><B>EBADF</B><DD>
+<I>fd</I> がオープンされたファイルディスクリプターではない。
+<DT><B>EBADF</B><DD>
+<I>cmd</I> が <B>F_SETLK</B> または <B>F_SETLKW</B> だったが、対象のファイルディスクリプターのオープンモードが
+必要となるロックの型にマッチしていない。
+<DT><B>EBUSY</B><DD>
+<I>cmd</I> が <B>F_SETPIPE_SZ</B> で、 <I>arg</I> で指定されたパイプの新しい容量がパイプが、
+現在パイプにあるデータを格納するのに使用されているバッファー容量よりも小さい。
+<DT><B>EBUSY</B><DD>
+<I>cmd</I> が <B>F_ADD_SEALS</B> で、 <I>arg</I> に <B>F_SEAL_WRITE</B> が含まれており、 <I>fd</I>
+が参照するファイルに対する書き込み可能な共有マッピングが存在する。
+<DT><B>EDEADLK</B><DD>
+指定された <B>F_SETLKW</B> コマンドを実行した場合にはデッドロックになることが検出された。
+<DT><B>EFAULT</B><DD>
+<I>lock</I> が利用可能なアドレス空間の外部にある。
+<DT><B>EINTR</B><DD>
+<I>cmd</I> が <B>F_SETLKW</B> か <B>F_OFD_SETLKW</B> で、 操作がシグナルにより割り込まれた。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+参照。
+<DT><B>EINTR</B><DD>
+<I>cmd</I> が <B>F_GETLK</B>, <B>F_SETLK</B>, <B>F_OFD_GETLK</B>, <B>F_OFD_SETLK</B> で、
+操作がシグナルにより割り込まれた (<B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照)。 <B>F_GETLK</B> と <B>F_SETLK</B>
+の場合、ロックを確認したり取得したりする前にシグナルによって割り込まれた。 これはたいていリモートのファイルをロックする場合 (例えば NFS
+上でロックする場合) に起こる。 しかしローカルでも起こる場合がある。
+<DT><B>EINVAL</B><DD>
+カーネルが認識しない値が <I>cmd</I> で指定された。
+<DT><B>EINVAL</B><DD>
+<I>cmd</I> が <B>F_ADD_SEALS</B> で、 <I>arg</I> に認識できない seal を示すビットが含まれている。
+<DT><B>EINVAL</B><DD>
+<I>cmd</I> が <B>F_ADD_SEALS</B> か <B>F_GET_SEALS</B> で、 <I>fd</I> が参照している inode
+が格納されているファイルシステムが sealing をサポートしていない。
+<DT><B>EINVAL</B><DD>
+<I>cmd</I> が <B>F_DUPFD</B> で、 <I>arg</I> が負か、もしくは許される最大値よりも大きい (<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2) の
+<B>RLIMIT_NOFILE</B> の議論を参照)。
+<DT><B>EINVAL</B><DD>
+<I>cmd</I> が <B>F_SETSIG</B> で、 <I>arg</I> が許可されたシグナル番号ではない。
+<DT><B>EINVAL</B><DD>
+<I>cmd</I> が <B>F_OFD_SETLK</B>, <B>F_OFD_SETLKW</B>, <B>F_OFD_GETLK</B> のいずれかで、 <I>l_pid</I> に
+0 が指定されなかった。
+<DT><B>EMFILE</B><DD>
+<I>cmd</I> が <B>F_DUPFD</B>で、オープンされているファイルディスクリプターの数がプロセス単位の上限に達していた。
+<DT><B>ENOLCK</B><DD>
+オープンされているロックの数が多過ぎて、ロックテーブルがいっぱいである。 または remote locking protocol (例えば NFS
+上のロック) が失敗した。
+<DT><B>ENOTDIR</B><DD>
+<B>F_NOTIFY</B> が <I>cmd</I> に指定されたが、 <I>fd</I> がディレクトリを参照していない。
+<DT><B>EPERM</B><DD>
+<I>cmd</I> is <B>F_SETPIPE_SZ</B> and the soft or hard user pipe limit has been
+reached; see <B><A HREF="../man7/pipe.7.html">pipe</A></B>(7).
+<DT><B>EPERM</B><DD>
+追加専用属性が設定されたファイルの <B>O_APPEND</B> フラグをクリアしようと試みた。
+<DT><B>EPERM</B><DD>
+<I>cmd</I> が <B>F_ADD_SEALS</B> だが、 <I>fd</I> が書き込み用にオープンされていないか、 ファイルの現在の seal の集合にすでに
+<B>F_SEAL_SEAL</B> が含まれている。
+</DL>
+<A NAME="lbAT">&nbsp;</A>
+<H2>準拠</H2>
+
+SVr4, 4.3BSD, POSIX.1-2001.  POSIX.1-2001 で規定されている操作は、
+<B>F_DUPFD</B>, <B>F_GETFD</B>, <B>F_SETFD</B>, <B>F_GETFL</B>, <B>F_SETFL</B>,
+<B>F_GETLK</B>, <B>F_SETLK</B>, <B>F_SETLKW</B> だけである。
+<P>
+
+
+
+<B>F_GETOWN</B> と <B>F_SETOWN</B> は POSIX.1-2001 で規定されている。 (これら定義するには、
+<B>_XOPEN_SOURCE</B> を 500 以上の値で定義するか、 <B>_POSIX_C_SOURCE</B> を 200809L 以上の値で定義するか、
+のいずれが必要である。)
+<P>
+
+<B>F_DUPFD_CLOEXEC</B> は POSIX.1-2008 で規定されている。
+(これら定義するには、
+<B>_POSIX_C_SOURCE</B> を 200809L 以上の値で定義するか、
+<B>_XOPEN_SOURCE</B> を 700 以上の値で定義すること。)
+<P>
+
+
+
+<B>F_GETOWN_EX</B>, <B>F_SETOWN_EX</B>, <B>F_SETPIPE_SZ</B>, <B>F_GETPIPE_SZ</B>,
+<B>F_GETSIG</B>,
+<B>F_SETSIG</B>, <B>F_NOTIFY</B>, <B>F_GETLEASE</B>, <B>F_SETLEASE</B> は Linux 固有である
+(これらの定義を有効にするには <B>_GNU_SOURCE</B> マクロを定義すること)。
+<P>
+
+<B>F_OFD_SETLK</B>, <B>F_OFD_SETLKW</B>, <B>F_OFD_GETLK</B> は Linux 固有だが (これらの定義を得るには
+<B>_GNU_SOURCE</B> を定義しなければならない)、 POSIX.1 の次のバージョンに含めようという活動が進められている。
+<P>
+
+
+<B>F_ADD_SEALS</B> と <B>F_GET_SEALS</B> は Linux 固有である。
+<A NAME="lbAU">&nbsp;</A>
+<H2>注意</H2>
+
+
+エラーの際の返り値が <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2)  と <B>F_DUPFD</B> では異なっている。
+<A NAME="lbAV">&nbsp;</A>
+<H3>ファイルロック</H3>
+
+
+元々の Linux の <B>fcntl</B>() システムコールは (<I>flock</I> 構造体で) 大きな
+ファイルオフセットを扱えるように設計されていなかった。
+その結果、Linux 2.4 で <B>fcntl64</B>() システムコールが追加された。
+この新しいシステムコールは、ファイルのロックに <I>flock64</I> という別の
+構造体を利用し、これに対応するコマンドとして <B>F_GETLK64</B>,
+<B>F_SETLK64</B>, <B>F_SETLKW64</B> を使用する。
+しかし、 glibc を使うアプリケーションではこれらの詳細を無視することが
+できる。 glibc の <B>fcntl</B> のラッパー関数は新しいシステムコールが
+利用できる場合はそれを利用するようになっているからである。
+<A NAME="lbAW">&nbsp;</A>
+<H3>レコードロック</H3>
+
+カーネル 2.0 以降では、 <B><A HREF="../man2/flock.2.html">flock</A></B>(2)  と <B>fcntl</B>()  が設定するロック種別の間に相互作用はない。
+<P>
+
+
+
+
+Several systems have more fields in <I>struct flock</I> such as, for example,
+<I>l_sysid</I> (to identify the machine where the lock is held).  Clearly,
+<I>l_pid</I> alone is not going to be very useful if the process holding the
+lock may live on a different machine; on Linux, while present on some
+architectures (such as MIPS32), this field is not used.
+<P>
+
+元々の Linux の <B>fcntl</B>() システムコールは (<I>flock</I> 構造体で) 大きな
+ファイルオフセットを扱えるように設計されていなかった。
+その結果、Linux 2.4 で <B>fcntl64</B>() システムコールが追加された。
+この新しいシステムコールは、ファイルのロックに <I>flock64</I> という別の
+構造体を利用し、これに対応するコマンドとして <B>F_GETLK64</B>,
+<B>F_SETLK64</B>, <B>F_SETLKW64</B> を使用する。
+しかし、 glibc を使うアプリケーションではこれらの詳細を無視することが
+できる。 glibc の <B>fcntl</B> のラッパー関数は新しいシステムコールが
+利用できる場合はそれを利用するようになっているからである。
+<A NAME="lbAX">&nbsp;</A>
+<H3>レコードロックと NFS</H3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Linux 3.12 より前では、 NFSv4 クライアントが一定時間サーバーと通信がなかった場合 (90 秒間通信がない場合と定義されている)、
+クライアントが気付かずにロックを失い再獲得する場合がある。 (通信がなくなったみなす時間は NFSv4 leastime と呼ばれる。 Linux
+NFS サーバーでは、 この値は <I>/proc/fs/nfsd/nfsv4leasetime</I> を見て決定される。 このファイルの値の単位は秒であり、
+このファイルのデフォルト値は 90 である。) この状況では潜在的にデータ破壊が起こる危険性がある。
+通信がなかった間に他のプロセスがロックを獲得しファイル入出力を行う場合があるからである。
+<P>
+
+
+
+Linux 3.12 以降、 NFSv4 クライアントがサーバーと通信がなかった場合、
+ロックを持っていると「思っている」プロセスがそのファイルに入出力を行うと失敗する。
+そのプロセスがそのファイルをいったんクローズし再オープンするまでは入出力は失敗する。 カーネルパラメーター
+<I>nfs.recover_lost_locks</I> を 1 に設定すると、 Linux 3.12 より前の動作にすることができる。 この場合、
+サーバーとの通信が再確立された場合、 クライアントがは失われたロックを回復しようとする。 データ破壊が起こる危険性があるため、
+このパラメーターはデフォルトでは 0 (無効) になっている。
+<A NAME="lbAY">&nbsp;</A>
+<H2>バグ</H2>
+
+<A NAME="lbAZ">&nbsp;</A>
+<H3>F_SETFL</H3>
+
+
+
+
+<B>F_SETFL</B> を使って、 フラグ <B>O_DSYNC</B> と <B>O_SYNC</B>
+の状態を変更することはできない。これらのフラグの状態を変更しようとした場合には、黙って無視される。
+<A NAME="lbBA">&nbsp;</A>
+<H3>F_GETOWN</H3>
+
+
+
+
+
+
+いくつかのアーキテクチャー (特に i386) における Linux システムコールの慣習
+のため以下の制限が存在する。
+<B>F_GETOWN</B> が返す (負の) プロセスグループID が -1 から -4095 の範囲に入った場合、
+glibc はこの返り値をシステムコールでエラーが起こったと間違って解釈してしまう。
+つまり、 <B>fcntl</B>() の返り値は -1 となり、 <I>errno</I> には (正の) プロセスグループID
+が設定されることになる。Linux 固有の <B>F_GETOWN_EX</B> ではこの問題を回避できる。
+glibc バージョン 2.11 以降では、glibc では <B>F_GETOWN_EX</B> を使って
+<B>F_GETOWN</B> を実装することで、カーネルの <B>F_GETOWN</B> の問題を見えないようにしている。
+<A NAME="lbBB">&nbsp;</A>
+<H3>F_SETOWN</H3>
+
+
+Linux 2.4 以前では、非特権プロセスが <B>F_SETOWN</B> を使って、ソケットのファイルディスクリプターの所有者に 呼び出し元以外のプロセス
+(やプロセスグループ) を指定すると 発生するバグがある。この場合、 呼び出し元が所有者として指定したプロセス (やプロセスグループ) に
+シグナルを送る許可を持っていたとしても、 <B>fcntl</B>()  が -1 を返し <I>errno</I> に <B>EPERM</B> を設定することがある。
+このエラーが返ったにもかかわらず、ファイルディスクリプターの所有者 は設定され、シグナルはその所有者に送られる。
+<A NAME="lbBC">&nbsp;</A>
+<H3>デッドロックの検出</H3>
+
+
+<B>F_SETLKW</B> 要求を処理する際にカーネルが使用するデッドロック検出アルゴリズムは、 false negative になる場合
+(デッドロックを検出できず、 デッドロックになったプロセスは無限に停止する) も false positive になる場合 (デッドロックがない場合でも
+<B>EDEADLK</B> エラーとなる) もある。 例えば、 カーネルは依存関係の検索を行うロックの深さを 10 ステップに限定しているが、
+このためこれよりも長い循環するデッドロックは検出されない。 また、 <B><A HREF="../man2/clone.2.html">clone</A></B>(2) の <B>CLONE_FILES</B> フラグを使って作成された
+2 つ以上のプロセスが (カーネルにとって) 衝突するように見えるロックを適用した場合、 カーネルはデッドロックを誤って検出する。
+<A NAME="lbBD">&nbsp;</A>
+<H3>強制ロック (mandatory locking)</H3>
+
+
+
+
+
+
+
+
+
+Linux の強制ロックの実装は、 競合条件下で強制ロックが不完全になるような場合がある。 ロックと重なって実行された <B><A HREF="../man2/write.2.html">write</A></B>(2)
+の呼び出しは強制ロックが獲得された後にもデータを変更することができる。 ロックと重なって実行された <B><A HREF="../man2/read.2.html">read</A></B>(2)
+の呼び出しは強制ロックが獲得された後になって行われたデータの変更を 検出することができる。 同様の競合条件が強制ロックと <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+の間にも存在する。それゆえ、強制ロックに頼るのはお薦めできない。
+<A NAME="lbBE">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),&nbsp;<B><A HREF="../man2/flock.2.html">flock</A></B>(2),&nbsp;<B><A HREF="../man2/open.2.html">open</A></B>(2),&nbsp;<B><A HREF="../man2/socket.2.html">socket</A></B>(2),&nbsp;<B><A HREF="../man3/lockf.3.html">lockf</A></B>(3),
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7), <B>lslocks</B>(8)
+<P>
+
+Linux カーネルソースの <I>Documentation/filesystems/</I> ディレクトリ内の <I>locks.txt</I>,
+<I>mandatory-locking.txt</I>, <I>dnotify.txt</I> (以前のカーネルでは、これらのファイルは
+<I>Documentation/</I> ディレクトリ直下にあり、 <I>mandatory-locking.txt</I> は <I>mandatory.txt</I>
+という名前であった)
+<A NAME="lbBF">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">ファイルディスクリプターの複製</A><DD>
+<DT><A HREF="#lbAF">ファイルディスクリプターフラグ</A><DD>
+<DT><A HREF="#lbAG">ファイル状態フラグ</A><DD>
+<DT><A HREF="#lbAH">アドバイザリーレコードロック</A><DD>
+<DT><A HREF="#lbAI">オープンファイル記述ロック (非 POSIX)</A><DD>
+<DT><A HREF="#lbAJ">強制ロック (mandatory locking)</A><DD>
+<DT><A HREF="#lbAK">Lost locks</A><DD>
+<DT><A HREF="#lbAL">シグナルの管理</A><DD>
+<DT><A HREF="#lbAM">リース (leases)</A><DD>
+<DT><A HREF="#lbAN">ファイルやディレクトリの変更の通知 (dnotify)</A><DD>
+<DT><A HREF="#lbAO">パイプの容量の変更</A><DD>
+<DT><A HREF="#lbAP">File Sealing</A><DD>
+<DT><A HREF="#lbAQ">File read/write hints</A><DD>
+</DL>
+<DT><A HREF="#lbAR">返り値</A><DD>
+<DT><A HREF="#lbAS">エラー</A><DD>
+<DT><A HREF="#lbAT">準拠</A><DD>
+<DT><A HREF="#lbAU">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAV">ファイルロック</A><DD>
+<DT><A HREF="#lbAW">レコードロック</A><DD>
+<DT><A HREF="#lbAX">レコードロックと NFS</A><DD>
+</DL>
+<DT><A HREF="#lbAY">バグ</A><DD>
+<DL>
+<DT><A HREF="#lbAZ">F_SETFL</A><DD>
+<DT><A HREF="#lbBA">F_GETOWN</A><DD>
+<DT><A HREF="#lbBB">F_SETOWN</A><DD>
+<DT><A HREF="#lbBC">デッドロックの検出</A><DD>
+<DT><A HREF="#lbBD">強制ロック (mandatory locking)</A><DD>
+</DL>
+<DT><A HREF="#lbBE">関連項目</A><DD>
+<DT><A HREF="#lbBF">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,142 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ALLOCA</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ALLOCA</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/alloca.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+alloca - 自動的に解放されるメモリーを割り当てる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/alloca.h">alloca.h</A>&gt;</B>
+<P>
+
+<B>void *alloca(size_t </B><I>size</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>alloca</B>()  関数は、 <I>size</I> バイトの領域を呼出元のスタックフレームに割り付ける。 この一時的な領域は、 <B>alloca</B>()
+を呼び出した関数が呼出元に返るときに自動的に解放される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>alloca</B>()  関数は、割り付けた領域の始まりを指すポインターを返す。 割り付けによってスタックオーバーフローが起った場合の
+プログラムの動作は定義されていない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>alloca</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+この関数は POSIX.1 にはない。
+<P>
+
+32V, PWB, PWB.2, 3BSD, 4BSD に <B>alloca</B>()  関数が登場した証拠がある。 4.3BSD
+には、マニュアルページがある。 Linux は、GNU 版を使っている。 この関数は POSIX.1-2001 にはない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>alloca</B>()  関数は、機種とコンパイラに依存する。 特定のアプリケーションでは、この関数を使うと <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  と
+<B><A HREF="../man3/free.3.html">free</A></B>(3)  を組み合わせて使った場合に比べて効率を改善することができる。 特定の場合では、この関数を使うことで、 <B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)
+や <B><A HREF="../man3/siglongjmp.3.html">siglongjmp</A></B>(3)  を使うアプリケーションでのメモリーの開放を簡単にすることができる。
+それ以外の場合では、この関数の使用は推奨されない。
+<P>
+
+<B>alloca</B>() により割り当てられる空間はスタックフレームから割り当てられるので、 関数の戻り先が <B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3) や
+<B><A HREF="../man3/siglongjmp.3.html">siglongjmp</A></B>(3) の呼び出しによりジャンプした場合には、 割り当てられた空間は自動的に解放される。
+<P>
+
+The space allocated by <B>alloca</B>()  is <I>not</I> automatically deallocated if
+the pointer that refers to it simply goes out of scope.
+<P>
+
+<B>alloca</B>()  で割り当てられた空間を <B><A HREF="../man3/free.3.html">free</A></B>(3)  しようとすることのないように！
+<A NAME="lbAI">&nbsp;</A>
+<H3>GNU 版についての注意</H3>
+
+通常 <B><A HREF="../../GNU_gcc/man1/gcc.1.html">gcc</A></B>(1) は <B>alloca</B>()  の呼び出しをインラインコードに変換する。 <I>-ansi</I>, <I>-std=c89</I>,
+<I>-std=c99</I>, <I>-std=c11</I> のいずれかのオプションが指定され、<B>かつ</B> <I>&lt;<A HREF="file:///usr/include/alloca.h">alloca.h</A>&gt;</I>
+がインクルードされていない場合、 この変換は行われない。 それ以外の場合 (-ansi オプションも -std=c* オプションも指定されない場合)
+には、 glibc 版の <I>&lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</I> は <I>&lt;<A HREF="file:///usr/include/alloca.h">alloca.h</A>&gt;</I>
+をインクルードするが、このファイルには以下の行が含まれており、
+<P>
+
+
+
+#ifdef  __GNUC__
+#define alloca(size)   __builtin_alloca (size)
+#endif
+
+
+<P>
+
+独自版の __builtin_alloca (size) 関数がある場合、厄介な結果になる。
+<P>
+
+このコードはインライン化されているので、 この関数のアドレスを取得したり、 他のライブラリをリンクして動作を変更することはできない。
+<P>
+
+通常このインラインコードはスタックポインターを移動する 1 つの命令 (instruction) から構成されており、
+スタックオーバーフローをチェックしない。 よって NULL エラーが返されることはない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+スタックフレームが拡張できなかった場合、エラー通知は行われない。 (しかしながら、割り当てに失敗した後で、プログラムが割り当てられなかった
+空間にアクセスしようとした場合に <B>SIGSEGV</B> シグナルを受信することだろう。)
+<P>
+
+多くのシステムにおいて、関数コールの引数のリスト内では <B>alloca</B>()  が使えない。 これは、 <B>alloca</B>()
+によって予約されるスタック領域が、 関数引数に使われるスタック領域の中に現れてしまうためである。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2), <B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">GNU 版についての注意</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:26 GMT, December 05, 2022
+</BODY>
+</HTML>

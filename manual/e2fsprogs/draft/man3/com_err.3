@@ -1,0 +1,55 @@
+.\" Copyright (c) 1988 Massachusetts Institute of Technology,
+.\" Student Information Processing Board.  
+.\"
+.\"*******************************************************************
+.\"
+.\" This file was generated with po4a. Translate the source file.
+.\"
+.\"*******************************************************************
+.\"
+.\" Japanese Version Copyright (c) 2000 NAKANO Takeo all rights reserved.
+.\" Translated Thu 13 2000 by NAKANO Takeo <nakano@apm.seikei.ac.jp>
+.\"
+.TH COM_ERR 3 "22 Nov 1988" SIPB 
+.SH 名前
+com_err \- 汎用のエラー表示ルーチン
+.SH 書式
+.nf
+ #include <et/com_err.h>
+void (*\fIproc\fP) (const char *, long, const char *, va_list);
+.PP
+void com_err (const char *whoami, long code, const char *format, ...);
+.PP
+proc = set_com_err_hook (proc);
+.PP
+proc = reset_com_err_hook ();
+.PP
+void initialize_XXXX_error_table ();
+.fi
+.SH 説明
+\fIcom_err\fP はエラーメッセージを標準エラーストリーム \fIstderr\fP (\fIstdio\fP(3S)  を見よ)
+に表示する。エラーメッセージは、 \fIwhoami\fP 文字列 (プログラムの名前やプログラムのある部分を示す)・ 値 \fIcode\fP
+(\fIcompile_et\fP(1)  から引かれる)・ \fBfprintf\fP(3)  スタイルの \fIformat\fP 文字列を使って、残りの引数から
+生成した文字列、の 3 つの部分からなる。
+
+\fIcom_err\fP の動作は \fIset_com_err_hook\fP を用いて変更できる。 これは \fIcom_err\fP
+に渡される引数を用いて呼び出される関数を定義する。 デフォルトでは内部の関数が用いられ、これは整形したテキストをエラー出力に送る。
+つまり、プログラムからのエラーメッセージを、例えば \fBsyslog\fP(3)  のような診断ログに振り向けることが容易にできるわけである。
+\fIreset_com_err_hook\fP を用いると、 \fIcom_err\fP の動作をデフォルトの形式に戻すことができる。 この両関数は、実行前の
+\*(lqhook\*(rq の値を返す。 これらの \*(lqhook\*(rq 関数は、書式の部分で示した \fIproc\fP のように宣言しなければならない。
+
+\fIinitialize_XXXX_error_table\fP ルーチンは、名前とそれに対応する文字列とからなるソースファイルから
+\fIcompile_et\fP(1)  によって自動的に生成される。 それぞれの表は 4 文字までの名前を持ち、ルーチンの名前の \fBXXXX\fP
+の部分になる。これらのルーチンは、 各エラーコードを用いる前に呼び出しておき、 \fIcom_err\fP ライブラリが
+エラーコードをこれらの表から認識できるようにしておかなければならない。
+
+\fIcom_err\fP ライブラリのルーチンを用いる全てのソースファイルは、 \fBcom_err.h\fP ヘッダーファイルをインクルードしなければならない。
+実行ファイルをリンクするときには、 \fI\*(lq\-lcom_err\*(rq\fP を用いて \fIcom_err\fP ライブラリが含まれるようにしなければならない。
+
+
+.\" .IR for manual entries
+.\" .PP for paragraph breaks
+.SH 関連項目
+\fBcompile_et\fP(1), \fBsyslog\fP(3)
+
+Ken Raeburn, "A Common Error Description Library for UNIX".

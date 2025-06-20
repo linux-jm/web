@@ -1,0 +1,266 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of forward</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>forward</H1>
+Section: User Commands  (1)<BR>Updated: 1999 February 14<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/mirrordir/release/man1/forward.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+forward - 任意のソケットを安全で圧縮された経路にフォワードする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>forward</B>
+
+<BR>
+
+[<B>-h</B>, <B>--help</B>]
+<BR>
+
+[<B>-v</B>, <B>--verbose</B>]
+<BR>
+
+[<B>-V</B>, <B>--version</B>]
+<BR>
+
+[<B>-p</B>, <B>--password</B> <I>password</I>]
+<BR>
+
+[<B>--netrc</B>]
+<BR>
+
+[<B>--no-netrc</B>]
+<BR>
+
+[<B>--secure</B>]
+<BR>
+
+[<B>-z</B>, <B>--gzip</B>]
+<BR>
+
+[<B>-K</B>, <B>--key-size</B> <I>bits</I>]
+<BR>
+
+[<I>user</I><B>@</B>]<I>machine1</I>[<B>:</B><I>port1</I>] 
+<BR>
+
+<I>machine2</I><B>:</B><I>port2</I>
+<BR>
+
+<I>listen_port</I>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>forward</B>
+
+はローカルマシンの
+<I>listen_port</I>
+
+で待ち受ける。接続を受信すると、その接続を
+<B><A HREF="../man1/secure-mcserv.1.html">secure-mcserv</A></B>(1)
+
+デーモンが既に動作しているはずの
+<I>machine1</I>
+
+ヘとフォワードする。すると
+<B>secure-mcserv</B>
+
+デーモンは
+<I>machine2</I>
+
+のポート
+<I>port2</I>
+
+に接続する。そしてすべてのトラフィックは、
+透過的に
+<I>listen_port</I>
+
+と
+<I>machine2</I>
+
+の
+<I>port2</I>
+
+の間をフォワードされる。
+<P>
+ローカルマシンの
+<I>listen_port</I>
+
+と
+<I>machine2</I>
+
+の
+<I>port2</I>
+
+との間の接続は、
+<B>--secure</B>
+
+オプションと
+<B>--gzip</B>
+
+オプションで変更できる。このように、
+<B>forward</B>
+
+はあらゆるサービスに対して、安全性あるいは圧縮を付加できる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+すべてのオプションは
+<B>mirrordir</B>
+
+と同様である。詳細は
+<B><A HREF="../man1/mirrordir.1.html">mirrordir</A></B>(1)
+
+を見てほしい。ただし
+<B>--debug</B>
+
+は
+<B>forward</B>
+
+がバックグラウンドのデーモンへフォークするのを妨げる意味しか持たない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>例</H2>
+
+私はこれらを試していないが、論理的には正しいと思う。
+どこかでタイプミスをしていたら、私に知らせてほしい。
+<P>
+
+プリントサーバ <B>A</B> が LAN にある。
+この LAN にはマスカレードサーバ <B>B</B> があり、
+LAN をインターネットにつないでいる。
+<B>B</B> はインターネットと <B>A</B> の両方を見ることができる。
+ある別のサイトで、<B>John</B> は <B>D</B> というマシンを持っており、
+これはマスカレードサーバ <B>C</B> を通してインターネットにつながっている。
+<B>B</B> と <B>D</B> は、インターネット越しでしかお互いを見ることはできない。
+<B>John</B>
+
+は lpr を <B>D</B> で起動し、
+印刷を <B>A</B> に出力させたい。
+また <B>B</B> と <B>C</B> の間の経路を圧縮させ、
+(1024 ビットの鍵交換で) 暗号化させたい。
+<P>
+
+<PRE>
+手順は以下のようになる (515 はプリンタのポート):
+    A# lpd &amp;
+    B# secure-mcserv -d -p 12345
+~/.netrc に john の B におけるパスワードのエントリを追加する。そして
+    C# forward john@B:12345 A:515 515 --secure -K 1024 -z
+/etc/printcap に C のプリンタ x のエントリを追加する。そして
+    D# lpr -Px mydocument
+</PRE>
+
+<P>
+
+同僚の <B>John</B> が嫌いな <B>Jill</B> が、
+X セッションのスクリーンダンプを表示する場合を考える。
+彼女は安全な X セッションを、サーバ <B>A</B> と
+メインフレーム <B>B</B> の間に作りたい。
+<P>
+
+<PRE>
+手順は以下のようになる (6010 は display 10.0 に対応する):
+    A# X &amp;
+    A# secure-mcserv -d -p 12345
+~/.netrc に jill の A におけるパスワードのエントリを追加する。そして
+    B# forward jill@A:12345 A:6000 6010 --secure -K 1024
+    B# export DISPLAY=localhost:10.0
+    B# fvwm &amp;
+</PRE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>テスト済みサービスのリスト</H2>
+
+
+telnet ログイン、X セッション、プリンタ (lpr) サービス、
+http、pop3 接続はテストされ、動作が確認されている。
+ftp はソケットのバインドが妙 (?) なのでフォワードできない。
+他に動作したものがあったら知らせてほしい。
+ほとんどのものは動作するはずだが。
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+<B><A HREF="../man1/mirrordir.1.html">mirrordir</A></B>(1)
+
+の <B>バグ</B> セクションも見てほしい。
+帯域外データ
+(<B><A HREF="../../LDP_man-pages/man2/recv.2.html">recv</A></B>(2) と <B><A HREF="../../LDP_man-pages/man2/send.2.html">send</A></B>(2)
+
+の
+<B>MSG_OOB</B>)
+
+は暗号化も圧縮もされない。修正されず、プレインテキストで送信される。
+これをセキュリティ上のリスクだと考える方は、
+私に知らせてほしい。何らかの対応をしたいと思う。
+<P>
+
+<B><A HREF="../../netkit/man1/rlogin.1.html">rlogin</A></B>(1)
+
+での画面サイズ変更 (の検知?) は動作しないようだ。しかし
+<B><A HREF="../../netkit/man1/telnet.1.html">telnet</A></B>(1)
+
+では問題ない。これは OOB データが正しく送られないことと関連しているに違いない。
+しかし問題点を発見するために
+rlogin, rlogind, forward, secure-mcserv
+を同時にデバッグするのは、私は気がすすまない。
+チャレンジしてみたい人は、どうか頑張ってほしい。
+<A NAME="lbAI">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><B>~/.netrc</B><DD>
+マシンとそのパスワードのリスト。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>標準</H2>
+
+mirrordir は作成者の発明であり、
+いかなる OS の標準にも従っていない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>入手方法</H2>
+
+このプログラムの最新版は、
+<B><A HREF="ftp://metalab.unc.edu/pub/Linux/system/backup">ftp://metalab.unc.edu/pub/Linux/system/backup</A></B> または
+<B><A HREF="ftp://lava.obsidian.co.za/pub/linux/mirrordir">ftp://lava.obsidian.co.za/pub/linux/mirrordir</A></B>
+から入手できる。
+<A NAME="lbAL">&nbsp;</A>
+<H2>著者</H2>
+
+Paul Sheer  &lt;<A HREF="mailto:psheer@obsidian.co.za">psheer@obsidian.co.za</A>&gt;  &lt;<A HREF="mailto:psheer@icon.co.za">psheer@icon.co.za</A>&gt;
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/mirrordir.1.html">mirrordir</A></B>(1), <B><A HREF="../man1/pslogin.1.html">pslogin</A></B>(1), <B>ssh</B>(1)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">例</A><DD>
+<DT><A HREF="#lbAG">テスト済みサービスのリスト</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">ファイル</A><DD>
+<DT><A HREF="#lbAJ">標準</A><DD>
+<DT><A HREF="#lbAK">入手方法</A><DD>
+<DT><A HREF="#lbAL">著者</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

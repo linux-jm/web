@@ -1,0 +1,347 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MLOCK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MLOCK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/mlock.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mlock, mlock2, munlock, mlockall, munlockall - メモリーのロックとロック解除を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+
+<B>int mlock(const void *</B><I>addr</I><B>, size_t </B><I>len</I><B>);</B>
+<B>int mlock2(const void *</B><I>addr</I><B>, size_t </B><I>len</I><B>, int </B><I>flags</I><B>);</B>
+<B>int munlock(const void *</B><I>addr</I><B>, size_t </B><I>len</I><B>);</B>
+
+<B>int mlockall(int </B><I>flags</I><B>);</B>
+<B>int munlockall(void);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>mlock</B>() と <B>mlockall</B>() は、呼び出し元プロセスの仮想アドレス空間の一部または全部を RAM
+上にロックし、メモリーがスワップエリアにページングされるのを防ぐ。
+<P>
+
+<B>munlock</B>()  と <B>munlockall</B>()  は逆の操作で、それぞれ呼び出し元プロセスの仮想アドレス空間の一部または全部を
+ロック解除する。つまり、指定された仮想アドレス範囲のページは カーネルメモリーマネージャーから要求されればスワップアウトするようになる。
+メモリーのロックとロック解除はページ単位で行われる。
+<P>
+
+メモリーのロックとロック解除はページ単位で行われる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>mlock(), mlock2(), munlock()</H3>
+
+<B>mlock</B>()  は <I>addr</I> から始まる長さ <I>len</I> バイトのアドレス範囲のページをロックする。 呼び出しが成功した場合には、
+指定されたアドレス範囲を含む全てのページは RAM に残り続けることが保証される。 これらのページは後でロック解除されるまで RAM
+に残り続けることが保証される。
+<P>
+
+
+
+
+<B>mlock2</B>()  also locks pages in the specified range starting at <I>addr</I> and
+continuing for <I>len</I> bytes.  However, the state of the pages contained in
+that range after the call returns successfully will depend on the value in
+the <I>flags</I> argument.
+<P>
+
+The <I>flags</I> argument can be either 0 or the following constant:
+<DL COMPACT>
+<DT><B>MLOCK_ONFAULT</B><DD>
+Lock pages that are currently resident and mark the entire range so that the
+remaining nonresident pages are locked when they are populated by a page
+fault.
+</DL>
+<P>
+
+If <I>flags</I> is 0, <B>mlock2</B>()  behaves exactly the same as <B>mlock</B>().
+<P>
+
+<B>munlock</B>()  は、 <I>addr</I> から始まる長さ <I>len</I> バイトのアドレス範囲のページのロックを解除する。
+この呼び出しを行った後は、カーネルが、指定されたメモリー範囲を含む 全てのページを外部のスワップ空間に移動できるようになる。
+<A NAME="lbAF">&nbsp;</A>
+<H3>mlockall() と munlockall()</H3>
+
+<B>mlockall</B>()  は呼び出し元プロセスのアドレス空間にマップされている全てのページを ロックする。これにはコード、データ、スタックの
+各セグメント、共有ライブラリ、カーネルのユーザー空間データ、 共有メモリー、メモリーマップされたファイルが含まれる。
+システムコールが成功した場合には全てのマップされたページは RAM に 残ることを保証される。 これらのページは後でロック解除されるまで RAM
+に残り続けることが保証される。
+<P>
+
+<I>flags</I> 引数は以下の内容の一つまたは複数のビット OR から構成される:
+<DL COMPACT>
+<DT><B>MCL_CURRENT</B><DD>
+現在、プロセスのアドレス空間にマップされている全てのページをロックする。
+<DT><B>MCL_FUTURE</B><DD>
+将来、プロセスのアドレス空間にマップされる全てのページをロックする。 例えば、ヒープ (heap) やスタックの成長により新しく必要になったページだけで
+なく、新しくメモリーマップされたファイルや共有メモリー領域もロックされる。
+<DT><B>MCL_ONFAULT</B> (Linux 4.4 以降)<DD>
+Used together with <B>MCL_CURRENT</B>, <B>MCL_FUTURE</B>, or both.  Mark all current
+(with <B>MCL_CURRENT</B>)  or future (with <B>MCL_FUTURE</B>)  mappings to lock
+pages when they are faulted in.  When used with <B>MCL_CURRENT</B>, all present
+pages are locked, but <B>mlockall</B>()  will not fault in non-present pages.
+When used with <B>MCL_FUTURE</B>, all future mappings will be marked to lock
+pages when they are faulted in, but they will not be populated by the lock
+when the mapping is created.  <B>MCL_ONFAULT</B> must be used with either
+<B>MCL_CURRENT</B> or <B>MCL_FUTURE</B> or both.
+</DL>
+<P>
+
+<B>MCL_FUTURE</B> が指定されていると、以後のシステムコール (例えば、 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/sbrk.2.html">sbrk</A></B>(2),
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3))  は、ロックするバイト数が許可された最大値 (下記参照) を超えた場合に 失敗する可能性がある。
+同様に、スタックの成長も失敗する可能性がある。 その場合、カーネルはスタックの拡張を拒否し、 <B>SIGSEGV</B> をプロセスに送る。
+<P>
+
+<B>munlockall</B>()  は、呼び出し元プロセスのアドレス空間にマッピングされている 全てのページをロック解除する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は、これらのシステムコールはゼロを返す。 エラーの場合は -1 が返され、 <I>errno</I>
+が適切に設定され、プロセスのアドレス空間におけるロックは変更されない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>ENOMEM</B><DD>
+(Linux 2.6.9 以降) 呼び出し元は非ゼロの ソフト資源制限 <B>RLIMIT_MEMLOCK</B>
+を持つが、制限が許可している以上のメモリーをロックしようとした。 この制限は、プロセスが特権 (<B>CAP_IPC_LOCK</B>)
+を持っている場合は適用されない。
+<DT><B>ENOMEM</B><DD>
+
+
+
+
+
+
+
+
+(Linux 2.4 以前) 呼び出し元プロセスが RAM の半分以上をロックしようとした。
+<DT><B>EPERM</B><DD>
+
+呼び出し側が特権を持っていないが、
+要求された操作を実行するには特権 (<B>CAP_IPC_LOCK</B>) が必要である。
+</DL>
+<P>
+
+For <B>mlock</B>(), <B>mlock2</B>(), and <B>munlock</B>():
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+指定されたアドレス範囲の一部または全てをロックすることができなかった。
+<DT><B>EINVAL</B><DD>
+<I>addr</I>+<I>len</I> の加算の結果が <I>addr</I> よりも小さかった (例えば、加算でオーバーフローが発生したなど)。
+<DT><B>EINVAL</B><DD>
+(Linux ではこの意味で使われない)  <I>addr</I> がページサイズの倍数ではない。
+<DT><B>ENOMEM</B><DD>
+指定されたアドレス範囲がプロセスのアドレス空間にマップされたページと 一致しない。
+<DT><B>ENOMEM</B><DD>
+
+Locking or unlocking a region would result in the total number of mappings
+with distinct attributes (e.g., locked versus unlocked)  exceeding the
+allowed maximum.  (For example, unlocking a range in the middle of a
+currently locked mapping would result in three mappings: two locked mappings
+at each end and an unlocked mapping in the middle.)
+</DL>
+<P>
+
+For <B>mlock2</B>():
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+未知の <I>flags</I> が指定された。
+</DL>
+<P>
+
+<B>mlockall</B>()  用として:
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+Unknown <I>flags</I> were specified or <B>MCL_ONFAULT</B> was specified without
+either <B>MCL_FUTURE</B> or <B>MCL_CURRENT</B>.
+</DL>
+<P>
+
+<B>munlockall</B>()  用として:
+<DL COMPACT>
+<DT><B>EPERM</B><DD>
+(Linux 2.6.8 以前) 呼び出し元が権限 (<B>CAP_IPC_LOCK</B>)  を持っていない。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>mlock2</B>()  is available since Linux 4.4; glibc support was added in
+version 2.27.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4.
+<P>
+
+<B>mlock2</B>() は Linux 固有である。
+<P>
+
+<B>mlock</B>()  と <B>munlock</B>()  が使用可能な POSIX システムでは <B>_POSIX_MEMLOCK_RANGE</B> が
+<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> で定義されている。 また、ページあたりのバイト数は、 <I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I>
+で定義される定数 <B>PAGESIZE</B> から (定義されている場合)、もしくは <I>sysconf(_SC_PAGESIZE)</I>
+を呼び出すことで決定できる。
+<P>
+
+
+
+
+<B>mlockall</B>()  と <B>munlockall</B>()  が利用可能な POSIX システムでは、 <B>_POSIX_MEMLOCK</B> は
+<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> で 0 より大きい値に定義されている (<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)  も参照のこと)。
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+メモリーのロックの用途としては主に二つある: リアルタイム アルゴリズムと高いセキュリティの必要なデータ処理である。リアルタイムの
+アプリケーションは決定的なタイミングやスケジューリングを必要とするが、 ページングは予期しないプログラムの実行遅延をもたらす主要な要因となる。
+リアルタイムのアプリケーションはたいていは <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)  でリアルタイムスケジューラに変更される。
+暗号やセキュリティのソフトウェアはしばしばパスワードや秘密鍵のデータの ような重要なバイト列を扱う。ページングの結果、これらの秘密が
+スワップ用の固定媒体に転送されるかもしれない。そして、セキュリティ ソフトウェアが RAM 上の秘密を削除して終了したずっと後になっても、
+このスワップされたデータには敵がアクセスできる可能性がある (しかし、ラップトップといくつかのデスクトップコンピュータの サスペンドモードはシステムの
+RAM の内容をメモリーのロックに関わらず ディスクに保存することに注意)。
+<P>
+
+リアルタイムプロセスが <B>mlockall</B>()  を使ってページフォールトによる遅延を防ごうとする場合、
+関数呼び出しによってページフォールトが発生しないように、 時間制限の厳しい部分 (time-critical section) に入る前に
+十分な量のロックされたスタックを確保しておく必要がある。 これを実現するには、十分な大きさの自動変数 (の配列) を確保し、
+これらのスタック用のページがメモリー上に確保されるようにこの配列に 書き込みを行う関数を用意し、これを呼び出せばよい。こうすることで、
+十分な量のページがスタックにマッピングされ、RAM にロックされる。 ダミーの書き込みを行うことによって、 時間制限の厳しい部分 (critical
+section) 内では書き込み時コピーによる ページフォールトさえも発生しないことが保証される。
+<P>
+
+Memory locks are not inherited by a child created via <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  and are
+automatically removed (unlocked) during an <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  or when the process
+terminates.  The <B>mlockall</B>()  <B>MCL_FUTURE</B> and <B>MCL_FUTURE |
+MCL_ONFAULT</B> settings are not inherited by a child created via <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+and are cleared during an <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+<P>
+
+Note that <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  will prepare the address space for a copy-on-write
+operation.  The consequence is that any write access that follows will cause
+a page fault that in turn may cause high latencies for a real-time process.
+Therefore, it is crucial not to invoke <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  after an <B>mlockall</B>()
+or <B>mlock</B>()  operation---not even from a thread which runs at a low
+priority within a process which also has a thread running at elevated
+priority.
+<P>
+
+あるアドレス範囲に対するメモリーロックは、そのアドレス範囲が <B><A HREF="../man2/munmap.2.html">munmap</A></B>(2)  によってアンマップされた場合は削除される。
+<P>
+
+メモリーのロックは累積しない。 すなわち複数回 <B>mlock</B>(), <B>mlock2</B>(), <B>mlockall</B>()
+を呼び出してロックされたページでも、 対応する範囲に対して <B>munlock</B>()  を 1 回呼び出したり <B>munlockall</B>()
+を呼び出したりするだけでロック解除される。 複数の場所や複数のプロセスにマップされているページは、少なくとも一つの場所、
+一つのプロセスでロックされている限りは RAM に残り続ける。
+<P>
+
+If a call to <B>mlockall</B>()  which uses the <B>MCL_FUTURE</B> flag is followed by
+another call that does not specify this flag, the changes made by the
+<B>MCL_FUTURE</B> call will be lost.
+<P>
+
+The <B>mlock2</B>()  <B>MLOCK_ONFAULT</B> flag and the <B>mlockall</B>()  <B>MCL_ONFAULT</B>
+flag allow efficient memory locking for applications that deal with large
+mappings where only a (small) portion of pages in the mapping are touched.
+In such cases, locking all of the pages in a mapping would incur a
+significant penalty for memory locking.
+<A NAME="lbAL">&nbsp;</A>
+<H3>Linux での注意</H3>
+
+Linux では、 <B>mlock</B>(), <B>mlock2</B>(), <B>munlock</B>() は自動的に <I>addr</I>
+を端数切り捨てにより一番近いページ境界へと丸める。 しかし POSIX.1 仕様の <B>mlock</B>() と <B>munlock</B>() は
+<I>addr</I> がページ境界に合っていることを要求する実装も許している。 そのため移植性を意図したアプリケーションではきちんと境界に合わせた方が良い。
+<P>
+
+Linux 固有の <I>/proc/[pid]/status</I> ファイルの <I>VmLck</I> フィールドには、 <B>mlock</B>(),
+<B>mlock2</B>(), <B>mlockall</B>() および <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2) <B>MAP_LOCKED</B> を使って、 ID が <I>PID</I>
+のプロセスがロックしているメモリー量 (キロバイト単位) が表示される。
+<A NAME="lbAM">&nbsp;</A>
+<H3>制限と権限</H3>
+
+Linux 2.6.8 以前では、メモリーをロックするためには特権 (<B>CAP_IPC_LOCK</B>)  が必要で、 ソフト資源制限
+<B>RLIMIT_MEMLOCK</B> はプロセスがどれだけのメモリーをロックできるかの制限を定義する。
+<P>
+
+Linux 2.6.9 以降では、特権を持つプロセスがロックできるメモリー量は無制限となり、 代わりにソフト資源制限 <B>RLIMIT_MEMLOCK</B>
+は特権を持たないプロセスがロックできるメモリー量の制限を定義する。
+<A NAME="lbAN">&nbsp;</A>
+<H2>バグ</H2>
+
+
+In Linux 4.8 and earlier, a bug in the kernel's accounting of locked memory
+for unprivileged processes (i.e., without <B>CAP_IPC_LOCK</B>)  meant that if
+the region specified by <I>addr</I> and <I>len</I> overlapped an existing lock, then
+the already locked bytes in the overlapping region were counted twice when
+checking against the limit.  Such double accounting could incorrectly
+calculate a &quot;total locked memory&quot; value for the process that exceeded the
+<B>RLIMIT_MEMLOCK</B> limit, with the result that <B>mlock</B>()  and <B>mlock2</B>()
+would fail on requests that should have succeeded.  This bug was fixed in
+Linux 4.9.
+<P>
+
+2.4.17 までの 2.4 シリーズの Linux カーネルには、 <B>mlockall</B>()  <B>MCL_FUTURE</B> フラグが
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  で継承されると言うバグがある。 これはカーネル 2.4.18 で修正された。
+<P>
+
+
+
+
+
+カーネル 2.6.9 以降では、特権を持ったプロセスが <I>mlockall(MCL_FUTURE)</I> を呼び出した後で、特権をなくした場合 (例えば、
+実効 UID を 0 以外の値に変更するなどにより、 <B>CAP_IPC_LOCK</B> ケーパビリティを失った場合)、リソース上限
+<B>RLIMIT_MEMLOCK</B> に達すると、それ以降のメモリー割り当て (例えば <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/brk.2.html">brk</A></B>(2))  は失敗する。
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/mincore.2.html">mincore</A></B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2), <B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2), <B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3),
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">mlock(), mlock2(), munlock()</A><DD>
+<DT><A HREF="#lbAF">mlockall() と munlockall()</A><DD>
+</DL>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
+<DT><A HREF="#lbAJ">準拠</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAL">Linux での注意</A><DD>
+<DT><A HREF="#lbAM">制限と権限</A><DD>
+</DL>
+<DT><A HREF="#lbAN">バグ</A><DD>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

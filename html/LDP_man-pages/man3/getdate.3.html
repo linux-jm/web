@@ -1,0 +1,293 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETDATE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETDATE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated:  2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getdate.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getdate, getdate_r - 日付と時刻の文字列を要素別の時刻に変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</B>
+<P>
+
+<B>struct tm *getdate(const char *</B><I>string</I><B>);</B>
+<P>
+
+<B>extern int getdate_err;</B>
+<P>
+
+<B>#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</B>
+<P>
+
+<B>int getdate_r(const char *</B><I>string</I><B>, struct tm *</B><I>res</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>getdate</B>():
+
+<DL COMPACT><DT><DD>
+
+<BR>&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+</DL>
+
+<BR>
+
+<B>getdate_r</B>():
+
+<DL COMPACT><DT><DD>
+_GNU_SOURCE
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getdate</B>()  関数は、 <I>string</I> が指すバッファーに格納された文字列表現の日付と時刻を、 要素別の時刻 (broken-down
+time) に変換する。 要素別の時刻は <I>tm</I> 構造体に格納され、この構造体へのポインターが関数の結果として返される。 この <I>tm</I>
+構造体は静的なメモリー領域にあり、 <B>getdate</B>()  のそれ以降の呼び出しで上書きされるかもされない。
+<P>
+
+(<I>format</I> 引数でフォーマットを指定する)  <B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)  とは違い、 <B>getdate</B>()  は環境変数
+<B>DATEMSK</B> で指定されたフルパス名のファイルに書いてあるフォーマットを用いる。
+<P>
+
+マッチの際には大文字小文字を区別しない。 パターン中でも変換される文字列中でも、余分な空白文字は無視される。
+<P>
+
+パターンに指定できる変換指定は、 <B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)  のものと同じである。 POSIX.1-2001
+では一つの変換指定が追加で規定されている。
+<DL COMPACT>
+<DT><B>%Z</B><DD>
+
+
+
+タイムゾーンの名前。 glibc では実装されていない。
+</DL>
+<P>
+
+<B>%Z</B> が指定された場合、要素別の時刻を格納する構造体は、 指定されたタイムゾーンにおける現在時刻に対応する値で初期化される。
+指定されていない場合、この構造体は現在のローカルタイムに対応する 要素別の時刻で初期化される (<B><A HREF="../man3/localtime.3.html">localtime</A></B>(3)
+を呼び出した場合と同じ)。
+<P>
+
+曜日だけが指定された場合、 今日または今日以降で、 その曜日に合致する最初の日が採用される。
+<P>
+
+(年なしで) 月だけが指定された場合、 今月または今月以降で、 その月に合致する最初の月が採用される。
+<P>
+
+時・分・秒がいずれも指定されなかった場合、 現在の時・分・秒が採用される。
+<P>
+
+日付の指定がなかったが、時間 (hour) だけ指定された場合は、 現在の時間またはそれ以降で、その指定に合致する最初の時間が採用される。
+<P>
+
+<B>getdate_r</B>()  は GNU 拡張で <B>getdate</B>()  のリエントラント版を提供している。 <B>getdate_r</B>()
+では、エラーを報告するのにグローバル変数を使用したり、 要素別の時刻を返すのに静的なバッファーを使用したりせず、
+エラーを関数の返り値経由で報告し、要素別の時刻を 引数 <I>res</I> が指し示す呼び出し側で割り当てたバッファーに格納して返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>getdate</B>()  は <I>struct tm</I> へのポインターを返す。 失敗すると NULL を返し、グローバル変数
+<I>getdate_err</I> に以下に示すエラー番号のいずれか一つを設定する。 <I>errno</I> の変更については規定されていない。
+<P>
+
+成功すると、 <B>getdate_r</B>()  は 0 を返す。 失敗すると、以下に示すエラー番号のいずれか一つを返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+以下のエラーが、 (<B>getdate</B>()  では)  <I>getdate_err</I> 経由で返され、 (<B>getdate_r</B>()  では)
+関数の返り値として返される。
+<DL COMPACT>
+<DT><B>1</B><DD>
+環境変数 <B>DATEMASK</B> が未定義、またはその値が空文字列である。
+<DT><B>2</B><DD>
+<B>DATEMSK</B> で指定されたテンプレートファイルを読み込み用にオープンできない。
+<DT><B>3</B><DD>
+
+ファイルのステータス情報が取得できない。
+<DT><B>4</B><DD>
+テンプレートファイルが通常のファイルでない。
+<DT><B>5</B><DD>
+テンプレートファイルの読み込み中にエラーが起こった。
+<DT><B>6</B><DD>
+
+メモリーの割り当てに失敗した (メモリーが足りない)。
+<DT><B>7</B><DD>
+入力にマッチしたファイルに、行が含まれていない。
+<DT><B>8</B><DD>
+入力指定が正しくない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>環境変数</H2>
+
+<DL COMPACT>
+<DT><B>DATEMSK</B><DD>
+書式パターンを含むファイル。
+<DT><B>TZ</B>, <B>LC_TIME</B><DD>
+<B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)  が用いる変数。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getdate</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:getdate env locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getdate_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe env locale<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+<BR>&nbsp;POSIX.1-2001,&nbsp;POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+POSIX.1 仕様では、 <B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)  については <B>%E</B> や <B>%O</B> といった修正子を用いた変換指定を規定しているが、
+<B>getdate</B>()  についてはこのような修飾子の規定はない。 glibc では、 <B>getdate</B>()  は <B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)
+を用いて実装されており、 両者では全く同じ変換が両者でサポートされている。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは、コマンドライン引数のそれぞれについて <B>getdate</B>()  を呼び出し、それぞれについて返された <I>tm</I>
+構造体のフィールド値を表示する。 次のシェルセッションは、プログラムの動作例である。
+<P>
+
+
+
+$<B> TFILE=$PWD/tfile</B>
+$<B> echo '%A' &gt; $TFILE </B>      # Full name of the day of the week
+$<B> echo '%T' &gt;&gt; $TFILE</B>      # ISO date (YYYY-MM-DD)
+$<B> echo '%F' &gt;&gt; $TFILE</B>      # Time (HH:MM:SS)
+$<B> date</B>
+$<B> export DATEMSK=$TFILE</B>
+$<B> ./a.out Tuesday '2009-12-28' '12:22:33'</B>
+Sun Sep  7 06:03:36 CEST 2008
+Call 1 (&quot;Tuesday&quot;) succeeded:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_sec&nbsp;&nbsp;&nbsp;=&nbsp;36
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_min&nbsp;&nbsp;&nbsp;=&nbsp;3
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_hour&nbsp;&nbsp;=&nbsp;6
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_mday&nbsp;&nbsp;=&nbsp;9
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_mon&nbsp;&nbsp;&nbsp;=&nbsp;8
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_year&nbsp;&nbsp;=&nbsp;108
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_wday&nbsp;&nbsp;=&nbsp;2
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_yday&nbsp;&nbsp;=&nbsp;252
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_isdst&nbsp;=&nbsp;1
+Call 2 (&quot;2009-12-28&quot;) succeeded:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_sec&nbsp;&nbsp;&nbsp;=&nbsp;36
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_min&nbsp;&nbsp;&nbsp;=&nbsp;3
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_hour&nbsp;&nbsp;=&nbsp;6
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_mday&nbsp;&nbsp;=&nbsp;28
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_mon&nbsp;&nbsp;&nbsp;=&nbsp;11
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_year&nbsp;&nbsp;=&nbsp;109
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_wday&nbsp;&nbsp;=&nbsp;1
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_yday&nbsp;&nbsp;=&nbsp;361
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_isdst&nbsp;=&nbsp;0
+Call 3 (&quot;12:22:33&quot;) succeeded:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_sec&nbsp;&nbsp;&nbsp;=&nbsp;33
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_min&nbsp;&nbsp;&nbsp;=&nbsp;22
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_hour&nbsp;&nbsp;=&nbsp;12
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_mday&nbsp;&nbsp;=&nbsp;7
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_mon&nbsp;&nbsp;&nbsp;=&nbsp;8
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_year&nbsp;&nbsp;=&nbsp;108
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_wday&nbsp;&nbsp;=&nbsp;0
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_yday&nbsp;&nbsp;=&nbsp;250
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tm_isdst&nbsp;=&nbsp;1
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+<P>
+<BR>&nbsp;int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;tm&nbsp;*tmp;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;1;&nbsp;j&nbsp;&lt;&nbsp;argc;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tmp&nbsp;=&nbsp;getdate(argv[j]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(tmp&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Call&nbsp;%d&nbsp;failed;&nbsp;getdate_err&nbsp;=&nbsp;%d\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;j,&nbsp;getdate_err);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Call&nbsp;%d&nbsp;(\&quot;%s\&quot;)&nbsp;succeeded:\n&quot;,&nbsp;j,&nbsp;argv[j]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;tm_sec&nbsp;&nbsp;&nbsp;=&nbsp;%d\n&quot;,&nbsp;tmp-&gt;tm_sec);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;tm_min&nbsp;&nbsp;&nbsp;=&nbsp;%d\n&quot;,&nbsp;tmp-&gt;tm_min);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;tm_hour&nbsp;&nbsp;=&nbsp;%d\n&quot;,&nbsp;tmp-&gt;tm_hour);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;tm_mday&nbsp;&nbsp;=&nbsp;%d\n&quot;,&nbsp;tmp-&gt;tm_mday);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;tm_mon&nbsp;&nbsp;&nbsp;=&nbsp;%d\n&quot;,&nbsp;tmp-&gt;tm_mon);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;tm_year&nbsp;&nbsp;=&nbsp;%d\n&quot;,&nbsp;tmp-&gt;tm_year);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;tm_wday&nbsp;&nbsp;=&nbsp;%d\n&quot;,&nbsp;tmp-&gt;tm_wday);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;tm_yday&nbsp;&nbsp;=&nbsp;%d\n&quot;,&nbsp;tmp-&gt;tm_yday);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;tm_isdst&nbsp;=&nbsp;%d\n&quot;,&nbsp;tmp-&gt;tm_isdst);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/time.2.html">time</A></B>(2), <B><A HREF="../man3/localtime.3.html">localtime</A></B>(3), <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3), <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3), <B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">環境変数</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DL>
+<DT><A HREF="#lbAL">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

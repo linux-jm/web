@@ -1,0 +1,155 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_ATTR_SETINHERITSCHED</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_ATTR_SETINHERITSCHED</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/pthread_attr_setinheritsched.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_attr_setinheritsched, pthread_attr_getinheritsched - スレッド属性オブジェクトの
+inherit-scheduler 属性の設定/取得を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<B>int pthread_attr_setinheritsched(pthread_attr_t *</B><I>attr</I><B>,</B>
+<B>                                 int </B><I>inheritsched</I><B>);</B>
+<B>int pthread_attr_getinheritsched(const pthread_attr_t *</B><I>attr</I><B>,</B>
+<B>                                 int *</B><I>inheritsched</I><B>);</B>
+
+<I>-pthread</I> でコンパイルしてリンクする。
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pthread_attr_setinheritsched</B>() 関数は、 <I>attr</I> が参照するスレッド属性オブジェクトの
+inherit-scheduler 属性を <I>inheritsched</I> で指定された値に設定する。 inherit-scheduler
+属性により、スレッド属性オブジェクト <I>attr</I> を使って作成されるスレッドが、呼び出したスレッドのスケジューリング属性を継承するか、
+<I>attr</I> からスケジューリング属性を取得するかが決定される。
+<P>
+
+次に挙げるスケジューリング属性は inherit-scheduler 属性の影響を受ける: スケジューリングポリシー
+(<B><A HREF="../man3/pthread_attr_setschedpolicy.3.html">pthread_attr_setschedpolicy</A></B>(3))、 スケジューリング優先度
+(<B><A HREF="../man3/pthread_attr_setschedparam.3.html">pthread_attr_setschedparam</A></B>(3))、 contention scope
+(<B><A HREF="../man3/pthread_attr_setscope.3.html">pthread_attr_setscope</A></B>(3))。
+<P>
+
+以下の値を <I>inheritsched</I> に指定できる。
+<DL COMPACT>
+<DT><B>PTHREAD_INHERIT_SCHED</B><DD>
+<I>attr</I> を使って作成されたスレッドは、
+スレッドを作成するスレッドからスケジューリング属性を継承する。
+<I>attr</I> 内のスケジューリング属性は無視される。
+<DT><B>PTHREAD_EXPLICIT_SCHED</B><DD>
+
+<I>attr</I> を使って作成されたスレッドは、スレッド属性オブジェクトで
+指定された値からスケジューリング属性を取得する。
+</DL>
+<P>
+
+新たに初期化されたスレッド属性オブジェクトの inherit-scheduler 属性のデフォルト設定は
+<B>PTHREAD_INHERIT_SCHED</B> である。
+<P>
+
+<B>pthread_attr_getinheritsched</B>() は、 スレッド属性オブジェクト <I>attr</I> の
+inherit-scheduler 属性を <I>inheritsched</I> が指すバッファーに入れて返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、これらの関数は 0 を返す。
+エラーの場合、0 以外のエラー番号を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>pthread_attr_setinheritsched</B>() は以下のエラーで失敗する場合がある。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>inheritsched</I> に無効な値が指定された。
+</DL>
+<P>
+
+
+
+POSIX.1 では、 <B>pthread_attr_setinheritsched</B>() に関して
+エラー <B>ENOTSUP</B> (&quot;サポートされていない値を属性に設定しようとした&quot;)
+も追加で規定されている。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>pthread_attr_setinheritsched</B>(),
+<B>pthread_attr_getinheritsched</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+glibc 2.8 の時点では、スレッド属性オブジェクトが <B><A HREF="../man3/pthread_attr_init.3.html">pthread_attr_init</A></B>(3) を使って初期化された場合、
+スレッド属性オブジェクトのスケジューリングポリシーが <B>SCHED_OTHER</B> に、 スケジューリング優先度が 0 に設定される。一方、その後
+inherit-scheduler 属性に <B>PTHREAD_EXPLICIT_SCHED</B>
+が設定されると、このスレッド属性オブジェクトを使って作成されたスレッドでは、スレッドを作成するスレッドのスケジューリング属性が間違って継承されてしまう。
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3) を呼び出す前にスケジューリングポリシー属性かスケジューリング優先度属性のどちらかが明示的に設定された場合には、
+このバグは発生しない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man3/pthread_setschedparam.3.html">pthread_setschedparam</A></B>(3) を参照。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B><A HREF="../man3/pthread_attr_init.3.html">pthread_attr_init</A></B>(3), <B><A HREF="../man3/pthread_attr_setschedparam.3.html">pthread_attr_setschedparam</A></B>(3),
+<B><A HREF="../man3/pthread_attr_setschedpolicy.3.html">pthread_attr_setschedpolicy</A></B>(3), <B><A HREF="../man3/pthread_attr_setscope.3.html">pthread_attr_setscope</A></B>(3),
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3), <B><A HREF="../man3/pthread_setschedparam.3.html">pthread_setschedparam</A></B>(3),
+<B><A HREF="../man3/pthread_setschedprio.3.html">pthread_setschedprio</A></B>(3), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7), <B><A HREF="../man7/sched.7.html">sched</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

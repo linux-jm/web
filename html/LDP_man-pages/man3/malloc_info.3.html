@@ -1,0 +1,278 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MALLOC_INFO</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MALLOC_INFO</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/malloc_info.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+malloc_info - malloc の状態をストリームに出力する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/malloc.h">malloc.h</A>&gt;</B>
+
+<B>int malloc_info(int </B><I>options</I><B>, FILE *</B><I>stream</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>malloc_info</B>() 関数は、 呼び出し元のメモリー割り当て実装の現在の状態を表す XML 文字列を出力する。 文字列は、
+ファイルストリーム <I>stream</I> に出力される。 出力された文字列には、 全ての割り当て領域の情報が含まれる (<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3) 参照)。
+<P>
+
+現在の実装では、 <I>options</I> は 0 でなければならない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>malloc_info</B>() は、成功すると 0 を返す。 エラーの場合、-1 を返し、 <I>errno</I> にエラーの原因を示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>options</I> が 0 でなかった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>malloc_info</B>() は glibc バージョン 2.10 で追加された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>malloc_info</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+この関数は GNU による拡張である。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+メモリー割り当て情報は (C の構造体ではなく) XML 文字列として提供される。 これは、 この情報は時間をたつと (内部で使用している実装によって)
+変わる可能性があるからである。 出力される XML 文字列にはバージョンフィールドが付いている。
+<P>
+
+<B>open_memstream</B>(3) 関数を使うと、 <B>malloc_info</B>() の出力を、
+ファイルではなくメモリー内のバッファーに直接送ることができる。
+<P>
+
+<B>malloc_info</B>() 関数は、 <B><A HREF="../man3/malloc_stats.3.html">malloc_stats</A></B>(3) と <B><A HREF="../man3/mallinfo.3.html">mallinfo</A></B>(3) の不備を解決するために設定された。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは最大で 4 つのコマンドライン引数を取り、 最初の 3 つは必須である。 最初の引数は、このプログラムが生成するスレッド数を指定する。
+メインスレッドを含む全てのスレッドが第 2 引数で指定した数のメモリーブロックの割り当てを行う。 第 3 引数は割り当てるブロックのサイズを制御する。
+メインスレッドはこのサイズのブロックを作成し、 このプログラムが生成する 2 番目のスレッドはこのサイズの 2 倍のサイズのブロックを、 3
+番目のスレッドはこのサイズの 3 倍のサイズのブロックを割り当て、 以下同様である。
+<P>
+
+このプログラムは <B>malloc_info</B>() を 2 回呼び出し、メモリー割り当て状態を表示する。
+最初の呼び出しはスレッドの生成もメモリーの割り当ても行われる前に実行される。 2
+回目の呼び出しは全てのスレッドがメモリー割り当てを行った後に実行される。
+<P>
+
+以下の例では、 コマンドライン引数で、 追加でスレッドを一つ生成し、メインスレッドと追加のスレッドの両方が 10000
+個のメモリーブロックを割り当てるように指定している。 メモリーブロックの割り当て後の <B>malloc_info</B>() では、 2
+つの割り当て領域の状態が表示されている。
+<P>
+
+
+
+$ <B>getconf GNU_LIBC_VERSION</B>
+glibc 2.13
+$ <B>./a.out 1 10000 100</B>
+============ Before allocating blocks ============
+&lt;malloc version=&quot;1&quot;&gt;
+&lt;heap nr=&quot;0&quot;&gt;
+&lt;sizes&gt;
+&lt;/sizes&gt;
+&lt;total type=&quot;fast&quot; count=&quot;0&quot; size=&quot;0&quot;/&gt;
+&lt;total type=&quot;rest&quot; count=&quot;0&quot; size=&quot;0&quot;/&gt;
+&lt;system type=&quot;current&quot; size=&quot;135168&quot;/&gt;
+&lt;system type=&quot;max&quot; size=&quot;135168&quot;/&gt;
+&lt;aspace type=&quot;total&quot; size=&quot;135168&quot;/&gt;
+&lt;aspace type=&quot;mprotect&quot; size=&quot;135168&quot;/&gt;
+&lt;/heap&gt;
+&lt;total type=&quot;fast&quot; count=&quot;0&quot; size=&quot;0&quot;/&gt;
+&lt;total type=&quot;rest&quot; count=&quot;0&quot; size=&quot;0&quot;/&gt;
+&lt;system type=&quot;current&quot; size=&quot;135168&quot;/&gt;
+&lt;system type=&quot;max&quot; size=&quot;135168&quot;/&gt;
+&lt;aspace type=&quot;total&quot; size=&quot;135168&quot;/&gt;
+&lt;aspace type=&quot;mprotect&quot; size=&quot;135168&quot;/&gt;
+&lt;/malloc&gt;
+<P>
+============ After allocating blocks ============
+&lt;malloc version=&quot;1&quot;&gt;
+&lt;heap nr=&quot;0&quot;&gt;
+&lt;sizes&gt;
+&lt;/sizes&gt;
+&lt;total type=&quot;fast&quot; count=&quot;0&quot; size=&quot;0&quot;/&gt;
+&lt;total type=&quot;rest&quot; count=&quot;0&quot; size=&quot;0&quot;/&gt;
+&lt;system type=&quot;current&quot; size=&quot;1081344&quot;/&gt;
+&lt;system type=&quot;max&quot; size=&quot;1081344&quot;/&gt;
+&lt;aspace type=&quot;total&quot; size=&quot;1081344&quot;/&gt;
+&lt;aspace type=&quot;mprotect&quot; size=&quot;1081344&quot;/&gt;
+&lt;/heap&gt;
+&lt;heap nr=&quot;1&quot;&gt;
+&lt;sizes&gt;
+&lt;/sizes&gt;
+&lt;total type=&quot;fast&quot; count=&quot;0&quot; size=&quot;0&quot;/&gt;
+&lt;total type=&quot;rest&quot; count=&quot;0&quot; size=&quot;0&quot;/&gt;
+&lt;system type=&quot;current&quot; size=&quot;1032192&quot;/&gt;
+&lt;system type=&quot;max&quot; size=&quot;1032192&quot;/&gt;
+&lt;aspace type=&quot;total&quot; size=&quot;1032192&quot;/&gt;
+&lt;aspace type=&quot;mprotect&quot; size=&quot;1032192&quot;/&gt;
+&lt;/heap&gt;
+&lt;total type=&quot;fast&quot; count=&quot;0&quot; size=&quot;0&quot;/&gt;
+&lt;total type=&quot;rest&quot; count=&quot;0&quot; size=&quot;0&quot;/&gt;
+&lt;system type=&quot;current&quot; size=&quot;2113536&quot;/&gt;
+&lt;system type=&quot;max&quot; size=&quot;2113536&quot;/&gt;
+&lt;aspace type=&quot;total&quot; size=&quot;2113536&quot;/&gt;
+&lt;aspace type=&quot;mprotect&quot; size=&quot;2113536&quot;/&gt;
+&lt;/malloc&gt;
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/malloc.h">malloc.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+<P>
+static size_t blockSize;
+static int numThreads, numBlocks;
+<P>
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+static void *
+thread_func(void *arg)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tn&nbsp;=&nbsp;(int)&nbsp;arg;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;The&nbsp;multiplier&nbsp;'(2&nbsp;+&nbsp;tn)'&nbsp;ensures&nbsp;that&nbsp;each&nbsp;thread&nbsp;(including
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;main&nbsp;thread)&nbsp;allocates&nbsp;a&nbsp;different&nbsp;amount&nbsp;of&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;numBlocks;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(malloc(blockSize&nbsp;*&nbsp;(2&nbsp;+&nbsp;tn))&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc-thread&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sleep(100);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Sleep&nbsp;until&nbsp;main&nbsp;thread&nbsp;terminates&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sleepTime;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;4)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;%s&nbsp;num-threads&nbsp;num-blocks&nbsp;block-size&nbsp;[sleep-time]\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;numThreads&nbsp;=&nbsp;atoi(argv[1]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;numBlocks&nbsp;=&nbsp;atoi(argv[2]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;blockSize&nbsp;=&nbsp;atoi(argv[3]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sleepTime&nbsp;=&nbsp;(argc&nbsp;&gt;&nbsp;4)&nbsp;?&nbsp;atoi(argv[4])&nbsp;:&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;*thr&nbsp;=&nbsp;calloc(numThreads,&nbsp;sizeof(*thr));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(thr&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;calloc&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;============&nbsp;Before&nbsp;allocating&nbsp;blocks&nbsp;============\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;malloc_info(0,&nbsp;stdout);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;threads&nbsp;that&nbsp;allocate&nbsp;different&nbsp;amounts&nbsp;of&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;tn&nbsp;=&nbsp;0;&nbsp;tn&nbsp;&lt;&nbsp;numThreads;&nbsp;tn++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errno&nbsp;=&nbsp;pthread_create(&amp;thr[tn],&nbsp;NULL,&nbsp;thread_func,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(void&nbsp;*)&nbsp;tn);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errno&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;pthread_create&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;If&nbsp;we&nbsp;add&nbsp;a&nbsp;sleep&nbsp;interval&nbsp;after&nbsp;the&nbsp;start-up&nbsp;of&nbsp;each
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;thread,&nbsp;the&nbsp;threads&nbsp;likely&nbsp;won't&nbsp;contend&nbsp;for&nbsp;malloc
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mutexes,&nbsp;and&nbsp;therefore&nbsp;additional&nbsp;arenas&nbsp;won't&nbsp;be
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allocated&nbsp;(see&nbsp;<A HREF="../man3/malloc.3.html">malloc</A>(3)).&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sleepTime&nbsp;&gt;&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sleep(sleepTime);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;The&nbsp;main&nbsp;thread&nbsp;also&nbsp;allocates&nbsp;some&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;numBlocks;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(malloc(blockSize)&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sleep(2);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Give&nbsp;all&nbsp;threads&nbsp;a&nbsp;chance&nbsp;to
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;complete&nbsp;allocations&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n============&nbsp;After&nbsp;allocating&nbsp;blocks&nbsp;============\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;malloc_info(0,&nbsp;stdout);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/mallinfo.3.html">mallinfo</A></B>(3), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3), <B><A HREF="../man3/malloc_stats.3.html">malloc_stats</A></B>(3), <B>mallopt</B>(3),
+<B>open_memstream</B>(3)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DL>
+<DT><A HREF="#lbAL">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

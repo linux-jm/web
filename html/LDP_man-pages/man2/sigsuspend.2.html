@@ -1,0 +1,126 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SIGSUSPEND</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SIGSUSPEND</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/sigsuspend.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sigsuspend, rt_sigsuspend - シグナルを待つ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+<P>
+
+<B>int sigsuspend(const sigset_t *</B><I>mask</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>sigsuspend</B>(): _POSIX_C_SOURCE
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>sigsuspend</B>()  は、呼び出し元スレッドのシグナルマスクを <I>mask</I> で指定されたマスクに一時的に置き換え、
+シグナルハンドラーの起動もしくはプロセスの終了がアクションとして 設定されたシグナルが配送されるまで、そのスレッドを停止する。
+<P>
+
+シグナルがプロセスを終了させるものの場合、 <B>sigsuspend</B>()  は返らない。シグナルが捕捉された場合、
+シグナルハンドラーの処理が終わった後に <B>sigsuspend</B>()  は返り、シグナルマスクは <B>sigsuspend</B>()
+が呼び出される前の状態に復元される。
+<P>
+
+<B>SIGKILL</B> と <B>SIGSTOP</B> を禁止 (block) することはできない; これらのシグナルを <I>mask</I>
+に指定しても、そのスレッドのシグナルマスクは影響を受けない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>sigsuspend</B>() は常に -1 を返し、 <I>errno</I> にエラーの原因を示す値 (通常は <B>EINTR</B>) を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>mask</I> が指しているメモリーが、プロセスのアドレス空間の有効な部分ではない。
+<DT><B>EINTR</B><DD>
+システムコールはシグナルにより割り込まれた。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7) を参照。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>sigsuspend</B>()  は、通常、クリティカルコードセクション (critical code section) の
+実行中にシグナルが配送されるのを防止するために、 <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  と組み合わせて使用される。 まず最初に、呼び出し元は
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  を使ってシグナルを禁止する。 クリティカルコードが完了すると、呼び出し元は <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)
+が (<I>oldset</I> 引数で) 返すシグナルマスクを指定して <B>sigsuspend</B>()  を呼び出すことで、クリティカルコード実行中に発生した
+シグナルを待つことができる。
+<P>
+
+
+シグナル集合の操作に関する詳細は <B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3)  を参照のこと。
+<A NAME="lbAI">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+
+The original Linux system call was named <B>sigsuspend</B>().  However, with the
+addition of real-time signals in Linux 2.2, the fixed-size, 32-bit
+<I>sigset_t</I> type supported by that system call was no longer fit for
+purpose.  Consequently, a new system call, <B>rt_sigsuspend</B>(), was added to
+support an enlarged <I>sigset_t</I> type.  The new system call takes a second
+argument, <I>size_t sigsetsize</I>, which specifies the size in bytes of the
+signal set in <I>mask</I>.  This argument is currently required to have the
+value <I>sizeof(sigset_t)</I> (or the error <B>EINVAL</B> results).  The glibc
+<B>sigsuspend</B>()  wrapper function hides these details from us, transparently
+calling <B>rt_sigsuspend</B>()  when the kernel provides it.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2), <B><A HREF="../man2/pause.2.html">pause</A></B>(2), <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man2/signal.2.html">signal</A></B>(2), <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2),
+<B><A HREF="../man2/sigwaitinfo.2.html">sigwaitinfo</A></B>(2), <B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3), <B><A HREF="../man3/sigwait.3.html">sigwait</A></B>(3), <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

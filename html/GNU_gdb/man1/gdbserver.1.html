@@ -1,0 +1,426 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GDBSERVER</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GDBSERVER</H1>
+Section: GNU Development Tools (1)<BR>Updated: 2022-01-16<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_gdb/release/man1/gdbserver.1">roff page</A><HR>
+
+
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+gdbserver - GNU デバッガー用リモートサーバー
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+
+
+gdbserver <I>comm</I> <I>prog</I> [<I>args</I>...]
+<P>
+
+gdbserver --attach <I>comm</I> <I>pid</I>
+<P>
+
+gdbserver --multi <I>comm</I>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+
+<B>gdbserver</B> は、デバッグ対象のプログラムを実行しているマシンとは異なるマシン上で <FONT SIZE="-1">GDB</FONT>
+を実行することを可能にするプログラムです。
+<P>
+
+使用方法 (サーバー(ターゲット)側):
+<P>
+
+まず、デバッグ対象のプログラムのコピーをターゲットシステムに用意します。 <B>gdbserver</B> は、 シンボルを関知しないので、
+使用スペースを節約するためにプログラムからシンボルを取り除く (strip する) のでも構いません。
+すべてのシンボルの処理は、ホストシステム上において動作する <FONT SIZE="-1">GDB</FONT> が行います。
+<P>
+
+サーバーを使用するためには、ターゲットシステムにログインし、<B>gdbserver</B> プログラムを実行します。 その際には (a) <FONT SIZE="-1">GDB</FONT>
+との通信方法、 (b) プログラム名、 (c) プログラムへの引数 を指定する必要があります。 一般的な書式は以下のようになります。
+<P>
+
+
+
+<PRE>
+ target&gt; gdbserver &lt;comm&gt; &lt;program&gt; [&lt;args&gt;
+...]
+
+</PRE>
+
+
+<P>
+
+たとえば、シリアルポートを使用する場合は、以下のようになります。
+<P>
+
+
+
+<PRE>
+ target&gt; gdbserver /dev/com1 emacs foo.txt
+
+</PRE>
+
+
+<P>
+
+この例では、<B>gdbserver</B> に対して、emacs に引数 foo.txt を与えてデバッグすることを指定しています。 そして
+<FONT SIZE="-1">GDB</FONT> との通信に <I>/dev/com1</I> を使用します。 <B>gdbserver</B> は、ホストの <FONT SIZE="-1">GDB</FONT>
+が通信して来ることを辛抱強く待ちます。
+<P>
+
+<FONT SIZE="-1">TCP</FONT> 接続を使用する場合は、以下のようになります。
+<P>
+
+
+
+<PRE>
+ target&gt; gdbserver host:2345 emacs foo.txt
+
+</PRE>
+
+
+<P>
+
+この例では、ホストの GDB との通信に TCP を用いる以外は、前の例と同じです。 引数 <TT>&quot;host:2345&quot;</TT>
+は、<TT>&quot;host&quot;</TT> からの <FONT SIZE="-1">TCP</FONT> 接続が ローカルの <FONT SIZE="-1">TCP</FONT> ポート 2345
+に接続されるのを待つ、という意味です。 (現状では <TT>&quot;host&quot;</TT> 部は無視されます。)  ターゲットシステムで存在する
+<FONT SIZE="-1">TCP</FONT> ポートとの衝突が無ければ、ポート番号は自由に選ぶことができます。 ホストの GDB の <TT>&quot;target
+remote&quot;</TT> コマンドで、 同じポート番号を指定する必要があります。 他のサービスと衝突するポート番号を 選んだ場合、
+<B>gdbserver</B> はエラーメッセージを出力して終了します。
+<P>
+
+<B>gdbserver</B> は、 実行中のプログラムに接続することができます。 これを行うには <B>--attach</B> 引数を使用します。
+書式は次の通りです。
+<P>
+
+
+
+<PRE>
+ target&gt; gdbserver --attach &lt;comm&gt; &lt;pid&gt;
+
+</PRE>
+
+
+<P>
+
+<I>pid</I> は現在実行中のプロセスのプロセス <FONT SIZE="-1">ID</FONT> です。 <B>gdbserver</B>
+に実行中のプロセスのバイナリを指定する必要はありません。
+<P>
+
+初期起動するコマンド、 あるいはアタッチするプロセス <FONT SIZE="-1">ID</FONT> を指定せずに <TT>&quot;gdbserver&quot;</TT> を起動するには、
+コマンドラインオプション <B>--multi</B> を用います。 この場合は、 <TT>&quot;target extended-remote&quot;</TT>
+を利用して、デバッグしたいプログラムを起動して連携することが必要です。
+<P>
+
+
+
+<PRE>
+ target&gt; gdbserver --multi &lt;comm&gt;
+
+</PRE>
+
+
+<P>
+
+使用方法 (ホスト側):
+<P>
+
+<FONT SIZE="-1">GDB</FONT> がシンボルテーブルを検査したりするため、 ホストシステムには、 ターゲットプログラムのシンボルが取り除かれていない
+(strip されていない) コピーが必要です。 通常の場合同様、 最初の引数にターゲットプログラムを指定して GDB を起動します。
+(シリアル回線のボーレート (baud rate) が 9600 以外の場合は、<B>--baud</B> オプションの指定が必要になります。)
+つまり、<TT>&quot;gdb TARGET-PROG&quot;</TT> あるいは <TT>&quot;gdb --baud BAUD
+TARGET-PROG&quot;</TT> のように起動します。 その後、新たに覚える必要のあるコマンドは、<TT>&quot;target
+remote&quot;</TT> (あるいは <TT>&quot;target extended-remote&quot;</TT>) だけです。
+コマンドの引数は、デバイス名 (通常 <I>/dev/ttyb</I> のようなシリアルデバイス) か、 <TT>&quot;HOST:PORT&quot;</TT>
+記述子です。 たとえば、
+<P>
+
+
+
+<PRE>
+ (gdb) target remote /dev/ttyb
+
+</PRE>
+
+
+<P>
+
+は、シリアル回線 <I>/dev/ttyb</I> を使用してサーバーと通信します。また、
+<P>
+
+
+
+<PRE>
+ (gdb) target remote the-target:2345
+
+</PRE>
+
+
+<P>
+
+は、<FONT SIZE="-1">TCP</FONT> 接続で、ホスト `the-target' の <B>gdbserver</B> を起動した時に指定したポートと同じポート 2345
+を使用してサーバーと通信します。 <FONT SIZE="-1">TCP</FONT> 接続の場合、 `target remote' コマンドを実行する前に
+<B>gdbserver</B> を実行しておく必要があります。 そうしないと、`Connection refused' というようなエラーになるでしょう。
+<P>
+
+<B>gdbserver</B> では、 一度に複数の inferior オブジェクトをデバッグできます。 これについては <FONT SIZE="-1">GDB</FONT>
+マニュアルの <TT>&quot;Inferiors Connections and Programs&quot;</TT> ノードにおいて説明しています。
+--- シェルコマンドでは <TT>&quot;info -f gdb -n 'Inferiors Connections and
+Programs'&quot;</TT> とします。 この場合は、 <FONT SIZE="-1">GDB</FONT> コマンドの別の形である
+<TT>&quot;extended-remote&quot;</TT> <FONT SIZE="-1">GDB</FONT> を実行します。
+<P>
+
+
+
+<PRE>
+ (gdb) target extended-remote the-target:2345
+
+</PRE>
+
+
+<P>
+
+<B>gdbserver</B> オプションである <B>--multi</B> は、 この場合に使っても使わなくてもかまいません。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+
+
+<B>gdbserver</B> の起動方法には 3 つのモードがあります。
+<DL COMPACT>
+<DT>&bull;<DD>
+プログラム名指定によるプログラムデバッグ:
+
+
+<P>
+
+
+
+
+<PRE>
+ gdbserver &lt;comm&gt; &lt;prog&gt; [&lt;args&gt;...]
+
+</PRE>
+
+
+
+
+<P>
+
+
+パラメーター <I>comm</I> は、サーバーが <FONT SIZE="-1">GDB</FONT> と通信するための方法を指定します。 その値は、デバイス名 (シリアル回線利用時)、
+<FONT SIZE="-1">TCP</FONT> ポート番号 (<TT>&quot;:1234&quot;</TT>)、 <TT>&quot;-&quot;</TT> または
+<TT>&quot;stdio&quot;</TT> (<TT>&quot;gdbserver&quot;</TT> の標準入出力利用時) のいずれかです。
+デバッグするプログラム名は <I>prog</I> に指定します。 残りの引数は、 そのままプログラムに受け渡されます。 プログラムが終了すると、
+<FONT SIZE="-1">GDB</FONT> が接続を閉じ、<TT>&quot;gdbserver&quot;</TT> は終了します。
+<DT>&bull;<DD>
+プログラム実行中のプロセス <FONT SIZE="-1">ID</FONT> を指定したプログラムデバッグ：
+
+
+<P>
+
+
+
+
+<PRE>
+ gdbserver --attach &lt;comm&gt; &lt;pid&gt;
+
+</PRE>
+
+
+
+
+<P>
+
+
+パラメーター <I>comm</I> については前述済です。 実行しているプログラムのプロセス　<FONT SIZE="-1">ID</FONT> を <I>pid</I> に指定します。 後は
+<FONT SIZE="-1">GDB</FONT> がすべてを処理します。 前項目のモードと同じように、プロセス <I>pid</I> が終了すると、 <FONT SIZE="-1">GDB</FONT>
+が接続を閉じ、 <TT>&quot;gdbserver&quot;</TT> は終了します。
+<DT>&bull;<DD>
+マルチプロセスモード --- 複数のプログラム/プロセスのデバッグ：
+
+
+<P>
+
+
+
+
+<PRE>
+ gdbserver --multi &lt;comm&gt;
+
+</PRE>
+
+
+
+
+<P>
+
+
+このモードにおいては、 <FONT SIZE="-1">GDB</FONT> が <B>gdbserver</B> に対して実行コマンドを指示します。 上のそれまでの 2
+つのモードとは違って、 デバッグされていたプロセスが終了しても、 <FONT SIZE="-1">GDB</FONT> は接続を閉じません。 したがって同一セッション内において、
+複数のプロセスをデバッグすることができます。
+</DL>
+<P>
+
+いずれのモードにおいても、 以下のオプションが指定できます。
+<DL COMPACT>
+<DT><B>--help</B><DD>
+
+
+短い説明つきで、 すべてのオプションを表示します。
+<DT><B>--version</B><DD>
+
+
+このオプションにより <B>gdbserver</B> はバージョン番号を表示して終了します。
+<DT><B>--attach</B><DD>
+
+
+<B>gdbserver</B> は実行中プログラムにアタッチします。 その文法は以下のとおりです。
+
+
+<P>
+
+
+
+
+<PRE>
+ target&gt; gdbserver --attach &lt;comm&gt; &lt;pid&gt;
+
+</PRE>
+
+
+
+
+<P>
+
+
+<I>pid</I> は現在実行中のプロセスのプロセス <FONT SIZE="-1">ID</FONT> です。 <B>gdbserver</B>
+に実行中のプロセスのバイナリを指定する必要はありません。
+<DT><B>--multi</B><DD>
+
+
+初期起動するコマンド、 あるいはアタッチするプロセス <FONT SIZE="-1">ID</FONT> を指定せずに <TT>&quot;gdbserver&quot;</TT> を起動するには、
+このコマンドラインオプションを用います。 そして <TT>&quot;target extended-remote&quot;</TT> を利用して、
+デバッグしたいプログラムを起動します。 その文法は以下のとおりです。
+
+
+<P>
+
+
+
+
+<PRE>
+ target&gt; gdbserver --multi &lt;comm&gt;
+
+</PRE>
+
+
+<DT><B>--debug</B><DD>
+
+
+<TT>&quot;gdbserver&quot;</TT> に対して、 デバッグ処理における追加ステータス情報を表示するように指示します。 このオプションは
+<TT>&quot;gdbserver&quot;</TT> 開発向けとして、 開発およびバグ報告に用いることを意図しています。
+<DT><B>--remote-debug</B><DD>
+
+
+<TT>&quot;gdbserver&quot;</TT> に対して、 リモートプロトコルによるデバッグ出力を行うことを指示します。 このオプションは
+<TT>&quot;gdbserver&quot;</TT> 開発向けとして、 開発およびバグ報告に用いることを意図しています。
+<DT><B>--debug-file=</B><I>filename</I><DD>
+
+
+<TT>&quot;gdbserver&quot;</TT> に対して、デバッグ出力を指定した <I>filename</I> に書き出すことを指示します。 このオプションは
+<TT>&quot;gdbserver&quot;</TT> 開発向けとして、 開発およびバグ報告に用いることを意図しています。
+<DT><B>--debug-format=option1</B>[<B>,option2,...</B>]<DD>
+
+
+<TT>&quot;gdbserver&quot;</TT> に対して、 デバッグ出力の各行に追加情報を含めることを指示します。
+<DT><B>--wrapper</B><DD>
+
+
+デバッグを行うために起動するプログラムのラッパーを指定します。 このオプションに続けて、 ラッパー名を指定することが必要です。
+ラッパーに受け渡すコマンドライン引数があれば、続けて記述します。 <TT>&quot;--&quot;</TT> を記述して、
+ラッパーへの引数の終わりを指示します。
+<DT><B>--once</B><DD>
+
+
+デフォルトで <B>gdbserver</B> は <FONT SIZE="-1">TCP</FONT> ポートを開いたまま、 待ち続けます。 したがって追加で接続することが可能です。 ただし
+<TT>&quot;gdbserver&quot;</TT> に <B>--once</B> オプションをつけて実行すると、 最初の <FONT SIZE="-1">GDB</FONT>
+セッションの接続を終えたら、 ポートの待ち受けを停止して、 それ以上の接続は行いません。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<FONT SIZE="-1">GDB</FONT> の完全なドキュメントは Texinfo マニュアルとしてメンテナンスされています。<TT>&quot;info&quot;</TT> と
+<TT>&quot;gdb&quot;</TT> の両プログラム、および <FONT SIZE="-1">GDB</FONT> の Texinfo
+ドキュメントが適切にインストールされていれば、以下のコマンド
+<P>
+
+
+
+<PRE>
+ info gdb
+
+</PRE>
+
+
+<P>
+
+を実行して完全なマニュアルを参照できます。
+<P>
+
+<I>Using </I><FONT SIZE="-1"><I>GDB: A</I></FONT><I> Guide to the </I><FONT SIZE="-1"><I>GNU</I></FONT><I> Source-Level Debugger</I>,
+Richard M. Stallman and Roland H. Pesch, July 1991.
+<A NAME="lbAG">&nbsp;</A>
+<H2>著作権</H2>
+
+
+
+Copyright (c) 1988-2022 Free Software Foundation, Inc.
+<P>
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the <FONT SIZE="-1">GNU</FONT> Free Documentation License, Version 1.3 or any
+later version published by the Free Software Foundation; with the Invariant
+Sections being ``Free Software'' and ``Free Software Needs Free
+Documentation'', with the Front-Cover Texts being ``A <FONT SIZE="-1">GNU</FONT>
+Manual,'' and with the Back-Cover Texts as in (a) below.
+<P>
+
+(a) <FONT SIZE="-1">FSF</FONT> の裏表紙には、 以下の文章が記述されています: ``You are free to copy and modify
+this <FONT SIZE="-1">GNU</FONT> Manual.  Buying copies from <FONT SIZE="-1">GNU</FONT> Press supports the
+<FONT SIZE="-1">FSF</FONT> in developing <FONT SIZE="-1">GNU</FONT> and promoting software freedom.''
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">著作権</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:24 GMT, December 05, 2022
+</BODY>
+</HTML>

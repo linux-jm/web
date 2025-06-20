@@ -1,0 +1,153 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETRPCENT_R</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETRPCENT_R</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getrpcent_r.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getrpcent_r, getrpcbyname_r, getrpcbynumber_r - RPC エントリーを
+取得する (リエントラント版)
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</B>
+
+<B>int getrpcent_r(struct rpcent *</B><I>result_buf</I><B>, char *</B><I>buf</I><B>,</B>
+<B>                size_t </B><I>buflen</I><B>, struct rpcent **</B><I>result</I><B>);</B>
+
+<B>int getrpcbyname_r(const char *</B><I>name</I><B>,</B>
+<B>                struct rpcent *</B><I>result_buf</I><B>, char *</B><I>buf</I><B>,</B>
+<B>                size_t </B><I>buflen</I><B>, struct rpcent **</B><I>result</I><B>);</B>
+
+<B>int getrpcbynumber_r(int </B><I>number</I><B>,</B>
+<B>                struct rpcent *</B><I>result_buf</I><B>, char *</B><I>buf</I><B>,</B>
+<B>                size_t </B><I>buflen</I><B>, struct rpcent **</B><I>result</I><B>);</B>
+
+</PRE>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7) 参照):
+
+
+<P>
+
+<B>getrpcent_r</B>(),
+<B>getrpcbyname_r</B>(),
+<B>getrpcbynumber_r</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以降:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以前:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+関数 <B>getrpcent_r</B>(), <B>getrpcbyname_r</B>(), <B>getrpcbynumber_r</B>() は、
+それぞれ <B><A HREF="../man3/getrpcent.3.html">getrpcent</A></B>(3), <B><A HREF="../man3/getrpcbyname.3.html">getrpcbyname</A></B>(3), <B><A HREF="../man3/getrpcbynumber.3.html">getrpcbynumber</A></B>(3) の
+リエントラント版である。
+<I>rpcent</I> 構造体の返し方と、関数呼び出し時の引数と返り値が異なる。
+このマニュアルページでは、リエントラントでない関数との違いだけを
+説明する。
+<P>
+
+これらの関数は、関数の結果として静的に割り当てられた <I>rpcent</I> 構造体
+へのポインターを返すのではなく、 <I>rpcent</I> 構造体を <I>result_buf</I> が
+指す場所にコピーする。
+<P>
+
+
+
+配列 <I>buf</I> は、返される <I>rpcent</I> 構造体が指す文字列フィールドを
+格納するのに使用される (リエントラントでない関数の場合は、
+これらの文字列は静的な領域に格納される)。
+この配列の大きさは <I>buflen</I> で指定される。
+<I>buf</I> が小さすぎる場合、関数呼び出しはエラー <B>ERANGE</B> で失敗し、
+呼び出し側ではもっと大きなバッファーで再度呼び出す必要がある (ほとんどの
+アプリケーションでは、長さ 1024 バイトのバッファーで十分なはずである)。
+<P>
+
+関数呼び出しで RPC レコードの取得に成功すると、
+<I>*result</I> は <I>result_buf</I> を指すように設定される。
+それ以外の場合は <I>*result</I> に NULL が設定される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、これらの関数は 0 を返す。エラーの場合、「エラー」の節の
+リストにある正のエラー番号のいずれかを返す。
+<P>
+
+エラーの場合、レコードが見つからなかった場合 (<B>getrpcbyname_r</B>(),
+<B>getrpcbyaddr_r</B>()) やこれ以上レコードがない場合 (<B>getrpcent_r</B>())、
+<I>result</I> には NULL が設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>ENOENT</B><DD>
+(<B>getrpcent_r</B>())  データベースにこれ以上レコードがない。
+<DT><B>ERANGE</B><DD>
+<I>buf</I> が小さすぎる。もっと大きなバッファーにして
+(または <I>buflen</I> を増やして) 再度呼び出すこと。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getrpcent_r</B>(),
+<B>getrpcbyname_r</B>(),
+<B>getrpcbynumber_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+これらの関数は GNU による拡張である。
+他のシステムにも同様の名前の関数が存在する場合があるが、
+通常は関数の引数が異なる。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/getrpcent.3.html">getrpcent</A></B>(3), <B><A HREF="../man5/rpc.5.html">rpc</A></B>(5)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

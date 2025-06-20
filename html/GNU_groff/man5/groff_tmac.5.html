@@ -1,0 +1,890 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GROFF_TMAC</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>GROFF_TMAC</H1>
+Section: File Formats (5)<BR>Updated: 6 August 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_groff/contrib/man5/groff_tmac.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+groff_tmac - roff 清書システム内にあるマクロファイル
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>解説</H2>
+
+
+<B><A HREF="../man7/roff.7.html">roff</A></B>(7)
+
+清書システムは、特殊な用途のドキュメントに適した
+マクロパッケージを提供しています。それぞれのマクロパッケージは、
+そのパッケージの
+<B>tmac ファイル</B>
+
+と呼ばれるファイル中にマクロおよび定義を格納しています。
+tmac という名前は、
+`<B>T</B>roff
+
+<B>MAC</B>ros'
+
+を縮めたものです。
+<P>
+
+tmac ファイルは、普通の roff ソースドキュメントです。ただし、
+通常このファイルには定義および設定コマンドしか含まれておらず、
+テキストは入っていません。tmac ファイルはすべて
+<B>tmac</B>
+
+ディレクトリという 1 つあるいは少数のディレクトリ内に
+保管されています。
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>名称付け</H2>
+
+
+古くからある roff システムには、奇妙な名称付けの体系が
+ありました。
+マクロパッケージの名称が
+
+
+
+
+m
+
+
+
+で始まっている場合には、この文字は省略されました。例えば、
+マニュアルページ用のマクロパッケージ
+<I>man</I>
+
+は
+<I>an</I>
+
+と呼ばれ、そのパッケージのマクロファイルは
+<I>tmac.an</I>
+
+と呼ばれました
+(現在のバージョンの groff では、このファイルは代りに
+<I>an.tmac</I>
+
+と呼ばれることに注意してください)。
+<P>
+
+似たような理由で、名称が
+
+
+
+
+m
+
+
+
+で始まらないマクロパッケージは、
+
+
+
+
+m
+
+
+
+をつけて表されることがよくありました。例えば、
+<I>tmac.doc</I>
+
+に対応するパッケージは、
+<I>mdoc</I>
+
+と呼ばれました。なぜなら、このパッケージをアクティブに
+するためのコマンドラインは、次のように表されるからです。
+<DL COMPACT><DT><DD>
+<P>
+
+
+
+
+
+
+
+
+troff&nbsp;-m doc
+
+
+
+
+
+
+
+</DL>
+
+<P>
+
+現在の
+<B><A HREF="../man1/groff.1.html">groff</A>(1)</B>
+
+のバージョンでは、パッケージ名に
+
+
+
+
+m
+
+
+
+が付こうが付くまいが、この悩ましいマクロパッケージの名称付け体系を
+どちらも提供しています。ですので、
+<I>groff</I>
+
+では、
+<I>man</I>
+
+マクロパッケージは、次のいずれでも指定可能です。
+<DL COMPACT><DT><DD>
+<P>
+
+
+
+
+
+
+
+
+groff&nbsp;-m&nbsp; man
+
+
+
+
+
+
+
+<BR>
+
+
+
+
+
+
+
+
+groff&nbsp;-m an
+
+
+
+
+
+
+
+<BR>
+
+
+
+
+
+
+
+
+groff&nbsp;-m man
+
+
+
+
+
+
+
+<BR>
+
+
+
+
+
+
+
+
+groff&nbsp;-m  an
+
+
+
+
+
+
+
+</DL>
+
+<P>
+
+システムでどのマクロパッケージが利用可能であるかを判別するのに
+最も簡単な方法は、
+<I>tmac</I>
+
+ディレクトリ群の中身を調べることです。
+例えば、
+<B>tmac.</B><I>anything</I>
+
+または
+<I>anything</I><B>.tmac</B>
+
+と呼ばれるファイルは、
+<I>anything</I>
+
+という名前のマクロパッケージを決定しています。
+<P>
+
+<I>groff</I>
+
+では、マクロパッケージの大部分は、
+古くからあるパッケージに対して
+
+
+
+
+m
+
+
+
+を先頭に付けた
+<B>groff_&lt;name&gt;</B>(7)
+
+という名前のマニュアルページで説明がされています。
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>取り込み</H2>
+
+
+ドキュメント中でマクロパッケージを使うための方法はいくつかあります。
+実行時に、groff のオプション
+
+
+
+-m &nbsp;
+
+
+
+
+
+
+
+name
+
+
+
+を用いてマクロファイル
+<I>name</I><B>.tmac</B>
+
+内の定義を
+<B>名称付け</B>
+
+のセクションで述べたように利用可能にします。
+このファイルが見付からない場合、
+<B>tmac.</B><I>name</I>
+
+が探されます。
+<P>
+
+groff リクエスト
+
+
+
+
+.so
+
+
+
+あるいは
+
+
+
+
+.mso
+
+
+
+を用いてマクロファイルをドキュメントに取り込むことも可能です。
+
+
+
+
+.so
+
+
+
+については、マクロファイルのフルパスでのファイル名を指定しなくては
+いけません --- そのマクロファイルが保存されているディレクトリを
+含む必要があります。
+マクロファイルが tmac ディレクトリ群のどれか 1 つに格納されている場合、
+代わりに
+
+
+
+
+.mso
+
+
+
+を使用するほうが便利です。なぜなら、このリクエストは tmac パスを
+探索してファイル名を見つけるからです。
+更に、インクルードされるファイルの名前が
+<I>name</I><B>.tmac</B>
+
+という書式の場合でこれが見付からない場合、
+
+
+
+
+.mso
+
+
+
+は代りに
+<B>tmac.</B><I>name</I>
+
+をオープンしようとします。また、この逆も行います。
+<P>
+
+
+
+
+
+.so
+
+
+
+および
+
+
+
+
+.mso
+
+
+
+リクエストを解決するために、roff プリプロセッサ
+
+が呼ばれなくてはならないことに注意してください。
+ただし、インクルードされるファイルが前処理が必要な場合に限ります。
+これは、コマンドライン上でパイプラインから直接呼ぶか、または
+
+の
+
+
+
+
+-s
+
+
+
+オプションを使うかすればできます。
+<P>
+
+<B>約束事</B>
+
+のセクションで述べているように、
+プリプロセッサワード中に文字
+
+
+
+
+s
+
+
+
+を入れても良いです。
+<P>
+
+例えば、マクロファイルが
+<I>/usr/share/tmac/macros.tmac</I>
+
+に保存されており、
+<I>docu.roff</I>
+
+という名前のドキュメントで使用されているとします。
+<P>
+
+実行時において、このドキュメントに対するフォーマッタ呼び出しは
+次のように行います。
+<DL COMPACT><DT><DD>
+<P>
+
+
+
+
+
+
+
+macros
+
+
+
+
+
+
+
+docu.roff
+
+
+
+
+</DL>
+
+<P>
+
+ドキュメント内に直接マクロファイルを取り込むには、
+<DL COMPACT><DT><DD>
+
+.mso macros.tmac
+
+</DL>
+
+あるいは
+<DL COMPACT><DT><DD>
+
+.so /usr/share/tmac/macros.tmac
+
+</DL>
+
+を使用します。
+<P>
+
+どちらの場合でも、フォーマッタは
+
+<DL COMPACT><DT><DD>
+groff&nbsp;-s docu.roff
+</DL>
+
+
+を使用して呼び出されます。
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>約束事</H2>
+
+
+<P>
+
+最近の roff 清書システムの多くでサポートされている約束事があります。
+次に述べられているような
+<B>プリプロセッサワード</B>
+
+がそれです。
+<P>
+
+ドキュメントの 1 行目がコメントである場合、
+最初の単語 (コメント文字および空白の後) は
+<B>プリプロセッサ</B>
+
+<B>ワード</B>
+
+で構成されます。
+これはつまり、このワードの文字が、ドキュメントを整形する際に
+起動しなくてはならないプリプロセッサコマンドの省略形であると
+解釈されるということです。
+ほとんどの場合、プリプロセッサのオプションに対応した文字だけが
+認識されます。それは、
+
+
+
+
+e ,
+
+
+
+
+
+
+
+G ,
+
+
+
+
+
+
+
+g ,
+
+
+
+
+
+
+
+p ,
+
+
+
+
+
+
+
+R ,
+
+
+
+
+
+
+
+s ,
+
+
+
+
+
+
+
+t
+
+
+
+です
+(
+<B><A HREF="../man7/roff.7.html">roff</A></B>(7)
+
+を参照)。
+<P>
+
+さらに、ユーザへの良き忘備録として書いておきますが、
+フォーマッタによっては (
+<B><A HREF="../../0MultiFileIdx/man1/man.1.html">man</A></B>(1)
+
+プログラムのように) プリプロセッサワードで指定されたプリプロセッサを
+自動的に起動させることまでもできるものがあります。ただし、このことを
+あてにしてはいけません。
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>マクロファイルを記述する</H2>
+
+
+マクロファイルを記述するのは簡単です。マクロ、文字列、レジスタなどの
+セットを設計してください。そしてそれを 1 つのファイルに
+保存してください。
+記述したマクロを使用するドキュメントは、
+<B>取り込み</B>
+
+セクションで述べたように
+
+
+
+
+.so
+
+
+
+リクエストを使ってマクロを取り込みます。
+<P>
+
+tmac の機能を使用するには、マクロファイル
+<I>whatever</I><B>.tmac</B>
+
+(または
+<B>tmac.</B><I>whatever</I>) を呼び出し、tmac パスのどれかのディレクトリにファイルを置きます。
+<B>関連ファイル</B>
+
+セクションを参照してください。
+そうすると、ドキュメントは
+<B>取り込み</B>
+
+セクションで述べたように
+
+
+
+
+.mso
+
+
+
+リクエストあるいは
+
+オプションを使ってマクロファイルを取り込むことができます。
+<P>
+
+もしあなたが書いたマクロが一般用途に使えるかもしれないものなら、
+groff メンテナに連絡を取って、そのマクロが groff の
+<I>contrib</I>
+
+ソースディレクトリに含まれるようにしてください。
+<P>
+
+マクロを書く際には、いくつか一般的なガイドラインがあれば役に立つ
+でしょう。
+<DL COMPACT>
+<DT>&bull;<DD>
+機能のあるバックスラッシュはすべて 2 重にします。
+
+
+
+
+\
+
+
+
+-&gt;
+
+
+
+
+\\
+
+
+
+<DT>&bull;<DD>
+印字可能なバックスラッシュはすべて
+
+
+
+
+\e
+
+
+
+というように書かなくてはなりません。
+<DT>&bull;<DD>
+ドットはすべてエスケープしてください。
+
+
+
+
+.
+
+
+
+-&gt;
+
+
+
+
+\.
+
+
+
+<DT>&bull;<DD>
+テキスト部分には、印字できない文字
+
+
+
+
+\&amp;
+
+
+
+を広く使用するようにしてください。特に、
+
+
+
+
+\
+
+
+
+の前や行頭で使用してください。ただし、遅延コマンドの前では
+使用しないでください。
+<DT>&bull;<DD>
+文字
+
+
+
+
+@
+
+
+
+を一時的な変数名に使用してください。
+<DT>&bull;<DD>
+あなたが書いたマクロをテキストおよびグラフィックデバイスに対して
+テストしてください。例えば、
+<I>latin1</I>
+
+と
+<I>ps</I>
+
+がそうです。
+
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+
+tmac メカニズムを使用したいマクロ名はすべて、
+<I>name</I><B>.tmac</B>
+
+または
+<B>tmac.</B><I>name</I>
+
+の書式に従って名付けられなければなりません。
+<P>
+
+マクロファイルは、
+<B>tmac</B>
+
+<B>ディレクトリ群</B>
+
+に保存されています。このディレクトリ群すべてが
+<B>tmac</B>
+
+<B>パス</B>
+
+を構成しています。
+<P>
+
+マクロファイルを検索するパスの要素は (順番に) 次の通りです:
+<DL COMPACT>
+<DT>&bull;<DD>
+troff に対応する groff の
+<B>-M</B>
+
+コマンドラインオプションで指定されるディレクトリ
+command line option
+<DT>&bull;<DD>
+<B>GROFF_TMAC_PATH</B>
+
+環境変数で与えられるディレクトリ
+<DT>&bull;<DD>
+現在のディレクトリ (
+<B>-U</B>
+
+コマンドラインスイッチを使用して、安全ではないモードである場合のみ)
+<DT>&bull;<DD>
+ホームディレクトリ
+<DT>&bull;<DD>
+サイト固有の (プラットフォーム非依存の) ディレクトリ、
+プラットフォーム固有ディレクトリ、
+そしてメイン tmac ディレクトリ:
+<DT><DD>
+/usr/share/tmac
+<BR>
+
+/usr/share/tmac
+<BR>
+
+/usr/share/tmac
+
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>環境変数</H2>
+
+
+<DL COMPACT>
+<DT><B>GROFF_TMAC_PATH</B>
+
+<DD>
+コロン区切りの追加の tmac ディレクトリリストであり、
+このリストからマクロファイルを探します。
+詳細については、前の節を参照してください。
+
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+
+groff ドキュメントは、現在発展中です。一時的に他のドキュメントとの間で
+小さな食い違いができてしまう可能性があります。
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>作者</H2>
+
+
+このドキュメントは groff、すなわち GNU roff 配布物の一部です。
+このドキュメントは Bernd Warken &lt;<A HREF="mailto:bwarken@mayn.de">bwarken@mayn.de</A>&gt; が書きました。
+<P>
+
+このドキュメントは FDL (GNU Free Documentation License) バージョン
+1.1 以降の条項のもとで配布されています。お使いのシステムには
+FDL のコピーがあるはずです。また、
+<DL COMPACT><DT><DD>
+<P>
+
+<I>&lt;<A HREF="http://www.gnu.org/copyleft/fdl.html">http://www.gnu.org/copyleft/fdl.html</A>&gt;</I>
+
+</DL>
+
+からオンラインでも入手可能です。
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+groff システムの詳細すべてについて信頼できる情報源は、groff の
+<B><A HREF="../../GNU_texinfo/man1/info.1.html">info</A></B>(1)
+
+ファイルです。
+<P>
+
+groff の概要については、
+<B><A HREF="../man7/roff.7.html">roff</A></B>(7)
+
+および groff ソースパッケージ中の
+<I>README</I>
+
+ファイルを参照してください。
+<P>
+
+groff tmac マクロパッケージは、
+<B><A HREF="../man7/groff_man.7.html">groff_man</A></B>(7),
+
+<B><A HREF="../man7/groff_mwww.7.html">groff_mwww</A></B>(7),
+
+<B><A HREF="../man7/groff_mdoc.7.html">groff_mdoc</A></B>(7),
+
+<B>groff_mdoc.samples</B>(7),
+
+<B><A HREF="../man7/groff_me.7.html">groff_me</A></B>(7),
+
+<B><A HREF="../man7/groff_mm.7.html">groff_mm</A></B>(7),
+
+<B>groff_mmroff</B>(7),
+
+<B><A HREF="../man7/groff_ms.7.html">groff_ms</A></B>(7)
+
+です。
+<P>
+
+groff の言語については
+<B><A HREF="../man7/groff.7.html">groff</A></B>(7)
+
+で、フォーマッタについては
+<B><A HREF="../man1/groff.1.html">groff</A></B>(1),
+
+<B><A HREF="../man1/troff.1.html">troff</A></B>(1)
+
+で説明されています。
+<P>
+
+ファイルシステム階層標準 (FHS) は
+<B><A HREF="http://www.pathname.com/fhs/">http://www.pathname.com/fhs/</A></B>
+
+で入手可能です。
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">解説</A><DD>
+<DT><A HREF="#lbAD">名称付け</A><DD>
+<DT><A HREF="#lbAE">取り込み</A><DD>
+<DT><A HREF="#lbAF">約束事</A><DD>
+<DT><A HREF="#lbAG">マクロファイルを記述する</A><DD>
+<DT><A HREF="#lbAH">関連ファイル</A><DD>
+<DT><A HREF="#lbAI">環境変数</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">作者</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:24 GMT, December 05, 2022
+</BODY>
+</HTML>

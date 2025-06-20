@@ -1,0 +1,389 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LN</H1>
+Section: User Commands  (1)<BR>Updated: 18 June 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/gnumaniak/release/man1/ln.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ln - ファイルへのリンクを作成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>ln [options]</B>
+
+<I>source</I><B> [</B><I>dest</I><B>]</B>
+
+<BR>
+
+<B>ln [options]</B>
+
+<I>source... directory</I>
+
+<P>
+POSIX オプション:
+<B>[-f]</B>
+
+<P>
+GNU オプション (簡略形式):
+<B>[-bdfinsvF]</B>
+
+<B>[-S </B><I>backup-suffix</I><B>]</B>
+
+<B>[-V {numbered,existing,simple}]</B>
+
+<B>[--target-directory=</B><I>dir</I><B>]</B>
+
+<B>[--help] [--version] [--]</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>ln</B>
+
+コマンドはファイルへのリンクを作成する。特に指定がないとハードリンクを作成する;
+<B>-s</B>
+
+オプションを指定するとシンボリック (もしくはソフト) リンクを作成する。
+<P>
+
+Unix には通常ハードリンクとソフトリンクと呼ばれる、
+2 つの「リンク」の概念がある。
+ハードリンクは単にファイルの名前である。
+(ファイルは複数の名前を持つことができる。
+その最後の名前が削除された場合にのみディスク上から実体が消去される。
+ファイルが持つ名前の数は
+<B><A HREF="../man1/ls.1.html">ls</A></B>(1)
+
+コマンドで知ることができる。
+「もともと」の名前というものは無い: 
+すべての名前は同じステータスを持っている。
+通常、必須では無いが、ファイルの名前はすべてそのファイルシステム内にあり、
+それ自身のデータもそこに持っている。
+<P>
+
+ソフトリンク (もしくはシンボリックリンク、または symlink) というのは
+まったく違った種類のものである:
+実体はパス名を含んだ小さくて特殊なファイルである。
+従って、ソフトリンクは異なるファイルシステム上
+(たぶん他のマシンからマウントされた NFS) のファイルを指すことができる。
+また実際には存在しないファイルを指していても構わない。
+(<B><A HREF="../../LDP_man-pages/man2/open.2.html">open</A></B>(2)
+
+または
+<B><A HREF="../../LDP_man-pages/man2/stat.2.html">stat</A></B>(2)
+
+といったシステムコールにより) アクセスされた場合、
+シンボリックリンクへの参照は、オペレーティングシステムのカーネルにより
+そのパス名で指示されるファイルへの参照として置き換えられる。
+(しかし、
+<B><A HREF="../man1/rm.1.html">rm</A></B>(1)
+
+コマンドや
+<B><A HREF="../../LDP_man-pages/man2/unlink.2.html">unlink</A></B>(2)
+
+関数ではリンク自身が削除され、リンクが指しているファイルは削除されない。
+<B><A HREF="../../LDP_man-pages/man2/lstat.2.html">lstat</A></B>(2)
+
+や
+<B><A HREF="../../LDP_man-pages/man2/readlink.2.html">readlink</A></B>(2)
+
+関数といったシンボリックリンクや、リンクが指しているファイル名のステータスを
+得る特殊なシステムコールがある。
+その他の色々なシステムコールでは、その操作の対象がシンボリックリンク
+そのものなのか、それが指しているファイルなのかといったことについて、
+オペレーティングシステム間で不明瞭さや違いがある。)
+<P>
+
+<B>&bull;</B>&nbsp;1 つのファイルのみ与えられた場合、
+そのファイルをカレントディレクトリにリンクする。
+つまり、(一番最後におかれた)
+ファイル名と同じ名前でファイルへのリンクをカレントディレクトリに作る。
+(これは GNU での拡張機能である)
+<P>
+
+<B>&bull;</B>&nbsp;最後の引き数がすでに存在するディレクトリであった場合、
+<B>ln</B>
+
+コマンドはそのディレクトリ内に
+<I>source</I>
+
+ファイルで指示されたそれぞれに対するリンクを作る。
+その名前は (一番最後におかれた)
+<I>source</I>
+
+ファイルの名前と同じ名前を持つ。
+(以下の
+<B>--no-dereference</B>
+
+オプションの説明を参照)
+<P>
+
+<B>&bull;</B>&nbsp;引き数にファイルが2つ指定された場合、
+<I>source</I>
+
+を指す
+<I>dest</I>
+
+という名前のリンクが作成される。
+最後の引き数がディレクトリでは無いのに、2 つ以上のファイルが指定された
+場合はエラーとなる。
+<P>
+
+特に指定がないと、
+<B>ln</B>
+
+コマンドは存在しているファイルや、シンボリックリンクの削除はできない。
+(そのため、ロックの目的で使うことができる:
+<I>dest</I>
+
+が存在しない場合のみ正常終了する)
+-f オプションを指定することで強制的に削除することができる。
+<P>
+
+今ある実装では、ディレクトリへのハードリンクの作成ができる場合でも、
+スーパーユーザーにのみ許される操作としている。
+<B><A HREF="../../LDP_man-pages/man2/link.2.html">link</A></B>(2)
+
+システムコールや
+<B>ln</B>
+
+コマンドでのディレクトリへのハードリンクの作成を POSIX では禁止している。
+(しかし異種のファイルシステムをまたがったハードリンクは禁止していない。)
+<A NAME="lbAE">&nbsp;</A>
+<H2>POSIX オプション</H2>
+
+<DL COMPACT>
+<DT><B>-f</B>
+
+<DD>
+指定したリンクファイルがすでにあった場合は削除する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>GNU オプション</H2>
+
+<DL COMPACT>
+<DT><B>-d, -F, --directory</B>
+
+<DD>
+スーパーユーザーがディレクトリへのハードリンクを作成するのを許す。
+<DT><B>-f, --force</B>
+
+<DD>
+指定したリンクファイルがすでにあった場合は削除する。
+<DT><B>-i, --interactive</B>
+
+<DD>
+指定したリンクファイルがすでにあった場合は、削除するかどうか問い合わせを行う。
+<DT><B>-n, --no-dereference</B>
+
+<DD>
+明示的にディレクトリにシンボリックリンクしているリンクファイル
+が指定された場合、それを普通のファイルと同じように扱う。
+<BR>
+
+リンク先が実際のディレクトリ (どこかへのシンボリックリンクではない) の場合、
+そのディレクトリ内にリンクが作成される。
+しかしディレクトリへのシンボリックリンクがリンクファイルとして指定された場合、
+2 つの可能性がある。
+<B>ln</B>
+
+コマンドは指定されたリンクファイルを通常のディレクトリのように扱い、
+その中にリンクを作成することができる。
+もう 1 つは、リンクファイルが非ディレクトリ - 
+シンボリックリンクそのものであるとして扱うことができる。
+その場合には、
+<B>ln</B>
+
+コマンドは新しいリンクを作成する前にシンボリックリンクを削除、
+またはバックアップする必要がある。
+デフォルトでは、ディレクトリへのシンボリックリンクが指定された場合には、
+ディレクトリと同じように扱う。
+<DT><B>-s, --symbolic</B>
+
+<DD>
+ハードリンクの代わりにシンボリックリンクを作成する。
+シンボリックリンクをサポートしないシステムでは、
+このオプションを指定すると単にエラーメッセージを出力する。
+<DT><B>--target-directory=</B><I>DIR</I>
+
+<DD>
+コマンドラインの最後の引き数として指定する代わりに、
+このオプションでリンク先ディレクトリを指定する。
+<B><A HREF="../../GNU_findutils/man1/xargs.1.html">xargs</A>(1)</B> と一緒に使う場合に便利である。
+<DT><B>-v, --verbose</B>
+
+<DD>
+リンクを作成する前にそれぞれの名前を出力する。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>GNU バックアップオプション</H2>
+
+GNU 版のプログラム
+<B>cp</B>,
+
+<B>mv</B>,
+
+<B>ln</B>,
+
+<B>install,</B>
+
+<B>patch </B>
+
+は、指示すれば上書き、修正、削除といった場合に
+ファイルのバックアップを作成する。
+バックアップファイルを必要とする場合は -b オプションで指示する。
+どういう名前にするかは  --backup オプションで指定する。
+バックアップファイルの名前を、ファイル名の添字の拡張によって
+与えるようにしたい場合、この添字を -S オプションで指示する。
+<DL COMPACT>
+<DT><B>-b, --backup[=</B><I>METHOD</I><B>]</B>
+
+<DD>
+上書きもしくは削除の必要がある場合にはファイルのバックアップを作成する。
+<B>-b</B> は引き数をとらない点に注意すること。
+<DT><B>-S </B><I>SUFFIX</I><B>, --suffix=</B><I>SUFFIX</I>
+
+<DD>
+<I>SUFFIX</I>
+
+をバックアップファイルそれぞれに付け加える。
+このオプションが指定されていない場合、環境変数
+<B>SIMPLE_BACKUP_SUFFIX</B>
+
+に設定されている値が使われる。
+<B>SIMPLE_BACKUP_SUFFIX</B>
+
+が設定されていない場合、デフォルトは `~' である。
+<DT><B>-V </B><I>METHOD</I><B>, --version-control=</B><I>METHOD</I>
+
+<DD>
+このオプションは推奨されない。
+代わりに <B>--backup=</B><I>METHOD</I> を使うこと。
+<DL COMPACT><DT><DD>
+バックアップファイルの命名方法を指定する。
+<I>METHOD</I>
+
+引き数として `numbered' (または `t')、`existing' (または `nil')、
+`never' (または `simple') を指定できる。
+このオプションが指定されていない場合、環境変数
+<B>VERSION_CONTROL</B>
+
+の値が使われる。
+<B>VERSION_CONTROL</B>
+
+が設定されていない場合、デフォルトのバックアップタイプは `existing' である。
+<P>
+
+このオプションは Emacs 変数の `version-control' に対応している。
+有効な
+<I>METHOD</I>
+
+は (他と重複しない短縮形が使える):
+<DL COMPACT>
+<DT><B>t</B>, <B>numbered</B>
+
+<DD>
+常に番号の添字を持つバックアップが作られる。
+<DT><B>nil</B>, <B>existing</B>
+
+<DD>
+番号の添字を持つバックアップがすでにある場合には番号の添字を持つバックアップを、そうでない場合には単純なバックアップを作成する。
+<DT><B>never</B>, <B>simple</B>
+
+<DD>
+常に単純なバックアップが作られる。
+</DL>
+</DL>
+
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>GNU 標準オプション</H2>
+
+<DL COMPACT>
+<DT><B>--help</B>
+
+<DD>
+標準出力に使用方法のメッセージを出力して正常終了する。
+<DT><B>--version</B>
+
+<DD>
+標準出力にバージョン情報を出力して正常終了する。
+<DT><B>--</B>
+
+<DD>
+オプションリストを終了する。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>環境変数</H2>
+
+変数 LANG, LC_ALL, LC_CTYPE, LC_MESSAGES が通常の意味を持つ。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX 1003.2 に準拠する。
+しかし、POSIX 1003.2 (1996) ではソフトリンクについて触れていない。
+ソフトリンクは BSD により持ち込まれ、System V release 3
+(そしてそれ以前) のシステムでは無い。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/ls.1.html">ls</A></B>(1),
+
+<B><A HREF="../man1/rm.1.html">rm</A></B>(1),
+
+<B><A HREF="../../LDP_man-pages/man2/link.2.html">link</A></B>(2),
+
+<B><A HREF="../../LDP_man-pages/man2/lstat.2.html">lstat</A></B>(2),
+
+<B><A HREF="../../LDP_man-pages/man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../../LDP_man-pages/man2/readlink.2.html">readlink</A></B>(2),
+
+<B><A HREF="../../LDP_man-pages/man2/stat.2.html">stat</A></B>(2),
+
+<B><A HREF="../../LDP_man-pages/man2/unlink.2.html">unlink</A></B>(2)
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>注意</H2>
+
+このページでは fileutils-4.1 パッケージでの
+<B>ln</B>
+
+コマンドについて説明している。
+その他のバージョンでは少し違いがあるかもしれない。
+修正や追加は <A HREF="mailto:aeb@cwi.nl">aeb@cwi.nl</A>, <A HREF="mailto:aw@mail1.bet1.puv.fi">aw@mail1.bet1.puv.fi</A>, <A HREF="mailto:ragnar@ragnar-hojland.com">ragnar@ragnar-hojland.com</A>
+宛てにメールで連絡してほしい。
+プログラムのバグについては <A HREF="mailto:bug-fileutils@gnu.org">bug-fileutils@gnu.org</A> へ報告してほしい。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">POSIX オプション</A><DD>
+<DT><A HREF="#lbAF">GNU オプション</A><DD>
+<DT><A HREF="#lbAG">GNU バックアップオプション</A><DD>
+<DT><A HREF="#lbAH">GNU 標準オプション</A><DD>
+<DT><A HREF="#lbAI">環境変数</A><DD>
+<DT><A HREF="#lbAJ">準拠</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">注意</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

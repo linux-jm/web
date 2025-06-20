@@ -1,0 +1,418 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of I82365</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>I82365</H1>
+Section: Devices and Network Interfaces (4)<BR>Updated: 2000/06/12 21:24:47<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/pcmcia-cs/release/man4/i82365.4">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+i82365 - Intel i82365sl PCMCIA コントローラのドライバ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>insmod i82365.o</B>
+
+[<B>pc_debug=</B><I>n</I>]
+
+[<B>i365_base=</B><I>n</I>]
+
+[<B>ignore=</B><I>n</I>]
+
+[<B>extra_sockets=</B><I>n</I>]
+
+[<B>do_scan=</B><I>n</I>]
+
+[<B>irq_list=</B><I>i,j,...</I>]
+
+[<B>cs_irq=</B><I>n</I>]
+
+[<B>poll_interval=</B><I>n</I>]
+
+[<B>cycle_time=</B><I>n</I>]
+
+[<B>do_pci_probe=</B><I>n</I>]
+
+[<B>cb_write_post=</B><I>n</I>]
+
+[<B>pci_csc=</B><I>n</I>]
+
+[<B>pci_int=</B><I>n</I>]
+
+[<B>pci_irq_list=</B><I>i,j,...</I>]
+
+[<B>has_dma=</B><I>n</I>]
+
+[<B>has_led=</B><I>n</I>]
+
+[<B>has_ring=</B><I>n</I>]
+
+[<B>freq_bypass=</B><I>n</I>]
+
+[<B>setup_time=</B><I>n</I>]
+
+[<B>cmd_time=</B><I>n</I>]
+
+[<B>recov_time=</B><I>n</I>]
+
+[<B>wakeup=</B><I>n</I>]
+
+[<B>fast_pci=</B><I>n</I>]
+
+[<B>async_clock=</B><I>n</I>]
+
+[<B>cable_mode=</B><I>n</I>]
+
+[<B>irq_mode=</B><I>n</I>]
+
+[<B>p2cclk=</B><I>n</I>]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これは Intel i82365sl PCMCIA ホストコントローラと、
+その多くの派生コントローラの低レベルドライバである。
+このドライバは CardBus ブリッジに対する Intel の &quot;Yenta&quot;
+レジスタ規格も実装している。 i82365sl のクローンとしては、
+Cirrus Logic, IBM, O2Micro, Omega Micro, Ricoh, SMC, Texas Instruments,
+Toshiba, Vadem, VLSI らによるコントローラが出まわっている。
+現在のほとんどすべての PCMCIA コントローラと、全ての CardBus ブリッジは、
+i82365sl とレジスタ互換である。このドライバはカードサービスから用いられ、
+ホストコントローラを設定したり、カードの状態変更イベントを監視したりする。
+<P>
+
+ISA の i82365 互換コントローラは、通常 I/O アドレス
+0x3e0-0x3e1 を利用し、 4 つのソケットすべてをサポートする。
+コントローラの 2 番のペアは 0x3e2-0x3e3 を利用する。
+この位置をプローブするかどうかは
+<B>extra_sockets</B> パラメータによって制御できる。
+これは ISA ブリッジにのみ影響する。 PCI ブリッジのプローブは
+複数のコントローラを自動的に取り扱う。
+このドライバは最大で 8 つのソケットまでをサポートする。
+<A NAME="lbAE">&nbsp;</A>
+<H2>CardBus 割り込みの受け渡し</H2>
+
+CardBus ブリッジは、基本的に PCI と ISA の両方の割り込みシグナルを
+サポートしており、割り込みイベントをホストシステムに受け渡す手法も
+複数存在する。ブート時にブリッジを正しく設定し、
+割り込みハードウェアの実装にマッチさせる作業の一部は、
+システム BIOS の役割である。
+このモジュールではいくつかのパラメータを用意しており、
+デフォルトの割り込み設定を上書きすることが可能になっている。
+<B>pci_int</B> と <B>pci_csc</B> を用いると、
+カードの割り込みやカードの状態変更に PCI 割り込みを使うかどうかを制御できる。
+<B>irq_mode</B> を使えば、ブリッジがサポートしていれば、
+割り込みの受け渡し方法を変更できる。
+<P>
+
+<B>i82365</B>
+
+モジュールがロードされると、フリーな ISA 割り込みをスキャンし、
+PCMCIA イベントに利用できる割り込みを決定する。
+割り込みスキャンの結果はシステムのログに報告される。
+スキャンが成功すると、割り込みのリストが &quot;scanned&quot; と報告され、
+利用できる割り込みがない場合には、 &quot;default&quot; のリストが報告される。
+ブリッジによってはソフトウェア割り込みのテストをサポートしておらず、
+常に &quot;default&quot; のリストを返すものもある (Cirrus の non-CardBus ブリッジや
+Toshiba のある種のブリッジなど)。
+他の場合は、 <B>irq_mode</B> が不正であることを示しているのかもしれない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>パラメータ</H2>
+
+<DL COMPACT>
+<DT><B>pc_debug=</B><I>n</I>
+
+<DD>
+PCMCIA のデバッグレベルを選択する。
+このパラメータは、モジュールがデバッグを有効にしてコンパイルした場合にのみ
+利用できる。 0 以外の値を指定するとデバッグモードが有効になる。
+<DT><B>i365_base=</B><I>n</I>
+
+<DD>
+i82365sl チップのベース I/O ポートを指定する。
+デフォルトは 0x3e0 である。
+ISA-to-PCMCIA ブリッジにのみ適用される。
+<DT><B>ignore=</B><I>n</I>
+
+<DD>
+指定した一つのソケットをドライバに無視させる。
+ソケットは 0 から番号付けされる。
+ソケットはドライバ起動前の状態に保たれるので、
+このオプションはカードサービスと共存できない
+ポイントイネーブラを持つカードに用いるとよいだろう。
+
+<DT><B>extra_sockets=</B><I>n</I>
+
+<DD>
+ドライバのプローブを 8 つの ISA ソケットに対して行わせるか、
+4 つのソケットに対して行ったところで終了させるかを示すフラグ。
+デフォルトは 0 (4 つのソケットで終了)。
+2 つの独立な ISA-to-PCMCIA コントローラを有するシステム
+(例えばひとつは内蔵で、
+もうひとつはドッキングステーションにある場合など) では、
+仮にソケットの合計が 4 だったとしても、
+このフラグをセットしておかなければならないかもしれない。
+このフラグをセットすると、
+<B>poll_interval</B>
+
+が自動的に有効になる。
+<DT><B>do_scan=</B><I>n</I>
+
+<DD>
+空いている全ての ISA 割り込みをテストして、
+PCMCIA コントローラからトリガできるか調べるかどうかを指定するフラグ。
+デフォルトは 1 (真)。
+<DT><B>irq_list=</B><I>i,j,...</I>
+
+<DD>
+他の条件が許す場合に、
+このドライバが割り当て可能な割り込み番号をセットで指定する。
+デフォルトのリストは 3, 4, 5, 7, 9, 10, 11, 12, 14, 15 である。
+<DT><B>cs_irq=</B><I>n</I>
+
+<DD>
+カードの状態変化のモニターに用いる割り込みラインを設定する。
+デフォルトは 0 で、未使用の「正当な」番号のうち、
+もっとも高位の番号を使う。
+正当な番号は 15, 14, 12, 11, 10, 9, 7, 5, 4, 3 である。
+<DT><B>poll_interval=</B><I>n</I>
+
+<DD>
+カード状態のポーリング遅延を 1/100 秒単位で設定する。
+このパラメータをセットすると、カード状態の割り込みは無効になる。
+100 程度の値が良いだろう。ポーリングは
+カードの挿抜イベントの検知にのみ関係する。
+<DT><B>cycle_time=</B><I>n</I>
+
+<DD>
+ホストバスのサイクル長をナノ秒単位で設定する。
+デフォルトは 210 ns で、クロック 4.77MHz に対応する。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CardBus コントローラのオプション</H2>
+
+<DL COMPACT>
+<DT><B>do_pci_probe=</B><I>n</I>
+
+<DD>
+PCI バスに対して PCI-to-PCMCIA ブリッジや PCI-to-CardBus ブリッジの
+プローブを行うかどうかを決めるフラグ。デフォルトは 1 (真)。
+<DT><B>cb_write_post=</B><I>n</I>
+
+<DD>
+(性能向上のための) 遅延書き込みを有効にするかどうかのフラグ。
+デフォルトは 1 (真) (ただし TI 1130 ブリッジの特定のものを除く)。
+<DT><B>pci_csc=</B><I>n</I>
+
+<DD>
+CardBus コントローラに対して、
+カードの状態変更割り込みが PCI 割り込みを生じさせるかどうかを指定するフラグ。
+デフォルトは 1 (真)。
+<DT><B>pci_int=</B><I>n</I>
+
+<DD>
+CardBus コントローラに対して、
+IO カードへの関数割り込みが PCI 割り込みを生じさせるかどうかを指定するフラグ。
+デフォルトは 1 (真) (ただし PCI 割り込みを必要とするシステムを除く)。
+
+<DT><B>pci_irq_list</B><I>=</I><B>i,j,...</B>
+
+<DD>
+Linux カーネルは、 CardBus ソケットに対する
+PCI 割り込みの割り当てを自動的に検知できないことがある。
+他の方法でこの情報が決定できない場合、
+ここで与えることもできる。 N 番目のソケットは、
+リストの N 番目の割り込み番号を取得する。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>Cirrus のコントローラに特有のオプション</H2>
+
+<B>i82365</B>
+
+ドライバは、ロードされるとまず、
+どの割り込みを
+PCMCIA デバイスに安全に割り当てできるかを決定しようとする。
+Cirrus のコントローラは他にも追加機能を持っていて、
+これらによって特定の割り込み線が利用できないことがある。
+また Cirrus のチップには、
+割り込みを使えるかどうかの検知に必要な機能がない。
+<B>has_dma</B>, <B>has_ring</B>, <B>has_led</B>
+
+オプションは、
+これらの機能が実装されているかどうかの指定に用いられる。
+<DL COMPACT>
+<DT><B>has_dma=</B><I>n</I>
+
+<DD>
+<DT><B>has_led=</B><I>n</I>
+
+<DD>
+コントローラがディスクステータス LED に接続されているかどうかを示すフラグ。
+デフォルトではセットされている。
+<DT><B>has_ring=</B><I>n</I>
+
+<DD>
+コントローラの「ビープ通知 (ring indicate)」シグナルが実装されているか
+同化を示すフラグ。デフォルトではセットされている。
+<DT><B>freq_bypass=</B><I>n</I>
+
+<DD>
+コントローラを &quot;frequency bypass&quot; モードに設定するかどうかを示すフラグ。
+これは高速なシステムクロックのシステムに対して
+通常の 7/4 クロック分周を無効にし、
+PCMCIA バスへのアクセスを減速する。
+<DT><B>setup_time=</B><I>n</I>
+
+<DD>
+バスのセットアップ時間を内部クロックサイクルの単位で設定する。
+デフォルトは 1。
+<DT><B>cmd_time=</B><I>n</I>
+
+<DD>
+バスのコマンド時間を内部クロックサイクルの単位で設定する。
+デフォルトは 6。
+<DT><B>recov_time=</B><I>n</I>
+
+<DD>
+バスの復帰時間を内部クロックサイクルの単位で設定する。
+デフォルトは 0。
+<DT><B>wakeup=</B><I>n</I>
+
+<DD>
+プローブ機能によって、サスペンド状態のコントローラチップを
+目覚めさせるかどうかを示すフラグ。デフォルトは 0。
+<DT><B>fast_pci=</B><I>n</I>
+
+<DD>
+PCI バススピードが 25 MHz を越えるかどうかを示す、
+PD6729 PCI コントローラのためのフラグ。
+<DT><B>irq_mode=</B><I>n</I>
+
+<DD>
+割り込み配送モードを指定する、
+PD6729 PCI コントローラのためのフラグ。
+デフォルトは ISA バスの割り込みを用いる。
+1 を指定すると PCI 割り込みを用いる。
+PCI カードリーダによっては、
+正しく動作させるためにこの指定が必要になることもある。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>Ricoh の CardBus コントローラに特有のオプション</H2>
+
+<DL COMPACT>
+<DT><B>irq_mode=</B><I>n</I>
+
+<DD>
+割り込みの配送方法を選ぶ。
+0 を指定すると PCI 割込みだけに配送される。
+1 を指定すると ISA 割り込みに配送され、
+2 を指定すると外部シリアルの割り込みコントローラ経由で配送される。
+デフォルトでは、既に有効になっている配送方法を用いる。
+
+<DT><B>setup_time=</B><I>n</I>
+
+<DD>
+バスのセットアップ時間を内部クロックサイクルの単位で設定する。
+デフォルトは 3。
+<DT><B>cmd_time=</B><I>n</I>
+
+<DD>
+バスのコマンド時間を内部クロックサイクルの単位で設定する。
+デフォルトは 6。
+<DT><B>hold_time=</B><I>n</I>
+
+<DD>
+バスの停止 (hold) 時間を内部クロックサイクルの単位で設定する。
+デフォルトは 1。
+
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>Vadem の ISA コントローラに特有のオプション</H2>
+
+<DL COMPACT>
+<DT><B>async_clock=</B><I>n</I>
+
+<DD>
+PCMCIA バスのサイクルを、ホストバスのサイクルと
+非同期的にするかどうかを指定する。
+いくつかの操作に wait 状態を追加することになる。
+
+<DT><B>cable_mode=</B><I>n</I>
+
+<DD>
+VG469 に対してこのフラグを指定すると、
+ケーブル経由で接続されたソケットの駆動に用いるソケットシグナルを調整する。
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>TI の CardBus コントローラに特有のオプション</H2>
+
+通常はシステムの BIOS がこれらのオプションを適切に設定するので、
+これらのオプションをデフォルトにすると、
+これらの機能はドライバが検知した状態の設定のままで用いられる。
+<DL COMPACT>
+<DT><B>has_ring=</B><I>n</I>
+
+<DD>
+コントローラが「ビープ通知 (ring indicate)」の接続を持っているかを示すフラグ。
+デフォルトでは現在の設定をコントローラから読み込む。
+<DT><B>irq_mode=</B><I>n</I>
+
+<DD>
+割り込みの配送方法を指定する。 0 を指定すると PCI 割り込みだけを用いる。
+1 を指定すると ISA 割り込みを用いて配送する。 2 を指定すると
+外部シリアルの割り込みコントローラを用いて ISA 割り込みに配送する。
+3 を指定すると PCI と ISA 割り込みの両方を用いてシリアルに配送する。
+
+デフォルトは、現在有効になっている配送方法があれば、それを用いる。
+どれも有効になっていない場合は ISA 経由で配送する。
+<DT><B>p2cclk=</B><I>n</I>
+
+<DD>
+P2CCLK ピンを入力 (0) または 出力(1) として設定するかどうかを示すフラグ。
+このシグナルはソケットの電力コントローラと通信するときに用いる。
+間違った指定をすると、ブリッジはカードに電力を供給できなくなる。
+デフォルトでは BIOS の設定を用いる。
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H2>著者</H2>
+
+David Hinds - <A HREF="mailto:dahinds@users.sourceforge.net">dahinds@users.sourceforge.net</A>
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/cardmgr.8.html">cardmgr</A></B>(8),
+
+<B><A HREF="../man5/pcmcia.5.html">pcmcia</A></B>(5)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">CardBus 割り込みの受け渡し</A><DD>
+<DT><A HREF="#lbAF">パラメータ</A><DD>
+<DT><A HREF="#lbAG">CardBus コントローラのオプション</A><DD>
+<DT><A HREF="#lbAH">Cirrus のコントローラに特有のオプション</A><DD>
+<DT><A HREF="#lbAI">Ricoh の CardBus コントローラに特有のオプション</A><DD>
+<DT><A HREF="#lbAJ">Vadem の ISA コントローラに特有のオプション</A><DD>
+<DT><A HREF="#lbAK">TI の CardBus コントローラに特有のオプション</A><DD>
+<DT><A HREF="#lbAL">著者</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:43 GMT, December 05, 2022
+</BODY>
+</HTML>

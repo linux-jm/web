@@ -1,0 +1,168 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETNETGRENT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SETNETGRENT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/setnetgrent.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+setnetgrent, endnetgrent, getnetgrent, getnetgrent_r, innetgr -
+ネットワークグループのエントリーを操作する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</B>
+
+<B>int setnetgrent(const char *</B><I>netgroup</I><B>);</B>
+
+<B>void endnetgrent(void);</B>
+
+<B>int getnetgrent(char **</B><I>host</I><B>, char **</B><I>user</I><B>, char **</B><I>domain</I><B>);</B>
+
+<B>int getnetgrent_r(char **</B><I>host</I><B>, char **</B><I>user</I><B>,</B>
+<B>                  char **</B><I>domain</I><B>, char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>);</B>
+
+<B>int innetgr(const char *</B><I>netgroup</I><B>, const char *</B><I>host</I><B>,</B>
+<B>            const char *</B><I>user</I><B>, const char *</B><I>domain</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>setnetgrent</B>(),
+<B>endnetgrent</B>(),
+<B>getnetgrent</B>(),
+<B>getnetgrent_r</B>(),
+<B>innetgr</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以降:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以前:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>netgroup</I> は SunOS で考案されたものである。ネットグループのデータベースの エントリーは、 3 つの文字列のリスト
+(<I>hostname</I>, <I>username</I>, <I>domainname</I>)  もしくはネットグループ名である。
+前記のリストの各要素は空であってもよい。 空は何とでも一致することを意味する。 本ページで説明する関数を使うことで、ネットグループのデータベースに
+アクセスすることができる。どのデータベースが検索されるかは <I>/etc/nsswitch.conf</I> ファイルで定義されている。
+<P>
+
+<B>setnetgrent</B>()  コールは、この後で呼ばれる <B>getnetgrent</B>()  コールが検索するネットグループを定める。
+<B>getnetgrent</B>()  関数はネットグループの次のエントリーを取得し、 <I>host</I>, <I>user</I>, <I>domain</I>
+にポインターを入れて返る。ヌルポインターは、対応するエントリーがどんな文字列とも一致することを意味する。
+得られたポインターは、ネットグループ関係の関数のいずれかが呼ばれるまでの 間だけ有効である。この問題を避けるためには GNU 拡張の関数
+<B>getnetgrent_r</B>()  を使うとよい。この関数は呼び出し側が用意したバッファーに
+文字列を格納する。割り当て済のバッファーを全て解放するには <B>endnetgrent</B>()  を使用する。
+<P>
+
+ほとんどの場合、 (<I>hostname</I>, <I>username</I>, <I>domainname</I>)
+の3要素の組がネットグループのメンバーかどうかを確認したいだけであろう。 <B>innetgr</B>()
+関数を使うと、上記の3つの関数を呼び出さずにこの目的を達成できる。 もう一度書いておくが、NULL ポインターはワイルドカードであり、
+あらゆる文字列と一致する。この関数はスレッドセーフである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+これらの関数は成功すると 1 を、失敗すると 0 を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/etc/netgroup</I>
+<BR>
+
+<I>/etc/nsswitch.conf</I>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明は <B>attributes</B>(7) を参照のこと。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>setnetgrent</B>(),
+<BR>
+
+<B>getnetgrent_r</B>(),
+<BR>
+
+<B>innetgr</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:netgrent
+<BR>
+
+locale
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>endnetgrent</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:netgrent<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getnetgrent</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:netgrent
+<BR>
+
+race:netgrentbuf locale
+<BR></TD></TR>
+</TABLE>
+
+<P>
+In the above table, <I>netgrent</I> in <I>race:netgrent</I> signifies that if any of
+the functions <B>setnetgrent</B>(), <B>getnetgrent_r</B>(), <B>innetgr</B>(),
+<B>getnetgrent</B>(), or <B>endnetgrent</B>()  are used in parallel in different
+threads of a program, then data races could occur.
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+
+これらの関数は POSIX.1 にはないが、 setnetgrent (), endnetgrent (), getnetgrent (),
+innetgr ()  はほとんどの UNIX システムで利用可能である。 <B>getnetgrent_r</B>()
+は広く他のシステムで利用できるわけではない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+BSD の実装では <B>setnetgrent</B>()  は void を返す。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/sethostent.3.html">sethostent</A></B>(3), <B><A HREF="../man3/setprotoent.3.html">setprotoent</A></B>(3), <B><A HREF="../man3/setservent.3.html">setservent</A></B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

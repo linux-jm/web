@@ -1,0 +1,390 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SIGNALFD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SIGNALFD</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/signalfd.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+signalfd - シグナル受け付け用のファイルディスクリプターを生成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/signalfd.h">sys/signalfd.h</A>&gt;</B>
+<P>
+
+<B>int signalfd(int </B><I>fd</I><B>, const sigset_t *</B><I>mask</I><B>, int </B><I>flags</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>signalfd</B>()  は、呼び出し元宛てのシグナルを受け付けるために使用されるファイル ディスクリプターを生成する。
+この方法はシグナルハンドラーや <B><A HREF="../man2/sigwaitinfo.2.html">sigwaitinfo</A></B>(2)  を用いる方法の代わりとなるものであり、このファイルディスクリプターを
+<B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  で監視できるという利点がある。
+<P>
+
+<I>mask</I> 引数には、呼び出し元がこのファイルディスクリプター経由で受け付けたい シグナル集合を指定する。この引数で指定するシグナル集合の内容は、
+<B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3)  で説明されているマクロを使って初期化することができる。 通常、ファイルディスクリプター経由で受信するシグナル集合は、
+そのシグナルがデフォルトの配送方法に基いて処理されるのを防ぐために、 <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  を使ってブロックしておくべきである。
+シグナル <B>SIGKILL</B> と <B>SIGSTOP</B> を signalfd ファイルディスクリプター経由で受信することはできない。
+これらのシグナルが <I>mask</I> で指定された場合には黙って無視される。
+<P>
+
+<I>fd</I> 引数が -1 の場合、 <B>signalfd</B>()  は新しいファイルディスクリプターを生成し、 <I>mask</I>
+で指定されたシグナル集合をそのファイルディスクリプターに関連付ける。 <I>fd</I> 引数が -1 以外の場合、 <I>fd</I> には有効な既存の
+signalfd ファイルディスクリプターを指定しなければならず、 そのディスクリプターに関連付けられているシグナル集合は <I>mask</I>
+を使って置き換えられる。
+<P>
+
+Linux 2.6.27 以降では、 以下の値のいくつかをビット単位の論理和 (OR) で指定することで、 <B>signalfd</B>()
+の振舞いを変更することができる。
+<DL COMPACT>
+<DT><B>SFD_NONBLOCK</B><DD>
+Set the <B>O_NONBLOCK</B> file status flag on the open file description (see
+<B><A HREF="../man2/open.2.html">open</A></B>(2))  referred to by the new file descriptor.  Using this flag saves
+extra calls to <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  to achieve the same result.
+<DT><B>SFD_CLOEXEC</B><DD>
+新しいファイルディスクリプターに対して close-on-exec (<B>FD_CLOEXEC</B>)  フラグをセットする。
+このフラグが役に立つ理由については、 <B><A HREF="../man2/open.2.html">open</A></B>(2)  の <B>O_CLOEXEC</B> フラグの説明を参照のこと。
+</DL>
+<P>
+
+バージョン 2.6.26 以前の Linux では、 <I>flags</I> 引数は未使用であり、0 を指定しなければならない。
+<P>
+
+<B>signalfd</B>()  が返すファイルディスクリプターは以下の操作をサポートしている。
+<DL COMPACT>
+<DT><B><A HREF="../man2/read.2.html">read</A></B>(2)<DD>
+<I>mask</I> に指定されているシグナルのうち一つ以上がそのプロセスに対して 処理待ち (pending) であれば、それらのシグナルの情報が
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  に渡されたバッファーを使って、 <I>signalfd_siginfo</I> 構造体に格納されて返される。 <B><A HREF="../man2/read.2.html">read</A></B>(2)
+は、バッファーに格納可能な範囲でできるだけ多くの処理待ちのシグナルに ついての情報を返す。 バッファーは最低でも <I>sizeof(struct
+signalfd_siginfo)</I> バイトの大きさがなければならない。 <B><A HREF="../man2/read.2.html">read</A></B>(2)  の返り値は読み出されたトータルのバイト数である。
+<DT><DD>
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  が行われた結果、シグナルは消費され、 これらのシグナルはそのプロセスに対しては処理待ちではなくなる
+(つまり、シグナルハンドラーで捕捉されることもなく、 <B><A HREF="../man2/sigwaitinfo.2.html">sigwaitinfo</A></B>(2)  を使って受け取ることもできなくなる)。
+<DT><DD>
+<I>mask</I> に指定されているシグナルがそのプロセスに対して一つも処理待ちでなければ、 <B><A HREF="../man2/read.2.html">read</A></B>(2)  は、 <I>mask</I>
+で指定されたシグナルのうちいずれか一つがそのプロセスに対して発生するまで 停止 (block) する、もしくはファイルディスクリプターが非停止
+(nonblocking)  に設定されている場合はエラー <B>EAGAIN</B> で失敗する。
+<DT><B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2) (と同様の操作)<DD>
+<I>mask</I> に指定されたシグナルのうち一つ以上がそのプロセスに対して処理待ちであれば、 ファイルディスクリプターは読み出し可能となる
+(<B><A HREF="../man2/select.2.html">select</A></B>(2)  の <I>readfds</I> 引数や <B><A HREF="../man2/poll.2.html">poll</A></B>(2)  の <B>POLLIN</B> フラグ)。
+<DT><DD>
+signalfd ファイルディスクリプターは、これ以外のファイルディスクリプター 多重 API である <B><A HREF="../man2/pselect.2.html">pselect</A></B>(2),
+<B><A HREF="../man2/ppoll.2.html">ppoll</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  もサポートしている。
+<DT><B><A HREF="../man2/close.2.html">close</A></B>(2)<DD>
+ファイルディスクリプターがそれ以降は必要なくなった際には、クローズすべきである。 同じ signalfd
+オブジェクトに関連付けられたファイルディスクリプターが全て クローズされると、そのオブジェクト用の資源がカーネルにより解放される。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>signalfd_siginfo 構造体</H3>
+
+signalfd ファイルディスクリプターからの <B><A HREF="../man2/read.2.html">read</A></B>(2)  で返される <I>signalfd_siginfo</I>
+構造体のフォーマットは以下の通りである。
+<P>
+
+
+
+
+
+struct signalfd_siginfo {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;ssi_signo;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;シグナル番号&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int32_t&nbsp;&nbsp;ssi_errno;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;エラー番号&nbsp;(未使用)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int32_t&nbsp;&nbsp;ssi_code;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;シグナルコード&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;ssi_pid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;送信元の&nbsp;PID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;ssi_uid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;送信元の実&nbsp;UID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int32_t&nbsp;&nbsp;ssi_fd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ファイルディスクリプター&nbsp;(SIGIO)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;ssi_tid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;カーネルタイマー&nbsp;ID&nbsp;(POSIX&nbsp;タイマー)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;ssi_band;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Band&nbsp;イベント&nbsp;(SIGIO)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;ssi_overrun;&nbsp;&nbsp;/*&nbsp;POSIX&nbsp;タイマーのオーバーラン回数&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;ssi_trapno;&nbsp;&nbsp;&nbsp;/*&nbsp;シグナルの原因となったトラップ番号&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int32_t&nbsp;&nbsp;ssi_status;&nbsp;&nbsp;&nbsp;/*&nbsp;終了ステータスかシグナル&nbsp;(SIGCHLD)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int32_t&nbsp;&nbsp;ssi_int;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;<A HREF="../man3/sigqueue.3.html">sigqueue</A>(3)&nbsp;から送られた整数&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint64_t&nbsp;ssi_ptr;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;<A HREF="../man3/sigqueue.3.html">sigqueue</A>(3)&nbsp;から送られたポインター&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint64_t&nbsp;ssi_utime;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;消費したユーザー&nbsp;CPU&nbsp;時間&nbsp;(SIGCHLD)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint64_t&nbsp;ssi_stime;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;消費したシステム&nbsp;CPU&nbsp;時間&nbsp;(SIGCHLD)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint64_t&nbsp;ssi_addr;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;シグナルを生成したアドレス
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(ハードウェアが生成したシグナルの場合)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint16_t&nbsp;ssi_addr_lsb;&nbsp;/*&nbsp;アドレスの最下位ビット&nbsp;(LSB)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(SIGBUS;&nbsp;Linux&nbsp;2.6.37&nbsp;以降)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint8_t&nbsp;&nbsp;pad[<I>X</I>];&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;pad&nbsp;の大きさは&nbsp;128&nbsp;バイト
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(将来のフィールド追加用の場所の確保)&nbsp;*/
+};
+
+
+<P>
+
+<I>signalfd_siginfo</I> 構造体の各フィールドは、 <I>siginfo_t</I> 構造体の同じような名前のフィールドと同様である。
+<I>siginfo_t</I> 構造体については <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)  に説明がある。 返された <I>signalfd_siginfo</I>
+構造体の全てのフィールドがあるシグナルに対して有効なわけではない。 どのフィールドが有効かは、 <I>ssi_code</I>
+フィールドで返される値から判定することができる。 このフィールドは <I>siginfo_t</I> の <I>si_code</I> フィールドと同様である。詳細は
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)  を参照。
+<A NAME="lbAF">&nbsp;</A>
+<H3><A HREF="../man2/fork.2.html">fork</A>(2) での扱い</H3>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  が行われると、子プロセスは signalfd ファイルディスクリプターのコピーを 継承する。
+子プロセスでこのファイルディスクリプターから <B><A HREF="../man2/read.2.html">read</A></B>(2)  を行うと、子プロセスに対するキューに入っているシグナルに関する 情報が返される。
+<A NAME="lbAG">&nbsp;</A>
+<H3>Semantics of file descriptor passing</H3>
+
+As with other file descriptors, signalfd file descriptors can be passed to
+another process via a UNIX domain socket (see <B><A HREF="../man7/unix.7.html">unix</A></B>(7)).  In the receiving
+process, a <B><A HREF="../man2/read.2.html">read</A></B>(2)  from the received file descriptor will return
+information about signals queued to that process.
+<A NAME="lbAH">&nbsp;</A>
+<H3><A HREF="../man2/execve.2.html">execve</A>(2) での扱い</H3>
+
+他のファイルディスクリプターと全く同様に、 signalfd ファイルディスクリプターも <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+の前後でオープンされたままとなる。但し、そのファイルディスクリプターに close-on-exec のマーク (<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  参照)
+が付いている場合はクローズされる。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  の前に読み出し可能となっていた全てのシグナルは新しく起動されたプログラム
+でも引き続き読み出し可能である (これは伝統的なシグナルの扱いと同じであり、 処理待ちのブロックされたシグナルは <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+の前後で処理待ちのままとなる)。
+<A NAME="lbAI">&nbsp;</A>
+<H3>スレッドでの扱い</H3>
+
+
+マルチスレッドプログラムにおける signalfd ファイルディスクリプターの扱いは シグナルの標準的な扱いと全く同じである。
+言い換えると、あるスレッドが signalfd ファイルディスクリプターから 読み出しを行うと、そのスレッド自身宛てのシグナルとプロセス (すなわち
+スレッドグループ全体) 宛てのシグナルが読み出される。 (スレッドは同じプロセスの他のスレッド宛てのシグナルを読み出すことはできない。)
+<A NAME="lbAJ">&nbsp;</A>
+<H3><A HREF="../man7/epoll.7.html">epoll</A>(7) semantics</H3>
+
+If a process adds (via <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2))  a signalfd file descriptor to an
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  instance, then <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  returns events only for
+signals sent to that process.  In particular, if the process then uses
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  to create a child process, then the child will be able to
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  signals that are sent to it using the signalfd file descriptor,
+but <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  will <B>not</B> indicate that the signalfd file descriptor
+is ready.  In this scenario, a possible workaround is that after the
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2), the child process can close the signalfd file descriptor that it
+inherited from the parent process and then create another signalfd file
+descriptor and add it to the epoll instance.  Alternatively, the parent and
+the child could delay creating their (separate) signalfd file descriptors
+and adding them to the epoll instance until after the call to <B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+<A NAME="lbAK">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>signalfd</B>()  は signalfd ファイルディスクリプターを返す。 返されるファイルディスクリプターは、 <I>fd</I> が
+-1 の場合は新規のファイルディスクリプターであり、 <I>fd</I> が有効な signalfd ファイルディスクリプターだった場合は <I>fd</I>
+自身である。 エラーの場合、-1 を返し、 <I>errno</I> にエラーを示す値を設定する。
+<A NAME="lbAL">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+ファイルディスクリプター <I>fd</I> が有効なファイルディスクリプターでない。
+<DT><B>EINVAL</B><DD>
+
+
+
+
+<I>fd</I> が有効な signalfd ファイルディスクリプターではない。
+<DT><B>EINVAL</B><DD>
+<I>flags</I> が無効である。もしくは、Linux 2.6.26 以前の場合には <I>flags</I> が 0 以外である。
+<DT><B>EMFILE</B><DD>
+オープン済みのファイルディスクリプターの数がプロセスあたりの上限に 達していた。
+<DT><B>ENFILE</B><DD>
+オープン済みのファイル総数がシステム全体の上限に達していた。
+<DT><B>ENODEV</B><DD>
+(カーネル内の) 無名 inode デバイスをマウントできなかった。
+<DT><B>ENOMEM</B><DD>
+新しい signalfd ファイルディスクリプターを生成するのに十分なメモリーがなかった。
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+<B>signalfd</B>()  はカーネル 2.6.22 以降の Linux で利用可能である。 正しく動作する glibc 側のサポートはバージョン
+2.8 以降で提供されている。 <B>signalfd4</B>()  システムコール (「注意」参照) は カーネル 2.6.27 以降の Linux
+で利用可能である。
+<A NAME="lbAN">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>signalfd</B>()  と <B>signalfd4</B>()  は Linux 固有である。
+<A NAME="lbAO">&nbsp;</A>
+<H2>注意</H2>
+
+一つのプロセスは複数の signalfd ファイルディスクリプターを生成することができる。
+これにより、異なるファイルディスクリプターで異なるシグナルを受け取ることが できる (この機能は <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2),
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  を使ってファイルディスクリプターを監視する場合に有用かもしれない。
+異なるシグナルが到着すると、異なるファイルディスクリプターが利用可能に なるからだ)。 一つのシグナルが二つ以上のファイルディスクリプターの
+<I>mask</I> に含まれている場合、そのシグナルの発生はそのシグナルを <I>mask</I>
+に含むファイルディスクリプターのうちいずれか一つから読み出すことができる。
+<P>
+
+Attempts to include <B>SIGKILL</B> and <B>SIGSTOP</B> in <I>mask</I> are silently
+ignored.
+<P>
+
+
+The signal mask employed by a signalfd file descriptor can be viewed via the
+entry for the corresponding file descriptor in the process's
+<I>/proc/[pid]/fdinfo</I> directory.  See <B><A HREF="../man5/proc.5.html">proc</A></B>(5)  for further details.
+<A NAME="lbAP">&nbsp;</A>
+<H3>Limitations</H3>
+
+The signalfd mechanism can't be used to receive signals that are
+synchronously generated, such as the <B>SIGSEGV</B> signal that results from
+accessing an invalid memory address or the <B>SIGFPE</B> signal that results
+from an arithmetic error.  Such signals can be caught only via signal
+handler.
+<P>
+
+
+As described above, in normal usage one blocks the signals that will be
+accepted via <B>signalfd</B>().  If spawning a child process to execute a helper
+program (that does not need the signalfd file descriptor), then, after the
+call to <B><A HREF="../man2/fork.2.html">fork</A></B>(2), you will normally want to unblock those signals before
+calling <B><A HREF="../man2/execve.2.html">execve</A></B>(2), so that the helper program can see any signals that it
+expects to see.  Be aware, however, that this won't be possible in the case
+of a helper program spawned behind the scenes by any library function that
+the program may call.  In such cases, one must fall back to using a
+traditional signal handler that writes to a file descriptor monitored by
+<B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), or <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7).
+<A NAME="lbAQ">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+実際の Linux のシステムコールでは <I>size_t sizemask</I> という引数が追加で必要である。この引数で <I>mask</I>
+のサイズを指定する。 glibc の <B>signalfd</B>()  ラッパー関数にはこの引数は含まれず、
+ラッパー関数が必要な値を計算して内部で呼び出すシステムコールに提供する。
+<P>
+
+下層にある Linux システムコールは二種類あり、 <B>signalfd</B>()  と、もっと新しい <B>signalfd4</B>()  である。
+<B>signalfd</B>()  は <I>flags</I> 引数を実装していない。 <B>signalfd4</B>()  では上記の値の <I>flags</I>
+が実装されている。 glibc 2.9 以降では、 <B>signalfd</B>()  のラッパー関数は、 <B>signalfd4</B>()
+が利用可能であれば、これを使用する。
+<A NAME="lbAR">&nbsp;</A>
+<H2>バグ</H2>
+
+
+カーネル 2.6.25 より前では、 <B><A HREF="../man3/sigqueue.3.html">sigqueue</A></B>(3)  により送信されたシグナルと一緒に渡されるデータでは、フィールド
+<I>ssi_ptr</I> と <I>ssi_int</I> は設定されない。
+<A NAME="lbAS">&nbsp;</A>
+<H2>例</H2>
+
+下記のプログラムは、シグナル <B>SIGINT</B> と <B>SIGQUIT</B> を signalfd ファイルディスクリプター経由で受信する。 シグナル
+<B>SIGQUIT</B> 受信後にプログラムは終了する。 以下に示すシェルセッションにこのプログラムの使い方を示す。
+<P>
+
+
+
+$<B> ./signalfd_demo</B>
+<B>^C</B>                   # Control-C generates SIGINT
+Got SIGINT
+<B>^C</B>
+Got SIGINT
+<B>^\</B>                    # Control-\ generates SIGQUIT
+Got SIGQUIT
+$
+
+
+<A NAME="lbAT">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/sys/signalfd.h">sys/signalfd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+<P>
+#define handle_error(msg) \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigset_t&nbsp;mask;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sfd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;signalfd_siginfo&nbsp;fdsi;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;s;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;mask);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigaddset(&amp;mask,&nbsp;SIGINT);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigaddset(&amp;mask,&nbsp;SIGQUIT);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Block&nbsp;signals&nbsp;so&nbsp;that&nbsp;they&nbsp;aren't&nbsp;handled
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;according&nbsp;to&nbsp;their&nbsp;default&nbsp;dispositions&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sigprocmask(SIG_BLOCK,&nbsp;&amp;mask,&nbsp;NULL)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;sigprocmask&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sfd&nbsp;=&nbsp;signalfd(-1,&nbsp;&amp;mask,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sfd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;signalfd&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;read(sfd,&nbsp;&amp;fdsi,&nbsp;sizeof(fdsi));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;sizeof(fdsi))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;read&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fdsi.ssi_signo&nbsp;==&nbsp;SIGINT)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Got&nbsp;SIGINT\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;if&nbsp;(fdsi.ssi_signo&nbsp;==&nbsp;SIGQUIT)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Got&nbsp;SIGQUIT\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Read&nbsp;unexpected&nbsp;signal\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+
+<A NAME="lbAU">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/eventfd.2.html">eventfd</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2), <B><A HREF="../man2/sigwaitinfo.2.html">sigwaitinfo</A></B>(2), <B><A HREF="../man2/timerfd_create.2.html">timerfd_create</A></B>(2), <B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3),
+<B><A HREF="../man3/sigwait.3.html">sigwait</A></B>(3), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7), <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+<A NAME="lbAV">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">signalfd_siginfo 構造体</A><DD>
+<DT><A HREF="#lbAF">fork(2) での扱い</A><DD>
+<DT><A HREF="#lbAG">Semantics of file descriptor passing</A><DD>
+<DT><A HREF="#lbAH">execve(2) での扱い</A><DD>
+<DT><A HREF="#lbAI">スレッドでの扱い</A><DD>
+<DT><A HREF="#lbAJ">epoll(7) semantics</A><DD>
+</DL>
+<DT><A HREF="#lbAK">返り値</A><DD>
+<DT><A HREF="#lbAL">エラー</A><DD>
+<DT><A HREF="#lbAM">バージョン</A><DD>
+<DT><A HREF="#lbAN">準拠</A><DD>
+<DT><A HREF="#lbAO">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAP">Limitations</A><DD>
+<DT><A HREF="#lbAQ">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAR">バグ</A><DD>
+<DT><A HREF="#lbAS">例</A><DD>
+<DL>
+<DT><A HREF="#lbAT">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAU">関連項目</A><DD>
+<DT><A HREF="#lbAV">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

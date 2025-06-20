@@ -1,0 +1,125 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MSYNC</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MSYNC</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/msync.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+msync - ファイルをマップしたメモリーと同期させる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+<P>
+
+<B>int msync(void *</B><I>addr</I><B>, size_t </B><I>length</I><B>, int </B><I>flags</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>msync</B>()  は <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  を使ってメモリーにマップされたファイルの、
+メモリー上のコピーになされた変更をファイルシステムに反映させる。 この関数を使用しないと、 <B><A HREF="../man2/munmap.2.html">munmap</A></B>(2)
+が呼び出されるまで変更が書き戻される保証はない。 より正確には、ファイルのうち <I>addr</I> から始まり長さ <I>length</I>
+のメモリー領域に対応する部分が更新される。
+<P>
+
+The <I>flags</I> argument should specify exactly one of <B>MS_ASYNC</B> and
+<B>MS_SYNC</B>, and may additionally include the <B>MS_INVALIDATE</B> bit.  These
+bits have the following meanings:
+<DL COMPACT>
+<DT><B>MS_ASYNC</B><DD>
+Specifies that an update be scheduled, but the call returns immediately.
+<DT><B>MS_SYNC</B><DD>
+Requests an update and waits for it to complete.
+<DT><B>MS_INVALIDATE</B><DD>
+
+
+Asks to invalidate other mappings of the same file (so that they can be
+updated with the fresh values just written).
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 0 が返る。エラーの場合、 -1 が返り、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBUSY</B><DD>
+I flags に <B>MS_INVALIDATE</B> が指定されたが、指定されたアドレス範囲にロックが存在する。
+<DT><B>EINVAL</B><DD>
+<I>addr</I> が PAGESIZE の倍数でない。または、 <I>flags</I> に
+<B>MS_ASYNC</B>、<B>MS_INVALIDATE</B>、<B>MS_SYNC</B> 以外のビットが設定された。 または、 <I>flags</I> に
+<B>MS_SYNC</B> と <B>MS_ASYNC</B> の両方が設定された。
+<DT><B>ENOMEM</B><DD>
+指定されたメモリー (またはその一部) がマップされていない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<P>
+
+この関数は Linux 1.3.21 で導入されたが、 <B>ENOMEM</B> ではなく <B>EFAULT</B> が使われていた。 これは Linux
+2.4.19 で POSIX における値 <B>ENOMEM</B> に変更された。
+<P>
+
+
+
+
+<B>msync</B>()  が使用可能な POSIX システムでは <B>_POSIX_MAPPED_FILES</B> と
+<B>_POSIX_SYNCHRONIZED_IO</B> の両方が <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> で 0 より大きい値に定義される。
+(<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)  を参照すること。 )
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+
+POSIX では <B>MS_SYNC</B> と <B>MS_ASYNC</B> のいずれかは必ず <I>flags</I> に指定しなければならないとされており、
+実際にこれらのフラグのいずれかを指定しなかった場合 <B>msync</B>() が失敗するシステムもある。 しかし、 Linux
+ではこれらのフラグのいずれも指定せずに <B>msync</B>() を呼び出すことができ、 その場合の動作は (現在のところ) <B>MS_ASYNC</B>
+を指定した場合と等価である。 (Linux 2.6.19 以降では <B>MS_ASYNC</B> は実際には no-op (何もしない命令) である。
+これはカーネルが正しく dirty ページを追跡し、必要に応じてストレージにそれらをフラッシュするからである。) Linux
+の動作に関係なく、アプリケーションの移植性を考慮し、将来も確実に動くようにするには、 <B>MS_SYNC</B> か <B>MS_ASYNC</B> のいずれかを必ず
+<I>flags</I> に指定するようにすべきである。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+<P>
+
+B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

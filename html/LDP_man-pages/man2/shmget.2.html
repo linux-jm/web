@@ -1,0 +1,273 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SHMGET</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SHMGET</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/shmget.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+shmget - System V 共有メモリーセグメントを割り当てる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt;</B>
+<P>
+
+<B>int shmget(key_t </B><I>key</I><B>, size_t </B><I>size</I><B>, int </B><I>shmflg</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>shmget</B>()  returns the identifier of the System&nbsp;V shared memory segment
+associated with the value of the argument <I>key</I>.  It may be used either to
+obtain the identifier of a previously created shared memory segment (when
+<I>shmflg</I> is zero and <I>key</I> does not have the value <B>IPC_PRIVATE</B>), or to
+create a new set.
+<P>
+
+<I>key</I> の値が <B>IPC_PRIVATE</B> の場合、もしくは <I>key</I> に対応する共有メモリーセグメントが存在せず、 <I>shmflg</I> に
+<B>IPC_CREAT</B> が指定されていた場合、 新しい共有メモリーセグメントを作成する。 作成される共有メモリーセグメントは、 <I>size</I>
+引数の値を <B>PAGE_SIZE</B> の倍数へと切り上げた (round up) 大きさとなる。
+<P>
+
+<I>shmflg</I> に <B>IPC_CREAT</B> と <B>IPC_EXCL</B> の両方が指定された場合、 <I>key</I>
+に対応する共有メモリーセグメントが既に存在すると、 <B>shmget</B>()  は失敗し、 <I>errno</I> に <B>EEXIST</B> が設定される
+(これは <B><A HREF="../man2/open.2.html">open</A></B>(2)  に <B>O_CREAT | O_EXCL</B> を指定した場合の動作と同じである)。
+<P>
+
+<I>shmflg</I> は以下の内容から構成される:
+<DL COMPACT>
+<DT><B>IPC_CREAT</B><DD>
+新しいセグメントを作成する。このフラグが指定されなかった場合、 <B>shmget</B>()  は <I>key</I> に対応するセグメントを探し、
+ユーザーがそのセグメントにアクセスする許可があるかどうかをチェックする。
+<DT><B>IPC_EXCL</B><DD>
+このフラグは <B>IPC_CREAT</B> とともに使用し、 この呼び出しで確実にセグメントが作成されるようにする。 セグメントが既に存在した場合には、
+呼び出しは失敗する。
+<DT><B>SHM_HUGETLB</B> (Linux 2.6 以降)<DD>
+&quot;ヒュージページ (huge page)&quot; を使うセグメントを割り当てる。詳細な情報は、Linux カーネルソースのファイル
+<I>Documentation/admin-guide/vm/hugetlbpage.rst</I> を参照。
+<DT><B>SHM_HUGE_2MB</B>, <B>SHM_HUGE_1GB</B> (Linux 3.8 以降)<DD>
+
+Used in conjunction with <B>SHM_HUGETLB</B> to select alternative hugetlb page
+sizes (respectively, 2&nbsp;MB and 1&nbsp;GB)  on systems that support multiple
+hugetlb page sizes.
+<DT><DD>
+More generally, the desired huge page size can be configured by encoding the
+base-2 logarithm of the desired page size in the six bits at the offset
+<B>SHM_HUGE_SHIFT</B>.  Thus, the above two constants are defined as:
+<DT><DD>
+
+
+#define SHM_HUGE_2MB    (21 &lt;&lt; SHM_HUGE_SHIFT)
+#define SHM_HUGE_1GB    (30 &lt;&lt; SHM_HUGE_SHIFT)
+
+
+<DT><DD>
+For some additional details, see the discussion of the similarly named
+constants in <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
+<DT><B>SHM_NORESERVE</B> (Linux 2.6.15 以降)<DD>
+
+
+このフラグは、 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  の <B>MAP_NORESERVE</B> フラグと同じ役割を果たす。
+このセグメントに対するスワップ空間の予約を行わない。 スワップ空間を予約した場合は、そのセグメントの変更が必ず成功することが
+保証される。スワップ空間の予約を行わなかった場合は、物理メモリーに空きが ないと書き込み時に <B>SIGSEGV</B> を受け取る可能性がある。
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5)  にある <I>/proc/sys/vm/overcommit_memory</I> ファイルに関する議論も参照のこと。
+</DL>
+<P>
+
+上記のフラグに加えて、 <I>shmflg</I> の下位 9 ビットは、所有者、グループ、その他への許可を指定する。 これらのビットは <B><A HREF="../man2/open.2.html">open</A></B>(2)
+の <I>mode</I> 引数と同じ形式で同じ意味を持つ。 今のところ、システムは実行 (execute) 許可を参照しない。
+<P>
+
+共有メモリーセグメントが新たに作成される際、 共有メモリーセグメントの内容は 0 で初期化され、 関連情報を保持するデータ構造体 <I>shmid_ds</I>
+は以下のように初期化される。
+<DL COMPACT>
+<DT>&bull;<DD>
+<I>shm_perm.cuid</I> と <I>shm_perm.uid</I> に呼び出し元プロセスの実効 (effective) ユーザーID を設定する。
+<DT>&bull;<DD>
+<I>shm_perm.cgid</I> と <I>shm_perm.gid</I> に呼び出し元プロセスの実効グループID を設定する。
+<DT>&bull;<DD>
+<I>shm_perm.mode</I> の下位 9 ビットに <I>shmflg</I> の下位 9 ビットを設定する。
+<DT>&bull;<DD>
+<I>shm_segsz</I> に <I>size</I> の値を設定する。
+<DT>&bull;<DD>
+<I>shm_lpid</I>, <I>shm_nattch</I>, <I>shm_atime</I>, <I>shm_dtime</I> に 0 を設定する。
+<DT>&bull;<DD>
+<I>shm_ctime</I> に現在の時刻を設定する。
+</DL>
+<P>
+
+共有メモリーセグメントが既に存在する場合、アクセス許可の検査と、 破壊 (destruction) マークがつけられていないかのチェックが行われる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功の場合、有効な共有メモリーセグメントの識別子が返される。 エラーの場合、 -1 が返り、 <I>errno</I> にエラーを示す値が設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+失敗した場合は <I>errno</I> が以下のどれかに設定される:
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+The user does not have permission to access the shared memory segment, and
+does not have the <B>CAP_IPC_OWNER</B> capability in the user namespace that
+governs its IPC namespace.
+<DT><B>EEXIST</B><DD>
+<B>IPC_CREAT</B> と <B>IPC_EXCL</B> が <I>shmflg</I> に指定されたが、 <I>key</I>
+に対応する共有メモリーセグメントはすでに存在する。
+<DT><B>EINVAL</B><DD>
+新しいセグメントを作成しようとしたが、 <I>size</I> が <B>SHMMIN</B> より小さいか <B>SHMMAX</B> よりも大きかった。
+<DT><B>EINVAL</B><DD>
+指定された <I>key</I> に対応するセグメントが既に存在するが、 <I>size</I> がそのセグメントのサイズよりも大きかった。
+<DT><B>ENFILE</B><DD>
+
+システム全体でオープンされているファイルの総数が上限に達した。
+<DT><B>ENOENT</B><DD>
+指定された <I>key</I> に対応するセグメントが存在せず、 <B>IPC_CREAT</B> も指定されていなかった。
+<DT><B>ENOMEM</B><DD>
+セグメントの管理情報 (overhead) に割り当てるメモリーがなかった。
+<DT><B>ENOSPC</B><DD>
+システム全体の共有メモリーセグメント数の制限 (<B>SHMMNI</B>)  に達した、または要求された <I>size</I> のセグメントの割り当てが
+システム全体の共有メモリーサイズの制限 (<B>SHMALL</B>)  を超過した。
+<DT><B>EPERM</B><DD>
+<B>SHM_HUGETLB</B> フラグが指定されたが、呼び出し元には権限がなかった (<B>CAP_IPC_LOCK</B> ケーパビリティを持っていなかった)。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+
+POSIX.1-2001, POSIX.1-2008, SVr4.
+<P>
+
+<B>SHM_HUGETLB</B> と <B>SHM_NORESERVE</B> は Linux での拡張である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+Linux や POSIX の全てのバージョンでは、 <I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I> と <I>&lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</I>
+のインクルードは必要ない。しかしながら、いくつかの古い実装ではこれらのヘッダーファイルのインクルードが必要であり、 SVID
+でもこれらのインクルードをするように記載されている。このような古いシステムへの移植性を意図したアプリケーションではこれらのファイルをインクルードする必要があるかもしれない。
+<P>
+
+
+<B>IPC_PRIVATE</B> はフラグではなく <I>key_t</I> 型である。 この特別な値が <I>key</I> に使用された場合は、 <B>shmget</B>()
+は <I>shmflg</I> の下位 9 ビットを除いた全てを無視し、 新しい共有メモリーセグメントを作成する。
+<A NAME="lbAI">&nbsp;</A>
+<H3>共有メモリーの上限</H3>
+
+<B>shmget</B>()  コールに影響する共有メモリーセグメント資源の制限は以下の通りである:
+<DL COMPACT>
+<DT><B>SHMALL</B><DD>
+共有メモリーの全使用量のシステム全体での上限値。 システムページサイズが単位である。
+<DT><DD>
+
+Linux では、この上限値は <I>/proc/sys/kernel/shmall</I> 経由で参照したり、変更したりできる。 Linux 3.16
+以降では、 この上限値のデフォルト値は以下のとおりである。
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ULONG_MAX&nbsp;-&nbsp;2^24
+<DT><DD>
+この値は割り当てに関する上限としては適用されない (なお、この値は 32 ビットシステムにも 64 ビットシステムにも適したものになっている)。
+<B>ULONG_MAX</B> ではなく、この値が選ばれたのは、
+古いアプリケーションが最初に現在の値を確認せずに既存の上限をそのまま増やしてしまっても問題が起こらないようなデフォルト値を選んだからである。
+このようなアプリケーションでは、 上限を <B>ULONG_MAX</B> に設定すると値がオーバーフローしてしまうことになる。
+<DT><DD>
+Linux 2.4 から Linux 3.15 では、この上限のデフォルト値は以下であった。
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;SHMMAX&nbsp;/&nbsp;PAGE_SIZE&nbsp;*&nbsp;(SHMMNI&nbsp;/&nbsp;16)
+<DT><DD>
+<B>SHMMAX</B> と <B>SHMMNI</B> が変更されないとすると、 この式の結果に (バイト単位の値を得るために) ページサイズを掛け算すると、
+全ての共有メモリーセグメントで使用される全メモリーの上限として、 8&nbsp;GB という値が得られる。
+<DT><B>SHMMAX</B><DD>
+1 つの共有メモリーセグメントの最大サイズ (バイト数)。
+<DT><DD>
+
+Linux では、この上限値は <I>/proc/sys/kernel/shmmax</I> 経由で参照したり、変更したりできる。 Linux 3.16
+以降では、 この上限値のデフォルト値は以下のとおりである。
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ULONG_MAX&nbsp;-&nbsp;2^24
+<DT><DD>
+この値は割り当てに関する上限としては適用されない (なお、この値は 32 ビットシステムにも 64 ビットシステムにも適したものになっている)。
+(<B>ULONG_MAX</B> ではなく) このデフォルト値が使われている理由については <B>SHMALL</B> の説明を参照。
+<DT><DD>
+Linux 2.2 から Linux 3.15 までは、この上限値のデフォルト値は 0x2000000 (32&nbsp;MB) であった。
+<DT><DD>
+共有メモリーセグメントの一部分だけをマッピングすることはできないので、
+使用可能なセグメントの最大サイズには仮想メモリーの総量という別の上限が適用される。 例えば、i386
+ではマッピング可能な最大セグメントの大きさはおおよそ 2.8&nbsp;GB で、 x86-64 では上限はおおよそ 127TB である。
+<DT><B>SHMMIN</B><DD>
+共有メモリーセグメントのバイト単位の大きさの下限: 実装依存 (現在は 1 バイトだが、実質的な最小サイズは <B>PAGE_SIZE</B> である)。
+<DT><B>SHMMNI</B><DD>
+システム全体の共有メモリーセグメント数の上限値。 この上限値のデフォルトは、 Linux 2.2 以降では 128、 Linux 2.4 以降で
+4096 である。
+<DT><DD>
+
+
+
+Linux では、この上限値は <I>/proc/sys/kernel/shmmni</I> 経由で参照したり、変更したりできる。
+</DL>
+<P>
+
+プロセス当りの共有メモリーセグメントの個数の最大値 (<B>SHMSEG</B>)  に関する実装上の制限はない。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Linux での注意</H3>
+
+バージョン 2.3.30 までは、Linux は 削除が予定されている共有メモリーセグメントに対して <B>shmget</B>()  が行われると
+<B>EIDRM</B> を返していた。
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>IPC_PRIVATE</B> という名前を選んだのはおそらく失敗であろう。 <B>IPC_NEW</B> の方がより明確にその機能を表しているだろう。
+<A NAME="lbAL">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man2/shmop.2.html">shmop</A></B>(2) を参照。
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/memfd_create.2.html">memfd_create</A></B>(2), <B><A HREF="../man2/shmat.2.html">shmat</A></B>(2), <B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2), <B><A HREF="../man2/shmdt.2.html">shmdt</A></B>(2), <B><A HREF="../man3/ftok.3.html">ftok</A></B>(3),
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/shm_overview.7.html">shm_overview</A></B>(7), <B>sysvipc</B>(7)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">共有メモリーの上限</A><DD>
+<DT><A HREF="#lbAJ">Linux での注意</A><DD>
+</DL>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">例</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,177 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of WAIT4</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>WAIT4</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/wait4.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+wait3, wait4 - BSD スタイルでプロセスの状態変化を待つ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;</B>
+
+<B>pid_t wait3(int *</B><I>wstatus</I><B>, int </B><I>options</I><B>,</B>
+<B>            struct rusage *</B><I>rusage</I><B>);</B>
+
+<B>pid_t wait4(pid_t </B><I>pid</I><B>, int *</B><I>wstatus</I><B>, int </B><I>options</I><B>,</B>
+<B>            struct rusage *</B><I>rusage</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+
+<B>wait3</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.26:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE&nbsp;||
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500&nbsp;&amp;&amp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;!&nbsp;(_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L&nbsp;||&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;600))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;From&nbsp;glibc&nbsp;2.19&nbsp;to&nbsp;2.25:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE&nbsp;||&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.19&nbsp;and&nbsp;earlier:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<BR>
+
+<B>wait4</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.19:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.19&nbsp;and&nbsp;earlier:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+These functions are nonstandard; in new programs, the use of <B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+or <B><A HREF="../man2/waitid.2.html">waitid</A></B>(2)  is preferable.
+<P>
+
+システムコール <B>wait3</B>()  と <B>wait4</B>()  は <B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+と同様の動作をする。それに加え、子プロセスのリソース使用状況の情報を <I>rusage</I> が指す構造体に入れて返す。
+<P>
+
+<I>rusage</I> を使用する点を除けば、次の <B>wait3</B>()  の呼び出し
+<P>
+
+
+
+wait3(wstatus, options, rusage);
+
+
+<P>
+
+は以下と等価である。
+<P>
+
+
+
+waitpid(-1, wstatus, options);
+
+
+<P>
+
+同様に、次の <B>wait4</B>()  の呼び出し
+<P>
+
+
+
+wait4(pid, wstatus, options, rusage);
+
+
+<P>
+
+は以下と等価である。
+<P>
+
+
+
+waitpid(pid, wstatus, options);
+
+
+<P>
+
+言い換えると、 <B>wait3</B>()  は全ての子プロセスを対象に待つが、 <B>wait4</B>()  では特定の子プロセス (複数可)
+を選んで待つことができる。
+<P>
+
+<I>rusage</I> が NULL でない場合、 <I>rusage</I> が指す <I>rusage 構造体</I> には子プロセスのアカウント情報が格納される。
+詳しくは <B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2)  を参照のこと。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)  と同様。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)  と同様。
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+4.3BSD.
+<P>
+
+SUSv1 には <B>wait3</B>() の規定があった。 SUSv2 には <B>wait3</B>() が含まれていたが、「過去の名残
+(LEGACY)」となっていた。 SUSv3 では <B>wait3</B>() は削除された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+現在では <I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I> をインクルードする必要はないが、インクルードしておくと 移植性を高めることができる (実際には
+<I>&lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;</I> で <I>rusage</I> 構造体が定義されているが、そのフィールドで使用されている
+<I>struct timeval</I> 型は <I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I> で定義されている)。
+<A NAME="lbAI">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+Linux では、 <B>wait3</B>()  はライブラリ関数であり、 <B>wait4</B>()  システムコールを使って実装されている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2), <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man2/signal.2.html">signal</A></B>(2), <B><A HREF="../man2/wait.2.html">wait</A></B>(2),
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

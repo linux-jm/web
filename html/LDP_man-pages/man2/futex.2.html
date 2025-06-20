@@ -1,0 +1,209 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FUTEX</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FUTEX</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/futex.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+futex - 高速ユーザー空間ロック
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/futex.h">linux/futex.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+
+<B>int futex(int *</B><I>uaddr</I><B>, int </B><I>op</I><B>, int </B><I>val</I><B>, const struct timespec *</B><I>timeout</I><B>,</B>
+<BR>
+<B>          int *</B><I>uaddr2</I><B>, int </B><I>val3</I><B>);</B>
+</PRE>
+
+<I>注</I>: このシステムコールには glibc のラッパー関数は存在しない。「注意」の節を参照。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+<B>futex</B>()  システムコールは、 指定したアドレスの値が変更されるのをプログラムが待つ手段や 特定のアドレスに対して待機中のプロセスを
+wake (起床) させる手段を提供する (プロセスが異なれば同じメモリーに対するアドレスも同じではないかもしれないが、
+カーネルは異なる位置にマップされた同じメモリーを <B>futex</B>()  で使えるよう内部でマップする)。 通常は、このシステムコールは
+<B><A HREF="../man7/futex.7.html">futex</A></B>(7)  に書かれているように、 共有メモリー中のロックが競合する場合の処理を実装するのに用いられる。
+<P>
+
+<B><A HREF="../man7/futex.7.html">futex</A></B>(7)  の操作がユーザー空間で競合なく完了しなかった場合、 カーネルに仲裁させるためにシステムコールを呼ぶ必要がある。
+仲裁というのは、呼び出しプロセスを sleep (起床待ち) させたり、反対に 待ちプロセスを wake させたりすることを意味する。
+<P>
+
+この関数を呼び出すプロセスは <B><A HREF="../man7/futex.7.html">futex</A></B>(7)  に記述されているセマンティクスに忠実であることが要求される。
+このセマンティクスには移植不可能なアセンブリ命令を書くことが含まれる。 このことは言い換えると futex
+のユーザーのほとんどは実際はライブラリの作者であり、 一般アプリケーションの開発者ではないということである。
+<P>
+
+<I>uaddr</I> 引き数は、カウンターを格納する、 アラインメントの揃った int 型変数を指している必要がある。 実行する操作は <I>op</I>
+引き数を介して、値 <I>val</I> とともに渡される。
+<P>
+
+現在のところ 5 つの操作が定義されている:
+<DL COMPACT>
+<DT><B>FUTEX_WAIT</B><DD>
+この操作は futex アドレス <I>uaddr</I> に指定された値 <I>val</I> がまだ格納されているかどうかを不可分操作で検証し、 sleep 状態で
+この futex アドレスに対して <B>FUTEX_WAKE</B> が実行されるのを待つ。 <I>timeout</I> 引き数が NULL
+でない場合、その内容は待ち時間の最大値を表す (この停止時間はシステムクロックの粒度に切り上げられ、
+カーネルのスケジューリング遅延により少しだけ長くなる可能性がある)。 NULL の場合、 呼び出しは無限に停止する。 引き数 <I>uaddr2</I> と
+<I>val3</I> は無視される。
+<P>
+<B><A HREF="../man7/futex.7.html">futex</A></B>(7)  に照らし合わせると、この呼び出しは カウントのデクリメントで負の値 (競合を表す) になった場合に実行され、
+別のプロセスがその futex を解放し <B>FUTEX_WAKE</B> の操作を実行するまで sleep する。
+<DT><B>FUTEX_WAKE</B><DD>
+この操作では指定した futex アドレスに対して待ち状態の (すなわち <B>FUTEX_WAIT</B> 中の) 最大 <I>val</I> 個のプロセスを
+wake させる。 引き数 <I>timeout</I>, <I>uaddr2</I>, <I>val3</I> は無視される。
+<P>
+<B>futex</B>(4) に照らし合わせると、 この操作は カウントのインクリメントで待ちプロセスがあると判明し、 futex 値が 1 に設定された
+(利用可能であることを表す) 場合に実行される。
+<DT><B>FUTEX_FD</B> (Linux 2.6.25 以前)<DD>
+
+非同期の wake に対応するため、この操作はファイルディスクリプターを futex に 関連づける。 別のプロセスが <B>FUTEX_WAKE</B>
+を実行すると、プロセスは <I>val</I> で渡されたシグナル番号のシグナルを受信する。 呼び出しプロセスは使用後、返されたファイルディスクリプターを
+クローズしなければならない。 引き数 <I>timeout</I>, <I>uaddr2</I>, <I>val3</I> は無視される。
+<P>
+競合状態を防止するため、呼び出しプロセスは <B>FUTEX_FD</B> が返ったあと futex が up されたかどうかを確認しなければならない。
+<P>
+<B>FUTEX_FD</B> はもともと競合が起きやすかったため、 Linux 2.6.26 以降で削除されている。
+<DT><B>FUTEX_REQUEUE</B> (Linux 2.5.70 以降)<DD>
+この操作は、 <B>FUTEX_WAKE</B> が使われていて、かつ wake されている全てのプロセスが 他の futex を取得する必要がある場合に、
+「獣の群れの暴走 (thundering herd)」効果を避けるために導入された。 この呼び出しは <I>val</I> 個のプロセスを wake
+し、アドレス <I>uaddr2</I> で futex を待っている他の全てのプロセスを再度キューにいれる。 引き数 <I>timeout</I> と <I>val3</I>
+は無視される。
+<DT><B>FUTEX_CMP_REQUEUE</B> (Linux 2.6.7 以降)<DD>
+故意に <B>FUTEX_REQUEUE</B> を使う場合に競合が起こるため、 <B>FUTEX_CMP_REQUEUE</B> が導入された。これは
+<B>FUTEX_REQUEUE</B> と似ているが、場所 <I>uaddr</I> に値 <I>val3</I> がまだ保持されているかを最初にチェックする。
+保持されていない場合、操作はエラー <B>EAGAIN</B> で失敗する。引き数 <I>timeout</I> は無視される。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<P>
+
+エラーの場合、全ての操作で -1 が返り、 <I>errno</I>
+がエラーの内容を示す値に設定される。成功時の返り値は操作によって異なり、以下のリストに書かれている通りである。
+<DL COMPACT>
+<DT><B>FUTEX_WAIT</B><DD>
+そのプロセスが <B>FUTEX_WAKE</B> により wake された場合 0 を返す。発生する可能性があるエラーについては「エラー」の節を参照。
+<DT><B>FUTEX_WAKE</B><DD>
+wake したプロセスの数を返す。
+<DT><B>FUTEX_FD</B><DD>
+futex に関連づけられた新たなファイルディスクリプターを返す。
+<DT><B>FUTEX_REQUEUE</B><DD>
+wake したプロセスの数を返す。
+<DT><B>FUTEX_CMP_REQUEUE</B><DD>
+wake したプロセスの数を返す。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+futex メモリーに読み込みアクセス権がなかった。
+<DT><B>EAGAIN</B><DD>
+<B>FUTEX_CMP_REQUEUE</B> で、<I>uaddr</I> が指す値が期待値 <I>val3</I> と異なる状況が検出された。
+(これは競合を示しているかもしれない。この場合は安全な <B>FUTEX_WAKE</B> を使うこと。)
+<DT><B>EFAULT</B><DD>
+ユーザー空間から <I>timeout</I> の情報を取得する際にエラーが発生した。
+<DT><B>EINTR</B><DD>
+<B>FUTEX_WAIT</B> 操作がシグナル (<B><A HREF="../man7/signal.7.html">signal</A></B>(7) 参照) もしくは偽の wakeup により中断された。
+<DT><B>EINVAL</B><DD>
+無効な引き数。
+<DT><B>ENFILE</B><DD>
+オープンされているファイルの総数がシステムの制限に達した。
+<DT><B>ENOSYS</B><DD>
+<I>op</I> に無効な操作が指定された。
+<DT><B>ETIMEDOUT</B><DD>
+<B>FUTEX_WAIT</B> 操作でタイムアウトが発生した。
+<DT><B>EWOULDBLOCK</B><DD>
+<I>op</I> が <B>FUTEX_WAIT</B> で、その呼び出しにおいて <I>uaddr</I> が指す値が期待値 <I>val</I> と異なっていた。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<P>
+
+最初の futex 対応は Linux 2.5.7 で組み込まれたが、 上記のセマンティクスとは異なる。 4
+つの引き数のここに書かれているセマンティクスを持つ システムコールは、Linux 2.5.40 で導入された。 Linux 2.5.70 では 1
+つの引き数が追加された。 Linux 2.6.7 では 6 番目の引き数が追加された。 これは汚く、s390 アーキテクチャー上の特別のものである。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<P>
+
+
+
+
+
+
+
+
+繰り返すが、裸の futex はエンドユーザーが容易に使うことのできる概念として 意図されたものではない (glibc
+にはこのシステムコールに対するラッパー関数はない)。 実装者は、アセンブリ言語に慣れており、以下に挙げる futex ユーザー空間ライブラリの
+ソースを読み終えていることが要求される。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A></B>(2), <B><A HREF="../man7/futex.7.html">futex</A></B>(7)
+<P>
+
+<I>Fuss, Futexes and Furwocks: Fast Userlevel Locking in Linux</I> (proceedings
+of the Ottawa Linux Symposium 2002), online at
+<BR>
+
+
+
+<P>
+
+futex の使用例ライブラリ, futex-*.tar.bz2
+<BR>
+
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

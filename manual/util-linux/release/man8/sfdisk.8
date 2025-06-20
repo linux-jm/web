@@ -1,0 +1,683 @@
+.\" sfdisk.8 -- man page for sfdisk
+.\" Copyright (C) 2014 Karel Zak <kzak@redhat.com>
+.\"
+.\" Permission is granted to make and distribute verbatim copies of this
+.\" manual provided the copyright notice and this permission notice are
+.\" preserved on all copies.
+.\"
+.\" Permission is granted to copy and distribute modified versions of this
+.\" manual under the conditions for verbatim copying, provided that the
+.\" entire resulting derived work is distributed under the terms of a
+.\" permission notice identical to this one.
+.\"
+.\"*******************************************************************
+.\"
+.\" This file was generated with po4a. Translate the source file.
+.\"
+.\"*******************************************************************
+.\"
+.\" Japanese Version Copyright (c) 2001-2005 Yuichi SATO
+.\"   and 2020 Yoichi Chonan,
+.\"         all rights reserved.
+.\" Translated Sun Mar  4 15:57:26 JST 2001
+.\"         by Yuichi SATO <ysato@h4.dion.ne.jp>
+.\" Updated & Modified Fri Jan 25 05:42:49 JST 2002 by Yuichi SATO
+.\" Updated & Modified Mon Mar 10 04:26:24 JST 2003
+.\"         by Yuichi SATO <ysato444@yahoo.co.jp>
+.\" Updated & Modified Sun May  2 12:41:19 JST 2004 by Yuichi SATO
+.\" Updated & Modified Mon May  9 03:21:52 JST 2005 by Yuichi SATO
+.\" Updated & Modified (util-linux 2.35.2) Sat Jul 18 08:31:34 JST 2020
+.\"         by Yoichi Chonan <cyoichi@maple.con.ne.jp>
+.\"
+.TH SFDISK 8 "June 2015" util\-linux "System Administration"
+.SH 名前
+sfdisk \- ディスクパーティションテーブルの表示や操作を行う
+.SH 書式
+\fBsfdisk\fP [options] \fIdevice\fP [\fB\-N\fP \fIpartition\-number\fP]
+.sp
+\fBsfdisk\fP [options] \fIcommand\fP
+.SH 説明
+\fBsfdisk\fP は、ブロックデバイスのパーティション操作を行うスクリプト指向のツールである。
+端末上で実行されたときは (標準入力が端末を指しているときは）、対話モードになる。
+
+\fBsfdisk\fP は、バージョン 2.26 以来、MBR (DOS), GPT, SUN, SGI
+のディスクラベルをサポートしているが、CHS (シリンダ/ヘッド/セクタ)
+によるアドレシングの機能はもはや提供していない。CHS が Linux
+にとって重要だったことは一度もなかったし、
+このアドレシング方法は、最近のデバイスでは全く無意味なのである。
+.IP "[\fB訳注\fP]" 8
+util-linux の fdisk
+グループのマニュアルでは、「パーティションテーブル」と「ディスクラベル」の両方を、
+ほぼ同じ意味で、混ぜて使っている。強いて言えば、Linux や DOS
+(GPT や MBR) については「パーティションテーブル」を使い、他の OS
+の場合も含めて、より一般的に言うときは「ディスクラベル」を使うようにしているらしいが、
+必ずしもそうとは言えないところもある。
+.PP
+\fBsfdisk\fP は、(バージョン 2.26 以来) デフォルトの値が使用された場合や、
+パーティションの開始点に相対的なサイズが指定された場合、
+あるいは、サイズに (MiB などの) 乗数を表す接尾辞が使用された場合に、
+\fBパーティションの開始点と終了点を\fPブロックデバイスの
+\fBI/O リミットに合わせて整える\fPようになっている。
+開始オフセットがセクタで厳密に指定された場合でも、
+パーティションのサイズが相対的な形で、すなわち乗数接尾辞を付けて指定されているならば、
+I/O リミットに揃えるために、パーティションサイズの最適化が行われるかもしれない
+(すなわち、サイズが増減されるかもしれない)。
+.IP "[\fB訳注\fP]" 8
+util-linux 所収の \fBblkid\fP(8) の man によれば、\fBblkid \-i\fP \fIdevice\fP
+で「I/O Limits (aka I/O topology)
+の情報を表示する」ことになっている。そこで、それを実行すると、MINIMUM_IO_SIZE,
+PHYSICAL_SECTOR_SIZE, LOGICAL_SECTOR_SIZE が表示された。I/O
+リミットとは、そうしたもののことなのだろう。特に、PHYSICAL_SECTOR_SIZE
+が重要なようだ。「I/O 境界」「I/O 制約」と訳せるかもしれない。
+.sp
+なお、上のパラグラフでは、「パーティションの開始点に相対的なサイズを指定する」ということが、
+わかりにくいかもしれない。 たとえば、開始点を \fB+100M\fP
+といった形で指定することで、現在の開始点より
+100MiB 後方という指示が可能なのである。\fB\-\-move\-data\fP
+オプションの用例の最初のコマンドがその一例である。
+.PP
+我々が推奨するのは、開始オフセットを全く指定せず、パーティションサイズを
+MiB, GiB などの単位で指定する方法だ。その場合、sfdisk
+は、すべてのパーティションをブロックデバイスの I/O リミットに合わせて整える
+(I/O リミットでは細かすぎる場合には、ディスクレイアウトに可搬性があるように、
+メガバイトレベルの境界に揃える)。
+デフォルトのこの動作が望ましくない場合は
+(よくあるのは、非常に小さなパーティションを作りたい場合だ)、
+オフセットとサイズをセクタで指定すればよい。
+その場合、sfdisk は、指定された数値に全面的に従い、最適化を一切行わない。
+.sp
+\fBsfdisk\fP は、\fBfdisk\fP と違って、SGI や SUN
+のディスクラベルのために標準的なシステムパーティションを作成しない。
+ディスク全体を表すシステムパーティションを含めて、
+すべてのパーティションを明示的に作成する必要がある。
+
+\fBsfdisk\fP は (パーティションテーブルの再読み込みを行う) BLKRRPART ioctl
+を使用して、対象にするデバイスがシステムや他のツールによって使用されていないことを確認する
+(\-\-no\-reread オプションを参照)。この機能や sfdisk の他の動作が、\fBudevd\fP
+と競合することがあるかもしれない。衝突 (collisions)
+が起きないようにするための推奨方法は、ディスク全体を表すデバイスに対して
+flock を排他的に使って、デバイスへのアクセスをシリアライズすることである。
+排他的ロックがなされていると、udevd
+はそのデバイスに対するイベントハンドリングをスキップするのである。
+.RS
+.sp
+.nf
+\fBflock /dev/sdc sfdisk /dev/sdc\fP
+.fi
+.sp
+.RE
+現在のところ、この方法の持つ効果は、MD や DM デバイスに対しては
+udevd によってサポートされていない (訳注: MD や DM
+デバイスというのは、ソフトウエア RAID, LVM, 暗号化デバイスなどのことらしい)。
+
+.SH コマンド
+以下のコマンドはどれか一つしか使えない
+(訳注: ただし、\fB\-l\fP と \fB\-V\fP の組み合わせは例外である)。
+.TP 
+[\fB\-N\fP \fIpartition\-number\fP] \fIdevice\fP
+\fBsfdisk\fP のデフォルトのコマンドは
+(訳注: 要するに以下にあるような特定のコマンドが指定されていないときのデフォルトの動作は)、
+\fIdevice\fP にどんなパーティションを作成するかの具体的な指示を標準入力から読み込んで、
+その指示に従ってパーティションテーブルを作成することである。
+入力の書式がどんなものになるかについては、後述の説明をお読みになっていただきたい。
+標準入力が端末の場合は、
+\fBsfdisk\fP は対話セッションを開始する。
+.sp
+オプションの \fB\-N\fP が指定されている場合は、\fIpartition\-number\fP
+で指示されたパーティションに変更が適用される。
+そのパーティションのフィールドでも、具体的な指定のないフィールドは、変更されない。
+.sp
+なお、\fB\-N\fP を用いて、未使用のパーティションを指定することもできる。
+たとえば、MBR には、いつでも 4 個のパーティションを登録できるが、
+現在使用しているパーティションは、それより少ないかもしれない。
+その場合、\fBsfdisk\fP は、\fB\-N\fP で指定された未使用のパーティションについては、
+パーティションテーブルから取得されるデフォルトの値に従い、
+プログラムに埋め込まれたデフォルトは使用しない。
+\fB\-\-append\fP も参照していただきたい。
+.RS
+.IP "[\fB訳注\fP]" 8
+対話セッションを行わず、いわゆる sfdisk
+互換スクリプトの読み込みも行わない場合の、sfdisk
+の典型的、かつ単純な使用法は、次のように指示を標準入力から読み込ませることである。
+.sp
+.nf
+    # sfdisk /dev/sda <<END
+    > 2048,300GiB,L
+    > ,20GiB,S
+    > ,
+    > END
+.fi
+.sp
+上記の指示は、/dev/sda に 3 個のパーティションを作っている。まず、2048
+セクタを開始オフセットとして 300 GiB の Linux filesystem (L)、/dev/sda1
+を作り、続いて開始オフセットの決定を sfdisk にまかせて、20 GiB の
+Linux swap (S)、/dev/sda2 を作る。
+そして最後に残りのすべてを /dev/sda3 にしている 
+(タイプは、自動的にデフォルトの Linux filesystem になる)。
+指示の書式についての詳しいことは、「\fB入力の書式\fP」セクションをご覧いただきたい。
+.RE
+.TP 
+\fB\-A\fP,\fB \-\-activate \fP\fIdevice \fP[\fIpartition\-number...]\fP
+指定されたパーティション (複数指定可) のブート可能フラグを ON
+に切り替え、指定されなかったすべてのパーティションのブート可能フラグを
+OFF にする。すべてのパーティションのブート可能フラグを OFF
+にしてしまうには、パーティションナンバーの代わりに、特別な引き数の '\-' を使えばよい。
+
+このアクティベーションコマンドは、MBR と PMBR (Protective MBR)
+に対してのみサポートされている。GPT のディスクラベルが検出された場合、sfdisk
+は警告メッセージを表示し、自動的に PMBR にブートフラグを記入する。
+
+\fIpartition\-number\fP が指定されていない場合は、
+ブート可能フラグの付いたパーティションをリストする。
+.TP 
+\fB\-\-delete \fP\fIdevice \fP[\fIpartition\-number\fP...]
+すべての、または指定されたパーティションを削除する。
+.TP 
+\fB\-d\fP,\fB \-\-dump \fP\fIdevice\fP
+\fBsfdisk\fP の入力に使用できるフォーマットでデバイスのパーティションをダンプする。
+「\fBパーティションテーブルのバックアップ\fP」セクションを参照。
+.TP 
+\fB\-g\fP,\fB \-\-show\-geometry \fP[\fIdevice\fP...]
+すべての、または指定されたデバイスのジオメトリをリストする。
+後方互換のために、非推奨のオプション \fB\-\-show\-pt\-geometry\fP
+も、このコマンドと同じ意味を持っている。
+.TP 
+\fB\-J\fP,\fB \-\-json \fP\fIdevice\fP
+JSON フォーマットでデバイスのパーティションをダンプする。\fBsfdisk\fP
+は、JSON フォーマットを入力には使えないことに注意していただきたい。
+.TP 
+\fB\-l\fP,\fB \-\-list \fP[\fIdevice\fP...]
+すべての、または指定されたデバイスのパーティションをリストする。
+このコマンドは、\fB\-\-verify\fP と一緒に使うことができる。
+.TP 
+\fB\-F\fP,\fB \-\-list\-free \fP[\fIdevice\fP...]
+すべての、または指定されたデバイスの、パーティションが切られていない未使用領域をリストする。
+.TP 
+\fB\-\-part\-attrs \fP\fIdevice partition\-number \fP[\fIattributes\fP]
+GPT パーティションの属性ビット (attribute bits) を変更する。\fIattributes\fP
+の指定がない場合は、現在のパーティション設定を表示する。引き数 \fIattributes\fP
+は、コンマまたはスペースで区切ったビットのリストだ。
+現在サポートされている属性ビットは、 RequiredPartition, NoBlockIOProtocol,
+LegacyBIOSBootable、それに 48 から 63 までの範囲の GUID\-specific bits
+である。たとえば、"RequiredPartition,50,51"
+という文字列は、3 個のビットを設定する。
+.TP 
+\fB\-\-part\-label \fP\fIdevice partition\-number \fP[\fIlabel\fP]
+GPT パーティションの名前 (ラベル) を変更する。\fIlabel\fP
+の指定がない場合は、現在のパーティションラベルを表示する。
+(訳注: この \fIlabel\fP は、下記「\fBフィールド名のある書式\fP」で \fBname\fP
+に対して指定している値と同じものであり、パーティションの簡単な説明である。)
+.TP 
+\fB\-\-part\-type \fP\fIdevice partition\-number \fP[\fItype\fP]
+パーティションのタイプを変更する。\fItype\fP
+の指定がない場合は、現在のパーティションタイプを表示する。引き数 \fItype\fP
+は、MBR では 16 進数であり、GPT では GUID
+である。後方互換のために、オプション \fB\-c\fP と \fB\-\-id\fP
+も、このコマンドと同じ意味を持っている。
+.TP 
+\fB\-\-part\-uuid \fP\fIdevice partition\-number \fP[\fIuuid\fP]
+GPT パーティションの UUID を変更する。\fIuuid\fP
+の指定がない場合は、現在のパーティション UUID を表示する。
+.TP 
+\fB\-r\fP,\fB \-\-reorder \fP\fIdevice\fP
+パーティションの番号を付け直す。すなわち、パーティションの番号を開始オフセットの順番にする。
+.TP 
+\fB\-s\fP,\fB \-\-show\-size \fP[\fIdevice\fP...]
+すべての、または指定されたデバイスのサイズを、1024
+バイト単位で一覧表示する。このコマンドは「非推奨」である。\fBblockdev\fP(8)
+の使用をお勧めする。
+.TP 
+\fB\-T\fP,\fB \-\-list\-types\fP
+現在のディスクラベル、または \fB\-\-label\fP
+オプションで指定されたディスクラベル (訳注: dos とか gpt とか)
+でサポートされているパーティションのタイプ (type) のすべてを表示する。
+(訳注: 訳者の手元では、\fB\-\-label gpt\fP と指定しないかぎり、gpt
+のディスクでも、dos のパーティションタイプ一覧が表示される。)
+.TP 
+\fB\-V\fP,\fB \-\-verify \fP[\fIdevice\fP...]
+パーティションテーブルとパーティションが、正しく見えるかどうかを検査する。
+
+.SH オプション
+.TP 
+\fB\-a\fP,\fB \-\-append\fP
+新しいパーティションテーブルを作成しない。
+既存のパーティションテーブルに対する指定されたパーティションの追加のみを行う。
+.TP 
+\fB\-b\fP,\fB \-\-backup\fP
+パーティショニングを始める前に、
+現在のパーティションテーブルが格納されているセクタをバックアップする。
+デフォルトのバックアップファイル名は、~/sfdisk\-<device>\-<offset>.bak
+である。別の名前を使いたいなら、オプション \fB\-O\fP, \fB\-\-backup\-file\fP
+の説明をご覧になるとよい。
+.TP 
+\fB\-\-color\fP[\fB=\fP\fIwhen\fP]
+出力をカラー表示にする。指定が任意の引き数 \fIwhen\fP には、\fBauto\fP, \fBnever\fP,
+\fBalways\fP が使える。引き数 \fIwhen\fP を省略すると、デフォルトの
+\fBauto\fP になる。カラー表示は無効にすることもできる。
+プログラムに埋め込まれた現在のデフォルトが有効か無効かを知りたければ、\fB\-\-help\fP
+の出力を見ればよい。「\fBカラー表示\fP」セクションも参照していただきたい。
+.TP 
+\fB\-f\fP,\fB \-\-force\fP
+整合性チェックを一切行わないようにする。
+.TP 
+\fB\-\-Linux\fP
+非推奨なオプションであり、無視される。Linux (などの現代のオペレーティングシステム)
+で問題なく使えるパーティションの作成は、デフォルトである。
+.TP 
+\fB\-n\fP,\fB \-\-no\-act\fP
+デバイスに書き込むこと以外のすべてを行う。
+.TP 
+\fB\-\-no\-reread\fP
+デバイスが使用中かどうかを、パーティションテーブルの再読み込みを行う ioctl
+によってチェックしない。
+.TP 
+\fB\-\-no\-tell\-kernel\fP
+パーティションの変更についてカーネルに通知しない。
+使用中のディスクのパーティションを変更する場合、このオプションを \fB\-\-no\-reread\fP
+と併せて使用することをお勧めする。もちろん、変更したパーティションは、使用
+(たとえば、マウントなどを) するべきではない。
+.TP 
+\fB\-O\fP,\fB \-\-backup\-file \fP\fIpath\fP
+バックアップファイルの名前をデフォルトから変更する。
+ファイル名の末尾に、デバイス名とオフセットが必ず追加されることに注意していただきたい。
+.TP 
+\fB\-\-move\-data\fP[\fB=\fP\fIpath\fP]
+たとえば、パーティションの先頭をディスクの別の位置に移動するといった場合に、
+パーティションの再配置をした後で、データを移動する。
+パーティションのサイズは、操作の前後で同じでなければならない。
+新旧の位置は、オーバーラップしていても構わない。このオプションは、\fB\-N\fP
+オプションを必須とする。特定の 1 パーティションに対してのみ、処理を行うためである。
+
+指定が任意の引き数 \fIpath\fP はログファイルの名前である。
+このログファイルには、パーティションのデータに関するすべての
+read/wite 操作の情報が入っている。\fIpath\fP に "@default"
+という単語を指定すると、\fBsfdisk\fP はログファイルとして
+~/sfdisk\-<devname>.move を使うことになる。このログは、v2.35
+以来、作成がユーザの任意になった。
+
+この操作は危険であり、アトミックでもないことに注意していただきたい。
+だから、\fBデータのバックアップを取ることを忘れてはいけない！\fP
+
+ \fB\-\-move\-use\-fsync\fP もご覧いただきたい。
+
+次の例では、最初のコマンドは、第 1 パーティションの前に 100MiB
+の空き領域を作成し、第 1 パーティションのデータ (ファイルシステムなど)
+を後方に移動している。2 番目のコマンドは、今作った空き領域に
+(オフセット 2048 から) 新パーティションを作っている。
+最後のコマンドは、ディスク上の順番と一致するように、
+パーティションの番号を付け直している (元の sdc1 が sdc2 になる)。
+.RS
+.sp
+\fBecho '+100M,' | sfdisk \-\-move\-data /dev/sdc \-N 1\fP
+.br
+\fBecho '2048,' | sfdisk /dev/sdc \-\-append\fP
+.br
+\fBsfdisk /dev/sdc \-\-reorder\fP
+.sp
+.RE
+
+.TP 
+\fB\-\-move\-use\-fsync\fP
+\fB\-\-move\-data\fP でデータを新しい場所に移動する際、書き込みをするたびにシステムコール
+\fBfsync\fP を使用する。
+.TP 
+\fB\-o\fP,\fB \-\-output \fP\fIlist\fP
+出力にどの項目 (columns) を表示するかを指定する。
+使用できる全項目のリストを知るには、\fB\-\-help\fP を使用すればよい。
+.sp
+デフォルトの項目リストを拡張することもできる。\fIlist\fP を
+\fI+list\fP の形で指定すればよいのだ (たとえば、\fB\-o +UUID\fP のように)。
+.TP 
+\fB\-q\fP,\fB \-\-quiet\fP
+追加情報のメッセージを出さないようにする。
+.TP 
+\fB\-u\fP,\fB \-\-unit S\fP
+非推奨オプションである。使用できる単位がセクタのみになる。
+このオプションは、\fB\-\-show\-size\fP コマンドを使用しているときは、サポートされない。
+.TP 
+\fB\-X\fP,\fB \-\-label \fP\fItype\fP
+ディスクラベルの型を指定する (たとえば、\fBdos\fP, \fBgpt\fP, ...)。
+このオプションが指定されていない場合、\fBsfdisk\fP
+は、デバイスにすでに存在しているディスクラベルをデフォルトとして使用するが、
+デバイスにまだディスクラベルが存在しないときは、デフォルトのラベル型を
+\fBdos\fP にする。こうしたデフォルトや現在のラベルは、スクリプトのヘッダ行
+"label: <name>" で上書きすることができる。この \fB\-\-label\fP
+オプションは、空のディスクラベルを
+(訳注: 別の言い方をすると、パーティションテーブルの型だけが指定されて、パーティションは
+1 個も存在しないパーティションテーブルを) \fBsfdisk\fP
+に無理矢理作らせるようなことはしない (以下の「\fB空のディスクラベル\fP」セクションを参照)。
+.TP 
+\fB\-Y\fP,\fB \-\-label\-nested \fP\fItype\fP
+ネストしたディスクラベルを強引に編集する。
+プライマリーなディスクラベルはすでに存在していなければならない。
+このオプションを使えば、たとえば、GPT のデバイス上で
+hybrid/protective MBR を編集することができるようになる。
+
+.TP 
+\fB\-w\fP,\fB \-\-wipe \fP\fIwhen\fP
+デバイスからファイルシステムや RAID
+やパーティションテーブルのシグナチャーを消去する
+(訳注: 前から存在する古いシグナチャーを消去するということだろう)。衝突 (collision)
+が起きないようにするためである。引き数の \fIwhen\fP には、\fBauto\fP, \fBnever\fP,
+\fBalways\fP が使える。このオプションが指定されない場合のデフォルトは、\fBauto\fP
+であり、その場合シグナチャーが消去されるのは、原則として対話モードのときだけだが、
+古いパーティションテーブル・シグナチャーだけは例外で、引き数の \fIwhen\fP が
+\fBnever\fP でないかぎり、新しいパーティションテーブルが作成される前に、必ず消去される。
+いずれの場合でも、新しいパーティションテーブルが作成される前に、検出されたシグナチャーが、
+警告メッセージとして通知される。\fBwipefs\fP(8) コマンドの説明もご覧いただきたい。
+
+.TP 
+\fB\-W\fP,\fB \-\-wipe\-partitions \fP\fIwhen\fP
+新たに作成するパーティションからファイルシステムや RAID
+やパーティションテーブルのシグナチャーを消去する
+(訳注: 前から存在する古いシグナチャーを消去するということだろう)。衝突 (collision)
+が起きないようにするためである。引き数の \fIwhen\fP には、\fBauto\fP, \fBnever\fP,
+\fBalways\fP が使える。このオプションが指定されない場合のデフォルトは、\fBauto\fP
+であり、その場合シグナチャーが消去されるのは、対話モードのときだけで、
+それもユーザが承認した後である。
+いずれの場合でも、新しいパーティションが作成された後で、検出されたシグナチャーが、
+警告メッセージとして通知される。\fBwipefs\fP(8) コマンドの説明もご覧いただきたい。
+
+.TP 
+\fB\-v\fP,\fB \-\-version\fP
+バージョン情報を表示して終了する。
+.TP 
+\fB\-h\fP,\fB \-\-help\fP
+ヘルプテキストを表示して終了する。
+
+.SH 入力の書式
+\fBsfdisk\fP は、2 種類の入力書式と、両方に共通するヘッダ行をサポートしている。
+
+\fBヘッダ行\fP
+.RS
+指定が任意のヘッダ行では、パーティションテーブル全体に適用される情報を指定する。
+ヘッダ行の書式は、次のようになる。
+.RS
+.sp
+\fB<name>: <value>\fP
+.sp
+.RE
+現在のところ、認識されるヘッダは以下のものである。
+.RS
+.TP 
+\fBunit\fP
+パーティション分割で使う単位を指定する。サポートされている単位は、
+\fBsectors\fP (セクタ数) だけである。
+.TP 
+\fBlabel\fP
+パーティションテーブルの型 (partition table type)
+を指定する。たとえば、\fBdos\fP とか \fBgpt\fP とかである。(訳注: このマニュアルの中で
+partition table type は、disk label type とも呼ばれている。)
+.TP 
+\fBlabel\-id\fP
+パーティションテーブルの識別名を指定する。識別名は、MBR では (前に 0x の付いた)
+16 進数であり、GPT では UUID である。(訳注: \fBsfdisk \-l\fP
+の出力では、Disk identifier と表示される。)
+.TP 
+\fBfirst\-lba\fP
+GPT パーティションで使用できる最初のセクタを指定する。
+.TP 
+\fBlast\-lba\fP
+GPT パーティションで使用できる最後のセクタを指定する。
+.TP 
+\fBtable\-length\fP
+GPT パーティションの最大数を指定する。
+.TP 
+\fBgrain\fP
+パーティションの開始・終了位置を整えるとき、計算に使用する最小のサイズをバイト単位で指定する。
+デフォルトは 1MiB であり、このデフォルトの使用を強くお勧めする。
+よくわかっていないなら、この変数を変更してはいけない。
+.TP 
+\fBsector\-size\fP
+セクタのサイズを指定する。このヘッダはもっぱら参考用であり、\fBsfdisk\fP
+が新しいパーティションテーブルを作成するときに、使われるわけではない。そのときは、
+実際のデバイスに固有な値が常に使用され、ダンプによって取得したセクタサイズは無視される
+(訳注: \fBsector\-size\fP が \fB\-\-dump\fP によって取得されるのは、v2.35
+以降である)。
+.RE
+.sp
+気を付けてほしいが、ヘッダ行が使用できるのは、入力中で最初のパーティションを指定する前だけである。
+.RE
+
+\fBフィールド名なしの書式\fP
+.RS
+.RS
+.sp
+\fIstart size type bootable\fP
+.sp
+.RE
+こうした各行は、1 つのパーティションについての記述になっている。
+.sp
+フィールドは、空白 (whitespace)、コンマ、またはセミコロンによって区切られる。
+コンマなどの後ろには、空白があってもよく、先頭と末尾の空白は無視される。
+数値には 8 進、10 進、16 進数が使え、10　進数がデフォルトである。
+あるフィールドが存在しない場合や、空っぽの場合、'\-'
+という値が指定されている場合は、デフォルトの値が使用される。ただし、\fB\-N\fP
+オプション (ある 1 つのパーティションを変更せよ) が指定されているときは、
+各フィールドのデフォルトは、前回と同じ値になる。
+.sp
+\fIstart\fP のデフォルト値は、位置やサイズをデバイスの I/O
+リミットに合わせて整えたセクタの、まだ割り当てられていない最初のものである。
+ただし、最初のパーティションのデフォルトの開始オフセットは、1 MiB だ。
+指定するオフセットには、乗数を表す接尾辞を続けることができ (KiB, MiB, GiB, TiB,
+PiB, EiB, ZiB, YiB)、その場合、数値はバイト単位のオフセットと解釈される。
+(訳注: \fIstart\fP の値は、本来は論理セクタを単位とするオフセット位置だが、オフセット位置は
+KiB, MiB などのサイズで指定することもできるということ)。
+.sp
+\fIsize\fP のデフォルト値は、「できるだけ大きく」である。
+すなわち、次のパーティションまで、またはデバイスの終わりまでということだ。
+数値の指定は、デフォルトではセクタ数と解釈されるが、数値に乗数を表す接尾辞の 1 つ
+(KiB, MiB, GiB, TiB, PiB, EiB, ZiB and YiB)
+が続く場合は、バイト単位のパーティションサイズと解釈され、その上でデバイスの
+I/O リミットに合わせてサイズが整えられる。数値に代えて、1 個の '+'
+を使用することもでき、その場合は、パーティションをできるだけ大きく広げることになる。
+\&'+' は、新規パーティションでは、
+デフォルトの動作と同じであることに注意していただきたい。
+すでに存在しているパーティションの場合は、必要に応じてサイズを変更することになる。
+.sp
+パーティションの \fItype\fP は、MBR (DOS) では 0x を前に付けない
+16 進数で指定し、GPT では GUID 文字列で指定する。以下のような短縮表記による指定も可能だ。
+.RS
+.TP 
+\fBL\fP
+Linux; MBR では 83 を意味し、GPT では
+0FC63DAF\-8483\-4772\-8E79\-3D69D8477DE4 を意味する。
+.TP 
+\fBS\fP
+swap 領域; MBR では 82 を意味し、GPT では
+0657FD6D\-A4AB\-43C4\-84E5\-0933C84B4F4F を意味する。
+.TP 
+\fBE\fP
+拡張パーティション; MBR では 5 を意味する。
+.TP 
+\fBH\fP
+ホームパーティション; GPT では
+933AC7E1\-2EB4\-4F13\-B844\-0E14E2AEF915 を意味する。
+.TP 
+\fBX\fP
+linux 拡張パーティション; MBR では 85 を意味する。
+.TP 
+\fBU\fP
+EFI システムパーティション; MBR では EF を意味し、GPT では
+C12A7328\-F81F\-11D2\-BA4B\-00A0C93EC93B を意味する。
+.TP 
+\fBR\fP
+Linux RAID; MBR では FD を意味し、GPT では
+A19D880F\-05FC\-4D3B\-A006\-743F0F84911E を意味する。
+.TP 
+\fBV\fP
+LVM; MBR では 8E を意味し、GPT では
+E6D6D379\-F507\-44C2\-A23C\-238F2A3DF928 を意味する。
+.RE
+.PP
+\fItype\fP のデフォルトの値は、\fIL\fP である。
+
+\fIbootable\fP は [\fB*\fP|\fB\-\fP] という形で指定する。デフォルトは
+not\-bootable である。このフィールドの値は、Linux には関係がない (Linux
+が動いているなら、すでに問題なくブートしているわけだ)。
+だが、ブートローダやオペレーティングシステムによっては、何らかの役割を果たしていることもあり得る。
+.RE
+
+\fBフィールド名のある書式\fP
+.RS
+この書式は、フィールド名なしの書式とくらべて、より読みやすく、堅牢であり、
+拡張性もあって、追加の情報 (たとえば、UUID) を指定することも可能になる。
+こちらの書式を使用して、作成するスクリプトをより読みやすくしておくことをお勧めする。
+.RS
+.sp
+[\fIdevice \fP\fB:\fP]\fI name\fP[\fB=\fP\fIvalue\fP], ...
+.sp
+.RE
+\fIdevice\fP フィールドの指定は任意である。\fBsfdisk\fP
+は、パーティション番号をこのデバイス名から取り出す。
+そこで、これを使用すれば、パーティションを任意の順番で指定することが可能になる。この機能は、
+主に \fB\-\-dump\fP で使用されている。パーティション番号に確信がない場合は、\fIdevice\fP
+フィールドを使用してはいけない。
+
+\fIvalue\fP は、引用符で囲むことができる (たとえば、name="This is partition name"
+のように)。現在のところ、次のフィールドがサポートされている。
+.RS
+.TP 
+\fBstart=\fP\fInumber\fP
+デフォルトは、位置やサイズをデバイスの I/O
+リミットに合わせて整えたセクタの、まだ割り当てられていない最初のもの。
+ただし、最初のパーティションのデフォルトの開始オフセットは
+1 MiB である。指定するオフセットには、乗数を表す接尾辞を続けることができ
+(KiB, MiB, GiB, TiB, PiB, EiB, ZiB,
+YiB)、その場合、数値はバイト単位のオフセットと解釈される。
+.TP 
+\fBsize=\fP\fInumber\fP
+パーティションのサイズをセクタ数で指定する。数値には乗数を表す接尾辞を続けることができる
+(KiB, MiB, GiB, TiB, PiB, EiB, ZiB, YiB)。
+その場合、数値はバイト単位のサイズと解釈され、サイズがデバイスの
+I/O リミットに合わせて整えられる。
+.TP 
+\fBbootable\fP
+パーティションにブート可能の印を付ける。
+.TP 
+\fBattrs=\fP\fIstring\fP
+パーティションの属性。普通は、GPT パーティションの属性ビットである。
+GPT\-bits ストリングのフォーマットについては、\fB\-\-part\-attrs\fP の説明が詳しい。
+.TP 
+\fBuuid=\fP\fIstring\fP
+GPT パーティションの UUID。
+.TP 
+\fBname=\fP\fIstring\fP
+GPT パーティションの名前 (訳注: "EFI system partition",
+"Basic data partition" のようなパーティションの簡単な説明)。
+.TP 
+\fBtype=\fP\fIcode\fP
+MBR パーティションでは (0x を前に付けない) 16 進数。GPT パーティションでは GUID。
+\fBフィールド名なしの書式\fPと同様、短縮表記も使える
+(訳注: \fBフィールド名のある書式\fPで短縮表記が使えるのは、v2.35
+以降のようだ)。後方互換のために、\fBId=\fP フィールドも同じ意味を持っている。
+.RE
+.RE
+
+.SH 空のディスクラベル
+\fBsfdisk\fP は、デフォルトではパーティションの存在しないパーティションテーブルを作成しない。
+デフォルトでは、パーティションを記述する行が、スクリプト中に存在しなければならないのだ。
+そこで、空のパーティションテーブルを作りたかったら、それを明示的に要求しなければならない。
+すなわち、スクリプトヘッダ行の "label: <name>"
+を使用し、パーティションを記述する行を一切指定しないようにするのである。例を挙げよう。
+.RS
+.sp
+\fBecho 'label: gpt' | sfdisk /dev/sdb\fP
+.sp
+.RE
+上記のコマンドは、空の GPT パーティションテーブルを作成する。なお、
+\fB\-\-append\fP オプションは、この動作を無効にすることに注意していただきたい。
+
+.SH パーティションテーブルのバックアップ
+使用しているデバイスのレイアウトを保存しておくのは、よいことである。
+\fBsfdisk\fP は、2 種類の方法をサポートしている。
+.sp
+\fB\-\-dump\fP オプションを使えば、デバイスレイアウトの明細をテキストファイルに保存できる。
+このダンプのフォーマットは、後日 \fBsfdisk\fP の入力に使えるものである。
+たとえば、次のようにする。
+.RS
+.sp
+\fBsfdisk \-\-dump /dev/sda > sda.dump\fP
+.sp
+.RE
+保存した状態は、次のようにして後日復元することができる。
+.RS
+.sp
+\fBsfdisk /dev/sda < sda.dump\fP
+.RE
+
+パーティションテーブルが格納されているセクタすべての完全な (バイナリの)
+バックアップがしたかったら、\fB\-\-backup\fP オプションを使用すればよい。
+そうすると、該当するセクタが ~/sfdisk\-<device>\-<offset>.bak
+といったファイルに書き出される。バックアップファイルのこのデフォルト名は、
+\fB\-\-backup\-file\fP オプションで変更することができる。こうしたバックアップファイルには、
+\fIdevice\fP にあった raw data
+しか含まれていない。ちなみに、同じ発想のバックアップファイルが、
+\fBwipefs\fP(8) でも使われている。一例を挙げよう。
+.RS
+.sp
+\fBsfdisk \-\-backup /dev/sda\fP
+.sp
+.RE
+次のようにすれば、GPT ヘッダを後日復元することができる。
+.RS
+.sp
+.nf
+\fBdd  if=~/sfdisk\-sda\-0x00000200.bak  of=/dev/sda  \e\fP
+\fBseek=$((0x00000200))  bs=1  conv=notrunc\fP
+.fi
+.sp
+.RE
+注意していただきたいが、\fBsfdisk\fP は、バージョン 2.26
+以来、もうセクタを復元するための \fB\-I\fP
+オプションを提供していない。必要な機能は、すべて
+\fBdd\fP コマンドに存在している。
+
+.SH カラー表示
+自動的なカラー表示は、\fI/etc/terminal\-colors.d/sfdisk.disable\fP
+という空ファイルを作ることで無効にできる。
+
+カラー表示の設定についてもっと詳しいことを知りたかったら、\fBtermianl\-colors.d\fP(5)
+をご覧になるとよい。\fBsfdisk\fP は、以下の論理カラー名をサポートしている。
+.TP 
+\fBheader\fP
+出力するテーブルのヘッダ
+.TP 
+\fBwarn\fP
+警告メッセージ
+.TP 
+\fBwelcome\fP
+ウェルカムメッセージ
+
+.SH 注意
+バージョン 2.26 以来、\fBsfdisk\fP は、カーネルにパーティションテーブルを再読込させる
+\fB\-R\fP や \fB\-\-re\-read\fP オプションを提供していない。代わりに
+\fBblockdev \-\-rereadpt\fP を使用していただきたい。
+.PP
+バージョン 2.26 以来、\fBsfdisk\fP は、以下のオプションも提供していない。
+\fB\-\-DOS\fP, \fB\-\-IBM\fP, \fB\-\-DOS\-extended\fP, \fB\-\-unhide\fP,
+\fB\-\-show\-extended\fP, \fB\-\-cylinders\fP, \fB\-\-heads\fP, \fB\-\-sectors\fP,
+\fB\-\-inside\-outer\fP, \fB\-\-not\-inside\-outer\fP。
+
+.SH 環境変数
+.IP SFDISK_DEBUG=all
+sfdisk デバッグ出力を有効にする。
+.IP LIBFDISK_DEBUG=all
+libfdisk デバッグ出力を有効にする。
+.IP LIBBLKID_DEBUG=all
+libblkid デバッグ出力を有効にする。
+.IP LIBSMARTCOLS_DEBUG=all
+libsmartcols デバッグ出力を有効にする。
+
+.SH 関連項目
+\fBfdisk\fP(8), \fBcfdisk\fP(8), \fBparted\fP(8), \fBpartprobe\fP(8), \fBpartx\fP(8)
+
+.SH 作者
+Karel Zak <kzak@redhat.com>
+.PP
+現在の sfdisk の実装は、Andries E. Brouwer による最初の
+sfdisk を元にしている。
+
+.SH 入手方法
+この sfdisk コマンドは、util\-linux パッケージの一部であり、以下の URL
+から入手できる。https://www.kernel.org/pub/linux/utils/util\-linux/

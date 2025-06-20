@@ -1,0 +1,709 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TERMIOS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TERMIOS</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/termios.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+termios, tcgetattr, tcsetattr, tcsendbreak, tcdrain, tcflush, tcflow,
+cfmakeraw, cfgetospeed, cfgetispeed, cfsetispeed, cfsetospeed, cfsetspeed -
+ターミナル属性の取得・設定、ライン制御、ボーレートの取得・設定
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/termios.h">termios.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int tcgetattr(int </B><I>fd</I><B>, struct termios *</B><I>termios_p</I><B>);</B>
+
+<B>int tcsetattr(int </B><I>fd</I><B>, int </B><I>optional_actions</I><B>,</B>
+<B>              const struct termios *</B><I>termios_p</I><B>);</B>
+
+<B>int tcsendbreak(int </B><I>fd</I><B>, int </B><I>duration</I><B>);</B>
+
+<B>int tcdrain(int </B><I>fd</I><B>);</B>
+
+<B>int tcflush(int </B><I>fd</I><B>, int </B><I>queue_selector</I><B>);</B>
+
+<B>int tcflow(int </B><I>fd</I><B>, int </B><I>action</I><B>);</B>
+
+<B>void cfmakeraw(struct termios *</B><I>termios_p</I><B>);</B>
+
+<B>speed_t cfgetispeed(const struct termios *</B><I>termios_p</I><B>);</B>
+
+<B>speed_t cfgetospeed(const struct termios *</B><I>termios_p</I><B>);</B>
+
+<B>int cfsetispeed(struct termios *</B><I>termios_p</I><B>, speed_t </B><I>speed</I><B>);</B>
+
+<B>int cfsetospeed(struct termios *</B><I>termios_p</I><B>, speed_t </B><I>speed</I><B>);</B>
+
+<B>int cfsetspeed(struct termios *</B><I>termios_p</I><B>, speed_t </B><I>speed</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>cfsetspeed</B>(),
+<B>cfmakeraw</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以降:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以前:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+termios 関数群は、非同期通信ポートを制御するための汎用 ターミナルインターフェースである。
+<A NAME="lbAE">&nbsp;</A>
+<H3>termios 構造体</H3>
+
+ここに示されている関数の多くは、引数に <I>termios_p</I> を用いる。 この引数は <I>termios</I> 構造体へのポインターである。
+この構造体には少なくとも以下に示すメンバが含まれる:
+<P>
+
+
+
+tcflag_t c_iflag;      /* input modes */
+tcflag_t c_oflag;      /* output modes */
+tcflag_t c_cflag;      /* control modes */
+tcflag_t c_lflag;      /* local modes */
+cc_t     c_cc[NCCS];   /* special characters */
+
+
+<P>
+
+以下に、これらのフィールドに割り当て可能な値について説明する。 最初の 4 つのビットマスクフィールドでは、
+関係するフラグの定義のいくつかは、特定の機能検査マクロ (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照)
+が定義された場合にのみ公開される。 必要な機能検査マクロは角括弧 (&quot;[]&quot;) 内に書かれている。
+<P>
+
+以下の説明で、 &quot;POSIX にはない&quot; は その値が POSIX.1-2001 で規定されていないことを意味し、 &quot;XSI&quot; はその値が
+POSIX.1-2001 の XSI 拡張で 規定されていることを意味する。
+<P>
+
+<I>c_iflag</I> フラグには以下の要素を指定できる:
+<DL COMPACT>
+<DT><B>IGNBRK</B><DD>
+入力中の BREAK 信号を無視する。
+<DT><B>BRKINT</B><DD>
+<B>IGNBRK</B> が設定されている場合は、BREAK 信号は無視される。 <B>IGNBRK</B> が設定されていないが、<B>BRKINT</B>
+が設定されている場合は、 BREAK 信号によって入出力キューがフラッシュされ、 さらに、端末がフォアグラウンドプロセスグループの制御端末の場合は、
+フォアグラウンドプロセスグループに <B>SIGINT</B> が送られる。 <B>IGNBRK</B> も <B>BRKINT</B> も設定されていない場合、 BREAK
+をヌルバイト ('\0') として読み込む。 ただし、<B>PARMRK</B> が設定されている場合は \377 \0 \0
+のシーケンスとして 読み込む。
+<DT><B>IGNPAR</B><DD>
+フレームエラーおよびパリティエラーを無視する。
+<DT><B>PARMRK</B><DD>
+If this bit is set, input bytes with parity or framing errors are marked
+when passed to the program.  This bit is meaningful only when <B>INPCK</B> is
+set and <B>IGNPAR</B> is not set.  The way erroneous bytes are marked is with
+two preceding bytes, \377 and \0.  Thus, the program actually reads three
+bytes for one erroneous byte received from the terminal.  If a valid byte
+has the value \377, and <B>ISTRIP</B> (see below) is not set, the program might
+confuse it with the prefix that marks a parity error.  Therefore, a valid
+byte \377 is passed to the program as two bytes, \377 \377, in this case.
+<DT><DD>
+<B>IGNPAR</B> も <B>PARMRK</B> も 設定されていない場合、パリティエラーあるいはフレームエラーの発生した文字を \0 として読み込む。
+<DT><B>INPCK</B><DD>
+入力のパリティチェックを有効にする。
+<DT><B>ISTRIP</B><DD>
+8 ビット目を落とす。
+<DT><B>INLCR</B><DD>
+入力の NL (New Line: 改行文字) を CR (Carriage Return: 復帰文字) に 置き換える。
+<DT><B>IGNCR</B><DD>
+入力の CR を無視する。
+<DT><B>ICRNL</B><DD>
+(<B>IGNCR</B> が設定されていない場合) 入力の CR を NL に置き換える。
+<DT><B>IUCLC</B><DD>
+(POSIX にはない) 入力の大文字を小文字に置き換える。
+<DT><B>IXON</B><DD>
+出力の XON/XOFF フロー制御を有効にする。
+<DT><B>IXANY</B><DD>
+(XSI) 任意の文字を入力すると、停止していた出力を再開する (デフォルトでは、START 文字でのみ出力が再開される)。
+<DT><B>IXOFF</B><DD>
+入力の XON/XOFF フロー制御を有効にする。
+<DT><B>IMAXBEL</B><DD>
+(POSIX にはない) 入力キューが一杯の時にベルを鳴らす。 Linux ではこのビットは実装されておらず、 常にセットされているかのように振舞う。
+<DT><B>IUTF8</B> (Linux 2.6.4 以降)<DD>
+(POSIX にはない) 入力が UTF8 である; これにより cooked mode で文字削除 (character-erase) を
+正しく機能させることができる。
+</DL>
+<P>
+
+<I>c_oflag</I> フラグには以下の要素を指定できる:
+<DL COMPACT>
+<DT><B>OPOST</B><DD>
+実装に依存した出力処理を有効にする。
+<DT><B>OLCUC</B><DD>
+(POSIX にはない) 出力時に小文字を大文字に変換する。
+<DT><B>ONLCR</B><DD>
+(XSI) 出力の NL を CR-NL に置き換える。
+<DT><B>OCRNL</B><DD>
+出力の CR を NL に置き換える。
+<DT><B>ONOCR</B><DD>
+0 桁目で CR を出力しない。
+<DT><B>ONLRET</B><DD>
+CR を出力しない。
+<DT><B>OFILL</B><DD>
+転送時間を遅らせるのではなく、補填文字 (fill character) を送る。 (訳注:特定の文字に対して、端末側の処理を待つために転送を一定時間
+遅らせることができる。また、 <B>OFILL</B> を指定すると 転送を遅らせる代わりに補填文字を送る。)
+<DT><B>OFDEL</B><DD>
+補填文字を ASCII DEL にする。 このフラグが設定されていない場合は ASCII NUL ('\0') になる。 (Linux
+では実装されていない)
+<DT><B>NLDLY</B><DD>
+NL の遅延を設定する。値は <B>NL0</B> (遅延なし) および <B>NL1</B> である。 [<B>_BSD_SOURCE</B> か
+<B>_SVID_SOURCE</B> か <B>_XOPEN_SOURCE</B> が必要]
+<DT><B>CRDLY</B><DD>
+CR の遅延を設定する。値は <B>CR0</B> (遅延なし), <B>CR1</B>, <B>CR2</B>,<B>CR3</B> である。 [<B>_BSD_SOURCE</B> か
+<B>_SVID_SOURCE</B> か <B>_XOPEN_SOURCE</B> が必要]
+<DT><B>TABDLY</B><DD>
+水平タブ (horizontal tab) の遅延を設定する。 値は <B>TAB0</B>, <B>TAB1</B>, <B>TAB2</B>, <B>TAB3</B> (または
+<B>XTABS</B>; ただし「バグ」を参照) である。 [<B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B> か
+<B>_XOPEN_SOURCE</B> が必要] XTAB3 (これは XTABS と同じである) の値はタブをスペース何個に変換するかを示す (タブは 8
+桁毎に止まる)。
+<DT><B>BSDLY</B><DD>
+後退 (backspace) の遅延を設定する。 値は <B>BS0</B> (遅延なし) あるいは <B>BS1</B> である。 (実装されたことはない)
+[<B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B> か <B>_XOPEN_SOURCE</B> が必要]
+<DT><B>VTDLY</B><DD>
+垂直タブ (vertical tab) の遅延を設定する。 値は <B>VT0</B> (遅延なし) あるいは <B>VT1</B> である。
+<DT><B>FFDLY</B><DD>
+頁送り (form feed) の遅延を設定する。 値は <B>FF0</B> (遅延なし) あるいは <B>FF1</B> である。 [<B>_BSD_SOURCE</B>
+か <B>_SVID_SOURCE</B> か <B>_XOPEN_SOURCE</B> が必要]
+</DL>
+<P>
+
+<I>c_cflag</I> フラグは以下の通り:
+<DL COMPACT>
+<DT><B>CBAUD</B><DD>
+(POSIX にはない) ボーレートマスク (4+1 ビット)。 [<B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B> が必要]
+<DT><B>CBAUDEX</B><DD>
+(POSIX にはない) 追加のボーレートマスク (1 ビット)。 <B>CBAUD</B> に含まれている。 [<B>_BSD_SOURCE</B> か
+<B>_SVID_SOURCE</B> が必要]
+<DT><DD>
+(POSIX では、 <I>termios</I> 構造体に格納されたボーレートは正確なものではなく、 ボーレートを操作するために
+<B>cfgetispeed</B>()  と <B>cfsetispeed</B>()  が提供されている。 <I>c_cflag</I> 内の <B>CBAUD</B>
+で選択されたビットを使うシステムもあれば、 <I>sg_ispeed</I> や <I>sg_ospeed</I> といった独立したフィールドを使うものもある。)
+<DT><B>CSIZE</B><DD>
+文字サイズを設定する。 値は <B>CS5</B>, <B>CS6</B>, <B>CS7</B>, <B>CS8</B> である。
+<DT><B>CSTOPB</B><DD>
+ストップビットを 1 ではなく 2 にする。
+<DT><B>CREAD</B><DD>
+受信を有効にする。
+<DT><B>PARENB</B><DD>
+出力にパリティを付加し、入力のパリティチェックを行う。
+<DT><B>PARODD</B><DD>
+設定されると、入力および出力に対するパリティが奇数パリティとなる。 設定されない場合、偶数パリティが使用される。
+<DT><B>HUPCL</B><DD>
+最後のプロセスがデバイスをクローズした後、モデムの制御線を low にする (切断する)。
+<DT><B>CLOCAL</B><DD>
+モデムの制御線を無視する。
+<DT><B>LOBLK</B><DD>
+(POSIX にはない) 現在のシェル層以外からの出力を抑制する。
+<BR>&nbsp;<B>shl</B>&nbsp;(シェル層)&nbsp;で用いられる。(Linux&nbsp;では実装されていない)
+<DT><B>CIBAUD</B><DD>
+(POSIX にはない) 入力速度のマスク。 <B>CIBAUD</B> ビットのための値は <B>CBAUD</B> ビットのための値と同じであり、 左に
+<B>IBSHIFT</B> ビットシフトしたものである。 [<B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B> が必要] (Linux
+では実装されていない)
+<DT><B>CMSPAR</B><DD>
+(POSIX にはない)  (一部のシリアルデバイスでサポートされている)  「スティック (stick)」パリティ (マーク/スペース
+パリティ)を使用する。 <B>PARODD</B> が設定された場合パリティビットは常に 1 となり、 設定されない場合は常に 0 となる。
+[<B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B> が必要]
+<DT><B>CRTSCTS</B><DD>
+(POSIX にはない) RTS/CTS (ハードウェア) フロー制御を有効にする。 [<B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B>
+が必要]
+</DL>
+<P>
+
+<I>c_lflag</I> フラグは以下の通り:
+<DL COMPACT>
+<DT><B>ISIG</B><DD>
+INTR, QUIT, SUSP, DSUSP の文字を受信した時、対応するシグナルを 発生させる。
+<DT><B>ICANON</B><DD>
+カノニカルモードを有効にする (下記参照)。
+<DT><B>XCASE</B><DD>
+
+
+
+
+
+(POSIX にはない; Linux では対応していない)  <B>ICANON</B> が同時に設定された場合、端末は大文字のみが有効である。
+入力された文字は \ が付いた文字を除いて小文字に変換される。 出力時は、大文字の前に \ が付き、小文字は大文字に変換される。
+[<B>_BSD_SOURCE</B> が <B>_SVID_SOURCE</B> か <B>_XOPEN_SOURCE</B> が必要]
+<DT><B>ECHO</B><DD>
+入力された文字をエコーする。
+<DT><B>ECHOE</B><DD>
+<B>ICANON</B> も同時に設定された場合、ERASE 文字は前の文字を削除し、 WERASE 文字は前の単語を削除する。
+<DT><B>ECHOK</B><DD>
+<B>ICANON</B> も同時に設定された場合、KILL 文字は現在の行を削除する。
+<DT><B>ECHONL</B><DD>
+<B>ICANON</B> も同時に設定された場合、 ECHO が設定されていなくても NL 文字をエコーする。
+<DT><B>ECHOCTL</B><DD>
+(POSIX にはない) <B>ECHO</B> も同時に設定された場合、TAB, NL, START, STOP 以外の端末特殊文字が <B>^X</B>
+としてエコーされる。 X は特殊文字に ASCII コードで 0x40 を足した文字である。例えば文字 0x08 (BS) は <B>^H</B>
+とエコーされる。 [<B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B> が必要]
+<DT><B>ECHOPRT</B><DD>
+(POSIX にはない) <B>ICANON</B> および <B>ECHO</B> が同時に設定されている場合、
+削除された文字も表示される。 [<B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B> が必要]
+<DT><B>ECHOKE</B><DD>
+(POSIX にはない) <B>ICANON</B> も設定された場合、 KILL が行の各文字を消去する代わりにエコーされる。 これは <B>ECHOE</B>
+および <B>ECHOPRT</B> を指定することと等しい。 [<B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B> が必要]
+<DT><B>DEFECHO</B><DD>
+(POSIX にはない) プロセスが読み込んだときにだけエコーする。 (Linux では実装されていない)
+<DT><B>FLUSHO</B><DD>
+(POSIX にはない; Linux では対応していない)  出力をフラッシュする。このフラグは DISCARD 文字を入力することで切替えられる。
+[<B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B> が必要]
+<DT><B>NOFLSH</B><DD>
+
+INT, QUIT, SUSP 文字に対応するシグナルを発生する際の 入力・出力キューのフラッシュを無効にする。
+<DT><B>TOSTOP</B><DD>
+バックグラウンドプロセスのプロセスグループで制御端末へ 文字を出力しようとしているプロセスに対して <B>SIGTTOU</B> シグナルを送る。
+<DT><B>PENDIN</B><DD>
+(POSIX にはない; Linux では対応していない)  次の文字を読み込んだ時、入力キュー中の全文字を再表示する。 (<B><A HREF="../../GNU_bash/man1/bash.1.html">bash</A></B>(1)
+は入力行をこのように処理している。)  [<B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B> が必要]
+<DT><B>IEXTEN</B><DD>
+実装依存の入力処理を有効にする。 このフラグは、特殊文字である EOL2, LNEXT, REPRINT, WERASE や、 <B>IUCLC</B>
+フラグを有効にするために必要である。
+</DL>
+<P>
+
+<I>c_cc</I> 配列は端末特殊文字を定義している。
+シンボルの一覧 (初期値) と意味は以下の通り。
+<DL COMPACT>
+<DT><B>VDISCARD</B><DD>
+(POSIX にはない; Linux では対応していない; 017, SI, Ctrl-O)  未送信バッファーの内容の破棄/保存を切り替える。
+<B>IEXTEN</B> がセットされている場合に認識し、入力には渡されない。
+<DT><B>VDSUSP</B><DD>
+(POSIX にはない; Linux では対応していない; 031, EM, Ctrl-Y)  遅延中断文字 (DSUSP)。
+ユーザープログラムから文字が読み込まれた時に <B>SIGTSTP</B> シグナルを送る。
+<B>IEXTEN</B> と <B>ISIG</B> がセットされていて、システムがジョブ制御に対応している
+場合に 認識し、入力には渡されない。
+<DT><B>VEOF</B><DD>
+(004, EOT, Ctrl-D)  ファイル終端文字 (EOF)。
+より正確には、tty バッファーの内容を行末を待たずにユーザープログラムに送る。
+これが行の最初の文字だった場合、ユーザープログラムの <B><A HREF="../man2/read.2.html">read</A></B>(2) は 0 を 返し、
+ファイル終端であることを知らせる。 <B>ICANON</B> がセットされている場合に認識し、
+入力には渡されない。
+<DT><B>VEOL</B><DD>
+(0, NUL)  追加の行末文字 (EOL)。
+<B>ICANON</B> がセットされている場合に認識する。
+<DT><B>VEOL2</B><DD>
+(POSIX にはない; 0, NUL)  追加の行末文字 (EOL2)。
+<B>ICANON</B> がセットされている場合に認識する。
+<DT><B>VERASE</B><DD>
+(0177, DEL, rubout か 010, BS, Ctrl-H か #)  消去文字 (ERASE)。
+これにより、直前の未消去文字を消去する。
+しかし、EOF や行頭を超えては消去しない。
+<B>ICANON</B> がセットされている場合に認識し、入力には渡されない。
+<DT><B>VINTR</B><DD>
+(003, ETX, Ctrl-C か 0177, DEL, rubout)  割り込み文字 (INTR)。
+<B>SIGINT</B> シグナルを送る。
+<B>ISIG</B> がセットされている場合に認識し、入力には渡されない。
+<DT><B>VKILL</B><DD>
+(025, NAK, Ctrl-U か Ctrl-X か @)  完全消去文字 (KILL)。
+直前の EOF か行頭以降の全ての入力を消去する。
+<B>ICANON</B> がセットされている場合に認識し、入力には渡されない。
+<DT><B>VLNEXT</B><DD>
+(POSIX にはない; 026, SYN Ctrl-V)  リテラル (LNEXT)。
+次の入力文字をエスケープし、特別な意味があっても解釈しない。
+<B>IEXTEN</B> がセットされている場合に認識し、入力には渡されない。
+<DT><B>VMIN</B><DD>
+非カノニカル読み込み時の最小文字数 (MIN)。
+<DT><B>VQUIT</B><DD>
+(034, FS, Ctrl-\)  終了文字 (QUIT)。
+<B>SIGQUIT</B> シグナルを送る。
+<B>ISIG</B> がセットされている場合に認識し、入力には渡されない。
+<DT><B>VREPRINT</B><DD>
+(POSIX にはない; 022, DC2, Ctrl-R) まだ読み込んでいない文字列を再表示する (REPRINT)。
+<B>ICANON</B> と <B>IEXTEN</B> がセットされている場合に認識し、入力には渡されない。
+<DT><B>VSTART</B><DD>
+(021, DC1, Ctrl-Q)  開始文字 (START)。停止文字で停止した出力を再開する。
+<B>IXON</B> がセットされている場合に認識し、入力には渡されない。
+<DT><B>VSTATUS</B><DD>
+(POSIX にはない; Linux では対応していない; 状態要求: 024, DC4, Ctrl-T)
+状態文字 (STATUS)。端末での状態情報を表示する。
+表示される情報には、フォアグラウンドプロセスの状態やそのプロセスが消費した
+CPU 時間の総計が含まれる。
+また、フォアグラウンドプロセスグループにシグナル <B>SIGINFO</B> を送信する
+(Linux ではサポートされていない)。
+<DT><B>VSTOP</B><DD>
+(023, DC3, Ctrl-S)  停止文字 (STOP)。
+開始文字が入力されるまで出力を停止する。
+<B>IXON</B> が設定されている場合に認識し、入力には渡されない。
+<DT><B>VSUSP</B><DD>
+(032, SUB, Ctrl-Z)  中断文字 (SUSP)。
+<B>SIGTSTP</B> シグナルを送る。
+<B>ISIG</B> がセットされている場合に認識し、入力には渡されない。
+<DT><B>VSWTCH</B><DD>
+(POSIX にはない; Linux では対応していない; 0, NUL)  スイッチ文字 (SWTCH)。
+System V で (シェルのジョブ制御の前にあった) <I>shell layers</I> での
+シェルの切り替えに用いられる。
+<DT><B>VTIME</B><DD>
+非カノニカル読み込み時のタイムアウト時間 (1/10 秒単位) (TIME)。
+<DT><B>VWERASE</B><DD>
+(POSIX にはない; 027, ETB, Ctrl-W)  単語消去 (WERASE)。
+<B>ICANON</B> と <B>IEXTEN</B> がセットされている場合に認識し、入力には渡されない。
+</DL>
+<P>
+
+対応する <I>c_cc</I> 要素の値を <B>_POSIX_VDISABLE</B> に設定することで、
+それぞれの端末制御文字を無効にすることができる。
+<P>
+
+上記のシンボルの示す値は全て異なる。ただし、 <B>VTIME</B>, <B>VMIN</B> はそれぞれ
+<B>VEOL</B>, <B>VEOF</B> と同じ値である。 非カノニカルモードでは、特殊文字の意味は
+タイムアウトの意味に変わる。 <B>VMIN</B> と <B>VTIME</B> の説明については、
+下記の非カノニカルモードの説明を参照のこと。
+<A NAME="lbAF">&nbsp;</A>
+<H3>端末の設定の取得と変更</H3>
+
+<B>tcgetattr</B>()  は <I>fd</I> に関するパラメーターを取得し、<I>termios_p</I> が参照する構 造体 <I>termios</I>
+に設定する。この関数はバックグラウンドプロセスから 呼ばれることもあるが、この場合、端末の属性はフォアグラウンドプロセス によって変化することもある。
+<P>
+
+<B>tcsetattr</B>()  は端末に関連したパラメーターを設定する (ハードウェアの設定に必要で、ここで 設定できないものを除く)。設定には
+<I>termios_p</I> が参照する <I>termios</I> 構造体を用いる。 <I>optional_actions</I>
+には変更が有効となるタイミングを設定する:
+<DL COMPACT>
+<DT><B>TCSANOW</B><DD>
+ただちに変更が有効となる。
+<DT><B>TCSADRAIN</B><DD>
+<I>fd</I> への出力がすべて転送された後に変更が有効になる。このオプションは 出力に影響するパラメーターを変更する時に使用するべきである。
+<DT><B>TCSAFLUSH</B><DD>
+パラメーターを変更する前に、 <I>fd</I> への出力がすべて転送され、受信したがまだ読み込んでいないすべての 入力が破棄される。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>カノニカルモードと非カノニカルモード</H3>
+
+<I>c_lflag</I> の <B>ICANON</B> フラグの設定により、端末がカノニカルモードで動作するかが決定される。 <B>ICANON</B>
+がセットされた場合、カノニカルモード (canonical mode) となり、 セットされない場合、非カノニカルモード (noncanonical
+mode) となる。 デフォルトでは、 <B>ICANON</B> はセットされる。
+<P>
+
+カノニカルモードでは、以下のような動作となる。
+<DL COMPACT>
+<DT>*<DD>
+入力は行単位に行われる。 行区切り文字が打ち込まれた時点で、入力行が利用可能となる。 行区切り文字は NL, EOL, EOL2 および行頭での EOF
+である。 EOF 以外の場合、 <B><A HREF="../man2/read.2.html">read</A></B>(2)  が返すバッファーに行区切り文字も含められる。
+<DT>*<DD>
+行編集が有効となる (ERASE, KILL が効果を持つ。 <B>IEXTEN</B> フラグが設定された場合は、 WERASE, REPRINT,
+LNEXT も効果を持つ)。 <B><A HREF="../man2/read.2.html">read</A></B>(2)  は最大でも 1行の入力しか返さない。 <B><A HREF="../man2/read.2.html">read</A></B>(2)
+が要求したバイト数が現在の入力行のバイト数よりも少ない場合、 要求したのと同じバイト数だけが読み込まれ、 残りの文字は次回の <B><A HREF="../man2/read.2.html">read</A></B>(2)
+で読み込まれる。
+<DT>*<DD>
+The maximum line length is 4096 chars (including the terminating newline
+character); lines longer than 4096 chars are truncated.  After 4095
+characters, input processing (e.g., <B>ISIG</B> and <B>ECHO*</B> processing)
+continues, but any input data after 4095 characters up to (but not
+including) any terminating newline is discarded.  This ensures that the
+terminal can always receive more input until at least one line can be read.
+</DL>
+<P>
+
+In noncanonical mode input is available immediately (without the user having
+to type a line-delimiter character), no input processing is performed, and
+line editing is disabled.  The read buffer will only accept 4095 chars; this
+provides the necessary space for a newline char if the input mode is
+switched to canonical.  The settings of MIN (<I>c_cc[VMIN]</I>)  and TIME
+(<I>c_cc[VTIME]</I>)  determine the circumstances in which a <B><A HREF="../man2/read.2.html">read</A></B>(2)
+completes; there are four distinct cases:
+<DL COMPACT>
+<DT>MIN == 0, TIME == 0 (ポーリングリード)<DD>
+データが利用可能であれば、 <B><A HREF="../man2/read.2.html">read</A></B>(2) はすぐに返る。このときの返り値は、そのとき利用可能なバイト数か <B><A HREF="../man2/read.2.html">read</A></B>(2)
+の要求バイト数のうち小さい方となる。 利用可能なデータがない場合 <B><A HREF="../man2/read.2.html">read</A></B>(2) は 0 を返す。
+<DT>MIN &gt; 0, TIME == 0 (ブロッキングリード)<DD>
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  は、利用可能なデータが MIN バイトに達するまで停止する。返り値は最大でも要求バイト数である。
+<DT>MIN == 0, TIME &gt; 0 (タイムアウト付きの読み込み)<DD>
+TIME はタイマーの上限を規定し、単位は 1/10 秒である。 タイマーは <B><A HREF="../man2/read.2.html">read</A></B>(2)  が呼ばれた時点で開始される。 <B><A HREF="../man2/read.2.html">read</A></B>(2)
+が返るのは、少なくとも 1バイトのデータが利用可能となった時点、 またはタイマーが時間切れとなった時点である。
+入力が全くなくタイマーが時間切れとなった場合、 <B><A HREF="../man2/read.2.html">read</A></B>(2)  は 0 を返す。 <B><A HREF="../man2/read.2.html">read</A></B>(2)
+の呼び出し時にすでに利用可能なデータがある場合、 その呼び出しは呼び出し直後にそのデータが到着したかのように振る舞う。
+<DT>MIN &gt; 0, TIME &gt; 0 (バイト間のタイムアウト付きの読み出し)<DD>
+TIME はタイマーの上限を規定し、単位は 1/10 秒である。 入力の最初のバイトが利用可能になった後は、 新たに
+1バイト受信する度にタイマーがリセットされる。 <B><A HREF="../man2/read.2.html">read</A></B>(2) は以下の条件のいずれかを満たした場合に返る。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+MIN バイトのデータを受信した。
+<DT>*<DD>
+バイト間タイマーが時間切れになった。
+<DT>*<DD>
+
+<B><A HREF="../man2/read.2.html">read</A></B>(2) で要求されたバイト数のデータを受信した (POSIX ではこの終了条件は規定されておらず、 他のいくつかの実装では
+<B><A HREF="../man2/read.2.html">read</A></B>(2) はこの条件では返らない)。
+</DL>
+</DL>
+
+<DT><DD>
+タイマーは最初のバイトが利用可能になった時点で開始されるので、 少なくとも 1 バイトは読み出される。 <B>read</B>()
+の呼び出し時にすでに利用可能なデータがある場合、 その呼び出しは呼び出し直後にそのデータが到着したかのように振る舞う。
+</DL>
+<P>
+
+
+POSIX では、 <B>O_NONBLOCK</B> ファイル状態フラグが MIN や TIME の設定よりも優先されるかは規定されていない。
+<B>O_NONBLOCK</B> が設定された場合、 非カノニカルモードの <B><A HREF="../man2/read.2.html">read</A></B>(2) は MIN や TIME の設定に関わらずすぐに返る。
+また、利用可能なデータがない場合、 POSIX では、は非カノニカルモードの <B><A HREF="../man2/read.2.html">read</A></B>(2) が 0 を返す方法も、 <I>errno</I> に
+<B>EAGAIN</B> を設定して -1 を返すことも認められている。
+<A NAME="lbAH">&nbsp;</A>
+<H3>Raw mode</H3>
+
+<B>cfmakeraw</B>()  は、端末を昔の Version 7 端末ドライバの &quot;raw&quot; モードのように設定する。
+入力は文字単位に可能であり、エコーが無効となり、 端末の入出力文字に対する特殊処理はすべて無効となる。 端末の属性は以下のように設定される:
+<P>
+
+
+
+termios_p-&gt;c_iflag &amp;= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;INLCR&nbsp;|&nbsp;IGNCR&nbsp;|&nbsp;ICRNL&nbsp;|&nbsp;IXON);
+termios_p-&gt;c_oflag &amp;= ~OPOST;
+termios_p-&gt;c_lflag &amp;= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+termios_p-&gt;c_cflag &amp;= ~(CSIZE | PARENB);
+termios_p-&gt;c_cflag |= CS8;
+
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>ライン制御</H3>
+
+<B>tcsendbreak</B>()  は端末が非同期のシリアルデータ転送を用いている場合に、 連続した0のビット列を一定間隔で転送する。
+<I>duration</I> が 0 の場合は、0 のビットを 0.25 秒以上、 0.5 秒以下の間隔で転送する。 <I>duration</I> が 0
+でない場合は、 0 のビットを実装依存の時間間隔で送る。
+<P>
+
+端末が非同期のシリアルデータ転送モードでない場合、 <B>tcsendbreak</B>()  は何も行わずに戻る。
+<P>
+
+<B>tcdrain</B>()  は <I>fd</I> が行っている出力の転送が完了するまで待つ。
+<P>
+
+<B>tcflush</B>()  は <I>fd</I> が行っているデータの出力でまだ転送されていないもの、あるいは受信し
+たがまだ入力していないものを破棄する。いずれを行うかは <I>queue_selector</I> の値で定める:
+<DL COMPACT>
+<DT><B>TCIFLUSH</B><DD>
+受信したが読んでいないデータをフラッシュする。
+<DT><B>TCOFLUSH</B><DD>
+書いたが送信していないデータをフラッシュする。
+<DT><B>TCIOFLUSH</B><DD>
+受信したが読んでいないデータ・書いたが送信していないデータ両方 をフラッシュする。
+</DL>
+<P>
+
+<B>tcflow</B>()  は <I>fd</I> で指定されたオブジェクトにおけるデータの送信あるいは受信を一時的に中断する。 送信と受信のどちらかは、
+<I>action</I>で決まる:
+<DL COMPACT>
+<DT><B>TCOOFF</B><DD>
+出力の中断。
+<DT><B>TCOON</B><DD>
+中断した出力の再開。
+<DT><B>TCIOFF</B><DD>
+STOP 文字の送信。 STOP 文字は端末デバイスからシステムへのデータ送信を停止する。
+<DT><B>TCION</B><DD>
+START 文字の送信。 START 文字は端末デバイスからシステムへのデータ送信を開始する。
+</DL>
+<P>
+
+端末ファイルがオープンされたときのデフォルトでは、 入力も出力も中断されていない。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>ライン速度</H3>
+
+ボーレート関数は <I>termios</I> 構造体中の入出力ボーレートを 取得、設定するために提供される。 設定された値は <B>tcsetattr</B>()
+の呼び出しが成功するまでは有効ではない。
+<P>
+
+速度を <B>B0</B> に設定した場合、モデムは停止 (hang up) する。 <B>B38400</B> に該当する実際のビットレートは
+<B><A HREF="../../setserial/man8/setserial.8.html">setserial</A></B>(8)  で 変更できる。
+<P>
+
+入力および出力ボーレートは <I>termios</I> 構造体に格納される。
+<P>
+
+<B>cfgetospeed</B>()  は <I>termios_p</I> が示している <I>termios</I> 構造体に格納されている 出力ボーレートを返す。
+<P>
+
+<B>cfsetospeed</B>()  は <I>termios_p</I> で示されている <I>termios</I> 構造体中の出力ボーレートを <I>speed</I>
+に設定する。値は以下のいずれかでなければならない:
+<P>
+
+<PRE>
+<B>        B0
+        B50
+        B75
+        B110
+        B134
+        B150
+        B200
+        B300
+        B600
+        B1200
+        B1800
+        B2400
+        B4800
+        B9600
+        B19200
+        B38400
+        B57600
+        B115200
+        B230400</B>
+</PRE>
+
+<P>
+
+0ボー (<B>B0</B>) は接続の中断に用いられる。 B0が指定された場合、モデムの制御線は使用されない状態になり、一般にはこれで 接続が切断される。
+<B>CBAUDEX</B> はPOSIX.1で定義されている速度の範囲外 (57600 およびそれ以上)  を設定する。すなわち例えば <B>B57600</B> &amp;
+<B>CBAUDEX</B> は 0 でない。
+<P>
+
+<B>cfgetispeed</B>()  は <I>termios</I> 構造体中の入力ボーレートを返す。
+<P>
+
+<B>cfsetispeed</B>()  は <I>termios</I> 構造体中の入力ボーレートを <I>speed</I> に設定する。 <I>speed</I> には、上述の
+<B>cfsetospeed</B>()  のボーレート定数 <B>Bnnn</B> のいずれか一つを指定しなければならない。 入力ボーレートが 0
+に設定された場合、入力ボーレートは出力ボーレート と同じ値となる。
+<P>
+
+<B>cfsetspeed</B>()  は 4.4BSD による拡張である。この関数は <B>cfsetispeed</B>()
+と同じ引数をとり、入出力両方の速度を設定する。
+<A NAME="lbAK">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>cfgetispeed</B>()  は <I>termios</I> 構造体中の入力ボーレートを返す。
+<P>
+
+<B>cfgetospeed</B>()  は <I>termios</I> 構造体中の出力ボーレートを返す。
+<P>
+
+他のすべての関数の戻り値:
+<DL COMPACT>
+<DT>0<DD>
+実行成功。
+<DT>-1<DD>
+実行失敗。 <I>errno</I> がエラーの種類を示す。
+</DL>
+<P>
+
+<B>tcsetattr</B>()  は <I>なんらかの</I> 変更要求が成功した場合に成功を返すことに注意。 従って、複数の変更を行った場合には、引き続いて
+<B>tcgetattr</B>()  を呼び出して全ての変更が実行されているかを確認する必要があるかもしれない。
+<A NAME="lbAL">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+
+
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>tcgetattr</B>(),
+<B>tcsetattr</B>(),
+<B>tcdrain</B>(),
+<B>tcflush</B>(),
+<B>tcflow</B>(),
+<B>tcsendbreak</B>(),
+<B>cfmakeraw</B>(),
+<B>cfgetispeed</B>(),
+<B>cfgetospeed</B>(),
+<B>cfsetispeed</B>(),
+<B>cfsetospeed</B>(),
+<B>cfsetspeed</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>tcgetattr</B>(), <B>tcsetattr</B>(), <B>tcsendbreak</B>(), <B>tcdrain</B>(),
+<B>tcflush</B>(), <B>tcflow</B>(), <B>cfgetispeed</B>(), <B>cfgetospeed</B>(),
+<B>cfsetispeed</B>(), <B>cfsetospeed</B>()  は POSIX.1-2001 で規定されている。
+<P>
+
+<B>cfmakeraw</B>()  と <B>cfsetspeed</B>()  は非標準だが、BSD では利用可能である。
+<A NAME="lbAN">&nbsp;</A>
+<H2>注意</H2>
+
+UNIX&nbsp;V7 とその後のいくつかのシステムでは、ボーレートの 14 個のリストである B0, ..., B9600 の後ろに EXTA, EXTB
+(&quot;External A&quot; と &quot;External B&quot;) の 2 つを 追加している。
+多くのシステムではさらに高速なボーレートのためにリストを拡張している。
+<P>
+
+
+
+
+
+<B>tcsendbreak</B>()  で <I>duration</I> に 0 以外を指定した場合の効果は様々である。 SunOS は
+<I>duration</I><B>*</B><I>N</I> 秒のブレークを規定している。ここで <I>N</I> は 0.25 以上 0.5 未満である。 Linux, AIX,
+DU, Tru64 は <I>duration</I> ミリ秒のブレークを送信する。 FreeBSD, NetBSD, HP-UX, MacOS は
+<I>duration</I> の値を無視する。 Solaris と UnixWare では、非ゼロの <I>duration</I> を指定した
+<B>tcsendbreak</B>()  の振る舞いは <B>tcdrain</B>()  と同様である。
+<A NAME="lbAO">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+On the Alpha architecture before Linux 4.16 (and glibc before 2.28), the
+<B>XTABS</B> value was different from <B>TAB3</B> and it was ignored by the <B>N_TTY</B>
+line discipline code of the terminal driver as a result (because as it
+wasn't part of the <B>TABDLY</B> mask).
+<A NAME="lbAP">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>reset</B>(1), <B><A HREF="../../util-linux/man1/setterm.1.html">setterm</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/stty.1.html">stty</A></B>(1), <B>tput</B>(1), <B>tset</B>(1), <B><A HREF="../../0MultiFileIdx/man1/tty.1.html">tty</A></B>(1),
+<B>ioctl_console</B>(2), <B>ioctl_tty</B>(2), <B><A HREF="../../setserial/man8/setserial.8.html">setserial</A></B>(8)
+<A NAME="lbAQ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">termios 構造体</A><DD>
+<DT><A HREF="#lbAF">端末の設定の取得と変更</A><DD>
+<DT><A HREF="#lbAG">カノニカルモードと非カノニカルモード</A><DD>
+<DT><A HREF="#lbAH">Raw mode</A><DD>
+<DT><A HREF="#lbAI">ライン制御</A><DD>
+<DT><A HREF="#lbAJ">ライン速度</A><DD>
+</DL>
+<DT><A HREF="#lbAK">返り値</A><DD>
+<DT><A HREF="#lbAL">属性</A><DD>
+<DT><A HREF="#lbAM">準拠</A><DD>
+<DT><A HREF="#lbAN">注意</A><DD>
+<DT><A HREF="#lbAO">バグ</A><DD>
+<DT><A HREF="#lbAP">関連項目</A><DD>
+<DT><A HREF="#lbAQ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

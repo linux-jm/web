@@ -1,0 +1,164 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of NUMA</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>NUMA</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2012-08-05<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/numa.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+numa - 非対称型メモリーアーキテクチャーの概要
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+非対称型メモリーアクセス (Non-Uniform Memory Access; NUMA) は、
+メモリーが複数のメモリーノードに分割されているマルチプロセッサシステム
+のことである。メモリーノードへのアクセス時間は、アクセス元の CPU と
+アクセス先のノードの相対的な位置関係に依存する
+(これに対し、対称型マルチプロセッサシステムでは、どの CPU から
+どのメモリーへのアクセス時間も同じである)。
+通常は、 NUMA システムの各 CPU にはローカルのメモリーノードがあり、
+そのメモリーノードには、他の CPU のローカルノードや全ての CPU で
+共有されるバス上のメモリーよりも早くアクセスすることができる。
+<A NAME="lbAD">&nbsp;</A>
+<H3>NUMA システムコール</H3>
+
+Linux カーネルには、次に示す NUMA 関連のシステムコールが実装されている:
+<B><A HREF="../man2/get_mempolicy.2.html">get_mempolicy</A></B>(2), <B><A HREF="../man2/mbind.2.html">mbind</A></B>(2), <B><A HREF="../man2/migrate_pages.2.html">migrate_pages</A></B>(2),
+<B><A HREF="../man2/move_pages.2.html">move_pages</A></B>(2), <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2).
+ただし、アプリケーションは通常は <I>libnuma</I> が提供するインターフェース
+を使用すべきである。下記の「ライブラリによるサポート」を参照。
+<A NAME="lbAE">&nbsp;</A>
+<H3>/proc/[number]/numa_maps (Linux 2.6.14 以降)</H3>
+
+
+このファイルは、プロセスの NUMA メモリーポリシーと割り当てに関する
+情報を表示する。
+<P>
+
+各行に、そのプロセスが使用しているメモリー領域に関する情報が表示される。その他の情報 ---
+そのメモリー領域に適用されているメモリーポリシーや、そのページがどのノード上に割り当てられているか、など --- もあわせて表示される。
+<P>
+
+<I>numa_maps</I> は読み出し専用のファイルである。 <I>/proc/&lt;pid&gt;/numa_maps</I> から読み出しが行われると、
+カーネルはそのプロセスの仮想アドレス空間をスキャンし、 メモリーの使用状況を報告する。
+プロセスのメモリー領域の情報が 1 行に 1 領域で表示される。
+<P>
+
+各行の最初のフィールドはメモリー領域の開始アドレスを示す。 このフィールドは <I>/proc/&lt;pid&gt;/maps</I>
+ファイルの内容と対応している。 <I>/proc/&lt;pid&gt;/maps</I>
+には、メモリー領域の末尾のアドレスや、アクセス許可や共有といった他の情報も含まれる。
+<P>
+
+2 番目のフィールドは、 そのメモリー領域に現在適用されているメモリーポリシーを示す。 適用されているポリシーは、
+必ずしもそのプロセスがこのメモリー領域に対して設定したポリシーとは限らない点に注意すること。
+特に、
+プロセスがその領域に対して「デフォルト」ポリシーを設定した場合、その領域に適用されるポリシーはプロセスのポリシーとなり、それが「デフォルト」ポリシーとなる場合もあればそうでない場合もある。
+<P>
+
+行の残りの部分には、そのメモリー領域に割り当てられたページに関する情報が入る。以下に詳細を示す。
+<DL COMPACT>
+<DT><I>N&lt;node&gt;=&lt;nr_pages&gt;</I><DD>
+<I>&lt;node&gt;</I> に割り当てられているページ数。 <I>&lt;nr_pages&gt;</I> には、
+そのプロセスが現在マッピングしているページだけが含まれる。 ページの移動やメモリーの再利用により、 このメモリー領域に関連付けられているが、
+一時的にマッピングされていないページが存在する場合がある。 プロセスがそれらのページを参照しようとした後には、 これらのページは再び現れる可能性がある。
+メモリー領域が共有メモリーやファイルマッピングの場合には、 そのメモリー領域内に別のページを他のプロセスがマッピングしている場合もある。
+<DT><I>file=&lt;filename&gt;</I><DD>
+そのメモリー領域に関連付けられているファイル。 ファイルがプライベート (非公開) でマッピングされている場合、 書き込みアクセスがあると、
+このメモリー領域に書き込み時コピー (Copy-On-Write) ページが生成されることがある。 これらのページは無名ページ (anonymous
+page) として表示される。
+<DT><I>heap</I><DD>
+ヒープに使用されているメモリー範囲。
+<DT><I>stack</I><DD>
+スタックに使用されているメモリー範囲。
+<DT><I>huge</I><DD>
+ヒュージメモリーの範囲。表示されるページ数は、
+通常の大きさのページではなく、ヒュージページの数である。
+<DT><I>anon=&lt;pages&gt;</I><DD>
+メモリー範囲内の無名ページ (anonymous page) の数。
+<DT><I>dirty=&lt;pages&gt;</I><DD>
+dirty (変更された) ページの数。
+<DT><I>mapped=&lt;pages&gt;</I><DD>
+マッピングされているページ数。 <I>dirty</I> および <I>anon</I> のページ数と異なる値の場合に表示される。
+<DT><I>mapmax=&lt;count&gt;</I><DD>
+スキャン中に検出した mapcount (一つのページをマッピングしているプロセス数) の最大値。 この値は、
+そのメモリー領域でどの程度の共有が行われているかの指標として使うことができる。
+<DT><I>swapcache=&lt;count&gt;</I><DD>
+スワップデバイスに対応するエントリーが存在するページ数。
+<DT><I>active=&lt;pages&gt;</I><DD>
+アクティブリストに入っているページ数。 このフィールドが表示されるのは、
+値がこのメモリー領域のページ数と異なる場合だけである。このフィールドが表示されるということは、 このメモリー領域に、まもなくスワッパ (swapper)
+によりこの領域から削除される可能性がある inactive なページが存在することを意味する。
+<DT><I>writeback=&lt;pages&gt;</I><DD>
+現在ディスクに書き出されているページ数。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>準拠</H2>
+
+NUMA インターフェースについて規定している標準はない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+Linux の NUMA システムコールと <I>/proc</I> インターフェースは、カーネルが
+設定オプション <B>CONFIG_NUMA</B> を有効にして作成されている場合のみ、利用
+可能である。
+<A NAME="lbAH">&nbsp;</A>
+<H3>ライブラリによるサポート</H3>
+
+システムコールの定義を得るには <I>-lnuma</I> でリンクすること。
+<I>libnuma</I> と必要なヘッダーファイル <I>&lt;<A HREF="file:///usr/include/numaif.h">numaif.h</A>&gt;</I> は
+<I>numactl</I> パッケージで提供されている。
+<P>
+
+ただし、アプリケーションはこれらのシステムコールを直接利用すべきでない。
+推奨される方法は、<I>numactl</I> パッケージの <B>numa</B>(3) の関数群が提供する
+高レベルインターフェースの利用である。 <I>numactl</I> パッケージは
+
+
+で入手できる。
+このパッケージが収録されている Linux ディストリビューションもある。
+ディストリビューションによっては、開発用のライブラリとヘッダーファイルは
+別パッケージ <I>numactl-devel</I> で提供されている。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/get_mempolicy.2.html">get_mempolicy</A></B>(2), <B><A HREF="../man2/mbind.2.html">mbind</A></B>(2), <B><A HREF="../man2/move_pages.2.html">move_pages</A></B>(2), <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2),
+<B>numa</B>(3), <B>cpuset</B>(7), <B>numactl</B>(8)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">NUMA システムコール</A><DD>
+<DT><A HREF="#lbAE">/proc/[number]/numa_maps (Linux 2.6.14 以降)</A><DD>
+</DL>
+<DT><A HREF="#lbAF">準拠</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAH">ライブラリによるサポート</A><DD>
+</DL>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

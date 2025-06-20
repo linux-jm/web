@@ -1,0 +1,143 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of HASH</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>HASH</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/hash.3">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+hash - hash データベースへのアクセスメソッド
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>大事な注意</I>:
+このページは、バージョン 2.1 までの glibc が提供するインターフェースに
+ついて説明している。バージョン 2.2 以降の glibc では、もはやこれらの
+インターフェースは提供されていない。おそらく、このページではなく、
+<I>libdb</I> ライブラリが提供する API をお探しなのだろう。
+<P>
+
+ルーチン <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  はデータベースファイルに対するライブラリインターフェースである。 サポートされているファイルフォーマットのひとつに
+hash ファイルがある。 データベースへのアクセスメソッドに関する一般的な記述は <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  に書かれている。
+このマニュアルページでは hash 特有の情報についてのみ記述する。
+<P>
+
+hash データ構造は、拡張可能な動的ハッシュスキームである。
+<P>
+
+<B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  に渡される hash アクセスメソッドに特有のデータ構造体は、 <I>&lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;</I>
+インクルードファイルで以下のように定義されている。
+<P>
+
+
+
+typedef struct {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bsize;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ffactor;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nelem;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cachesize;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(*hash)(const&nbsp;void&nbsp;*,&nbsp;size_t);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lorder;
+} HASHINFO;
+
+
+<P>
+
+この構造体の要素を以下に示す。
+<DL COMPACT>
+<DT><I>bsize</I><DD>
+hash テーブルバケット (table bucket) のサイズを定義する。 デフォルトは 256 バイトである。
+ディスクに置かれるテーブルやデータアイテムが大きいテーブルでは ページサイズを大きくするほうが良いだろう。
+<DT><I>ffactor</I><DD>
+ユーザーが望む hash テーブル中の密度である。 これはそれぞれのバケットに格納できるキーの概数であり、 hash テーブルを拡大・縮小を作用する。
+デフォルトは 8 である。
+<DT><I>nelem</I><DD>
+hash テーブルの最終サイズを大まかに見積もった値である。 この値がセットされていなかったり、あまりに低くセットされていると、 hash
+テーブルはキーが入ってくるに応じて拡張される。 しかし少しパフォーマンスが (おそらく気付く程度に) 落ちる。 デフォルト値は 1 である。
+<DT><I>cachesize</I><DD>
+メモリーキャッシュの最大値 (バイト単位) の参考値。 この値は <B>あくまで参考であり</B>、
+アクセスメソッドはこの値を越えたメモリーの割り当てに成功することもある。
+<DT><I>hash</I><DD>
+はユーザー定義の hash 関数である。 全てのデータに対してうまく作用する hash 関数と言うのはないから、 特定のデータセットに対しては組み込みの
+hash 関数では パフォーマンスが低いこともあるかもしれない。 ユーザー定義の hash 関数は二つの引数をとらなくてはならない (バイト文字
+列へのポインターと、長さ)。 そして hash 値として使われる 32ビットの値を返さなくてはならない。
+<DT><I>lorder</I><DD>
+データベースに格納されているメタデータの整数値のバイトオーダー。 この数字は、順序を整数で表したものである。 例えばビッグエンディアンなら、この数値は
+4,321 となる。 <I>lorder</I> が 0 (指定されていない)場合、現在のホスト で使われている並び順が使われる。
+ファイルが既に存在する場合、指定した値は無視されツリーが作られ た時に指定されていた値が使われる。
+</DL>
+<P>
+
+ファイルが既に存在している (または <B>O_TRUNC</B> フラグが指定されていない) と、 <I>bsize</I>, <I>ffactor</I>,
+<I>lorder</I>, <I>nelem</I> に指定された値は無視され、 ハッシュが作られた時に使った値が使われる。
+<P>
+
+hash 関数が指定されると、 <I>hash_open</I> はデータベースが作られた時に指定されていた hash 関数と今回指定された hash
+関数が同じかどうかを調べ、 同じでない場合には失敗する。
+<P>
+
+<B>dbm</B>(3), と <B>ndbm</B>(3)  に記述されているルーチンへの過去互換を取るためのインターフェイスが
+存在する。しかしこれらのインターフェイスは以前のファイルフォー マットとは互換性がない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>エラー</H2>
+
+<I>hash</I> アクセスメソッドルーチンは、失敗するとライブラリルーチン <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  で指定されているエラーに応じた <I>errno</I>
+をセットする。
+<A NAME="lbAF">&nbsp;</A>
+<H2>バグ</H2>
+
+バイトオーダーとしてはビッグエンディアンとリトルエンディアンのみが サポートされている。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/btree.3.html">btree</A></B>(3), <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3), <B><A HREF="../man3/mpool.3.html">mpool</A></B>(3), <B><A HREF="../man3/recno.3.html">recno</A></B>(3)
+<P>
+
+<I>Dynamic Hash Tables</I>, Per-Ake Larson, Communications of the ACM, April
+1988.
+<P>
+
+<I>A New Hash Package for UNIX</I>, Margo Seltzer, USENIX Proceedings, Winter
+1991.
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">エラー</A><DD>
+<DT><A HREF="#lbAF">バグ</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

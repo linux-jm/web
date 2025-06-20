@@ -1,0 +1,204 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UMOUNT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>UMOUNT</H1>
+Section: Linux Programmer's Manual (8)<BR>Updated: 26 July 1997<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/util-linux/release/man8/umount.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+umount - ファイルシステムをアンマウントする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>umount [-hV]</B>
+
+<P>
+
+<B>umount -a [-dflnrv] [-t </B><I>vfstype</I><B>] [-O </B><I>options</I><B>]</B>
+
+<BR>
+
+<B>umount [-dflnrv] </B><I>dir </I><B>|</B><I> device </I><B>[...]</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>umount</B>
+
+コマンドは、ファイルの階層構造から指定したファイルシステムを切り離す。
+ファイルシステムの指定には、システムをマウントしたディレクトリを与える。
+またファイルシステムの実体が存在するスペシャルデバイスを与えることもできるが、
+このやり方は古く、デバイスが 2 つ以上のディレクトリに
+マウントされている場合に失敗するだろう。
+<P>
+
+ファイルシステムが `busy' である時にはアンマウントは実行できない。
+例えばそのファイルシステム上で、
+ファイルがオープンされている
+(あるいはスワップファイルが使用中である) 場合や、
+あるプロセスのワーキングディレクトリがそこにある場合などが該当する。
+この原因となるプロセスが
+<B>umount</B>
+
+自身の場合もありうる。
+<B>umount</B>
+
+は libc をオープンするし、
+libc はまた多くのファイル (locale ファイルなど)
+をオープンする可能性がある。
+lazy アンマウントにより、この問題は回避できる。
+<P>
+
+<B>umount</B>
+
+コマンドのオプションは以下の通り:
+<DL COMPACT>
+<DT><B>-V</B>
+
+<DD>
+バージョンを表示して終了する。
+<DT><B>-h</B>
+
+<DD>
+ヘルプメッセージを表示して終了する。
+<DT><B>-v</B>
+
+<DD>
+詳細表示モード。
+<DT><B>-n</B>
+
+<DD>
+アンマウントの際、
+<I>/etc/mtab</I>
+
+への書き込みを行わない。
+<DT><B>-r</B>
+
+<DD>
+アンマウントが失敗した場合、リードオンリーでの再マウントを試みる。
+<DT><B>-d</B>
+
+<DD>
+アンマウント対象のデバイスが loop デバイスの場合、
+loop デバイスの解放も行う。
+<DT><B>-i</B>
+
+<DD>
+/sbin/umount.&lt;filesystem&gt; ヘルパがあっても、呼び出さない。
+デフォルトでは /sbin/umount.&lt;filesystem&gt; ヘルパがある場合は、
+それが呼び出される。
+<DT><B>-a</B>
+
+<DD>
+<I>/etc/mtab</I>
+
+に記述されているすべてのファイルシステムをアンマウントする。
+(<B>umount</B>
+
+バージョン 2.7 以降では、
+<I>proc</I>
+
+ファイルシステムはアンマウントされない。)
+<DT><B>-t</B><I> vfstype</I>
+
+<DD>
+指定したタイプのファイルシステムにのみに対して動作を行う。
+複数のファイルシステムをコンマで区切ったリストで指定することもできる。
+ファイルシステムのリストに
+<B>no</B>
+
+を前置することもでき、
+この場合は動作を行わないファイルシステムのタイプを指定したことになる。
+<DT><B>-O</B><I> options</I>
+
+<DD>
+このオプションが
+<I>/etc/fstab</I>
+
+で指定されているファイルシステムについてのみ動作を行う。
+コンマで区切ることで 2 つ以上のオプションを指定できる。
+オプションに
+<B>no</B>
+
+を前置することもでき、
+この場合は動作を行わないオプションを指定したことになる。
+<DT><B>-f</B>
+
+<DD>
+強制的にアンマウントする (到達不可能な NFS システムの場合)。
+(カーネル 2.1.116 以降である必要がある。)
+<DT><B>-l</B>
+
+<DD>
+lazy アンマウント。
+現在のファイルシステムの階層構造から指定されたファイルシステムを切り離し、
+ファイルシステムへの全ての参照が busy でなくなった時点ですぐに整理する。
+(カーネル 2.4.11 以降である必要がある。)
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>LOOP デバイス</H2>
+
+<B>umount</B>
+
+コマンドはマウントされている loop デバイスがあれば、
+それを解放しようとする。
+これが行われるのは、
+<I>/etc/mtab</I>
+
+中に `loop=...&quot; というオプションが記述されている場合か、
+オプションとして -d が与えられた場合である。
+マウントされていない
+loop デバイスは `losetup -d' によって解放することができる。
+詳細は
+<B><A HREF="../man8/losetup.8.html">losetup</A></B>(8)
+
+を見よ。
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/etc/mtab</I>
+
+マウントされているファイルシステムの一覧
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../LDP_man-pages/man2/umount.2.html">umount</A></B>(2),
+
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8),
+
+<B><A HREF="../man8/losetup.8.html">losetup</A></B>(8)
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>履歴</H2>
+
+<B>umount</B>
+
+コマンドは Version 6 の AT&amp;T UNIX から導入された。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">LOOP デバイス</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">履歴</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:50 GMT, December 05, 2022
+</BODY>
+</HTML>

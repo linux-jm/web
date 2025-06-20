@@ -1,0 +1,128 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of YPSERV</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>YPSERV</H1>
+Section:  (8)<BR>Updated: August 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/ypserv/release/man8/ypxfr.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ypxfr - NIS データーベースをリモートサーバーからローカルホストに転送する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/usr/lib/yp/ypxfr</B> [ <B>-f</B> ] [ <B>-c</B> ] [ <B>-d</B> <I>target domain</I> ]
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+[ <B>-h</B> <I>source host</I> ] [ <B>-s</B> <I>source domain</I> ]
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+[ <B>-C</B> <I>taskid</I> <I>program-number</I> <I>ipaddr port</I> ]
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+[ <B>-p</B> <I>yp_path</I> ] mapname ...
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>ypxfr</B> は NIS データーベースを NIS サーバーからローカルホストに NIS サービスを用いてコピーする。 <B>ypxfr</B> は通常
+<B>ypinit</B> から起動されるか、 <B>yppush</B> からマップ転送要求を受け取った <B>ypserv</B> によって起動される。 <B>ypxfr</B>
+は一時的なマップを <B>/var/yp/domain</B> ディレクトリに生成し (このディレクトリは存在していなければならない。 <I>domain</I>
+はローカルホストのデフォルトドメイン名である)、 そのマップのエントリを取得して内容を書き込み、マップのパラメータ (マスターとオーダー番号)
+を取得する。 転送が成功したら、古いバージョンのマップは削除され、 この一時的なマップの内容がそこに書き込まれる。 次に <B>ypxfr</B> は
+&quot;clear current map&quot; 要求をローカルの <B>ypserv</B> に送ろうと試みる。
+<P>
+インタラクティブな形式で実行されると、 <B>ypxfr</B> は出力を標準エラー出力に書き出す。しかし制御端末なしで 起動された場合には、出力は
+syslog に記録される。
+<P>
+<B>ypxfr</B> が用いられるのは、複数の NIS サーバーが用いられているような 環境においてである。あらゆるマップに対して、そのマップの原本を
+保持している NIS マスターサーバーが一つだけ存在する。他のサーバは すべて NIS スレーブサーバーとなり、マスターサーバーでマップが
+更新されるたびに、新しい版のマップをコピーする。 通常は一台の NIS サーバーにすべてのマップの管理を集中させる。
+<P>
+これらすべての NIS サーバーの間でマップの内容を一致させておくためには、 <B>ypxfr</B> を <B>cron</B>
+ジョブとして定期的に動作させると良い。あまり変更されないマップは 一日に一回更新すればよいだろうし (システムの使用率が最低となるような
+夜遅くが好まれる)、頻繁に変更されるマップ ( <I>passwd.byname</I> や <I>passwd.byuid</I> など)
+は一時間に一回くらい更新する必要があるかもしれない。 これらの例は <B>/usr/lib/yp</B> の <B>ypxfr_1perday</B>,
+<B>ypxfr_2perday</B>, <B>ypxfr_1perhour</B> などに示してある。とりあえず動かしてみるには、 これらを用いてみると良いだろう。
+<P>
+NIS マスターサーバーで <B>/var/yp/Makefile</B> が実行されたら、 通常はその更新内容を <B>yppush</B>
+を用いて伝播させるべきである。 しかし大きなネットワークの場合には、通信障害などによって NIS スレーブの同期がマスターとずれることもあるだろうから、
+このように <B>ypxfr</B> を使うのは良いことである。
+<P>
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+以下のオプションがサポートされている。
+<DL COMPACT>
+<DT><B>-f</B><DD>
+マップの転送を強制する。通常の動作では、 NIS マスターにあるマップがローカルホストにすでに存在するコピーよりも 新しくないと判断されると、
+<B>ypxfr</B> はマップの転送を行わない。このフラグを指定すると、 どのサーバーの版が最新であるかを問わず、強制的に転送が行われる。
+<DT><B>-c</B><DD>
+ローカルで動作している <B>ypserv</B> プロセスに &quot;clear current map&quot; 要求を送らない。 <B>ypxfr</B> が
+<B>ypinit</B> から起動された場合や、 <B>ypxfr</B> の起動時に <B>ypserv</B>
+が動作していない場合などには通常このフラグを指定する。さもないと <B>ypxfr</B> はローカルの <B>ypserv</B>
+と通信できない旨のエラーを出し、転送は失敗する。
+<DT><B>-d</B><I> domain</I><DD>
+デフォルトの NIS ドメインの代わりに用いるドメインを指定する。
+<DT><B>-h</B><I> source host</I><DD>
+マップに書かれているマスターの情報を無視して、マップを <I>host</I> から取得する。 <I>host</I> が指定されない場合には、 <B>ypxfr</B> は
+<FONT SIZE="-1">NIS</FONT>
+サービスにマスターの名前を問い合わせて、そこからマップを取得しようとする。 このオプションは <B>ypxfr</B>
+がマップの取得先とする NIS マスターサーバーを保証するために用いられる。
+<DT><B>-s</B><I> source domain</I><DD>
+マップの取得先とするソースドメインを指定する。 そのマップをドメインを通して同じものとしたい場合に有効。
+<DT><B>-C</B><I> taskid progam-number ipaddr port</I><DD>
+このオプションは <B>ypserv</B> によって<B>のみ</B>用いられる。 <B>ypserv</B> が <B>ypxfr</B> を起動するときに、 <B>ypxfr</B> が
+<B>yppush</B> プロセスをコールバックする先 (
+<FONT SIZE="-1">IP</FONT>
+アドレス <I>ipaddr</I> のホストの、予約済みプログラム番号
+<I>progam-number</I>、 ポート番号 <I>port</I> が、トランザクション <I>taskid</I> へのレスポンスを待っている)  を指定する。
+<DT><B>-p</B><I> yp_path</I><DD>
+マップのディレクトリを <I>yp_path/[domainname]</I> に変更する。デフォルトは <I>/var/yp/[domainname]</I>
+である。
+<DT><I>mapname</I><DD>
+転送するマップの名前を指定する (複数指定可)。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+/var/yp/[domainname]/[maps]
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/ypserv.8.html">ypserv</A></B>(8), <B><A HREF="../man8/yppush.8.html">yppush</A></B>(8), <B><A HREF="../man8/ypinit.8.html">ypinit</A></B>(8), <B><A HREF="../../cron/man8/cron.8.html">cron</A></B>(8), <B><A HREF="../../cron/man5/crontab.5.html">crontab</A></B>(5)
+<A NAME="lbAH">&nbsp;</A>
+<H2>作者</H2>
+
+Thorsten Kukuk &lt;<A HREF="mailto:kukuk@suse.de">kukuk@suse.de</A>&gt;
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">作者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:51 GMT, December 05, 2022
+</BODY>
+</HTML>

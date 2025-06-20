@@ -1,0 +1,185 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SIGPROCMASK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SIGPROCMASK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/sigprocmask.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sigprocmask, rt_sigprocmask - 禁止するシグナルの確認と変更
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+<P>
+
+<PRE>
+/* Prototype for the glibc wrapper function */
+<B>int sigprocmask(int </B><I>how</I><B>, const sigset_t *</B><I>set</I><B>, sigset_t *</B><I>oldset</I><B>);</B>
+
+/* Prototype for the underlying system call */
+<B>int rt_sigprocmask(int </B><I>how</I><B>, const kernel_sigset_t *</B><I>set</I><B>,</B>
+<B>                   kernel_sigset_t *</B><I>oldset</I><B>, size_t </B><I>sigsetsize</I><B>);</B>
+
+/* Prototype for the legacy system call (deprecated) */
+<B>int sigprocmask(int </B><I>how</I><B>, const old_kernel_sigset_t *</B><I>set</I><B>,</B>
+<B>                old_kernel_sigset_t *</B><I>oldset</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>sigprocmask</B>(): _POSIX_C_SOURCE
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>sigprocmask</B>()  を使うと、呼び出したスレッドのシグナルマスクの取得/変更ができる。
+シグナルマスクは、呼び出し元に対して現在配送が禁止されているシグナルの 集合のことである (詳細については <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  も参照のこと)。
+<P>
+
+このコールの動作は <I>how</I> の値によって決まる:
+<DL COMPACT>
+<DT><B>SIG_BLOCK</B><DD>
+禁止されたシグナルの集合は現在の値と <I>set</I> 引数を結合したものとなる。
+<DT><B>SIG_UNBLOCK</B><DD>
+現在禁止されているシグナルの集合から <I>set</I> にあるシグナルを取り除く。禁止されていないシグナルを取り除こうと することも認められている。
+<DT><B>SIG_SETMASK</B><DD>
+禁止されているシグナルの集合に <I>set</I> 引数を設定する。
+</DL>
+<P>
+
+<I>oldset</I> が NULL でなければ、シグナルマスクの今までの値を <I>oldset</I> に格納する。
+<P>
+
+<I>set</I> が NULL であれば、シグナルマスクは変更されない (すなわち、 <I>how</I> は無視される)。 <I>set</I>
+の値にかかわらず、現在のシグナルマスクの値は <I>oldset</I> に入れて返される (但し、 <I>oldset</I> が NULL でない場合)。
+<P>
+
+A set of functions for modifying and inspecting variables of type
+<I>sigset_t</I> (&quot;signal sets&quot;) is described in <B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3).
+<P>
+
+マルチスレッドのプロセスで <B>sigprocmask</B>()  を使用した場合の動作は規定されていない。 <B><A HREF="../man3/pthread_sigmask.3.html">pthread_sigmask</A></B>(3)
+を参照のこと。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>sigprocmask</B>() は成功した場合 0 を返す。 エラーの場合、 -1 を返し、 <I>errno</I> にエラーの原因を示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+引数 <I>set</I> か <I>oldset</I> がプロセスに割り当てられたアドレス空間の外を指している。
+<DT><B>EINVAL</B><DD>
+Either the value specified in <I>how</I> was invalid or the kernel does not
+support the size passed in <I>sigsetsize.</I>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>SIGKILL</B> や <B>SIGSTOP</B> を禁止することはできない。 禁止しようとしても黙って無視される。
+<P>
+
+プロセス内の各スレッドはそれぞれ専用のシグナルマスクを持つ。
+<P>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  経由で作成された子プロセスは親プロセスのシグナルマスクのコピーを継承する。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+の前後でシグナルマスクは保持される。
+<P>
+
+シグナル <B>SIGBUS</B>, <B>SIGFPE</B>, <B>SIGILL</B>, <B>SIGSEGV</B> が禁止されている間に生成された場合で、 そのシグナルが
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2), <B><A HREF="../man3/sigqueue.3.html">sigqueue</A></B>(3), <B><A HREF="../man3/raise.3.html">raise</A></B>(3)  によって生成されたものでないときには、 その後の動作は未定義である。
+<P>
+
+シグナル集合の操作に関する詳細は <B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3)  を参照のこと。
+<P>
+
+
+Note that it is permissible (although not very useful) to specify both
+<I>set</I> and <I>oldset</I> as NULL.
+<A NAME="lbAI">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+The kernel's definition of <I>sigset_t</I> differs in size from that used by the
+C library.  In this manual page, the former is referred to as
+<I>kernel_sigset_t</I> (it is nevertheless named <I>sigset_t</I> in the kernel
+sources).
+<P>
+
+The glibc wrapper function for <B>sigprocmask</B>()  silently ignores attempts
+to block the two real-time signals that are used internally by the NPTL
+threading implementation.  See <B>nptl</B>(7)  for details.
+<P>
+
+
+
+The original Linux system call was named <B>sigprocmask</B>().  However, with
+the addition of real-time signals in Linux 2.2, the fixed-size, 32-bit
+<I>sigset_t</I> (referred to as <I>old_kernel_sigset_t</I> in this manual page)
+type supported by that system call was no longer fit for purpose.
+Consequently, a new system call, <B>rt_sigprocmask</B>(), was added to support
+an enlarged <I>sigset_t</I> type (referred to as <I>kernel_sigset_t</I> in this
+manual page).  The new system call takes a fourth argument, <I>size_t
+sigsetsize</I>, which specifies the size in bytes of the signal sets in <I>set</I>
+and <I>oldset</I>.  This argument is currently required to have a fixed
+architecture specific value (equal to <I>sizeof(kernel_sigset_t)</I>).
+<P>
+
+
+The glibc <B>sigprocmask</B>()  wrapper function hides these details from us,
+transparently calling <B>rt_sigprocmask</B>()  when the kernel provides it.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2), <B><A HREF="../man2/pause.2.html">pause</A></B>(2), <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man2/signal.2.html">signal</A></B>(2), <B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2),
+<B><A HREF="../man2/sigsuspend.2.html">sigsuspend</A></B>(2), <B><A HREF="../man3/pthread_sigmask.3.html">pthread_sigmask</A></B>(3), <B><A HREF="../man3/sigqueue.3.html">sigqueue</A></B>(3), <B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3),
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

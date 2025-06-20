@@ -1,0 +1,121 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SIGEVENT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SIGEVENT</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/sigevent.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sigevent - 非同期ルーチンからの通知用の構造体
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
+
+union sigval {            /* Data passed with notification */
+    int     sival_int;    /* Integer value */
+    void   *sival_ptr;    /* Pointer value */
+};
+
+struct sigevent {
+    int    sigev_notify;  /* Notification method */
+    int    sigev_signo;   /* Notification signal */
+    union sigval sigev_value;
+                          /* Data passed with notification */
+    void (*sigev_notify_function) (union sigval);
+                          /* Function used for thread
+                             notification (SIGEV_THREAD) */
+    void  *sigev_notify_attributes;
+                          /* Attributes for notification thread
+                             (SIGEV_THREAD) */
+    pid_t  sigev_notify_thread_id;
+                          /* ID of thread to signal
+                             (SIGEV_THREAD_ID); Linux-specific */
+};
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+<I>sigevent</I> 構造体は、イベントに関する情報をプロセスに通知するために様々な API で使用される (イベントの例としては、
+非同期処理要求の完了、 タイマーの満了、 メッセージの到着など)。
+<P>
+
+「書式」に記載されている定義はおおよそのものである。 <I>sigevent</I> 構造体のいくつかのフィールドは、
+共用体の一部として定義されているものもある。 プログラムは、 <I>sigev_notify</I> で指定された値に応じたフィールドだけを利用すべきである。
+<P>
+
+<I>sigev_notify</I> フィールドは、通知をどのように処理すべきかを指定する。 このフィールドは、以下のいずれかの値である。
+<DL COMPACT>
+<DT><B>SIGEV_NONE</B><DD>
+「空 (null)」の通知。 イベントが発生時には何もしないこと。
+<DT><B>SIGEV_SIGNAL</B><DD>
+<I>sigev_signo</I> で指定されたシグナルを送信することで、プロセスへの通知を行う。
+<DT><DD>
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2) の <B>SA_SIGINFO</B> フラグを使った登録されたシグナルハンドラーによりシグナルが捕捉されると、
+シグナルハンドラーの 2 番目の引数として渡された <I>siginfo_t</I> 構造体の以下のフィールドが設定される。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>si_code</I><DD>
+このフィールドには通知を配送した API に応じた決まる値が設定される。
+<DT><I>si_signo</I><DD>
+このフィールドにはシグナル番号 (すなわち <I>sigev_signo</I> と同じ値) が設定される。
+<DT><I>si_value</I><DD>
+このフィールドには <I>sigev_value</I> で指定された値が設定される。
+</DL>
+</DL>
+
+<DT><DD>
+API によっては <I>siginfo_t</I> 構造体の他のフィールドが設定される場合もある。
+<DT><DD>
+シグナルを受け取ったときには <B><A HREF="../man2/sigwaitinfo.2.html">sigwaitinfo</A></B>(2) でも同じ情報が得られる。
+<DT><B>SIGEV_THREAD</B><DD>
+「あたかも」新しいスレッドセーフの開始関数であるかのように <I>sigev_notify_function</I> を起動することで、 プロセスへの通知を行う
+(実装の可能性としては、 タイマー通知の度に新しいスレッドセーフが作成される場合も、 一つのスレッドを作成してすべての通知を受信する場合もある)。
+この関数は <I>sigev_value</I> を唯一の引数として起動される。 <I>sigev_notify_attributes</I> は、 NULL
+以外の場合は、 新しいスレッドセーフの属性を定義する <I>pthread_attr_t</I> 構造体を指していなければならない
+(<B><A HREF="../man3/pthread_attr_init.3.html">pthread_attr_init</A></B>(3) 参照)。
+<DT><B>SIGEV_THREAD_ID</B> (Linux 固有)<DD>
+
+現在のところ POSIX でのみ使用されている。 <B>timer_create</B>(2) 参照。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>timer_create</B>(2), <B><A HREF="../man3/aio_fsync.3.html">aio_fsync</A></B>(3), <B><A HREF="../man3/aio_read.3.html">aio_read</A></B>(3), <B><A HREF="../man3/aio_write.3.html">aio_write</A></B>(3),
+<B><A HREF="../man3/getaddrinfo_a.3.html">getaddrinfo_a</A></B>(3), <B><A HREF="../man3/lio_listio.3.html">lio_listio</A></B>(3), <B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3), <B><A HREF="../man7/aio.7.html">aio</A></B>(7),
+<B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
+<A NAME="lbAF">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">関連項目</A><DD>
+<DT><A HREF="#lbAF">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

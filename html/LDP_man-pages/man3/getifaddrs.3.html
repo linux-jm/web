@@ -1,0 +1,282 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETIFADDRS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETIFADDRS</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getifaddrs.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getifaddrs, freeifaddrs - インターフェースのアドレスを取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/ifaddrs.h">ifaddrs.h</A>&gt;</B>
+
+<B>int getifaddrs(struct ifaddrs **</B><I>ifap</I><B>);</B>
+
+<B>void freeifaddrs(struct ifaddrs *</B><I>ifa</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getifaddrs</B>() 関数は、ローカルシステムのネットワークインターフェース情報を表す構造体の連結リストを作成し、
+リストの先頭の要素のアドレスを <I>*ifap</I> に格納する。 リストは <I>ifaddrs</I> 構造体で構成される。 <I>ifaddrs</I>
+構造体は以下のように定義されている。
+<P>
+
+
+
+struct ifaddrs {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;ifaddrs&nbsp;&nbsp;*ifa_next;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Next&nbsp;item&nbsp;in&nbsp;list&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ifa_name;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Name&nbsp;of&nbsp;interface&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ifa_flags;&nbsp;&nbsp;&nbsp;/*&nbsp;Flags&nbsp;from&nbsp;SIOCGIFFLAGS&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr&nbsp;*ifa_addr;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Address&nbsp;of&nbsp;interface&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr&nbsp;*ifa_netmask;&nbsp;/*&nbsp;Netmask&nbsp;of&nbsp;interface&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;union&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr&nbsp;*ifu_broadaddr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Broadcast&nbsp;address&nbsp;of&nbsp;interface&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr&nbsp;*ifu_dstaddr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Point-to-point&nbsp;destination&nbsp;address&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;ifa_ifu;
+#define              ifa_broadaddr ifa_ifu.ifu_broadaddr
+#define              ifa_dstaddr   ifa_ifu.ifu_dstaddr
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ifa_data;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Address-specific&nbsp;data&nbsp;*/
+};
+
+
+<P>
+
+<I>ifa_next</I> フィールドにはリストの次の構造体へのポインターが格納される。 この要素がリストの最後の場合には NULL が入る。
+<P>
+
+
+
+
+<I>ifa_name</I> はヌル終端されたインターフェース名を指す。
+<P>
+
+<I>ifa_flags</I> フィールドには、 <B>SIOCGIFFLAGS</B> <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) 操作で返されるインターフェースのフラグが格納される
+(これらのフラグのリストについては <B><A HREF="../man7/netdevice.7.html">netdevice</A></B>(7) を参照)。
+<P>
+
+<I>ifa_addr</I> フィールドは、インターフェースのアドレスを格納した構造体へのポインターである (<I>sa_family</I>
+サブフィールドを参照して、アドレス構造体の形式を判別すべきである)。 このフィールドはヌルポインターとなる場合がある。
+<P>
+
+<I>ifa_netmask</I> フィールドには、 ネットマスクがあるアドレスファミリーであれば、 <I>ifa_addr</I>
+に関連付けられたネットマスクを格納した構造体へのポインターが入る。 このフィールドはヌルポインターとなる場合がある。
+<P>
+
+<I>ifa_flags</I> にビット <B>IFF_BROADCAST</B> か <B>IFF_POINTOPOINT</B> のどちらが設定されているかにより
+(同時にはこれらのどちらか一方だけが設定される)、 <I>ifa_broadaddr</I> に <I>ifa_addr</I> に対応するブロードキャストが入るか
+(そのアドレスファミリーでブロードキャストがある場合)、 <I>ifa_dstaddr</I> に point-to-point
+インターフェースの宛先アドレスが入るかが決まる。
+<P>
+
+<I>ifa_data</I> フィールドは、 アドレスファミリー固有のデータが入ったバッファーへのポインターである。
+そのインターフェースでこのようなデータがない場合には、 このフィールドは NULL となる。
+<P>
+
+<B>getifaddrs</B>() が返すデータは動的に確保される。 必要なくなった際には <B>freeifaddrs</B>() を使って解放すべきである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>getifaddrs</B> は 0 を返す。 エラーの場合、 -1 が返り、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>getifaddrs</B>() は失敗する場合があり、その場合には <I>errno</I> には <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man2/bind.2.html">bind</A></B>(2),
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2), <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2), <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3), <B><A HREF="../man3/realloc.3.html">realloc</A></B>(3)
+に対して規定されているエラーのいずれかが設定される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>getifaddrs</B>() 関数は glibc 2.3 で初めて登場したが、 glibc 2.3.3 より前のバージョンの実装では IPv4
+アドレスだけがサポートされていた。 IPv6 のサポートは glibc 2.3.3 で追加された。 IPv4 以外のアドレスファミリーが
+<B>getifaddrs</B> で利用できるのは、 netlink をサポートするカーネルの場合だけである。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getifaddrs</B>(),
+<B>freeifaddrs</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+
+POSIX.1 にはない。 この関数は BSDi で初めて登場し、 BSD 系のシステムに存在するが、
+ドキュメント上はかなり動作が異なり、アドレス毎ではなくインターフェース毎に 1 エントリーを返す。 このことは、
+インターフェースがアドレスを持たない場合には <I>ifa_addr</I> や他のフィールドは実際に NULL になり、 インターフェースに IP
+アドレスが割り当てられている場合には リンクレベルのアドレスは返されない、ということを意味する。 また、 <I>ifa_broadaddr</I> と
+<I>ifa_dstaddr</I> のどちらを選択するかを決める方法は、 システムにより異なる。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+Linux では、 返されるアドレスは通常インターフェースに割り当てられた IPv4 アドレスと IPv6 アドレスになるが、
+これ以外にインターフェース毎に一つ <B>AF_PACKET</B> アドレスも返される。 <B>AF_PACKET</B> アドレスには、
+インターフェースとその物理層に関する低レベルの詳細が格納される。 この場合、 <I>ifa_data</I> フィールドには、
+<I>&lt;<A HREF="file:///usr/include/linux/if_link.h">linux/if_link.h</A>&gt;</I> で定義される <I>struct rtnl_link_stats</I> (Linux 2.4
+以前では <I>&lt;<A HREF="file:///usr/include/linux/netdevice.h">linux/netdevice.h</A>&gt;</I> で定義される <I>struct net_device_stats</I>)
+へのポインターが格納される。 この構造体には、インターフェースの様々な属性や統計情報が入る。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは <B>getifaddrs</B>(), <B>freeifaddrs</B>(), <B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3) の使用例である。
+以下はこのプログラムをあるシステムで実行した際の出力である。
+<P>
+
+
+
+$ <B>./a.out</B>
+lo       AF_PACKET (17)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tx_packets&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;524;&nbsp;rx_packets&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;524
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tx_bytes&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;38788;&nbsp;rx_bytes&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;38788
+wlp3s0   AF_PACKET (17)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tx_packets&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;108391;&nbsp;rx_packets&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;130245
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tx_bytes&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;30420659;&nbsp;rx_bytes&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;94230014
+em1      AF_PACKET (17)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tx_packets&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0;&nbsp;rx_packets&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tx_bytes&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0;&nbsp;rx_bytes&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0
+lo       AF_INET (2)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;address:&nbsp;&lt;127.0.0.1&gt;
+wlp3s0   AF_INET (2)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;address:&nbsp;&lt;192.168.235.137&gt;
+lo       AF_INET6 (10)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;address:&nbsp;&lt;::1&gt;
+wlp3s0   AF_INET6 (10)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;address:&nbsp;&lt;fe80::7ee9:d3ff:fef5:1a91%wlp3s0&gt;
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#define _GNU_SOURCE     /* To get defns of NI_MAXSERV and NI_MAXHOST */
+#include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/ifaddrs.h">ifaddrs.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/linux/if_link.h">linux/if_link.h</A>&gt;
+<P>
+int main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;ifaddrs&nbsp;*ifaddr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;family,&nbsp;s;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;host[NI_MAXHOST];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(getifaddrs(&amp;ifaddr)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;getifaddrs&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Walk&nbsp;through&nbsp;linked&nbsp;list,&nbsp;maintaining&nbsp;head&nbsp;pointer&nbsp;so&nbsp;we
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;can&nbsp;free&nbsp;list&nbsp;later&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(struct&nbsp;ifaddrs&nbsp;*ifa&nbsp;=&nbsp;ifaddr;&nbsp;ifa&nbsp;!=&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ifa&nbsp;=&nbsp;ifa-&gt;ifa_next)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ifa-&gt;ifa_addr&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;family&nbsp;=&nbsp;ifa-&gt;ifa_addr-&gt;sa_family;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Display&nbsp;interface&nbsp;name&nbsp;and&nbsp;family&nbsp;(including&nbsp;symbolic
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;form&nbsp;of&nbsp;the&nbsp;latter&nbsp;for&nbsp;the&nbsp;common&nbsp;families)&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%-8s&nbsp;%s&nbsp;(%d)\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ifa-&gt;ifa_name,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(family&nbsp;==&nbsp;AF_PACKET)&nbsp;?&nbsp;&quot;AF_PACKET&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(family&nbsp;==&nbsp;AF_INET)&nbsp;?&nbsp;&quot;AF_INET&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(family&nbsp;==&nbsp;AF_INET6)&nbsp;?&nbsp;&quot;AF_INET6&quot;&nbsp;:&nbsp;&quot;???&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;family);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;For&nbsp;an&nbsp;AF_INET*&nbsp;interface&nbsp;address,&nbsp;display&nbsp;the&nbsp;address&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(family&nbsp;==&nbsp;AF_INET&nbsp;||&nbsp;family&nbsp;==&nbsp;AF_INET6)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;getnameinfo(ifa-&gt;ifa_addr,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(family&nbsp;==&nbsp;AF_INET)&nbsp;?&nbsp;sizeof(struct&nbsp;sockaddr_in)&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(struct&nbsp;sockaddr_in6),
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;host,&nbsp;NI_MAXHOST,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NULL,&nbsp;0,&nbsp;NI_NUMERICHOST);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;getnameinfo()&nbsp;failed:&nbsp;%s\n&quot;,&nbsp;gai_strerror(s));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\t\taddress:&nbsp;&lt;%s&gt;\n&quot;,&nbsp;host);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;if&nbsp;(family&nbsp;==&nbsp;AF_PACKET&nbsp;&amp;&amp;&nbsp;ifa-&gt;ifa_data&nbsp;!=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;rtnl_link_stats&nbsp;*stats&nbsp;=&nbsp;ifa-&gt;ifa_data;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\t\ttx_packets&nbsp;=&nbsp;%10u;&nbsp;rx_packets&nbsp;=&nbsp;%10u\n&quot;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;\t\ttx_bytes&nbsp;&nbsp;&nbsp;=&nbsp;%10u;&nbsp;rx_bytes&nbsp;&nbsp;&nbsp;=&nbsp;%10u\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stats-&gt;tx_packets,&nbsp;stats-&gt;rx_packets,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stats-&gt;tx_bytes,&nbsp;stats-&gt;rx_bytes);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;freeifaddrs(ifaddr);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2), <B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2), <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man7/packet.7.html">packet</A></B>(7), <B><A HREF="../../net-tools/man8/ifconfig.8.html">ifconfig</A></B>(8)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DL>
+<DT><A HREF="#lbAL">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,303 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of dhclient</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>dhclient</H1>
+Section: Maintenance Commands (8)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/dhcp2/contrib/man8/dhclient.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+dhclient - 動的ホスト設定プロトコルのクライアント
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>dhclient</B>
+
+[
+<B>-Ddq1</B>
+
+]
+[
+<B>-cf</B>
+
+<I>config-file</I>
+
+]
+[
+<B>-lf</B>
+
+<B>lease-file</B>
+
+]
+[
+<B>-p</B>
+
+<I>port</I>
+
+]
+[
+<B>-pf</B>
+
+<I>pidfile</I>
+
+]
+[
+<I>if0</I>
+
+[
+<I>...ifN</I>
+
+]
+]
+<A NAME="lbAD">&nbsp;</A>
+<H2>解説</H2>
+
+Internet Software Consortium の DHCP クライアントである dhclient
+は動的ホスト設定プロトコル (DHCP: Dynamic Host Configuration Protocol)
+または BOOTP プロトコルを用いて、あるいは
+これらのプロトコルが失敗した場合にはアドレスを静的に割り当てて、
+1 つ以上のネットワークインタフェースを設定する方法を提供します。
+<A NAME="lbAE">&nbsp;</A>
+<H2>操作</H2>
+
+<P>
+
+DHCP プロトコルでは、1 つ以上のサブネットに割り当てることのできる
+IP アドレスのリストを管理する中央サーバに、ホストがアクセスできます。
+DHCP クライアントはこのリストからアドレスを要求して、
+それをネットワーク通信の一時的な土台に用いることができます。
+また DHCP プロトコルは、デフォルトルータの場所やネームサーバの場所など、
+クライアントが接続しているネットワークに関する重要な情報を
+クライアントに詳細に知らせる機構も提供します。
+<P>
+
+起動時に dhclient は
+<I>dhclient.conf</I>
+
+から設定指示を読み取ります。
+それから現在のシステムに組み込まれている
+すべてのネットワークインタフェースのリストを取得します。
+各インタフェースに対し dhclient は DHCP プロトコルを用いて設定を試みます。
+<P>
+
+システムリブートやサーバ再起動の際にリースを失わないように、
+dhclient は割り当てられたリースのリストを
+<A HREF="../man5/dhclient.leases.5.html">dhclient.leases</A>(5) ファイルに保存します。
+起動時、dhclient.conf ファイルを読み取った後、
+dhclient は dhclient.leases ファイルを読み込んで、
+割り当てられたリースに関するメモリを更新します。
+<P>
+
+新しいリースを取得すると、dhclient.leases ファイルの末尾に付け加えられます。
+ファイルが極端に大きくなるのを防ぐために、
+dhclient は時おりコア内部のリースデータベースから
+新規 dhclient.leases ファイルを作成します。
+古いほうの dhclient.leases ファイルは、
+dhclient が次にデータベースを作り替えるまで、
+<I>dhcpd.leases~</I>
+
+という名前で保存されます。
+<P>
+
+dhclient が最初に起動されたとき
+(一般的にはシステムブート初期過程の間) に DHCP サーバが利用できなければ、
+古いリースは残されます。
+その場合、dhclient.leases ファイルから
+まだ期限の切れていない古いリースを検査し、
+有効であると判断されれば、それらの期限が切れるか
+または DHCP サーバが利用できるようになるまで、そのリースを使います。
+<P>
+
+時には DHCP サーバが存在しないネットワークにアクセスする必要があるような
+移動ホストは、そのネットワーク上の固定アドレスのリースを
+あらかじめ読み込んでおくことができます。
+DHCP サーバへのアクセスがどれも成功しなかった場合、
+dhclient はその静的なリースが有効であるか検証し、
+有効であれば次に再起動されるまでそのリースを使います。
+<P>
+
+また移動ホストは、DHCP は利用できないが BOOTP なら利用できるような
+ネットワークへ移動することもあるでしょう。
+そのような場合は、古いリースを順次試すよりも、
+そのネットワークの管理者と相談して
+BOOTP データベースにエントリを作成してもらい、
+そのネットワーク上で素早くブートできるようにするとよいでしょう。
+<A NAME="lbAF">&nbsp;</A>
+<H2>コマンドライン</H2>
+
+<P>
+
+dhclient が設定しようとするネットワークインタフェースの名前を
+コマンドラインで指定できます。
+コマンドラインでインタフェース名が指定されなければ、
+dhclient はすべてのネットワークインタフェースを識別し、
+可能なら非ブロードキャストインタフェースは除いて、
+それぞれのインタフェースを設定しようとします。
+<P>
+
+<B>-D</B>
+
+フラグを指定すると、
+<B>dhclient</B>
+
+が
+<B>dhclient-script</B>
+
+と組み合わせて使用するために作成したスクリプトを、
+<I>/tmp</I>
+
+に保存させます。
+<P>
+
+通常、dhclient はインタフェースを設定するまではフォアグラウンドで動作し、
+その後バックグラウンドの動作に移行します。
+dhclient を常にフォアグラウンドプロセスとして実行させるには、
+<B>-d</B>
+
+フラグを指定してください。
+これは dhclient をデバッガ内で実行するときや、
+System V システムで inittab 外で実行するときに便利です。
+<P>
+
+標準 (ポート 68) 以外のポートで dhclient に送受信させるには、
+<B>-p</B>
+
+フラグが使えます。
+このフラグに続けて、dhclient が使う udp ポート番号を指定します。
+これは主にデバッグ目的に有用です。
+<B>-p</B>
+
+フラグを指定すると、指定した番号より 1 つ小さなポート番号を使用して、
+クライアントはサーバへの応答を送信します -
+つまり、
+<B>-p</B>
+
+68 と指定した場合には、
+クライアントはポート 68 で listen してポート 67 で送信します。
+リレーエージェントを介す必要があるデータグラムは、
+<B>-p</B>
+
+フラグで指定されるポート番号に送られます -
+代替ポート番号を使用したい場合、
+使用しているリレーエージェントを設定して、
+同じ代替ポート番号を使用させる必要があります。
+<P>
+
+<B>-cf</B>
+
+を使用すると、デフォルトの
+/sbin/dhclient-script
+からシェルスクリプトを変更可能です。
+<P>
+
+<B>-lf</B>
+
+フラグを使用することにより、リース出力ファイルを、
+デフォルトの /var/db/dhclient.leases から変えることができます。
+<P>
+
+<B>-pf</B>
+
+フラグを使用することにより、PID ファイルを、
+デフォルトの /var/run/dhclient.pid から変えることができます。
+<P>
+
+<B>-q</B>
+
+フラグを使用することにより、
+<B>dhclient</B>
+
+の画面出力量を減らすことができます。
+<P>
+
+<B>-1</B>
+
+フラグを指定すると、
+dhclient はひとつのリースに対し 1 度だけしか取得を試みません。
+もし取得に失敗すれば dhclient は終了コード 2 で終了します。
+<P>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>設定</H2>
+
+<A HREF="../man5/dhclient.conf.5.html">dhclient.conf</A>(5) ファイルの書式は別に解説されています。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+<B>/etc/dhclient.conf, /var/db/dhclient.leases, /var/db/dhclient.leases~.</B>
+
+<B>/var/run/dhclient.pid,</B>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man5/dhclient.conf.5.html">dhclient.conf</A>(5), <A HREF="../man5/dhclient.leases.5.html">dhclient.leases</A>(5), <A HREF="../man8/dhclient-script.8.html">dhclient-script</A>(8)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>作者</H2>
+
+<B><A HREF="../man8/dhclient.8.html">dhclient</A>(8)</B>
+
+は Ted Lemon &lt;<A HREF="mailto:mellon@fugue.com">mellon@fugue.com</A>&gt; が
+Vixie Enterprises と協力して Internet Software Consortium のために
+書きました。
+Internet Software Consortium についてより詳しくは、
+<B><A HREF="http://www.vix.com/isc">http://www.vix.com/isc</A></B>
+
+をご覧ください。
+Vixie Enterprises についてより詳しくは、
+<B><A HREF="http://www.vix.com">http://www.vix.com</A></B>
+
+をご覧ください。
+<P>
+
+本クライアントは、Elliot Poger が
+Stanford 大学の MosquitoNet プロジェクトに参加している間に、
+Linux での利用に際し大幅に修正、改良を行いました。
+<P>
+
+現在のバージョンは、Elliot による Linux での改良に負うところが大きいですが、
+Internet Software Consortium の DHCP サーバが使うものと同じ
+ネットワーキングフレームワークを用いるように、Ted Lemon が
+大幅な再編成や部分的な書き換えを行いました。
+システム特有の設定コードの大部分はシェルスクリプトに移されたので、
+より多くのオペレーティングシステムのサポートが加えられるにつれ、
+システム特有の設定コードをそのオペレーティングシステムに
+移植したり管理したりする必要はなくなるでしょう。
+代わりに、シェルスクリプトが環境に合ったツールを呼び出して
+その目的を果たしてくれます。
+<P>
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">解説</A><DD>
+<DT><A HREF="#lbAE">操作</A><DD>
+<DT><A HREF="#lbAF">コマンドライン</A><DD>
+<DT><A HREF="#lbAG">設定</A><DD>
+<DT><A HREF="#lbAH">関連ファイル</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">作者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:37 GMT, December 05, 2022
+</BODY>
+</HTML>

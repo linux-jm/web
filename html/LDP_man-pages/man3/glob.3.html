@@ -1,0 +1,244 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GLOB</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GLOB</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/glob.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+glob, globfree - パターンにマッチするパス名を見付ける。glob() によっ て確保されたメモリー領域を解放する。
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/glob.h">glob.h</A>&gt;</B>
+
+<B>int glob(const char *</B><I>pattern</I><B>, int </B><I>flags</I><B>,</B>
+<B>         int (*</B><I>errfunc</I><B>) (const char *</B><I>epath</I><B>, int </B><I>eerrno</I><B>),</B>
+<B>         glob_t *</B><I>pglob</I><B>);</B>
+<B>void globfree(glob_t *</B><I>pglob</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>glob</B>()  関数はシェルが用いているルール (<B><A HREF="../man7/glob.7.html">glob</A></B>(7)  参照) に基づいてパターン <I>pattern</I>
+にマッチするすべてのパス名を検索する。 チルダ (~) の展開やパラメーター置換は行われない。それらを行いたい場合は <B><A HREF="../man3/wordexp.3.html">wordexp</A></B>(3)
+を使うとよい。
+<P>
+
+<B>globfree</B>()  関数は前に呼ばれた <B>glob</B>()  により動的に確保された記憶領域を解放する。
+<P>
+
+<B>glob</B>()  の結果は <I>pglob</I> がポイントする構造体に返される。 <I>pglob</I> は <I>glob_t</I> 型の構造体である。
+<I>glob_t</I> 型は <I>&lt;<A HREF="file:///usr/include/glob.h">glob.h</A>&gt;</I> 内で宣言されており、以下の要素を含んでいる。これらの要素は POSIX.2 で定義
+されている (さらに多くの要素が拡張として入っているかもしれない)。
+<P>
+
+
+
+typedef struct {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;&nbsp;gl_pathc;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;今までにマッチしたパスの数&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;**gl_pathv;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;マッチしたパス名のリスト&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;&nbsp;gl_offs;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;<I>gl_pathv</I>&nbsp;内に確保するスロット数&nbsp;*/
+} glob_t;
+
+
+<P>
+
+結果は動的に確保された記憶領域に入れられる。
+<P>
+
+パラメーター <I>flags</I> には以下の示す定数のうち、指定したいものをビットごとの OR で与える (一つも 指定しなくてもよい)。これによって
+<B>glob</B>()  の動作を変更できる。
+<DL COMPACT>
+<DT><B>GLOB_ERR</B><DD>
+(例えば、ディレクトリに読み取り許可属性が無い場合などで)  読み取りエラーが発生した際に関数から戻る。 デフォルトでは、エラーに関わらず
+読み取り可能なディレクトリを全てについて読み取りを実行しようとする。
+<DT><B>GLOB_MARK</B><DD>
+ディレクトリに対応する各々のパスにスラッシュを付加する。
+<DT><B>GLOB_NOSORT</B><DD>
+返されるパス名のソートを行わない。 ソートを行わない理由は、処理時間を節約するためだけである。 デフォルトでは、返されるパス名はソートされる。
+<DT><B>GLOB_DOOFFS</B><DD>
+<I>pglob-&gt;pathv</I> の文字列リストの先頭に <I>pglob-&gt;gl_offs</I> スロット分の領域を予約する。
+予約されたスロットにはヌルポインターが入る。
+<DT><B>GLOB_NOCHECK</B><DD>
+マッチするパターンがなければ、元のパターンを返す。 デフォルトでは、 <B>glob</B>()  はマッチするパターンがなければ
+<B>GLOB_NOMATCH</B> を返す。
+<DT><B>GLOB_APPEND</B><DD>
+この呼び出しでの結果を直前の <B>glob</B>()  の呼び出しで返された結果のベクトルに追加する。最初の <B>glob</B>()
+の呼び出しの際にはこのフラグを設定してはいけない。
+<DT><B>GLOB_NOESCAPE</B><DD>
+バックスラッシュ ('\') をエスケープ用文字として使用できない。 通常は、バックスラッシュを使って、次に続く文字をクォートすることで、
+特別な意味を持つメタキャラクターを無効することができる。
+</DL>
+<P>
+
+<I>flags</I> には以下に示すものも指定できる。 これらは GNU で拡張されたもので、POSIX.2 では定義されていない。
+<DL COMPACT>
+<DT><B>GLOB_PERIOD</B><DD>
+先頭のピリオドがメタキャラクターにマッチできるようにする。 デフォルトでは、メタキャラクターは先頭のピリオドにはマッチできない。
+<DT><B>GLOB_ALTDIRFUNC</B><DD>
+ファイルシステムにアクセスする際に、通常のライブラリ関数の代わりに 代替関数 <I>pglob-&gt;gl_closedir</I>,
+<I>pglob-&gt;gl_readdir</I>, <I>pglob-&gt;gl_opendir</I>, <I>pglob-&gt;gl_lstat</I>,
+<I>pglob-&gt;gl_stat</I> が用いられる。
+<DT><B>GLOB_BRACE</B><DD>
+<B>{a,b}</B> という形式の <B>csh</B>(1)  スタイルの括弧表現を展開する。 括弧表現は入れ子にすることができる。
+したがって、例えば、&quot;{foo/{,cat,dog},bar}&quot; というパターンを 指定した場合に得られる結果は、 4つの文字列 &quot;foo/&quot;,
+&quot;foo/cat&quot;, &quot;foo/dog&quot;, &quot;bar&quot; のそれぞれについて <B>glob</B>()  を呼び出した場合と同じになる。
+<DT><B>GLOB_NOMAGIC</B><DD>
+パターンにメタキャラクターが含まれていない場合、 マッチ結果として指定されたパターンだけを返す。
+パターンで指定された名前のファイルが存在しない場合であっても、 そのパターンが返される。
+<DT><B>GLOB_TILDE</B><DD>
+チルダの展開を行う。 チルダ ('~') がパターン内の唯一の文字の場合か、先頭のチルダの直後の文字が スラッシュ
+('/') の場合、チルダを呼び出し者のホームディレクトリで置換する。 先頭のチルダにユーザー名が続く場合 (例えば
+&quot;~andrea/bin&quot;)、 チルダとユーザー名をそのユーザーのホームディレクトリで置換する。
+ユーザー名が無効な場合やホームディレクトリが決定できない場合は、 置換は実行されない。
+<DT><B>GLOB_TILDE_CHECK</B><DD>
+このフラグを指定すると <B>GLOB_TILDE</B> と同様の振舞いをする。 <B>GLOB_TILDE</B> との違いは、ユーザー名が無効だった場合や
+ホームディレクトリが決定できなかった場合に、 パターン自身を使用するのではなく、 <B>glob</B>()  がエラーを示す <B>GLOB_NOMATCH</B>
+を返すことである。
+<DT><B>GLOB_ONLYDIR</B><DD>
+このフラグは、 <B>glob</B>()  に対する「ヒント」であり、 呼び出し側がパターンにマッチするディレクトリにしか興味がないことを知らせる。
+実装においてファイルの種別情報を簡単に決定できる場合は、ディレクトリでない ファイルは呼び出し側に返されない。しかしながら、呼び出し側では、返された
+ファイルリストがディレクトリかどうかを確認しなければならない。 (このフラグが存在するのは、呼び出し側がディレクトリにしか興味がない際に
+性能を最適化する目的のためだけである。)
+</DL>
+<P>
+
+<I>errfunc</I> が NULL でなければ、 エラーが起こった場合には関数 <I>errfunc</I> が呼び出される。関数の引数には、失敗したパス名
+<I>epath</I> と <I>errno</I> (<B><A HREF="../man3/opendir.3.html">opendir</A></B>(3), <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3), <B><A HREF="../man2/stat.2.html">stat</A></B>(2).
+のいずれかによってセットされた値) が与えられる。 <I>errfunc</I> が 0 以外の値を返すかもしくは <B>GLOB_ERR</B> がセットされた場合
+<B>glob</B>()  は <I>errfunc</I> の呼び出し後に終了する。
+<P>
+
+呼び出しが成功して戻った場合 <I>pglob-&gt;gl_pathc</I> にはマッチしたパス名が含まれ、 <I>pglob-&gt;gl_pathv</I>
+はマッチしたパス名へのポインターのリストへのポインターとなる。 ポインターのリストはヌルポインターで終端される。
+<P>
+
+<B>glob</B>()  を何度か続けて呼び出すことができる。その際2回目以降の呼び出しでは <B>GLOB_APPEND</B> フラグが <I>flags</I>
+に設定されていなければならない。
+<P>
+
+GNU の拡張として、 <I>pglob-&gt;gl_flags</I> には指定したフラグがセットされる。もし一つでもメタキャラクターが見付かれば
+このフラグと <B>GLOB_MAGCHAR</B> との <B>OR</B> を取った結果がセットされる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+呼び出しが成功して完了すると <B>glob</B>()  は 0 を返す。 それ以外の返り値は以下の通り:
+<DL COMPACT>
+<DT><B>GLOB_NOSPACE</B><DD>
+メモリーを使い果たした
+<DT><B>GLOB_ABORTED</B><DD>
+読み取りエラー
+<DT><B>GLOB_NOMATCH</B><DD>
+一つもマッチしなかった
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>glob</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:utent env
+<BR>
+
+sig:ALRM timer locale
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>globfree</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+In the above table, <I>utent</I> in <I>race:utent</I> signifies that if any of the
+functions <B><A HREF="../man3/setutent.3.html">setutent</A></B>(3), <B><A HREF="../man3/getutent.3.html">getutent</A></B>(3), or <B><A HREF="../man3/endutent.3.html">endutent</A></B>(3)  are used in
+parallel in different threads of a program, then data races could occur.
+<B>glob</B>()  calls those functions, so we use race:utent to remind users.
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, POSIX.2.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+glibc 2.1 では、 <I>gl_pathc</I> と <I>gl_offs</I> は POSIX.2 で指定されているように <I>size_t</I>
+として宣言されている。 glibc 2.0 では、 <I>int</I> として宣言されている。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>glob</B>()  関数はその中で呼び出している <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  や <B><A HREF="../man3/opendir.3.html">opendir</A></B>(3)
+などの関数の呼び出しで失敗が起こると失敗する。 これにより <I>errno</I> にそのエラーコードが入る。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+使用法の一例を以下に示す。以下はシェルで
+<P>
+
+
+
+ls -l *.c ../*.c
+
+
+<P>
+
+をタイプした場合をシミュレートしている。
+<P>
+
+
+
+glob_t globbuf;
+<P>
+globbuf.gl_offs = 2;
+glob(&quot;*.c&quot;, GLOB_DOOFFS, NULL, &amp;globbuf);
+glob(&quot;../*.c&quot;, GLOB_DOOFFS | GLOB_APPEND, NULL, &amp;globbuf);
+globbuf.gl_pathv[0] = &quot;ls&quot;;
+globbuf.gl_pathv[1] = &quot;-l&quot;;
+execvp(&quot;ls&quot;, &amp;globbuf.gl_pathv[0]);
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1), <B>sh</B>(1), <B><A HREF="../man2/stat.2.html">stat</A></B>(2), <B><A HREF="../man3/exec.3.html">exec</A></B>(3), <B><A HREF="../man3/fnmatch.3.html">fnmatch</A></B>(3), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3),
+<B><A HREF="../man3/opendir.3.html">opendir</A></B>(3), <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3), <B><A HREF="../man3/wordexp.3.html">wordexp</A></B>(3), <B><A HREF="../man7/glob.7.html">glob</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

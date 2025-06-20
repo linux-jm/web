@@ -1,0 +1,143 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FSEEK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FSEEK</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2018-04-30<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/fseek.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fgetpos, fseek, fsetpos, ftell, rewind - ストリームの位置を変更する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+<P>
+
+<B>int fseek(FILE *</B><I>stream</I><B>, long </B><I>offset</I><B>, int </B><I>whence</I><B>);</B>
+<P>
+
+<B>long ftell(FILE *</B><I>stream</I><B>);</B>
+<P>
+
+<B>void rewind(FILE *</B><I>stream</I><B>);</B>
+<P>
+
+<B>int fgetpos(FILE *</B><I>stream</I><B>, fpos_t *</B><I>pos</I><B>);</B>
+<P>
+
+<B>int fsetpos(FILE *</B><I>stream</I><B>, const fpos_t *</B><I>pos</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>fseek</B>()  関数は <I>stream</I> によって指定されたストリームにおいて、ファイル位置表示子 (file position
+indicator) をセットする。新たな位置 (バイト単位)  は <I>whence</I> で指定された位置に <I>offset</I>
+バイトを加えることによって与えられる。 <I>whence</I> が <B>SEEK_SET</B>, <B>SEEK_CUR</B>, <B>SEEK_END</B>
+のどれかになっている場合は、それぞれファイルの先頭、現在の位置表示子、 ファイルの末尾からのオフセットが取られる。 <B>fseek</B>()
+関数の呼び出しが成功すると、ストリームの end-of-file 表示子は クリアされ、それまでに <B><A HREF="../man3/ungetc.3.html">ungetc</A></B>(3)
+関数で戻したデータはなかったことになる。
+<P>
+
+<B>ftell</B>()  関数は <I>stream</I> によって指定されたストリームにおける、ファイル位置表示子 の現時点での値を与える。
+<P>
+
+<B>rewind</B>()  関数は <I>stream</I> によって指定されたストリームにおいて、ファイル位置表示子
+をファイルの先頭にセットする。この関数は以下と等価である。
+<P>
+
+<DL COMPACT><DT><DD>
+(void) fseek(stream, 0L, SEEK_SET)
+</DL>
+
+<P>
+
+ただし <B>rewind</B>()  ではストリームに対するエラー表示子 (error indicator) も同時に クリアされる (
+<B><A HREF="../man3/clearerr.3.html">clearerr</A></B>(3)  を見よ)。
+<P>
+
+<B>fgetpos</B>()  関数と <B>fsetpos</B>()  関数は、それぞれ <B>ftell</B>()  と <B>fseek</B>()  で
+<I>whence</I> に <B>SEEK_SET</B> を指定した場合と同様の機能を、異なるインターフェースで提供する。 <B>fgetpos</B>()
+はファイルオフセットの現在の値を <I>pos</I> が参照するオブジェクトに保存し、 <B>fsetpos</B>()  はファイルオフセットを <I>pos</I>
+に設定する。 UNIX 以外のシステムにおいては、 <I>fpos_t</I> が構造体などの複雑なオブジェクトになっていて、これらのルーチンがテキス
+トストリームでファイル位置を変更する方法のうち、移植性のある唯一のもの になっている場合もある。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>rewind</B>()  は返り値を持たない。 <B>fgetpos</B>(), <B>fseek</B>(), <B>fsetpos</B>()  は成功すると 0
+を返す。 <B>ftell</B>()  は現在のオフセットを返す。失敗した場合は返り値は -1 となり、 <I>errno</I> にエラーを示す値がセットされる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<B>fseek</B>()  関数に対して与えた <I>whence</I> 引数が <B>SEEK_SET</B>, <B>SEEK_END</B>, <B>SEEK_CUR</B>
+以外の値であった。 または、更新後のファイルオフセットが負になってしまう。
+<DT><B>ESPIPE</B><DD>
+The file descriptor underlying <I>stream</I> is not seekable (e.g., it refers to
+a pipe, FIFO, or socket).
+</DL>
+<P>
+
+<B>fgetpos</B>(), <B>fseek</B>(), <B>fsetpos</B>(), <B>ftell</B>()  は、それぞれ <B><A HREF="../man3/fflush.3.html">fflush</A></B>(3),
+<B><A HREF="../man2/fstat.2.html">fstat</A></B>(2), <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  などのルーチンを呼び出す際に失敗する可能性がある。この場合は
+それぞれ対応した <I>errno</I> が設定される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>fseek</B>(),
+<B>ftell</B>(),
+<B>rewind</B>(),
+<BR>
+
+<B>fgetpos</B>(),
+<B>fsetpos</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, C89, C99.
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/lseek.2.html">lseek</A></B>(2), <B><A HREF="../man3/fseeko.3.html">fseeko</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

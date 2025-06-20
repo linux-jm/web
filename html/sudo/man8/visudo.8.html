@@ -1,0 +1,284 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of VISUDO</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>VISUDO</H1>
+Section: System Manager's Manual (8)<BR>Updated: November 20, 2015<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/sudo/release/man8/visudo.8">roff page</A><HR>
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<B>visudo</B> - sudoers ファイルを編集する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<DL COMPACT>
+<DT>
+<B>visudo</B> [<B>-chqsV</B>] [<B>-f</B>&nbsp;<I>sudoers</I>] [<B>-x</B>&nbsp;<I>output_file</I>]
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>visudo</B> は <A HREF="../../0MultiFileIdx/man8/vipw.8.html">vipw</A>(8) によく似た安全なやり方で <I>sudoers</I> ファイルを編集する。
+<B>visudo</B> は <I>sudoers</I> ファイルをロックして、
+重複した編集が同時に行われないようにするとともに、
+整合性をざっと調べ、文法エラーのチェックを行う。
+<I>sudoers</I> ファイルが現在編集中だった場合は、
+「try again later」というメッセージを端末に表示する。
+<P>
+
+<B>visudo</B> が使用するエディタについては、
+コンパイル時に設定された一つ以上のエディタからなるリストがプログラムに埋め込まれているが、
+<I>sudoers</I> ファイルの Defaults 行で <I>editor</I> オプションを使えば、
+それを変更することができる。このリストは、デフォルトでは vi になっている。
+通常 <B>visudo</B> は、環境変数 VISUAL や EDITOR
+の値が上述のエディタ・リストに含まれるエディタでないかぎり、
+そうした環境変数を使用しない。とは言え、
+<B>visudo</B> が --with-env-editor オプションを付けて configure されている場合や、
+<I>sudoeres</I> ファイルの Defaults 行で <I>env_editor</I> オプションがセットされている場合は、
+<B>visudo</B> は VISUAL や EDITOR によって指定されたどんなエディタでも使用することになる。
+これがセキュリティホールになりかねないことに注意していただきたい。
+単に VISUAL や EDITOR を設定するだけで、
+ユーザが任意のプログラムを実行できるようになってしまうからだ。
+<P>
+
+<B>visudo</B> は編集が終わると、<I>sudoers</I> ファイルの文法解析を行い、
+文法エラーがあれば、変更を保存しない。<B>visudo</B> はエラーを発見すると、
+エラーが起きた行番号を知らせるメッセージを表示し、
+&quot;What now?&quot; というプロンプトを出す。このとき、'e' を押せば、
+<I>sudoers</I> ファイルを再編集できる。'x' を押せば、
+変更を保存せずに終了し、'Q' を押せば、変更を保存して終了する。
+'Q' の選択は、くれぐれも慎重になさっていただきたい。なぜなら、
+<B>visudo</B> が文法エラーがあると考えるのなら、<B>sudo</B> も同様に考えるはずであり、
+エラーが訂正されるまで、もう誰にも <B>sudo</B> を実行できなくなってしまうからだ。
+文法エラーが発見されたとき、'e' を押して <I>sudoers</I>
+ファイルを編集しようとすると、カーソルがファイルのエラーが起きた行に飛ぶ
+(エディタにその機能があればだが)。
+<P>
+
+オプションとして以下のものが使用できる。
+<DL COMPACT>
+<DT><B>-c</B>, <B>--check</B><DD>
+<I>check-only</I> モードを有効にする。
+現在の <I>sudoers</I> ファイルの文法エラー、所有者、アクセス権をチェックする。
+<B>-q</B> オプションが指定されていない場合は、メッセージを標準出力に表示して、
+<I>sudoers</I> の状態を報告する。チェックが成功裡に終わった場合、
+<B>visudo</B> は返り値 0 で終了する。エラーに出会った場合の返り値は 1 である。
+<DT><B>-f</B> <I>sudoers</I>, <B>--file</B>=<I>sudoers</I><DD>
+デフォルト以外の <I>sudoers</I> ファイルの位置を指定する。
+このオプションを付けると、<B>visudo</B> はデフォルトの <I>/etc/sudoers</I> ではなく、
+ユーザが選んだ <I>sudoers</I> ファイルを編集 (あるいは、チェック) することになる。
+ロックファイルとしては、指定された <I>sudoers</I> ファイルの名前の末尾に
+&quot;.tmp&quot; を付けたものが使われる。なお、<I>check-only</I> モードの場合だけは、
+<B>-f</B> の引数に '-' を指定することができる。
+これは、標準入力から <I>sudoers</I> を読み込むということである。
+<DT><B>-h</B>, <B>--help</B><DD>
+標準出力に簡単なヘルプメッセージを表示して終了する。
+<DT><B>-q</B>, <B>--quiet</B><DD>
+<I>quiet</I> モードを有効にする。このモードでは、文法エラーの詳細は表示されない。
+このオプションが役に立つのは、<B>-c</B> オプションと組み合わせたときだけである。
+<DT><B>-s</B>, <B>--strict</B><DD>
+<I>sudoers</I> ファイルの<I>厳密</I> (strict) チェックを有効にする。
+エイリアスを定義する前に使用すると、
+<B>visudo</B> がそれを文法エラーと見なすようになる。
+ホスト名やユーザ名がアルファベットの大文字、数字、アンダースコア ('_')
+だけから構成されている場合には、
+そうしたものとエイリアスとの区別が付かないことに注意していただきたい。
+<DT><B>-V</B>, <B>--version</B><DD>
+<B>visudo</B> のバージョンと <I>sudoers</I> の文法バージョンを表示して終了する。
+<DT><B>-x</B> <I>output_file</I>, <B>--export</B>=<I>output_file</I><DD>
+<I>sudoers</I> を JSON フォーマットに変換 (export) して、
+<I>output_file</I> に書き出す。<I>output_file</I> が '-' の場合は、
+変換された <I>sudoers</I> ポリシーが標準出力に書き出されることになる。
+デフォルトでは、<I>/etc/sudoers</I>
+(及び、それにインクルードされているすべてのファイル) が変換の対象になる。
+<B>-f</B> を使用すれば、それ以外の <I>sudoers</I>
+ファイルを変換対象として指定することができる。
+フォーマットを変換するのは、サードパーティのアプリケーションにとって、
+従来の <I>sudoers</I> のフォーマットよりも解析しやすくするためである。
+様々な値は明示的なタイプを持ち、そうすることで従来の <I>sudoers</I>
+フォーマットの持つ曖昧さの多くを排除している。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>デバッグと sudoers プラグインへの引き数について</H3>
+
+バージョン 1.8.4 以上の <B>visudo</B> は、
+柔軟なデバッグ用の枠組みをサポートしており、<A HREF="../man5/sudo.conf.5.html">sudo.conf</A>(5)
+ファイルの Debug 行で設定するようになっている。
+<P>
+
+<B>sudo</B> 1.8.12 以降の <B>visudo</B> は、
+(訳注: <I>/etc/sudo.conf</I> で指定された)
+<I>sudoers</I> プラグインに対する引き数も理解する。
+そうした引き数は、<I>sudoers</I> ファイルのパス名、UID、GID、
+ファイルのモードを、デフォルトのものから変更しているのである。
+そうした引き数が存在する場合は、プラグインのパスの後ろに
+(すなわち、<I>sudoers.so</I> の後ろに) 列挙することになっている。
+複数の引き数があるときは、ホワイトスペースで区切って指定すればよい。
+一例を挙げる。
+<PRE>
+
+<DL COMPACT><DT><DD><DD>Plugin sudoers_policy sudoers.so sudoers_mode=0400
+</DL>
+</PRE>
+
+<P>
+
+以下の引き数が使用できる。
+<DL COMPACT>
+<DT>sudoers_file=pathname<DD>
+<I>sudoers_file</I> 引き数を使用すると、
+<I>sudoers</I> ファイルのパスをデフォルトのものから変更することができる。
+<DT>sudoers_uid=uid<DD>
+<I>sudoers_uid</I> 引き数を使用すると、
+<I>sudoers</I> ファイルの所有者をデフォルトのものから変更することができる。
+指定には、ユーザ ID 番号を使うべきである。
+<DT>sudoers_gid=gid<DD>
+<I>sudoers_gid</I> 引き数を使用すると、
+<I>sudoers</I> ファイルのグループをデフォルトのものから変更することができる。
+指定には、グループ ID 番号を使用しなければならない (グループ名ではない)。
+<DT>sudoers_mode=mode<DD>
+<I>sudoers_mode</I> 引き数を使用すると、
+<I>sudoers</I> ファイルのファイル・モードをデフォルトのものから変更することができる。
+指定には、8 進数の値を使うべきである。
+</DL>
+<P>
+
+<A HREF="../man5/sudo.conf.5.html">sudo.conf</A>(5) の設定についてさらに詳しいことをお知りになりたかったら、
+<A HREF="../man5/sudo.conf.5.html">sudo.conf</A>(5) のマニュアルをご覧になっていただきたい。
+<A NAME="lbAF">&nbsp;</A>
+<H2>環境変数</H2>
+
+以下の環境変数が参照されるかどうかは、<I>sudoers</I> における
+<I>editor</I> や <I>env_editor</I> の値次第である。
+<DL COMPACT>
+<DT>VISUAL<DD>
+<B>visudo</B> が起動するエディタ
+<DT>EDITOR<DD>
+VISUAL が設定されていないとき <B>visudo</B> が使用するエディタ
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/etc/sudo.conf</I><DD>
+sudo のフロントエンドの設定
+<DT><I>/etc/sudoers</I><DD>
+誰が何を実行できるかのリスト
+<DT><I>/etc/sudoers.tmp</I><DD>
+visudo が使うロックファイル
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー (警告) メッセージ</H2>
+
+<DL COMPACT>
+<DT>sudoers file busy, try again later.<DD>
+現在、ほかの誰かが <I>sudoers</I> ファイルを編集中である。
+<DT>/etc/sudoers.tmp: Permission denied<DD>
+<B>visudo</B> を root として実行しなかった。
+<DT>Can't find you in the passwd database<DD>
+あなたのユーザ ID はシステムの passwd ファイルに存在しない。
+<DT>Warning: {User,Runas,Host,Cmnd}_Alias referenced but not defined<DD>
+User_Alias (あるいは、Runas_Alias, Host_Alias, Cmnd_Alias)
+を、定義しないまま使用しようとしている。
+あるいは、記載したユーザ名かホスト名の中に、アルファベットの大文字、
+数字、アンダースコア ('_') のみからなるものがある。後者の場合は、
+この warning を無視して構わない (<B>sudo</B> は文句を言わないだろう)。
+<B>-s</B> (strict) モードでは、
+warning ではなく、error になる。
+<DT>Warning: unused {User,Runas,Host,Cmnd}_Alias<DD>
+指摘された User_Alias (あるいは、Runas_Alias, Host_Alias, Cmnd_Alias) は、
+定義されているが、一度も使用されていない。そうした使用しないエイリアスは、
+コメントアウトするなり、消去するなりしてもよい。
+<DT>Warning: cycle in {User,Runas,Host,Cmnd}_Alias<DD>
+指摘された User_Alias (あるいは、Runas_Alias, Host_Alias, Cmnd_Alias) は、
+直接自分自身を参照しているか、
+構成要素のエイリアスを通して自分自身を参照している。
+<B>sudo</B> は <I>sudoers</I> ファイルを解析するとき、
+循環を無視するので、デフォルトでは単なる警告になっている。
+<DT>visudo: /etc/sudoers: input and output files must be different<DD>
+<B>-x</B> オプションを使用する際に引数として指定した
+<I>output_file</I> ファイルのパス名が、
+変換対象である <I>sudoers</I> ファイルのパス名と同じである。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+vi(1), <A HREF="../man5/sudo.conf.5.html">sudo.conf</A>(5), <A HREF="../man5/sudoers.5.html">sudoers</A>(5), <A HREF="../man8/sudo.8.html">sudo</A>(8), <A HREF="../../0MultiFileIdx/man8/vipw.8.html">vipw</A>(8)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>作者</H2>
+
+多数の人々が長年に渡って <B>sudo</B> の開発に取り組んできた。
+このバージョンは、主として次の者が書いたコードからなっている。
+<P>
+<DL COMPACT><DT><DD>
+Todd C. Miller
+</DL>
+
+<P>
+
+<B>sudo</B> の開発に貢献してくださった方々の詳細なリストについては、
+配布物中の CONTRIBUTORS ファイルをご覧になっていただきたい
+(<A HREF="https://www.sudo.ws/contributors.html)。">https://www.sudo.ws/contributors.html)。</A>
+<A NAME="lbAK">&nbsp;</A>
+<H2>警告</H2>
+
+<B>visudo</B> が使用するエディタでシェル・エスケープが可能なかぎり、
+ユーザがルート・シェルを獲得するのを防止する簡単な方法はない。
+<A NAME="lbAL">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>visudo</B> にバグを発見したと思ったら、<A HREF="https://bugzilla.sudo.ws/">https://bugzilla.sudo.ws/</A>
+にアクセスして、バグレポートを提出していただきたい。
+<A NAME="lbAM">&nbsp;</A>
+<H2>サポート</H2>
+
+ある程度の無料サポートが sudo-users メーリングリストを通して利用できる。
+購読やアーカイブの検索には、次の URL を御覧になるとよい。
+<A HREF="https://www.sudo.ws/mailman/listinfo/sudo-users">https://www.sudo.ws/mailman/listinfo/sudo-users</A>
+<A NAME="lbAN">&nbsp;</A>
+<H2>免責</H2>
+
+<B>visudo</B> は「現状のまま」提供される。 明示的な、あるいは黙示的ないかなる保証も、
+商品性や特定目的への適合性についての黙示的な保証を含め、
+またそれのみに止まらず、これを否認する。詳細な全文については、
+<B>sudo</B> と一緒に配布されている LICENSE ファイルや、
+次の Web ページをご覧いただきたい。
+<A HREF="https://www.sudo.ws/license.html">https://www.sudo.ws/license.html</A>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">デバッグと sudoers プラグインへの引き数について</A><DD>
+</DL>
+<DT><A HREF="#lbAF">環境変数</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">エラー (警告) メッセージ</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">作者</A><DD>
+<DT><A HREF="#lbAK">警告</A><DD>
+<DT><A HREF="#lbAL">バグ</A><DD>
+<DT><A HREF="#lbAM">サポート</A><DD>
+<DT><A HREF="#lbAN">免責</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:46 GMT, December 05, 2022
+</BODY>
+</HTML>

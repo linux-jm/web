@@ -1,0 +1,304 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FSTAB</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FSTAB</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 15 June 1999<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/util-linux/release/man5/fstab.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fstab - ファイルシステムの静的な情報
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/fstab.h">fstab.h</A>&gt;</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+このファイル
+<B>fstab</B>
+
+には様々なファイルシステムに関する情報が記述されている。
+<B>fstab</B>
+
+ファイルはプログラムによって読みこまれるだけで書き込まれることはない。
+このファイルを適切に作り、保守するのはシステム管理者の責任である。
+それぞれのファイルシステムは一行単位で記述され、
+各行のフィールドは TAB 文字もしくは空白 (spaces) で区切られる。
+'#' で始まる行はコメントである。
+<B><A HREF="../../e2fsprogs/man8/fsck.8.html">fsck</A></B>(8),
+
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8),
+
+<B><A HREF="../man8/umount.8.html">umount</A></B>(8)
+
+などのプログラムは、
+<B>fstab</B>
+
+ファイルを先頭から順に読み込んで処理するため、
+<B>fstab</B>
+
+に記述されるレコード (ファイルシステム) の順序は重要である。
+<P>
+最初のフィールド
+(<I>fs_spec</I>)
+
+は、マウントしたいブロックスペシャルデバイス
+もしくはリモートファイルシステムを記述する。
+<P>
+
+通常のマウントでは、これはマウントされるブロックスペシャルデバイスノード
+(またはそれへのリンク) である。これは
+<B>mknod</B>(8)
+
+によって作成される。たとえば `/dev/cdrom' や `/dev/sdb7'
+といったものになる。
+NFS マウントの場合は &lt;host&gt;:&lt;dir&gt; という書式になる。
+たとえば `knuth.aeb.nl:/' などである。
+procfs の場合は `proc' を使う。
+<P>
+
+デバイスを明示する代わりに、
+マウントされる (ext2 または xfs) ファイルシステムを
+UUID とボリュームラベルで指定することもできる
+(<B><A HREF="../../e2fsprogs/man8/e2label.8.html">e2label</A></B>(8)
+
+または
+<B>xfs_admin</B>(8)
+
+を参照のこと)。
+この場合は LABEL=&lt;label&gt; または UUID=&lt;uuid&gt; のように書く。
+たとえば `LABEL=Boot' や
+`UUID=3e6be9de-8139-11d1-9106-a43f08d823a6' のようになる。
+こうするとシステムはより強固になる。
+SCSI ディスクを追加・削除してディスクデバイスの名前が変わっても、
+ファイルシステムのボリュームラベルは変化しないからである。
+<P>
+2 番目のフィールド
+(<I>fs_file</I>)
+
+は、ファイルシステムのマウントポイントを記述する。
+スワップパーティションの場合、
+このフィールドは `none' と明記する必要がある。
+マウントポイントに含まれている空白は、`\040' のようにエスケープできる。
+<P>
+3 番目のフィールド
+(<I>fs_vfstype</I>)
+
+は、ファイルシステムのタイプを記述する。
+Linux では
+<I>adfs</I>,
+
+<I>affs</I>,
+
+<I>autofs</I>,
+
+<I>coda</I>,
+
+<I>coherent</I>,
+
+<I>cramfs</I>,
+
+<I>devpts</I>,
+
+<I>efs</I>,
+
+<I>ext2</I>,
+
+<I>ext3</I>,
+
+<I>hfs</I>,
+
+<I>hpfs</I>,
+
+<I>iso9660</I>,
+
+<I>jfs</I>,
+
+<I>minix</I>,
+
+<I>msdos</I>,
+
+<I>ncpfs</I>,
+
+<I>nfs</I>,
+
+<I>ntfs</I>,
+
+<I>proc</I>,
+
+<I>qnx4</I>,
+
+<I>reiserfs</I>,
+
+<I>romfs</I>,
+
+<I>smbfs</I>,
+
+<I>sysv</I>,
+
+<I>tmpfs</I>,
+
+<I>udf</I>,
+
+<I>ufs</I>,
+
+<I>umsdos</I>,
+
+<I>vfat</I>,
+
+<I>xenix</I>,
+
+<I>xfs</I>,
+
+更にそれ以外の多くのファイルシステムタイプをサポートする。
+詳細は
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8)
+
+を参照すること。
+稼働中のカーネルが現在サポートしているファイルシステムについては、
+<I>/proc/filesystems</I>
+
+を見よ。
+エントリ
+<I>swap</I>
+
+はスワップに使われるファイルまたはパーティションを表す。
+<B><A HREF="../man8/swapon.8.html">swapon</A></B>(8)
+
+を参照。
+エントリ
+<I>ignore</I>
+
+により、その行は無視される。
+これは現在使用されていないディスクパーティションを表示するのに役立つ。
+<P>
+4 番目のフィールド
+(<I>fs_mntops</I>)
+
+は、 ファイルシステム毎のマウントオプションを記述する。
+<P>
+これはカンマで区切られたオプションのリストである。
+少なくともマウントのタイプを書く必要がある。
+加えてファイルシステムのタイプに応じた
+適切なオプションが書かれていることが多い。
+NFS 以外のファイルシステムで使用可能なオプションについては、
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8)
+
+を参照のこと。
+nfs 固有のオプションについては
+<B>nfs</B>(5)
+
+を参照のこと。
+どのようなファイルシステムにも適用できるオプションは、
+``noauto'' (&quot;mount -a&quot;  を実行したとき (ブート時など) にマウントしない),
+``user'' (ユーザにマウントを許可する),
+``owner'' (デバイスの所有者にマウントを許可する),
+``comment'' (例えば、fstab 管理プログラムで使用するため) である。
+``owner'' と ``comment'' は Linux 独自のオプションである。
+詳細は
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8)
+
+を参照のこと。
+<P>
+5 番目のフィールド
+(<I>fs_freq</I>)
+
+は、これらのファイルシステムを
+<B>dump</B>(8)
+
+コマンドが
+ダンプする必要があるかを決定するために用いられる。
+5 番目のフィールドがなければ、
+0 が戻り値となり、
+<B>dump</B>
+
+はそのファイルシステムをダンプする必要が無いとみなす。
+<P>
+6 番目のフィールド
+(<I>fs_passno</I>)
+
+は
+<B><A HREF="../../e2fsprogs/man8/fsck.8.html">fsck</A></B>(8)
+
+プログラムが用い、
+ブート時にファイルシステムのチェックを実行する順序を
+決定するために参照される。
+ルートファイルシステムは 
+<I>fs_passno</I>
+
+を 1 と明記する必要があり、
+その他のパーティションは、
+<I>fs_passno</I>
+
+を 2 とする必要がある。
+1 つのドライブ中のファイルシステムは順番にチェックされる。
+しかし、異なるドライブのファイルシステムは
+ハードウェアの並列性を役立たせる為に
+同時にチェックされる。
+6 番目のフィールドが存在しないか 0 である場合には
+0 値が返り、
+<B>fsck</B>
+
+はそのファイルシステムをチェックする必要がないとみなす。
+<P>
+<B>fstab</B>
+
+ファイルからレコードを読む正しい方法は、
+<B><A HREF="../../LDP_man-pages/man3/getmntent.3.html">getmntent</A></B>(3)
+
+ルーチンを用いることである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/etc/fstab</I>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../LDP_man-pages/man3/getmntent.3.html">getmntent</A></B>(3),
+
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8),
+
+<B><A HREF="../man8/swapon.8.html">swapon</A></B>(8),
+
+<B><A HREF="../../LDP_man-pages/man5/fs.5.html">fs</A></B>(5)
+
+<B>nfs</B>(5)
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>履歴</H2>
+
+この
+<B>fstab</B>
+
+ファイルフォーマットの原型は 4.0BSD で導入された。
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">ファイル</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">履歴</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:46 GMT, December 05, 2022
+</BODY>
+</HTML>

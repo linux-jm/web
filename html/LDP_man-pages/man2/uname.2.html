@@ -1,0 +1,140 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UNAME</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>UNAME</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated:  2019-10-10<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/uname.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+uname - 現在稼働中のカーネルについての名前と情報を得る
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/utsname.h">sys/utsname.h</A>&gt;</B>
+<P>
+
+<B>int uname(struct utsname *</B><I>buf</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>uname</B>()  は <I>buf</I> で指される構造体にシステム情報を返す。 <I>utsname</I> 構造体は
+<I>&lt;<A HREF="file:///usr/include/sys/utsname.h">sys/utsname.h</A>&gt;</I> で以下のように定義されている。
+<P>
+
+
+
+struct utsname {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;sysname[];&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;OS&nbsp;の名前&nbsp;(例:&nbsp;&quot;Linux&quot;)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;nodename[];&nbsp;&nbsp;&nbsp;/*&nbsp;「実装時に定義された、何らかの
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ネットワーク」におけるマシン名&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;release[];&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;オペレーションシステムのリリース番号
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(例:&nbsp;&quot;2.6.28&quot;)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;version[];&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;オペレーティングシステムのバージョン&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;machine[];&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ハードウェア識別子&nbsp;*/
+#ifdef _GNU_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;domainname[];&nbsp;/*&nbsp;NIS&nbsp;や&nbsp;YP&nbsp;のドメイン名&nbsp;*/
+#endif
+};
+
+
+<P>
+
+<I>struct utsname</I> にある配列の長さは指定されていない (「注意」の節を参照)。 フィールドはヌルバイト ('\0')
+で終端される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>buf</I> が有効でない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4. 4.3BSD には <B>uname</B>()  コールがない。
+<P>
+
+<I>domainname</I> メンバー (NIS または YP ドメイン名) は GNU の拡張である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+これはシステムコールであり、OS は名前・リリース・バージョンなどを たぶん分かっているだろう。
+さらにそれが稼働しているハードウェアも分かっているだろう。 よって構造体の 4 つのフィールドには意味がある。 一方、<I>nodename</I>
+フィールドには意味がない: このフィールドは現在のマシンの (定義されていない)  どこかのネットワークにおける名前を与えるが、
+通常マシンは複数のネットワークに属し、複数の名前を持つ。 さらに、カーネルはこのような情報を知る術を持たないので、
+ここでの答えは前もって教えてやらなければならない。 これは追加フィールドである <I>domainname</I> についても同様である。
+<P>
+
+このため Linux ではシステムコール <B><A HREF="../man2/sethostname.2.html">sethostname</A></B>(2)  と <B><A HREF="../man2/setdomainname.2.html">setdomainname</A></B>(2)  が使われる。
+「<B><A HREF="../man2/sethostname.2.html">sethostname</A></B>(2)  で設定されるホスト名は、 <B>uname</B>()  で返される構造体の <I>nodename</I>
+フィールドと同じ文字列である」 と規定している標準規格はない (実際、256 バイトのホスト名と 8 バイトのノード名を許可しているシステムもある)。
+しかし、Linux では同じ文字列が返される。 <B><A HREF="../man2/setdomainname.2.html">setdomainname</A></B>(2)  と <I>domainname</I>
+フィールドについても同じことが成り立つ。
+<P>
+
+構造体のフィールドの長さはさまざまである。 OS やライブラリの中には、 ハードコードされた 9, 33, 65, 257
+などの値を使っているものもある。 また <B>SYS_NMLN</B>, <B>_SYS_NMLN</B>, <B>UTSLEN</B>, <B>_UTSNAME_LENGTH</B>
+などを使っているシステムもある。 はっきり言って、これらの定数を使うのは悪い考え方であり、 sizeof(...) を使うべきである。
+インターネットホスト名で使う領域を持たせるために、 257 が選ばれることが多い。
+<P>
+
+utsname の情報は、 <I>/proc/sys/kernel/</I>{<I>ostype</I>, <I>hostname</I>, <I>osrelease</I>,
+<I>version</I>, <I>domainname</I>} を使ってアクセスすることもできる。
+<A NAME="lbAI">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+
+
+時間の経過とともに、 <I>utsname</I> 構造体のサイズが大きくなり、この影響で <B>uname</B>()  には 3つのバージョンが存在する:
+<I>sys_olduname</I>()  (スロットは <I>__NR_oldolduname</I>)、 <I>sys_uname</I>()  (スロットは
+<I>__NR_olduname</I>)、 <I>sys_newuname</I>()  (スロットは <I>__NR_uname</I>)。
+<I>sys_olduname</I>()  はすべてのフィールドが長さ 9 を使っていた。 <I>sys_uname</I>()  は長さ 65 を使っていた。
+<I>sys_newuname</I>()  も長さ 65 を使っているが、 <I>domainname</I> フィールドが追加されている。 glibc の
+<B>uname</B>()  ラッパー関数は、これらの詳細をアプリケーションから隠蔽し、
+カーネルが提供しているシステムコールのうち最新のバージョンを起動する。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../../0MultiFileIdx/man1/uname.1.html">uname</A></B>(1),&nbsp;<B><A HREF="../man2/getdomainname.2.html">getdomainname</A></B>(2),&nbsp;<B><A HREF="../man2/gethostname.2.html">gethostname</A></B>(2),&nbsp;<B>uts_namespaces</B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

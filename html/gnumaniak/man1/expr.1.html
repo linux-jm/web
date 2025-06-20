@@ -1,0 +1,265 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of expr</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>expr</H1>
+Section: User Commands  (1)<BR>Updated: 18 June 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/gnumaniak/release/man1/expr.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+expr - 式を評価する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>expr </B><I>expression...</I>
+
+<P>
+<B>expr [--help] [--version]</B>
+
+<BR>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>expr</B>
+
+は式を評価し、その結果を標準出力に書き出す。
+式のトークン (token) はそれぞれ別々の引数で与える必要がある。
+<P>
+
+オペランド (operand) は数字または文字列である。
+<B>expr</B>
+
+はオペランドの位置に現れたものを、それに対して行われる演算に応じて
+整数または文字列に変換する。
+文字列は
+<B>expr</B>
+
+ではクォートしなくてよいが、
+シェルから保護するための引用符が必要かもしれない (スペースなど)。
+<P>
+
+演算子は 2 項間に挿入されるシンボルとして、
+または前置されるキーワードとして与えられる。
+括弧も通常のようにグループ化に利用できる
+(しかしシェルによる解釈を避けるためには括弧をクォートしなければならない)。
+<P>
+
+<B>expr</B>
+
+は以下の終了ステータスを返す:
+<BR>
+
+0: 式がナルでも 0 でもない
+<BR>
+
+1: 式がナルまたは 0
+<BR>
+
+2: 式が正しくない
+<A NAME="lbAE">&nbsp;</A>
+<H2>演算子 (優先度順)</H2>
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>関係演算</H3>
+
+<DL COMPACT>
+<DT><B>|</B><DD>
+左項がナルでも 0 でもなければ左項を返す。
+ナルや 0 だった場合は右項を返す。
+これは通常の `or' 演算にあたる。
+<DT><B>&amp;</B><DD>
+左項、右項ともナルでも 0 でもなければ左項を返す。
+それ以外の場合は 0 となる。
+<DT><B>&lt;</B>&nbsp; <B>&lt;=</B>&nbsp; <B>=</B>&nbsp; <B>==</B>&nbsp; <B>!=</B>&nbsp; <B>&gt;=</B>&nbsp; <B>&gt;</B><DD>
+両項を比較し、関係が真なら 1、偽なら 0 を返す
+(<I>==</I> は <I>=</I>と同義）。
+<B>expr</B> はまず両方の項を数値に変換し、
+数値的な比較を行おうとする。
+どちらかの引数が数値に変換できなかった場合は辞書的な比較を行う。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>数値演算</H3>
+
+<DL COMPACT>
+<DT><B>+</B>&nbsp; <B>-</B><DD>
+代数的な加減算を行う。
+左右の項は数値に変換され、失敗した場合はエラーとなる。
+<DT><B>*</B>&nbsp; <B>/</B>&nbsp; <B>%</B><DD>
+代数的な乗算・除算・剰余演算を行う
+(`%' は C の場合と同じく剰余演算に対応する)。
+左右の項は数値に変換され、これに失敗した場合はエラーとなる。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>文字列演算</H3>
+
+<DL COMPACT>
+<DT><I>string</I> <B>:</B> <I>regex</I><DD>
+パターンマッチを実行する。
+左右の項は文字列に変換され、
+右項は (<B><A HREF="../../GNU_grep/man1/grep.1.html">grep</A></B>(1) の使う基本的な) 正規表現として扱われる。
+右項には暗黙のうちに先頭に `^' が自動的に付加され、
+左項がその正規表現にマッチするかのテストが行われる。
+<P>
+マッチが成功した場合、
+正規表現の一部が `\(' と '\)' で囲われていれば、
+<B>:</B> 演算子は <I>string</I> のうち、
+副表現 (subexpression) にマッチした部分を返す。
+それ以外の場合はマッチした部分の文字数が返される。
+<P>
+マッチに失敗した場合、
+`\(' と `\)' が使われていた場合にはナル文字列が、
+そうでない場合には 0 が返される。
+<P>
+`\(' と `\)' のペアのうち、最初のものだけが返り値に影響する。
+それ以外のペアは、正規表現の演算子をグループ化するという意味だけを持つ。
+<P>
+他の
+<B>expr</B>
+
+と異なり、`+' (1 つ以上)、`?' (0 または 1)、`|'
+(or 接続) もマッチング演算子として認識される。
+<DT>さらに、以下のキーワードも認識される:<DD>
+<DT><B>index</B><I> string charset</I>
+
+<DD>
+<I>charset</I> にあるどれかの文字が <I>string</I> に見付かれば、
+その最初に見付かった位置を返す。どの文字も見付からなければ 0 を返す。
+<DT><B>length</B><I> string</I>
+
+<DD>
+<I>string</I> の長さを返す。
+<DT><B>match</B><I> string regex</I>
+
+<DD>
+パターンマッチを行う別のやり方。
+これは ``<I>string</I> <B>:</B> <I>regex</I>'' と同じ。
+<DT><B>quote</B><I> string</I>
+
+<DD>
+<I>string</I> を (演算子またはキーワードが含まれていても) 通常の文字列とみなす。
+環境変数 <B>POSIXLY_CORRECT</B> が設定されていると無効になる。
+<DT><B>substr</B><I> string position length</I>
+
+<DD>
+<I>string</I> の部分文字列を返す。
+部分文字列は <I>string</I> の <I>position</I> から始まり、
+最大 <I>length</I> の長さを持つ。
+<I>position</I> や <I>length</I> が正でなかったり数値でなかった場合は、
+ナル文字列を返す。
+</DL>
+<P>
+
+括弧は通常のグループ化の意味に用いることができる。
+キーワード (match, substr, index, length) は文字列として用いることはできない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>オプション</H2>
+
+GNU
+<B>expr</B>
+
+が引数 1 つだけで起動された場合には、
+以下のオプションが認識される:
+<DL COMPACT>
+<DT><B>--help</B>
+
+<DD>
+標準出力に使用方法のメッセージを出力して正常終了する。
+<DT><B>--version</B>
+
+<DD>
+標準出力にバージョン情報を出力して正常終了する。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+<P>
+
+シェル変数
+<I>foo</I>
+
+に 1 を加える:
+<DL COMPACT>
+<DT><DD>
+foo=`expr $a + 1`
+</DL>
+<P>
+
+変数
+<I>bar</I>
+
+に格納されているファイル名のうち、
+ディレクトリ以外の部分を表示する
+(<I>bar</I>
+
+の値には `/' が含まれていなくても良い):
+<DL COMPACT>
+<DT><DD>
+expr $bar : '.*/\(.*\)' '|' $a
+</DL>
+<P>
+
+文字列 `abc' に文字 `b' をマッチさせる:
+<DL COMPACT>
+<DT><DD>
+expr abc : 'a\(.\)c'
+</DL>
+<P>
+
+文字列 `abcdef' に `c' または `z' のいずれかが存在している位置を探す:
+<DL COMPACT>
+<DT><DD>
+expr index abcdef cz
+</DL>
+<P>
+
+キーワード (index) を文字列として用いている誤った例:
+<DL COMPACT>
+<DT><DD>
+expr index index a
+</DL>
+<P>
+
+キーワード (index) を文字列として用いている正しい例:
+<DL COMPACT>
+<DT><DD>
+expr index quote index d
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+プログラムのバグについては <A HREF="mailto:bug-sh-utils@gnu.org">bug-sh-utils@gnu.org</A> に報告してください。
+ページの更新は Ragnar Hojland Espinosa
+&lt;<A HREF="mailto:ragnar@ragnar-hojland.com">ragnar@ragnar-hojland.com</A>&gt; が行っています。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">演算子 (優先度順)</A><DD>
+<DL>
+<DT><A HREF="#lbAF">関係演算</A><DD>
+<DT><A HREF="#lbAG">数値演算</A><DD>
+<DT><A HREF="#lbAH">文字列演算</A><DD>
+</DL>
+<DT><A HREF="#lbAI">オプション</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

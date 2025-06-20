@@ -1,0 +1,174 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of IF_NAMEINDEX</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>IF_NAMEINDEX</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/if_nameindex.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+if_nameindex, if_freenameindex - ネットワークインターフェースの名前とインデックスを取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/net/if.h">net/if.h</A>&gt;</B>
+
+<B>struct if_nameindex *if_nameindex(</B><I>void</I><B>);</B>
+<B>void if_freenameindex(struct if_nameindex *</B><I>ptr</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>if_nameindex</B>() 関数は <I>if_nameindex</I> 構造体の配列を返す。
+各構造体にはローカルシステムのネットワークインターフェースのいずれかの情報が入る。 <I>if_nameindex</I>
+構造体には少なくとも以下のフィールドがある。
+<P>
+
+
+
+unsigned int if_index; /* インターフェースのインデックス (1, 2, ...) */
+char        *if_name;  /*ヌル終端された名前 (&quot;eth0&quot; など) */
+
+
+<P>
+
+<I>if_index</I> フィールドにはインターフェースのインデックスが入る。 <I>if_name</I> フィールドはヌル終端されたインターフェース名を指す。
+配列の最後は、 <I>if_index</I> が 0 で <I>if_name</I> が NULL のエントリーで示される。
+<P>
+
+<B>if_nameindex</B>() が返すデータ構造体は動的に確保される。 必要なくなった際には <B>if_freenameindex</B>()
+で解放すべきである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合には <B>if_nameindex</B>() は配列へのポインターを返す。エラー時には NULL が返され、 <I>errno</I>
+が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>if_nameindex</B>() が失敗した場合には以下の <I>errno</I> が設定される。
+<DL COMPACT>
+<DT><B>ENOBUFS</B><DD>
+利用可能なリソースが十分にない。
+</DL>
+<P>
+
+<B>if_nameindex</B>() は、 <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man2/bind.2.html">bind</A></B>(2), <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2),
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2), <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2), <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+に対して規定されているエラーのいずれかで失敗する場合がある。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>if_nameindex</B>() 関数は glibc 2.1 で初めて登場したが、 glibc 2.3.4 より前のバージョンの実装では IPv4
+アドレスを持つインターフェースのみをサポートしていた。 IPv4 アドレスを持たないインターフェースがサポートされているのは、 netlink
+をサポートするカーネルにおいてのみである。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>if_nameindex</B>(),
+<BR>
+
+<B>if_freenameindex</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, RFC&nbsp;3493.
+<P>
+
+この関数は BSDi 初めて登場した。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムはこのページで説明した関数の使い方を示している。このプログラムが生成する出力は以下のようになる。
+<P>
+
+
+
+$ <B>./a.out</B><I>
+1: lo
+2: wlan0
+3: em1</I>
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+#include &lt;<A HREF="file:///usr/include/net/if.h">net/if.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;if_nameindex&nbsp;*if_ni,&nbsp;*i;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if_ni&nbsp;=&nbsp;if_nameindex();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(if_ni&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;if_nameindex&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(i&nbsp;=&nbsp;if_ni;&nbsp;!&nbsp;(i-&gt;if_index&nbsp;==&nbsp;0&nbsp;&amp;&amp;&nbsp;i-&gt;if_name&nbsp;==&nbsp;NULL);&nbsp;i++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%u:&nbsp;%s\n&quot;,&nbsp;i-&gt;if_index,&nbsp;i-&gt;if_name);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if_freenameindex(if_ni);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2), <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2), <B><A HREF="../man3/getifaddrs.3.html">getifaddrs</A></B>(3), <B><A HREF="../man3/if_indextoname.3.html">if_indextoname</A></B>(3),
+<B><A HREF="../man3/if_nametoindex.3.html">if_nametoindex</A></B>(3), <B><A HREF="../../net-tools/man8/ifconfig.8.html">ifconfig</A></B>(8)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DL>
+<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,319 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_MUTEXATTR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_MUTEXATTR</H1>
+Section: C Library Functions (3)<BR>Updated: LinuxThreads<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/glibc-linuxthreads/release/man3/pthread_mutexattr_init.3">roff page</A><HR>
+
+<P>
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_mutexattr_init, pthread_mutexattr_destroy, pthread_mutexattr_settype, pthread_mutexattr_gettype 
+- mutex 作成時の属性
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<P>
+<B>int pthread_mutexattr_init(pthread_mutexattr_t *</B><I>attr</I><B>);</B>
+
+<P>
+<B>int pthread_mutexattr_destroy(pthread_mutexattr_t *</B><I>attr</I><B>);</B>
+
+<P>
+<B>int pthread_mutexattr_settype(pthread_mutexattr_t *</B><I>attr</I><B>, int </B><I>kind</I><B>);</B>
+
+<P>
+<B>int pthread_mutexattr_gettype(const pthread_mutexattr_t *</B><I>attr</I><B>, int *</B><I>kind</I><B>);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+mutex の属性は mutex 作成時に、
+<B><A HREF="../man3/pthread_mutex_init.3.html">pthread_mutex_init</A></B>(3)
+
+の第 2 引数として mutex 属性オブジェクトを渡すことで
+指定することができる。
+<B>NULL</B>
+
+を渡すことは、すべての属性がデフォルト値に
+設定された mutex 属性オブジェクトを渡すことと同等である。
+<P>
+<B>pthread_mutexattr_init</B>
+
+は mutex 属性オブジェクト
+<I>attr</I>
+
+を初期化し、すべての属性をデフォルトの値に設定する。
+<P>
+<B>pthread_mutexattr_destroy</B>
+
+は mutex 属性オブジェクトを破壊する。
+破壊された mutex 属性オブジェクトは
+再び初期化されるまで再使用してはならない。
+<B>pthread_mutexattr_destroy</B>
+
+は LinuxThreads の実装では何もしない。
+<P>
+LinuxThreads はただ 1 つの mutex 属性に対応している。
+それは mutex 種別 (mutex kind) で、
+「速い (fast) 」 mutex を表す
+<B>PTHREAD_MUTEX_FAST_NP</B>
+
+か、「再帰的な (recursive) 」 mutex を表す
+<B>PTHREAD_MUTEX_RECURSIVE_NP</B>
+
+、「エラー検査を行なう (error checking) 」 mutex を表す
+<B>PTHREAD_MUTEX_ERRORCHECK_NP</B>
+
+のいずれかの値をとる。
+<B>NP</B>
+
+という接尾辞が示すように、
+これは POSIX 標準に対するポータブルでない拡張で、
+ポータブルなプログラムでは用いるべきでない。
+<P>
+mutex 種別は、
+あるスレッドが自分自身で
+<B><A HREF="../man3/pthread_mutex_lock.3.html">pthread_mutex_lock</A></B>(3)
+
+ですでに保持している mutex をロックしようとしたときに、
+何が起こるかを決定する。
+mutex が「速い (fast) 」という種別の場合、
+<B><A HREF="../man3/pthread_mutex_lock.3.html">pthread_mutex_lock</A></B>(3)
+
+は単に呼び出しスレッドを永遠に停止させる。
+mutex が「エラー検査を行なう (error checking) 」という種別の場合、
+<B><A HREF="../man3/pthread_mutex_lock.3.html">pthread_mutex_lock</A></B>(3)
+
+はエラーコード
+<B>EDEADLK</B>
+
+とともに直ちに返る。
+mutex が「再帰的な (recursive) 」という種別の場合、
+<B><A HREF="../man3/pthread_mutex_lock.3.html">pthread_mutex_lock</A></B>(3)
+
+の呼び出しは成功の返り値とともに直ちに返る。
+mutex を保持しているスレッドが何回ロックしたかがその mutex に記録される。
+保持しているスレッドがロック解除状態に戻るためには、
+同じ回数だけ
+<B><A HREF="../man3/pthread_mutex_unlock.3.html">pthread_mutex_unlock</A></B>(3)
+
+を呼び出さなければならない。
+<P>
+デフォルトの mutex 種別は「速い (fast) 」、
+すなわち
+<B>PTHREAD_MUTEX_FAST_NP</B>
+
+である。
+<P>
+<B>pthread_mutexattr_settype</B>
+
+は
+<I>attr</I>
+
+の mutex 種別を表す属性を
+<I>kind</I>
+
+で示される値に設定する。
+<P>
+<B>pthread_mutexattr_gettype</B>
+
+は
+<I>attr</I>
+
+の mutex 種別を表す属性を取得し、
+<I>kind</I>
+
+で指し示される領域に格納する。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>pthread_mutexattr_init</B>
+
+および
+<B>pthread_mutexattr_destroy</B>
+
+、
+<B>pthread_mutexattr_gettype</B>
+
+は常に 0 を返す。
+<P>
+<B>pthread_mutexattr_settype</B>
+
+は成功すると 0 を、エラーの場合非 0 のエラーコードを返す。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<P>
+エラーのとき、
+<B>pthread_mutexattr_settype</B>
+
+は次のようなエラーコードを返す:
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+<I>kind</I>
+
+が
+<B>PTHREAD_MUTEX_FAST_NP</B>
+
+および
+<B>PTHREAD_MUTEX_RECURSIVE_NP</B>
+
+、
+<B>PTHREAD_MUTEX_ERRORCHECK_NP</B>
+
+のいずれでもない。
+<P>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>著者</H2>
+
+Xavier Leroy &lt;<A HREF="mailto:Xavier.Leroy@inria.fr">Xavier.Leroy@inria.fr</A>&gt;
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/pthread_mutex_init.3.html">pthread_mutex_init</A></B>(3),
+
+<B><A HREF="../man3/pthread_mutex_lock.3.html">pthread_mutex_lock</A></B>(3),
+
+<B><A HREF="../man3/pthread_mutex_unlock.3.html">pthread_mutex_unlock</A></B>(3).
+
+<P>
+<P>
+[訳注1] glibc-linuxthreads の最新のドキュメントは Texinfo 形式で提供されている。
+上の記述は glibc-linuxthreads-2.2 以降では正しくない。
+以下は glibc-linuxthreads-2.3.1 の Texinfo ファイルからの引用である。
+種別 (kind) が型 (type) に変更されている。
+<P>
+LinuxThreads はただ 1 つの mutex 属性に対応している。
+それは mutex 型 (mutex type) で、
+「速い (fast) 」 mutex を表す
+<B>PTHREAD_MUTEX_ADAPTIVE_NP</B>
+
+か、「再帰的な (recursive) 」 mutex を表す
+<B>PTHREAD_MUTEX_RECURSIVE_NP</B>
+
+、「時刻情報つき (timed) 」 mutex を表す
+<B>PTHREAD_MUTEX_TIMED_NP</B>
+
+、「エラー検査を行なう (error checking) 」 mutex を表す
+<B>PTHREAD_MUTEX_ERRORCHECK_NP</B>
+
+のいずれかの値をとる。
+<B>NP</B>
+
+という接尾辞が示すように、
+これは POSIX 標準に対するポータブルでない拡張で、
+ポータブルなプログラムでは用いるべきでない。
+<P>
+mutex 型は、
+あるスレッドが自分自身で
+<B><A HREF="../man3/pthread_mutex_lock.3.html">pthread_mutex_lock</A></B>(3)
+
+ですでに保持している mutex をロックしようとしたときに、
+何が起こるかを決定する。
+mutex が「速い (fast) 」という型の場合、
+<B><A HREF="../man3/pthread_mutex_lock.3.html">pthread_mutex_lock</A></B>(3)
+
+は単に呼び出しスレッドを永遠に停止させる。
+mutex が「エラー検査を行なう (error checking) 」という型の場合、
+<B><A HREF="../man3/pthread_mutex_lock.3.html">pthread_mutex_lock</A></B>(3)
+
+はエラーコード
+<B>EDEADLK</B>
+
+とともに直ちに返る。
+mutex が「再帰的な (recursive) 」という型の場合、
+<B><A HREF="../man3/pthread_mutex_lock.3.html">pthread_mutex_lock</A></B>(3)
+
+の呼び出しは成功の返り値とともに直ちに返る。
+mutex を保持しているスレッドが何回ロックしたかがその mutex に記録される。
+保持しているスレッドがロック解除状態に戻るためには、
+同じ回数だけ
+<B><A HREF="../man3/pthread_mutex_unlock.3.html">pthread_mutex_unlock</A></B>(3)
+
+を呼び出さなければならない。
+<P>
+デフォルトの mutex 型は「時刻情報つき (timed) 」、
+すなわち
+<B>PTHREAD_MUTEX_TIMED_NP</B>
+
+である。
+<P>
+<P>
+[訳注2] LinuxThreads では mutex をプロセス間で共有することはできない。
+glibc-linuxthreads-2.2 以降、次の 2 つの関数が追加されている。
+<P>
+<B>int pthread_mutexattr_getpshared(const pthread_mutexattr_t *</B><I>attr</I><B>, int *</B><I>pshared</I><B>);</B>
+
+<P>
+<I>pshared</I>
+
+で指し示される領域に
+<B>PTHREAD_PROCESS_PRIVATE</B>
+
+を格納し、常に 0 を返す。
+<P>
+<B>int pthread_mutexattr_setpshared(pthread_mutexattr_t *</B><I>attr</I><B>, int </B><I>pshared</I><B>);</B>
+
+<P>
+<I>pshared</I>
+
+が
+<B>PTHREAD_PROCESS_PRIVATE</B>
+
+および
+<B>PTHREAD_PROCESS_SHARED</B>
+
+のいずれでもない場合、
+<B>EINVAL</B>
+
+を返す。
+<I>pshared</I>
+
+が
+<B>PTHREAD_PROCESS_SHARED</B>
+
+の場合、
+<B>ENOSYS</B>
+
+を返す。
+それ以外の場合、 0 を返す。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">著者</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

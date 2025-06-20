@@ -1,0 +1,162 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FREXP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FREXP</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/frexp.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+frexp, frexpf, frexpl - 浮動小数点実数を小数成分と整数成分に変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;</B>
+
+<B>double frexp(double </B><I>x</I><B>, int *</B><I>exp</I><B>);</B>
+<B>float frexpf(float </B><I>x</I><B>, int *</B><I>exp</I><B>);</B>
+<B>long double frexpl(long double </B><I>x</I><B>, int *</B><I>exp</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>-lm</I> でリンクする。
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>frexpf</B>(), <B>frexpl</B>():
+<DL COMPACT><DT><DD>
+_ISOC99_SOURCE || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Since&nbsp;glibc&nbsp;2.19:&nbsp;*/&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Glibc&nbsp;versions&nbsp;&lt;=&nbsp;2.19:&nbsp;*/&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらの関数は浮動小数点実数 <I>x</I> を正規化小数と指数に分解し、 指数を *<I>exp</I> に格納する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+これらの関数は正規化小数を返す。 引数 <I>x</I> がゼロでない場合、この正規化小数は <I>x</I> に 2 の累乗を乗じたものであり、その絶対値は 常に
+1/2 以上 1 未満、つまり [0.5,1) となる。
+<P>
+
+<I>x</I> がゼロの場合、正規化小数はゼロになり *<I>exp</I> にはゼロが格納される。
+<P>
+
+<I>x</I> が NaN の場合、NaN が返される。 <I>*exp</I> の値は不定である。
+<P>
+
+<I>x</I> が正の無限大 (負の無限大) の場合、 正の無限大 (負の無限大) が返される。 <I>*exp</I> の値は不定である。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+エラーは発生しない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>frexp</B>(),
+<B>frexpf</B>(),
+<B>frexpl</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+C99, POSIX.1-2001, POSIX.1-2008.
+<P>
+
+<I>double</I> 版の関数は SVr4, 4.3BSD, C89 にも準拠している。
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+このプログラムを実行すると以下のような結果となる:
+<P>
+
+
+
+$<B> ./a.out 2560</B>
+frexp(2560, &amp;e) = 0.625: 0.625 * 2^12 = 2560
+$<B> ./a.out -4</B>
+frexp(-4, &amp;e) = -0.5: -0.5 * 2^3 = -4
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/float.h">float.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;double&nbsp;x,&nbsp;r;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;exp;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;x&nbsp;=&nbsp;strtod(argv[1],&nbsp;NULL);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;r&nbsp;=&nbsp;frexp(x,&nbsp;&amp;exp);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;frexp(%g,&nbsp;&amp;e)&nbsp;=&nbsp;%g:&nbsp;%g&nbsp;*&nbsp;%d^%d&nbsp;=&nbsp;%g\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x,&nbsp;r,&nbsp;r,&nbsp;FLT_RADIX,&nbsp;exp,&nbsp;x);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/ldexp.3.html">ldexp</A></B>(3), <B><A HREF="../man3/modf.3.html">modf</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">例</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

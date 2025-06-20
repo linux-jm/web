@@ -1,0 +1,139 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of INIT_MODULE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>INIT_MODULE</H1>
+Section: Linux Module Support (2)<BR>Updated: 26 Dec 1996<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/modutils/release/man2/init_module.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+init_module - ローダブルモジュールのエントリを初期化する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/linux/module.h">linux/module.h</A>&gt;</B>
+
+<B>int init_module(const char *</B><I>name</I><B>, struct module *</B><I>image</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>このマニュアルについて</H2>
+
+これは、Linux Kernel 2.4 の時代に使われていた modutils
+パッケージ所収の古いマニュアルです。(2022/12/02, Linux JM Project)
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+<B>init_module</B>
+
+は再配置されたモジュールイメージをカーネル空間にロードし、その
+モジュールの <I>init</I> 関数を実行する。
+<P>
+
+モジュールイメージは、先頭部分にモジュール構造体が置かれ、その後に適切
+なコードとデータが配置される。モジュール構造体の定義を以下に示す:
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+struct module
+{
+  unsigned long size_of_struct;
+  struct module *next;
+  const char *name;
+  unsigned long size;
+  long usecount;
+  unsigned long flags;
+  unsigned int nsyms;
+  unsigned int ndeps;
+  struct module_symbol *syms;
+  struct module_ref *deps;
+  struct module_ref *refs;
+  int (*init)(void);
+  void (*cleanup)(void);
+  const struct exception_table_entry *ex_table_start;
+  const struct exception_table_entry *ex_table_end;
+#ifdef __alpha__
+  unsigned long gp;
+#endif
+};
+</PRE>
+
+</DL>
+
+<P>
+
+<I>next</I> と <I>refs</I> 以外の全てのポインタ要素は、
+モジュールの本体内部を指し、カーネル空間での適切な値で初期化される
+(つまりモジュールの残りの部分と共に再配置される)ことが期待される。
+<P>
+
+このシステムコールを使えるのはユーパーユーザだけである。
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。エラーの場合は -1 が返され、<I>errno</I> 
+に適切な値が設定される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EPERM</B>
+
+<DD>
+呼び出しを行ったユーザがスーパーユーザでない。
+<DT><B>ENOENT</B>
+
+<DD>
+その名前を持つモジュールが存在しない。
+<DT><B>EINVAL</B>
+
+<DD>
+<I>image</I> スロットの一部に誤った値が入っているか、
+<I>image-&gt;name</I> が元のモジュールの名前に一致していないか、
+<I>image-&gt;deps</I> エントリの一部がロードされたモジュールに対応していない。
+あるいは同様の別の矛盾が起きている。
+<DT><B>EBUSY</B>
+
+<DD>
+モジュールの初期化ルーチンが失敗した。
+<DT><B>EFAULT</B>
+
+<DD>
+<I>name</I> あるいは <I>image</I> が、プログラムがアクセスできる
+アドレス空間の外部である。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/create_module.2.html">create_module</A></B>(2), <B><A HREF="../man2/delete_module.2.html">delete_module</A></B>(2), <B><A HREF="../man2/query_module.2.html">query_module</A></B>(2)
+
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">このマニュアルについて</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

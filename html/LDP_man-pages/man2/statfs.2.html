@@ -1,0 +1,257 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STATFS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>STATFS</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-06-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/statfs.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+statfs, fstatfs - ファイルシステムの統計を取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/vfs.h">sys/vfs.h</A>&gt; </B>/* または &lt;<A HREF="file:///usr/include/sys/statfs.h">sys/statfs.h</A>&gt; */
+<P>
+<B>int statfs(const char *</B><I>path</I><B>, struct statfs *</B><I>buf</I><B>);</B>
+<BR>
+
+<B>int fstatfs(int </B><I>fd</I><B>, struct statfs *</B><I>buf</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+関数 <B>statfs</B>()  はマウントされたファイルシステムについての情報を返す。 <I>path</I>
+はマウントされたファイルシステムにあるファイルのパス名である。 <I>buf</I> は <I>statfs</I>
+構造体へのポインターで、およそ以下のように定義される:
+<P>
+
+<PRE>
+#if __WORDSIZE == 32            /* システムのワードサイズ */
+# define __SWORD_TYPE           int
+#else /* __WORDSIZE == 64 */
+# define __SWORD_TYPE           long int
+#endif
+
+struct statfs {
+    __SWORD_TYPE f_type;    /* ファイルシステムの種別 (下記参照) */
+    __SWORD_TYPE f_bsize;   /* 最適な転送ブロックサイズ */
+    fsblkcnt_t   f_blocks;  /* ファイルシステムの総データブロック数 */
+    fsblkcnt_t   f_bfree;   /* ファイルシステムの空きブロック数 */
+    fsblkcnt_t   f_bavail;  /* 非特権ユーザーが利用可能な空きブロック数 */
+    fsfilcnt_t   f_files;   /* ファイルシステムの総ファイルノード数 */
+    fsfilcnt_t   f_ffree;   /* ファイルシステムの空きファイルノード数 */
+    fsid_t       f_fsid;    /* ファイルシステムの ID */
+    __SWORD_TYPE f_namelen; /* ファイル名の最大長 */
+    __SWORD_TYPE f_frsize;  /* フラグメントサイズ (Linux 2.6 以降) */
+    __SWORD_TYPE f_spare[5];
+};
+
+ファイルシステムの型:
+
+   ADFS_SUPER_MAGIC      0xadf5
+   AFFS_SUPER_MAGIC      0xADFF
+   BDEVFS_MAGIC          0x62646576
+   BEFS_SUPER_MAGIC      0x42465331
+   BFS_MAGIC             0x1BADFACE
+   BINFMTFS_MAGIC        0x42494e4d
+   BTRFS_SUPER_MAGIC     0x9123683E
+   CGROUP_SUPER_MAGIC    0x27e0eb
+   CIFS_MAGIC_NUMBER     0xFF534D42
+   CODA_SUPER_MAGIC      0x73757245
+   COH_SUPER_MAGIC       0x012FF7B7
+   CRAMFS_MAGIC          0x28cd3d45
+   DEBUGFS_MAGIC         0x64626720
+   DEVFS_SUPER_MAGIC     0x1373
+   DEVPTS_SUPER_MAGIC    0x1cd1
+   EFIVARFS_MAGIC        0xde5e81e4
+   EFS_SUPER_MAGIC       0x00414A53
+   EXT_SUPER_MAGIC       0x137D
+   EXT2_OLD_SUPER_MAGIC  0xEF51
+   EXT2_SUPER_MAGIC      0xEF53
+   EXT3_SUPER_MAGIC      0xEF53
+   EXT4_SUPER_MAGIC      0xEF53
+   FUSE_SUPER_MAGIC      0x65735546
+   FUTEXFS_SUPER_MAGIC   0xBAD1DEA
+   HFS_SUPER_MAGIC       0x4244
+   HOSTFS_SUPER_MAGIC    0x00c0ffee
+   HPFS_SUPER_MAGIC      0xF995E849
+   HUGETLBFS_MAGIC       0x958458f6
+   ISOFS_SUPER_MAGIC     0x9660
+   JFFS2_SUPER_MAGIC     0x72b6
+   JFS_SUPER_MAGIC       0x3153464a
+   MINIX_SUPER_MAGIC     0x137F /* オリジナルの minix */
+   MINIX_SUPER_MAGIC2    0x138F /* 30 文字ファイル名の minix */
+   MINIX2_SUPER_MAGIC    0x2468 /* minix V2 */
+   MINIX2_SUPER_MAGIC2   0x2478 /* minix V2, 30 文字ファイル名 */
+   MINIX3_SUPER_MAGIC    0x4d5a /* minix V3 ファイルシステム, 60 文字ファイル名 */
+   MQUEUE_MAGIC          0x19800202
+   MSDOS_SUPER_MAGIC     0x4d44
+   NCP_SUPER_MAGIC       0x564c
+   NFS_SUPER_MAGIC       0x6969
+   NILFS_SUPER_MAGIC     0x3434
+   NTFS_SB_MAGIC         0x5346544e
+   OPENPROM_SUPER_MAGIC  0x9fa1
+   PIPEFS_MAGIC          0x50495045
+   PROC_SUPER_MAGIC      0x9fa0
+   PSTOREFS_MAGIC        0x6165676C
+   QNX4_SUPER_MAGIC      0x002f
+   QNX6_SUPER_MAGIC      0x68191122
+   RAMFS_MAGIC           0x858458f6
+   REISERFS_SUPER_MAGIC  0x52654973
+   ROMFS_MAGIC           0x7275
+   SELINUX_MAGIC         0xf97cff8c
+   SMACK_MAGIC           0x43415d53
+   SMB_SUPER_MAGIC       0x517B
+   SOCKFS_MAGIC          0x534F434B
+   SQUASHFS_MAGIC        0x73717368
+   SYSFS_MAGIC           0x62656572
+   SYSV2_SUPER_MAGIC     0x012FF7B6
+   SYSV4_SUPER_MAGIC     0x012FF7B5
+   TMPFS_MAGIC           0x01021994
+   UDF_SUPER_MAGIC       0x15013346
+   UFS_MAGIC             0x00011954
+   USBDEVICE_SUPER_MAGIC 0x9fa2
+   V9FS_MAGIC            0x01021997
+   VXFS_SUPER_MAGIC      0xa501FCF5
+   XENFS_SUPER_MAGIC     0xabba1974
+   XENIX_SUPER_MAGIC     0x012FF7B4
+   XFS_SUPER_MAGIC       0x58465342
+   _XIAFS_SUPER_MAGIC    0x012FD16D
+</PRE>
+
+
+<P>
+
+これらの MAGIC 定数のほとんどは <I>/usr/include/linux/magic.h</I>
+で定義されており、いくつかはカーネルソースで直接書かれている。
+<P>
+
+<I>f_fsid</I> にどんな値が入るべきなのかは誰も知らない (但し、下記を参照)。
+<P>
+
+それぞれのファイルシステムにおいて未定義のフィールドには 0 が 設定される。 <B>fstatfs</B>()  はディスクリプター <I>fd</I>
+によって参照されるオープンされたファイルについて、同じ情報を返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、0 が返される。 失敗した場合、 -1 が返され、 <I>errno</I> に適切な値がセットされる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+(<B>statfs</B>()  の場合)  <I>path</I> のディレクトリ部分に検索許可が与えられていない (<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)
+も参照すること)。
+<DT><B>EBADF</B><DD>
+(<B>fstatfs</B>()  の場合)  <I>fd</I> は有効なオープンされたファイルディスクリプターではない。
+<DT><B>EFAULT</B><DD>
+<I>buf</I> または <I>path</I> が不正なアドレスを指している。
+<DT><B>EINTR</B><DD>
+この呼び出しがシグナルで中断された。
+<DT><B>EIO</B><DD>
+ファイルシステムからの読み込みの間に I/O エラーが発生した。
+<DT><B>ELOOP</B><DD>
+(<B>statfs</B>()  の場合)  <I>path</I> を解決するのに辿るべきシンボリックリンクが多すぎる。
+<DT><B>ENAMETOOLONG</B><DD>
+(<B>statfs</B>()  の場合)  <I>path</I> が長過ぎる。
+<DT><B>ENOENT</B><DD>
+(<B>statfs</B>()  の場合)  <I>path</I> によって参照されるファイルが存在しない。
+<DT><B>ENOMEM</B><DD>
+十分なカーネルメモリーがない。
+<DT><B>ENOSYS</B><DD>
+ファイルシステムがこの呼び出しをサポートしていない。
+<DT><B>ENOTDIR</B><DD>
+(<B>statfs</B>()  の場合)  <I>path</I> のディレクトリ部分がディレクトリでない。
+<DT><B>EOVERFLOW</B><DD>
+いくつかの値が大き過ぎて、返り値の構造体で表現できない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+Linux 固有である。 Linux の <B>statfs</B>()  は 4.4BSD のものに影響を受けている。
+(しかし同じ構造体を使用しているわけではない)
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+元々の Linux の <B>statfs</B>() と <B>fstatfs</B>() システムコールは
+非常に大きなファイルサイズを念頭に入れて設計されていなかった。
+その後、Linux 2.6 で、新しい構造体 <I>statfs64</I> を使用する
+新しいシステムコール <B>statfs64</B>() と <B>fstatfs64</B>() が追加された。
+新しい構造体は元の <I>statfs</I> 構造体と同じフィールドを持つが、
+いろいろなフィールドのサイズが大きなファイルサイズに対応できるように
+増やされている。 glibc の <B>statfs</B>() と <B>fstatfs</B>() のラッパー関数は
+カーネルによるこれらの違いを吸収している。
+<P>
+<I>&lt;<A HREF="file:///usr/include/sys/vfs.h">sys/vfs.h</A>&gt;</I> しか持たないシステムもあり、 <I>&lt;<A HREF="file:///usr/include/sys/statfs.h">sys/statfs.h</A>&gt;</I>
+も持っているシステムもある。 前者は後者をインクルードするので、 前者をインクルードするのが良いと考えられる。
+<P>
+LSB ではライブラリコール <B>statfs</B>(), <B>fstatfs</B>()  を非推奨として、代わりに <B>statvfs</B>(2),
+<B>fstatvfs</B>(2)  を使うように指示している。
+<A NAME="lbAI">&nbsp;</A>
+<H3>f_fsid フィールド</H3>
+
+Solaris, Irix, POSIX にはシステムコール <B>statvfs</B>(2)  があり、 <I>struct statvfs</I> を返す
+(<I>&lt;<A HREF="file:///usr/include/sys/statvfs.h">sys/statvfs.h</A>&gt;</I> で定義されている)。 この構造体には、 <I>unsigned long</I> <I>f_fsid</I>
+が含まれている。 Linux, SunOS, HP-UX, 4.4BSD にはシステムコール <B>statfs</B>()  があり、 <I>struct
+statfs</I> を返す (<I>&lt;<A HREF="file:///usr/include/sys/vfs.h">sys/vfs.h</A>&gt;</I> で定義されている)。 この構造体には <I>fsid_t</I> <I>f_fsid</I>,
+が含まれており、 <I>fsid_t</I> は <I>struct { int val[2]; }</I> と定義されている。 FreeBSD
+でも同じであるが、インクルードファイル <I>&lt;<A HREF="file:///usr/include/sys/mount.h">sys/mount.h</A>&gt;</I> を使う。
+<P>
+<I>f_fsid</I> はあるランダムな値を持ち、 (<I>f_fsid</I>,<I>ino</I>)  という 1 組の値でファイルを一意に決定できるようにする、
+というのが基本的な考え方である。 いくつかの OS では、デバイス番号 (の変種) を使ったり、
+デバイス番号とファイルシステムタイプを組み合わせて使ったりしている。 OS の中には <I>f_fsid</I>
+フィールドの取得をスーパーユーザーに限定しているものもある (非特権ユーザーが取得すると 0 となる)。 NFS でエクスポートされる場合、
+このフィールドがファイルシステムのファイルハンドルで使われており、 この値を提供するとセキュリティ上の問題がある。
+<P>
+
+いくつかの OS では、 <I>fsid</I> を <B><A HREF="../man2/sysfs.2.html">sysfs</A></B>(2)  システムコールの第 2 引き数として使用できる。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+Linux 2.6.38 から Linux 3.1 までは (3.1 を含む)、 <B>fstatfs</B>() は <B><A HREF="../man2/pipe.2.html">pipe</A></B>(2)
+で作成されたファイルディスクリプターに対してはエラー <B>ENOSYS</B> で失敗していた。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2), <B>statvfs</B>(2), <B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">f_fsid フィールド</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

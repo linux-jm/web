@@ -1,0 +1,883 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 7.1 sort: テキストファイルを並べ替える</title>
+
+<meta name="description" content="GNU Coreutils: 7.1 sort: テキストファイルを並べ替える">
+<meta name="keywords" content="GNU Coreutils: 7.1 sort: テキストファイルを並べ替える">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="sort-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_41.html#Operating-on-sorted-files" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_43.html#shuf-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_41.html#Operating-on-sorted-files" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_41.html#Operating-on-sorted-files" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_54.html#Operating-on-fields" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="sort_003a-tekisutohuairuwoBing-beTi-eru"></a>
+<h2 class="section">7.1 <code>sort</code>: テキストファイルを並べ替える</h2>
+
+<a name="index-sort"></a>
+<a name="index-sorting-files"></a>
+
+<p><code>sort</code> は、指定されたファイルから読み込んだすべての行に対して、ソート
+(sort、一定の基準に従った並べ替え)、マージ (merge、データの統合)、比較
+(compare) を行う。ファイルが一つも指定されなかった場合や、<var>file</var> として
+&lsquo;<samp>-</samp>&rsquo; が指定された場合は、標準入力から読み込む。デフォルトでは、<code>sort</code>
+は結果を標準出力に書き出す。
+</p>
+<p>書式:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">sort [<var>option</var>]&hellip; [<var>file</var>]&hellip;
+</pre></td></tr></table>
+
+<a name="index-sort-stability"></a>
+<a name="index-sort_0027s-last_002dresort-comparison"></a>
+<p>多くのオプションが、<code>sort</code> が行を比較する方法に影響を及ぼす。
+そこで、結果が期待どおりでないときは、&lsquo;<samp>--debug</samp>&rsquo;
+オプションを使って、どうしてそうなったかを調べてみていただきたい。
+二つの行の比較は、次のように行われる。<code>sort</code> は、対になる各フィールドを
+(&lsquo;<samp>--key</samp>&rsquo; オプションを参照)、
+コマンドラインで指定された順番で、そのフィールドに結びついた順序関係のオプションに従いつつ比較し、
+相違が見つかるか、比較するフィールドがなくなるまでそれを続ける。
+キーとなるフィールドが指定されていない場合は、デフォルトのキーである行全体が比較に使用される。
+最後に、すべてのキーが同じだったときは、最後の手段として、&lsquo;<samp>--reverse</samp>&rsquo; (&lsquo;<samp>-r</samp>&rsquo;)
+以外の順序関係のどんなオプションも指定されていないかのように、行全体を比較する。
+&lsquo;<samp>--stable</samp>&rsquo; オプションを指定すると、この最後の手段の比較
+(<em>last-resort comparison</em>) を行わないようになり、
+その結果、すべてのキー・フィールドが等価である行は、互いに対する元の順序がそのまま維持される。
+&lsquo;<samp>--unique</samp>&rsquo; (&lsquo;<samp>-u</samp>&rsquo;) オプションも、最後の手段の比較を行わないようにする。
+<a name="index-LC_005fALL"></a>
+<a name="index-LC_005fCOLLATE"></a>
+</p>
+<p>別の指定がなされていないかぎり、すべての比較は、<code>LC_COLLATE</code>
+のロケールによって指定されている文字の照合順序で行われる。<a name="DOCF2" href="coreutils-ja_fot.html#FOOT2">(2)</a>
+行末の改行は、比較に当たっては、行の一部として扱われない。
+入力ファイルの最後のバイトが改行でなければ、GNU の <code>sort</code> は黙って改行を追加する。
+GNU の <code>sort</code> では (GNU のすべてのユーティリティについて規定されているとおり)、
+入力行の長さに上限がない。すなわち、各行に含まれるバイト数に制限がない。
+</p>
+<p><code>sort</code> には三つの動作モードがある。ソート (これがデフォルト)、
+マージ、それに、すでにソートされているかどうかのチェックである。
+動作モードの変更には、以下のオプションを使用する。
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>-c</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--check</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--check=diagnose-first</samp>&rsquo;</dt>
+<dd><a name="index-_002dc-6"></a>
+<a name="index-_002d_002dcheck"></a>
+<a name="index-checking-for-sortedness"></a>
+<p>指定されたファイルがすでにソートされているかどうかをチェックする。
+ファイル全体がソート済みでない場合は、診断メッセージを出し、
+順番から外れている最初の箇所を示してから、ステータス 1 で終了する。
+ファイルがソート済みの場合は、正常終了する。
+入力ファイルは、1 個しか指定できない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-C</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--check=quiet</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--check=silent</samp>&rsquo;</dt>
+<dd><a name="index-_002dc-7"></a>
+<a name="index-_002d_002dcheck-1"></a>
+<a name="index-checking-for-sortedness-1"></a>
+<p>指定されたファイルがすでにソート済みだったら、正常終了する。
+さもなければ、ステータス 1 で終了。入力ファイルは、1 個しか指定できない。
+このオプションは &lsquo;<samp>-c</samp>&rsquo; と同様だが、診断メッセージを出さない点が異なる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-m</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--merge</samp>&rsquo;</dt>
+<dd><a name="index-_002dm-2"></a>
+<a name="index-_002d_002dmerge-1"></a>
+<a name="index-merging-sorted-files"></a>
+<p>指定された複数のファイルを一つのグループとしてソートすることでデータの統合を行う。
+各入力ファイルは、必ずそれぞれがソート済みでなければならない。
+マージモードの代わりにソートモードを使えば、
+そうした条件なしで、ソートとマージを行うことができる。
+マージモードがあるのは、それが使える場合は、その方が高速だからである。
+</p>
+</dd>
+</dl>
+
+<a name="index-exit-status-of-sort"></a>
+<p>終了ステータス:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="display">0: エラーが起きなかった。
+1: &lsquo;<samp>-c</samp>&rsquo; や &lsquo;<samp>-C</samp>&rsquo; を付けて実行した際に、入力がソートされていなかった。
+2: エラーが起きた。
+</pre></td></tr></table>
+
+<a name="index-TMPDIR"></a>
+<p>環境変数 <code>TMPDIR</code> が設定されていれば、<code>sort</code>
+はその値をテンポラリ・ファイルを置くディレクトリとして &lsquo;<tt>/tmp</tt>&rsquo; の代わりに使用する。
+&lsquo;<samp>--temporary-directory</samp>&rsquo; (&lsquo;<samp>-T</samp>&rsquo;) オプションは、環境変数よりさらに優先される。
+</p>
+<p>以下に挙げるオプションは、出力する行の順序に影響を与える。
+こうしたオプションは、グローバルなオプションとして指定することもできるし、
+キーとなる特定のフィールドに対してのみ働くように指定することもできる。
+キーとなるフィールドが全く指定されていない場合は、グローバルなオプションが行全体の比較に使用される。
+キー・フィールドの指定がある場合は、グローバルなオプションは、
+キー・フィールドのうち、それ自身のオプションが特に指定されていないフィールドに継承される。
+POSIX 以前の <code>sort</code> のバージョンを使用している場合、グローバルなオプションが効果を持つのは、
+それより後で指定されるキー・フィールドに対してだけなので、
+移植を考慮したシェルスクリプトでは、グローバル・オプションを最初に指定した方がよい。
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>-b</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--ignore-leading-blanks</samp>&rsquo;</dt>
+<dd><a name="index-_002db-9"></a>
+<a name="index-_002d_002dignore_002dleading_002dblanks"></a>
+<a name="index-blanks_002c-ignoring-leading"></a>
+<a name="index-LC_005fCTYPE"></a>
+<p>各行中でソートに使うキーを捜すときに、文字の前にある空白を無視する。
+デフォルトの空白は、スペースまたはタブだが、<code>LC_CTYPE</code> のロケールによっては違うかもしれない。
+なお、次のことに留意してほしい。
+空白は、使用しているロケールの照合ルールによっては無視されることがあるが、
+このオプションを指定しておかないと、&lsquo;<samp>-k</samp>&rsquo; オプションで指定されるキー中の文字の位置に関して、
+空白が意味を持つことになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-d</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--dictionary-order</samp>&rsquo;</dt>
+<dd><a name="index-_002dd-5"></a>
+<a name="index-_002d_002ddictionary_002dorder"></a>
+<a name="index-dictionary-order"></a>
+<a name="index-phone-directory-order"></a>
+<a name="index-telephone-directory-order"></a>
+<a name="index-LC_005fCTYPE-1"></a>
+<p>電話帳 (<em>phone directory</em>) 順にソートする。
+すなわち、ソートする際にアルファベット、数字、空白以外のすべての文字を無視する。
+デフォルトのアルファベットと数字は ASCII のそれであり、空白はスペースまたはタブだが、
+後者は <code>LC_CTYPE</code> のロケールによっては違うかもしれない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-f</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--ignore-case</samp>&rsquo;</dt>
+<dd><a name="index-_002df-5"></a>
+<a name="index-_002d_002dignore_002dcase"></a>
+<a name="index-ignoring-case"></a>
+<a name="index-case-folding"></a>
+<a name="index-LC_005fCTYPE-2"></a>
+<p>アルファベットの小文字を、一回すべて対応する大文字に直してから、比較する。
+その結果、たとえば、&lsquo;<samp>b</samp>&rsquo; と &lsquo;<samp>B</samp>&rsquo; は等価なものとしてソートされる。
+どの文字がどのタイプに属するか (訳注: たとえば、大文字か小文字か)
+を決めているのは、<code>LC_CTYPE</code> のロケールである。&lsquo;<samp>--unique</samp>&rsquo;
+オプションと一緒に使用したとき、小文字を使っている等価な行があると、
+その小文字の行は捨てられることになる。(大文字を使っている等価な行の方を捨てる方法は、
+現在のところ存在しない。(&lsquo;<samp>--reverse</samp>&rsquo; オプションがあっても、
+それが効果を発揮するのは、小文字の行が捨てられた後の最終結果に対してだけなのだ。))
+(訳注: 実際の動作はこの説明と少し違う。最近の <code>sort</code> では、
+&lsquo;<samp>--unique</samp>&rsquo; と併せて使用した場合、小文字を使っている行が捨てられるのではなく、
+等価な行のうち、最初に現れた行が残り、それ以外のすべてが捨てられるようである。)
+</p>
+</dd>
+<dt> &lsquo;<samp>-g</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--general-numeric-sort</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--sort=general-numeric</samp>&rsquo;</dt>
+<dd><a name="index-_002dg-1"></a>
+<a name="index-_002d_002dgeneral_002dnumeric_002dsort"></a>
+<a name="index-_002d_002dsort"></a>
+<a name="index-general-numeric-sort"></a>
+<a name="index-LC_005fNUMERIC-2"></a>
+<p>各行の先頭部分を倍精度浮動小数点数 (long double-precision floating
+point number) に変換して、数値としてソートする
+(訳注: 実際には、各行の先頭と言うより、比較される各フィールドの先頭部分を対象にする)。
+See section <a href="coreutils-ja_6.html#Floating-point">浮動小数点数</a>.  オーバーフロー、アンダーフロー、変換エラーが起きても、
+通知しない。行の並ぶ順番は以下のようになる。
+</p>
+<ul>
+<li>
+数字で始まっていない行 (すべて同じ数値と見なされる)。
+</li><li>
+NaN (IEEE の浮動小数点演算で使う &ldquo;Not a Number&rdquo; を表す値)
+を一貫した、ただし、マシンに依存する順番で並べる。
+</li><li>
+マイナスの無限大。
+</li><li>
+有限数を数値として昇順で並べる (<em>-0</em> と <em>+0</em> は等価とする)。
+</li><li>
+プラスの無限大。
+</li></ul>
+
+<p>このオプションを使うのは、他に方法がないときのみにすること。
+処理速度が &lsquo;<samp>--numeric-sort</samp>&rsquo; (&lsquo;<samp>-n</samp>&rsquo;) よりずっと遅いし、
+浮動小数点数に変換するとき、情報を失う恐れがあるからだ。
+</p>
+</dd>
+<dt> &lsquo;<samp>-h</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--human-numeric-sort</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--sort=human-numeric</samp>&rsquo;</dt>
+<dd><a name="index-_002dh-3"></a>
+<a name="index-_002d_002dhuman_002dnumeric_002dsort"></a>
+<a name="index-_002d_002dsort-1"></a>
+<a name="index-human-numeric-sort"></a>
+<a name="index-LC_005fNUMERIC-3"></a>
+<p>数値としてソートする。その際、ソートを、まず数が正か負かによって行い
+(負の数、ゼロ、正の数の順)、次に SI 接尾辞 によって行い
+(接尾辞なし、&lsquo;<samp>k</samp>&rsquo; や &lsquo;<samp>K</samp>&rsquo;、そして &lsquo;<samp>MGTPEZY</samp>&rsquo; の順  see section <a href="coreutils-ja_5.html#Block-size">ブロックサイズ</a>)、
+最後に数値によって行う。たとえば、&lsquo;<samp>1023M</samp>&rsquo; は &lsquo;<samp>1G</samp>&rsquo; の前に来る。
+SI 接尾辞として &lsquo;<samp>M</samp>&rsquo;(メガ) は &lsquo;<samp>G</samp>&rsquo; (ギガ) の前になるからだ。
+つまり、このオプションでソートする対象は、接尾辞の意味が 1000
+の累乗か、1024 の累乗かを問わず、一貫したやり方で、
+数値の規模にもっともふさわしい接尾辞を付けられている数値である。
+従って、このオプションは、<code>df</code>, <code>du</code>, <code>ls</code>
+などのコマンドに &lsquo;<samp>--human-readable</samp>&rsquo; や &lsquo;<samp>--si</samp>&rsquo;
+オプションを付けて実行したときの、一回分の出力をソートするのに用いられる。
+数値の書式は、&lsquo;<samp>--numeric-sort</samp>&rsquo; の場合と同じであり
+(訳注: すなわち、数値の前に付けた &lsquo;<samp>+</samp>&rsquo; 符号を理解しない)、
+SI 接尾辞は、数値の後ろに直接続いていなければならない。
+なお、<code>numfmt</code> コマンドを使用することも考慮していただきたい。<code>numfmt</code>
+を使用すれば、数値をソートした後で、人間に読みやすい形に整形し直すことができるので、
+たいていの場合 <code>sort</code> の対象に、より精密な数値を使うことが可能になるからだ。
+</p>
+</dd>
+<dt> &lsquo;<samp>-i</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--ignore-nonprinting</samp>&rsquo;</dt>
+<dd><a name="index-_002di-4"></a>
+<a name="index-_002d_002dignore_002dnonprinting"></a>
+<a name="index-nonprinting-characters_002c-ignoring"></a>
+<a name="index-unprintable-characters_002c-ignoring"></a>
+<a name="index-LC_005fCTYPE-3"></a>
+<p>表示できない文字を無視する。どの文字がどのタイプに属するかを決めているのは、
+<code>LC_CTYPE</code> のロケールである。より強力なオプションである
+&lsquo;<samp>--dictionary-order</samp>&rsquo; (&lsquo;<samp>-d</samp>&rsquo;) が一緒に指定されていると、
+このオプションは効果を持たない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-M</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--month-sort</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--sort=month</samp>&rsquo;</dt>
+<dd><a name="index-_002dM"></a>
+<a name="index-_002d_002dmonth_002dsort"></a>
+<a name="index-_002d_002dsort-2"></a>
+<a name="index-months_002c-sorting-by"></a>
+<a name="index-LC_005fTIME-1"></a>
+<p>比較する部分の先頭が、0 個以上の空白に続いて、月名の短縮形になっているとき、
+すべての文字を大文字に直して &lsquo;<samp>JAN</samp>&rsquo; &lt; &lsquo;<samp>FEB</samp>&rsquo; &lt; &hellip; &lt; &lsquo;<samp>DEC</samp>&rsquo;
+の順序で比較する。月名として無効な名前は、有効な月名より前に置かれる。
+月名のつづりを決めているのは、<code>LC_TIME</code> カテゴリのロケールである
+(訳注: だから、英語の月名によってソートするには、ロケールを英語か
+C にしておく必要がある)。デフォルトの空白は、スペースまたはタブだが、
+<code>LC_CTYPE</code> のロケールによっては違うかもしれない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-n</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--numeric-sort</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--sort=numeric</samp>&rsquo;</dt>
+<dd><a name="index-_002dn-7"></a>
+<a name="index-_002d_002dnumeric_002dsort"></a>
+<a name="index-_002d_002dsort-3"></a>
+<a name="index-numeric-sort"></a>
+<a name="index-LC_005fNUMERIC-4"></a>
+<p>数値としてソートする。数値は行頭から始まり
+(訳注: 比較する位置が指定されていれば、実は行頭でなくてもよい)、
+任意個の空白、必要なら &lsquo;<samp>-</samp>&rsquo; 符号、それに、0 個以上の数字から構成される。
+数値は、区切り記号で 3 桁づつ区切られていてもよく、小数点記号と 0 個以上の数字が続いていてもよい。
+数字がない場合は、&lsquo;<samp>0</samp>&rsquo; と見なされる。小数点記号や桁区切りの記号を規定しているのは、
+<code>LC_NUMERIC</code> のロケールである。デフォルトの空白は、スペースまたはタブだが、
+<code>LC_CTYPE</code> のロケールによっては違うかもしれない。
+</p>
+<p>比較は厳密であり、丸めによるエラーはない。
+</p>
+<p>このオプションは、数値に前置した &lsquo;<samp>+</samp>&rsquo; 符号や、指数表記を理解しない。
+そうした文字列を数値として比較するには、&lsquo;<samp>--general-numeric-sort</samp>&rsquo;
+(&lsquo;<samp>-g</samp>&rsquo;) を使用するべきである。
+</p>
+</dd>
+<dt> &lsquo;<samp>-V</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--version-sort</samp>&rsquo;</dt>
+<dd><a name="index-_002dV"></a>
+<a name="index-_002d_002dversion_002dsort"></a>
+<a name="index-version-number-sort"></a>
+<p>バージョン名とバージョン番号によってソートする。標準用法のソートと動作が似ているが、
+10 進数の数字が連続する各部分をインデックス番号やバージョン番号と見なし、
+(文字列としてではなく) 数値として取り扱う点が違う。
+(See section <a href="coreutils-ja_70.html#Details-about-version-sort">バージョン・ソートの詳細</a>.)
+</p>
+</dd>
+<dt> &lsquo;<samp>-r</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--reverse</samp>&rsquo;</dt>
+<dd><a name="index-_002dr-3"></a>
+<a name="index-_002d_002dreverse"></a>
+<a name="index-reverse-sorting"></a>
+<p>比較の結果を逆順にする。その結果、出力ではより大きなキーの値を持つ行が、
+後ではなく、先に表示される。
+</p>
+</dd>
+<dt> &lsquo;<samp>-R</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--random-sort</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--sort=random</samp>&rsquo;</dt>
+<dd><a name="index-_002dR"></a>
+<a name="index-_002d_002drandom_002dsort"></a>
+<a name="index-_002d_002dsort-4"></a>
+<a name="index-random-sort"></a>
+<p>ソートを行うのに、入力中のキーをハッシュしてから、そのハッシュ値をソートするという方法を用いる。
+ハッシュ関数はランダムに選択する。
+その際、衝突 (collision) が絶対起きないように関数を選択するので、
+値の違うキーは必ず違うハッシュ値を持つようになる。
+これは、入力のランダムな並び替えに似ているが (see section <a href="coreutils-ja_43.html#shuf-invocation"><code>shuf</code>: テキストをシャッフルする</a>)、
+同じ値を持つキーは一緒に並べるという点が、異なっている。
+</p>
+<p>ランダムソートを行うフィールドが複数指定されている場合は、
+ランダムに選択された一つの同じハッシュ関数が、すべてのフィールドで使用される。
+フィールドごとに別のランダムなハッシュ関数を使うようにするには、
+<code>sort</code> を複数回呼び出せばよい。
+</p>
+<p>ハッシュ関数の選択は、 &lsquo;<samp>--random-source</samp>&rsquo; オプションの影響を受ける。
+</p>
+</dd>
+</dl>
+
+<p>その他のオプション。
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>--compress-program=<var>prog</var></samp>&rsquo;</dt>
+<dd><p>テンポラリ・ファイルを <var>prog</var> というプログラムで圧縮する。
+</p>
+<p><var>prog</var> プログラムは、
+引数が一つも存在しない場合に、標準入力を圧縮して標準出力に書き出し、
+&lsquo;<samp>-d</samp>&rsquo; オプションの指定があれば、
+標準入力を展開して標準出力に書き出すものでなければならない。
+</p>
+<p><var>prog</var> が 0 以外のステータスで終了した場合は、
+エラーメッセージを出して、<code>sort</code> の実行を中止する。
+</p>
+<p><var>prog</var> の指定中でホワイトスペース (訳注: 空白、タブ、改行など)
+やバックスラッシュ文字を使ってはならない。
+そうした文字は、将来の使用のために、予約されている。
+</p>
+</dd>
+<dt> &lsquo;<samp>--files0-from=<var>file</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dfiles0_002dfrom_003dfile-1"></a>
+<p>コマンドラインで名前を指定されたファイルの処理を行わない。その代わりに、
+ファイル <var>file</var> に名前が書き込まれているファイルの処理を行う。
+なお、<var>file</var> 中に書かれている各ファイル名は、ゼロバイト (ASCII NUL)
+で終端されていなければならない。このオプションは、ファイル名のリストが長すぎて、
+コマンドライン長の上限を超過してしまいそうなときに、
+便利である。そうした場合、<code>sort</code> を
+<code>xargs</code> 経由で実行するのは、望ましくない。
+なぜなら、<code>xargs</code> はファイルのリストをいくつかの部分に分割して
+<code>sort</code> に渡すので、<code>sort</code> はリスト全体のソートした結果ではなく、
+部分リストごとのソートした結果を表示してしまうからである。
+ASCII NUL で終端されたファイル名のリストを得る方法の一つは、
+GNU <code>find</code> に &lsquo;<samp>-print0</samp>&rsquo; を付けて使うことである。
+<var>file</var> に &lsquo;<samp>-</samp>&rsquo; を指定すれば、
+ASCII NUL で終端されたファイル名を標準入力から読み込むことができる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-k <var>pos1</var>[,<var>pos2</var>]</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--key=<var>pos1</var>[,<var>pos2</var>]</samp>&rsquo;</dt>
+<dd><a name="index-_002dk-2"></a>
+<a name="index-_002d_002dkey"></a>
+<a name="index-sort-field"></a>
+<p>行中の <var>pos1</var> から <var>pos2</var> までの部分 (両者を含む)
+を、ソートの対象となる場所として指定する。<var>pos2</var> が省略されている場合は、
+<var>pos1</var> から行末までがソートの対象になる。
+</p>
+<p>最も単純な形の場合、<var>pos</var> で指定するのは、何番目のフィールドかということである (1 から数える)。
+フィールドは 1 個以上の空白文字によって区切られるが、
+デフォルトでは、そうした空白文字は比較するとき各フィールドの先頭に含まれることになる。
+空白文字の扱い方を調整する方法については、&lsquo;<samp>-b</samp>&rsquo; や &lsquo;<samp>-t</samp>&rsquo;
+オプションの説明をご覧いただきたい。
+</p>
+<p>より一般的に言うと、各 <var>pos</var> は、&lsquo;<samp><var>f</var>[.<var>c</var>][<var>opts</var>]</samp>&rsquo; という形式を取る。
+<var>f</var> は、比較に使用するフィールドは何番目かということであり、
+<var>c</var> は、そのフィールドの始めから数えて何番目の文字かということである。
+フィールドや文字の位置は、1 から数える。
+なお、<var>pos2</var> の文字の位置として 0 を指定すると、
+そのフィールドの最後の文字を指すことになる。&lsquo;<samp>.<var>c</var></samp>&rsquo; が、<var>pos1</var>
+で省略されている場合は、デフォルトの 1 (フィールドの最初の文字)
+を指定したことになり、<var>pos2</var> で省略されている場合は、デフォルトの 0
+(フィールドの最後の文字) を指定したことになる。
+<var>opts</var> は順序関連のオプションであり、
+これを指定することで、各キーを異なったルールでソートすることが可能になる。
+詳細については後述しているので、参照していただきたい。
+なお、キーは複数のフィールドにまたがることができる。
+</p>
+<p>たとえば、二番目のフィールドでソートするには、&lsquo;<samp>--key=2,2</samp>&rsquo; (&lsquo;<samp>-k 2,2</samp>&rsquo;)
+を使用する。後述部分で、キーについてさらに説明し、
+用例ももっとたくさん挙げているので、ご覧になっていただきたい。
+また、&lsquo;<samp>--debug</samp>&rsquo; オプションの説明もご覧になるとよい。&lsquo;<samp>--debug</samp>&rsquo;
+オプションを使うと、行中のどの部分がソートに使用されているかが明らかになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>--debug</samp>&rsquo;</dt>
+<dd><p>各行のソートに使われている部分を強調表示する。
+また、使用法に問題がありそうなときは、標準エラーに警告メッセージを出す。
+</p>
+</dd>
+<dt> &lsquo;<samp>--batch-size=<var>nmerge</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dbatch_002dsize"></a>
+<a name="index-number-of-inputs-to-merge_002c-nmerge"></a>
+<p>一度にマージする入力ファイルの数を多くても <var>nmerge</var> 個までとする。
+</p>
+<p><var>nmerge</var> 個を越える入力ファイルをマージしなければならない場合、<code>sort</code>
+は <var>nmerge</var> 個のファイルからなるグループを作ってマージし、
+その結果をテンポラリ・ファイルに保存する。
+そして、今度はそれを入力として使用して、後に続くマージを行うのである。
+</p>
+<p><var>nmerge</var> の値が大きいと、実行速度が向上し、ハードディスクの一時的な使用が減るかもしれないが、
+その分、メモリの使用量と I/O が増加する。
+逆に、<var>nmerge</var> の値が小さいと、メモリに対する要求と I/O は減少するかもしれないが、
+その分、ハードディスクの一時的な使用が増え、実行速度が低下することになる。
+</p>
+<p><var>nmerge</var> の値は、2 以上でなければならない。デフォルトの値は 16 だが、
+これは実装次第なので、将来は変わるかもしれない。
+</p>
+<p><var>nmerge</var> の値は、オープンできるファイル・ディスクリプタの上限によって制限されているかもしれない。
+&lsquo;<samp>ulimit -n</samp>&rsquo; や &lsquo;<samp>getconf OPEN_MAX</samp>&rsquo;
+コマンドを使えば、使用しているシステムの上限を知ることができる。
+ただし、そうした上限がさらに小さくなっていることもあり、
+使用中のプログラムがすでにファイルをいくつかオープンしている場合や、
+オープンできるファイルの数についてオペレーティング・システムに他の制限がある場合が、
+それに当たる。<var>nmerge</var> がリソースの上限を越えているときは、
+<code>sort</code> は警告メッセージを出さずに、より小さい値を使用する。
+</p>
+</dd>
+<dt> &lsquo;<samp>-o <var>output-file</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--output=<var>output-file</var></samp>&rsquo;</dt>
+<dd><a name="index-_002do-2"></a>
+<a name="index-_002d_002doutput"></a>
+<a name="index-overwriting-of-input_002c-allowed"></a>
+<p>出力を標準出力ではなく、<var>output-file</var> に書き出す。通常、<code>sort</code>
+は、入力をすべて読み込んでから、<var>output-file</var> をオープンする。
+従って、<code>sort -o F F</code> や <code>cat F | sort -o F</code>
+といったコマンドを使って、ファイルを直接書き変えるやり方でソートをすることが可能だ。
+とは言え、他の用途に使用されていないファイルに出力する方が、おおむね安全である。
+ファイルを直接書き変えるやり方でソートしている最中に、システムがクラッシュしたり、
+<code>sort</code> が入出力エラーなど、深刻なエラーに遭遇したりすると、データが失われてしまいかねないからだ。
+また、&lsquo;<samp>--merge</samp>&rsquo; (&lsquo;<samp>-m</samp>&rsquo;) オプションを指定した場合は、<code>sort</code>
+は、入力をすべて読み込む前に、出力ファイルをオープンするかもしれないので、
+<code>cat F | sort -m -o F - G</code> といったコマンドは安全ではない。
+<code>cat</code> が &lsquo;<tt>F</tt>&rsquo; の読み込みを済ます前に、<code>sort</code>
+が &lsquo;<tt>F</tt>&rsquo; への書き込みを始めてしまうかもしれないからだ。
+</p>
+<a name="index-POSIXLY_005fCORRECT-3"></a>
+<p>比較的新しいシステムでも、環境変数 <code>POSIXLY_CORRECT</code> を設定している場合は、
+たとえば &lsquo;<samp>sort F -o F</samp>&rsquo; のように、入力ファイルの後に
+&lsquo;<samp>-o</samp>&rsquo; オプションを置くことはできない。移植を考慮したスクリプトでは、
+&lsquo;<samp>-o <var>output-file</var></samp>&rsquo; を入力ファイルの前で指定するべきである。
+</p>
+</dd>
+<dt> &lsquo;<samp>--random-source=<var>file</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002drandom_002dsource"></a>
+<a name="index-random-source-for-sorting"></a>
+<p><var>file</var> をランダムデータのソースとして使用する。そのランダムデータは、
+&lsquo;<samp>-R</samp>&rsquo; オプションでどのランダムハッシュ関数を使うかを決めるのに使用される。
+See section <a href="coreutils-ja_9.html#Random-sources">ランダムデータのソース</a>.
+</p>
+</dd>
+<dt> &lsquo;<samp>-s</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--stable</samp>&rsquo;</dt>
+<dd><a name="index-_002ds-10"></a>
+<a name="index-_002d_002dstable"></a>
+<a name="index-sort-stability-1"></a>
+<a name="index-sort_0027s-last_002dresort-comparison-1"></a>
+
+<p>最後の手段の比較 (last-resort comparison) を行うのを止めて、<code>sort</code>
+を入力順尊重 (stable) にする。このオプションは、フィールド指定オプションや、
+&lsquo;<samp>--reverse</samp>&rsquo; (&lsquo;<samp>-r</samp>&rsquo;) 以外のグローバルな順序関係のオプションが指定されていなければ、効果を持たない。
+</p>
+<p>(訳注: いわゆる stable sort (普通、安定ソート、固定ソートと訳される) である。
+たとえば、&lsquo;<samp>-b</samp>&rsquo; オプションを使って、先行する空白を無視して比較した場合に、等価となる行があったとしよう。
+通常では、それでも、最後の手段の比較によって、
+先行する空白の有無も考慮に入れた行全体の比較が行われ、
+等価な行に順序を付けることになるが、&lsquo;<samp>--stable</samp>&rsquo; オプションが指定されていると、
+それをしないので、等価な行は入力されたときの順序で出力される)。
+</p>
+</dd>
+<dt> &lsquo;<samp>-S <var>size</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--buffer-size=<var>size</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dS-3"></a>
+<a name="index-_002d_002dbuffer_002dsize"></a>
+<a name="index-size-for-main-memory-sorting"></a>
+<p>指定された <var>size</var> のメインメモリをソート用のバッファとして使用する。
+デフォルトでは、<var>size</var> は 1024 バイトを 1 単位とする数値である。&lsquo;<samp>%</samp>&rsquo;
+を後ろに付けると、<var>size</var> は、物理メモリの何パーセントの意味になる。
+後置するのが &lsquo;<samp>K</samp>&rsquo; ならば、<var>size</var> は 1024 倍され (デフォルトと同じ)、
+&lsquo;<samp>M</samp>&rsquo; なら 1,048,576 倍、&lsquo;<samp>G</samp>&rsquo; なら 1,073,741,824 倍される。
+&lsquo;<samp>T</samp>&rsquo;, &lsquo;<samp>P</samp>&rsquo;, &lsquo;<samp>E</samp>&rsquo;, &lsquo;<samp>Z</samp>&rsquo;, &lsquo;<samp>Y</samp>&rsquo; の後置も、同じ理屈である。
+&lsquo;<samp>b</samp>&rsquo; を後置すると、<var>size</var> はバイト数と見なされ、掛け算は行われない。
+</p>
+<p>このオプションを指定すると、<code>sort</code> は作業を始めるとき、
+デフォルトよりも大きかったり、小さかったりするソート用のバッファを使用することになり、
+そのために動作速度が向上することがある。
+とは言え、このオプションは起動直後のバッファサイズにしか影響を持たない。
+<code>sort</code> が <var>size</var> を越える入力行に出会うと、バッファのサイズは
+<var>size</var> 以上に拡大されるからである。
+</p>
+</dd>
+<dt> &lsquo;<samp>-t <var>separator</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--field-separator=<var>separator</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dt-6"></a>
+<a name="index-_002d_002dfield_002dseparator"></a>
+<a name="index-field-separator-character"></a>
+<p>各行でソートに使うキーを探すとき、文字 <var>separator</var>
+をフィールド・セパレータとして使用する。
+デフォルトでフィールドを区分するのは、非空白文字と空白文字の間の空文字列である。
+デフォルトの空白は、スペースとタブだが、<code>LC_CTYPE</code> のロケールによっては、
+違うかもしれない。
+</p>
+<p>たとえば、入力行が &lsquo;<samp> foo bar</samp>&rsquo; だったとしよう。<code>sort</code> はこれを
+&lsquo;<samp> foo</samp>&rsquo; と &lsquo;<samp> bar</samp>&rsquo; のフィールドに分割する。
+フィールド・セパレータは前後どちらのフィールドにも属さないことになっている。
+そこで、&lsquo;<samp>sort -t &quot; &quot;</samp>&rsquo; を使用した場合は、同じ入力行が、空っぽのフィールド、
+&lsquo;<samp>foo</samp>&rsquo;、それに &lsquo;<samp>bar</samp>&rsquo; という 3 個のフィールドを持つことになる。
+とは言え、キー・フィールドが、&lsquo;<samp>-k 2</samp>&rsquo; のように、行末まで続く場合や、
+&lsquo;<samp>-k 2,3</samp>&rsquo; のように、範囲からなる場合は、
+範囲の両端の間に存在するフィールド・セパレータは、キー・フィールド中にそのまま保持される。
+</p>
+<p>ASCII NUL をフィールド・セパレータに指定するには、二文字からなる文字列
+&lsquo;<samp>\0</samp>&rsquo; を使用すればよい。&lsquo;<samp>sort -t '\0'</samp>&rsquo; のようにだ。
+</p>
+</dd>
+<dt> &lsquo;<samp>-T <var>tempdir</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--temporary-directory=<var>tempdir</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dT-2"></a>
+<a name="index-_002d_002dtemporary_002ddirectory"></a>
+<a name="index-temporary-directory"></a>
+<a name="index-TMPDIR-1"></a>
+<p>テンポラリファイルの置き場所にディレクトリ <var>tempdir</var> を使用する。
+この指定は、環境変数 <code>TMPDIR</code> に優先する。このオプションを二回以上指定すると、
+テンポラリファイルの置き場所として、指定されたすべてのディレクトリが使用されることになる。
+大規模なソートやマージを行って、I/O が足枷になる場合、このオプションを使って、
+別のディスク上にあり、別のコントローラを使用している複数のディレクトリを指定すると、
+実行速度が向上することがよくある。
+</p>
+</dd>
+<dt> &lsquo;<samp>--parallel=<var>n</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dparallel"></a>
+<a name="index-multithreaded-sort"></a>
+<p>平行して実行するソートの数を  <var>n</var> に設定する。デフォルトでは、
+<var>n</var> は、利用できるプロセッサーの数になっている。ただし、上限は
+8 であり、これは、それ以上にしても、速度の向上が頭打ちになるからだ。
+<var>n</var> 個のスレッドを使用すると、メモリの使用量が log <var>n</var> 倍になることにも注意していただきたい。
+参照 <a href="coreutils-ja_160.html#nproc-invocation"><code>nproc</code>: 利用できるプロセッサの個数を表示する</a>.
+</p>
+</dd>
+<dt> &lsquo;<samp>-u</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--unique</samp>&rsquo;</dt>
+<dd><a name="index-_002du-3"></a>
+<a name="index-_002d_002dunique"></a>
+<a name="index-uniquifying-output"></a>
+
+<p>通常は、等価と評価される複数の行の内、最初のもののみを出力する。
+&lsquo;<samp>--check</samp>&rsquo; (&lsquo;<samp>-c</samp>&rsquo; または &lsquo;<samp>-C</samp>&rsquo;) オプションが指定されている場合は、
+等価と評価される行が、2 行連続していないかをチェックする
+(訳注: 等価な行の連続があると、終了ステータスが 1 になる)。
+</p>
+<p>また、このオプションを指定すると、デフォルトでは実行する、最後の手段の比較を行わなくなる。
+</p>
+<p>コマンド <code>sort -u</code> と <code>sort | uniq</code> は等価である。
+しかし、その等価性は、<code>sort</code> に何か他のオプションが付いたときにまでは及ばない。
+たとえば、<code>sort -n -u</code> は、唯一性のチェックをするとき、行頭にある数字の並びの値しか調べないが、
+<code>sort -n | uniq</code> の方は、行全体を検査するのである。See section <a href="coreutils-ja_44.html#uniq-invocation"><code>uniq</code>: ファイルから重複を省く</a>.
+</p>
+</dd>
+<dt> &lsquo;<samp>-z</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--zero-terminated</samp>&rsquo;</dt>
+<dd><a name="index-_002dz-3"></a>
+<a name="index-_002d_002dzero_002dterminated-2"></a>
+<a name="index-process-zero_002dterminated-items-2"></a>
+<p>項目の区切りに、改行 (ASCII LF) ではなく、ゼロバイトを使用する。
+すなわち、入力を ASCII NUL で分離された項目として扱い、出力する各項目の末尾に
+ASCII NUL を付加する。このオプションは、&lsquo;<samp>perl -0</samp>&rsquo;,
+&lsquo;<samp>find -print0</samp>&rsquo;, &lsquo;<samp>xargs -0</samp>&rsquo; などと組み合わせて使用すると、
+便利なことがある。そうしたコマンドでも、わがままなファイル名を
+(空白などの特殊文字を含んでいる場合でも) きちんと確実に処理するために、
+同様なことをしているのである。
+</p>
+</dd>
+</dl>
+
+<p><code>sort</code> の従来の (すなわち BSD と System V の) 実装では、
+いくつかのオプションの解釈が互いに異なっていた。
+とりわけ、&lsquo;<samp>-b</samp>&rsquo;, &lsquo;<samp>-f</samp>&rsquo;, &lsquo;<samp>-n</samp>&rsquo; についてそうだった。
+GNU の sort は、POSIX 規格の動作に従っており、
+これは、たいていの場合 (常にではない！)、System V の動作と同じである。POSIX
+によると、&lsquo;<samp>-n</samp>&rsquo; はもはや &lsquo;<samp>-b</samp>&rsquo; を自動的に設定しない。
+そこで、動作の一貫性のために、&lsquo;<samp>-M</samp>&rsquo; も同様に変更した。
+この変更によって、フィールドを指定するとき、文字の位置がどこを指すかが、
+微妙なケースでは変わってくるかもしれない。
+これに対する唯一の対処法は、明示的に &lsquo;<samp>-b</samp>&rsquo; オプションを指定することである。
+</p>
+<p>&lsquo;<samp>-k</samp>&rsquo; によってソート・フィールドを指定するとき、
+その位置指定の後ろにオプション文字 &lsquo;<samp>MbdfghinRrV</samp>&rsquo; のうち任意のものを付けることができる。
+その場合、そのフィールドは、グローバルな順序関係のオプションを一切引き継がないことになる。
+&lsquo;<samp>-b</samp>&rsquo; オプションは、フィールド限定のオプションとしては、
+フィールド指定の開始位置と終端位置の片方、あるいは両方に付けることができるが、
+グローバル・オプションから継承した場合は、両方に付いていることになる。
+入力行が、行頭やフィールド間に複数の空白を含んでいる可能性があって、
+しかも &lsquo;<samp>-t</samp>&rsquo; を使っていない場合は、&lsquo;<samp>-k</samp>&rsquo; を使用するとき、&lsquo;<samp>-b</samp>&rsquo;
+と組み合わせるか、先行する空白を暗黙のうちに無視するオプション (すなわち &lsquo;<samp>Mghn</samp>&rsquo;)
+と組み合わせるのが普通だ。そうしないと、フィールドにある先行する空白の数の違いのせいで、
+結果がわけのわからないものになりかねないからである。
+</p>
+<p>ソートフィールド指定の開始位置が、行末より後ろや、終端側のフィールドより後ろに来てしまうと、
+そのフィールドは空になる。&lsquo;<samp>-b</samp>&rsquo; オプションを指定した場合、
+フィールド指定の &lsquo;<samp>.<var>c</var></samp>&rsquo; の部分は、そのフィールドの最初の非空白文字から数えることになる。
+</p>
+<a name="index-_005fPOSIX2_005fVERSION-2"></a>
+<a name="index-POSIXLY_005fCORRECT-4"></a>
+<p>POSIX 1003.1-2001 に準拠していないシステムの <code>sort</code>
+では、ソート・キーの指定に、&lsquo;<samp>+<var>pos1</var> [-<var>pos2</var>]</samp>&rsquo;
+という 0 から数える旧来の書式が使用できる。
+&lsquo;<samp>sort +<var>a</var>.<var>x</var> -<var>b</var>.<var>y</var></samp>&rsquo; という旧来のコマンドは、
+もし <var>y</var> が &lsquo;<samp>0</samp>&rsquo; であるか、指定されていない場合は、
+&lsquo;<samp>sort -k <var>a+1</var>.<var>x+1</var>,<var>b</var></samp>&rsquo; と同じである。
+それ以外の場合は、&lsquo;<samp>sort -k <var>a+1</var>.<var>x+1</var>,<var>b+1</var>.<var>y</var></samp>&rsquo; と同じだ。
+</p>
+<p>(訳注: 旧来の書式と新しい書式の違いは、フィールドやフィールド中の文字の位置を
+0 から数えるか、1 から数えるかだけではない。
+終端指定の位置が、旧来の書式ではキー・フィールドに含まれないのに対し
+(つまり、その直前までなのに対し)、新しい書式では含まれるという違いもある。
+そこで、上のようになる。なお、旧来の書式であれ、新しい書式であれ、
+デフォルトのフィールド・セパレータは、
+「非空白文字と空白文字の間の空文字列」であることに注意していただきたい。)
+</p>
+<p>この旧来の動作は、環境変数 <code>_POSIX2_VERSION</code> を使えば、コントロールすることができる
+(see section <a href="coreutils-ja_15.html#Standards-conformance">規格への準拠</a>)。また、<code>POSIXLY_CORRECT</code>
+が設定されていないときに、&lsquo;<samp>-<var>pos2</var></samp>&rsquo; が存在する旧来の書式を使っても、有効になる。
+</p>
+<p>標準的なホストで使用することを意図したスクリプトでは、旧来の書式は使わずに、
+&lsquo;<samp>-k</samp>&rsquo; の方を使用するべきである。たとえば、&lsquo;<samp>sort +2</samp>&rsquo; は使わない方がよい。
+&lsquo;<samp>sort ./+2</samp>&rsquo; と解釈されるか、&lsquo;<samp>sort -k 3</samp>&rsquo; と解釈されるか、わからないからである。
+そのスクリプトが、旧来の書式にしか対応していないホストでも動作しなければならないのなら、
+スクリプト中で &lsquo;<samp>if sort -k 1 &lt;/dev/null &gt;/dev/null 2&gt;&amp;1; then &hellip;</samp>&rsquo;
+といったテストを行って、どちらの書式を使うべきかを判断すればよい。
+</p>
+<p>用例をいくつか挙げて、オプションの様々な組み合わせを説明する。
+</p>
+<ul>
+<li>
+数値としてソートし、降順に (つまり、通常の逆に) 並べる。
+
+<table><tr><td>&nbsp;</td><td><pre class="example">sort -n -r
+</pre></td></tr></table>
+
+</li><li>
+同時にソートを 4 つまで行う。バッファサイズを 10M にする。
+
+<table><tr><td>&nbsp;</td><td><pre class="example">sort --parallel=4 -S 10M
+</pre></td></tr></table>
+
+</li><li>
+1 番目と 2 番目のフィールドを無視し、さらに 3 番目のフィールドの先頭の空白も無視して、
+アルファベット順に並べる。ここで使っているキーは一つであり、
+それは 3 番目のフィールドの最初の非空白文字に始まって、
+各行の末尾まで続くすべての文字からなっている。
+
+<table><tr><td>&nbsp;</td><td><pre class="example">sort -k 3b
+</pre></td></tr></table>
+
+</li><li>
+2 番目のフィールドを数値としてソートし、同点の決着を付けるために、
+5 番目のフィールドの 3 番目と 4 番目の文字をアルファベット順でソートする。
+フィールドの区切りには &lsquo;<samp>:</samp>&rsquo; を使用する。
+
+<table><tr><td>&nbsp;</td><td><pre class="example">sort -t : -k 2,2n -k 5.3,5.4
+</pre></td></tr></table>
+
+<p>ここで注意していただきたいが、もし &lsquo;<samp>-k 2,2n</samp>&rsquo; の代わりに &lsquo;<samp>-k 2n</samp>&rsquo;
+と書いたなら、<code>sort</code> は、2 番目のフィールドに始まり、行末まで続くすべての文字を、
+主キー (primary key) として、それも「数値」のキーとして使用したことだろう。
+<code>sort</code> を実行するたいていの場合について言えることだが、
+複数のフィールドにまたがるキーを数値として使用しても、期待する結果は得られないものである。
+</p>
+<p>もう一つ注意していただきたい。
+上の例では、&lsquo;<samp>n</samp>&rsquo; 修飾子を最初のキーのフィールド終端指定に付けている。
+これは、&lsquo;<samp>-k 2n,2</samp>&rsquo; とか &lsquo;<samp>-k 2n,2n</samp>&rsquo;
+とか指定しても、同じことだったろう。&lsquo;<samp>b</samp>&rsquo; を除くすべての修飾子は、
+キー指定のフィールド開始側に付けるか、フィールド終端側に付けるか、
+あるいは、その両方に付けるかにかかわりなく、
+付けられた「キー・フィールド全体」に適用されるのである。
+</p>
+</li><li>
+パスワードファイルを 5 番目のフィールドでソートする。このとき、
+先頭の空白は無視する。5 番目のフィールドが同じ値になる行については、
+3 番目のフィールドのユーザ ID 番号でソートする。
+フィールドの区切りは、&lsquo;<samp>:</samp>&rsquo; という文字である。
+
+<table><tr><td>&nbsp;</td><td><pre class="example">sort -t : -k 5b,5 -k 3,3n /etc/passwd
+sort -t : -n -k 5b,5 -k 3,3 /etc/passwd
+sort -t : -b -k 5,5 -k 3,3n /etc/passwd
+</pre></td></tr></table>
+
+<p>この三つのコマンドは同じ働きをする。
+1 番目のコマンドは、最初のキーの開始位置では先行する空白を無視し、
+二番目のキーを数値としてソートするように指定している。他の二つのコマンドは、
+グローバル・オプションは修飾子がないソート・キーによって継承されるという特性を利用している。
+この場合、継承がうまく働くのは、&lsquo;<samp>-k 5b,5b</samp>&rsquo; と
+&lsquo;<samp>-k 5b,5</samp>&rsquo; が同じことだからだ (訳注: 「&lsquo;<samp>-b</samp>&rsquo; オプションは &hellip;
+グローバル・オプションから継承した場合は、(開始位置と終端位置の)
+両方に付いていることになる」ので、3 番目のコマンドは、&lsquo;<samp>-k 5b,5b</samp>&rsquo;
+と指定するのと事実上等しい)。両者が同じになるのは、&lsquo;<samp>.<var>c</var></samp>&rsquo;
+という文字位置を欠いたフィールド終端の指定では、
+先頭の空白をスキップしてもしなくても、終端位置は変わらないからである。
+</p>
+</li><li>
+一群のログファイルをソートする。主キーとして IPv4 アドレスを使用し、
+副キーとしてタイムスタンプを使用する。二つの行の主キーと副キーが全く同じ場合は、
+入力されたときと同じ順番で、その行を出力する。ログファイルは、次のような行からなっている。
+
+<table><tr><td>&nbsp;</td><td><pre class="example">4.150.156.3 - - [01/Apr/2004:06:31:51 +0000] message 1
+211.24.3.231 - - [24/Apr/2004:20:17:39 +0000] message 2
+</pre></td></tr></table>
+
+<p>フィールドは、ただ 1 個の空白で区切られている。
+IPv4 アドレスのソートは辞書順 (lexicographically) で行う。
+たとえば、212.61.52.2 は 212.129.233.201 の前に来る。
+61 は 129 よりも小さいからだ。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">sort -s -t ' ' -k 4.9n -k 4.5M -k 4.2n -k 4.14,4.21 file*.log |
+sort -s -t '.' -k 1,1n -k 2,2n -k 3,3n -k 4,4n
+</pre></td></tr></table>
+
+<p>この例の場合は、<code>sort</code> を一回起動するだけでは、ことがすまない。
+日付が空白 1 個のすぐ後に置かれているだけなのに対して、
+IPv4 の構成要素は &lsquo;<samp>.</samp>&rsquo; で区切られているからである。そこで、作業を分割し、
+<code>sort</code> を 2 回起動している。1 回目はタイムスタンプでソートし、
+2 回目は IPv4 アドレスでソートするわけだ。タイムスタンプは、
+年、月、日のフィールドの順番でソートし、最後に、時・分・秒のフィールドでソートしているが、
+それは &lsquo;<samp>-k</samp>&rsquo; オプションを使って、各フィールドを分離することで実現している。
+時・分・秒を除いて、各キー・フィールドの終端を指定する必要はない。
+&lsquo;<samp>n</samp>&rsquo; や &lsquo;<samp>M</samp>&rsquo; 修飾子は、フィールドの先頭にある数値や月名の短縮形に基づいてソートを行うが、
+そうしたものは、フィールドの境界を越えられないからである。IPv4 アドレスのソートは、
+辞書順で行っている。なお、二回目のソートで &lsquo;<samp>-s</samp>&rsquo; を使っているのは、
+主キーで一ヶ所にまとめられる行が、副キーによってソートされているようにするためである。
+それに対して、一回目のソートで  &lsquo;<samp>-s</samp>&rsquo; を使っているのは、
+二つのソートの組み合わせ全体を入力順尊重 (stable) にするためだ。
+</p>
+</li><li>
+アルファベットの大文字小文字の違いを無視してソートし、その順番で
+tags ファイルを作成する。
+
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">find src -type f -print0 | sort -z -f | xargs -0 etags --append
+</pre></td></tr></table>
+
+<p>この例では、&lsquo;<samp>-print0</samp>&rsquo;, &lsquo;<samp>-z</samp>&rsquo;, &lsquo;<samp>-0</samp>&rsquo; といったオプションを使っている。
+そのため、空白などの特殊文字を含んでいるファイル名が、
+ソート操作によって分断されることがない。
+</p>
+
+</li><li>
+慣用句 DSU (Decorate Sort Undecorate) の手法 (訳注: 指標を付けて、
+ソートして、指標を取る) を採用して、短いものから長いものへと、行を並べる。
+
+<table><tr><td>&nbsp;</td><td><pre class="example">awk '{print length, $0}' /etc/passwd | sort -n | cut -f2- -d' '
+</pre></td></tr></table>
+
+<p>一般に、あるデータが <code>sort</code> コマンドでは直接ソートできないとか、
+効率が悪いというとき、そうしたデータをソートするのに、この手法が役に立つ。
+</p>
+</li><li>
+ディレクトリをランダムな順番でで並べる。ただし、各ディレクトリ内のファイルについては、
+その順番を維持する。一例を挙げると、この方法で演奏リストを作成すれば、
+アルバムはシャッフルするけれど、
+各アルバム内の曲は通常のソート順で演奏するといったことが可能になる。
+
+<table><tr><td>&nbsp;</td><td><pre class="example">ls */* | sort -t / -k 1,1R -k 2,2
+</pre></td></tr></table>
+
+</li></ul>
+
+
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_41.html#Operating-on-sorted-files" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_43.html#shuf-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_41.html#Operating-on-sorted-files" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_41.html#Operating-on-sorted-files" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_54.html#Operating-on-fields" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

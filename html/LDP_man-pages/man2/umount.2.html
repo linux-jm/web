@@ -1,0 +1,179 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UMOUNT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>UMOUNT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/umount.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+umount, umount2 - ファイルシステムをアンマウントする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/mount.h">sys/mount.h</A>&gt;</B>
+
+<B>int umount(const char *</B><I>target</I><B>);</B>
+
+<B>int umount2(const char *</B><I>target</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+
+
+<B>umount</B>()  と <B>umount2</B>()  は <I>target</I> にマウントされている (最上位の) ファイルシステムを外す。
+<P>
+
+ファイルシステムのアンマウントを行うには、 適切な権限 (Linux では <B>CAP_SYS_ADMIN</B> ケーパビリティ) が必要である。
+<P>
+
+Linux 2.1.116 から、 <B>umount2</B>()  システムコールが追加された。これは <B>umount</B>()  と同様に
+<I>target</I> をアンマウントするが、 <I>flags</I> が追加されており、操作時の振る舞いを制御できる。
+<DL COMPACT>
+<DT><B>MNT_FORCE</B> (2.1.116 以降)<DD>
+Ask the filesystem to abort pending requests before attempting the unmount.
+This may allow the unmount to complete without waiting for an inaccessible
+server, but could cause data loss.  If, after aborting requests, some
+processes still have active references to the filesystem, the unmount will
+still fail.  As at Linux 4.12, <B>MNT_FORCE</B> is supported only on the
+following filesystems: 9p (since Linux 2.6.16), ceph (since Linux 2.6.34),
+cifs (since Linux 2.6.12), fuse (since Linux 2.6.16), lustre (since Linux
+3.11), and NFS (since Linux 2.1.116).
+<DT><B>MNT_DETACH</B> (2.4.11 以降)<DD>
+Perform a lazy unmount: make the mount point unavailable for new accesses,
+immediately disconnect the filesystem and all filesystems mounted below it
+from each other and from the mount table, and actually perform the unmount
+when the mount point ceases to be busy.
+<DT><B>MNT_EXPIRE</B> (Linux 2.6.8 以降)<DD>
+マウントポイントに期限切れの印をつける。 マウントポイントが現在使用中でない場合、このフラグをつけて <B>umount2</B>()  を初めて呼び出すと
+<B>EAGAIN</B> エラーで失敗するが、マウントポイントには期限切れ (expire)  の印がつけられる。
+そのマウントポイントはいずれかのプロセスがアクセスしない限り 期限切れの印がついたままとなる。 もう一度 <B>MNT_EXPIRE</B> をつけて
+<B>umount2</B>()  を呼び出すと、期限切れの印のついたマウントポイントが アンマウントされる。 このフラグを <B>MNT_FORCE</B> もしくは
+<B>MNT_DETACH</B> と同時に指定することはできない。
+<DT><B>UMOUNT_NOFOLLOW</B> (Linux 2.6.34 以降)<DD>
+
+<I>target</I> がシンボリックリンクの場合に、シンボリックリンクの展開を行わない。
+このフラグを使うと、 <I>root</I> に set-user-ID されたプログラムにおいて、
+非特権ユーザーがファイルシステムのアンマウントをできてしまうという
+セキュリティ問題を回避することができる。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、0 が返される。 失敗した場合、 -1 が返され、 <I>errno</I> に適切な値がセットされる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+以下に示すエラーは、ファイルシステムに依存しないものである。 それぞれのファイルシステムタイプには固有のエラーが存在する場合があり、
+独自の動作をすることもある。詳しくは Linux カーネルのソースを見て欲しい。
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+<B>MNT_EXPIRE</B> を指定した <B>umount2</B>()  の呼び出しで、正常に未使用のファイルシステムに期限切れの印を つけることができた。
+<DT><B>EBUSY</B><DD>
+使用中 (busy) のため、 <I>target</I> をアンマウントできなかった。
+<DT><B>EFAULT</B><DD>
+<I>target</I> がユーザーアドレス空間の外を指している。
+<DT><B>EINVAL</B><DD>
+<I>target</I> がマウントポイントではない。
+<DT><B>EINVAL</B><DD>
+<B>MNT_EXPIRE</B> が指定された <B>umount2</B>() で、 <B>MNT_DETACH</B> か <B>MNT_FORCE</B> が同時に指定された。
+<DT><B>EINVAL</B> (Linux 2.6.34 以降)<DD>
+<I>flags</I> に無効なフラグが指定されて <B>umount2</B>() が呼び出された。
+<DT><B>ENAMETOOLONG</B><DD>
+パス名の長さが <B>MAXPATHLEN</B> より長かった。
+<DT><B>ENOENT</B><DD>
+パス名が空である。もしくは指定されたパスが存在しない。
+<DT><B>ENOMEM</B><DD>
+カーネルがファイル名やデータをコピーするための空きページを確保できなかった。
+<DT><B>EPERM</B><DD>
+呼び出し元が必要な権限を持っていない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+<B>MNT_DETACH</B> と <B>MNT_EXPIRE</B> はバージョン 2.11 以降の glibc で利用できる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+この関数は Linux 固有の関数であり、移植を考慮したプログラムでは 使用すべきでない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>umount() and shared mount points</H3>
+
+Shared mount points cause any mount activity on a mount point, including
+<B>umount</B>()  operations, to be forwarded to every shared mount point in the
+peer group and every slave mount of that peer group.  This means that
+<B>umount</B>()  of any peer in a set of shared mounts will cause all of its
+peers to be unmounted and all of their slaves to be unmounted as well.
+<P>
+
+This propagation of unmount activity can be particularly surprising on
+systems where every mount point is shared by default.  On such systems,
+recursively bind mounting the root directory of the filesystem onto a
+subdirectory and then later unmounting that subdirectory with <B>MNT_DETACH</B>
+will cause every mount in the mount namespace to be lazily unmounted.
+<P>
+
+To ensure <B>umount</B>()  does not propagate in this fashion, the mount point
+may be remounted using a <B><A HREF="../man2/mount.2.html">mount</A></B>(2)  call with a <I>mount_flags</I> argument
+that includes both <B>MS_REC</B> and <B>MS_PRIVATE</B> prior to <B>umount</B>()  being
+called.
+<A NAME="lbAK">&nbsp;</A>
+<H3>Historical details</H3>
+
+元々の <B>umount</B>()  関数は <I>umount(device)</I> の形で呼び出され、 ブロックデバイス以外を指定して呼び出すと
+<B>ENOTBLK</B> を返した。 Linux 0.98p4 で、無名デバイス (anonymous device) に対応するために
+<I>umount(dir)</I> の形での呼び出しが加えられた。 Linux 2.3.99-pre7 で、<I>umount(device)</I> は削除され、
+<I>umount(dir)</I> だけが残された (一つのデバイスを複数の位置にマウント出来るようになったため、
+デバイスを指定しただけでは不十分だからである)。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2), <B>mount_namespaces</B>(7), <B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7), <B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8),
+<B><A HREF="../../util-linux/man8/umount.8.html">umount</A></B>(8)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">umount() and shared mount points</A><DD>
+<DT><A HREF="#lbAK">Historical details</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

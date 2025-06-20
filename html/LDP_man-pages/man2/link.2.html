@@ -1,0 +1,286 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LINK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LINK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/link.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+link, linkat - ファイルの新しい名前を作成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int link(const char *</B><I>oldpath</I><B>, const char *</B><I>newpath</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;           </B>/* AT_* 定数の定義 */
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int linkat(int </B><I>olddirfd</I><B>, const char *</B><I>oldpath</I><B>,</B>
+<B>           int </B><I>newdirfd</I><B>, const char *</B><I>newpath</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>linkat</B>():
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>glibc 2.10 以降:<DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>glibc 2.10 より前:<DD>
+_ATFILE_SOURCE
+</DL>
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>link</B>()  は存在するファイルへの新しいリンク (link)  (ハードリンク (hard link) ともいう) を作成する。
+<P>
+
+<I>newpath</I> が存在する場合には、上書きは<I>されない</I>。
+<P>
+
+この新しい名前は全ての操作において古い名前と完全に同じように使用される; 両方の名前は同じファイルを参照しており (それで同じ許可
+(permission) や所有者 (ownership) となるので)、 どちらの名前が本来のものであるか判別できない。
+<A NAME="lbAE">&nbsp;</A>
+<H3>linkat()</H3>
+
+<B>linkat</B>() システムコールは <B>link</B>() と全く同様に動作するが、以下で説明する点が異なる。
+<P>
+
+<I>oldpath</I> で指定されたパス名が相対パスの場合、このパス名はファイルディスクリプター <I>olddirfd</I>
+が参照するディレクトリに対する相対パスと解釈される (<B><A HREF="../man2/link.2.html">link</A></B>(2)
+に相対パス名を渡した場合のように、呼び出したプロセスのカレントワーキングディレクトリに対する相対パスではない)。
+<P>
+
+<I>oldpath</I> で指定されたパス名が相対パスで、 <I>olddirfd</I> が特別な値 <B>AT_FDCWD</B> の場合、 (<B><A HREF="../man2/link.2.html">link</A></B>(2)
+と同様に) <I>oldpath</I> は呼び出したプロセスのカレントワーキングディレクトリに対する相対パスと解釈される。
+<P>
+
+<I>oldpath</I> で指定されたパス名が絶対パスの場合、 <I>olddirfd</I> は無視される。
+<P>
+
+<I>newpath</I> の解釈は <I>oldpath</I> と同じである。 相対パスのパス名がファイルディスクリプター <I>newdirfd</I>
+が参照するディレクトリと解釈される点だけが異なる。
+<P>
+
+以下の値のビット単位の論理和を <I>flags</I> に指定できる。
+<DL COMPACT>
+<DT><B>AT_EMPTY_PATH</B> (Linux 2.6.39 以降)<DD>
+
+
+<I>oldpath</I> が空文字列の場合、 <I>olddirfd</I> が参照するファイルへのリンクを作成する (<I>olddirfd</I> は
+<B><A HREF="../man2/open.2.html">open</A></B>(2) の <B>O_PATH</B> フラグを使って取得する)。 この場合、 <I>olddirfd</I>
+はディレクトリ以外の任意の型のファイルを参照することができる。 一般的には、 ファイルのリンクカウントが 0 の場合は、この操作は成功しない (ただし、
+<B>O_TMPFILE</B> が指定され <B>O_EXCL</B> を指定せずに作成されたファイルは例外である)。 このフラグを使用するためには、 呼び出し元は
+<B>CAP_DAC_READ_SEARCH</B> ケーパビリティを持っていなければならない。 このフラグは Linux 固有で、 この定義を得るには
+<B>_GNU_SOURCE</B> を定義すること。
+<DT><B>AT_SYMLINK_FOLLOW</B> (Linux 2.6.18 以降)<DD>
+<B>linkat</B>() は (<B>link</B>() 同様) デフォルトでは <I>oldpath</I> がシンボリックリンクの場合リンクの展開を行わない。
+フラグ <B>AT_SYMLINK_FOLLOW</B> を <I>flags</I> に指定することができ、指定した場合 <I>oldpath</I>
+がシンボリックリンクの場合リンクの展開が行われる。 procfs がマウントされている場合、これは <B>AT_EMPTY_PATH</B>
+の代替として以下のように使うことができる。
+<DT><DD>
+
+
+linkat(AT_FDCWD, &quot;/proc/self/fd/&lt;fd&gt;&quot;, newdirfd,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;newname,&nbsp;AT_SYMLINK_FOLLOW);
+
+
+</DL>
+<P>
+
+カーネル 2.6.18 より前では、 <I>flags</I> 引数は未使用で、 0 を指定しなければならなかった。
+<P>
+
+<B>linkat</B>() の必要性についての説明については <B><A HREF="../man2/openat.2.html">openat</A></B>(2) を参照。
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+<I>newpath</I> を含んでいるディレクトリへの書き込みが許されていないか、 <I>oldpath</I> または <I>newpath</I>
+へのディレクトリのどれかに検索許可がない (<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)  を参照)。
+<DT><B>EDQUOT</B><DD>
+ディスクブロックか inode がそのファイルシステムのユーザークォータに達していた。
+<DT><B>EEXIST</B><DD>
+<I>newpath</I> が既に存在する。
+<DT><B>EFAULT</B><DD>
+<I>oldpath</I> や <I>newpath</I> がアクセス可能なアドレス空間の外を指している。
+<DT><B>EIO</B><DD>
+I/O エラーが発生した。
+<DT><B>ELOOP</B><DD>
+<I>oldpath</I> または <I>newpath</I> を解決する際に遭遇したシンボリックリンクが多過ぎる。
+<DT><B>EMLINK</B><DD>
+The file referred to by <I>oldpath</I> already has the maximum number of links
+to it.  For example, on an <B>ext4</B>(5)  filesystem that does not employ the
+<I>dir_index</I> feature, the limit on the number of hard links to a file is
+65,000; on <B>btrfs</B>(5), the limit is 65,535 links.
+<DT><B>ENAMETOOLONG</B><DD>
+<I>oldpath</I> または <I>newpath</I> が長過ぎる。
+<DT><B>ENOENT</B><DD>
+<I>oldpath</I> または <I>newpath</I> のディレクトリ部分が存在しないか、 壊れた(dangling)シンボリックリンクである。
+<DT><B>ENOMEM</B><DD>
+十分なカーネルメモリーがない。
+<DT><B>ENOSPC</B><DD>
+そのファイルを含んでいるデバイスに新しいディレクトリエントリーを 作成するための空きがない。
+<DT><B>ENOTDIR</B><DD>
+<I>oldpath</I> または <I>newpath</I> のディレクトリ部分が、実際には、ディレクトリでない。
+<DT><B>EPERM</B><DD>
+<I>oldpath</I> がディレクトリである。
+<DT><B>EPERM</B><DD>
+<I>oldpath</I> と <I>newpath</I> を含んでいるファイルシステムがハードリンクをサポートしていない。
+<DT><B>EPERM</B> (Linux 3.6 以降)<DD>
+呼び出し元にこのファイルへのハードリンクを作成する許可がなかった (<B><A HREF="../man5/proc.5.html">proc</A></B>(5) の
+<I>/proc/sys/fs/protected_hardlinks</I> の説明を参照)。
+<DT><B>EPERM</B><DD>
+<I>oldpath</I> is marked immutable or append-only.  (See <B>ioctl_iflags</B>(2).)
+<DT><B>EROFS</B><DD>
+ファイルが読み込み専用のファイルシステムに存在する。
+<DT><B>EXDEV</B><DD>
+<I>oldpath</I> と <I>newpath</I> が同じマウントされたファイルシステムに存在しない。 (Linux は 1
+つのファイルシステムを複数のマウント位置に マウントすることを許可している。 しかし <B>link</B>()  は、たとえ同じファイルシステムであっても、
+別々のマウント位置を跨いでは動作しない。)
+</DL>
+<P>
+
+<B>linkat</B>() では以下のエラーも発生する。
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>olddirfd</I> か <I>newdirfd</I> が有効なファイルディスクリプターでない。
+<DT><B>EINVAL</B><DD>
+無効なフラグ値が <I>flags</I> に指定された。
+<DT><B>ENOENT</B><DD>
+<B>AT_EMPTY_PATH</B> が <I>flags</I> に指定されたが、呼び出し元が <B>CAP_DAC_READ_SEARCH</B>
+ケーパビリティを持っていなかった。
+<DT><B>ENOENT</B><DD>
+以下の呼び出しで作成されたファイルディスクリプターに対応する <I>/proc/self/fd/NN</I> ファイルに対してリンクを行おおうとした。
+<DT><DD>
+
+
+open(path, O_TMPFILE | O_EXCL, mode);
+
+
+<DT><DD>
+<B><A HREF="../man2/open.2.html">open</A></B>(2) 参照。
+<DT><B>ENOENT</B><DD>
+削除済みのファイルに対応する <I>/proc/self/fd/NN</I> ファイルに対してリンクを行おおうとした。
+<DT><B>ENOENT</B><DD>
+<I>oldpath</I> が相対パス名で、 <I>olddirfd</I> が削除されたディレクトリを参照している。 または、 <I>newpath</I>
+が相対パス名で、 <I>newdirfd</I> が削除されたディレクトリを参照している。
+<DT><B>ENOTDIR</B><DD>
+<I>oldpath</I> が相対パスで、 <I>olddirfd</I> がディレクトリ以外のファイルを参照している。または <I>newpath</I> と
+<I>newdirfd</I> に関して同じ状況である。
+<DT><B>EPERM</B><DD>
+<I>flags</I> に <B>AT_EMPTY_PATH</B> が指定され、 <I>oldpath</I> が空文字列で、 <I>olddirfd</I>
+がディレクトリを参照している。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>linkat</B>()  はカーネル 2.6.16 で Linux に追加された。 ライブラリによるサポートはバージョン 2.4 で glibc
+に追加された。
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+<B>link</B>(): SVr4, 4.3BSD, POSIX.1-2001 (但し「注意」を参照), POSIX.1-2008.
+<P>
+
+<B>linkat</B>(): POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<B>link</B>()  でファイルシステムを超えてハードリンクを作成することはできない。 このような場合は <B><A HREF="../man2/symlink.2.html">symlink</A></B>(2)  を使用すること。
+<P>
+
+
+
+
+
+
+POSIX.1-2001 では、 <I>oldpath</I> がシンボリックリンクである場合、 <B>link</B>()  は <I>oldpath</I>
+の参照を解決すべきであると記述されている。 しかし、カーネル 2.0 以降の Linux ではそのようになっていない。 <I>oldpath</I>
+がシンボリックリンクである場合、 <I>newpath</I> は同じシンボリックリンクファイルへの (ハード) リンクとして作成される (つまり
+<I>newpath</I> は <I>oldpath</I> が参照していた同じファイルへのシンボリックリンクになる)。 他のいくつかの実装でも Linux
+と同じように動作する。 POSIX.1-2008 では <B>link</B>()  の仕様が変更され、 <I>oldpath</I>
+がシンボリックリンクの場合にシンボリックリンクの参照を 解決するかどうかは実装依存となった。
+リンク作成時のシンボリックリンクの扱いについての詳細な制御を行う場合には <B>linkat</B>() を使用すること。
+<A NAME="lbAK">&nbsp;</A>
+<H3>glibc での注意</H3>
+
+<B>linkat</B>() が利用できない古いカーネルでは、 <B>AT_SYMLINK_FOLLOW</B> が指定されていない場合、 glibc ラッパー関数は
+<B>link</B>() を使用するモードにフォールバックする。 <I>oldpath</I> と <I>newpath</I> が相対パスの場合、 glibc は
+<I>olddirfd</I> と <I>newdirfd</I> 引数に対応する <I>/proc/self/fd</I>
+のシンボリックリンクに基づいてそれぞれパス名を構成する。
+<A NAME="lbAL">&nbsp;</A>
+<H2>バグ</H2>
+
+NFS ファイルシステムでは、NFS サーバーがリンクを作成した後に、 それを伝える前に死んだ場合には返り値が不正な場合がある。
+リンクが作成できたかどうか見つけるためには <B><A HREF="../man2/stat.2.html">stat</A></B>(2)  を使用すること。
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/ln.1.html">ln</A></B>(1), <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man2/rename.2.html">rename</A></B>(2), <B><A HREF="../man2/stat.2.html">stat</A></B>(2), <B><A HREF="../man2/symlink.2.html">symlink</A></B>(2), <B><A HREF="../man2/unlink.2.html">unlink</A></B>(2),
+<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7), <B><A HREF="../man7/symlink.7.html">symlink</A></B>(7)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">linkat()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAK">glibc での注意</A><DD>
+</DL>
+<DT><A HREF="#lbAL">バグ</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

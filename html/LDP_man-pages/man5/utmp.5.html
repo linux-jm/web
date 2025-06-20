@@ -1,0 +1,276 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UTMP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>UTMP</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man5/utmp.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+utmp, wtmp - ログイン記録
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>utmp</I> ファイルを見ることで、現在誰がシステムを使っているかという情報 が得られる。ただすべてのプログラムが utmp ファイルを
+更新しているわけではないので、実際にはそれ以上のユーザーが システムを使っている可能性がある。
+<P>
+
+<B>警告:</B> (愚かにも) 多くのシステムプログラムがその整合性に依存しているので、 <I>utmp</I> ファイルは &quot;other&quot;
+に分類されるユーザーに対して 書き込み可能にしてはならない。 ファイルの所有者とグループオーナー以外のユーザーに対して <I>utmp</I>
+ファイルを書き込み可能な状態にしておくと、 システムのログファイルを偽造されたり、システムファイルの 改ざんを受けるといったリスクを犯すことになる。
+<P>
+
+このファイルは <I>utmp</I> 構造体の繰り返しで構成される。 この構造体は <I>&lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;</I> で以下のように定義されている
+(ここに記述してあるのは幾つかの大まかな定義のみで、 詳細は libc のバージョンにより変わることに注意が必要である)。
+<P>
+
+
+
+/* Values for ut_type field, below */
+<P>
+#define EMPTY         0 /* Record does not contain valid info
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(formerly&nbsp;known&nbsp;as&nbsp;UT_UNKNOWN&nbsp;on&nbsp;Linux)&nbsp;*/
+#define RUN_LVL       1 /* Change in system run-level (see
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>init</B>(1))&nbsp;*/
+#define BOOT_TIME     2 /* Time of system boot (in <I>ut_tv</I>) */
+#define NEW_TIME      3 /* Time after system clock change
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(in&nbsp;<I>ut_tv</I>)&nbsp;*/
+#define OLD_TIME      4 /* Time before system clock change
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(in&nbsp;<I>ut_tv</I>)&nbsp;*/
+#define INIT_PROCESS  5 /* Process spawned by <B>init</B>(1) */
+#define LOGIN_PROCESS 6 /* Session leader process for user login */
+#define USER_PROCESS  7 /* Normal process */
+#define DEAD_PROCESS  8 /* Terminated process */
+#define ACCOUNTING    9 /* Not implemented */
+<P>
+#define UT_LINESIZE      32
+#define UT_NAMESIZE      32
+#define UT_HOSTSIZE     256
+<P>
+struct exit_status {              /* Type for ut_exit, below */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;e_termination;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Process&nbsp;termination&nbsp;status&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;e_exit;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Process&nbsp;exit&nbsp;status&nbsp;*/
+};
+<P>
+struct utmp {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;&nbsp;&nbsp;ut_type;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Type&nbsp;of&nbsp;record&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;&nbsp;&nbsp;ut_pid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;PID&nbsp;of&nbsp;login&nbsp;process&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;ut_line[UT_LINESIZE];&nbsp;/*&nbsp;Device&nbsp;name&nbsp;of&nbsp;tty&nbsp;-&nbsp;&quot;/dev/&quot;&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;ut_id[4];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Terminal&nbsp;name&nbsp;suffix,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;<A HREF="../../SysVinit/man5/inittab.5.html">inittab</A>(5)&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;ut_user[UT_NAMESIZE];&nbsp;/*&nbsp;Username&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;ut_host[UT_HOSTSIZE];&nbsp;/*&nbsp;Hostname&nbsp;for&nbsp;remote&nbsp;login,&nbsp;or
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kernel&nbsp;version&nbsp;for&nbsp;run-level
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;messages&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;&nbsp;exit_status&nbsp;ut_exit;&nbsp;&nbsp;/*&nbsp;Exit&nbsp;status&nbsp;of&nbsp;a&nbsp;process
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;marked&nbsp;as&nbsp;DEAD_PROCESS;&nbsp;not
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;used&nbsp;by&nbsp;Linux&nbsp;init(1)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ut_session&nbsp;と&nbsp;ut_tv&nbsp;フィールドは、32ビットでコンパイルされた場合と
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;64ビットでコンパイルされた場合で同じサイズでなければならない。
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;こうすることで、32ビットと64ビットのアプリケーションで、
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;データファイルと共有メモリーを共有することができるようになる。&nbsp;*/
+#if __WORDSIZE == 64 &amp;&amp; defined __WORDSIZE_COMPAT32
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int32_t&nbsp;ut_session;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Session&nbsp;ID&nbsp;(<B><A HREF="../man2/getsid.2.html">getsid</A></B>(2)),
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;used&nbsp;for&nbsp;windowing&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int32_t&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Seconds&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int32_t&nbsp;tv_usec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Microseconds&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;ut_tv;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Time&nbsp;entry&nbsp;was&nbsp;made&nbsp;*/
+#else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ut_session;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Session&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;timeval&nbsp;ut_tv;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Time&nbsp;entry&nbsp;was&nbsp;made&nbsp;*/
+#endif
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int32_t&nbsp;ut_addr_v6[4];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Internet&nbsp;address&nbsp;of&nbsp;remote
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;host;&nbsp;IPv4&nbsp;address&nbsp;uses
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;just&nbsp;ut_addr_v6[0]&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;__unused[20];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Reserved&nbsp;for&nbsp;future&nbsp;use&nbsp;*/
+};
+<P>
+/* Backward compatibility hacks */
+#define ut_name ut_user
+#ifndef _NO_UT_TIME
+#define ut_time ut_tv.tv_sec
+#endif
+#define ut_xtime ut_tv.tv_sec
+#define ut_addr ut_addr_v6[0]
+
+
+<P>
+
+この構造体からユーザーの使っている端末のスペシャルファイル名、 ユーザーのログイン名、 (<B><A HREF="../man2/time.2.html">time</A></B>(2)
+形式での)ログイン時刻がわかる。文字列フィールドは、 フィールドの長さより文字列が短い場合には、ヌルバイト ('\0')
+によって終端される。
+<P>
+
+最初のエントリーは <B>init</B>(1)  コマンドが <B><A HREF="../../SysVinit/man5/inittab.5.html">inittab</A></B>(5)  を処理することで作られる。 あるエントリーを処理する前に、
+<B>init</B>(1)  は <I>ut_type</I> を <B>DEAD_PROCESS</B> に初期化する。 レコードの <I>ut_type</I> が
+<B>DEAD_PROCESS</B> と <B>RUN_LVL</B> のいずれでもなく、 かつ PID が <I>ut_pid</I>
+であるプロセスがいない場合は、<I>ut_user</I>, <I>ut_host</I>, <I>ut_time</I> をヌルバイトでクリアして初期化を行う。 必要な
+<I>ut_id</I> を持つ空のレコードを見つけられなかった場合、 <B>init</B>(1)  は新しいレコードを作る。inittab から <I>ut_id</I>
+を設定し、 <I>ut_pid</I> および <I>ut_time</I> を現在値に、 <I>ut_type</I> を <B>INIT_PROCESS</B> に設定する。
+<P>
+
+<B>mingetty</B>(8)  (または <B><A HREF="../../util-linux/man8/agetty.8.html">agetty</A></B>(8))  は pid でエントリーを特定し、 <I>ut_type</I> を
+<B>LOGIN_PROCESS</B> に変更し、 <I>ut_time</I> を更新し、<I>ut_line</I>を設定した後、接続が確立されるのを待つ。
+<B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1)  はユーザー認証が終了すると、 <I>ut_type</I> を <B>USER_PROCESS</B> に変更し、 <I>ut_time</I>
+を更新し、<I>ut_host</I> と <I>ut_addr</I>を設定する。 <B>mingetty</B>(8)  (または <B><A HREF="../../util-linux/man8/agetty.8.html">agetty</A></B>(8))  と
+<B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1)  により異なるが、 <I>ut_pid</I> の代わりに <I>ut_line</I> を使ってレコードの特定が行われることもある
+(<I>ut_pid</I> を使う方が望ましい) 。
+<P>
+
+<B>init</B>(1)  はプロセスの終了を検出した場合、 <I>ut_pid</I> をキーとして utmp のエントリーを特定し、 <I>ut_type</I> を
+<B>DEAD_PROCESS</B> に設定し、 <I>ut_user</I>, <I>ut_host</I>, <I>ut_time</I> をヌルバイトでクリアする。
+<P>
+
+<B>xterm</B>(1)  コマンドや他の端末エミュレータは 直接 <B>USER_PROCESS</B> のレコードを作り、 端末名のサフィックス文字列
+(<I>/dev/[pt]ty</I> に続く文字列)  を使って <I>ut_id</I> の値を生成する。 この id を持つエントリーが
+<B>DEAD_PROCESS</B> であった場合には再利用し、 それ以外の場合には新しいエントリーが作られる。 可能な場合にはプロセス終了時に
+<B>DEAD_PROCESS</B> と設定し、 さらに <I>ut_line</I>, <I>ut_time</I>, <I>ut_user</I>, <I>ut_host</I>
+をヌルバイトでクリアすることが奨励されている。
+<P>
+
+<B><A HREF="../../netkit/man8/telnetd.8.html">telnetd</A></B>(8)  は <B>LOGIN_PROCESS</B> を設定するだけでよく、 残りの処理は通常通り <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1)
+に任せればよい。 telnet のセッションが終了した後、前述のように <B><A HREF="../../netkit/man8/telnetd.8.html">telnetd</A></B>(8)  が utmp のエントリーを初期化する。
+<P>
+
+<I>wtmp</I> ファイルには、すべてのログインとログアウトが記録される。 そのフォーマットは、ログアウト済の端末でユーザー名がヌルとなること以外は
+<I>utmp</I> とまったく同じである。 ユーザー名が <B>shutdown</B> もしくは <B>reboot</B> の端末名 <B>~</B> は、システムの停止
+(shutdown) または再起動 (reboot)  を意味する。またその端末名が <B>|</B> と <B>}</B> の対は <B><A HREF="../../0MultiFileIdx/man1/date.1.html">date</A></B>(1)
+コマンドで変更した新／旧のシステム時刻を記録している。 <I>wtmp</I> ファイルは <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1), <B>init</B>(1)
+やいくつかのバージョンの <B>getty</B>(8)  (<B>mingetty</B>(8)  または <B><A HREF="../../util-linux/man8/agetty.8.html">agetty</A></B>(8))  により管理されている。
+これらのプログラムはどれもファイルを新たに作成しないので、 ファイルを削除することで情報の記録 (record-keeping) を止めることができる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/var/run/utmp</I>
+<BR>
+
+<I>/var/log/wtmp</I>
+<A NAME="lbAF">&nbsp;</A>
+<H2>準拠</H2>
+
+<P>
+
+POSIX.1 では、 <I>utmp</I> 構造体ではなく、 <I>utmpx</I> 構造体を規定している。 <I>utmpx</I>
+構造体で規定されているのは、フィールド <I>ut_type</I>, <I>ut_pid</I>, <I>ut_line</I>, <I>ut_id</I>, <I>ut_user</I>,
+<I>ut_tv</I> である。 POSIX.1 では、フィールド <I>ut_line</I> と <I>ut_user</I> の長さは規定されていない。
+<P>
+
+Linux では、 <I>utmpx</I> 構造体の定義は <I>utmp</I> 構造体と同じである。
+<A NAME="lbAG">&nbsp;</A>
+<H3>過去のシステムとの比較</H3>
+
+Linux での utmp のエントリーは v7/BSD や System V のいずれにも準拠しておらず、 その両方が混在したものである。
+<P>
+
+v7/BSD ではより少しの項目しかない; もっとも重要なことは、<I>ut_type</I> が無いことである。 そのため v7/BSD 系のプログラムでは
+(たとえば) 死んだ状態のエントリーや ログイン状態のエントリーまで表示されてしまうことになった。
+さらにセッション用のスロットを割り当てるための設定ファイルがない。 BSD に設定ファイルがあるのは <I>ut_id</I> がないからである。
+<P>
+
+Linux (System V 系)では、設定ファイルを必要とせず セッション用のスロットを割り当てるので、一旦設定 されてしまうとレコードの
+<I>ut_id</I> は決して変更されない。 <I>ut_id</I> をクリアすると競合状態におちいり、 utmp
+のエントリーを壊したり、潜在的なセキュリティホールになる可能性がある。 上述のフィールドをヌルバイトで埋めてクリアしておくのは、 System V
+での取り決めでは必要とはされていないが、 BSD での取り決めを前提としていて、かつ utmp を更新しない多くのプログラムが
+動作するようにするためである。 Linux ではここまで記述してきたように、行内容の表示は BSD の慣例に従っている。
+<P>
+
+
+
+
+<B>UT_UNKNOWN</B> は Linux で作られたもののようである。 System V には <I>ut_host</I> も <I>ut_addr_v6</I>
+も存在しない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<P>
+
+ファイルを削除することで utmp への記録を止められる 他の様々なシステムとは違い、Linux では utmp ファイルを必ずおいて おく必要がある。
+<B><A HREF="../../0MultiFileIdx/man1/who.1.html">who</A></B>(1)  コマンドが機能しないようにしたい場合には、 utmp ファイルの全ユーザーに対する読み取り許可を設定しないようにする。
+<P>
+
+ファイルのフォーマットはマシンに依存するので、ファイルが作られた マシンもしくは同一アーキテクチャーのマシン上でのみ処理することを推奨する。
+<P>
+
+注意すべき点としては、 <I>biarch</I> なプラットフォーム、つまり 32ビットと 64ビットの両方の アプリケーションを実行できるシステム
+(x86-64, ppc64, s390x など) では、 <I>ut_tv</I> のサイズは 32ビットモードと 64ビットモードで同じである。
+<I>ut_session</I> と <I>ut_time</I> も、存在する場合には同様に同じサイズ である。これにより、32ビットアプリケーションと
+64ビットアプリケーション の間でデータファイルと共有メモリーを共有することが可能になる。 そのためには、 <I>ut_session</I> を
+<I>int32_t</I> 型に、 <I>ut_tv</I> を 2つの <I>int32_t</I> 型のフィールド <I>tv_sec</I>, <I>tv_usec</I>
+を持つ構造体に変更すればよい <I>ut_tv</I> は <I>struct timeval</I> と同じサイズとは限らないので、
+<P>
+
+
+
+gettimeofday((struct timeval *) &amp;ut.ut_tv, NULL);
+
+
+<P>
+
+のような呼び出しをするのではなく、 以下のように各フィールドを設定する方法が推奨される:
+<P>
+
+
+
+struct utmp ut;
+struct timeval tv;
+<P>
+gettimeofday(&amp;tv, NULL);
+ut.ut_tv.tv_sec = tv.tv_sec;
+ut.ut_tv.tv_usec = tv.tv_usec;
+
+
+
+
+
+
+
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>ac</B>(1), <B><A HREF="../../0MultiFileIdx/man1/date.1.html">date</A></B>(1), <B>init</B>(1), <B><A HREF="../../0MultiFileIdx/man1/last.1.html">last</A></B>(1), <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/logname.1.html">logname</A></B>(1),
+<B>lslogins</B>(1), <B><A HREF="../../0MultiFileIdx/man1/users.1.html">users</A></B>(1), <B>utmpdump</B>(1), <B><A HREF="../../0MultiFileIdx/man1/who.1.html">who</A></B>(1), <B><A HREF="../man3/getutent.3.html">getutent</A></B>(3),
+<B><A HREF="../man3/getutmp.3.html">getutmp</A></B>(3), <B><A HREF="../man3/login.3.html">login</A></B>(3), <B><A HREF="../man3/logout.3.html">logout</A></B>(3), <B><A HREF="../man3/logwtmp.3.html">logwtmp</A></B>(3), <B><A HREF="../man3/updwtmp.3.html">updwtmp</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">ファイル</A><DD>
+<DT><A HREF="#lbAF">準拠</A><DD>
+<DL>
+<DT><A HREF="#lbAG">過去のシステムとの比較</A><DD>
+</DL>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

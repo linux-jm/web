@@ -1,0 +1,240 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RAW</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RAW</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/raw.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+raw - Linux の IPv4 raw ソケット
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</B>
+<BR>
+
+<B>raw_socket = socket(AF_INET, SOCK_RAW, int </B><I>protocol</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+raw ソケットを使うと、新しい IPv4 プロトコルをユーザー空間で 実装できるようになる。 raw ソケットは、リンクレベルヘッダーを 含まない
+raw データグラムの送受信ができる。
+<P>
+
+IPv4 レイヤは、扱っているソケットで <B>IP_HDRINCL</B> ソケットオプションが有効になっていなければ、 パケットを送信するときに IP
+ヘッダーを生成する。 <B>IP_HDRINCL</B> オプションが有効になっているときは、パケットには IP ヘッダーが含まれていなければならない。
+受信時には、 IP ヘッダーは常にパケットに含まれている。
+<P>
+
+In order to create a raw socket, a process must have the <B>CAP_NET_RAW</B>
+capability in the user namespace that governs its network namespace.
+<P>
+
+All packets or errors matching the <I>protocol</I> number specified for the raw
+socket are passed to this socket.  For a list of the allowed protocols, see
+the IANA list of assigned protocol numbers at
+
+
+and
+<B><A HREF="../man3/getprotobyname.3.html">getprotobyname</A></B>(3).
+<P>
+
+<B>IPPROTO_RAW</B> のプロトコルは暗黙のうちに <B>IP_HDRINCL</B> を有効にするので、 渡されたヘッダーで指定された、あらゆる IP
+プロトコルを送信できる。 <B>IPPROTO_RAW</B> 経由でのあらゆる IP プロトコルの受信は、 raw ソケットを用いては行えない。
+<DL COMPACT><DT><DD>
+<TABLE BORDER>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2>IP ヘッダーフィールド。 <B>IP_HDRINCL</B> によって送信時に変更される。<BR></TD></TR>
+<TR VALIGN=top><TD>IP チェックサム</TD><TD>常に変更される<BR></TD></TR>
+<TR VALIGN=top><TD>ソースアドレス</TD><TD>元の値が 0 の時に変更される<BR></TD></TR>
+<TR VALIGN=top><TD>パケット ID</TD><TD>元の値が 0 の時に変更される<BR></TD></TR>
+<TR VALIGN=top><TD>全体の長さ</TD><TD>常に変更される<BR></TD></TR>
+</TABLE>
+
+</DL>
+
+<P>
+
+<P>
+
+<B>IP_HERINCL</B> が指定されていて、 IP ヘッダーに 0 でない送信先アドレスが記入されていた場合は、
+その送信先アドレスがパケットの経路を決めるのに用いられる。 <B>MSG_DONTROUTE</B> が指定されている時には、
+送信先アドレスはローカルなインターフェースを参照するものでなければならない。 さもないと、ルーティングテーブルの参照はいずれにせよ行われるが、
+ゲートウェイが必要な経路は無視される。
+<P>
+
+<B>IP_HDRINCL</B> がセットされていなければ、 raw ソケットの IP ヘッダーオプションを <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+を用いて設定することができる。詳細な情報は <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  を見よ。
+<P>
+
+Linux 2.2 以降では、 IP ヘッダーの全てのフィールドとオプションとを IP ソケットオプションによって設定できる。したがって raw
+ソケットが必要になるのは、新しいプロトコルを設計する場合か、 ユーザーインターフェースを持たないプロトコル (ICMP など) を扱う場合に 限られる。
+<P>
+
+パケットは、受信されるとまずプロトコルにバインドしている raw ソケットに渡され、 その後で他のプロトコルハンドラー
+(カーネルのプロトコルモジュールなど)  に渡される。
+<A NAME="lbAE">&nbsp;</A>
+<H3>アドレスのフォーマット</H3>
+
+
+For sending and receiving datagrams (<B><A HREF="../man2/sendto.2.html">sendto</A></B>(2), <B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2), and
+similar), raw sockets use the standard <I>sockaddr_in</I> address structure
+defined in <B><A HREF="../man7/ip.7.html">ip</A></B>(7).  The <I>sin_port</I> field could be used to specify the IP
+protocol number, but it is ignored for sending in Linux 2.2 and later, and
+should be always set to 0 (see BUGS).  For incoming packets, <I>sin_port</I> is
+set to zero.
+<A NAME="lbAF">&nbsp;</A>
+<H3>ソケットオプション</H3>
+
+
+raw ソケットのオプションは、 <B>IPPROTO_RAW</B> ファミリーフラグを与えて <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  を呼べば設定でき、
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  を呼べば取得できる。
+<DL COMPACT>
+<DT><B>ICMP_FILTER</B><DD>
+<B>IPPROTO_ICMP</B> プロトコルにバインドされた raw ソケットのための特殊なフィルタを有効にする。 この値は ICMP
+メッセージのタイプそれぞれに対して、どれをフィルターアウト するかを表したビットセットである。デフォルトでは ICMP
+メッセージは全くフィルターしない。
+</DL>
+<P>
+
+さらに、データグラムソケットに使える全ての <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  <B>SOL_IP</B> ソケットオプションがサポートされている。
+<A NAME="lbAG">&nbsp;</A>
+<H3>エラー処理</H3>
+
+ネットワークで生じたエラーがユーザーに渡されるのは、 ソケットが接続済みの場合か <B>IP_RECVERR</B> フラグが有効になっている場合に限られる。
+接続済みのソケットに対しては、 <B>EMSGSIZE</B> および <B>EPROTO</B> だけが渡される (互換性のため)。 <B>IP_RECVERR</B>
+を設定すると、全てのネットワークエラーがエラーキューに保存される。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+ユーザーが broadcast フラグを設定していないソケットを用いて ブロードキャストアドレスに送信を行おうとした。
+<DT><B>EFAULT</B><DD>
+不正なメモリーアドレスが与えられた。
+<DT><B>EINVAL</B><DD>
+引数が不正。
+<DT><B>EMSGSIZE</B><DD>
+パケットが大きすぎる。 Path MTU Discoverry が有効になっている (<B>IP_MTU_DISCOVER</B> ソケットフラグ)
+か、パケットのサイズが IPv4 で許されている パケットサイズの最大値 64&nbsp;KB を越えている。
+<DT><B>EOPNOTSUPP</B><DD>
+ソケット呼び出しに不正なフラグ (<B>MSG_OOB</B> など) が渡された。
+<DT><B>EPERM</B><DD>
+ユーザーは raw ソケットをオープンする権限を持っていない。 実行ユーザー ID が 0 のプロセスか、 <B>CAP_NET_RAW</B>
+属性を持つプロセスだけがこれを行うことができる。
+<DT><B>EPROTO</B><DD>
+パラメーターの問題を報告する ICMP エラーを受け取った。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>IP_RECVERR</B> と <B>ICMP_FILTER</B> は Linux 2.2 で登場した。これらは Linux での拡張であり、
+移植性の必要なプログラムでは用いるべきでない。
+<P>
+
+Linux 2.0 では <B>SO_BSDCOMPAT</B> ソケットオプションをセットすると、 BSD の raw
+ソケットにあるバグに互換性を取ることができた --- Linux 2.2 以降では、このオプションはもはや効力を持たない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+デフォルトでは、raw ソケットは Path MTU Discovery を行う。 つまり、カーネルは特定の宛先 IP アドレスの MTU
+(Maximum Transmission Unit; 最大転送単位) を記録し、raw パケットの書き込みが MTU を超えた場合
+<B>EMSGSIZE</B> を返す。 <B>EMSGSIZE</B> を返された場合、アプリケーションはパケットサイズを小さくすべきである。 ソケットオプション
+<B>IP_MTU_DISCOVER</B> または <I>/proc/sys/net/ipv4/ip_no_pmtu_disc</I> ファイルを使って Path
+MTU Discovery を無効にすることもできる (詳細は <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  を参照)。 Path MTU Discovery
+を無効にした場合は、パケットサイズが インターフェースの MTU よりも大きいと raw ソケットはそのパケットを フラグメント化して送出する。
+しかしながら、性能と信頼性の理由から Path MTU Discovery を 無効にするのは推奨できない。
+<P>
+
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2)  システムコールを用いると、 raw ソケットを 特定のローカルアドレスにバインドさせることができる。
+このバインドがされていない場合は、指定した IP プロトコルの すべてのパケットが受信される。 さらに、 <B>SO_BINDTODEVICE</B>
+を用いれば raw ソケットを特定のネットワークデバイスに バインドさせることもできる。 <B><A HREF="../man7/socket.7.html">socket</A></B>(7)  を見よ。
+<P>
+
+<B>IPPROTO_RAW</B> ソケットは送信専用である。もしどうしてもすべての IP パケットを 受信したい場合は、 <B><A HREF="../man7/packet.7.html">packet</A></B>(7)
+ソケットを <B>ETH_P_IP</B> プロトコルで用いること。 packet ソケットは raw ソケットのように IP
+フラグメントを再構成しないことに注意。
+<P>
+
+datagram ソケットに対するすべての ICMP パケットを受信したい場合は、 特定のソケットに対して <B>IP_RECVERR</B>
+を用いるほうが良い場合が多い。 <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  を見よ。
+<P>
+
+raw ソケットは、 Linux のすべての IP プロトコルを受信することができる。 ICMP や TCP
+のように、カーネル内部にプロトコルモジュールを持つような ものも可能である。この場合には、パケットはカーネルモジュールと raw
+ソケットの両方に渡される (raw ソケットが複数あればそれぞれに渡される)。 移植性の必要なプログラムではこの機能に依存するべきではない。 他の多くの
+BSD におけるソケットの実装ではこの点において制限がある。
+<P>
+
+Linux はユーザーから渡されたヘッダーを決して変更しない (ただし <B>IP_HDRINCL</B> の説明にあるように、 0
+をいくつか埋める場合を除く)。 これは他の多くの raw ソケットの実装では異なる。
+<P>
+
+一般に raw ソケットは移植性がないことが多いので、 移植性が必要なプログラムでは避けるべきである。
+<P>
+
+raw ソケットへの送信では、 IP プロトコルを <I>sin_port</I> から取得できなければならない。この機能は Linux 2.2
+では使えなくなった。 <B>IP_HDRINCL</B> を用いれば同様のことが実現できる。
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+透過プロクシ (transparent proxy) 拡張については記述していない。
+<P>
+
+<B>IP_HDRINCL</B> オプションがセットされているとデータグラムはフラグメント化されず、 インターフェースの MTU の大きさに制限される。
+<P>
+
+
+
+送信用の IP プロトコルの設定を <I>sin_port</I> にしておく機能は Linux 2.2 から使えなくなった。
+ソケットにバインドされているプロトコルか、最初の <B><A HREF="../man2/socket.2.html">socket</A></B>(2)  コールによって指定されたプロトコルが常に用いられる。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2), <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/ip.7.html">ip</A></B>(7), <B><A HREF="../man7/socket.7.html">socket</A></B>(7)
+<P>
+
+Path MTU discovery に関しては <B>RFC&nbsp;1191</B> を参照。 IP プロトコルに関しては <B>RFC&nbsp;791</B>
+とインクルードファイル <I>&lt;<A HREF="file:///usr/include/linux/ip.h">linux/ip.h</A>&gt;</I> を参照。
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">アドレスのフォーマット</A><DD>
+<DT><A HREF="#lbAF">ソケットオプション</A><DD>
+<DT><A HREF="#lbAG">エラー処理</A><DD>
+</DL>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

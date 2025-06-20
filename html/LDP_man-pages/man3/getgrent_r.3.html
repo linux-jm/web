@@ -1,0 +1,219 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETGRENT_R</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETGRENT_R</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getgrent_r.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getgrent_r, fgetgrent_r - グループファイルエントリーをリエントラント (reentrant) に取り出す
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</B>
+
+<B>int getgrent_r(struct group *</B><I>gbuf</I><B>, char *</B><I>buf</I><B>,</B>
+<B>               size_t </B><I>buflen</I><B>, struct group **</B><I>gbufp</I><B>);</B>
+
+<B>int fgetgrent_r(FILE *</B><I>stream</I><B>, struct group *</B><I>gbuf</I><B>, char *</B><I>buf</I><B>,</B>
+<B>                size_t </B><I>buflen</I><B>, struct group **</B><I>gbufp</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>getgrent_r</B>(): _GNU_SOURCE
+<BR>
+
+<B>fgetgrent_r</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以降:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以前:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_SVID_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+関数 <B>getgrent_r</B>()  と <B>fgetgrent_r</B>()  は <B><A HREF="../man3/getgrent.3.html">getgrent</A></B>(3)  と <B><A HREF="../man3/fgetgrent.3.html">fgetgrent</A></B>(3)
+のリエントラント版である。 前者は、 <B><A HREF="../man3/setgrent.3.html">setgrent</A></B>(3)  によって初期化されたストリームから、次のグループファイルのエントリーを読み込む。
+後者は、 <I>stream</I> から次のグループファイルのエントリーを読み込む。
+<P>
+
+<I>group</I> 構造体は <I>&lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</I> で以下のように定義されている:
+<P>
+
+
+
+struct group {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*gr_name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループ名&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*gr_passwd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループのパスワード&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;&nbsp;&nbsp;gr_gid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループ&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;**gr_mem;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループのメンバ名へのポインター
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;の配列&nbsp;(配列はヌルで終端する)&nbsp;*/
+};
+
+
+<P>
+
+この構造体のフィールドの詳細は <B><A HREF="../man5/group.5.html">group</A></B>(5)  を参照のこと。
+<P>
+
+リエントラントでない関数は静的な格納領域へのポインターを返す。 この静的な格納領域には、更にグループ名・パスワード・ メンバへのポインターが含まれる。
+ここで説明されているリエントラントな関数は、 呼び出し側から提供されるバッファーにグループ名など全てを返す。 最初の引数として <I>struct
+group</I> を保持できるバッファー <I>gbuf</I> がある。 次にその他の文字列を保持できるサイズ <I>buflen</I> のバッファー <I>buf</I>
+がある。 これらの関数の結果 (ストリームから読み込まれた <I>struct group</I>) は、 提供されたバッファー <I>*gbuf</I>
+に格納され、この <I>struct group</I> へのポインターは <I>*gbufp</I> に返される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、これらの関数は 0 を返し、 *<I>gbufp</I> は <I>struct group</I> へのポインターとなる。
+エラーの場合、これらの関数はエラー値を返し、 *<I>gbufp</I> は NULL になる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>ENOENT</B><DD>
+次のエントリーがない。
+<DT><B>ERANGE</B><DD>
+十分なバッファー空間が与えられていない。 もっと大きなバッファーで再度実行すること。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getgrent_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:grent locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>fgetgrent_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+In the above table, <I>grent</I> in <I>race:grent</I> signifies that if any of the
+functions <B><A HREF="../man3/setgrent.3.html">setgrent</A></B>(3), <B><A HREF="../man3/getgrent.3.html">getgrent</A></B>(3), <B><A HREF="../man3/endgrent.3.html">endgrent</A></B>(3), or <B>getgrent_r</B>()
+are used in parallel in different threads of a program, then data races
+could occur.
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+これらの関数は GNU 拡張であり、POSIX 版の関数 <B><A HREF="../man3/getpwnam_r.3.html">getpwnam_r</A></B>(3)  の形式に似せてある。
+他のシステムでは以下のプロトタイプが使われている。
+<P>
+
+
+
+struct group *getgrent_r(struct group *grp, char *buf,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;buflen);
+
+
+<P>
+
+より良いものでは、以下のようになっている。
+<P>
+
+
+
+int getgrent_r(struct group *grp, char *buf, int buflen,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FILE&nbsp;**gr_fp);
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+関数 <B>getgrent_r</B>()  は本当のリエントラントではない。 なぜなら、ストリームの読み込み位置を
+他の全てのスレッドと共有しているためである。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#define BUFLEN 4096
+<P>
+int
+main(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;group&nbsp;grp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;group&nbsp;*grpp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[BUFLEN];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;i;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;setgrent();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i&nbsp;=&nbsp;getgrent_r(&amp;grp,&nbsp;buf,&nbsp;sizeof(buf),&nbsp;&amp;grpp);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(i)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s&nbsp;(%jd):&quot;,&nbsp;grpp-&gt;gr_name,&nbsp;(intmax_t)&nbsp;grpp-&gt;gr_gid);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(grpp-&gt;gr_mem[j]&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;%s&quot;,&nbsp;grpp-&gt;gr_mem[j]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;endgrent();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/fgetgrent.3.html">fgetgrent</A></B>(3), <B><A HREF="../man3/getgrent.3.html">getgrent</A></B>(3), <B><A HREF="../man3/getgrgid.3.html">getgrgid</A></B>(3), <B><A HREF="../man3/getgrnam.3.html">getgrnam</A></B>(3),
+<B><A HREF="../man3/putgrent.3.html">putgrent</A></B>(3), <B><A HREF="../man5/group.5.html">group</A></B>(5)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

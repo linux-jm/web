@@ -1,0 +1,125 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of _EXIT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>_EXIT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-02-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/_exit.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+_exit, _Exit - 呼び出し元のプロセスを終了させる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>void _exit(int </B><I>status</I><B>);</B>
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+<P>
+
+<B>void _Exit(int </B><I>status</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>_Exit</B>():
+<DL COMPACT><DT><DD>
+_ISOC99_SOURCE || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>_exit</B>()  terminates the calling process &quot;immediately&quot;.  Any open file
+descriptors belonging to the process are closed.  Any children of the
+process are inherited by <B>init</B>(1)  (or by the nearest &quot;subreaper&quot; process
+as defined through the use of the <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)  <B>PR_SET_CHILD_SUBREAPER</B>
+operation).  The process's parent is sent a <B>SIGCHLD</B> signal.
+<P>
+
+The value <I>status &amp; 0xFF</I> is returned to the parent process as the
+process's exit status, and can be collected by the parent using one of the
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)  family of calls.
+<P>
+
+関数 <B>_Exit</B>()  は <B>_exit</B>()  と等価である。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+これらの関数は値を返さない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.  関数 <B>_Exit</B>()  は C99 で導入された。
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+exit の効果、終了状態の受渡し、ゾンビプロセス、シグナル送出などに
+ついての議論は、 <B><A HREF="../man3/exit.3.html">exit</A></B>(3) を参照すること。
+<P>
+
+The function <B>_exit</B>()  is like <B><A HREF="../man3/exit.3.html">exit</A></B>(3), but does not call any functions
+registered with <B><A HREF="../man3/atexit.3.html">atexit</A></B>(3)  or <B><A HREF="../man3/on_exit.3.html">on_exit</A></B>(3).  Open <B><A HREF="../man3/stdio.3.html">stdio</A></B>(3)  streams
+are not flushed.  On the other hand, <B>_exit</B>()  does close open file
+descriptors, and this may cause an unknown delay, waiting for pending output
+to finish.  If the delay is undesired, it may be useful to call functions
+like <B><A HREF="../man3/tcflush.3.html">tcflush</A></B>(3)  before calling <B>_exit</B>().  Whether any pending I/O is
+canceled, and which pending I/O may be canceled upon <B>_exit</B>(), is
+implementation-dependent.
+<A NAME="lbAH">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+In glibc up to version 2.3, the <B>_exit</B>()  wrapper function invoked the
+kernel system call of the same name.  Since glibc 2.3, the wrapper function
+invokes <B><A HREF="../man2/exit_group.2.html">exit_group</A></B>(2), in order to terminate all of the threads in a
+process.  (The raw <B>_exit</B>()  system call terminates only the calling
+thread.)
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2), <B><A HREF="../man2/exit_group.2.html">exit_group</A></B>(2), <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man2/kill.2.html">kill</A></B>(2), <B><A HREF="../man2/wait.2.html">wait</A></B>(2),
+<B><A HREF="../man2/wait4.2.html">wait4</A></B>(2), <B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2), <B><A HREF="../man3/atexit.3.html">atexit</A></B>(3), <B><A HREF="../man3/exit.3.html">exit</A></B>(3), <B><A HREF="../man3/on_exit.3.html">on_exit</A></B>(3),
+<B><A HREF="../man3/termios.3.html">termios</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">準拠</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAH">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:26 GMT, December 05, 2022
+</BODY>
+</HTML>

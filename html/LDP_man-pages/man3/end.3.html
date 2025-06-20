@@ -1,0 +1,125 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of END</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>END</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/end.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+etext, edata, end - プログラムセグメントの終わり
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>extern</B><I> etext</I><B>;</B>
+<B>extern</B><I> edata</I><B>;</B>
+<B>extern</B><I> end</I><B>;</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらのシンボルのアドレスは各種のプログラムセグメントの終わりを示す。
+<DL COMPACT>
+<DT><I>etext</I><DD>
+テキストセグメント (プログラムのコード) の末尾の次のアドレス。
+<DT><I>edata</I><DD>
+初期化されたデータのセグメントの末尾の次のアドレス。
+<DT><I>end</I><DD>
+初期化されていないデータのセグメント (BSS セグメントとも言われる)  の末尾の次のアドレス。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>準拠</H2>
+
+これらのシンボルは長年ほとんどの UNIX システムで提供されているが、 標準化されてはいない。注意して使うこと。
+<A NAME="lbAF">&nbsp;</A>
+<H2>注意</H2>
+
+プログラムではこれらのシンボルは明示的に宣言しなければならない。 これらはどのヘッダーファイルでも定義されていない。
+<P>
+
+いくつかのシステムでは、これらのシンボルの名前は前にアンダースコアが 付いていて、 <I>_etext</I>, <I>_edata</I>, <I>_end</I>
+となっている。 Linux でコンパイルされたプログラムでは、 これらのシンボルでも定義される。
+<P>
+
+プログラムの実行開始時に、プログラムブレークは <I>&amp;end</I> の近くのどこか (おそらく次のページの先頭) になる。 しかしながら、
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2)  や <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  でメモリーが割り当てられるに連れて、プログラムブレークは変化していく。 引数に 0 を指定して
+<B><A HREF="../man2/sbrk.2.html">sbrk</A></B>(2)  を呼び出すことで、プログラムブレークの現在値を知ることができる。
+<A NAME="lbAG">&nbsp;</A>
+<H2>例</H2>
+
+下記のプログラムを実行すると、次のような出力が得られる。
+<P>
+
+
+
+$<B> ./a.out</B>
+First address past:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;program&nbsp;text&nbsp;(etext)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0x8048568
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;initialized&nbsp;data&nbsp;(edata)&nbsp;&nbsp;&nbsp;0x804a01c
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uninitialized&nbsp;data&nbsp;(end)&nbsp;&nbsp;&nbsp;0x804a024
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+<P>
+extern char etext, edata, end; /* The symbols must have some type,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;&quot;gcc&nbsp;-Wall&quot;&nbsp;complains&nbsp;*/
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;First&nbsp;address&nbsp;past:\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;program&nbsp;text&nbsp;(etext)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%10p\n&quot;,&nbsp;&amp;etext);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;initialized&nbsp;data&nbsp;(edata)&nbsp;&nbsp;%10p\n&quot;,&nbsp;&amp;edata);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;uninitialized&nbsp;data&nbsp;(end)&nbsp;&nbsp;%10p\n&quot;,&nbsp;&amp;end);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../GNU_binutils/man1/objdump.1.html">objdump</A></B>(1), <B>readelf</B>(1), <B><A HREF="../man2/sbrk.2.html">sbrk</A></B>(2), <B><A HREF="../man5/elf.5.html">elf</A></B>(5)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">準拠</A><DD>
+<DT><A HREF="#lbAF">注意</A><DD>
+<DT><A HREF="#lbAG">例</A><DD>
+<DL>
+<DT><A HREF="#lbAH">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

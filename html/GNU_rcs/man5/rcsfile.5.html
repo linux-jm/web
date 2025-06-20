@@ -1,0 +1,323 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RCSFILE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/index.html">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>RCSFILE</H1>
+Section: File Formats (5)<BR>Updated: 2001/07/22<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_rcs/contrib/man5/rcsfile.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+rcsfile - RCS ファイルの書式
+<A NAME="lbAC">&nbsp;</A>
+<H2>解説</H2>
+
+<FONT SIZE="-1">RCS</FONT> ファイルの内容は以下の文法に基づき記述されます。
+<P>
+
+テキストはフリーフォーマットであり、
+文字列中のスペース、バックスペース、
+タブ、改行、垂直タブ、改頁、復帰 (まとめて
+<I>空白</I>
+
+と呼びます) は意味を持ちません。
+例外として、id, num, sym 内では空白があってはならず、
+<FONT SIZE="-1">RCS</FONT> ファイルは改行で終わらなければなりません。
+<P>
+
+文字列は
+<B>@</B>
+
+で括られます。文字列が
+<B>@</B>
+
+自身を含む場合、2 重化されなければならず、それ以外は任意の
+バイナリデータを含むことができます。
+<P>
+
+以下、簡便のためにメタ文法を用います。
+`|' (縦棒) は選言を分けます。
+`{' と `}' は省略可能な句を括ります。
+`{' と `}*' は 0 回以上繰り返される句を括ります。
+`{' と `}+' は 1 回以上繰り返される句を括ります。
+終端記号は
+<B>太字</B>
+
+で、非終端記号は
+<I>斜体</I>
+
+で表記します。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<PRE>
+<I>rcstext</I>     ::=  <I>admin</I> {<I>delta</I>}* <I>desc</I> {<I>deltatext</I>}*
+
+<I>admin</I>       ::=  <B>head</B>         {<I>num</I>}<B>;</B>
+                 { <B>branch</B>     {<I>num</I>}<B>;</B> }
+                 <B>access</B>       {<I>id</I>}*<B>;</B>
+                 <B>symbols</B>      {<I>sym</I> <B>:</B> <I>num</I>}*<B>;</B>
+                 <B>locks</B>        {<I>id</I> <B>:</B> <I>num</I>}*<B>;</B>  {<B>strict  ;</B>}
+                 { <B>comment</B>    {<I>string</I>}<B>;</B> }
+                 { <B>expand</B>     {<I>string</I>}<B>;</B> }
+                 { <I>newphrase</I> }*
+
+<I>delta</I>       ::=  <I>num</I>
+                 <B>date</B>         <I>num</I><B>;</B>
+                 <B>author</B>       <I>id</I><B>;</B>
+                 <B>state</B>        {<I>id</I>}<B>;</B>
+                 <B>branches</B>     {<I>num</I>}*<B>;</B>
+                 <B>next</B>         {<I>num</I>}<B>;</B>
+                 { <I>newphrase</I> }*
+
+<I>desc</I>        ::=  <B>desc</B>         <I>string</I>
+
+<I>deltatext</I>   ::=  <I>num</I>
+                 <B>log</B>          <I>string</I>
+                 { <I>newphrase</I> }*
+                 <B>text</B>         <I>string</I>
+
+<I>num</I>         ::=  {<I>digit</I> | <B>.</B>}+
+
+<I>digit</I>       ::=  <B>0</B> | <B>1</B> | <B>2</B> | <B>3</B> | <B>4</B> | <B>5</B> | <B>6</B> | <B>7</B> | <B>8</B> | <B>9</B>
+
+<I>id</I>          ::=  {<I>num</I>} <I>idchar</I> {<I>idchar</I> | <I>num</I>}*
+
+<I>sym</I>         ::=  {<I>digit</I>}* <I>idchar</I> {<I>idchar</I> | <I>digit</I>}*
+
+<I>idchar</I>      ::=  <I>special</I> を除く任意の可視文字 (visible graphic character)
+
+<I>special</I>     ::=  <B>$</B> | <B>,</B> | <B>.</B> | <B>:</B> | <B>;</B> | <B>@</B>
+
+<I>string</I>      ::=  <B>@</B>{任意の文字、ただし <B>@</B> は 2 重化される}*<B>@</B>
+
+<I>newphrase</I>   ::=  <I>id</I> <I>word</I>* <B>;</B>
+
+<I>word</I>        ::=  <I>id</I> | <I>num</I> | <I>string</I> | <B>:</B>
+</PRE>
+
+<P>
+
+識別子は大文字小文字を区別します。
+キーワードは小文字のみです。
+キーワードと識別子の集合は重複可能です。
+ほとんどの環境では、<FONT SIZE="-1">RCS</FONT> は <FONT SIZE="-1">ISO</FONT> 8859/1 エンコーディングを用います。
+このコードでは、可視文字のコードが 041-176 と 240-377 で、
+空白文字のコードが 010-015 と 040 です。
+<P>
+
+<B>date</B>
+
+キーワードの後に現れる日時は
+<I>Y</I><B>.</B><I>mm</I><B>.</B><I>dd</I><B>.</B><I>hh</I><B>.</B><I>mm</I><B>.</B><I>ss</I>
+という書式で、それぞれ
+<I>Y</I>
+
+が年を、
+<I>mm</I>
+
+が月 (01-12) を、
+<I>dd</I>
+
+が日 (01-31) を、
+<I>hh</I>
+
+が時 (00-23) を、
+<I>mm</I>
+
+が分 (00-59) を、
+<I>ss</I>
+
+が秒 (00-60) を表します。
+<I>Y</I>
+
+は 1900 年から 1999 年までは年の最後の 2 桁で表し、それ以降は
+年のすべての桁で表します。
+日付はグレゴリオ暦を用い、時刻は UTC (協定世界時) で表します。
+<P>
+
+文法中の
+<I>newphrase</I>
+
+は <FONT SIZE="-1">RCS</FONT> ファイル書式の今後の拡張のために予約されています。
+すでに使われているキーワードでは
+<I>newphrase</I>
+
+は始まりません。
+<P>
+
+複数の
+<I>delta</I>
+
+ノードが集まって、木を形成します。
+単一の組からなる番号のノード (例えば 2.3, 2.1, 1.3 など) は
+すべて幹 (trunk) であり、降順で
+<B>next</B>
+
+フィールドを通してリンクされています。
+<I>admin</I>
+
+ノードの
+<B>head</B>
+
+フィールドは、このシーケンスの先頭 (head; すなわち最高位の組) を示します。
+admin ノードの
+<B>branch</B>
+
+ノードは、
+ほとんどの <FONT SIZE="-1">RCS</FONT> 操作が利用するデフォルトの枝 (もしくはリビジョン) を示します。
+もしこれが存在しなければ、幹の最高位の枝が用いられます。
+<P>
+
+2<I>n</I>
+
+個
+(<I>n</I>&ge;2)
+
+のフィールドからなる番号を持つ全
+<I>delta</I>
+
+ノード (例えば 3.1.1.1, 2.1.2.2 など) は、次のようにリンクされます。
+すなわち、先頭の
+2<I>n</I>-1
+
+個のフィールドの番号が等しい全ノードは、昇順で
+<B>next</B>
+
+フィールドを通してリンクされます。
+シーケンス中の delta ノードの番号の先頭
+2<I>n</I>-2
+
+個分と等しい番号を持つ
+<I>delta</I>
+
+ノードは、そのシーケンスの分岐点と呼ばれます。
+ノードの
+<B>branches</B>
+
+フィールドは、
+そのノードが分岐点となっている全シーケンスに対し、
+最初のノード番号のリストを保持しています。
+このリストは昇順で並べられています。
+<P>
+
+以下の図は <FONT SIZE="-1">RCS</FONT> ファイルの構成の例を示しています。
+<PRE>
+
+
+
+
+
+
+                           Head
+                             |
+                             |
+                             v                        / \
+                         ---------                   /   \
+   / \          / \      |       |      / \         /     \
+  /   \        /   \     |  2.1  |     /   \       /       \
+ /     \      /     \    |       |    /     \     /         \
+/1.2.1.3\    /1.3.1.1\   |       |   /1.2.2.2\   /1.2.2.1.1.1\
+---------    ---------   ---------   ---------   -------------
+    ^            ^           |           ^             ^
+    |            |           |           |             |
+    |            |           v           |             |
+   / \           |       ---------      / \            |
+  /   \          |       \  1.3  /     /   \           |
+ /     \         ---------\     /     /     \-----------
+/1.2.1.1\                  \   /     /1.2.2.1\
+---------                   \ /      ---------
+    ^                        |           ^
+    |                        |           |
+    |                        v           |
+    |                    ---------       |
+    |                    \  1.2  /       |
+    ----------------------\     /---------
+                           \   /
+                            \ /
+                             |
+                             |
+                             v
+                         ---------
+                         \  1.1  /
+                          \     /
+                           \   /
+                            \ /
+
+
+
+
+</PRE>
+
+
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>作者</H2>
+
+
+Author: Walter F. Tichy,
+Purdue University, West Lafayette, IN, 47907.
+<BR>
+
+Manual Page Revision: 1.5.2.1; Release Date: 2001/07/22.
+<BR>
+
+Copyright &#169; 1982, 1988, 1989 Walter F. Tichy.
+<BR>
+
+Copyright &#169; 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert.
+<A NAME="lbAE">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man1/rcsintro.1.html">rcsintro</A>(1), <A HREF="../man1/ci.1.html">ci</A>(1), <A HREF="../man1/co.1.html">co</A>(1), <A HREF="../man1/ident.1.html">ident</A>(1), <A HREF="../man1/rcs.1.html">rcs</A>(1), <A HREF="../man1/rcsclean.1.html">rcsclean</A>(1), <A HREF="../man1/rcsdiff.1.html">rcsdiff</A>(1),
+<A HREF="../man1/rcsmerge.1.html">rcsmerge</A>(1), <A HREF="../man1/rlog.1.html">rlog</A>(1)
+<BR>
+
+Walter F. Tichy,
+<FONT SIZE="-1">RCS</FONT>--A System for Version Control,
+<I>Software--Practice &amp; Experience</I>
+
+<B>15</B>,
+
+7 (July 1985), 637-654.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">解説</A><DD>
+<DT><A HREF="#lbAD">作者</A><DD>
+<DT><A HREF="#lbAE">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:25 GMT, December 05, 2022
+</BODY>
+</HTML>

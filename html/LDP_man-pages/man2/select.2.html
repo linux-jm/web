@@ -1,0 +1,413 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SELECT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SELECT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-01-22<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/select.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+select, pselect, FD_CLR, FD_ISSET, FD_SET, FD_ZERO - 同期 I/O の多重化
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+/* POSIX.1-2001 に従う場合 */
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
+
+/* 以前の規格に従う場合 */
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int select(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>,</B>
+<B>           fd_set *</B><I>exceptfds</I><B>, struct timeval *</B><I>timeout</I><B>);</B>
+
+<B>void FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
+<BR>
+<B>int  FD_ISSET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
+<BR>
+<B>void FD_SET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
+<BR>
+<B>void FD_ZERO(fd_set *</B><I>set</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
+
+<B>int pselect(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>,</B>
+<B>            fd_set *</B><I>exceptfds</I><B>, const struct timespec *</B><I>timeout</I><B>,</B>
+<B>            const sigset_t *</B><I>sigmask</I><B>);</B>
+</PRE>
+
+<P>
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+<B>pselect</B>(): _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>select</B>()  や <B>pselect</B>()  を使うと、プログラムで複数のファイルディスクリプターを監視し、
+一つ以上のファイルディスクリプターがある種の I/O 操作の 「ready (準備ができた)」状態 (例えば、読み込み可能になった状態)
+になるまで待つことができる。 ファイルディスクリプターが ready (準備ができた) とは、 (<B><A HREF="../man2/read.2.html">read</A></B>(2)  などの) 対応する I/O
+操作が停止 (block) なしに実行したり、 十分小さな <B><A HREF="../man2/write.2.html">write</A></B>(2) を実行したりできる状態にあることを意味する。
+<P>
+
+<B>select</B>()  と <B>pselect</B>()  の動作は同じであるが、以下の 3 点が異なる:
+<DL COMPACT>
+<DT>(i)<DD>
+<B>select</B>()  では、タイムアウト時間の指定に構造体 <I>struct timeval</I> (秒・マイクロ秒単位) を用いる。 一方、
+<B>pselect</B>()  関数では、構造体 <I>struct timespec</I> (秒・ナノ秒単位) を用いる。
+<DT>(ii)<DD>
+<B>select</B>()  は残り時間を示す <I>timeout</I> 引き数を更新することがある。 <B>pselect</B>()  はこの引き数を変更しない。
+<DT>(iii)<DD>
+<B>select</B>()  は <I>sigmask</I> 引き数を持たない。その動作は <I>sigmask</I> に NULL を指定した場合の
+<B>pselect</B>()  と同じである。
+</DL>
+<P>
+
+3 つの独立したファイルディスクリプター集合の監視を行う。 <I>readfds</I> に入れられたディスクリプターについては、読み込みが可能かどうかを
+監視する (より正確にいうと、停止 (block) なしで読むことができるかを 調べる。ファイルの終端 (end-of-file) の場合も、
+ファイルディスクリプターは読み込み可能として扱われる)。 <I>writefds</I>
+に入れられたディスクリプターについては、書き込み用に利用可能な領域があるかを監視する (ただし、大きな書き込みの場合には停止する可能性はある)。
+<I>exceptfds</I> にあるものについては、例外の監視を行なう。システムコール終了時に、
+どのファイルディスクリプターの状態が実際に変化したか示すために、 集合の内容が変更される。
+ある種別のイベントを監視したいファイルディスクリプターが一つもない場合には、 対応するファイルディスクリプター集合に NULL を指定することができる。
+<P>
+
+集合を操作するために 4 つのマクロが提供されている。 <B>FD_ZERO</B>()  は集合を消去する。 <B>FD_SET</B>()  と
+<B>FD_CLR</B>()  はそれぞれ指定したファイルディスクリプターの集合への追加、削除を行う。 <B>FD_ISSET</B>()
+は集合にファイルディスクリプターがあるかどうか調べる; このマクロは <B>select</B>()  が終了した後に使うと便利である。
+<P>
+
+<I>nfds</I> は 3 つの集合に含まれるファイルディスクリプターの最大値に 1 を足したものである。
+<P>
+
+<I>timeout</I> 引き数は、 <B>select</B>() がファイルディスクリプターが ready になるのを待って停止する時間を指定する。
+呼び出しは以下のいずれかになるまで停止する。
+<DL COMPACT>
+<DT>*<DD>
+ファイルディスクリプターが利用可能になる。
+<DT>*<DD>
+システムコールがシグナルハンドラーにより割り込まれた。
+<DT>*<DD>
+タイムアウト時間が満了した。
+</DL>
+<P>
+
+この <I>timeout</I> 時間はシステムクロックの粒度に切り上げられ、
+カーネルのスケジューリング遅延により少しだけ長くなる可能性がある点に注意すること。 <I>timeval</I> 構造体の両方のフィールドが 0 の場合、
+<B>select</B>() はすぐに復帰する (この機能はポーリング (polling) を行うのに便利である)。 <I>timeout</I> に NULL
+(タイムアウトなし) が指定されると、 <B>select</B>() は無期限に停止 (block) する。
+<P>
+
+<I>sigmask</I> は、シグナルマスク (<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  を参照) へのポインターである。 <I>sigmask</I> が NULL
+でない場合、 <B>pselect</B>()  は <I>sigmask</I> が指しているシグナルマスクで現在のシグナルマスクを置き換えてから、 &quot;select&quot;
+関数を実行し、 終了後にシグナルマスクを元のシグナルマスクに戻す。
+<P>
+
+<I>timeout</I> 引き数の精度の違いを除くと、以下の <B>pselect</B>()  の呼び出しは、
+<PRE>
+
+    ready = pselect(nfds, &amp;readfds, &amp;writefds, &amp;exceptfds,
+                    timeout, &amp;sigmask);
+
+</PRE>
+
+次のコールを <I>atomic</I> に実行するのと等価である。
+<PRE>
+
+    sigset_t origmask;
+
+    pthread_sigmask(SIG_SETMASK, &amp;sigmask, &amp;origmask);
+    ready = select(nfds, &amp;readfds, &amp;writefds, &amp;exceptfds, timeout);
+    pthread_sigmask(SIG_SETMASK, &amp;origmask, NULL);
+</PRE>
+
+<P>
+
+<B>pselect</B>()  が必要になる理由は、シグナルやファイルディスクリプターの状態変化を 待ちたいときには、競合状態を避けるために atomic
+なテストが必要になる からである。 (シグナルハンドラーが大域フラグを設定して戻る場合を考えてみよう。 この大域フラグのテストに続けて
+<B>select</B>()  を呼び出すと、 シグナルがテストの直後かつ呼び出しの直前に届いた時には <B>select</B>()
+は永久にハングしてしまうかもしれない。 一方、 <B>pselect</B>()  を使うと、まずシグナルを禁止 (block)
+して、入ってくるシグナルを操作し、 望みの <I>sigmask</I> で <B>pselect</B>()  を呼び出すことで、前記の競合を避けることができる。)
+<A NAME="lbAE">&nbsp;</A>
+<H3>タイムアウト</H3>
+
+これらの関数で使用される時間関連の構造体は、 <I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I> で
+<P>
+
+<PRE>
+struct timeval {
+    long    tv_sec;         /* 秒 */
+    long    tv_usec;        /* マイクロ秒 */
+};
+</PRE>
+
+
+<P>
+や
+<P>
+
+<PRE>
+struct timespec {
+    long    tv_sec;         /* 秒 */
+    long    tv_nsec;        /* ナノ秒 */
+};
+</PRE>
+
+
+<P>
+のように定義されている。 (POSIX.1-2001 での定義については下記の「注意」を参照)
+<P>
+
+秒単位以下の精度でスリープを実現する 移植性の高い方法として、 3 つの集合全てを空、 <I>nfds</I> を 0 、 <I>timeout</I> を NULL
+でない値に設定して <B>select</B>()  を呼び出すという方法を使っているコードもある。
+<P>
+
+
+
+
+
+Linux では、 <B>select</B>()  は <I>timeout</I> を変更し、残りの停止時間を反映するようになっているが、
+他のほとんどの実装ではこのようになっていない (POSIX.1-2001 はどちらの動作も認めている)。 このため、 <I>timeout</I>
+を参照している Linux のコードを他のオペレーティングシステムへ 移植する場合、問題が起こる。 また、ループの中で <I>timeval</I>
+構造体を初期化せずにそのまま再利用して <B>select</B>()  を複数回行なっているコードを Linux へ移植する場合にも、問題が起こる。
+<B>select</B>()  から復帰した後は <I>timeout</I> は未定義であると考えるべきである。
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 <B>select</B>()  と <B>pselect</B>()  は更新された 3 つのディスクリプター集合に含まれている
+ファイルディスクリプターの数 (つまり、 <I>readfds</I>, <I>writefds</I>, <I>exceptfds</I> 中の 1
+になっているビットの総数) を返す。 何も起こらずに時間切れになった場合、 ディスクリプターの数は 0 になることもある。 エラーならば -1 を返し、
+<I>errno</I> にエラーを示す値が設定される; ファイルディスクリプター集合は変更されず、 <I>timeout</I> は不定となる。
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+いずれかの集合に無効なファイルディスクリプターが指定された (おそらくは、すでにクローズされたファイルディスクリプターか、
+エラーが発生したファイルディスクリプターが指定された)。
+<DT><B>EINTR</B><DD>
+シグナルを受信した。
+<DT><B>EINVAL</B><DD>
+<I>nfds</I> が負、 またはリソース上限 <B>RLIMIT_NOFILE</B> (<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2) 参照) より大きい。
+<DT><B>EINVAL</B><DD>
+<I>timeout</I> に入っている値が不正である。
+<DT><B>ENOMEM</B><DD>
+内部テーブルにメモリーを割り当てることができなかった。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>pselect</B>()  はカーネル 2.6.16 で Linux に追加された。 それ以前は、 <B>pselect</B>()  は glibc
+でエミュレートされていた (「バグ」の章を参照)。
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>select</B>()  は POSIX.1-2001 と 4.4BSD (<B>select</B>()  は 4.2BSD で最初に登場した) に準拠する。
+BSD ソケット層のクローンをサポートしている非 BSD システム (System&nbsp;V 系も含む) との間でだいたい移植性がある。しかし
+System&nbsp;V 系では たいがい timeout 変数を exit の前にセットするが、 BSD 系ではそうでないので注意すること。
+<P>
+
+<B>pselect</B>()  は POSIX.1g と POSIX.1-2001 で定義されている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<I>fd_set</I> は固定サイズのバッファーである。 負や <B>FD_SETSIZE</B> 以上の値を持つ <I>fd</I> に対して <B>FD_CLR</B>()
+や <B>FD_SET</B>()  を実行した場合、 どのような動作をするかは定義されていない。 また、 POSIX では <I>fd</I>
+は有効なファイルディスクリプターでなければならないと規定されている。
+<P>
+型宣言に関しては、昔ながらの状況では <I>timeval</I> 構造体の 2 つのフィールドは (上記のように) 両方とも <I>long</I>
+型であり、構造体は <I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I> で定義されている。 POSIX.1-2001 の下では、以下のようになっている。
+<P>
+
+<PRE>
+struct timeval {
+         time_t         tv_sec;     /* 秒 */
+         suseconds_t    tv_usec;    /* マイクロ秒 */
+};
+</PRE>
+
+
+<P>
+この構造体は <I>&lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</I> で定義されており、データ型 <I>time_t</I> と <I>suseconds_t</I> は
+<I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I> で定義されている。
+<P>
+
+プロトタイプに関しては、昔ながらの状況で <B>select</B>()  を使いたい場合は、 <I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I>
+をインクルードすればよい。 POSIX.1-2001 の環境で <B>select</B>()  と <B>pselect</B>()  を使いたい場合は、
+<I>&lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</I> をインクルードすればよい。
+<P>
+glibc 2.0 では <I>&lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</I> が提供する <B>pselect</B>()  のプロトタイプが間違っている。
+glibc 2.1 から 2.2.1 では <B>_GNU_SOURCE</B> が定義されている場合に、 <B>pselect</B>()  が提供される。
+glibc 2.2.2 以降では、 <B>pselect</B>()  を使用するには、「書式」に記載された要件を満たす必要がある。
+<A NAME="lbAK">&nbsp;</A>
+<H3>マルチスレッドアプリケーション</H3>
+
+
+<B>select</B>() で監視中のファイルディスクリプターが別のスレッドでクローズされた場合、どのような結果になるかは規定されていない。いくつかの
+UNIX システムでは、 <B>select</B>() は停止 (block) せず、すぐ返り、ファイルディスクリプターが ready だと報告される
+(<B>select</B>() が返ってから I/O 操作が実行されるまでの間に、 別のファイルディスクリプターが再度オープンされない限り、 それ以降の
+I/O 操作はおそらく失敗するだろう)。 Linux (や他のいくつかのシステム) では、 別のスレッドでファイルディスクリプターがクローズされても
+<B>select</B>() には影響を与えない。
+まとめると、このような場合に特定の動作に依存しているアプリケーションは「バグっている」と考えなければならない。
+<A NAME="lbAL">&nbsp;</A>
+<H3>C ライブラリとカーネル ABI の違い</H3>
+
+このページで説明している <B>pselect</B>() のインターフェースは、glibc に
+実装されているものである。内部で呼び出される Linux のシステムコールは
+<B>pselect6</B>() という名前である。このシステムコールは glibc のラッパー
+関数とは少し違った動作をする。
+<P>
+Linux の <B>pselect6</B>() システムコールは <I>timeout</I> 引き数を変更する。
+しかし、glibc のラッパー関数は、システムコールに渡す timeout 引き数と
+してローカル変数を使うことでこの動作を隠蔽している。このため、glibc の
+<B>pselect</B>() 関数は <I>timeout</I> 引き数を変更しない。
+これが POSIX.1-2001 が要求している動作である。
+<P>
+<B>pselect6</B>() システムコールの最後の引き数は <I>sigset_t&nbsp;*</I> 型の
+ポインターではなく、以下に示す構造体である。
+
+<PRE>
+
+struct {
+    const sigset_t *ss;     /* シグナル集合へのポインター */
+    size_t          ss_len; /* 'ss' が指すオブジェクトのサイズ
+                               (バイト数) */
+};
+
+</PRE>
+
+
+このようにすることで、ほとんどのアーキテクチャーがサポートしている
+システムコールの引き数が最大で 6 個という事実を満たしつつ、
+<B>pselect6</B>() システムコールがシグナル集合へのポインターとシグナル集合
+のサイズの両方を取得することができるのである。
+<A NAME="lbAM">&nbsp;</A>
+<H2>バグ</H2>
+
+glibc 2.0 では、 <I>sigmask</I> 引き数を取らないバージョンの <B>pselect</B>()  が提供されていた。
+<P>
+バージョン 2.1 以降の glibc では、 <B>pselect</B>()  は <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  と <B>select</B>()
+を使ってエミュレートされていた。 この実装にはきわどい競合条件において脆弱性が残っていた。 この競合条件における問題を防止するために
+<B>pselect</B>()  は設計されたのである。 最近のバージョンの glibc では、カーネルがサポートしている場合には、 (競合が起こらない)
+<B>pselect</B>()  システムコールが使用される。
+<P>
+<B>pselect</B>() がないシステムにおいて、シグナルの捕捉を信頼性があり (移植
+性も高い) 方法で行うには、 自己パイプ (self-pipe) という技を使うとよい。
+この方法では、シグナルハンドラーはパイプへ 1 バイトのデータを書き込み、
+同じパイプのもう一端をメインプログラムの <B>select</B>() で監視する (一杯に
+なったパイプへの書き込みや空のパイプから読み出しを行った際に起こるであ
+ろう停止 (blocking) を避けるためには、パイプへの読み書きの際には 非停止
+(nonblocking) I/O を使用するとよい)。
+<P>
+
+
+
+Linux では、 <B>select</B>()  がソケットファイルディスクリプターで &quot;読み込みの準備ができた&quot; と報告した場合でも、 この後で read
+を行うと停止 (block) することがある。このような状況は、 例えば、データが到着したが、検査でチェックサム異常が見つかり廃棄された時
+などに起こりえる。他にもファイルディスクリプターが準備できたと間違って 報告される状況が起こるかもしれない。
+したがって、停止すべきではないソケットに対しては <B>O_NONBLOCK</B> を使うとより安全であろう。
+<P>
+Linux では、 <B>select</B>()  がシグナルハンドラーにより割り込まれた場合 (つまり <B>EINTR</B> エラーが返る場合)、
+<I>timeout</I> も変更する。 これは POSIX.1-2001 では認められていない挙動である。 Linux の <B>pselect</B>()
+システムコールも同じ挙動をするが、 glibc のラッパー関数がこの挙動を隠蔽している。 具体的には、glibc のラッパー関数の内部で、
+<I>timeout</I> をローカル変数にコピーし、 このローカル変数をシステムコールに渡している。
+<A NAME="lbAN">&nbsp;</A>
+<H2>例</H2>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+
+int
+main(void)
+{
+    fd_set rfds;
+    struct timeval tv;
+    int retval;
+
+    /* stdin (fd 0) を監視し、入力があった場合に表示する。*/
+    FD_ZERO(&amp;rfds);
+    FD_SET(0, &amp;rfds);
+
+    /* 5 秒間監視する。*/
+    tv.tv_sec = 5;
+    tv.tv_usec = 0;
+
+    retval = select(1, &amp;rfds, NULL, NULL, &amp;tv);
+    /* この時点での tv の値を信頼してはならない。*/
+
+    if (retval == -1)
+        perror(&quot;select()&quot;);
+    else if (retval)
+        printf(&quot;今、データが取得できました。\n&quot;);
+        /* FD_ISSET(0, &amp;rfds) が true になる。*/
+    else
+        printf(&quot;5 秒以内にデータが入力されませんでした。\n&quot;);
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2), <B><A HREF="../man2/connect.2.html">connect</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/recv.2.html">recv</A></B>(2),
+<B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2), <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2),
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7), <B><A HREF="../man7/time.7.html">time</A></B>(7)
+<P>
+考察と使用例の書かれたチュートリアルとして、 <B><A HREF="../man2/select_tut.2.html">select_tut</A></B>(2)  がある。
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">タイムアウト</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAK">マルチスレッドアプリケーション</A><DD>
+<DT><A HREF="#lbAL">C ライブラリとカーネル ABI の違い</A><DD>
+</DL>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">例</A><DD>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

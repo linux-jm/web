@@ -1,0 +1,385 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SHAR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SHAR</H1>
+Section: User Commands  (1)<BR>Updated: September 10, 1995<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_sharutils/release/man1/shar.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+shar - シェルアーカイブを作成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+shar [ options ] file ...
+shar -S [ options ]
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+shar は「シェルアーカイブ (shar ファイル)」を作成する。
+これはテキスト形式なので、メールで送ることができる。
+これらのファイルをほどくには、 /bin/sh を使って実行すればよい。
+作成されたアーカイブは、<I>-o</I> オプションで指示されない限り、
+標準出力に送られる。
+shar には様々な機能があるので、 shar ファイルの作成や
+shar の「賢さ (smartness)」の指定は、非常に柔軟に行うことができる。
+アーカイブは、「簡潔 (vanilla)」にも詳細にもできる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<P>
+
+オプションには、- で始まる 1 文字のバージョンと、
+-- で始まる長いバージョンがある。
+<I>--help</I>, <I>--version</I>,
+<I>--no-i18n</I>, <I>--print-text-domain-dir</I> は例外で、
+短いバージョンがない。
+長いオプションに必須の引き数は、短いオプションでも必須である。
+オプションはどのような順番でも与えることができる。
+互いに依存しているオプションもある。たとえば、
+<PRE>
+        <I>-l</I> や <I>-L</I> オプションを使う場合、<I>-o</I> オプションが必要である。
+        <I>-a</I> オプションを使う場合、<I>-n</I> オプションが必要である。
+        下記の <I>-V</I> オプションも参照すること。
+</PRE>
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>フィードバックを与える：</H3>
+
+<DL COMPACT>
+<DT><I>--help</I><DD>
+ヘルプを標準出力に表示し、すぐに終了する。
+<DT><I>--version</I><DD>
+プログラムのバージョン番号を標準出力に表示し、すぐに終了する。
+<DT><I>-q</I> <I>--quiet</I> <I>--silent</I><DD>
+アーカイブを作成するとき、詳細なメッセージを出力しない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>ファイルの選択：</H3>
+
+<DL COMPACT>
+<DT><I>-p</I>  <I>--intermix-type</I><DD>
+指定位置に依存するパラメーターオプションの使用を許す。
+<I>-B</I>, <I>-T</I>, <I>-z</I>, <I>-Z</I> オプションを
+(ファイルリストに) 入れてよい。
+このオプションの後ろのファイルはすべて、指示されたモードで処理される。
+<DT><I>-S</I>  <I>--stdin-file-list</I><DD>
+コマンドラインからではなく、標準入力からパックするファイルの一覧を読み込む。
+入力は find コマンドで生成される形式と同じく、
+1 行に 1 つのファイル名でなければならない。
+パックするファイルの一覧をコマンドラインに書けない場合に、
+このオプションは非常に役立つ。たとえば、
+<PRE>
+
+find . -type f -print | sort | shar -S -Z -L50 -o /tmp/big
+
+</PRE>
+
+<I>-p</I> が指定された場合、
+<I>-B</I>, <I>-T</I>, <I>-z</I>, <I>-Z</I> オプションを
+標準入力に入れることができる (行はファイル名で区切られる)。
+標準入力の行数、ファイル名、オプションは最大 1024 を越えてはならない。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>出力の分割：</H3>
+
+<DL COMPACT>
+<DT><I>-o</I> XXX  <I>--output-prefix=</I>XXX<DD>
+アーカイブを標準出力に送らず、ファイル XXX.01 から XXX.nn に保存する。
+<I>-l</I> または <I>-L</I> オプションを使う場合、
+このオプションを使うこと。
+<DT><I>-l</I> XX  <I>--whole-size-limit=</I>XX<DD>
+出力ファイルのサイズを XX キロバイトに制限しようとする
+(このサイズより小さくなる場合は、
+複数の入力ファイルをまとめた出力ファイルを作成する)。
+しかし、(1 つの入力ファイルをアーカイブしたサイズが
+これより大きくなる場合でも) 入力ファイルを途中で分割しない。
+<DT><I>-L</I> XX  <I>--split-size-limit=</I>XX<DD>
+出力ファイルのサイズを XX キロバイトに制限し、必要ならば分割する。
+このオプションで作られた、分割形式のアーカイブファイルは、
+正しい順番でファイルを取り出さなければならない。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H3>shar ヘッダーの制御：</H3>
+
+<DL COMPACT>
+<DT><I>-n</I> name  <I>--archive-name=</I>name<DD>
+shar ファイルのヘッダーにアーカイブ名を入れる。
+<I>-a</I> オプションを参照すること。
+<DT><I>-s</I> <A HREF="mailto:who@where">who@where</A>  <I>--submitter=</I><A HREF="mailto:who@where">who@where</A><DD>
+自動的に決定される作成者名を上書きする。
+<DT><I>-a</I>  <I>--net-headers</I><DD>
+次のようなヘッダーを自動生成する。
+<PRE>
+        Submitted-by: <A HREF="mailto:who@where">who@where</A>
+        Archive-name: &lt;name&gt;/part##
+</PRE>
+
+&lt;name&gt; は <I>-n</I> オプションで指示しなければならない。
+name に '/' が含まれている場合、&quot;/part&quot; は使われない。つまり、
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+
+-n xyzzy                      の場合：
+                              xyzzy/part01
+                              xyzzy/part02
+
+-n xyzzy/patch                の場合：
+                              xyzzy/patch01
+                              xyzzy/patch02
+
+-n xyzzy/patch01.             の場合：
+                              xyzzy/patch01.01
+                              xyzzy/patch01.02
+</DL>
+</PRE>
+
+<DT><DD>
+<A HREF="mailto:who@where">who@where</A> がデフォルトでは不適切な場合、<I>-s</I>
+オプションを使って明示的に宣言できる。
+<A HREF="mailto:who@where">who@where</A> は本来 `whoami`@`uname` で作られる。
+<DT><I>-c</I>  <I>--cut-mark</I><DD>
+shar ファイルを cut line で始める。'Cut here' と書かれた行が、
+各出力ファイルの先頭に置かれる。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>ファイルの格納法の選択：</H3>
+
+<DL COMPACT>
+<DT><I>-M</I>  <I>--mixed-uuencode</I><DD>
+混合モード。ファイルがテキストなのかバイナリなのかを決定し、
+正しくアーカイブを作る (デフォルトである)。
+バイナリであるとわかったファイルは、パックする前に uuencode される
+(ネットワーク上の多くの人に、uuencode の使用は煙たがられる)。
+<DT><I>-T</I>  <I>--text-files</I><DD>
+すべてのファイルをテキストとして扱う。
+<DT><I>-B</I>  <I>--uuencode</I><DD>
+すべてのファイルをバイナリとして扱い、パックする前に uuencode する。
+このオプションは、アーカイブのサイズを増大させる。
+受信者は、ファイルを取り出すために uudecode を持っていなければならない
+(ネットワーク上の多くの人に、uuencode の使用は煙たがられる)。
+<DT><I>-z</I>  <I>--gzip</I><DD>
+パックする前に、すべてのファイルを gzip して uuencode する。
+受信者は、ファイルを取り出すために uudecode と gzip を持っていなければならない
+(ネットワーク上の多くの人に、uuencode と gzip の
+使用は煙たがられる)。
+<DT><I>-g</I> LEVEL  <I>--level-for-gzip=</I>LEVEL<DD>
+圧縮するとき、'-LEVEL' を gzip のパラメーターとして使う。
+デフォルトは 9 である。
+<I>-g</I> オプションは、デフォルトで <I>-z</I> オプションをオンにする。
+<DT><I>-Z</I>  <I>--compress</I><DD>
+パックする前に、すべてのファイルを compress して uuencode する。
+受信者は、ファイルを取り出すために
+uudecode と compress を持っていなければならない
+(ネットワーク上の多くの人に、uuencode と compress の
+使用は煙たがられる)。
+<I>-C</I> オプションは、<I>-Z</I> と同義であるが、推奨されない。
+<DT><I>-b</I> BITS  <I>--bits-per-code=</I>BITS<DD>
+圧縮するとき、'-bBITS' を compress のパラメーターとして使う。
+<I>-B</I> オプションは、デフォルトで <I>-Z</I> オプションをオンにする。
+デフォルトの値は 12 である。
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H3>転送エラーに対する保護：</H3>
+
+<DL COMPACT>
+<DT><I>-w</I>  <I>--no-character-count</I><DD>
+ファイルを取り出すした後、'wc -c' を使って各ファイルをチェックしない。
+デフォルトではチェックする。
+<DT><I>-D</I>  <I>--no-md5-digest</I><DD>
+取り出したファイルを検査するために 'md5sum' ダイジェストを使わない。
+デフォルトでは、チェックする。
+<DT><I>-F</I>  <I>--force-prefix</I><DD>
+必要がない場合でも、強制的にプレフィックス文字
+(<I>-d</I> オプションの引き数が 'X' で始まっていない限り、通常は 'X') を
+すべての行の行頭におく。
+特に <I>-B</I> や <I>-Z</I> が使われる場合、
+このオプションはアーカイブのサイズを少し増加させる。
+<DT><I>-d</I> XXX  <I>--here-delimiter=</I>XXX<DD>
+SHAR_EOF のかわりに XXX を shar アーカイブの中のファイルの境界に使う。
+このオプションは、shar ファイルをその人独自のものにしたい人のためにある。
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H3>何種類かの shar ファイルの作成：</H3>
+
+<DL COMPACT>
+<DT><I>-V</I>  <I>--vanilla-operation</I><DD>
+unshar をする環境に sed と echo だけがあれば良いような、
+「簡潔な (vanilla)」shar ファイルを生成する。
+さらに、<I>-x</I> オプションを使わないときは、
+&quot;if test&quot; をサポートしなければならない。
+<I>-V</I> オプションは、&quot;network cop&quot; (または、&quot;brown shirt&quot;
+(訳註：やたらと検閲したがる人)) が
+不快に感じるオプションを暗黙のうちに不可にする。
+しかし、<I>-B</I>, <I>-z</I>, <I>-Z</I>, <I>-p</I>, <I>-M</I>
+オプションと同時に指定されると、警告を発する
+(これらのオプションは、unshar をする環境に
+uudecode, gzip, compress を必要とする)。
+<DT><I>-P</I>  <I>--no-piping</I><DD>
+shar ファイル (の展開) にパイプではなく一時ファイルを使う。
+<DT><I>-x</I>  <I>--no-check-existing</I><DD>
+チェックせずに、既に存在するファイルを上書きする。
+<I>-x</I> も <I>-X</I> も指定されない場合は、
+アーカイブからファイルを取り出すときに、
+既に存在するファイルをチェックして上書きしない。
+ファイルを取り出すとき、
+<P>
+<DL COMPACT><DT><DD>
+sh archive -c
+</DL>
+
+<DT><DD>
+というように、<I>-c</I> がスクリプトへの引き数として渡されると、
+既に存在するファイルが無条件に上書きされる。
+<DT><I>-X</I>  <I>--query-user</I><DD>
+ファイルを取り出すとき、ファイルの上書きをユーザーに対話的に尋ねる。
+(ネットワーク上に送信する shar ファイルに使ってはならない)。
+<DT><I>-m</I>  <I>--no-timestamp</I><DD>
+アーカイブからファイルを取り出すときに 'touch' コマンドを生成しない。
+ファイル修正日時は復元されない。
+<DT><I>-Q</I>  <I>--quiet-unshar</I><DD>
+詳細出力をしない。
+ファイルを取り出すときに出力されるコメントをアーカイブに含めない。
+<DT><I>-f</I>  <I>--basename</I><DD>
+パスを考慮せず、ファイル名だけで復元をする。
+このオプションはファイル名だけが使われるようにする。
+shar ファイルが複数のディレクトリから作られる場合に役立つ。
+ディレクトリ名が shar に渡される場合、
+<I>-f</I> オプションが指定されているかどうかに関係なく、
+そのディレクトリ以下の階層は復元されることに注意すること。
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H3>国際化：</H3>
+
+<DL COMPACT>
+<DT><I>--no-i18n</I><DD>
+国際化されたシェルアーカイブを作らず、デフォルトの英語メッセージを使う。
+shar は通常、
+アーカイブからファイルを取り出すときに
+(環境変数 LANG/LC_MESSAGES で決定される) その人の好みの言語で
+メッセージを出力することができるアーカイブを作る。
+ファイルを取り出すとき、その人の言語のメッセージファイルがない場合は、
+メッセージは英語になる。
+<DT><I>--print-text-domain-dir</I><DD>
+shar がいろいろな言語のメッセージファイルを見つけるための
+ディレクトリを表示し、すぐに終了する。
+</DL>
+<A NAME="lbAN">&nbsp;</A>
+<H2>例</H2>
+
+<PRE>
+
+shar *.c &gt; cprog.shar                # すべての C プログラムソース
+shar -Q *.[ch] &gt; cprog.shar          # 詳細出力なし。.c と .h ファイル
+shar -B -l28 -oarc.sh *.arc          # すべてのバイナリ .arc ファイルを、
+                                     # ファイル arc.sh.01 - arc.sh.NN へ
+shar -f /lcl/src/u*.c &gt; u.sh         # ファイル名のみを使用
+
+</PRE>
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>警告</H2>
+
+<P>
+
+ファイルを取り出すとき作られるディレクトリに対して、
+chmod と touch が起動されることはない。
+よって、ディレクトリを shar でパックすると、
+取り出されたディレクトリのアクセス権・修正日時は、
+元のディレクトリのものと一致しない。
+<P>
+
+shar にディレクトリを渡すと、
+ディレクトリは 2 回以上スキャンされる。
+よって、shar が動作している間にディレクトリを変更しないように
+注意しなければならない。
+<P>
+
+出力ファイルが入力ファイルに含まれないように注意すること。
+さもないと、shar はディスクが溢れるまでループする。
+特に、shar にディレクトリを渡すときは、
+出力ファイルをそのディレクトリ (もしくはそのサブディレクトリ) に
+置かないように注意すること。
+<P>
+
+<I>-B</I>, <I>-z</I>, <I>-Z</I>, 特に <I>-M</I> を使うと、
+ファイル数に応じてアーカイブプロセスが非常に遅くなる。
+<P>
+
+<I>-X</I> オプションを使うと、多くの unshar プロセスで
+<I>間違いなく</I> 問題を引き起こす shar ファイルが作られる。
+この機能を使うのは、合意の取れた集団内で受け渡されるアーカイブのみにすること。
+もちろん、<I>-X</I> は Usenet に発信される
+シェルアーカイブのためのものではない。
+<I>-B</I>, <I>-z</I>, <I>-Z</I> をネットワーク上の shar ファイルに使うと、
+非常に非難されるだろう。
+<I>-m</I> と <I>-F</I> を使わない場合も、時々苦情を言われるだろう。
+<A NAME="lbAP">&nbsp;</A>
+<H2>関連項目</H2>
+
+<P>
+
+<A HREF="../man1/unshar.1.html">unshar</A>(1)
+<A NAME="lbAQ">&nbsp;</A>
+<H2>返り値</H2>
+
+<P>
+
+不正なオプション・矛盾するオプション、
+一般でないファイル・見つからないファイル・アクセスできないファイル、
+(有り得ない) メモリ割り当ての失敗、に対するエラーメッセージ。
+<A NAME="lbAR">&nbsp;</A>
+<H2>著者</H2>
+
+shar と unshar プログラムは多くの著者の協同作品である。
+多くの人々が、問題の報告・いろいろな改良の示唆・実際のコードの提供に
+貢献してくれた。
+これらの人々は sharutils ディストリビューションの
+THANKS というファイルにリストされている。
+<P>
+<P>
+<P>
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DL>
+<DT><A HREF="#lbAF">フィードバックを与える：</A><DD>
+<DT><A HREF="#lbAG">ファイルの選択：</A><DD>
+<DT><A HREF="#lbAH">出力の分割：</A><DD>
+<DT><A HREF="#lbAI">shar ヘッダーの制御：</A><DD>
+<DT><A HREF="#lbAJ">ファイルの格納法の選択：</A><DD>
+<DT><A HREF="#lbAK">転送エラーに対する保護：</A><DD>
+<DT><A HREF="#lbAL">何種類かの shar ファイルの作成：</A><DD>
+<DT><A HREF="#lbAM">国際化：</A><DD>
+</DL>
+<DT><A HREF="#lbAN">例</A><DD>
+<DT><A HREF="#lbAO">警告</A><DD>
+<DT><A HREF="#lbAP">関連項目</A><DD>
+<DT><A HREF="#lbAQ">返り値</A><DD>
+<DT><A HREF="#lbAR">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:25 GMT, December 05, 2022
+</BODY>
+</HTML>

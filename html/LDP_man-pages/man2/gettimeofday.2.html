@@ -1,0 +1,198 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETTIMEOFDAY</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETTIMEOFDAY</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-04-26<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/gettimeofday.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+gettimeofday, settimeofday - 時刻を取得/設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+
+<B>int gettimeofday(struct timeval *</B><I>tv</I><B>, struct timezone *</B><I>tz</I><B>);</B>
+
+<B>int settimeofday(const struct timeval *</B><I>tv</I><B>, const struct timezone *</B><I>tz</I><B>);</B>
+
+</PRE>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+<B>settimeofday</B>(): _BSD_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+関数 <B>gettimeofday</B>()  と <B>settimeofday</B>()  は時刻とタイムゾーンを取得または設定する。 <I>tv</I> 引き数は
+<I>struct timeval</I> である (<I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I> で定義されている):
+<P>
+
+<PRE>
+struct timeval {
+    time_t      tv_sec;     /* 秒 */
+    suseconds_t tv_usec;    /* マイクロ秒 */
+};
+</PRE>
+
+
+<P>
+これにより紀元 (the Epoch: <B><A HREF="../man2/time.2.html">time</A></B>(2)  を参照) からの秒とマイクロ秒が取得できる。 <I>tz</I> 引き数は <I>struct
+timezone</I> である:
+<P>
+
+<PRE>
+struct timezone {
+    int tz_minuteswest;     /* グリニッジ標準時との差 (西方に分単位) */
+    int tz_dsttime;         /* 夏時間調整の型 */
+};
+</PRE>
+
+
+<P>
+
+
+
+
+
+
+
+<I>tv</I> や <I>tz</I> が NULL の場合、対応する構造体の設定/取得は行われない
+(ただし、<I>tv</I> が NULL の場合には、コンパイル時の警告が発生する)。
+<P>
+
+<I>timezone</I> 構造体の利用は廃止予定とされている;
+通常は <I>tz</I> 引き数に NULL を指定すべきである (下記の「注意」を参照)。
+<P>
+Linux では、 <B>settimeofday</B>() システムコールに関連して、独特の「クロックのズレ
+(warp clock)」が存在する場合がある。 これは (ブート後の) 最初の呼び出しで
+<I>tz</I> 引き数が NULL でなく、 <I>tv</I> 引き数が NULL で <I>tz_minuteswest</I> フィールド
+が 0 でない場合に起こる (この場合 <I>tz_dsttime</I> フィールドは 0 にすべきである)。
+このような場合、 <B>settimeofday</B>() は CMOS クロックが地方時 (local time) であり、
+UTC システム時間を得るためには、<I>tz_minuteswest</I> の分だけ増加させなくてはなら
+ないとみなしてしまう。 疑いもなく、この機構を使うことは良い考えではない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>gettimeofday</B>()  と <B>settimeofday</B>()  は成功すると 0 を返し、失敗した場合は -1 を返す (この場合は
+<I>errno</I> が適切に設定される)。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>tv</I> か <I>tz</I> のどちらかがアクセス可能なアドレス空間外を指している。
+<DT><B>EINVAL</B><DD>
+タイムゾーン (または他の何か) が不正である。
+<DT><B>EPERM</B><DD>
+呼び出し元プロセスに <B>settimeofday</B>()  を呼び出すための十分な特権がない。 Linux では <B>CAP_SYS_TIME</B>
+ケーパビリティ (capability) が必要である。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+SVr4, 4.3BSD に準拠する。 POSIX.1-2001 は <B>gettimeofday</B>()  については記述しているが、
+<B>settimeofday</B>()  については記述していない。 POSIX.1-2008 では <B>gettimeofday</B>()
+は廃止予定とされており、 代わりに <B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2)  の使用が推奨されている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>gettimeofday</B>() が返す時刻は、システム時間の不連続な変化
+(例えば、システム管理者がシステム時間を手動で変更した場合など)
+の影響を<I>受ける</I>。単調増加するクロックが必要な場合は、
+<B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2) を参照してほしい。
+<P>
+<I>timeval</I> 構造体を操作するためのマクロの説明は <B><A HREF="../man3/timeradd.3.html">timeradd</A></B>(3)  にある。
+<P>
+昔は <I>struct timeval</I> のフィールドは <I>long</I> 型であった。
+<P>
+
+
+
+
+<I>tz_dsttime</I> は Linux でこれまで使われたことはない。
+したがって、以下は純粋に歴史的な興味から書かれたものである。
+<P>
+<I>tz_dsttime</I> フィールドには (下記に示す) シンボル定数が格納される。
+これは一年のうちでいつ夏時間 (Daylight Savings Time) を実施するかを示している
+(注意: その値は年間を通した定数である: 夏時間が実施中であることを示すわけではなく、
+アルゴリズムを選択しているだけである)。 夏時間は以下のように定義される:
+
+<PRE>
+
+<B>DST_NONE</B>     /* 夏時間を採用していない */
+<BR>
+<B>DST_USA</B>      /* アメリカ合衆国式夏時間 */
+<BR>
+<B>DST_AUST</B>     /* オーストラリア式夏時間 */
+<BR>
+<B>DST_WET</B>      /* 西ヨーロッパ式夏時間 */
+<BR>
+<B>DST_MET</B>      /* 中央ヨーロッパ式夏時間 */
+<BR>
+<B>DST_EET</B>      /* 東ヨーロッパ式夏時間 */
+<BR>
+<B>DST_CAN</B>      /* カナダ */
+<BR>
+<B>DST_GB</B>       /* グレートブリテンおよびアイルランド */
+<BR>
+<B>DST_RUM</B>      /* ルーマニア */
+<BR>
+<B>DST_TUR</B>      /* トルコ */
+<BR>
+<B>DST_AUSTALT</B>  /* 1986年に移行されたオーストラリア式 */
+</PRE>
+
+
+<P>
+
+当然のことながら、夏時間がどの期間に実施されるかを国ごとの簡単なアルゴリズムで
+導くことができないことが判明した。 実際、夏時間の期間は予測不可能な政治的決定で
+決定される。そのため、この方法でタイムゾーンを表すことは断念された。
+Linux において <B>settimeofday</B>() を呼び出すときは、
+<I>tz_dsttime</I> フィールドを 0 にするべきである。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/date.1.html">date</A></B>(1), <B><A HREF="../man2/adjtimex.2.html">adjtimex</A></B>(2), <B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2), <B><A HREF="../man2/time.2.html">time</A></B>(2),
+<B><A HREF="../man3/ctime.3.html">ctime</A></B>(3), <B><A HREF="../man3/ftime.3.html">ftime</A></B>(3), <B><A HREF="../man3/timeradd.3.html">timeradd</A></B>(3), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+<B><A HREF="../man7/time.7.html">time</A></B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

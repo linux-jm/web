@@ -1,0 +1,408 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STRFTIME</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>STRFTIME</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated:  2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/strftime.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+strftime - 日付および時刻の文字列への変換
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</B>
+
+<B>size_t strftime(char *</B><I>s</I><B>, size_t </B><I>max</I><B>, const char *</B><I>format</I><B>,</B>
+<B>                const struct tm *</B><I>tm</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+
+<B>strftime</B>() 関数 は、要素別の時刻 <I>tm</I> の内容を <I>format</I> で指定された書式指定にしたがって変換し、長さ <I>max</I>
+の文字列 <I>s</I> に書き込む。要素別の時刻構造体 <I>tm</I> は <I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I> で定義されている。 <B><A HREF="../man3/ctime.3.html">ctime</A></B>(3)
+も参照。
+<P>
+
+書式指定はヌル終端された文字列であり、「変換指定 (conversion
+specification)」と呼ばれる特別な文字列を含めることができる。各々の変換指定は '%' 文字で始まり、「変換指定文字
+(conversion specifier character)」と呼ばれる何らか他の文字で終端される。上記以外の全ての文字列は「通常の文字列
+(ordinary character sequence)」となる。
+<P>
+
+(NULL バイトも含む) 通常の文字列内の文字は、そのまま <I>format</I> から <I>s</I>
+にコピーされる。一方、変換指定の文字は以下のリストに示すように置換される。このリストでは、 <I>tm</I>
+構造体のフィールドが参照される場合、その情報も記載している。
+<DL COMPACT>
+<DT><B>%a</B><DD>
+現在のロケールにおける曜日の省略名。 <I>tm_wday</I> から計算される。現在のロケールで使用される具体的な名前は、引数に
+<B>ABDAY_</B>{<B>1</B>-<B>7</B>} を指定して <B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3) を呼び出すことで取得できる。
+<DT><B>%A</B><DD>
+現在のロケールにおける曜日の完全な名前。 <I>tm_wday</I> から計算される。現在のロケールで使用される具体的な名前は、引数に
+<B>DAY_</B>{<B>1</B>-<B>7</B>} を指定して <B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3) を呼び出すことで取得できる。
+<DT><B>%b</B><DD>
+現在のロケールにおける月の省略名。 <I>tm_mon</I> から計算される。現在のロケールで使用される具体的な名前は、引数に
+<B>ABMON_</B>{<B>1</B>-<B>12</B>} を指定して <B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3) を呼び出すことで取得できる。
+<DT><B>%B</B><DD>
+現在のロケールにおける月の完全な名前。 <I>tm_mon</I> から計算される。現在のロケールで使用される具体的な名前は、引数に
+<B>MON_</B>{<B>1</B>-<B>12</B>} を指定して <B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3) を呼び出すことで取得できる。
+<DT><B>%c</B><DD>
+現在のロケールにおいて一般的な日付・時刻の表記。現在のロケールで使用される具体的なフォーマットは、 <B>%c</B> 変換指定の場合は <B>D_T_FMT</B>
+を、 <B>%Ec</B> 変換指定の場合は <B>ERA_D_T_FMT</B> を引数に指定して <B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3) を呼び出すことで取得できる。
+POSIX ロケールでは <B>%a %b %e %H:%M:%S %Y</B> と等価である。
+<DT><B>%C</B><DD>
+世紀に対応する 2 桁の整数 (year/1000)。 <B>%EC</B> 変換指定は、西暦以外の年数表記 (&quot;era&quot;) の名前に対応する。
+<I>tm_year</I> から計算される。 (SU)
+<DT><B>%d</B><DD>
+月内通算日 (10 進数表記) (01-31)。 <I>tm_mday</I> から計算される。
+<DT><B>%D</B><DD>
+<B>%m/%d/%y</B> と等価。(うえっ、アメリカ専用だ。アメリカ以外の国では <B>%d/%m/%y</B>
+の方が一般的だ。紛らわしいので、使用すべきではない。) (SU)
+<DT><B>%e</B><DD>
+<B>%d</B> と同様に月内通算日を 10 進数で表現するが、 1 桁の場合 10 の位にゼロを置かずスペースを置く。 <I>tm_mday</I>
+から計算される。 (SU)
+<DT><B>%E</B><DD>
+別形式 (西暦以外の年数表記; &quot;era&quot;) を使用する際の修飾子。下記参照。 (SU)
+<DT><B>%F</B><DD>
+<B>%Y-%m-%d</B> と等価 (ISO&nbsp;8601 形式の日付フォーマット)。 (C99)
+<DT><B>%G</B><DD>
+ISO&nbsp;8601 の週 (ISO&nbsp;8601 week) に基づく年の表示。「注意」の節を参照)。世紀も 10 進数で表す。 ISO 週番号
+(<B>%V</B> を参照) に対応した 4 桁の西暦年。 これは基本的には <B>%Y</B> と同じ形式だが、ISO
+週数が前年や翌年になる場合にはその年が使用される点が異なる。 <I>tm_year</I>, <I>tm_yday</I>, <I>tm_wday</I> から計算される。
+(TZ)
+<DT><B>%g</B><DD>
+<B>%G</B> と同様。ただし、世紀を含まず下 2 桁のみを表示 (00-99)。 <I>tm_year</I>, <I>tm_yday</I>,
+<I>tm_wday</I> から計算される。 (TZ)
+<DT><B>%h</B><DD>
+<B>%b</B> と等価 (SU)
+<DT><B>%H</B><DD>
+24 時間表記での時 (hour) (00-23)。 <I>tm_hour</I> から計算される。
+<DT><B>%I</B><DD>
+12 時間表記での時 (hour) (01-12)。 <I>tm_hour</I> から計算される。
+<DT><B>%j</B><DD>
+年の初めから通算の日数 (001-366)。 <I>tm_yday</I> から計算される。
+<DT><B>%k</B><DD>
+24 時間表記での時 (0-23)。 1 桁の場合には前にゼロでなくスペースが置かれる。 <B>%H</B> も参照。 <I>tm_hour</I> から計算される。
+(TZ)
+<DT><B>%l</B><DD>
+12 時間表記での時 (0-12)。 1 桁の場合には前にゼロでなくスペースが置かれる。 <B>%I</B> も参照。 <I>tm_hour</I> から計算される。
+(TZ)
+<DT><B>%m</B><DD>
+10 進数表記の月 (01-12)。 <I>tm_mon</I> から計算される。
+<DT><B>%M</B><DD>
+10 進数表記の分 (00-59)。 <I>tm_min</I> から計算される。
+<DT><B>%n</B><DD>
+改行 (SU)
+<DT><B>%O</B><DD>
+別の数値シンボルを使用する際の修飾子。下記参照。 (SU)
+<DT><B>%p</B><DD>
+現在のロケールにおける「午前」「午後」に相当する文字列。 英語の場合には &quot;AM&quot; または &quot;PM&quot; となる。
+正午は「午後」、真夜中は「午前」として扱われる。 <I>tm_hour</I> から計算される。現在のロケールで &quot;AM&quot; と &quot;PM&quot;
+に対応する文字列表現は、それぞれ <B>AM_STR</B> と <B>PM_STR</B> を指定して <B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3)
+を呼び出すことで取得できる。
+<DT><B>%P</B><DD>
+<B>%p</B> と同様であるが小文字が使用される。 &quot;am&quot; や &quot;pm&quot;、もしくは現在のロケールでの対応する文字列となる。 <I>tm_hour</I>
+から計算される。 (GNU)
+<DT><B>%r</B><DD>
+午前・午後形式での時刻。現在のロケールで使用される具体的なフォーマットは、引数に <B>T_FMT_AMPM</B> を指定して
+<B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3) を呼び出すことで取得できる。 POSIX ロケールでは <B>%I:%M:%S %p</B> と等価である。 (SU)
+<DT><B>%R</B><DD>
+24 時間表記での時刻、秒は表示しない (<B>%H:%M</B>)。 秒を含んだものは以下の <B>%T</B> を参照すること。(SU)
+<DT><B>%s</B><DD>
+紀元 (Epoch; 1970-01-01 00:00:00 +0000 (UTC)) からの秒数。 <I>mktime(tm)</I> から計算される。
+(TZ)
+<DT><B>%S</B><DD>
+秒 (10 進数表記) (00-60)。時々ある閏秒に対応するため、値の範囲は 60 までとなっている。 <I>tm_sec</I> から計算される。
+<DT><B>%t</B><DD>
+タブ文字 (SU)
+<DT><B>%T</B><DD>
+24 時間表記の時間 (<B>%H:%M:%S</B>) (SU)
+<DT><B>%u</B><DD>
+週の何番目の日 (10 進数表記) か。月曜日を 1 とする (1-7)。 <B>%w</B> も参照。 <I>tm_wday</I> から計算される。 (SU)
+<DT><B>%U</B><DD>
+年の初めからの通算の週番号 (10 進数表記) (00-53)。 その年の最初の日曜日を、第 1 週の始まりとして計算する。 <B>%V</B> と <B>%W</B>
+も参照すること。 <I>tm_yday</I> と <I>tm_wday</I> から計算される。
+<DT><B>%V</B><DD>
+ISO&nbsp;8601 形式での年の始めからの週番号 (「注意」の節を参照)。 10 進数表記で、01 から 53
+の値となる。週番号は、新しい年が少なくとも 4 日以上含まれる最初の週を 1 として計算する。 <B>%U</B> と <B>%W</B> も参照のこと。
+<I>tm_year</I>, <I>tm_yday</I>, <I>tm_wday</I> から計算される。 (SU)
+<DT><B>%w</B><DD>
+週の何番目の日 (10 進数表記) か。日曜日を 0 とする。(0-6)。 <B>%u</B> も参照。 <I>tm_wday</I> から計算される。
+<DT><B>%W</B><DD>
+年の初めからの通算の週番号 (10 進数表記) (00-53)。 その年の最初の月曜日を、第 1 週の始まりとして計算する。 <B>%V</B> と <B>%W</B>
+も参照すること。 <I>tm_yday</I> と <I>tm_wday</I> から計算される。
+<DT><B>%x</B><DD>
+現在のロケールで一般的な日付表記。時刻は含まない。現在のロケールで使用される具体的なフォーマットは、 <B>%x</B> 変換指定の場合は <B>D_FMT</B>
+を、 <B>%Ex</B> 変換指定の場合は <B>ERA_D_FMT</B> を引数に指定して、 <B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3) を呼び出すことで取得できる。
+POSIX ロケールでは、これは <B>%m/%d/%y</B> と等価である。
+<DT><B>%X</B><DD>
+現在のロケールで一般的な時刻表記。日付は含まない。現在のロケールで使用される具体的なフォーマットは、 <B>%X</B> 変換指定の場合は <B>T_FMT</B>
+を、 <B>%EX</B> 変換指定の場合は <B>ERA_T_FMT</B> を引数に指定して、 <B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3) を呼び出すことで取得できる。
+POSIX ロケールでは、これは <B>%H:%M:%S</B> と等価である。
+<DT><B>%y</B><DD>
+西暦の下 2 桁 (世紀部分を含まない年) (00 から 99)。 <B>%Ey</B> 変換指定は。 <B>%EC</B> 変換指定で示される西暦以外の年数表記
+(&quot;era&quot;) における初めからの年数に対応する。 <I>tm_year</I> から計算される。
+<DT><B>%Y</B><DD>
+世紀部分を含めた 10 進表記の西暦年。 <B>%EY</B> 変換指定は別形式の年表記の完全な表現に対応する。 <I>tm_year</I> から計算される。
+<DT><B>%z</B><DD>
+<I>+hhmm</I> や <I>-hhmm</I> の形式のタイムゾーン (UTC へのオフセット時間)。(SU)
+<DT><B>%Z</B><DD>
+タイムゾーン名または省略名。
+<DT><B>%+</B><DD>
+
+
+<B><A HREF="../../0MultiFileIdx/man1/date.1.html">date</A></B>(1) 形式での日時。 glibc2 ではサポートされていない。 (TZ)
+<DT><B>%%</B><DD>
+'%' 文字
+</DL>
+<P>
+
+いくつかの変換指定では、変換指定文字の前に <B>E</B> や <B>O</B> 「修飾子」を置くことによって別書式を使用するように指定することができる。
+現在のロケールにおいて別書式が存在しない場合には、 通常の変換指定が使用されたかのように動作する (SU)。 統一 UNIX 規格 (Single
+UNIX Specification) では <B>%Ec</B>, <B>%EC</B>, <B>%Ex</B>, <B>%EX</B>, <B>%Ey</B>, <B>%EY</B>,
+<B>%Od</B>, <B>%Oe</B>, <B>%OH</B>, <B>%OI</B>, <B>%Om</B>, <B>%OM</B>, <B>%OS</B>, <B>%Ou</B>, <B>%OU</B>,
+<B>%OV</B>, <B>%Ow</B>, <B>%OW</B>, <B>%Oy</B>, について記述がある。ここで <B>O</B> 修飾子は別形式の数値シンボル (ローマ数字とか)
+を指定するために使用する。 <B>E</B> 修飾子はロケール依存の別表現を指定するのに使用する。 <B>E</B>
+修飾子を使った場合のデータ表現に適用されるルールは、 <B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3) の引数に <B>ERA</B>
+を指定することで取得できる。このような別表現の例としては <B>ja_JP</B> glibc ロケールでの日本の年号 (「昭和」「平成」など)
+によるカレンダー表記がある。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+
+
+
+
+
+終端のヌルバイトを含めた結果の文字列の長さが <I>max</I> バイトを超えなかった場合、 <B>strftime</B>() 関数は配列 <I>s</I>
+に格納されたバイト数を返す (このバイト数に終端のヌルバイトは含まれない)。 終端のヌルバイトを含めた結果の文字列の長さが <I>max</I>
+バイトを超える場合には、 <B>strftime</B>() は 0 を返し、配列の内容は不定となる。
+<P>
+
+返り値 0 は必ずしもエラーを意味している訳ではないので注意すること。例えば、多くのロケールでは <B>%p</B> は空文字列を返す。同様に、空の
+<I>format</I> 文字列は空文字列を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>環境変数</H2>
+
+環境変数 <B>TZ</B> と <B>LC_TIME</B> が使用される。 (訳注: <B>LC_ALL</B> が設定されている場合には <B>LC_TIME</B>
+よりもそちらが優先される。 <B>LC_TIME</B> も <B>LC_ALL</B> も設定されていない場合には <B>LANG</B> が使用される。)
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>strftime</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe env locale<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+SVr4, C89, C99. 個々の変換が厳密にどの規格に含まれるかをマークで示している。「マークなし」は ANSI C、「SU」は統一 UNIX
+規格を、「TZ」は Olson の timezone パッケージ、「GNU」は glibc を示す。 glibc2 では <B>%+</B>
+はサポートされていないが、 いくつかの拡張が行われている。POSIX.1 では ANSI C のみを参照している。 POSIX.2 の
+<B><A HREF="../../0MultiFileIdx/man1/date.1.html">date</A></B>(1)  のところに記述されている幾つかの拡張は <B>strftime</B>() にも適用できるだろう。 <B>%F</B> 変換は C99 と
+POSIX.1-2001 にある。
+<P>
+
+SUSv2 では、 <B>%S</B> は 00 から 61 の範囲をとると規定されている。 これは、1 分間のうち閏秒が 2
+つ入る可能性が理論的にはあることを考慮してのものである (実際には、このような状況はこれまで一度も 起こっていない)。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>ISO&nbsp;8601 の暦週日付</H3>
+
+<B>%G</B>, <B>%g</B>, <B>%V</B> は、ISO&nbsp;8601 標準により定義された週単位表記の年により 計算される値を出力する。 ISO&nbsp;8601
+標準の週単位表記では、週は月曜日から開始され、 週番号は、年の最初の週が 01 となり、最後の週は 52 か 53 となる。 週 01 は、新しい年が
+4 日以上含まれる最初の週である。 言い換えると、週 01 は、その年の木曜日を含む最初の週、 つまり 1 月 4 日を含む週ということである。
+新しい年のカレンダー上の最初の週に新しい年が 3 日以下しか含まれない場合、 ISO&nbsp;8601 の週単位表記では、これらの日を前の年の週 53
+の一部とみなす。 例えば、2010 年 1 月 1 日は金曜日であり、 その週には 2010 年の日が 3 日しか含まれない。 したがって、ISO&nbsp;8601 の週単位表記では、これらの日は 2009 年 (<B>%G</B>)  の週 53 (<B>%V</B>) の一部となる。 ISO&nbsp;8601 の 2010
+年の週 01 は 2010 年 1 月 4 日の月曜日から始まる。同様に、 2011 年 1 月の最初の 2 日は 2010 年の週 52
+の一部とみなされる。
+<A NAME="lbAK">&nbsp;</A>
+<H3>glibc での注意</H3>
+
+
+glibc では変換指定にいくつか拡張を行っている (これらの拡張は POSIX.1-2001 には規定されていないが、
+他のいくつかのシステムで同様の機能が提供されている)。 '%' 文字と変換指定文字の間に、オプションとして <I>フラグ</I> とフィールドの
+<I>幅</I> を指定できる (これらを指定する場合には <B>E</B> や <B>O</B> 修飾子の前に置く)。
+<P>
+
+以下のフラグ文字が使用できる。
+<DL COMPACT>
+<DT><B>_</B><DD>
+(下線)  数値の結果文字列のパディング (穴埋め) をスペース (空白文字) で行う。
+<DT><B>-</B><DD>
+(ダッシュ)  数値の結果文字列に対するパディングを行わない。
+<DT><B>0</B><DD>
+変換指定文字がデフォルトではスペースでパディングを行う場合でも、 数値の結果文字列へのパディングを 0 で行う。
+<DT><B>^</B><DD>
+結果文字列中のアルファベット文字を大文字に変換する。
+<DT><B>#</B><DD>
+結果文字列の大文字・小文字を入れ替える (このフラグは特定の変換指定文字でしか機能しない。その中でも 本当に有用なのは <B>%Z</B> の場合だけである)。
+</DL>
+<P>
+
+オプションの 10 進数の幅指定子はフラグの後ろに置くことができる (フラグはなくてもよい)。フィールドの本来の大きさが指定された幅よりも
+小さい場合、結果文字列の左側は指定された幅までパディングされる。
+<A NAME="lbAL">&nbsp;</A>
+<H2>バグ</H2>
+
+出力文字列が <I>max</I> バイトを超えてしまう場合、 <I>errno</I> は設定「されない」。 このため、このエラーと、 <I>format</I>
+文字列がきちんと処理されて長さ 0 の出力文字列が生成される場合、を区別することができない。 POSIX.1-2001 では <B>strftime</B>()
+に関して <I>errno</I> に設定される値について一切規定して「いない」。
+<P>
+
+<B><A HREF="../../GNU_gcc/man1/gcc.1.html">gcc</A></B>(1)  のいくつかのバージョンにはおかしなところがあり、 <B>%c</B> の使用法について以下のような警告を出す: <I>warning:
+`%c' yields only last 2 digits of year in some locales</I> (<I>警告:</I>
+いくつかのロケールでは <I>`%c'</I> は年の下2桁しか出力しない<I>)。</I> もちろんプログラマが <B>%c</B> を使うのはお薦めできることである。
+<B>%c</B> を使うと適切な日付と時刻の表記を得ることができるからである。 <B><A HREF="../../GNU_gcc/man1/gcc.1.html">gcc</A></B>(1)
+のこの問題を回避しようとすると、何かすっきりしない気分になるだろう。 比較的きれいな回避策は以下のような中間関数を追加することである。
+<P>
+
+
+
+size_t
+my_strftime(char *s, size_t max, const char *fmt,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;struct&nbsp;tm&nbsp;*tm)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;strftime(s,&nbsp;max,&nbsp;fmt,&nbsp;tm);
+}
+
+
+<P>
+
+現在では、 <B><A HREF="../../GNU_gcc/man1/gcc.1.html">gcc</A></B>(1)  はこの警告を抑えるための <I>-Wno-format-y2k</I> オプションを
+提供しており、上記の回避策はもはや必要ない。
+<A NAME="lbAM">&nbsp;</A>
+<H2>例</H2>
+
+<B>RFC&nbsp;2822 準拠の日付形式</B> (%a と %b は英語ロケール)
+<P>
+
+
+
+<BR>&nbsp;&quot;%a,&nbsp;%d&nbsp;%b&nbsp;%Y&nbsp;%T&nbsp;%z&quot;
+
+
+<P>
+
+<B>RFC&nbsp;822 準拠の日付形式</B> (%a と %b は英語ロケール)
+<P>
+
+
+
+<BR>&nbsp;&quot;%a,&nbsp;%d&nbsp;%b&nbsp;%y&nbsp;%T&nbsp;%z&quot;
+
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>サンプルプログラム</H3>
+
+以下のプログラムを使うと <B>strftime</B>() の実験ができる。
+<P>
+
+以下に <B>strftime</B>() の glibc 実装が生成する結果の例をいくつか示す。
+<P>
+
+
+
+$<B> ./a.out '%m'</B>
+Result string is &quot;11&quot;
+$<B> ./a.out '%5m'</B>
+Result string is &quot;00011&quot;
+$<B> ./a.out '%_5m'</B>
+Result string is &quot;   11&quot;
+
+
+<A NAME="lbAO">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;outstr[200];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;t;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;tm&nbsp;*tmp;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;t&nbsp;=&nbsp;time(NULL);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tmp&nbsp;=&nbsp;localtime(&amp;t);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(tmp&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;localtime&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(strftime(outstr,&nbsp;sizeof(outstr),&nbsp;argv[1],&nbsp;tmp)&nbsp;==&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;strftime&nbsp;returned&nbsp;0&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Result&nbsp;string&nbsp;is&nbsp;\&quot;%s\&quot;\n&quot;,&nbsp;outstr);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAP">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../../0MultiFileIdx/man1/date.1.html">date</A></B>(1),&nbsp;<B><A HREF="../man2/time.2.html">time</A></B>(2),&nbsp;<B><A HREF="../man3/ctime.3.html">ctime</A></B>(3),&nbsp;<B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3),&nbsp;<B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3),
+<B><A HREF="../man3/sprintf.3.html">sprintf</A></B>(3), <B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)
+<A NAME="lbAQ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">環境変数</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">ISO&nbsp;8601 の暦週日付</A><DD>
+<DT><A HREF="#lbAK">glibc での注意</A><DD>
+</DL>
+<DT><A HREF="#lbAL">バグ</A><DD>
+<DT><A HREF="#lbAM">例</A><DD>
+<DL>
+<DT><A HREF="#lbAN">サンプルプログラム</A><DD>
+<DT><A HREF="#lbAO">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAP">関連項目</A><DD>
+<DT><A HREF="#lbAQ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

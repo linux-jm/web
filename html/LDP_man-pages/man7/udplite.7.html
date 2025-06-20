@@ -1,0 +1,161 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UDPLITE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>UDPLITE</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/udplite.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+udplite - 軽量なユーザーデータグラムプロトコル
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<BR>
+
+
+
+
+<P>
+
+<B>sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDPLITE);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これは RFC&nbsp;3828 に書かれている軽量なユーザーデータグラムプロトコル (Lightweight User Datagram Protocol;
+UDP-Lite) の実装である。
+<P>
+
+UDP-Lite は UDP (RFC&nbsp;768) の拡張で、可変長のチェックサムをサポートしている。
+このプロトコルが効果を発揮するのは、少しだけ壊れたデータグラムがあった場合に、 そのデータグラムを下位レイヤーのプロトコルに廃棄させるのではなく、
+それを利用することができるような、ある種のマルチメディア転送においてである。
+<P>
+
+可変長のチェックサムの対象範囲は <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  オプション経由で設定される。 このオプションが設定されていない場合、UDP
+と異なるのは 違う IP プロトコル識別子 (IANA 番号 136) を使用する点だけである。
+<P>
+
+UDP-Lite の実装は <B><A HREF="../man7/udp.7.html">udp</A></B>(7)  の完全な拡張、すなわち API と API の動作は同じである。 これに加えて、2
+つのソケットオプションがチェックサムの対象範囲を 制御するために提供されている。
+<A NAME="lbAE">&nbsp;</A>
+<H3>アドレスのフォーマット</H3>
+
+UDP-Litev4 は <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  で説明されている <I>sockaddr_in</I> アドレスを使用する。 UDP-Litev6 は
+<B><A HREF="../man7/ipv6.7.html">ipv6</A></B>(7)  で説明されている <I>sockaddr_in6</I> アドレスを使用する。
+<A NAME="lbAF">&nbsp;</A>
+<H3>ソケットオプション</H3>
+
+UDP-Lite のソケットオプションを設定/取得するには、 オプションレベル引数に <B>IPPROTO_UDPLITE</B> を指定して、取得時には
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  を、設定時には <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  を呼び出す。さらに、全ての <B>IPPROTO_UDP</B>
+のソケットオプションが UDP-Lite ソケットでも使用できる。 詳細は <B><A HREF="../man7/udp.7.html">udp</A></B>(7)  を参照のこと。
+<P>
+
+以下の 2 つが UDP-Lite に固有のオプションである。
+<DL COMPACT>
+<DT><B>UDPLITE_SEND_CSCOV</B><DD>
+このオプションは送信側のチェックサムの対象範囲を設定する。 <I>int</I> 型を引数として取り、設定可能な値の範囲は 0 から 2^16-1 までである。
+<DT><DD>
+値 0 はデータグラム全体が常にチェックサムの対象となることを意味する。 値 1〜7 は不正であり (RFC&nbsp;3828 の 3.1
+章)、範囲の設定として最小値である 8 に切り上げられる。
+<DT><DD>
+IPv6 の jumbograms (巨大なデータグラム; RFC&nbsp;2675) の場合には、 UDP-Litev6
+のチェックサムの対象範囲は、RFC&nbsp;3828 の 3.5 章にあるように、 先頭から 2^16-1 オクテットまでに限定される。
+そのため、それより大きな値は 2^16-1 に黙って切り詰められる。 現在の対象範囲の値を知りたければ、いつでも <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
+を使って値を問い合わせることができる。
+<DT><B>UDPLITE_RECV_CSCOV</B><DD>
+これは受信側のチェックサムの対象範囲を設定するもので、 使用される引数形式と値の範囲は <B>UDPLITE_SEND_CSCOV</B> と同じである。
+このオプションは、部分的なチェックサム対象範囲を持つトラフィックを 有効にするのに必要なわけではなく、トラフィックフィルターとして機能する。
+このオプションが有効にすると、カーネルは指定されたチェックサム対象範囲 よりも「短かい」対象範囲を持つパケットを全て廃棄するようになる。
+<DT><DD>
+
+
+
+
+
+
+
+
+<B>UDPLITE_RECV_CSCOV</B> の値が実際のパケットのチェックサム対象範囲よりも大きい場合、 受信したパケットは黙って廃棄される。
+ただし、システムログに対して警告メッセージが生成されるかもしれない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<B><A HREF="../man7/udp.7.html">udp</A></B>(7)  について書かれている全てのエラーは返る可能性がある。 UDP-Lite 自体は新たなエラーは追加していない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/proc/net/snmp</I><DD>
+UDP-Litev4 の基本的な統計情報カウンター。
+<DT><I>/proc/net/snmp6</I><DD>
+UDP-Litev6 の基本的な統計情報カウンター。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>バージョン</H2>
+
+UDP-Litev4/v6 は Linux 2.6.20 で初めて登場した。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+
+glibc によるサポートがない場合は、以下の定義を行う必要がある。
+<P>
+
+
+
+
+#define IPPROTO_UDPLITE     136
+#define UDPLITE_SEND_CSCOV  10
+#define UDPLITE_RECV_CSCOV  11
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7), <B><A HREF="../man7/ipv6.7.html">ipv6</A></B>(7), <B><A HREF="../man7/socket.7.html">socket</A></B>(7), <B><A HREF="../man7/udp.7.html">udp</A></B>(7)
+<P>
+
+RFC&nbsp;3828 for the Lightweight User Datagram Protocol (UDP-Lite).
+<P>
+
+Linux カーネルソース内の <I>Documentation/networking/udplite.txt</I>
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">アドレスのフォーマット</A><DD>
+<DT><A HREF="#lbAF">ソケットオプション</A><DD>
+</DL>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">ファイル</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

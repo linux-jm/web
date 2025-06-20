@@ -1,0 +1,630 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CONSOLE_CODES</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>CONSOLE_CODES</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated:  2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man4/console_codes.4">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+console_codes - Linux コンソールのエスケープシーケンスとコントロール シーケンス
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+Linux コンソールは VT102 と ECMA-48/ISO6429/ANSI X3.64 端末コンソールの
+サブセットに、カラーパレットや文字集合のマッピングなどを変更する プライベートモードシーケンスを加えて実装されている。 以下の表では、機能の
+ECMA-48 または DEC のニーモニクス(DECで始まれば後者)を 2 番目の桁に記す。 ニーモニクスのないものは ECMA-48 でも
+VT102 でもないものである。
+<P>
+
+すべての出力作業が終って、実際に印字するために文字のストリームが コンソールドライバーに届いた時、最初に行なわれるのが、処理用コードから
+印字用のコードへの変換である。
+<P>
+
+もし、コンソールが UTF-8 モードなら、入って来たバイト(byte)は 16 ビットの Unicode に組み立てられる。そうでなければ、それぞれの
+バイトは現在の(各バイトを Unicode の値に変換する)マッピングテーブルに
+従って変換される。これに関しては下のキャラクターセット(Charcter Sets)  節を参照のこと。
+<P>
+
+通常、Unicode の値はフォントインデックス(font index) に変換され、 ビデオメモリーに蓄えられる。そして(ビデオ ROM
+中に見付けられる)  対応するグリフ(glyph)が画面に現れる。 Unicode を用いると、(PC 互換機の設計では) 512 の異なった
+グリフを同時に利用できるようになる。
+<P>
+
+現在の Unicode の値がコントロール文字であるかエスケープシーケンスを 処理している時には、その値は特別に扱われる。
+フォントのインデックスに変換されてグリフとして表示される代わりに、カーソルの 移動やその他のコントロール機能を実行させる。
+詳しいことは、後述の「LINUX コンソールコントロール」のセクションを参照のこと。
+<P>
+
+一般に端末コントロールコードをプログラム中に直接記述するのは 良いことではない。 Linuxでは、端末において実現可能な操作のデータベースである
+<B>terminfo</B>(5)  をサポートしている。 コンソールエスケープシーケンスをわざわざ入力するよりも、ほとんどの場合 terminfo
+の情報を参照する <B>ncurses</B>(3), <B>tput</B>(1), や <B>reset</B>(1)
+などのスクリーンライブラリやユーティリティーを使いたいと思うであろう。
+<A NAME="lbAD">&nbsp;</A>
+<H3>Linux コンソールコントロール</H3>
+
+この章では Linux コンソールにおいて特殊な機能(つまり、現在のカーソル位置に
+文字のイメージを印字する以外のこと)を起こさせる全てのコントロール文字と エスケープシーケンスについて述べる。
+<P>
+
+<B>コントロール文字</B>
+<P>
+
+コントロール文字とは、(マッピングテーブルによる変換前のコードが)  00 (NUL), 07 (BEL), 08 (BS), 09 (HT), 0a
+(LF), 0b (VT), 0c (FF), 0d (CR), 0e (SO), 0f (SI), 18 (CAN), 1a (SUB), 1b
+(ESC), 7f (DEL) の 14 のコードのうちのどれかである文字である。 &quot;コントロール文字表示(display control
+characters)&quot;モード(後述)を 設定すると、07, 09, 0b, 18, 1a, 7f をグリフとして表示することができる。 一方、
+UTF-8 モードでは、00-1f の全てのコードは、コントロール文字表示 モードが指定された場合でもコントロール文字として扱われる。
+<P>
+
+コントロール文字がある時には、それはすぐに(たとえエスケープシーケンスの 途中でも)実行され、破棄される。エスケープシーケンスは次の文字から続けられる
+(しかし、ESC は新しいエスケープシーケンスを始めるので、 前の終了していないエスケープシーケンスが中止される可能性がある。 さらに、CAN と
+SUB はどんなエスケープシーケンスも中止する)。 認められているコントロール文字は、BEL, BS, HT, LF, VT, FF, CR, SO,
+SI, CAN, SUB, ESC, DEL, CSI である。これらは期待どおりの動作をする:
+<DL COMPACT>
+<DT>
+<DD>BEL (0x07, <B>^G</B>) はビープ音を鳴らす;
+<DT>
+<DD>BS (0x08, <B>^H</B>) はバックスペース (ただし、行頭は越えない);
+<DT>
+<DD>HT (0x09, <B>^I</B>) は次のタブストップ(tab stop)へ移動する、そこから行末までに
+タブストップが無い場合は行の終りに移動する;
+<DT>
+<DD>LF (0x0A, <B>^J</B>), VT (0x0B, <B>^K</B>), FF (0x0C, <B>^L</B>) これらは全て
+ラインフィード(linefeed)を与える; LF/NL (ニューラインモード(new line mode))がセットされていれば
+キャリッジリターンもアクティブにする;
+<DT>
+<DD>CR (0x0D, <B>^M</B>) はキャリッジリターンを与える;
+<DT>
+<DD>SO (0x0E, <B>^N</B>) は G1 文字集合をアクティブにする。
+<DT>
+<DD>SI (0x0F, <B>^O</B>) は G0 文字集合をアクティブにする;
+<DT>
+<DD>CAN (0x18, <B>^X</B>) と SUB (0x1A, <B>^Z</B>) はエスケープシーケンスを中止する;
+<DT>
+<DD>ESC (0x1B, <B>^[</B>) はエスケープシーケンスを始める。
+<DT>
+<DD>DEL (0x7F) は無視される;
+<DT>
+<DD>CSI (0x9B) は ESC [ と等価。
+</DL>
+<P>
+
+<B>エスケープシーケンスであるが CSI シーケンスでないもの</B>
+<TABLE>
+<TR VALIGN=top><TD>ESC c</TD><TD>RIS</TD><TD>リセット。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC D</TD><TD>IND</TD><TD>ラインフィード。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC E</TD><TD>NEL</TD><TD>ニューライン。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC H</TD><TD>HTS</TD><TD>現在の桁の位置にタブストップを設定する。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC M</TD><TD>RI</TD><TD>逆ラインフィード<BR></TD></TR>
+<TR VALIGN=top><TD>ESC Z</TD><TD>DECID</TD><TD>
+DEC固有の識別用。
+カーネルは文字列 ESC [ ? 6 c を返す。
+これは端末がVT102であることを意味する。
+<BR></TD></TR>
+<TR VALIGN=top><TD>ESC 7</TD><TD>DECSC</TD><TD>
+現在の状態 (カーソルの座標、属性、G0, G1 で示している
+文字集合) をセーブする。
+<BR></TD></TR>
+<TR VALIGN=top><TD>ESC 8</TD><TD>DECRC</TD><TD>最後に ESC 7 でセーブした状態を復帰させる。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC [</TD><TD>CSI</TD><TD>コントロールシーケンスを導入する。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC %</TD><TD></TD><TD>キャラクターセットを選択するシーケンスを開始する。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC % @</TD><TD></TD><TD>&nbsp;&nbsp;&nbsp; デフォルト(ISO 646 / ISO 8859-1)を選択する。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC % G</TD><TD></TD><TD>&nbsp;&nbsp;&nbsp; UTF-8 を選択する。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC % 8</TD><TD></TD><TD>&nbsp;&nbsp;&nbsp; UTF-8 を選択する(旧式)。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC # 8</TD><TD>DECALN</TD><TD>DEC のスクリーン調整テスト - スクリーンを E でうめる。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC (</TD><TD></TD><TD>G0 文字集合を定義するシーケンスを開始する。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ( B</TD><TD></TD><TD>&nbsp;&nbsp;&nbsp; デフォルト(ISO 8859-1 マッピング)を選択する。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ( 0</TD><TD></TD><TD>&nbsp;&nbsp;&nbsp; VT100 グラフィクスマッピングを選択する。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ( U</TD><TD></TD><TD>&nbsp;&nbsp;&nbsp; ヌルマッピングを選択する - キャラクター ROM から直接マッピングする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ( K</TD><TD></TD><TD>&nbsp;&nbsp;&nbsp; ユーザー定義のマッピングを選択する - そのマップ<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>&nbsp;&nbsp;&nbsp; は <B>mapscrn</B>(8) ユーティリティーによってロードされる。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC )</TD><TD></TD><TD>G1 を定義するシーケンスを開始する。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>(すでに述べたように B, 0, U, K のどれかが次に続く)<BR></TD></TR>
+<TR VALIGN=top><TD>ESC &gt;</TD><TD>DECPNM</TD><TD>数値キーパッドモード(numeric keypad mode)をセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC =</TD><TD>DECPAM</TD><TD>アプリケーションキーパッドモード(application keypad mode) をセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ]</TD><TD>OSC</TD><TD>
+(&quot;Operating system command&quot;のことだろう)
+ESC ] P <I>nrrggbb</I>: 最後の P のあとの 7 つの 16 進数を
+パラメーターとして :-( パレットをセットする。
+ここで、<I>n</I>は色 (0-15)、<I>rrggbb</I>は赤/緑/青の値
+(0-255)を意味する。
+ESC ] R: パレットをリセットする。
+<BR></TD></TR>
+</TABLE>
+
+<P>
+
+<B>ECMA-48 CSI シーケンス</B>
+<P>
+
+CSI (または ESC [ ) のあとに、最大で NPAR (16) 個のセミコロンで区切られた 10 進数のパラメーターシーケンスが続く。
+空であるかそこにないパラメーターは 0 とされる。 パラメーターシーケンスの前にはひとつのクエスチョンマークがつくことがある。
+<P>
+
+しかし、CSI [ (または ESC [ [ ) の後では、一文字が読まれ、このすべての
+パラメーターシーケンスが無視される(要するにファンクションキーのエコーは 無視されるということである)。
+<P>
+
+CSI シーケンスの動作は、その最後の文字によって決まる。
+<TABLE>
+<TR VALIGN=top><TD>@</TD><TD>ICH</TD><TD>指示された数の空白文字を挿入する。<BR></TD></TR>
+<TR VALIGN=top><TD>A</TD><TD>CUU</TD><TD>指示された数だけカーソルを上方向に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD>B</TD><TD>CUD</TD><TD>カーソルを指示された数の行だけ下方向に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD>C</TD><TD>CUF</TD><TD>カーソルを指示された数の桁だけ右に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD>D</TD><TD>CUB</TD><TD>カーソルを指示された数の桁だけ左に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD>E</TD><TD>CNL</TD><TD>カーソルを指示された数の行だけ下の第 1 桁に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD>F</TD><TD>CPL</TD><TD>カーソルを指示された数の行だけ上の第 1 桁に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD>G</TD><TD>CHA</TD><TD>カーソルを現在の行の指示された桁に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD>H</TD><TD>CUP</TD><TD>カーソルを指示された行、桁(1,1を原点とする)に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD>J</TD><TD>ED</TD><TD>ディスプレイの消去(デフォルト: カーソルからディスプレイの最後まで)。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>ESC [ 1 J: 最初からカーソルまでの消去。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>ESC [ 2 J: ディスプレイ全体の消去。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>ESC [ 3 J: スクロールバッファーも含めたディスプレイ全体の<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>消去 (Linux 3.0 以降)。<BR></TD></TR>
+<TR VALIGN=top><TD>K</TD><TD>EL</TD><TD>行の消去(デフォルト: カーソルから行末まで)。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>ESC [ 1 K: 行頭からカーソルまでの消去。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>ESC [ 2 K: 行全体の消去。<BR></TD></TR>
+<TR VALIGN=top><TD>L</TD><TD>IL</TD><TD>指示された数の空行を挿入する。<BR></TD></TR>
+<TR VALIGN=top><TD>M</TD><TD>DL</TD><TD>指示された数の行を削除する。<BR></TD></TR>
+<TR VALIGN=top><TD>P</TD><TD>DCH</TD><TD>現在の行から指示された数の文字を削除する。<BR></TD></TR>
+<TR VALIGN=top><TD>X</TD><TD>ECH</TD><TD>現在の行から指示された数の文字を消去する。<BR></TD></TR>
+<TR VALIGN=top><TD>a</TD><TD>HPR</TD><TD>カーソルを指示された数の桁だけ右に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD>c</TD><TD>DA</TD><TD>ESC [ ? 6 c を返す: &quot;私はVT102です&quot;(ということ)。<BR></TD></TR>
+<TR VALIGN=top><TD>d</TD><TD>VPA</TD><TD>カーソルを指示された行の現在の桁に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD>e</TD><TD>VPR</TD><TD>カーソルを指示された数の行だけ下方向に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD>f</TD><TD>HVP</TD><TD>カーソルを指示された行、桁に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD>g</TD><TD>TBC</TD><TD>パラメーターなしの時: 現在位置のタブストップを削除する。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>ESC [ 3 g: すべてのタブストップを削除する。<BR></TD></TR>
+<TR VALIGN=top><TD>h</TD><TD>SM</TD><TD>モードのセット(後述)。<BR></TD></TR>
+<TR VALIGN=top><TD>l</TD><TD>RM</TD><TD>モードのリセット(後述)。<BR></TD></TR>
+<TR VALIGN=top><TD>m</TD><TD>SGR</TD><TD>属性のセット(後述)。<BR></TD></TR>
+<TR VALIGN=top><TD>n</TD><TD>DSR</TD><TD>状態の報告(後述)。<BR></TD></TR>
+<TR VALIGN=top><TD>q</TD><TD>DECLL</TD><TD>キーボードの LED をセットする。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>ESC [ 0 q: すべての LED を消す。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>ESC [ 1 q: スクロールロック LED を点灯。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>ESC [ 2 q: ナンバーロック LED を点灯。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>ESC [ 3 q: キャピタルロック LED を点灯。<BR></TD></TR>
+<TR VALIGN=top><TD>r</TD><TD>DECSTBM</TD><TD>スクロールの範囲のセット; パラメーターは一番上の行と一番下の行。<BR></TD></TR>
+<TR VALIGN=top><TD>s</TD><TD>?</TD><TD>カーソル位置の保存。<BR></TD></TR>
+<TR VALIGN=top><TD>u</TD><TD>?</TD><TD>カーソル位置の復帰。<BR></TD></TR>
+<TR VALIGN=top><TD>`</TD><TD>HPA</TD><TD>カーソルを現在の行の指示された桁に移動する。<BR></TD></TR>
+</TABLE>
+
+<P>
+
+<B>ECMA-48 グラフィクスレンディション(Graphics Rendition)の設定</B>
+<P>
+
+ECMA-48 SGR シーケンス ESC [ &lt;パラメーター&gt; m は表示属性を設定する。
+セミコロンで区切ることで、同じシーケンスでいくつかの属性を設定できる。
+空パラメーター(セミコロンか文字列開始文字か文字列終端文字の間)はゼロと解釈される。
+<TABLE>
+<TR VALIGN=top><TD>パラメーター</TD><TD>結果<BR></TD></TR>
+<TR VALIGN=top><TD>0</TD><TD>すべての属性をデフォルトにリセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>1</TD><TD>ボールド(bold)をセット。<BR></TD></TR>
+<TR VALIGN=top><TD>2</TD><TD>ハーフブライト(half-bright)(カラーディスプレイでは色で代用)をセット。<BR></TD></TR>
+<TR VALIGN=top><TD>4</TD><TD>
+下線(underscore)をセット(カラーディスプレイでは色で代用)。
+(ディムや下線を代用するのに使われる色は
+ESC ] ... によりセット)
+<BR></TD></TR>
+<TR VALIGN=top><TD>5</TD><TD>点滅(blink)をセット。<BR></TD></TR>
+<TR VALIGN=top><TD>7</TD><TD>反転表示(reverce video)をセット。<BR></TD></TR>
+<TR VALIGN=top><TD>10</TD><TD>
+選択したマッピング、ディスプレイコントロールフラグ(display control flag)、
+トグルメタフラグ(toggle meta flag)をリセットする (ECMA-48では&quot;primary font&quot;と呼んでいる)。
+<BR></TD></TR>
+<TR VALIGN=top><TD>11</TD><TD>
+ヌルマッピングを選択、ディスプレイコントロールフラグをセット、
+トグルメタフラグをリセットする
+(ECMA-48 では&quot;first alternate font&quot;と呼んでいる)。
+<BR></TD></TR>
+<TR VALIGN=top><TD>12</TD><TD>
+ヌルマッピングを選択、ディスプレイコントロールフラグをセット、
+トグルメタフラグをセットする (ECMA-48 では &quot;second alternate font&quot; と呼んでいる)。
+トグルメタフラグがたっていると、
+マッピングテーブルによる変換をする前に、
+バイトの上位の1ビットがトグルされる。
+<BR></TD></TR>
+<TR VALIGN=top><TD>21</TD><TD>
+set underline; before Linux 4.17, this value
+set normal intensity (as is done in many other terminals)
+<BR></TD></TR>
+<TR VALIGN=top><TD>22</TD><TD>通常の輝度にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>24</TD><TD>下線オフ。<BR></TD></TR>
+<TR VALIGN=top><TD>25</TD><TD>点滅オフ。<BR></TD></TR>
+<TR VALIGN=top><TD>27</TD><TD>反転表示オフ。<BR></TD></TR>
+<TR VALIGN=top><TD>30</TD><TD>フォアグラウンド(foreground)を黒にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>31</TD><TD>フォアグラウンドを赤にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>32</TD><TD>フォアグラウンドを緑にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>33</TD><TD>フォアグラウンドを茶にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>34</TD><TD>フォアグラウンドを青にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>35</TD><TD>フォアグラウンドをマゼンダにセット。<BR></TD></TR>
+<TR VALIGN=top><TD>36</TD><TD>フォアグラウンドをシアンにセット。<BR></TD></TR>
+<TR VALIGN=top><TD>37</TD><TD>フォアグラウンドを白にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>38</TD><TD>
+256/24-bit foreground color follows, shoehorned into 16 basic colors
+(before Linux 3.16: set underscore on, set default foreground color)
+<BR></TD></TR>
+<TR VALIGN=top><TD>39</TD><TD>
+デフォルトのフォアグラウンドの色を設定する
+(Linux 3.16 より前: 下線表示を解除し、デフォルトのフォアグラウンドの色をセット)
+<BR></TD></TR>
+<TR VALIGN=top><TD>40</TD><TD>バックグラウンド(background)を黒にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>41</TD><TD>バックグラウンドを赤にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>42</TD><TD>バックグラウンドを緑にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>43</TD><TD>バックグラウンドを茶にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>44</TD><TD>バックグラウンドを青にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>45</TD><TD>バックグラウンドをマゼンダにセット。<BR></TD></TR>
+<TR VALIGN=top><TD>46</TD><TD>バックグラウンドをシアンにセット。<BR></TD></TR>
+<TR VALIGN=top><TD>47</TD><TD>バックグラウンドを白にセット。<BR></TD></TR>
+<TR VALIGN=top><TD>48</TD><TD>
+256/24-bit background color follows, shoehorned into 8 basic colors
+<BR></TD></TR>
+<TR VALIGN=top><TD>49</TD><TD>バックグラウンドをデフォルトにセット。<BR></TD></TR>
+<TR VALIGN=top><TD>90..97</TD><TD>set foreground to bright versions of 30..37<BR></TD></TR>
+<TR VALIGN=top><TD>100.107</TD><TD>set background, same as 40..47 (bright not supported)<BR></TD></TR>
+</TABLE>
+
+<P>
+
+Commands 38 and 48 require further arguments:
+<TABLE>
+<TR VALIGN=top><TD>;5;x</TD><TD>
+256 color: values 0..15 are IBGR (black, red, green, ... white),
+16..231 a 6x6x6 color cube, 232..255 a grayscale ramp
+<BR></TD></TR>
+<TR VALIGN=top><TD>;2;r;g;b</TD><TD>24-bit color, r/g/b components are in the range 0..255<BR></TD></TR>
+</TABLE>
+
+<P>
+
+<B>ECMA-48 モードスイッチ(Mode Switches)</B>
+<DL COMPACT>
+<DT>ESC [ 3 h<DD>
+DECCRM (デフォルトではオフ): コントロール文字を表示する。
+<DT>ESC [ 4 h<DD>
+DECIM (デフォルトではオフ): 挿入モードにする。
+<DT>ESC [ 20 h<DD>
+
+LF/NL (デフォルトではオフ): LF, VT, FFをエコーしたあと自動的 CR をつける。
+</DL>
+<P>
+
+
+<B>ECMA-48 状態リポートコマンド(Status Report Commands)</B>
+<DL COMPACT>
+<DT>ESC [ 5 n<DD>
+デバイス状態のリポート(DSR): 返事は ESC [ 0 n (端末 OK).
+<DT>ESC [ 6 n<DD>
+
+カーソル位置のリポート(CPR): 返事は ESC [ <I>y</I> ; <I>x</I> R、 <I>x,y</I> はカーソルの位置をあらわす。
+</DL>
+<P>
+
+<B>DEC プライベートモード (DECSET/DECRST) シーケンス</B>
+<P>
+
+
+これらは ECMA-48 では記述されていない。ここでは、セットモード シーケンス (Set Mode sequences)を記載する; 最後の
+'h' を 'l' に 置き換えるとリセットモードシーケンス(Reset Mode sequences)になる。
+<DL COMPACT>
+<DT>ESC [ ? 1 h<DD>
+DECCKM (デフォルトはオフ): セットされた時にはカーソルキーは ESC [ ではなく ESC O を前につけて送る。
+<DT>ESC [ ? 3 h<DD>
+DECCOLM (デフォルトはオフ = 80 桁): 80/132 の桁モード切替え。 ドライバーのソースの注釈には、これだけでは十分でなく
+<B>resizecons</B>(8)  のようなユーザーモードのユーティリティーで、コンソールビデオカードの
+ハードウェアレジスターを変える必要があると書かれている。
+<DT>ESC [ ? 5 h<DD>
+DECSCNM (デフォルトはオフ): 反転表示モードのセット。
+<DT>ESC [ ? 6 h<DD>
+DECOM(デフォルトはオフ): セットされた時には、カーソルのアドレッシングが、 スクロール範囲の左上隅からの相対位置になる。
+<DT>ESC [ ? 7 h<DD>
+DECAWM(デフォルトはオン): オートラップを設定。このモードの時は、80 桁 (DECCOLM がオンのときは 132
+桁)を超えたグラフィックキャラクターは、 強制的に次の行の先頭に折り返されて表示される。
+<DT>ESC [ ? 8 h<DD>
+DECARM(デフォルトはオン): キーボードのオートリピートをオンにセット。
+<DT>ESC [ ? 9 h<DD>
+X10 マウスリポート(デフォルトはオフ): リポートモードを 1 にセット(または、 0 にリセット)---後述
+<DT>ESC [ ? 25 h<DD>
+DECTECM (デフォルトはオン): カーソルを可視(visible)にする。
+<DT>ESC [ ? 1000 h<DD>
+
+X11 マウスリポート(デフォルトはオフ): リポートモードを 2 にセット(または、 0にリセット)---後述
+</DL>
+<P>
+
+<B>Linux コンソールプライベート CSI シーケンス</B>
+<P>
+
+
+以下のシーケンスは ECMA-48 のものでも本来の VT102 のものでもでもなく、 Linuxコンソールドライバーに固有なシーケンスである。色は
+SGR パラメーターで 表現される: 0 = 黒, 1= 赤, 2 = 緑, 3 = 茶, 4 = 青, 5 = マゼンタ, 6 = シアン, 7 =
+白; 8-15 は 0-7 の色が明るいバージョンである。
+<TABLE>
+<TR VALIGN=top><TD>ESC [ 1 ; <I>n</I> ]</TD><TD>下線の色を<I>n</I> にセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC [ 2 ; <I>n</I> ]</TD><TD>ディムの色を<I>n</I> にセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC [ 8 ]       </TD><TD>現在の色のペアをデフォルト属性にする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC [ 9 ; <I>n</I> ]</TD><TD>スクリーンブランク(screen blank)のタイムアウトを <I>n</I> 分にセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC [ 10 ; <I>n</I> ]</TD><TD>ベルの周波数(Hz)をセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC [ 11 ; <I>n</I> ]</TD><TD>ベルの鳴っている時間(msec)をセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC [ 12 ; <I>n</I> ]</TD><TD>指定のコンソールを前面に持ってくる。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC [ 13 ]      </TD><TD>スクリーンをアンブランク(unblank)する。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC [ 14 ; <I>n</I> ]   </TD><TD>VESA電源停止インターバル(VESA powerdown interval)をセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC [ 15 ]</TD><TD>
+直前のコンソールを前面に持ってくる
+(Linux 2.6.0 以降)
+<BR></TD></TR>
+<TR VALIGN=top><TD>ESC [ 16 ; <I>n</I> ]</TD><TD>
+Set the cursor blink interval in milliseconds
+(since Linux 4.2).
+<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>文字集合</H3>
+
+カーネルは、バイト列からコンソールスクリーン符号の変換を 4 つ 知っている。 4 つの変換テーブルとは、a) Latin1 -&gt; PC, b)
+VT100 graphics -&gt; PC, c) PC -&gt; PC, d) ユーザー定義, である。
+<P>
+
+G0 と G1 と呼ばれる二つの文字集合があり、そのうち一つが現在の 文字集合である(初期値は G0 )。 <B>^N</B> をタイプすると G1 が
+<B>^O</B> を入力すると G0 が現在の文字集合になる。
+<P>
+
+変数 G0 と G1 は変換テーブルを指しており、ユーザーにより変更できる。 最初はそれぞれテーブル a) と テーブル b) を指している。 ESC
+( B 、 ESC ( 0 、 ESC ( U 、 ESC ( K のそれぞれのシーケンスにより、 G0 が変換テーブル a)、 b)、 c)、 d)
+を指すようになる。 また、ESC ) B 、 ESC ) 0 、 ESC ) U 、 ESC ) K のそれぞれのシーケンス により、G1
+が変換テーブル a)、 b)、 c)、 d) を指すようになる。
+<P>
+
+ESC c のシーケンスは端末をリセットする。スクリーンがめちゃくちゃになった 時にそうすることが必要である。よくアドバイスされる &quot;echo
+^V^O&quot; は G0 を現在の文字集合にするだけであり、G0 がテーブル a) を指しているという 保証はない。
+いくつかのディストリビューションには、 <B>reset</B>(1)  というプログラムが含まれるが、これはただ &quot;echo ^[c&quot;
+を実行するものである。 もし、コンソールの terminfo エントリーが正しい(かつ rs1=\Ec のエントリーが ある)ならば、&quot;tput
+reset&quot;でも同じ効果がある。
+<P>
+
+ユーザー定義のマッピングテーブルは <B>mapscrn</B>(8)  を使って定義できる。 マッピングの結果、シンボル c が印字されるとシンボル s =
+map[c] が ビデオメモリーに送られる。s に対応するビットマップはキャラクター ROM にあり、 <B>setfont</B>(8)
+により変更可能である。
+<A NAME="lbAF">&nbsp;</A>
+<H3>マウストラッキング</H3>
+
+マウストラッキング機能は、 <B>xterm</B>(1)-互換の マウスステータスリポート(mouse status
+reports)を返させるためのものである。 コンソールドライバーはマウスのデバイスや種類について知る方法が
+ないので、仮想ターミナルドライバーがマウス更新の ioctl を受け取った時だけ、 マウスステータスリポートがコンソールの入力ストリームに送られる。
+この ioctl は、 <B>gpm</B>(8)  デーモンのようなマウス対応のユーザーモード アプリケーションが発生しなければならない。
+<P>
+
+<B>xterm</B>(1) によって生成される全てのマウス追跡エスケープシーケンスのための パラメーターは、数値を <I>value</I>+040
+のように符号化し、一つの文字として あらわす。 例えば、'!' は 1 になる。スクリーン座標は 1 をベースにする。
+<P>
+
+X10 互換モードでは、ボタンが押された時にマウスの位置と押されたマウスの ボタンとをエンコードしたエスケープシーケンスを送る。 この機能は ESC [
+? 9 h を送ると有効になり ESC [ ? 9 l により無効になる。 ボタンが押されると <B>xterm</B>(1) は ESC [ M <I>bxy</I>
+(の 6 文字)を送る。 ここで <I>b</I> は button-1, <I>x</I> と <I>y</I> は マウスがボタンが押された 時の x と y 座標である。
+このコードはカーネルが発生するのと同じコードである。
+<P>
+
+ノーマルトラッキングモード(Normal tracking mode)(Linux 2.0.24 では
+実装されていない)では、両方のボタンが押されたか離された時に エスケープシーケンスが送られる。 モディファイアの情報も一緒に送られる。
+この機能は、ESC [ ? 1000 h を送ると有効になり ESC [ ? 1000 l で無効になる。
+ボタンが押されるか離されるかした時には、<B>xterm</B>(1) は ESC [ M <I>bxy</I> を送る。 <I>b</I>
+の低位の2ビットにはボタン情報がエンコードされる: 0=MB1 が押された, 1=MB2 が押された, 2=MB3 が押された, 3=離された。
+高位のビットには、ボタンが押された時にどのモディファイアがダウンしていたかが エンコードされる: 4=Shift, 8=Meta,
+16=Control。 そして、上位と下位ビットが加算される。 ここでも <I>x</I> と <I>y</I> は、マウスイベントが起こった時の x と y
+座標であり、左上の隅が(1,1)である。
+<A NAME="lbAG">&nbsp;</A>
+<H3>他のターミナルとの比較</H3>
+
+
+多くの異なるターミナルタイプが、Linux コンソールのように、&quot;VT100互換&quot;を 名乗っている。 ここでは、Linux コンソールと 2
+つの最も重要なターミナルである DEC VT102 と <B>xterm</B>(1)  との違いについて述べる。
+<P>
+
+<B>コントロール文字の取り扱い</B>
+<P>
+
+VT102 は以下のコントロール文字も認識する:
+<DL COMPACT>
+<DT>
+<DD>NUL (0x00) は無視される;
+<DT>
+<DD>ENQ (0x05) はアンサーバックメッセージ(answerback message)を発生する;
+<DT>
+<DD>DC1 (0x11, <B>^Q</B>, XON) は送信を再開する;
+<DT>
+<DD>DC3 (0x13, <B>^S</B>, XOFF) は VT100 に XOFF と XON 以外のコードを無視(そして 送信の停止)を起こさせる。
+</DL>
+<P>
+
+端末ドライバーにより VT100 に似た DC1/DC3 処理を有効にする。
+<P>
+
+
+<B>xterm</B>(1)  (VT100 モード)は BEL, BS, HT, LF, VT, FF, CR, SO, SI, ESC の
+コントロール文字を認識する。
+<P>
+
+<B>エスケープシーケンス</B>
+<P>
+
+Linux コンソールで実装されていない VT100 コンソールシーケンスは以下の通り:
+<TABLE>
+<TR VALIGN=top><TD>ESC N</TD><TD>SS2</TD><TD>シングルシフト 2 (次の文字だけ G2<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>文字集合を選択する)。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC O</TD><TD>SS3</TD><TD>シングルシフト 3 (次の文字だけ G3<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>文字集合を選択する)。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC P</TD><TD>DCS</TD><TD>デバイス制御文字列 (ESC \ で終わる)<BR></TD></TR>
+<TR VALIGN=top><TD>ESC X</TD><TD>SOS</TD><TD>文字列の始まり。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ^</TD><TD>PM</TD><TD>プライバシーメッセージ(ESC \ で終わる)。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC \</TD><TD>ST</TD><TD>文字列の終端文字。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC * ...</TD><TD></TD><TD>G2 文字集合を指定する。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC + ...</TD><TD></TD><TD>G3 文字集合を指定する。<BR></TD></TR>
+</TABLE>
+
+<P>
+
+<B>xterm</B>(1)  (VT100 モード)は ESC c, ESC # 8, ESC &gt;, ESC =, ESC D, ESC E,
+ESC H, ESC M, ESC N, ESC O, ESC P ... ESC \, ESC Z を認識する(&quot;わたしは高等ビデオオプション付きの
+VT100 です&quot;という 意味で ESC [ ? 1 ; 2 c と返答する)、ESC ^ ... ESC \ は上述と同じ意味を
+あらわす。ESC (, ESC ), ESC *, ESC + に続く 0, A, B を DEC 特殊文字と
+して受け、それぞれラインドローイング(line drawing) のセット、UK、 US-ASCII をあらわす。
+<P>
+
+ユーザーは <B>xterm</B>(1) が VT220 特有のコントロールシーケンスに 反応するように設定でき、また設定と初期化のされかたによって
+自分自身を VT52, VT100 などと認識する。
+<P>
+
+xterm は、特定のリソースの設定のために ESC ] (OSC) を受け付ける。 ECMA-48 の文字列終端文字 (ST) に加えて、
+<B>xterm</B>(1) は BEL を OSC 文字列を終端するものとして受け付ける。 以下は <B>xterm</B>(1) が認識する OSC
+コントロールシーケンスの一部である。
+<TABLE>
+<TR VALIGN=top><TD>ESC ] 0 ; <I>txt</I> ST</TD><TD>アイコン名とウインドウタイトルを <I>txt</I> にセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ] 1 ; <I>txt</I> ST</TD><TD>アイコン名を <I>txt</I> にセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ] 2 ; <I>txt</I> ST</TD><TD>ウインドウタイトルを <I>txt</I> にセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ] 4 ; <I>num</I>; <I>txt</I> ST</TD><TD>ANSI 色 <I>num</I> を <I>txt</I> にセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ] 10 ; <I>txt</I> ST</TD><TD>動的テキスト色を <I>txt</I> にセットする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ] 4 6 ; <I>name</I> ST</TD><TD>ログファイルを <I>name</I> に変更する (通常は<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD>コンパイル時オプションにより無効になっている)。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ] 5 0 ; <I>fn</I> ST</TD><TD>フォントを <I>fn</I> にセットする。<BR></TD></TR>
+</TABLE>
+
+<P>
+
+以下のものは、少し違った意味にとられる (より多くの状態を保存し、より VT100/VT220 に近いふるまいをする):
+<TABLE>
+<TR VALIGN=top><TD>ESC 7  DECSC</TD><TD>カーソルの保存。</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>ESC 8  DECRC</TD><TD>カーソルの復元。</TD><TD><BR></TD></TR>
+</TABLE>
+
+<P>
+
+また、次のものも認識する:
+<TABLE>
+<TR VALIGN=top><TD>ESC F</TD><TD></TD><TD>カーソルをスクリーンの左下に移動する。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>(<B>xterm</B>(1) の <B>hpLowerleftBugCompat</B>リソースにより有効な時)<BR></TD></TR>
+<TR VALIGN=top><TD>ESC l</TD><TD></TD><TD>(HP ターミナル毎に)メモリーロック。<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD>カーソルより上のメモリーをロックする。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC m</TD><TD></TD><TD>(HP ターミナル毎に)メモリーロックを解除する。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC n</TD><TD>LS2</TD><TD>G2 文字集合の呼び出し。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC o</TD><TD>LS3</TD><TD>G3 文字集合の呼び出し。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC |</TD><TD>LS3R</TD><TD>G3 文字集合を GR として呼び出す。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC }</TD><TD>LS2R</TD><TD>G2 文字集合を GR として呼び出す。<BR></TD></TR>
+<TR VALIGN=top><TD>ESC ~</TD><TD>LS1R</TD><TD>G1 文字集合を GR として呼び出す。<BR></TD></TR>
+</TABLE>
+
+<P>
+
+
+また ESC % を認識し、Linux コンソールより更に完全な UTF-8 実装を提供する。
+<P>
+
+<B>CSI シーケンス</B>
+<P>
+
+X11R5 由来のような、古いバージョンの <B>xterm</B>(1) はブリンク SGR を ボールド SGR として解釈する。 1995 年の
+XFree86 3.1.2A のような、ANSI カラーが実装された、より新しい バージョンでは、ブリンク属性を色として表示することによってこれを
+改善している。 最近のバージョンの xterm はブリンク SGR をテキストをブリンクさせることで 実装し、さらにまた、SGR
+表示の代替案として色付きのテキストも利用できる。 Stock X11R6 版では、XFree86 xterm が組み入れられた X11R6.8
+リリースまで 色設定 SGR を認識しなかった。 Linux が認識する他のすべての ECMA-48 CSI シーケンスは <I>xterm</I>
+でも認識されるが、<B>xterm</B>(1) は Linux が認識しない いくつかの ECMA-48 と DEC のコントロールシーケンスも実装している。
+<P>
+
+<B>xterm</B>(1) は上述のすべての DEC プライベートモードのシーケンスを認識するが、 Linux
+プライベートモードのシーケンスはどれも認識しない。 <B>xterm</B>(1) 自身のプライベートモードシーケンスに関しての議論は、 X
+配布とともに入手可能な Edward Moy, Stephen Gildea,Thomas E. Dickey による <I>Xterm
+Control Sequences</I> ドキュメントを参照されたい。 このドキュメントは、簡潔なものであるが、このマニュアルページより
+遥かに長いものである。 年代順の概観としては、
+<P>
+
+<DL COMPACT><DT><DD>
+
+
+</DL>
+
+<P>
+
+には xterm の変更の詳細がある。
+<P>
+
+<I>vttest</I> は
+<P>
+
+<DL COMPACT><DT><DD>
+
+
+</DL>
+
+<P>
+
+で入手でき、これらのコントロールシーケンスの多くに関するデモを行う。 <B>xterm</B>(1) ソース配布パッケージには
+その他の機能を学ぶことが出来るサンプルスクリプトが入っている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+ESC 8 (DECRC) は ESC % で変更された文字集合を復元することはできない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+2.0.23 では CSI が壊れていて、エスケープシーケンス中の NUL が 無視されない。
+<P>
+
+古いバージョン(2.0 以降)のカーネルには、8 ビット制御シーケンスを解釈する。 これらの &quot;C1 コントロール&quot; は ESC [, ESC ]
+および同様な制御シーケンス 起動子を置き換えるために 128 から 159 のコードを使う。 新しいカーネルでは (UTF-8
+対応の変更時に見落とされたか壊れたために)  寸断しているが、実装は不完全で信頼できないものと評価されている。
+<P>
+
+Linux &quot;プライベートモード&quot; シーケンスは ECMA-48 のプライベートモード コントロールシーケンスのルールに従っていない。 特に、 ]
+で終わるものは標準終端文字を使えない。 OSC(パレット設定)シーケンスは大きな問題がある。 <B>xterm</B>(1) はこれを文字列終端文字 (ST)
+が必要なコントロールシーケンスと 解釈するかもしれないからである。 (不正なコントロールシーケンスなので)無視される <B><A HREF="../../util-linux/man1/setterm.1.html">setterm</A></B>(1)
+シーケンスと 違い、パレットシーケンスは <B>xterm</B>(1) をハングさせるかもしれない (しかしリターンキーを押すことで回復できる)。 Linux
+コントロールシーケンスをハードコードしているアプリケーションに 適応させるには、<B>xterm</B>(1) リソースの <B>brokenLinuxOSC</B>
+を 真 (true) に設定する。
+<P>
+
+このドキュメントの古いバージョンでは、Linux が ECMA-48 の不可視テキストの コントロールシーケンスを認識するかのように書かれていた。
+これは無視される。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B>ioctl_console</B>(2),&nbsp;<B><A HREF="../man7/charsets.7.html">charsets</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">Linux コンソールコントロール</A><DD>
+<DT><A HREF="#lbAE">文字集合</A><DD>
+<DT><A HREF="#lbAF">マウストラッキング</A><DD>
+<DT><A HREF="#lbAG">他のターミナルとの比較</A><DD>
+</DL>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

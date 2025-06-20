@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: I/O リダイレクション</title>
+
+<meta name="description" content="GNU Coreutils: I/O リダイレクション">
+<meta name="keywords" content="GNU Coreutils: I/O リダイレクション">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="I_002fO-redirection"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_211.html#Toolbox-introduction" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_213.html#The-who-command" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_210.html#Opening-the-software-toolbox" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_210.html#Opening-the-software-toolbox" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_218.html#About-the-translation" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="I_002fO-ridairekusiyon"></a>
+<h2 class="unnumberedsec">I/O リダイレクション</h2>
+
+<p>シェルの入出力リダイレクションについて、基本的なこと、
+とくに標準入力、標準出力、標準エラーがどういうものかを、読者はよく御存じだと思う。
+要するに、標準入力とは、データの入力元、すなわち、データがそこからやって来る場所のことだ。
+データの入力元が、ディスク上のファイルだろうと、キーボードだろうと、磁気テープだろうと、
+それどころかパンチカード・リーダーだろうと、プログラムはそれを知る必要もなければ、気にかける必要もない。
+同様に、標準出力とは、データの溜まる場所、データがそこに行く場所のことだ。
+プログラムとしては、それがどこになろうと、知らなくてもよく、気にかけなくてもよい。
+標準入力からデータを読み込み、それに対して何らかの処理を行い、標準出力に送り出すだけのプログラムを、
+水道のパイプラインのフィルターになぞらえて、「フィルター (<em>filter</em>)」と呼ぶ。
+</p>
+<p>Unix のシェルでは、データのパイプラインを作るのはとてもやさしい。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">program_to_create_data | filter1 | ... | filterN &gt; final.pretty.data
+</pre></td></tr></table>
+
+<p>ここでは、まず最初に生のデータを作成している。
+各フィルターがそのデータに対して何らかの変形を次々に行い、
+最終的に、データが希望どおりの形になって、パイプラインから抜け出してくる。
+</p>
+<p>標準入力と標準出力については、それでよい。
+では、標準エラーはどこで登場し、どんな役割を果たすのだろうか？
+上記パイプラインの <code>filter1</code> について考えてほしい。
+データを読んでいるうちにエラーが起きたら、どうなるだろうか？
+<code>filter1</code> がエラーメッセージを標準出力に書き出したら、
+そのメッセージはパイプラインを下って <code>filter2</code> の入力に飲み込まれてしまう。
+そうなると、ユーザはたぶんメッセージをまったく目にしないことになるだろう。
+そこで、プログラムとしては、ユーザがエラーメッセージに気がついてくれるように、
+それを送ることのできる場所が必要になる。それが、標準エラーなのであり、
+標準エラーは通常、現在使用しているコンソールやウィンドウに結びついている。
+プログラムの標準出力を使用中のスクリーン以外にリダイレクトしている場合でも、それは変わらない。
+</p>
+<p>フィルター・プログラムが協力し合うためには、データのフォーマットについて互いに合意している必要がある。
+最も素直で使いやすいフォーマットと言えば、何と言っても、行分けされたテキストだ。
+そして、Unix のデータファイルは、たいていの場合、まさに、ASCII LF (Line Feed)
+文字によって行分けされたバイトの連続なのである。なお、この LF 文字は、Unix
+の文書では「改行 (newline)」と呼ばれる習慣になっている (C のプログラマにとっては
+<code>\n</code> だ)。これこそ、すべての伝統的なフィルター・プログラムによって使用されて来たフォーマットである。
+(昔のオペレーティング・システムの多くは、バイナリ・データを扱うための複雑な手段や専用のプログラムを備えていた。
+だが、Unix は、ただ単にテキストエディタでデータを見たり編集できたりする方がはるかに簡単だという考えから、
+そうした道具をずっと敬遠してきたのである。)
+</p>
+<p>さて、前置きはこれくらいで十分だ。まず、道具のいくつかをざっと見てみよう。
+その後で、そうした道具をおもしろいやり方で組み合わせる方法をご覧に入れる。
+以下の解説では、当面の問題に関係のあるコマンドライン・オプションしか取り上げない。
+いつでもそうすべきことだが、コマンドについて詳しいことを知りたかったら、
+ご使用のシステムの文書を参照なさるとよい。
+</p>
+<hr size="1">
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

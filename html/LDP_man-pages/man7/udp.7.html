@@ -1,0 +1,231 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UDP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>UDP</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/udp.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+udp - IPv4 の ユーザーデータグラムプロトコル
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/netinet/udp.h">netinet/udp.h</A>&gt;</B>
+<P>
+
+<B>udp_socket = socket(AF_INET, SOCK_DGRAM, 0);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これは RFC&nbsp;768 で記述されている User Datagram Protocol の実装である。 UDP
+はコネクションレスの、信頼性の低いデータパケットサービスである。 パケットは到着前に並び替えられたり複製されたりする。 UDP
+は転送エラーを検出するためにチェックサムを生成・チェックする。
+<P>
+
+UDP ソケットが生成されるとき、 ローカルアドレスやリモートアドレスは指定されない。 正しい行き先アドレスを引数として <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2)  や
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  を呼べば、データグラムはただちに送信される。 ソケットに対して <B><A HREF="../man2/connect.2.html">connect</A></B>(2)
+を呼ぶと、デフォルトの行き先アドレスが設定され、 <B><A HREF="../man2/send.2.html">send</A></B>(2)  や <B><A HREF="../man2/write.2.html">write</A></B>(2)
+を使って、行き先アドレスの指定なしにデータグラムを送信できるようになる。 この場合でも、行き先アドレスを <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2)  や
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  に渡せば、デフォルト以外のアドレスに送信可能である。 パケットを受信するために、まずソケットを <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
+を用いてローカルなアドレスにバインドさせることもできる。 そうでない場合は、ソケット層は自動的に
+<I>/proc/sys/net/ipv4/ip_local_port_range</I> で定義されている範囲の外で空いているローカルなポートを割り当て、
+ソケットを <B>INADDR_ANY</B> にバインドする。
+<P>
+
+受信動作はパケットを一つだけ返す。渡したバッファーよりもパケットが 小さければ、そのパケットの大きさのデータだけが返される。
+逆にバッファーよりも大きい場合はパケットは丸められ、 <B>MSG_TRUNC</B> フラグがセットされる。 <B>MSG_WAITALL</B>
+はサポートしていない。
+<P>
+
+IP オプションは、 <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  に記述されているソケットオプションを用いて読み書きできる。 これらは適切な <I>/proc</I>
+パラメーターが有効な場合に限ってカーネルによって処理される (しかし無効になっている場合でもユーザーには渡される)。 <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  を参照のこと。
+<P>
+
+<B>MSG_DONTROUTE</B> フラグが送信時にセットされている場合には、 行き先アドレスはローカルなインターフェースアドレスから
+参照できなければならない。パケットはそのインターフェースにしか送られない。
+<P>
+
+デフォルトでは、Linux の UDP は Path MTU Discovery を行う。 つまり、カーネルは特定の宛先 IP アドレスの MTU
+(Maximum Transmission Unit; 最大転送単位) を記録し、UDP パケットの書き込みが MTU を超えた場合
+<B>EMSGSIZE</B> を返す。 <B>EMSGSIZE</B> を返された場合、アプリケーションはパケットサイズを小さくすべきである。 ソケットオプション
+<B>IP_MTU_DISCOVER</B> または <I>/proc/sys/net/ipv4/ip_no_pmtu_disc</I> ファイルを使って Path
+MTU Discovery を無効にすることもできる (詳細は <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  を参照)。 Path MTU Discovery
+を無効にした場合は、パケットサイズが インターフェースの MTU よりも大きいと UDP はそのパケットを フラグメント化して送出する。
+しかしながら、性能と信頼性の理由から Path MTU Discovery を 無効にするのは推奨できない。
+<A NAME="lbAE">&nbsp;</A>
+<H3>アドレスのフォーマット</H3>
+
+UDP は IPv4 の <I>sockaddr_in</I> アドレスフォーマットを用いる。これは <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  に記述されている。
+<A NAME="lbAF">&nbsp;</A>
+<H3>エラー処理</H3>
+
+致命的なエラーは、たとえソケットが接続されていなくても、 すべてエラー戻り値としてユーザーに渡される。
+これにはネットワークから受け取る非同期エラーも含まれる。 同じソケットを使って送信した昔のパケットに関するエラーを受け取るかもしれない。
+この振る舞いは他の BSD ソケットの実装の多くとは異なる。 これらではソケットが接続されていない場合はエラーを全く返さない。 Linux の振る舞いは
+<B>RFC&nbsp;1122</B> での指定に従ったものである。
+<P>
+
+Linux 2.0 と 2.2 では、古いコードとの互換性のために、 <B>SO_BSDCOMPAT</B> <B>SOL_SOCKET</B>
+オプションを設定すれば、ソケットが接続されている 場合に限ってリモートのエラーを受信するようにできた (<B>EPROTO</B> と <B>EMSGSIZE</B>
+を除く)。 ローカルで生成されたエラーは常に渡される。 このソケットオプションのサポートはそれ以降のバージョンの Linux で 削除された。詳細は
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7)  を参照。
+<P>
+
+<B>IP_RECVERR</B> オプションが有効になっていると、 すべてのエラーはソケットのエラーキューに保存される。 これは
+<B>MSG_ERRQUEUE</B> フラグをセットして <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)  を呼べば受信できる。
+<A NAME="lbAG">&nbsp;</A>
+<H3>/proc インターフェース</H3>
+
+システム全体の UDP パラメーター設定には、 <I>/proc/sys/net/ipv4/</I> ディレクトリ内のファイルの読み書きでアクセスできる。
+<DL COMPACT>
+<DT><I>udp_mem</I> (Linux 2.6.25 以降)<DD>
+これは 3 つの整数からなるベクトル値で、 UDP の全ソケットのキューで利用可能なページ数を制御する。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>min</I><DD>
+このページ数より少なければ、UDP はそのメモリー使用に関して 干渉されない。 UDP に割り当てられたメモリー総量がこの値を超過すると、 UDP
+はメモリー使用量を調整し始める。
+<DT><I>pressure</I><DD>
+この値は <I>tcp_mem</I> の形式 (<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)  参照) と合わせるために導入された
+<DT><I>max</I><DD>
+UDP の全ソケットのキューで利用可能なページ数。
+</DL>
+</DL>
+
+<DT><DD>
+これらの 3 つの値のデフォルト値は、 ブート時に利用可能なメモリー総量から計算される。
+<DT><I>udp_rmem_min</I> (integer; デフォルト値: PAGE_SIZE; Linux 2.6.25 以降)<DD>
+メモリー使用量の調整中に、UDP ソケットが使用できる受信バッファーの最小値 (バイト単位)。 UDP の全ソケットのページ使用量の合計が
+<I>udp_mem</I> pressure を超過している場合であっても、 各 UDP ソケットはデータの受信にこのサイズ分だけは使用することができる。
+<DT><I>udp_wmem_min</I> (integer; デフォルト値: PAGE_SIZE; Linux 2.6.25 以降)<DD>
+メモリー使用量の調整中に、UDP ソケットが使用できる送信バッファーの最小値 (バイト単位)。 UDP の全ソケットのページ使用量の合計が
+<I>udp_mem</I> pressure を超過している場合であっても、 各 UDP ソケットはデータの送信にこのサイズ分だけは使用することができる。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>ソケットオプション</H3>
+
+UDP ソケットオプションを設定または取得するには、 取得には <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  を、設定には <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+をオプションレベル引数に <B>IPPROTO_UDP</B> を指定して呼び出す。 注釈がない限り、 <I>optval</I> は <I>int</I>
+へのポインターである。
+<P>
+
+Following is a list of UDP-specific socket options.  For details of some
+other socket options that are also applicable for UDP sockets, see
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7).
+<DL COMPACT>
+<DT><B>UDP_CORK</B> (Linux 2.5.44 以降)<DD>
+
+
+
+
+
+
+このオプションが指定されると、このソケットの全てのデータ出力は 一つのデータグラムに蓄積され、このオプションが無効化された時に 送信される。
+このオプションは移植性を考慮したコードでは用いるべきではない。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H3>ioctl</H3>
+
+以下に示す ioctl は <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  を使ってアクセスできる。 正しい文法は以下の通り。
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+<B>int</B><I> value</I><B>;</B>
+<I>error</I><B> = ioctl(</B><I>udp_socket</I><B>, </B><I>ioctl_type</I><B>, &amp;</B><I>value</I><B>);</B>
+</PRE>
+
+</DL>
+
+<DL COMPACT>
+<DT><B>FIONREAD</B> (<B>SIOCINQ</B>)<DD>
+
+
+整数へのポインターを引数に取り、そのポインターに、次の処理待ちのデータグラムの
+サイズをバイト単位で返す。処理待ちのデータグラムがない場合は 0 を返す。
+<B>警告</B>: <B>FIONREAD</B> を使った場合、処理待ちのデータグラムがない場合と、
+次の処理待ちデータグラムが 0 バイトのデータの場合を区別することができない。
+この両者を区別したい場合は、<B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+を使う方が安全である。
+<DT><B>TIOCOUTQ</B> (<B>SIOCOUTQ</B>)<DD>
+ローカル送信キューにあるデータサイズをバイト単位で返す。 Linux 2.4 以上でのみ対応している。
+</DL>
+<P>
+
+さらに、 <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  と <B><A HREF="../man7/socket.7.html">socket</A></B>(7)  で述べられている全ての ioctl も対応している。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>エラー</H2>
+
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7)  や <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  に記述されている全てのエラーが、 UDP ソケットの送受信で返される可能性がある。
+<DL COMPACT>
+<DT><B>ECONNREFUSED</B><DD>
+行き先アドレスに関連づけられている受信者がいない。 これは以前のパケットがそのパケットを 上書き送信してしまっているからであることが多い。
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+
+<B>IP_RECVERR</B> は Linux 2.2 の新しい機能である。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7), <B><A HREF="../man7/raw.7.html">raw</A></B>(7), <B><A HREF="../man7/socket.7.html">socket</A></B>(7), <B><A HREF="../man7/udplite.7.html">udplite</A></B>(7)
+<P>
+
+The kernel source file <I>Documentation/networking/ip-sysctl.txt</I>.
+<P>
+
+RFC&nbsp;768 : User Datagram Protocol
+<BR>
+
+RFC&nbsp;1122 : ホストの必要条件
+<BR>
+
+RFC&nbsp;1191 : path MTU discovery の記述
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">アドレスのフォーマット</A><DD>
+<DT><A HREF="#lbAF">エラー処理</A><DD>
+<DT><A HREF="#lbAG">/proc インターフェース</A><DD>
+<DT><A HREF="#lbAH">ソケットオプション</A><DD>
+<DT><A HREF="#lbAI">ioctl</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">エラー</A><DD>
+<DT><A HREF="#lbAK">バージョン</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,154 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of IO_GETEVENTS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>IO_GETEVENTS</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/io_getevents.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+io_getevents - 完了キューから非同期 I/O イベントを読み出す
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/linux/aio_abi.h">linux/aio_abi.h</A>&gt;</B>         /* 必要な型の定義 */
+<B>#include &lt;<A HREF="file:///usr/include/linux/time.h">linux/time.h</A>&gt;</B>            /* 'struct timespec' の定義 */
+
+<B>int io_getevents(aio_context_t </B><I>ctx_id</I><B>, long </B><I>min_nr</I><B>, long </B><I>nr</I><B>,</B>
+<B>                 struct io_event *</B><I>events</I><B>, struct timespec *</B><I>timeout</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>注</I>: このシステムコールには glibc のラッパー関数は存在しない。「注意」の節を参照。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>注意</I>:このページは生の Linux のシステムコールのインターフェースについて説明している。 <I>libaio</I> で提供されるラッパー関数では
+<I>ctx_id</I> 引数に違う型が使われている。「注意」を参照。
+<P>
+
+The <B>io_getevents</B>()  system call attempts to read at least <I>min_nr</I>
+events and up to <I>nr</I> events from the completion queue of the AIO context
+specified by <I>ctx_id</I>.
+<P>
+
+The <I>timeout</I> argument specifies the amount of time to wait for events, and
+is specified as a relative timeout in a structure of the following form:
+<P>
+
+
+
+struct timespec {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;seconds&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;tv_nsec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;nanoseconds&nbsp;[0&nbsp;..&nbsp;999999999]&nbsp;*/
+};
+
+
+<P>
+
+The specified time will be rounded up to the system clock granularity and is
+guaranteed not to expire early.
+<P>
+
+Specifying <I>timeout</I> as NULL means block indefinitely until at least
+<I>min_nr</I> events have been obtained.
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>io_getevents</B>()  は読み出したイベント数を返す。 <I>timeout</I> 時間が経過した場合は、 0 もしくは
+<I>min_nr</I> 未満の値が返る。呼び出しがシグナルハンドラーに割り込まれた場合にも、 0 もしくは <I>min_nr</I> 未満の値が返ることがある。
+<P>
+
+失敗時の返り値については、「注意」の節を参照すること。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>events</I> または <I>timeout</I> が無効なポインターである。
+<DT><B>EINTR</B><DD>
+シグナルハンドラーにより割り込まれた。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EINVAL</B><DD>
+<I>ctx_id</I> が無効である。もしくは、<I>min_nr</I> または <I>nr</I> が 範囲外の値である。
+<DT><B>ENOSYS</B><DD>
+<B>io_getevents</B>()  がこのアーキテクチャーでは実装されていない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+非同期 I/O システムコールは Linux 2.5 で初めて登場した。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>io_getevents</B>()  は Linux 固有であり、移植を想定したプログラムで 使用すべきではない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+
+glibc はこのシステムコールのラッパー関数を提供していない。
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2) を使ってこのシステムコールを起動することができる。
+しかし、たいていは、このシステムコールを呼び出したいのではなく、
+<BR>&nbsp;<I>libaio</I>&nbsp;が提供している&nbsp;<B>io_getevents</B>&nbsp;ラッパー関数を呼び出したい
+場合がほとんどであろう。
+<P>
+
+
+
+<I>libaio</I> のラッパー関数では <I>ctx_id</I> 引数に別の型
+(<I>io_context_t</I>) が使われることに注意すること。
+また、<I>libaio</I> のラッパー関数は、エラーの通知が通常の C ライブラリの
+慣習にしたがっておらず、エラーの場合には負のエラー番号 (エラーの節に列
+挙されている値の一つを負にしたもの) が返り値となる点にも注意すること。
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2) 経由でシステムコールを起動すると、返り値は通常のエラー通
+知の慣習に したがってものとなり、エラーの場合には -1 が返り、 <I>errno</I>
+にエラーを示す (正の) 値が設定される。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+無効な <I>ctx_id</I> を指定した場合、エラー <B>EINVAL</B> が生成されず、セグメンテーション違反 (segmentation fault)
+が発生する場合がある。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B><A HREF="../man2/io_cancel.2.html">io_cancel</A></B>(2), <B><A HREF="../man2/io_destroy.2.html">io_destroy</A></B>(2), <B><A HREF="../man2/io_setup.2.html">io_setup</A></B>(2), <B><A HREF="../man2/io_submit.2.html">io_submit</A></B>(2),
+<B><A HREF="../man7/aio.7.html">aio</A></B>(7), <B><A HREF="../man7/time.7.html">time</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

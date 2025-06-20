@@ -1,0 +1,227 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MBSTOWCS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MBSTOWCS</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/mbstowcs.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mbstowcs - マルチバイト文字列をワイド文字列に変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>size_t mbstowcs(wchar_t *</B><I>dest</I><B>, const char *</B><I>src</I><B>, size_t </B><I>n</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+If <I>dest</I> is not NULL, the <B>mbstowcs</B>()  function converts the multibyte
+string <I>src</I> to a wide-character string starting at <I>dest</I>.  At most <I>n</I>
+wide characters are written to <I>dest</I>.  The sequence of characters in the
+string <I>src</I> shall begin in the initial shift state.  The conversion can
+stop for three reasons:
+<DL COMPACT>
+<DT>1.<DD>
+不正なマルチバイト列に遭遇した。この場合には <I>(size_t)&nbsp;-1</I> を返す。
+<DT>2.<DD>
+<I>n</I> 文字の L'\0' 以外のワイド文字を <I>dest</I> に格納した場合。 この場合は <I>*src</I>
+が次に変換されるマルチバイト列を指すようにして、 <I>dest</I> に書き込まれたワイド文字の数を返す。しかしこの指している 場所のシフト状態は失われる。
+<DT>3.<DD>
+マルチバイト文字列が終端のヌル文字 ('\0') まで含めて完全に変換された場合。この場合は終端のヌルワイド文字を除いて <I>dest</I>
+に書き込まれた文字数を返す。
+</DL>
+<P>
+
+プログラマーは <I>dest</I> に最低でも <I>n</I> ワイド文字を書き込むこ とができる空間があることを保証しなければならない。
+<P>
+
+<I>dest</I> が NULL の場合、<I>n</I> は無視され、上記と同様の変換が 行われるが、変換されたワイド文字はメモリーに書き込まれず、変換先の上限
+が存在しない。
+<P>
+
+上記の 2. の場合を避けるためにプログラマーは <I>n</I> が <I>mbstowcs(NULL,src,0)+1</I> 以上であることを保証すべきである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>mbstowcs</B>()  関数はワイド文字列に変換完了したワイド文字の数を返す。
+終端のヌルワイド文字は含まない。不正なマルチバイト列に遭遇した場合には <I>(size_t)&nbsp;-1</I> を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>mbstowcs</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, C99.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>mbstowcs</B>()  の動作は現在のロケールの <B>LC_CTYPE</B> カテゴリーに依存している。
+<P>
+
+<B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3)  関数は同じ機能のより良いインターフェースを提供する。
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+下記のプログラムは <B>mbstowcs</B>() といくつかのワイド文字分類関数の使用方法を示したものである。実行例は以下のようになる。
+<P>
+
+
+
+$ ./t_mbstowcs de_DE.UTF-8 Grüße!
+Length of source string (excluding terminator):
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;8&nbsp;bytes
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;6&nbsp;multibyte&nbsp;characters
+<P>
+Wide character string is: Grüße! (6 characters)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;G&nbsp;alpha&nbsp;upper
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;r&nbsp;alpha&nbsp;lower
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ü&nbsp;alpha&nbsp;lower
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ß&nbsp;alpha&nbsp;lower
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;e&nbsp;alpha&nbsp;lower
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;!&nbsp;!alpha
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/wctype.h">wctype.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/locale.h">locale.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/wchar.h">wchar.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;mbslen;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;multibyte&nbsp;characters&nbsp;in&nbsp;source&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;wchar_t&nbsp;*wcs;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Pointer&nbsp;to&nbsp;converted&nbsp;wide&nbsp;character&nbsp;string&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;3)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;locale&gt;&nbsp;&lt;string&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Apply&nbsp;the&nbsp;specified&nbsp;locale&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(setlocale(LC_ALL,&nbsp;argv[1])&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;setlocale&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Calculate&nbsp;the&nbsp;length&nbsp;required&nbsp;to&nbsp;hold&nbsp;argv[2]&nbsp;converted&nbsp;to
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;wide&nbsp;character&nbsp;string&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mbslen&nbsp;=&nbsp;mbstowcs(NULL,&nbsp;argv[2],&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mbslen&nbsp;==&nbsp;(size_t)&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;mbstowcs&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Describe&nbsp;the&nbsp;source&nbsp;string&nbsp;to&nbsp;the&nbsp;user&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Length&nbsp;of&nbsp;source&nbsp;string&nbsp;(excluding&nbsp;terminator):\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;%zu&nbsp;bytes\n&quot;,&nbsp;strlen(argv[2]));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;%zu&nbsp;multibyte&nbsp;characters\n\n&quot;,&nbsp;mbslen);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allocate&nbsp;wide&nbsp;character&nbsp;string&nbsp;of&nbsp;the&nbsp;desired&nbsp;size.&nbsp;&nbsp;Add&nbsp;1
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;allow&nbsp;for&nbsp;terminating&nbsp;null&nbsp;wide&nbsp;character&nbsp;(L'\0').&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;wcs&nbsp;=&nbsp;calloc(mbslen&nbsp;+&nbsp;1,&nbsp;sizeof(*wcs));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(wcs&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;calloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Convert&nbsp;the&nbsp;multibyte&nbsp;character&nbsp;string&nbsp;in&nbsp;argv[2]&nbsp;to&nbsp;a
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wide&nbsp;character&nbsp;string&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mbstowcs(wcs,&nbsp;argv[2],&nbsp;mbslen&nbsp;+&nbsp;1)&nbsp;==&nbsp;(size_t)&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;mbstowcs&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Wide&nbsp;character&nbsp;string&nbsp;is:&nbsp;%ls&nbsp;(%zu&nbsp;characters)\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wcs,&nbsp;mbslen);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Now&nbsp;do&nbsp;some&nbsp;inspection&nbsp;of&nbsp;the&nbsp;classes&nbsp;of&nbsp;the&nbsp;characters&nbsp;in
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;wide&nbsp;character&nbsp;string&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(wchar_t&nbsp;*wp&nbsp;=&nbsp;wcs;&nbsp;*wp&nbsp;!=&nbsp;0;&nbsp;wp++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;%lc&nbsp;&quot;,&nbsp;(wint_t)&nbsp;*wp);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!iswalpha(*wp))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;!&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;alpha&nbsp;&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(iswalpha(*wp))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(iswupper(*wp))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;upper&nbsp;&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(iswlower(*wp))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;lower&nbsp;&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;putchar('\n');
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/mblen.3.html">mblen</A></B>(3), <B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3), <B><A HREF="../man3/mbtowc.3.html">mbtowc</A></B>(3), <B><A HREF="../man3/wcstombs.3.html">wcstombs</A></B>(3), <B><A HREF="../man3/wctomb.3.html">wctomb</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">例</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

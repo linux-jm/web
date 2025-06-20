@@ -1,0 +1,188 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CONNECT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>CONNECT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/connect.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+connect - ソケットの接続を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>          /* 「注意」参照 */
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<B>int connect(int </B><I>sockfd</I><B>, const struct sockaddr *</B><I>addr</I><B>,</B>
+<B>            socklen_t </B><I>addrlen</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>connect</B>()  システムコールは、ファイルディスクリプター <I>sockfd</I> が参照しているソケットを <I>addr</I>
+で指定されたアドレスに接続する。 <I>addrlen</I> 引数は <I>addr</I> の大きさを示す。 <I>addr</I> のアドレスのフォーマットはソケット
+<I>sockfd</I> のアドレス空間により異なる。 さらなる詳細は <B><A HREF="../man2/socket.2.html">socket</A></B>(2)  を参照のこと。
+<P>
+
+ソケット <I>sockfd</I> が <B>SOCK_DGRAM</B> 型であれば、 <I>addr</I> は、デフォルトのデータグラムの送信先のアドレスであり、
+データグラムを受信する唯一のアドレスを示すに過ぎない。 ソケットが <B>SOCK_STREAM</B> 型もしくは <B>SOCK_SEQPACKET</B>
+型であれば、このシステムコールは <I>addr</I> で指定されたアドレスに結び付けられたソケットに対する接続の 作成を試みる。
+<P>
+
+Some protocol sockets (e.g., UNIX domain stream sockets)  may successfully
+<B>connect</B>()  only once.
+<P>
+
+Some protocol sockets (e.g., datagram sockets in the UNIX and Internet
+domains)  may use <B>connect</B>()  multiple times to change their association.
+<P>
+
+Some protocol sockets (e.g., TCP sockets as well as datagram sockets in the
+UNIX and Internet domains)  may dissolve the association by connecting to an
+address with the <I>sa_family</I> member of <I>sockaddr</I> set to <B>AF_UNSPEC</B>;
+thereafter, the socket can be connected to another address.  (<B>AF_UNSPEC</B>
+is supported on Linux since kernel 2.2.)
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+接続または対応づけに成功するとゼロを返す。 失敗すると -1 を返し、 <I>errno</I> に適切な値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+以下は一般的なソケットについてのエラーである。他にドメイン特有のエラー が発生する可能性がある。
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+UNIX ドメインソケットはパス名で識別される。 ソケットファイルへの書き込み許可がなかったか、パス名へ
+到達するまでのディレクトリのいずれかに対する検索許可がなかった。 (<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)  も参照のこと)
+<DT><B>EACCES</B>, <B>EPERM</B><DD>
+ソケットのブロードキャストフラグが有効になっていないのに ユーザーがブロードキャストへ接続を試みた。または、ローカルのファイアウォールの
+規則により接続の要求が失敗した。
+<DT><DD>
+<B>EACCES</B> can also be returned if an SELinux policy denied a connection (for
+example, if there is a policy saying that an HTTP proxy can only connect to
+ports associated with HTTP servers, and the proxy tries to connect to a
+different port).  dd
+<DT><B>EADDRINUSE</B><DD>
+ローカルアドレスが既に使用されている。
+<DT><B>EADDRNOTAVAIL</B><DD>
+(インターネットドメインソケットの場合) <I>sockfd</I> が参照するソケットがそれ以前にアドレスにバインドされておらず、
+そのソケットに一時ポートをバインドしようとした際に、 一時ポートとして使用する範囲のポート番号がすべて使用中であった。 <B><A HREF="../man7/ip.7.html">ip</A></B>(7) の
+<I>/proc/sys/net/ipv4/ip_local_port_range</I> の議論を参照のこと。
+<DT><B>EAFNOSUPPORT</B><DD>
+渡されたアドレスの <I>sa_family</I> フィールドが正しいアドレスファミリーではない。
+<DT><B>EAGAIN</B><DD>
+For nonblocking UNIX domain sockets, the socket is nonblocking, and the
+connection cannot be completed immediately.  For other socket families,
+there are insufficient entries in the routing cache.
+<DT><B>EALREADY</B><DD>
+ソケットが非停止 (nonblocking) に設定されており、 前の接続が完了していない。
+<DT><B>EBADF</B><DD>
+<I>sockfd</I> が有効なオープンされたファイルディスクリプターでない。
+<DT><B>ECONNREFUSED</B><DD>
+A <B>connect</B>()  on a stream socket found no one listening on the remote
+address.
+<DT><B>EFAULT</B><DD>
+ソケット構造体のアドレスがユーザーのアドレス空間外にある。
+<DT><B>EINPROGRESS</B><DD>
+The socket is nonblocking and the connection cannot be completed
+immediately.  (UNIX domain sockets failed with <B>EAGAIN</B> instead.)  It is
+possible to <B><A HREF="../man2/select.2.html">select</A></B>(2)  or <B><A HREF="../man2/poll.2.html">poll</A></B>(2)  for completion by selecting the
+socket for writing.  After <B><A HREF="../man2/select.2.html">select</A></B>(2)  indicates writability, use
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  to read the <B>SO_ERROR</B> option at level <B>SOL_SOCKET</B> to
+determine whether <B>connect</B>()  completed successfully (<B>SO_ERROR</B> is zero)
+or unsuccessfully (<B>SO_ERROR</B> is one of the usual error codes listed here,
+explaining the reason for the failure).
+<DT><B>EINTR</B><DD>
+
+
+捕捉されたシグナルによりシステムコールが中断された。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EISCONN</B><DD>
+ソケットは既に接続 (connect) されている。
+<DT><B>ENETUNREACH</B><DD>
+到達できないネットワークである。
+<DT><B>ENOTSOCK</B><DD>
+ファイルディスクリプター <I>sockfd</I> がソケットを参照していない。
+<DT><B>EPROTOTYPE</B><DD>
+ソケットタイプが要求された通信プロトコルではサポートされていない。 このエラーは、 例えば UNIX
+ドメインデータグラムソケットをストリームソケットに接続しようとした場合などに起こり得る。
+<DT><B>ETIMEDOUT</B><DD>
+接続を試みている途中で時間切れ (timeout) になった。サーバーが混雑していて 新たな接続を受け入れられないのかもしれない。 IP ソケットでは、
+syncookie がサーバーで有効になっている場合、 タイムアウトが非常に長くなる場合があるので注意すること。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>accept</B>(): POSIX.1-2001, POSIX.1-2008, SVr4, 4.4BSD, (<B>connect</B>()  は
+4.2BSD で初めて実装された).
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+POSIX.1 では <I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I> のインクルードは必須とされておらず、 Linux
+ではこのヘッダーファイルは必要ではない。 しかし、歴史的には、いくつかの実装 (BSD 系) でこのヘッダーファイルが
+必要であり、移植性が必要なアプリケーションではこのファイルを インクルードするのが賢明であろう。
+<P>
+
+For background on the <I>socklen_t</I> type, see <B><A HREF="../man2/accept.2.html">accept</A></B>(2).
+<P>
+
+<B>connect</B>() が失敗した場合、そのソケットの状態は不定だと考えること。
+移植性を考慮したアプリケーションでは、そのソケットをクローズし、再接続用に新しいソケットを作成すべきである。
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+<B>connect</B>()  の利用例が <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)  に記載されている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2), <B><A HREF="../man2/bind.2.html">bind</A></B>(2), <B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2), <B><A HREF="../man2/listen.2.html">listen</A></B>(2), <B><A HREF="../man2/socket.2.html">socket</A></B>(2),
+<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7), <B>selinux</B>(8)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">例</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

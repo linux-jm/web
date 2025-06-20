@@ -1,0 +1,163 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GENKSYMS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GENKSYMS</H1>
+Section: Linux Module Support (8)<BR>Updated: January 30, 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/modutils/release/man8/genksyms.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+genksyms - シンボルのバージョン情報を生成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>genksyms</B>
+
+[-wq] [-dD] [-V] [-k&nbsp;<I>version</I>] [-p string]
+[<I>output&nbsp;directory</I>]
+<A NAME="lbAD">&nbsp;</A>
+<H2>このマニュアルについて、</H2>
+
+これは、Linux Kernel 2.4 の時代に使われていた modutils
+パッケージ所収の古いユーティリティのマニュアルです。(2022/12/02,
+Linux JM Project)
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+<B>genksyms</B>
+
+は (標準入力から) &quot;<B>gcc -E source.c</B>&quot; の出力を読み込み、
+バージョン情報を含むファイルを生成する。
+<P>
+
+<B>-k</B>&nbsp;オプションで指定される出力フォーマットにしたがって、
+出力は指定された出力ディレクトリの <B>.ver</B> ファイルまたは標準出力に
+書き出される。
+<P>
+
+<B>genksyms</B>
+
+は普通ソースファイル中の明示的なシンボルテーブル定義を探す。
+<B>typedef</B>,&nbsp;<B>struct</B>,&nbsp;<B>union</B>,&nbsp;<B>enum</B>
+
+の全ての定義と宣言は後で展開するために保存される。
+全てのグローバルなシンボルも、後で全て展開できるようにするポインタと共に
+保存される。
+<P>
+
+シンボルテーブルがソース中で見つかると、シンボルは完全な定義に展開される。
+この際には全ての構造体、共用体、列挙指定子、型宣言は基本部分まで再帰的に
+展開される。
+こうして得られた最終的な文字列が、CRC アルゴリズムへの入力として使われる。
+このアルゴリズムは、このシンボルについて含まれている定義が変更されると
+すぐに値が変わる整数を与える。
+<P>
+
+カーネルが持っているバージョン情報は普通、
+<B>symbol_R12345678</B>
+
+のようになっている。
+ここで 12345678 は CRC を表す 16 進値である。
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-d</B>, <B>--debug</B>
+
+<DD>
+デバッグ情報を出力する。このオプションを繰り返して指定すると、
+出力の詳しさのレベルが大きくなる。デバッグレベル 1 では行った動作に関する
+普通の情報が表示される。デバッグレベル 2 ではパーザの認識した情報の出力が
+有効になる。デバッグレベル 3 では構文解析の情報が出力されるようになる。
+<DT><B>-D</B>, <B>--dump</B>
+
+<DD>
+展開したシンボル定義を標準エラー出力にダンプする。デバッグ専用の
+オプションである。
+<DT><B>-h</B>, <B>--help</B>
+
+<DD>
+オプションの一覧を表示して直ちに終了する。
+<DT><B>-k</B>&nbsp;<I>version</I>,&nbsp;<B>--kernel</B>&nbsp;<I>version</I><DD>
+出力を生成する対象となるカーネルのバージョンを選択する。このオプションを
+省略すると、バージョンは 2.1.0 より前として扱われる。2.1.18 より前では
+バージョン 1 のチェックサムを使っており、出力は直接コマンドライン上に
+生成される。バージョン 2.1.18 以降ではバージョン 2 のチェックサムを
+使っており、出力は標準出力に生成される。
+<DT><B>-p</B>&nbsp;<I>string</I>,&nbsp;<B>--prefix</B>&nbsp;<I>string</I><DD>
+全てのシンボルについて、生成した CRC の前に与えられた文字列を付ける。
+これは SMP 対応カーネル等で使うためのオプションである。このような場合には、
+データの型で記述するよりも低いレベルにおいてモジュールの互換性がない。
+非互換性の主な原因は、モジュールのコード自体におけるインライン関数の
+展開である。
+<DT><B>-q</B>, <B>--quiet</B>
+
+<DD>
+警告を出さないようにする。つまり、-w オプションの逆である。
+<DT><B>-V</B>, <B>--version</B>
+
+<DD>
+<B>genksyms</B> のバージョンを表示する。
+<DT><B>-w</B>, <B>--warnings</B>
+
+<DD>
+認識できない構文や、宣言されているにも関わらず定義されていない構造体に
+対する警告を表示するようにする。通常はこのような警告は行われない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/insmod.8.html">insmod</A></B>(8), <B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8) 
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>-h</B>&nbsp;オプションは壊れている。<B>--help</B>&nbsp;は正しく動く。
+<BR>
+
+<B>genksyms</B> [<B>-V</B>&nbsp;|&nbsp;<B>--version</B>] はバージョン情報を
+表示して直ちに終了するべきである。
+しかしながら、現在はバージョン情報を表示した後、
+何もオプションが指定されなかったかのように振舞う。
+<A NAME="lbAI">&nbsp;</A>
+<H2>履歴</H2>
+
+このバージョン付けの概念は議論の結果得られたものである。
+議論も KERNEL-channel だけでなく、多くの人々によって行われた。
+<P>
+
+genksyms ユーティリティは 1994 年に Bjorn Ekwall &lt;<A HREF="mailto:bj0rn@blox.se">bj0rn@blox.se</A>&gt; が作成した。
+その多くのアイディアは Jacques Gelinas &lt;<A HREF="mailto:jack@solucorp.ca">jack@solucorp.ca</A>&gt; と
+Jeremy Fitzhardinge &lt;<A HREF="mailto:jeremy@suite.sw.oz.au">jeremy@suite.sw.oz.au</A>&gt; によるものである。
+<P>
+
+このユーティリティは 1996 年に Richard Hendersnon が書き直し、より適切な
+字句解析器とパーザを使うようにした。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">このマニュアルについて、</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">履歴</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

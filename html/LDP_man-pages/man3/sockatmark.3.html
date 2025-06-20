@@ -1,0 +1,162 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SOCKATMARK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SOCKATMARK</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/sockatmark.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sockatmark - どのソケットに帯域外 (out-of-band) マークが付けられているかを調べる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<P>
+
+<B>int sockatmark(int </B><I>sockfd</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>sockatmark</B>(): _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>sockatmark</B>()  はファイルディスクリプター <I>sockfd</I> で参照されるソケットに帯域外マークが付けられているか否かを返す。
+ソケットにマークが付けられている場合は、1 が返される。 ソケットにマークが付けられていない場合は、0 が返される。
+この関数は帯域外マークを削除しない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>sockatmark</B>()  の呼び出しが成功した場合、ソケットに帯域外マークが 付けられていれば 1 を返し、付けられていなければ 0 を返す。
+エラーの場合は -1 が返され、エラーを表す <I>errno</I> が設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>sockfd</I> が有効なファイルディスクリプターでない。
+<DT><B>EINVAL</B><DD>
+
+<I>sockfd</I> は <B>sockatmark</B>()  が適用できないファイルディスクリプターである。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>sockatmark</B>()  は glibc バージョン 2.2.4 で追加された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>sockatmark</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<B>sockatmark</B>()  が 1 を返す場合、帯域外データは <B>MSG_OOB</B> を指定した <B><A HREF="../man2/recv.2.html">recv</A></B>(2)  で読み込むことができる。
+<P>
+
+帯域外データは、いくつかのストリームソケットプロトコルでしか サポートされていない。
+<P>
+
+<B>sockatmark</B>()  は <B>SIGURG</B> シグナルのハンドラーから安全に呼び出すことができる。
+<P>
+
+<B>sockatmark</B>()  は <B>SIOCATMARK</B> <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  操作を使って実装されている。
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+glibc 2.4 より前のバージョンでは、 <B>sockatmark</B>()  は動作しない。
+<A NAME="lbAL">&nbsp;</A>
+<H2>例</H2>
+
+以下のコードは、 <B>SIGURG</B> シグナルを受け取った後にマークまでの全てのデータを読み込んで (破棄し)、
+マークされたデータのバイトを読み込むのに使用できる。
+<P>
+
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[BUF_LEN];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;oobdata;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;atmark,&nbsp;s;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;atmark&nbsp;=&nbsp;sockatmark(sockfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(atmark&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;sockatmark&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(atmark)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;read(sockfd,&nbsp;buf,&nbsp;BUF_LEN);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;read&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;&lt;=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(atmark&nbsp;==&nbsp;1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(recv(sockfd,&nbsp;&amp;oobdata,&nbsp;1,&nbsp;MSG_OOB)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;recv&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2), <B><A HREF="../man2/recv.2.html">recv</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2), <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">例</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

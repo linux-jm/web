@@ -1,0 +1,355 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DEPMOD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>DEPMOD</H1>
+Section: Linux Module Support (8)<BR>Updated: January 26, 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/modutils/release/man8/depmod.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+depmod - ローダブルカーネルモジュールの依存関係の記述を扱う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>depmod</B>
+
+[-aA] [-ehnqrsuvV]
+[-C&nbsp;<I>configfile</I>] [-F&nbsp;<I>kernelsyms</I>] [-b <I>basedirectory</I>]
+
+[<I>forced_version</I>]
+
+<BR>
+
+<B>depmod </B>[-enqrsuv] [-F <I>kernelsyms</I>] module1.o module2.o ...
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>このマニュアルについて</H2>
+
+このマニュアルは、Linux Kernel 2.4 の時代に使われていた modutils
+パッケージの <B>depmod</B> の説明で、古いものです。現在ではたいていの場合、kmod
+パッケージの <B>depmod</B> が使われています。(2022/12/02, Linux JM Project)
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+<B>depmod</B>
+
+および
+<B>modprobe</B>
+
+は、 Linux のモジュール化カーネルを管理するための、
+ユーザー・管理者・ディストリビューションメンテナ向けユーティリティである。
+<P>
+
+<B>depmod</B>
+
+は、コマンドラインで指定されたモジュール
+(あるいは設定ファイルで指定されたディレクトリにあるモジュール)
+のセットにあるシンボルに基づき、
+&quot;Makefile&quot; 的な依存関係ファイルを作成する。
+<P>
+
+<B>depmod</B>
+
+の普通の使い方は、
+<I>/etc/rc.d</I>
+
+にある rc ファイルのどれかに
+<P>
+<BR>
+
+<B>/sbin/depmod -a</B>
+
+<BR>
+
+<P>
+という行を入れることである。
+これにより、正しいモジュールの依存関係をシステムの起動直後に使用できる。
+現在は
+<B>-a</B>
+
+オプションは省略可能である。
+起動時には、
+<B>-q</B>
+
+オプションの方がより適切である。
+こちらは解決できなかったシンボルに関するワーニングを出力しない。
+<P>
+
+新しいカーネルのコンパイル直後に依存関係ファイルを作成することもできる。
+例えば 2.2.98 カーネルのもとで
+カーネル 2.2.99 とそのモジュールを初めてコンパイルしたとき、
+&quot;<B>depmod&nbsp;-a&nbsp;2.2.99</B>&quot; とすれば、正しい位置にファイルが作成される。
+しかしこの場合、
+カーネルへの依存関係は正しいとは保証されない。
+この扱いに関しては、上記の
+<B>-F</B>, <B>-C</B>, <B>-b</B>
+
+各オプションの説明を参照のこと。
+<P>
+
+モジュールと、他のモジュールからエクスポートされたシンボルとの関係を
+構築する際に、
+<B>depmod</B>
+
+はモジュールやエクスポートされたシンボルの GPL 状態を考慮しない。
+つまり、depmod は GPL 互換でないライセンスのモジュールが GPL 専用シンボル
+(カーネル中の EXPORT_SYMBOL_GPL)を参照してもエラーを出さない。
+しかし、insmod は 非 GPL モジュールを GPL 専用シンボルで解決することを
+拒否するので、実際の読み込みは失敗する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-a</B>, <B>--all</B>
+
+<DD>
+設定ファイル
+<I>/etc/modules.conf</I>
+
+があれば、そこで指定されている全てのディレクトリでモジュールを検索する。
+<DT><B>-A</B>, <B>--quick</B>
+
+<DD>
+ファイルのタイムスタンプを比較し、さらに必要ならば
+<B>depmod -a</B>
+
+と同じように振る舞う。
+このオプションは、何か変更があった場合にのみ
+依存関係ファイルを更新する。
+<DT><B>-e</B>, <B>--errsyms</B>
+
+<DD>
+各モジュールごとに、解決されていない全てのシンボルを表示する。
+<DT><B>-h</B>, <B>--help</B>
+
+<DD>
+オプションの一覧を表示して直ちに終了する。
+<DT><B>-n</B>, <B>--show</B>
+
+<DD>
+依存関係ファイルを<I>/lib/modules</I>以下ではなく標準出力に書き出す。
+<DT><B>-q</B>, <B>--quiet</B>
+
+<DD>
+quiet モード。見付からないシンボルがあっても文句を言わない。
+<DT><B>-r</B>, <B>--root</B>
+
+<DD>
+ユーザによっては、モジュールを root 以外のユーザー ID でコンパイルし、
+そのモジュールを root でインストールすることがある。
+このプロセスでは、モジュールの所有者が root 以外のユーザー ID
+のままになることがある (ディレクトリの所有者が root であっても)。
+非 root のユーザー ID を許してしまうと、
+侵入者がそのユーザー ID 保有のモジュールを置き換えることが
+可能になるかもしれず、
+これをきっかけに root アクセスを奪取されてしまうかもしれない。
+<P>
+デフォルトでは、 modutils は root の所有でないモジュールの利用を
+拒否しようとする。 <B>-r</B> を指定すると、このエラーを抑制し、
+root 以外の所有するモジュールを root がロードできるようになる。
+<P>
+-r の利用は大きなセキュリティ上の危険を招く可能性があり、推奨できない。
+<DT><B>-s</B>, <B>--syslog</B>
+
+<DD>
+全てのエラーメッセージを、標準出力ではなく syslog デーモン経由で書き出す。
+<DT><B>-u</B>, <B>--unresolved-error</B>
+
+<DD>
+<B>depmod</B> 2.4 は解決できないシンボルがあったときには返り値を設定しない。
+次の modutils のメジャーリリース (2.5) では、
+解決できないシンボルに対して返り値を設定する予定である。
+modutils 2.4 に対して非ゼロの返り値を期待している
+ディストリビューションもあるが、
+この変更は古い動作を期待しているユーザに対して問題を引き起こすかもしれない。
+depmod 2.4 に非ゼロの返り値を希望する場合は <B>-u</B> を指定すること。
+<B>depmod</B> 2.5 は <B>-u</B> フラグを黙って無視し、
+解決できないシンボルがあった場合には常に非ゼロの返り値を戻す。
+<DT><B>-v</B>, <B>--verbose</B>
+
+<DD>
+各モジュールを処理するごとに、それらのモジュールの名前を表示する。
+<DT><I>-V</I>
+
+<DD>
+<B>depmod</B> のバージョンを表示する。
+</DL>
+<P>
+
+以下のオプションは、ディストリビューションを管理する人々に便利であろう。
+<DL COMPACT>
+<DT><B>-b </B><I>basedirectory</I>, <B>--basedir </B><I>basedirectory<DD>
+環境を変更するために、モジュールのサブツリーが含まれるディレクトリツリー
+/lib/modules</I>
+
+をどこか別の場所に移したい場合、
+その移動された
+<I>/lib/modules</I>
+
+イメージを探す場所を
+<B>-b</B>
+
+オプションを使って depmod に伝える。
+depmod が出力するファイル
+<I>modules.dep</I>
+
+におけるファイル参照は、
+<I>basedirectory</I>
+
+パスを含まない。
+すなわち、最終的なディストリビューションでファイルツリーが
+<I>basedirectory/lib/modules</I>
+
+から
+<I>/lib/modules</I>
+
+に戻されても、全ての参照は正しく利用できる。
+<DT><B>-C </B><I>configfile</I>, <B>--config </B><I>configfile<DD>
+configfile</I>
+
+を
+<I>/etc/modules.conf</I>
+
+の代わりに用いる。
+環境変数
+<B>MODULECONF</B>
+
+を使っても、設定ファイルを
+<I>/etc/modules.conf</I>
+
+(あるいは
+<I>/etc/conf.modules</I>
+
+(使わないほうが良い))
+以外に指定できる。
+<DT>環境変数<DD>
+<B>UNAME_MACHINE</B>
+
+をセットすると、modutils は uname() システムコールの machine フィールドの
+代わりにこの変数の値を用いる。
+これは主に 32 ビットユーザー空間で 64 ビットモジュールをコンパイルする
+(またはその逆)場合に用いる。
+現在の modutils はモジュールに対する完全なクロスビルドモードに対応しておらず、
+ホストアーキテクチャの 32 ビット版と 64 ビット版を選択できるだけである。
+<DT><B>-F kernelsyms</B>,<B>--filesyms </B><I>kernelsyms<DD>
+現在実行されているカーネルとは
+別のカーネルに対して依存関係ファイルを作成する場合、
+</I><B>depmod</B>
+
+に正しいカーネルシンボルのセットを利用させ、
+各モジュールのカーネル参照を正しく解決させることが重要である。
+これらのシンボルには、他のカーネルの
+<I>System.map</I>
+
+のコピーか、あるいは
+<I>/proc/ksyms</I>
+
+の出力のコピーを使える。
+利用しているカーネルがバージョン付きのシンボルを使っている場合は、
+<I>/proc/ksyms</I>
+
+の出力を用いるのがもっともよい。なぜならこのファイルには
+カーネルシンボルのシンボルバージョンが含まれているからである。
+しかしバージョン付きのシンボルに対して
+<I>System.map</I>
+
+を使ってもかまわない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>設定</H2>
+
+<B>depmod</B>
+
+と
+<B>modprobe</B>
+
+の動作は、設定ファイル
+<I>/etc/modules.conf</I>
+
+によって調整できる (このファイルは無くても良い)。
+詳細は
+<B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8)
+
+および
+<B><A HREF="../man5/modules.conf.5.html">modules.conf</A></B>(5)
+
+を参照のこと。
+<A NAME="lbAH">&nbsp;</A>
+<H2>方針</H2>
+
+新しいカーネルをコンパイルして、
+コマンド &quot;<B>make modules_install</B>&quot; を実行すると、
+新しいディレクトリが作成されるがデフォルトは変更されない。
+
+<P>
+
+カーネル配布に含まれないモジュールを利用したい場合は、
+そのファイルは、 
+<I>/lib/modules</I>
+
+以下の、
+カーネルバージョンに関係しないディレクトリに置くのが良い。
+<P>
+
+これはデフォルトの方針であるが、
+/etc/modules.conf によって変更できる。
+<A NAME="lbAI">&nbsp;</A>
+<H2>ファイル</H2>
+
+<PRE>
+<I>/etc/modules.conf</I>(あるいは<I>/etc/conf.modules</I>(非推奨))<I>,</I>
+<I>/lib/modules/*/modules.dep</I>,
+<I>/lib/modules/*</I>
+</PRE>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man5/modules.conf.5.html">modules.conf</A></B>(5), <B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8), <B><A HREF="../man8/modinfo.8.html">modinfo</A></B>(8), 
+
+<B><A HREF="../man8/lsmod.8.html">lsmod</A></B>(8), <B><A HREF="../man8/ksyms.8.html">ksyms</A></B>(8) 
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>depmod</B> [ -V | --version ] は直ちに終了するべきである。
+しかしながら、現在はバージョン情報を表示した後、
+何もオプションが指定されなかったかのように振舞う。
+<A NAME="lbAL">&nbsp;</A>
+<H2>著者</H2>
+
+Jacques Gelinas (<A HREF="mailto:jack@solucorp.qc.ca">jack@solucorp.qc.ca</A>)
+<BR>
+
+Bjorn Ekwall (<A HREF="mailto:bj0rn@blox.se">bj0rn@blox.se</A>)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">このマニュアルについて</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">設定</A><DD>
+<DT><A HREF="#lbAH">方針</A><DD>
+<DT><A HREF="#lbAI">ファイル</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

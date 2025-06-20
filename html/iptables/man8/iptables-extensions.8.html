@@ -1,0 +1,2689 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of iptables-extensions</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>iptables-extensions</H1>
+Section: iptables 1.4.21 (8)<BR>Updated: <BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/iptables/release/man8/iptables-extensions.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+iptables-extensions --- 標準の iptables に含まれる拡張モジュールのリスト
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>ip6tables</B> [<B>-m</B> <I>name</I> [<I>module-options</I>...]] [<B>-j</B> <I>target-name</I>
+[<I>target-options</I>...]
+<P>
+
+<B>iptables</B> [<B>-m</B> <I>name</I> [<I>module-options</I>...]] [<B>-j</B> <I>target-name</I>
+[<I>target-options</I>...]
+<A NAME="lbAD">&nbsp;</A>
+<H2>マッチングの拡張</H2>
+
+iptables は拡張されたパケットマッチングモジュールを使うことができる。 使用するモジュールは <B>-m</B> か <B>--match</B>
+の後ろにモジュール名に続けて指定する。 モジュール名の後ろには、 モジュールに応じて他のいろいろなコマンドラインオプションを指定することができる。
+複数の拡張マッチングモジュールを一行で指定することができる。 モジュールの指定より後ろで <B>-h</B> か <B>--help</B> を指定すると、
+モジュール固有のヘルプが表示される。 拡張マッチングモジュールはルールで指定された順序で評価される。
+<P>
+
+
+<B>-p</B> か <B>--protocol</B> が指定され、 かつ未知のオプションだけが指定されていた場合にのみ、 iptables
+はプロトコルと同じ名前のマッチモジュールをロードし、 そのオプションを使えるようにしようとする。
+<A NAME="lbAE">&nbsp;</A>
+<H3>addrtype</H3>
+
+このモジュールは、 アドレス種別 (<B>address type</B>) に基づいてパケットマッチングを行う。
+アドレス種別はカーネルのネットワークスタック内で使われており、 アドレスはいくつかグループに分類される。 厳密なグループの定義は個々のレイヤ 3
+プロトコルに依存する。
+<P>
+
+以下のアドレスタイプが利用できる。
+<DL COMPACT>
+<DT><B>UNSPEC</B><DD>
+アドレスを指定しない (つまりアドレス 0.0.0.0)
+<DT><B>UNICAST</B><DD>
+ユニキャストアドレス
+<DT><B>LOCAL</B><DD>
+ローカルアドレス
+<DT><B>BROADCAST</B><DD>
+ブロードキャストアドレス
+<DT><B>ANYCAST</B><DD>
+エニーキャストアドレス
+<DT><B>MULTICAST</B><DD>
+マルチキャストアドレス
+<DT><B>BLACKHOLE</B><DD>
+ブラックホールアドレス
+<DT><B>UNREACHABLE</B><DD>
+到達できないアドレス
+<DT><B>PROHIBIT</B><DD>
+禁止されたアドレス
+<DT><B>THROW</B><DD>
+要修正
+<DT><B>NAT</B><DD>
+要修正
+<DT><B>XRESOLVE</B><DD>
+<DT>[<B>!</B>] <B>--src-type</B> <I>type</I><DD>
+送信元アドレスが指定された種類の場合にマッチする。
+<DT>[<B>!</B>] <B>--dst-type</B> <I>type</I><DD>
+宛先アドレスが指定された種類の場合にマッチする。
+<DT><B>--limit-iface-in</B><DD>
+アドレス種別のチェックをそのパケットが受信されたインターフェースに限定する。 このオプションは <B>PREROUTING</B>, <B>INPUT</B>,
+<B>FORWARD</B> チェインでのみ利用できる。 <B>--limit-iface-out</B> オプションと同時に指定することはできない。
+<DT><B>--limit-iface-out</B><DD>
+アドレス種別のチェックをそのパケットが出力されるインターフェースに限定する。 このオプションは <B>POSTROUTING</B>, <B>OUTPUT</B>,
+<B>FORWARD</B> チェインでのみ利用できる。 <B>--limit-iface-in</B> オプションと同時に指定することはできない。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>ah (IPv6 のみ)</H3>
+
+このモジュールは IPsec パケットの認証ヘッダーのパラメータにマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--ahspi</B> <I>spi</I>[<B>:</B><I>spi</I>]<DD>
+SPI にマッチする。
+<DT>[<B>!</B>] <B>--ahlen</B> <I>length</I><DD>
+このヘッダーの全体の長さ (8進数)。
+<DT><B>--ahres</B><DD>
+予約フィールドが 0 で埋められている場合にマッチする。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>ah (IPv4 の場合)</H3>
+
+このモジュールは IPsec パケットの認証ヘッダー (AH) の SPI 値にマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--ahspi</B> <I>spi</I>[<B>:</B><I>spi</I>]<DD>
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>bpf</H3>
+
+Linux Socket Filter を使ってマッチを行う。 BPF プログラムを 10 進数形式で指定する。 これは
+<B>nfbpf_compile</B> ユーティリティにより生成されるフォーマットである。
+<DL COMPACT>
+<DT><B>--bytecode</B> <I>code</I><DD>
+BPF バイトコードフォーマットを渡す (フォーマットについては下記の例で説明)。
+</DL>
+<P>
+
+コードのフォーマットは tcpdump の -ddd コマンドの出力に似ている。 最初に命令数が入った行が 1 行あり、 1 行 1 命令がこれに続く。
+命令行は 'u16 u8 u8 u32' のパターンで 10 進数で指定する。 各フィールドは、命令、 true 時のジャンプオフセット、 false
+時のジャンプオフセット、 汎用で様々な用途に使用するフィールド 'K' である。 コメントはサポートされていない。
+<P>
+
+例えば 'ip proto 6' にマッチするパケットのみを読み込むには、以下を挿入すればよい (コムと末尾のホワイトスペースは含めずに)。
+<DL COMPACT>
+<DT><DD>
+4 # 命令数
+<BR>
+
+48 0 0 9 # load byte ip-&gt;proto
+<BR>
+
+21 0 1 6 # jump equal IPPROTO_TCP
+<BR>
+
+6 0 0 1 # return pass (non-zero)
+<BR>
+
+6 0 0 0 # return fail (zero)
+</DL>
+<P>
+
+このフィルターを bpf マッチに渡すには以下のコマンドのようにする。
+<DL COMPACT>
+<DT><DD>
+iptables -A OUTPUT -m bpf --bytecode '4,48 0 0 9,21 0 1 6,6 0 0 1,6 0 0 0'
+-j ACCEPT
+</DL>
+<P>
+
+代わりに、 nfbpf_compile ユーティリティを使う方法もある。
+<DL COMPACT>
+<DT><DD>
+iptables -A OUTPUT -m bpf --bytecode &quot;`nfbpf_compile RAW 'ip proto 6'`&quot; -j
+ACCEPT
+</DL>
+<P>
+
+BPF についてもっと詳しく知るには FreeBSD の bpf(4) manpage を見るといいだろう。
+<A NAME="lbAI">&nbsp;</A>
+<H3>cluster</H3>
+
+このモジュールを使うと、負荷分散装置なしで、ゲートウェイとバックエンドの負荷分散クラスターを配備できる。
+<P>
+
+This match requires that all the nodes see the same packets. Thus, the
+cluster match decides if this node has to handle a packet given the
+following options:
+<DL COMPACT>
+<DT><B>--cluster-total-nodes</B> <I>num</I><DD>
+クラスターの総ノード数を設定する。
+<DT>[<B>!</B>] <B>--cluster-local-node</B> <I>num</I><DD>
+ローカルノードの数字の ID を設定する。
+<DT>[<B>!</B>] <B>--cluster-local-nodemask</B> <I>mask</I><DD>
+ローカルノードの ID マスクを設定する。 このオプションは <B>--cluster-local-node</B> の代わりに使うことができる。
+<DT><B>--cluster-hash-seed</B> <I>value</I><DD>
+Jenkins ハッシュのシード値を設定する。
+</DL>
+<P>
+
+例:
+<DL COMPACT>
+<DT><DD>
+iptables -A PREROUTING -t mangle -i eth1 -m cluster --cluster-total-nodes 2
+--cluster-local-node 1 --cluster-hash-seed 0xdeadbeef -j MARK --set-mark
+0xffff
+<DT><DD>
+iptables -A PREROUTING -t mangle -i eth2 -m cluster --cluster-total-nodes 2
+--cluster-local-node 1 --cluster-hash-seed 0xdeadbeef -j MARK --set-mark
+0xffff
+<DT><DD>
+iptables -A PREROUTING -t mangle -i eth1 -m mark ! --mark 0xffff -j DROP
+<DT><DD>
+iptables -A PREROUTING -t mangle -i eth2 -m mark ! --mark 0xffff -j DROP
+</DL>
+<P>
+
+以下のコマンドで、 すべてのノードに同じパケットを届けることができる。
+<DL COMPACT>
+<DT><DD>
+ip maddr add 01:00:5e:00:01:01 dev eth1
+<DT><DD>
+ip maddr add 01:00:5e:00:01:02 dev eth2
+<DT><DD>
+arptables -A OUTPUT -o eth1 --h-length 6 -j mangle --mangle-mac-s
+01:00:5e:00:01:01
+<DT><DD>
+arptables -A INPUT -i eth1 --h-length 6 --destination-mac 01:00:5e:00:01:01
+-j mangle --mangle-mac-d 00:zz:yy:xx:5a:27
+<DT><DD>
+arptables -A OUTPUT -o eth2 --h-length 6 -j mangle --mangle-mac-s
+01:00:5e:00:01:02
+<DT><DD>
+arptables -A INPUT -i eth2 --h-length 6 --destination-mac 01:00:5e:00:01:02
+-j mangle --mangle-mac-d 00:zz:yy:xx:5a:27
+</DL>
+<P>
+
+<B>NOTE</B>: the arptables commands above use mainstream syntax. If you are
+using arptables-jf included in some RedHat, CentOS and Fedora versions, you
+will hit syntax errors. Therefore, you'll have to adapt these to the
+arptables-jf syntax to get them working.
+<P>
+
+TCP 接続の場合には、応答方向で受信した TCP ACK パケットが有効とマークされないようにするため、ピックアップ (pickup)
+機能を無効する必要がある。
+<DL COMPACT>
+<DT><DD>
+echo 0 &gt; /proc/sys/net/netfilter/nf_conntrack_tcp_loose
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>comment</H3>
+
+ルールにコメント (最大 256 文字) を付けることができる。
+<DL COMPACT>
+<DT><B>--comment</B> <I>comment</I><DD>
+<DT>例:<DD>
+iptables -A INPUT -i eth1 -m comment --comment &quot;my local LAN&quot;
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H3>connbytes</H3>
+
+一つのコネクション (もしくはそのコネクションを構成する 2 つのフローの一方) でそれまでに転送されたバイト数やパケット数、
+もしくはパケットあたりの平均バイト数にマッチする。
+<P>
+
+カウンターは 64 ビットであり、したがってオーバーフローすることは考えられていない ;)
+<P>
+
+主な利用方法は、長時間存在するダウンロードを検出し、 これらに印を付けることで、
+トラフィック制御において艇優先帯域を使うようにスケジューリングできるようにすることである。
+<P>
+
+コネクションあたりの転送バイト数は、 `conntrack -L` 経由で見ることができ、 ctnetlink 経由でもアクセスすることもできる。
+<P>
+
+アカウント情報を持っていないコネクションでは、 このマッチングは常に false を返す点に注意すること。
+&quot;net.netfilter.nf_conntrack_acct&quot; sysctl フラグで、
+<B>新規</B>コネクションでバイト数/パケット数の計測が行われるかが制御できる。 sysctl フラグが変更されても、
+既存のコネクションのアカウント情報は影響を受けない。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--connbytes</B> <I>from</I>[<B>:</B><I>to</I>]<DD>
+パケット数/バイト数/平均パケットサイズが FROM バイト/パケットより大きく TO バイト/パケットよりも小さいコネクションのパケットにマッチする。
+TO が省略した場合は FROM のみがチェックされる。 &quot;!&quot; を使うと、 この範囲にないパケットにマッチする。
+<DT><B>--connbytes-dir</B> {<B>original</B>|<B>reply</B>|<B>both</B>}<DD>
+どのパケットを計測するかを指定する
+<DT><B>--connbytes-mode</B> {<B>packets</B>|<B>bytes</B>|<B>avgpkt</B>}<DD>
+パケット総数、転送バイト数、これまでに受信した全パケットの平均サイズ (バイト単位) のどれをチェックするかを指定する。 &quot;both&quot; と
+&quot;avgpkt&quot; を組み合わせて使った場合で、 (HTTP のように) データが (主に) 片方向でのみ転送される場合、
+平均パケットサイズは実際のデータパケットの約半分になる点に注意すること。
+<DT>例:<DD>
+iptables .. -m connbytes --connbytes 10000:100000 --connbytes-dir both
+--connbytes-mode bytes ...
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H3>connlimit</H3>
+
+一つのサーバーに対する、 一つのクライアント IP アドレス (またはクライアントアドレスブロック) からの同時接続数を制限することができる。
+<DL COMPACT>
+<DT><B>--connlimit-upto</B> <I>n</I><DD>
+既存の接続数が <I>n</I> 以下の場合にマッチする。
+<DT><B>--connlimit-above</B> <I>n</I><DD>
+既存の接続数が <I>n</I> より多い場合にマッチする。
+<DT><B>--connlimit-mask</B> <I>prefix_length</I><DD>
+プレフィックス長を使ってホストのグルーピングを行う。 IPv4 の場合には、プレフィックス長は 0 以上 32 以下の値でなければならない。 IPv6
+の場合には 0 以上 128 以下でなければならない。 指定しなかった場合、そのプロトコルで使われる最も長いプレフィックス長が使用される。
+<DT><B>--connlimit-saddr</B><DD>
+送信元グループに対して制限を適用する。 これが --connlimit-daddr が指定されなかった場合のデフォルトである。
+<DT><B>--connlimit-daddr</B><DD>
+宛先グループに対して制限を適用する。
+</DL>
+<P>
+
+例:
+<DL COMPACT>
+<DT># クライアントホストあたり 2 つの telnet 接続を許可する<DD>
+iptables -A INPUT -p tcp --syn --dport 23 -m connlimit --connlimit-above 2
+-j REJECT
+<DT># 同じことのに行う別のマッチ方法<DD>
+iptables -A INPUT -p tcp --syn --dport 23 -m connlimit --connlimit-upto 2 -j
+ACCEPT
+<DT># クラス C の送信元ネットワーク (ネットマスクが 24 ビット) あたりの同時 HTTP リクエスト数を 16 までに制限する<DD>
+iptables -p tcp --syn --dport 80 -m connlimit --connlimit-above 16
+--connlimit-mask 24 -j REJECT
+<DT># リンクローカルネットワークからの同時 HTTP リクエスト数を 16 までに制限する<DD>
+(ipv6)  ip6tables -p tcp --syn --dport 80 -s fe80::/64 -m connlimit
+--connlimit-above 16 --connlimit-mask 64 -j REJECT
+<DT># 特定のホスト宛のコネクション数を制限する<DD>
+ip6tables -p tcp --syn --dport 49152:65535 -d 2001:db8::1 -m connlimit
+--connlimit-above 100 -j REJECT
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H3>connmark</H3>
+
+このモジュールはコネクションに関連づけられた netfilter の mark フィールドにマッチする (このフィールドは、 以下の
+<B>CONNMARK</B> ターゲットで設定される)。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--mark</B> <I>value</I>[<B>/</B><I>mask</I>]<DD>
+指定された mark 値を持つコネクションのパケットにマッチする (mask が指定されると、 比較の前に mask との論理積 (AND)
+がとられる)。
+</DL>
+<A NAME="lbAN">&nbsp;</A>
+<H3>conntrack</H3>
+
+コネクション追跡 (connection tracking) と組み合わせて使用した場合に、 このモジュールを使うと、
+パケットやコネクションの追跡状態を知ることができる。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--ctstate</B> <I>statelist</I><DD>
+<I>statelist</I> はマッチするコネクション状態 (connection state) のリストで、 コンマ区切りで指定する。
+指定できる状態のリストは後述。
+<DT>[<B>!</B>] <B>--ctproto</B> <I>l4proto</I><DD>
+指定されたレイヤ 4 のプロトコルにマッチする。 プロトコルは名前または数値で指定する。
+<DT>[<B>!</B>] <B>--ctorigsrc</B> <I>address</I>[<B>/</B><I>mask</I>]<DD>
+<DT>[<B>!</B>] <B>--ctorigdst</B> <I>address</I>[<B>/</B><I>mask</I>]<DD>
+<DT>[<B>!</B>] <B>--ctreplsrc</B> <I>address</I>[<B>/</B><I>mask</I>]<DD>
+<DT>[<B>!</B>] <B>--ctrepldst</B> <I>address</I>[<B>/</B><I>mask</I>]<DD>
+順方向/反対方向のコネクションの送信元/宛先アドレスにマッチする。
+<DT>[<B>!</B>] <B>--ctorigsrcport</B> <I>port</I>[<B>:</B><I>port</I>]<DD>
+<DT>[<B>!</B>] <B>--ctorigdstport</B> <I>port</I>[<B>:</B><I>port</I>]<DD>
+<DT>[<B>!</B>] <B>--ctreplsrcport</B> <I>port</I>[<B>:</B><I>port</I>]<DD>
+<DT>[<B>!</B>] <B>--ctrepldstport</B> <I>port</I>[<B>:</B><I>port</I>]<DD>
+順方向/反対方向のコネクションの (TCP/UDPなどの) 送信元/宛先ポートアドレス、 もしくは GRE キーにマッチする。
+ポートの範囲指定はカーネル 2.6.38 以降でのみサポートされている。
+<DT>[<B>!</B>] <B>--ctstatus</B> <I>statelist</I><DD>
+<I>statuslist</I> はマッチするコネクション状況 (connection status) のリストで、 コンマ区切りで指定する。
+指定できる状況のリストは後述。
+<DT>[<B>!</B>] <B>--ctexpire</B> <I>time</I>[<B>:</B><I>time</I>]<DD>
+有効期間の残り秒数、 またはその範囲(両端を含む)にマッチする。
+<DT><B>--ctdir</B> {<B>ORIGINAL</B>|<B>REPLY</B>}<DD>
+指定した方向に流れるパケットにマッチする。 このフラグが全く指定されなかった場合、 両方向のパケットがマッチする。
+</DL>
+<P>
+
+<B>--ctstate</B> に指定できる状態は以下の通り。
+<DL COMPACT>
+<DT><B>INVALID</B><DD>
+そのパケットはどの既知のコネクションとも関連付けられていない。
+<DT><B>NEW</B><DD>
+そのパケットが新しいコネクションを開始しようとしている。 もしくは、 両方の方向でパケットが観測されていないコネクションに関連付けられる。
+<DT><B>ESTABLISHED</B><DD>
+そのパケットが、 両方向のパケットが観測されたコネクションに関連付けられる。
+<DT><B>RELATED</B><DD>
+そのパケットは、新しいコネクションを開始しようとしているが、 既存のコネクションと関連付けられる。 FTP データ転送や ICMP
+エラーなどが該当する。
+<DT><B>UNTRACKED</B><DD>
+そのパケットは全く追跡されていない。 この状態は、 raw テーブルで -j CT --notrack
+を使って明示的にそのパケットを追跡しないようにしている場合に起こる。
+<DT><B>SNAT</B><DD>
+元の送信元アドレスが応答の宛先アドレスと異なる場合にマッチする仮想的な状態。
+<DT><B>DNAT</B><DD>
+元の宛先アドレスが応答の送信元アドレスと異なる場合にマッチする仮想的な状態。
+</DL>
+<P>
+
+<B>--ctstatus</B> に指定できる値は以下の通り。
+<DL COMPACT>
+<DT><B>NONE</B><DD>
+以下のいずれでもない。
+<DT><B>EXPECTED</B><DD>
+期待通りのコネクションである (つまり conntrack のヘルパーがコネクションをセットアップした)。
+<DT><B>SEEN_REPLY</B><DD>
+conntrack が両方の方向でパケットを観測済である。
+<DT><B>ASSURED</B><DD>
+conntrack エントリが early-expired されることはない。
+<DT><B>CONFIRMED</B><DD>
+Connection is confirmed: originating packet has left box.
+</DL>
+<A NAME="lbAO">&nbsp;</A>
+<H3>cpu</H3>
+
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--cpu</B> <I>number</I><DD>
+このパケットを処理する CPU にマッチする。 CPU には 0 から NR_CPUS-1 の番号が振られる。
+ネットワークトラフィックを複数のキューに分散させるために RPS (Remote Packet Steering) やマルチキュー NIC
+と組み合わせて使用できる。
+</DL>
+<P>
+
+例:
+<P>
+
+iptables -t nat -A PREROUTING -p tcp --dport 80 -m cpu --cpu 0 -j REDIRECT
+--to-port 8080
+<P>
+
+iptables -t nat -A PREROUTING -p tcp --dport 80 -m cpu --cpu 1 -j REDIRECT
+--to-port 8081
+<P>
+
+Linux 2.6.36 以降で利用可能。
+<A NAME="lbAP">&nbsp;</A>
+<H3>dccp</H3>
+
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--source-port</B>,<B>--sport</B> <I>port</I>[<B>:</B><I>port</I>]<DD>
+<DT>[<B>!</B>] <B>--destination-port</B>,<B>--dport</B> <I>port</I>[<B>:</B><I>port</I>]<DD>
+<DT>[<B>!</B>] <B>--dccp-types</B> <I>mask</I><DD>
+DCCP パケットタイプが <I>mask</I> のいずれかであればマッチする。 <I>mask</I> はカンマ区切りのパケットタイプのリストである。
+指定できるパケットタイプは <B>REQUEST RESPONSE DATA ACK DATAACK CLOSEREQ CLOSE RESET SYNC
+SYNCACK INVALID</B> である。
+<DT>[<B>!</B>] <B>--dccp-option</B> <I>number</I><DD>
+DCCP オプションが設定されている場合にマッチする。
+</DL>
+<A NAME="lbAQ">&nbsp;</A>
+<H3>devgroup</H3>
+
+パケットの受信/送信インターフェースのデバイスグループにマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--src-group</B> <I>name</I><DD>
+受信デバイスのデバイスグループにマッチする
+<DT>[<B>!</B>] <B>--dst-group</B> <I>name</I><DD>
+送信デバイスのデバイスグループにマッチする
+</DL>
+<A NAME="lbAR">&nbsp;</A>
+<H3>dscp</H3>
+
+このモジュールは、 IP ヘッダーの TOS フィールド内にある、 6 bit の DSCP フィールドにマッチする。 IETF では DSCP が
+TOS に取って代わった。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--dscp</B> <I>value</I><DD>
+(10 進または 16 進の) 数値 [0-63] にマッチする。
+<DT>[<B>!</B>] <B>--dscp-class</B> <I>class</I><DD>
+DiffServ クラスにマッチする。 値は BE, EF, AFxx, CSx クラスのいずれかである。 対応する数値に変換される。
+</DL>
+<A NAME="lbAS">&nbsp;</A>
+<H3>dst (IPv6 のみ)</H3>
+
+このモジュールは宛先オプションヘッダーのパラメータにマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--dst-len</B> <I>length</I><DD>
+このヘッダーの全体の長さ (8進数)。
+<DT><B>--dst-opts</B> <I>type</I>[<B>:</B><I>length</I>][<B>,</B><I>type</I>[<B>:</B><I>length</I>]...]<DD>
+数値のオプションタイプとオプションデータのオクテット単位の長さ。
+</DL>
+<A NAME="lbAT">&nbsp;</A>
+<H3>ecn</H3>
+
+IPv4/IPv6 と TCP ヘッダーの ECN ビットにマッチングを行う。 ECN とは RFC3168 で規定された Explicit
+Congestion Notification (明示的な輻輳通知) 機構のことである。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--ecn-tcp-cwr</B><DD>
+TCP ECN CWR (Congestion Window Received) ビットがセットされている場合にマッチする。
+<DT>[<B>!</B>] <B>--ecn-tcp-ece</B><DD>
+TCP ECN ECE (ECN Echo) ビットがセットされている場合にマッチする。
+<DT>[<B>!</B>] <B>--ecn-ip-ect</B> <I>num</I><DD>
+特定の IPv4/IPv6 ECT (ECN-Capable Transport) にマッチする。 `0' 以上 `3'
+以下の値を指定しなければならない。
+</DL>
+<A NAME="lbAU">&nbsp;</A>
+<H3>esp</H3>
+
+このモジュールは IPsec パケットの ESP ヘッダーの SPI 値にマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--espspi</B> <I>spi</I>[<B>:</B><I>spi</I>]<DD>
+</DL>
+<A NAME="lbAV">&nbsp;</A>
+<H3>eui64 (IPv6 のみ)</H3>
+
+このモジュールは stateless の自動で設定された IPv6 アドレスの EUI-64 の部分にマッチする。 Ethernet の送信元 MAC
+アドレスに基づく EUI-64 と IPv6 送信元アドレスの下位 64 ビットの比較が行われる。 ただし &quot;Universal/Local&quot;
+ビットは比較されない。 このモジュールは他のリンク層フレームにはマッチしない。 このモジュールは <B>PREROUTING</B>, <B>INPUT</B>,
+<B>FORWARD</B> チェインでのみ有効である。
+<A NAME="lbAW">&nbsp;</A>
+<H3>frag (IPv6 のみ)</H3>
+
+このモジュールはフラグメントヘッダーのパラメータにマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--fragid</B> <I>id</I>[<B>:</B><I>id</I>]<DD>
+指定された値もしくは範囲の ID にマッチする。
+<DT>[<B>!</B>] <B>--fraglen</B> <I>length</I><DD>
+このオプションはバージョン 2.6.10 以降のカーネルでは使用できない。 フラグメントヘッダー長は変化しないので、このオプションは意味を持たない。
+<DT><B>--fragres</B><DD>
+予約フィールドに 0 が入っている場合にマッチする。
+<DT><B>--fragfirst</B><DD>
+最初のフラグメントにマッチする。
+<DT><B>--fragmore</B><DD>
+さらにフラグメントが続く場合にマッチする。
+<DT><B>--fraglast</B><DD>
+最後のフラグメントの場合にマッチする。
+</DL>
+<A NAME="lbAX">&nbsp;</A>
+<H3>hashlimit</H3>
+
+<B>hashlimit</B> uses hash buckets to express a rate limiting match (like the
+<B>limit</B> match) for a group of connections using a <B>single</B> iptables
+rule. Grouping can be done per-hostgroup (source and/or destination address)
+and/or per-port. It gives you the ability to express &quot;<I>N</I> packets per time
+quantum per group&quot; or &quot;<I>N</I> bytes per seconds&quot; (see below for some
+examples).
+<P>
+
+hash limit オプション (<B>--hashlimit-upto</B>, <B>--hashlimit-above</B>) と
+<B>--hashlimit-name</B> は必須である。
+<DL COMPACT>
+<DT><B>--hashlimit-upto</B> <I>amount</I>[<B>/second</B>|<B>/minute</B>|<B>/hour</B>|<B>/day</B>]<DD>
+単位時間あたりの平均マッチ回数の最大値。 数値で指定され、 添字 `/second', `/minute', `/hour', `/day'
+を付けることもできる。 デフォルトは 3/hour である。
+<DT><B>--hashlimit-above</B> <I>amount</I>[<B>/second</B>|<B>/minute</B>|<B>/hour</B>|<B>/day</B>]<DD>
+レートが指定された区間での <I>amount</I> より大きい場合にマッチする。
+<DT><B>--hashlimit-burst</B> <I>amount</I><DD>
+パケットがマッチする回数の最大初期値: 上のオプションで指定した制限に達しなければ、 マッチするごとに、 この数値になるまで 1 個ずつ増やされる。
+デフォルトは 5 である。 バイトでのレート照合が要求された場合、 このオプションは指定レートを超過できるバイト数を規定する。
+このオプションを使用する際には注意が必要である -- エントリがタイムアウトで削除される際に、バースト値もリセットされる。
+<DT><B>--hashlimit-mode</B> {<B>srcip</B>|<B>srcport</B>|<B>dstip</B>|<B>dstport</B>}<B>,</B>...<DD>
+対象とする要素のカンマ区切りのリスト。 --hashlimit-mode オプションが指定されなかった場合、 hashlimit は limit
+と同じ動作をするが、 ハッシュの管理を行うコストがかかる。
+<DT><B>--hashlimit-srcmask</B> <I>prefix</I><DD>
+When --hashlimit-mode srcip is used, all source addresses encountered will
+be grouped according to the given prefix length and the so-created subnet
+will be subject to hashlimit. <I>prefix</I> must be between (inclusive) 0 and
+32. Note that --hashlimit-srcmask 0 is basically doing the same thing as not
+specifying srcip for --hashlimit-mode, but is technically more expensive.
+<DT><B>--hashlimit-dstmask</B> <I>prefix</I><DD>
+Like --hashlimit-srcmask, but for destination addresses.
+<DT><B>--hashlimit-name</B> <I>foo</I><DD>
+/proc/net/ipt_hashlimit/foo エントリの名前。
+<DT><B>--hashlimit-htable-size</B> <I>buckets</I><DD>
+ハッシュテーブルのバケット数。
+<DT><B>--hashlimit-htable-max</B> <I>entries</I><DD>
+ハッシュの最大エントリ数。
+<DT><B>--hashlimit-htable-expire</B> <I>msec</I><DD>
+ハッシュエントリが何ミリ秒後に削除されるか。
+<DT><B>--hashlimit-htable-gcinterval</B> <I>msec</I><DD>
+ガベージコレクションの間隔 (ミリ秒)。
+</DL>
+<P>
+
+例:
+<DL COMPACT>
+<DT>送信元ホストに対するマッチ<DD>
+&quot;192.168.0.0/16 の各ホストに対して 1000 パケット/秒&quot; =&gt; -s 192.168.0.0/16
+--hashlimit-mode srcip --hashlimit-upto 1000/sec
+<DT>送信元ポートに対するマッチ<DD>
+&quot;192.168.1.1 の各サービスに対して 100 パケット/秒&quot; =&gt; -s 192.168.1.1 --hashlimit-mode
+srcport --hashlimit-upto 100/sec
+<DT>サブネットに対するマッチ<DD>
+&quot;10.0.0.0/8 内の /28 サブネット (アドレス 8 個のグループ) それぞれに対して 10000 パケット/秒&quot; =&gt; -s
+10.0.0.0/8 --hashlimit-mask 28 --hashlimit-upto 10000/min
+<DT>バイト/秒によるマッチ<DD>
+&quot;512kbyte/s を超過したフロー&quot; =&gt; --hashlimit-mode srcip,dstip,srcport,dstport
+--hashlimit-above 512kb/s
+<DT>バイト/秒によるマッチ<DD>
+&quot;512kbyte/s を超過するとマッチするが、 1 メガバイトに達するまではマッチせず許可する&quot; --hashlimit-mode dstip
+--hashlimit-above 512kb/s --hashlimit-burst 1mb
+</DL>
+<A NAME="lbAY">&nbsp;</A>
+<H3>hbh (IPv6 のみ)</H3>
+
+このモジュールは Hop-by-Hop オプションヘッダーのパラメータにマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--hbh-len</B> <I>length</I><DD>
+このヘッダーの全体の長さ (8進数)。
+<DT><B>--hbh-opts</B> <I>type</I>[<B>:</B><I>length</I>][<B>,</B><I>type</I>[<B>:</B><I>length</I>]...]<DD>
+数値のオプションタイプとオプションデータのオクテット単位の長さ。
+</DL>
+<A NAME="lbAZ">&nbsp;</A>
+<H3>helper</H3>
+
+このモジュールは、 指定されたコネクション追跡ヘルパーモジュールに 関連するパケットにマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--helper</B> <I>string</I><DD>
+指定されたコネクション追跡ヘルパーモジュールに 関連するパケットにマッチする。
+<DL COMPACT><DT><DD>
+<P>
+
+デフォルトのポートを使った ftp-セッションに関連するパケットでは、 string に &quot;ftp&quot; と書ける。 他のポートでは &quot;-ポート番号&quot;
+を値に付け加える。 すなわち &quot;ftp-2121&quot; となる。
+<P>
+
+他のコネクション追跡ヘルパーでも同じルールが適用される。
+</DL>
+
+</DL>
+<A NAME="lbBA">&nbsp;</A>
+<H3>hl (IPv6 のみ)</H3>
+
+このモジュールは IPv6 ヘッダーの Hop Limit フィールドにマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--hl-eq</B> <I>value</I><DD>
+Hop Limit が <I>value</I> と同じ場合にマッチする。
+<DT><B>--hl-lt</B> <I>value</I><DD>
+Hop Limit が <I>value</I> より小さい場合にマッチする。
+<DT><B>--hl-gt</B> <I>value</I><DD>
+Hop Limit が <I>value</I> より大きい場合にマッチする。
+</DL>
+<A NAME="lbBB">&nbsp;</A>
+<H3>icmp (IPv4 の場合)</H3>
+
+この拡張は `--protocol icmp' が指定された場合に使用でき、 以下のオプションが提供される:
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--icmp-type</B> {<I>type</I>[<B>/</B><I>code</I>]|<I>typename</I>}<DD>
+ICMP タイプを指定できる。 タイプ指定には、 数値の ICMP タイプ、 タイプ/コードの組、 または以下のコマンド で表示される ICMP
+タイプ名を指定できる。
+<PRE>
+ iptables -p icmp -h
+</PRE>
+
+</DL>
+<A NAME="lbBC">&nbsp;</A>
+<H3>icmp6 (IPv6 のみ)</H3>
+
+これらの拡張は `--protocol ipv6-icmp' または `--protocol icmpv6' が指定された場合に使用でき、
+以下のオプションが提供される:
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--icmpv6-type</B> <I>type</I>[<B>/</B><I>code</I>]|<I>typename</I><DD>
+ICMPv6 タイプを指定できる。 タイプ指定には、 数値の ICMP <I>type</I>、 <I>type</I> と <I>code</I>、 または以下のコマンド
+で表示される ICMPv6 タイプ名を指定できる。
+<PRE>
+ ip6tables -p ipv6-icmp -h
+</PRE>
+
+</DL>
+<A NAME="lbBD">&nbsp;</A>
+<H3>iprange</H3>
+
+このモジュールは指定された任意の範囲の IP アドレスにマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--src-range</B> <I>from</I>[<B>-</B><I>to</I>]<DD>
+指定された範囲の送信元 IP にマッチする。
+<DT>[<B>!</B>] <B>--dst-range</B> <I>from</I>[<B>-</B><I>to</I>]<DD>
+指定された範囲の宛先 IP にマッチする。
+</DL>
+<A NAME="lbBE">&nbsp;</A>
+<H3>ipv6header (IPv6 のみ)</H3>
+
+このモジュールは IPv6 拡張ヘッダー、 上位レイヤのヘッダー、もしくはその両方にマッチする。
+<DL COMPACT>
+<DT><B>--soft</B><DD>
+パケットが <B>--header</B> で指定されたヘッダーの<B>いずれか</B>を含む場合にマッチする。
+<DT>[<B>!</B>] <B>--header</B> <I>header</I>[<B>,</B><I>header</I>...]<DD>
+Matches the packet which EXACTLY includes all specified headers. The headers
+encapsulated with ESP header are out of scope.  Possible <I>header</I> types can
+be:
+<DT><B>hop</B>|<B>hop-by-hop</B><DD>
+Hop-by-Hop オプションヘッダー
+<DT><B>dst</B><DD>
+宛先オプションヘッダー
+<DT><B>route</B><DD>
+ルーティングヘッダー
+<DT><B>frag</B><DD>
+フラグメントヘッダー
+<DT><B>auth</B><DD>
+認証ヘッダー (AH)
+<DT><B>esp</B><DD>
+ESP (Encapsulating Security Payload) ヘッダー
+<DT><B>none</B><DD>
+No Next header which matches 59 in the 'Next Header field' of IPv6 header or
+any IPv6 extension headers
+<DT><B>proto</B><DD>
+which matches any upper layer protocol header. A protocol name from
+/etc/protocols and numeric value also allowed. The number 255 is equivalent
+to <B>proto</B>.
+</DL>
+<A NAME="lbBF">&nbsp;</A>
+<H3>ipvs</H3>
+
+IPVS コネクション属性にマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--ipvs</B><DD>
+IPVS コネクションに属すパケット
+<DT>以下のオプションでは --ipvs も暗黙のうちに指定される (否定の場合も含む)<DD>
+<DT>[<B>!</B>] <B>--vproto</B> <I>protocol</I><DD>
+マッチする VIP プロトコル (数値か名前 (例えば &quot;tcp&quot;) で指定する)
+<DT>[<B>!</B>] <B>--vaddr</B> <I>address</I>[<B>/</B><I>mask</I>]<DD>
+マッチする VIP アドレス
+<DT>[<B>!</B>] <B>--vport</B> <I>port</I><DD>
+マッチする VIP プロトコル (数値か名前 (例えば <DT><B>--vdir</B> {<B>ORIGINAL</B>|<B>REPLY</B>}<DD>
+パケットフローの方向
+<DT>[<B>!</B>] <B>--vmethod</B> {<B>GATE</B>|<B>IPIP</B>|<B>MASQ</B>}<DD>
+使用する IPVS の転送方法
+<DT>[<B>!</B>] <B>--vportctl</B> <I>port</I><DD>
+マッチする制御用コネクションの VIP ポート (例えば FTP であれば 21)
+</DL>
+<A NAME="lbBG">&nbsp;</A>
+<H3>length</H3>
+
+このモジュールは、 パケットのレイヤ 3 ペイロード (例えばレイヤ 4 パケット) の長さが、 指定された値、 または値の範囲にあればマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--length</B> <I>length</I>[<B>:</B><I>length</I>]<DD>
+</DL>
+<A NAME="lbBH">&nbsp;</A>
+<H3>limit</H3>
+
+このモジュールは、 トークンバケットフィルタを使って制限レートのマッチを行う。 この拡張を使ったルールは、指定された制限に達するまでマッチする。
+例えば、 このモジュールはログ記録を制限するために <B>LOG</B> ターゲットと組み合わせて使うことができる。
+<P>
+
+xt_limit has no negation support - you will have to use -m hashlimit !
+--hashlimit <I>rate</I> in this case whilst omitting --hashlimit-mode.
+<DL COMPACT>
+<DT><B>--limit</B> <I>rate</I>[<B>/second</B>|<B>/minute</B>|<B>/hour</B>|<B>/day</B>]<DD>
+単位時間あたりの平均マッチ回数の最大値。 数値で指定され、 添字 `/second', `/minute', `/hour', `/day'
+を付けることもできる。 デフォルトは 3/hour である。
+<DT><B>--limit-burst</B> <I>number</I><DD>
+パケットがマッチする回数の最大初期値: 上のオプションで指定した制限に達しなければ、 マッチするごとに、 この数値になるまで 1 個ずつ増やされる。
+デフォルトは 5 である。
+</DL>
+<A NAME="lbBI">&nbsp;</A>
+<H3>mac</H3>
+
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--mac-source</B> <I>address</I><DD>
+送信元 MAC アドレスにマッチする。 <I>address</I> は XX:XX:XX:XX:XX:XX と
+いう形式でなければならない。 イーサーネットデバイスから入ってくるパケッ
+トで、 <B>PREROUTING</B>, <B>FORWARD</B>, <B>INPUT</B> チェインに入るパケットにしか
+意味がない。
+</DL>
+<A NAME="lbBJ">&nbsp;</A>
+<H3>mark</H3>
+
+このモジュールはパケットに関連づけられた netfilter の mark フィールドにマッチする (このフィールドは、 以下の <B>MARK</B>
+ターゲットで設定される)。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--mark</B> <I>value</I>[<B>/</B><I>mask</I>]<DD>
+指定された符号なしの mark 値を持つパケットにマッチする (<I>mask</I> が指定されると、 比較の前に <I>mask</I> との論理積 (AND)
+がとられる)。
+</DL>
+<A NAME="lbBK">&nbsp;</A>
+<H3>mh (IPv6 のみ)</H3>
+
+この拡張は `--protocol ipv6-mh' または `--protocol mh' が指定された場合にロードされる。
+以下のオプションが提供される。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--mh-type</B> <I>type</I>[<B>:</B><I>type</I>]<DD>
+Mobility Header (MH) タイプを指定できる。 タイプ指定には、 数値の MH タイプか、 以下のコマンドで表示される MH
+タイプ名を指定できる。
+<PRE>
+ ip6tables -p mh -h
+</PRE>
+
+</DL>
+<A NAME="lbBL">&nbsp;</A>
+<H3>multiport</H3>
+
+このモジュールは送信元ポートや宛先ポートの集合にマッチする。 ポートは 15 個まで指定できる。 ポートの範囲指定 (port:port) は 2
+ポートとカウントされる。 このモジュールが使用できるのは <B>tcp</B>, <B>udp</B>, <B>udplite</B>, <B>dccp</B>, <B>sctp</B>
+のいずれかと組み合わせた場合だけである。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--source-ports</B>,<B>--sports</B> <I>port</I>[<B>,</B><I>port</I>|<B>,</B><I>port</I><B>:</B><I>port</I>]...<DD>
+送信元ポートが指定されたポートのいずれにマッチする。 フラグ <B>--sports</B> はこのオプションの便利な別名である。
+複数のポートやポート範囲がカンマ区切りで指定できる。 ポート範囲はコロン区切りで指定する。 したがって <B>53,1024:65535</B> はポート 53
+および 1024 から 65535 までの全ポートにマッチする。
+<DT>[<B>!</B>] <B>--destination-ports</B>,<B>--dports</B> <I>port</I>[<B>,</B><I>port</I>|<B>,</B><I>port</I><B>:</B><I>port</I>]...<DD>
+宛先ポートが指定されたポートのうちのいずれかであればマッチする。
+フラグ <B>--dports</B> は、 このオプションの便利な別名である。
+<DT>[<B>!</B>] <B>--ports</B> <I>port</I>[<B>,</B><I>port</I>|<B>,</B><I>port</I><B>:</B><I>port</I>]...<DD>
+送信元ポートと宛先ポートの一方が指定されたポートのいずれか一つと等しければ、 マッチする。
+</DL>
+<A NAME="lbBM">&nbsp;</A>
+<H3>nfacct</H3>
+
+nfacct マッチングは iptable に拡張アカウンティング機構を提供する。 このマッチングモジュールはユーザー空間スタンドアロンユーティリティ
+<B>nfacct</B>(8) と一緒に使う必要がある。
+<P>
+
+以下のオプションだけがこのマッチングで使用できる。
+<DL COMPACT>
+<DT><B>--nfacct-name</B> <I>name</I><DD>
+このルールセットがマッチするトラフィック量を記録するのに使用する既存のオブジェクト名を指定する。
+</DL>
+<P>
+
+この拡張を使用するには、アカウンティングオブジェクトを作成する必要があります。
+<DL COMPACT>
+<DT><DD>
+nfacct add http-traffic
+</DL>
+<P>
+
+それから、iptables を使ってアカウンティングオブジェクトにトラフィックを関連付けます。
+<DL COMPACT>
+<DT><DD>
+iptables -I INPUT -p tcp --sport 80 -m nfacct --nfacct-name http-traffic
+<DT><DD>
+iptables -I OUTPUT -p tcp --dport 80 -m nfacct --nfacct-name http-traffic
+</DL>
+<P>
+
+そうすると、ルールにマッチしたトラフィック量をチェックできる。
+<DL COMPACT>
+<DT><DD>
+nfacct get http-traffic
+<DT><DD>
+{ pkts = 00000000000000000156, bytes = 00000000000000151786 } =
+http-traffic;
+</DL>
+<P>
+
+<B>nfacct</B>(8) は <A HREF="http://www.netfilter.org">http://www.netfilter.org</A> もしくは git.netfilter.org リポジトリから入手できる。
+<A NAME="lbBN">&nbsp;</A>
+<H3>osf</H3>
+
+osf モジュールは受動的な OS (オペレーティングシステム) フィンガープリンティングを行う。 このモジュールは SYN
+ビットがセットされたパケットのいくつかのデータ (Window Size, MSS, オプションとその順序, TTL, DF など) を比較する。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--genre</B> <I>string</I><DD>
+受動的フィンガープリンティングでマッチさせるオペレーティングシステムのジャンル。
+<DT><B>--ttl</B> <I>level</I><DD>
+パケットに対して、オペレーティングシステムを判定するための追加の TTL チェックを行う。 <I>level</I> には以下の値のいずれを指定できる。
+<DT>&bull;<DD>
+0 - 本当の IP アドレスとフィンガープリント TTL の比較を行う。 一般に LAN で有効である。
+<DT>&bull;<DD>
+1 - IP ヘッダーの TTL がフィンガープリント TTL より小さいかチェックする。 グローバルにルーティング可能なアドレスで有効である。
+<DT>&bull;<DD>
+2 - TTL の比較を全く行わない。
+<DT><B>--log</B> <I>level</I><DD>
+判別したジャンルが期待するものと違う場合でもロギングするかどうか。 <I>level</I> には以下のいずれかを指定できる。
+<DT>&bull;<DD>
+マッチしたシグネチャーと不明なシグネチャーをすべて記録する
+<DT>&bull;<DD>
+1 - 最初にマッチしたもののみを記録する
+<DT>&bull;<DD>
+2 - マッチした既知のシグネチャーをすべて記録する
+</DL>
+<P>
+
+syslog に以下のようなメッセージが記録される。
+<P>
+
+Windows [2000:SP3:Windows XP Pro SP1, 2000 SP3]: 11.22.33.55:4024 -&gt;
+11.22.33.44:139 hops=3 Linux [2.5-2.6:] : 1.2.3.4:42624 -&gt; 1.2.3.5:22
+hops=4
+<P>
+
+OS フィンガープリントは <B>nfnl_osf</B> プログラムを使ってロードできる。 ファイルからフィンガープリントをロードするには以下のようにする。
+<P>
+
+<B>nfnl_osf -f /usr/share/xtables/pf.os</B>
+<P>
+
+再度削除するには以下のようにする。
+<P>
+
+<B>nfnl_osf -f /usr/share/xtables/pf.os -d</B>
+<P>
+
+フィンガープリントデータベースは <A HREF="http://www.openbsd.org/cgi-bin/cvsweb/src/etc/pf.os">http://www.openbsd.org/cgi-bin/cvsweb/src/etc/pf.os</A>
+からダウンロードできる。
+<A NAME="lbBO">&nbsp;</A>
+<H3>owner</H3>
+
+このモジュールは、 ローカルで生成されたパケットに対して、 パケット生成者の様々な特性に対するマッチを行う。 このマッチは OUTPUT チェインか
+POSTROUTING チェインでのみ有効である。 転送パケットはどのソケットとも関連付けられていない。
+カーネルスレッドからのパケットには対応するソケットがあるが、 通常ソケットの所有者はいない。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--uid-owner</B> <I>username</I><DD>
+<DT>[<B>!</B>] <B>--uid-owner</B> <I>userid</I>[<B>-</B><I>userid</I>]<DD>
+そのパケットのソケットのファイル構造体が存在し、ソケットの所有者が指定されたユーザーの場合にマッチする。 数値の UID や UID
+の範囲を指定することもできる。
+<DT>[<B>!</B>] <B>--gid-owner</B> <I>groupname</I><DD>
+<DT>[<B>!</B>] <B>--gid-owner</B> <I>groupid</I>[<B>-</B><I>groupid</I>]<DD>
+そのパケットのソケットのファイル構造体の所有者が指定されたグループの場合にマッチする。 数値の GID や GID の範囲を指定することもできる。
+<DT>[<B>!</B>] <B>--socket-exists</B><DD>
+パケットがソケットに関連付けられている場合にマッチする。
+</DL>
+<A NAME="lbBP">&nbsp;</A>
+<H3>physdev</H3>
+
+このモジュールは、 ブリッジデバイスのスレーブにされた、 ブリッジポートの入出力デバイスにマッチする。 このモジュールは、 ブリッジによる透過的な IP
+ファイアウォールの基盤の一部であり、 カーネルバージョン 2.5.44 以降でのみ有効である。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--physdev-in</B> <I>name</I><DD>
+パケットが受信されるブリッジのポート名 (<B>INPUT</B>, <B>FORWARD</B>, <B>PREROUTING</B> チェインに入るパケットのみ)。
+インターフェース名が &quot;+&quot; で終っている場合、 その名前で始まる任意のインターフェース名にマッチする。
+ブリッジデバイスを通して受け取られなかったパケットは、 '!' が指定されていない限り、 このオプションにマッチしない。
+<DT>[<B>!</B>] <B>--physdev-out</B> <I>name</I><DD>
+パケットを送信することになるブリッジのポート名 (<B>FORWARD</B>, <B>OUTPUT</B>, <B>POSTROUTING</B>
+チェインに入るパケットのみ)。 インターフェース名が &quot;+&quot; で終っている場合、 その名前で始まる任意のインターフェース名にマッチする。 <B>nat</B>
+と <B>mangle</B> テーブルの <B>OUTPUT</B> チェインではブリッジの出力ポートにマッチさせることができないが、 <B>filter</B> テーブルの
+<B>OUPUT</B> チェインではマッチ可能である。 パケットがブリッジデバイスから送られなかった場合、 またはパケットの出力デバイスが不明であった場合は、
+'!' が指定されていない限り、 パケットはこのオプションにマッチしない。
+<DT>[<B>!</B>] <B>--physdev-is-in</B><DD>
+パケットがブリッジインターフェースに入った場合にマッチする。
+<DT>[<B>!</B>] <B>--physdev-is-out</B><DD>
+パケットがブリッジインターフェースから出ようとした場合にマッチする。
+<DT>[<B>!</B>] <B>--physdev-is-bridged</B><DD>
+パケットがブリッジされることにより、 ルーティングされなかった場合にマッチする。 これは FORWARD, POSTROUTING
+チェインにおいてのみ役立つ。
+</DL>
+<A NAME="lbBQ">&nbsp;</A>
+<H3>pkttype</H3>
+
+このモジュールは、 リンク層のパケットタイプにマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--pkt-type</B> {<B>unicast</B>|<B>broadcast</B>|<B>multicast</B>}<DD>
+</DL>
+<A NAME="lbBR">&nbsp;</A>
+<H3>policy</H3>
+
+このモジュールはパケットを処理する IPsec が使用するポリシーにマッチする。
+<DL COMPACT>
+<DT><B>--dir</B> {<B>in</B>|<B>out</B>}<DD>
+復号 (decapsulation) に使用するポリシーにマッチするか、カプセル化 (encapsulation)
+に使用するポリシーにマッチするかを指定する。 <B>in</B> はチェイン <B>PREROUTING, INPUT, FORWARD</B> で有効で、
+<B>out</B> はチェイン <B>POSTROUTING, OUTPUT, FORWARD</B> で有効である。
+<DT><B>--pol</B> {<B>none</B>|<B>ipsec</B>}<DD>
+パケットが IPsec 処理対象であればマッチする。 <B>--pol none</B> は <B>--strict</B> と一緒に使用できない。
+<DT><B>--strict</B><DD>
+ポリシーが正確にマッチするか、指定したポリシーがポリシーのいずれかのルールにマッチするかを指定する。
+</DL>
+<P>
+
+それぞれのポリシー要素を定義するのに、以下のオプション (複数可) を使用することができる。 <B>--strict</B>
+が有効になっている場合、各要素につき少なくともオプションを一つ指定しなければならない。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--reqid</B> <I>id</I><DD>
+ポリシールールの reqid にマッチする。 reqid は <B>setkey</B>(8) でレベルとして <B>unique:id</B> を使って指定できる。
+<DT>[<B>!</B>] <B>--spi</B> <I>spi</I><DD>
+SA の SPI にマッチする。
+<DT>[<B>!</B>] <B>--proto</B> {<B>ah</B>|<B>esp</B>|<B>ipcomp</B>}<DD>
+カプセル化プロトコルにマッチする。
+<DT>[<B>!</B>] <B>--mode</B> {<B>tunnel</B>|<B>transport</B>}<DD>
+カプセル化モードにマッチする。
+<DT>[<B>!</B>] <B>--tunnel-src</B> <I>addr</I>[<B>/</B><I>mask</I>]<DD>
+トンネルモード SA の送信元エンドポイントアドレスにマッチする。 <B>--mode tunnel</B> との組み合わせでのみ有効。
+<DT>[<B>!</B>] <B>--tunnel-dst</B> <I>addr</I>[<B>/</B><I>mask</I>]<DD>
+トンネルモード SA の宛先エンドポイントアドレスにマッチする。 <B>--mode tunnel</B> との組み合わせでのみ有効。
+<DT><B>--next</B><DD>
+ポリシー定義の次の要素から開始する。 <B>--strict</B> との組み合わせでのみ使用できる。
+</DL>
+<A NAME="lbBS">&nbsp;</A>
+<H3>quota</H3>
+
+Implements network quotas by decrementing a byte counter with each
+packet. The condition matches until the byte counter reaches zero. Behavior
+is reversed with negation (i.e. the condition does not match until the byte
+counter reaches zero).
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--quota</B> <I>bytes</I><DD>
+バイト単位のクォータ。
+</DL>
+<A NAME="lbBT">&nbsp;</A>
+<H3>rateest</H3>
+
+レート推測器 (rate estimator) は RATEEST ターゲットで収集された推定レートにマッチする。 bps/pps
+の絶対値に対するマッチング、 2 つのレート推測器の比較、 2 つのレート推測器の差分に対するマッチングをサポートしている。
+<P>
+
+
+利用可能なオプションが分かりやすいように、すべての可能な組み合わせを以下に示す。
+<DL COMPACT>
+<DT>&bull;<DD>
+<B>rateest</B> <I>operator</I> <B>rateest-bps</B>
+<DT>&bull;<DD>
+
+<B>rateest</B> <I>operator</I> <B>rateest-pps</B>
+<DT>&bull;<DD>
+(<B>rateest</B> minus <B>rateest-bps1</B>) <I>operator</I> <B>rateest-bps2</B>
+<DT>&bull;<DD>
+
+(<B>rateest</B> minus <B>rateest-pps1</B>) <I>operator</I> <B>rateest-pps2</B>
+<DT>&bull;<DD>
+<B>rateest1</B> <I>operator</I> <B>rateest2</B> <B>rateest-bps</B>(without rate!)
+<DT>&bull;<DD>
+
+<B>rateest1</B> <I>operator</I> <B>rateest2</B> <B>rateest-pps</B>(without rate!)
+<DT>&bull;<DD>
+(<B>rateest1</B> minus <B>rateest-bps1</B>) <I>operator</I> (<B>rateest2</B> minus
+<B>rateest-bps2</B>)
+<DT>&bull;<DD>
+(<B>rateest1</B> minus <B>rateest-pps1</B>) <I>operator</I> (<B>rateest2</B> minus
+<B>rateest-pps2</B>)
+<DT><B>--rateest-delta</B><DD>
+(絶対モードでも相対モードでも) 各レート推測器について、 レート推測器が推測したフローレートと BPS/PPS
+オプションで指定された固定値の差分を計算する。 フローレートが指定された BPS/PPS よりも大きい場合、 負の値ではなく 0 が代わりに使用される。
+つまり &quot;max(0, rateest#_rate - rateest#_bps)&quot; が使用される。
+<DT>[<B>!</B>] <B>--rateest-lt</B><DD>
+レートが指定されたレートかレート推測器のレートよりも低い場合にマッチする。
+<DT>[<B>!</B>] <B>--rateest-gt</B><DD>
+レートが指定されたレートかレート推測器のレートよりも高い場合にマッチする。
+<DT>[<B>!</B>] <B>--rateest-eq</B><DD>
+レートが指定されたレートかレート推測器のレートと等しい場合にマッチする。
+</DL>
+<P>
+
+いわゆる「絶対モード」では、使用できるレート推測器は一つだけであり、固定値に対する比較だけができる。一方、「相対モード」では、2
+つのレート推測器が使用でき、レート推測器どうしの比較ができる。
+<DL COMPACT>
+<DT><B>--rateest</B> <I>name</I><DD>
+絶対モードで使用するレート推測器の名前
+<DT><B>--rateest1</B> <I>name</I><DD>
+<DT><B>--rateest2</B> <I>name</I><DD>
+相対モードで使用する 2 つレート推測器の名前
+<DT><B>--rateest-bps</B> [<I>value</I>]<DD>
+<DT><B>--rateest-pps</B> [<I>value</I>]<DD>
+<DT><B>--rateest-bps1</B> [<I>value</I>]<DD>
+<DT><B>--rateest-bps2</B> [<I>value</I>]<DD>
+<DT><B>--rateest-pps1</B> [<I>value</I>]<DD>
+<DT><B>--rateest-pps2</B> [<I>value</I>]<DD>
+レート推測器と指定した値を、秒間のバイト数またはパケット数で比較する。 どのオプションがどの場合に使用できるかは上の箇条書きのリストを見てほしい。
+単位を示す接尾辞を付けることができる。 bit, [kmgt]bit, [KMGT]ibit, Bps, [KMGT]Bps, [KMGT]iBps
+が使用できる。
+</DL>
+<P>
+
+例: この機能を、データコネクションの開始時に利用可能帯域に基づいて、 FTP サーバーからの出力データコネクションを 2
+つの回線に振り分けるのに使用する場合。
+<P>
+
+# 出力レートを推定する
+<P>
+
+iptables -t mangle -A POSTROUTING -o eth0 -j RATEEST --rateest-name eth0
+--rateest-interval 250ms --rateest-ewma 0.5s
+<P>
+
+iptables -t mangle -A POSTROUTING -o ppp0 -j RATEEST --rateest-name ppp0
+--rateest-interval 250ms --rateest-ewma 0.5s
+<P>
+
+# 利用可能帯域に基づいてマーキングを行う
+<P>
+
+iptables -t mangle -A balance -m conntrack --ctstate NEW -m helper --helper
+ftp -m rateest --rateest-delta --rateest1 eth0 --rateest-bps1 2.5mbit
+--rateest-gt --rateest2 ppp0 --rateest-bps2 2mbit -j CONNMARK --set-mark 1
+<P>
+
+iptables -t mangle -A balance -m conntrack --ctstate NEW -m helper --helper
+ftp -m rateest --rateest-delta --rateest1 ppp0 --rateest-bps1 2mbit
+--rateest-gt --rateest2 eth0 --rateest-bps2 2.5mbit -j CONNMARK --set-mark 2
+<P>
+
+iptables -t mangle -A balance -j CONNMARK --restore-mark
+<A NAME="lbBU">&nbsp;</A>
+<H3>realm (IPv4 の場合)</H3>
+
+This matches the routing realm.  Routing realms are used in complex routing
+setups involving dynamic routing protocols like BGP.
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--realm</B> <I>value</I>[<B>/</B><I>mask</I>]<DD>
+Matches a given realm number (and optionally mask). If not a number, value
+can be a named realm from /etc/iproute2/rt_realms (mask can not be used in
+that case).
+</DL>
+<A NAME="lbBV">&nbsp;</A>
+<H3>recent</H3>
+
+IP アドレスのリストを動的に作成し、このリストに対するマッチングをいくつかの方法で行う。
+<P>
+
+例えば、 あなたのファイアウォールの 139 番ポートに接続しようとした「悪ガキ」リストを作成し、
+そのアドレスからのこれ以降のすべてのパケットを「廃棄」する。
+<P>
+
+<B>--set</B>, <B>--rcheck</B>, <B>--update</B>, <B>--remove</B> は同時に使用できない。
+<DL COMPACT>
+<DT><B>--name</B> <I>name</I><DD>
+コマンドで使用するリストを指定する。名前が指定されなかった場合 <B>DEFAULT</B> が使用される。
+<DT>[<B>!</B>] <B>--set</B><DD>
+リストにパケットの送信元アドレスを追加する。 その送信元アドレスがすでにリストにある場合は、既存のエントリーを更新する。 常に成功を返す (<B>!</B>
+が指定されている場合は常に失敗を返す)。
+<DT><B>--rsource</B><DD>
+recent リストのテーブルの照合/保存で、各パケットの送信元アドレスを使う。 これがデフォルトである。
+<DT><B>--rdest</B><DD>
+recent リストのテーブルの照合/保存で、各パケットの宛先アドレスを使う。
+<DT><B>--mask</B> <I>netmask</I><DD>
+この recent リストに適用するネットマスク。
+<DT>[<B>!</B>] <B>--rcheck</B><DD>
+このパケットの送信元アドレスが現在リストに含まれるかをチェックする。
+<DT>[<B>!</B>] <B>--update</B><DD>
+<B>--rcheck</B> と同じだが、 このオプションではマッチした場合に &quot;last seen&quot; タイムスタンプを更新する。
+<DT>[<B>!</B>] <B>--remove</B><DD>
+パケットの送信元アドレスが現在リストに含まれているかをチェックし、 含まれている場合、そのアドレスをリストから削除し、ルールは true を返す。
+アドレスが含まれない場合、false を返す。
+<DT><B>--seconds</B> <I>seconds</I><DD>
+このオプションは <B>--rcheck</B> か <B>--update</B> との組み合わせでのみ使用できる。 使用された場合、
+アドレスがリストに含まれ、かつそのアドレスが直近の指定された秒数以内に観測された場合にのみ、 マッチするようになる。
+<DT><B>--reap</B><DD>
+このオプションは <B>--seconds</B> との組み合わせでのみ使用できる。 使用された場合、 最後に指定された秒数より古いエントリーを破棄する。
+<DT><B>--hitcount</B> <I>hits</I><DD>
+このオプションは <B>--rcheck</B> か <B>--update</B> との組み合わせて使用しなければならない。 使用された場合、
+アドレスがリストに含まれ、受信されたパケット数が指定した値以上の場合にのみマッチするようになる。 このオプションは <B>--seconds</B>
+と共に使用することもでき、 その場合は指定された時間内のヒット数に対して照合を行う。 hitcount パラメータの最大値は xt_recent
+カーネルモードの &quot;ip_pkt_list_tot&quot; パラメータで規定される。
+このコマンドリストでこの値よりも大きな値を指定すると、そのルールは拒否される。
+<DT><B>--rttl</B><DD>
+このオプションは <B>--rcheck</B> か <B>--update</B> との組み合わせでのみ使用できる。 使用された場合、
+アドレスがリストに含まれ、かつ現在のパケットの TTL が <B>--set</B> ルールにヒットしたパケットの TTL
+にマッチする場合にのみマッチするようになる。 このオプションは、
+送信元アドレスを偽装する人が偽りのパケットを送信して、このモジュールを使ってあなたのサイトへの他のアクセスができないようにする DoS
+攻撃がある場合などに役に立つかもしれない。
+</DL>
+<P>
+
+例:
+<DL COMPACT>
+<DT><DD>
+iptables -A FORWARD -m recent --name badguy --rcheck --seconds 60 -j DROP
+<DT><DD>
+iptables -A FORWARD -p tcp -i eth0 --dport 139 -m recent --name badguy --set
+-j DROP
+</DL>
+<P>
+
+<B>/proc/net/xt_recent/*</B> は現在のアドレスのリストと各リストの各エントリーの情報である。
+<P>
+
+<B>/proc/net/xt_recent/</B> の各ファイルは、読み出して現在のリストを確認することができる。 また、以下のコマンドを使って、
+これらのファイルに書き込んでリストを変更することができる。
+<DL COMPACT>
+<DT><B>echo +</B><I>addr</I><B> &gt;/proc/net/xt_recent/DEFAULT</B><DD>
+DEFAULT リストに <I>addr</I> を追加する
+<DT><B>echo -</B><I>addr</I><B> &gt;/proc/net/xt_recent/DEFAULT</B><DD>
+DEFAULT リストから <I>addr</I> を削除する
+<DT><B>echo / &gt;/proc/net/xt_recent/DEFAULT</B><DD>
+DEFAULT リストをフラッシュ (全エントリーを削除) する
+</DL>
+<P>
+
+モジュール自体もパラメーターを取り、デフォルトは以下の通りである。
+<DL COMPACT>
+<DT><B>ip_list_tot</B>=<I>100</I><DD>
+テーブル単位の記録アドレス数。
+<DT><B>ip_pkt_list_tot</B>=<I>20</I><DD>
+アドレス単位の記録パケット数。
+<DT><B>ip_list_hash_size</B>=<I>0</I><DD>
+ハッシュテーブルサイズ。 0 は ip_list_tot に基づいて計算することを意味する。 デフォルトは 512。
+<DT><B>ip_list_perms</B>=<I>0644</I><DD>
+/proc/net/xt_recent/* ファイルのアクセス許可モード。
+<DT><B>ip_list_uid</B>=<I>0</I><DD>
+/proc/net/xt_recent/* ファイルの数値 ID での所有者。
+<DT><B>ip_list_gid</B>=<I>0</I><DD>
+/proc/net/xt_recent/* ファイルの数値 ID でのグループ所有者。
+</DL>
+<A NAME="lbBW">&nbsp;</A>
+<H3>rpfilter</H3>
+
+パケットに対して reverse path フィルターテストを行う。
+パケットに対する応答がパケットが到着したインターフェースと同じインターフェースから送信される場合、そのパケットにマッチする。 カーネル内の
+rp_filter と異なり、 IPsec で保護されたパケットが特別扱いされない点に注意すること。
+必要な場合は、このマッチをポリシーマッチと組み合わせて使うこと。 また、ループバックインターフェース経由で到着したパケットは常に許可される。
+このマッチは raw テーブルまたは mangle テーブルの PREROUTING チェインでのみ使用できる。
+<DL COMPACT>
+<DT><B>--loose</B><DD>
+選択された出力デバイスが期待されたものではない場合であっても、 reverse path フィルターテストのマッチを行うことを指示する。
+<DT><B>--validmark</B><DD>
+reverse path の経路検索実行時にそのパケットの nfmark 値も使用する。
+<DT><B>--accept-local</B><DD>
+ローカルマシンにも割り当てられている送信元アドレスを持つネットワークから到着したパケットを許可する。
+<DT><B>--invert</B><DD>
+マッチの意味を逆にする。 reverse path フィルターテストに合格したパケットにマッチするのではなく、テストに失敗したパケットにマッチする。
+</DL>
+<P>
+
+reverse path フィルターテストに失敗したパケットをロギングし破棄する例
+<P>
+iptables -t raw -N RPFILTER
+<P>
+iptables -t raw -A RPFILTER -m rpfilter -j RETURN
+<P>
+iptables -t raw -A RPFILTER -m limit --limit 10/minute -j NFLOG
+--nflog-prefix &quot;rpfilter drop&quot;
+<P>
+iptables -t raw -A RPFILTER -j DROP
+<P>
+iptables -t raw -A PREROUTING -j RPFILTER
+<P>
+失敗したパケットをドロップするが、ロギングを行わない例
+<P>
+iptables -t raw -A RPFILTER -m rpfilter --invert -j DROP
+<A NAME="lbBX">&nbsp;</A>
+<H3>rt (IPv6 のみ)</H3>
+
+IPv6 ルーティングヘッダーに対してマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--rt-type</B> <I>type</I><DD>
+指定したタイプ (数値) にマッチする。
+<DT>[<B>!</B>] <B>--rt-segsleft</B> <I>num</I>[<B>:</B><I>num</I>]<DD>
+`segments left' フィールド (範囲) にマッチする。
+<DT>[<B>!</B>] <B>--rt-len</B> <I>length</I><DD>
+このヘッダーの長さにマッチする。
+<DT><B>--rt-0-res</B><DD>
+予約フィールド (type=0) にもマッチする。
+<DT><B>--rt-0-addrs</B> <I>addr</I>[<B>,</B><I>addr</I>...]<DD>
+type=0 のアドレス (リスト) にマッチする。
+<DT><B>--rt-0-not-strict</B><DD>
+type=0 のアドレスのリストは厳密なリストではない。
+</DL>
+<A NAME="lbBY">&nbsp;</A>
+<H3>sctp</H3>
+
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--source-port</B>,<B>--sport</B> <I>port</I>[<B>:</B><I>port</I>]<DD>
+<DT>[<B>!</B>] <B>--destination-port</B>,<B>--dport</B> <I>port</I>[<B>:</B><I>port</I>]<DD>
+<DT>[<B>!</B>] <B>--chunk-types</B> {<B>all</B>|<B>any</B>|<B>only</B>} <I>chunktype</I>[<B>:</B><I>flags</I>] [...]<DD>
+大文字のフラグ文字はそのフラグがセットされている場合にマッチし、 小文字のフラグ文字はセットされていない場合にマッチすることを指示する。
+<P>
+チャンク種別: DATA INIT INIT_ACK SACK HEARTBEAT HEARTBEAT_ACK ABORT SHUTDOWN
+SHUTDOWN_ACK ERROR COOKIE_ECHO COOKIE_ACK ECN_ECNE ECN_CWR SHUTDOWN_COMPLETE
+ASCONF ASCONF_ACK FORWARD_TSN
+<P>
+チャンク種別で利用可能なフラグ
+<BR>
+
+DATA I U B E i u b e
+<BR>
+
+ABORT T t
+<BR>
+
+SHUTDOWN_COMPLETE T t
+<P>
+(小文字はフラグを「オフ」にすることを、大文字は「オン」にすることを意味する)
+</DL>
+<P>
+
+例:
+<P>
+iptables -A INPUT -p sctp --dport 80 -j DROP
+<P>
+iptables -A INPUT -p sctp --chunk-types any DATA,INIT -j DROP
+<P>
+iptables -A INPUT -p sctp --chunk-types any DATA:Be -j ACCEPT
+<A NAME="lbBZ">&nbsp;</A>
+<H3>set</H3>
+
+このモジュールは <B>ipsec</B>(8) で定義できる IP 集合にマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--match-set</B> <I>setname</I> <I>flag</I>[<B>,</B><I>flag</I>]...<DD>
+where flags are the comma separated list of <B>src</B> and/or <B>dst</B>
+specifications and there can be no more than six of them. Hence the command
+<DT><DD>
+<BR>&nbsp;iptables&nbsp;-A&nbsp;FORWARD&nbsp;-m&nbsp;set&nbsp;--match-set&nbsp;test&nbsp;src,dst
+<DT><DD>
+will match packets, for which (if the set type is ipportmap) the source
+address and destination port pair can be found in the specified set. If the
+set type of the specified set is single dimension (for example ipmap), then
+the command will match packets for which the source address can be found in
+the specified set.
+<DT><B>--return-nomatch</B><DD>
+If the <B>--return-nomatch</B> option is specified and the set type supports the
+<B>nomatch</B> flag, then the matching is reversed: a match with an element
+flagged with <B>nomatch</B> returns <B>true</B>, while a match with a plain element
+returns <B>false</B>.
+<DT><B>!</B> <B>--update-counters</B><DD>
+If the <B>--update-counters</B> flag is negated, then the packet and byte
+counters of the matching element in the set won't be updated. Default the
+packet and byte counters are updated.
+<DT><B>!</B> <B>--update-subcounters</B><DD>
+If the <B>--update-subcounters</B> flag is negated, then the packet and byte
+counters of the matching element in the member set of a list type of set
+won't be updated. Default the packet and byte counters are updated.
+<DT>[<B>!</B>] <B>--packets-eq</B> <I>value</I><DD>
+If the packet is matched an element in the set, match only if the packet
+counter of the element matches the given value too.
+<DT><B>--packets-lt</B> <I>value</I><DD>
+If the packet is matched an element in the set, match only if the packet
+counter of the element is less than the given value as well.
+<DT><B>--packets-gt</B> <I>value</I><DD>
+If the packet is matched an element in the set, match only if the packet
+counter of the element is greater than the given value as well.
+<DT>[<B>!</B>] <B>-bytes-eq</B> <I>value</I><DD>
+If the packet is matched an element in the set, match only if the byte
+counter of the element matches the given value too.
+<DT><B>--bytes-lt</B> <I>value</I><DD>
+If the packet is matched an element in the set, match only if the byte
+counter of the element is less than the given value as well.
+<DT><B>--bytes-gt</B> <I>value</I><DD>
+If the packet is matched an element in the set, match only if the byte
+counter of the element is greater than the given value as well.
+</DL>
+<P>
+
+The packet and byte counters related options and flags are ignored when the
+set was defined without counter support.
+<P>
+
+The option <B>--match-set</B> can be replaced by <B>--set</B> if that does not clash
+with an option of other extensions.
+<P>
+
+Use of -m set requires that ipset kernel support is provided, which, for
+standard kernels, is the case since Linux 2.6.39.
+<A NAME="lbCA">&nbsp;</A>
+<H3>socket</H3>
+
+This matches if an open TCP/UDP socket can be found by doing a socket lookup
+on the packet. It matches if there is an established or non-zero bound
+listening socket (possibly with a non-local address). The lookup is
+performed using the <B>packet</B> tuple of TCP/UDP packets, or the original
+TCP/UDP header <B>embedded</B> in an ICMP/ICPMv6 error packet.
+<DL COMPACT>
+<DT><B>--transparent</B><DD>
+非透過 (non-transparent) ソケットを無視する。
+<DT><B>--nowildcard</B><DD>
+Do not ignore sockets bound to 'any' address.  The socket match won't accept
+zero-bound listeners by default, since then local services could intercept
+traffic that would otherwise be forwarded.  This option therefore has
+security implications when used to match traffic being forwarded to redirect
+such packets to local machine with policy routing.  When using the socket
+match to implement fully transparent proxies bound to non-local addresses it
+is recommended to use the --transparent option instead.
+</DL>
+<P>
+
+Example (assuming packets with mark 1 are delivered locally):
+<DL COMPACT>
+<DT><DD>
+-t mangle -A PREROUTING -m socket --transparent -j MARK --set-mark 1
+</DL>
+<A NAME="lbCB">&nbsp;</A>
+<H3>state</H3>
+
+&quot;state&quot; 拡張は &quot;conntrack&quot; モジュールのサブセットである。 &quot;state&quot; を使うと、
+パケットについてのコネクション追跡状態を参照できる。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--state</B> <I>state</I><DD>
+state はマッチするコネクション状態のカンマ区切りのリストである。 &quot;conntrack&quot; が理解できる状態の一部だけが指定できる。 指定できるのは
+<B>INVALID</B>, <B>ESTABLISHED</B>, <B>NEW</B>, <B>RELATED</B>, <B>UNTRACKED</B> である。
+これらの説明はこのマニュアルページの &quot;conntrack&quot; の説明を参照のこと。
+</DL>
+<A NAME="lbCC">&nbsp;</A>
+<H3>statistic</H3>
+
+このモジュールは統計的な条件に基づいたパケットのマッチングを行う。 二つのモードがサポートされており、 <B>--mode</B> オプションで設定できる。
+<P>
+
+サポートされているオプション:
+<DL COMPACT>
+<DT><B>--mode</B> <I>mode</I><DD>
+マッチングルールのマッチングモードを設定する。 サポートされているモードは <B>random</B> と <B>nth</B> である。
+<DT>[<B>!</B>] <B>--probability</B> <I>p</I><DD>
+ランダムにパケットがマッチする確率を設定する。 <B>random</B> モードでのみ機能する。 <I>p</I> は 0.0 と 1.0 の範囲でなければならない。
+サポートされている粒度は 1/2147483648 である。
+<DT>[<B>!</B>] <B>--every</B> <I>n</I><DD>
+n パケットに 1 つマッチする。 <B>nth</B> モードでのみ機能する (<B>--packet</B> オプションも参照)。
+<DT><B>--packet</B> <I>p</I><DD>
+<B>nth</B> モードでカウンターの初期値を設定する (0 &lt;= p &lt;= n-1, デフォルトは 0)。
+</DL>
+<A NAME="lbCD">&nbsp;</A>
+<H3>string</H3>
+
+このモジュールは、いくつかのパターンマッチ手法を用いて指定された文字列とのマッチを行う。 Linux カーネル 2.6.14 以上が必要である。
+<DL COMPACT>
+<DT><B>--algo</B> {<B>bm</B>|<B>kmp</B>}<DD>
+パターンマッチング手法を選択する (bm = Boyer-Moore, kmp = Knuth-Pratt-Morris)
+<DT><B>--from</B> <I>offset</I><DD>
+マッチングの検索を開始するオフセットを設定する。 指定されなかった場合のデフォルトは 0 である。
+<DT><B>--to</B> <I>offset</I><DD>
+検索を終了するオフセットを設定する。 バイト <I>offset</I>-1 (バイト番号は 0 から開始) が検索範囲の最終バイトとなる。
+指定されなかった場合、デフォルトはパケットサイズである。
+<DT>[<B>!</B>] <B>--string</B> <I>pattern</I><DD>
+指定されたパターンにマッチする。
+<DT>[<B>!</B>] <B>--hex-string</B> <I>pattern</I><DD>
+指定された 16 進表記のパターンにマッチする。
+<DT>例:<DD>
+<DT><DD>
+# 文字列パターンは単純なテキスト文字を探すのに使用できる。
+<BR>
+
+iptables -A INPUT -p tcp --dport 80 -m string --algo bm --string 'GET
+/index.html' -j LOG
+<DT><DD>
+16 進数文字列のパターンは表示可能文字以外を検索するのに使用できる。 |0D 0A| や |0D0A| など。
+<BR>
+
+iptables -p udp --dport 53 -m string --algo bm --from 40 --to 57
+--hex-string '|03|www|09|netfilter|03|org|00|'
+</DL>
+<A NAME="lbCE">&nbsp;</A>
+<H3>tcp</H3>
+
+これらの拡張は `--protocol tcp' が指定され場合に使用できる。 以下のオプションが提供される:
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--source-port</B>,<B>--sport</B> <I>port</I>[<B>:</B><I>port</I>]<DD>
+送信元ポートまたはポート範囲の指定。 サービス名またはポート番号を指定できる。 <I>first</I><B>:</B><I>last</I> という形式で、 2
+つの番号を含む範囲を指定することもできる。 最初のポートを省略した場合、 &quot;0&quot; を仮定する。 最後のポートを省略した場合、 &quot;65535&quot;
+を仮定する。 最初のポートが最後のポートより大きい場合、 2 つは入れ換えられる。 フラグ <B>--sport</B> は、
+このオプションの便利な別名である。
+<DT>[<B>!</B>] <B>--destination-port</B>,<B>--dport</B> <I>port</I>[<B>:</B><I>port</I>]<DD>
+宛先ポートまたはポート範囲の指定。 フラグ <B>--dport</B> は、 このオプションの便利な別名である。
+<DT>[<B>!</B>] <B>--tcp-flags</B> <I>mask</I> <I>comp</I><DD>
+TCP フラグが指定されたものと等しい場合にマッチする。 第 1 引き数 <I>mask</I> は評価対象とするフラグで、 コンマ区切りのリストである。 第
+2 引き数 <I>comp</I> は必ず設定しなければならないフラグで、 コンマ区切りのリストである。 指定できるフラグは <B>SYN ACK FIN RST
+URG PSH ALL NONE</B> である。 よって、 コマンド
+<PRE>
+ iptables -A FORWARD -p tcp --tcp-flags SYN,ACK,FIN,RST SYN
+</PRE>
+
+は、 SYN フラグが設定され ACK, FIN, RST フラグが設定されていない パケットにのみマッチする。
+<DT>[<B>!</B>] <B>--syn</B><DD>
+SYN ビットが設定され ACK, RST, FIN ビットがクリアされている TCP パケットにのみマッチする。 このようなパケットは TCP
+コネクションの開始要求に使われる。 例えば、 あるインターフェースに入ってくるこのようなパケットをブロックすれば、 内側への TCP
+コネクションは禁止されるが、 外側への TCP コネクションには影響しない。 これは <B>--tcp-flags SYN,RST,ACK,FIN
+SYN</B> と等しい。 &quot;--syn&quot; の前に &quot;!&quot; フラグ
+を置くと、 SYN ビットがクリアされ ACK と RST ビットが設定されている
+TCP パケットにのみマッチする。
+<DT>[<B>!</B>] <B>--tcp-option</B> <I>number</I><DD>
+TCP オプションが設定されている場合にマッチする。
+</DL>
+<A NAME="lbCF">&nbsp;</A>
+<H3>tcpmss</H3>
+
+TCP ヘッダーの TCP MSS (maximum segment size) フィールドにマッチする。 TCP の SYN パケットか
+SYN/ACK パケットに対してのみ利用できる。 MSS のネゴシエーションはコネクション開始時の TCP ハンドシェイク中だけだからである。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--mss</B> <I>value</I>[<B>:</B><I>value</I>]<DD>
+指定された TCP MSS 値か範囲にマッチする。
+</DL>
+<A NAME="lbCG">&nbsp;</A>
+<H3>time</H3>
+
+このモジュールはパケットの到着時刻/日付が指定された範囲内の場合にマッチする。 すべてのオプションが任意オプションで、 複数指定した場合は AND
+と解釈される。 デフォルトではすべての時刻は UTC と解釈される。
+<DL COMPACT>
+<DT><B>--datestart</B> <I>YYYY</I>[<B>-</B><I>MM</I>[<B>-</B><I>DD</I>[<B>T</B><I>hh</I>[<B>:</B><I>mm</I>[<B>:</B><I>ss</I>]]]]]<DD>
+<DT><B>--datestop</B> <I>YYYY</I>[<B>-</B><I>MM</I>[<B>-</B><I>DD</I>[<B>T</B><I>hh</I>[<B>:</B><I>mm</I>[<B>:</B><I>ss</I>]]]]]<DD>
+指定された時刻 (日付も含む) の範囲にある場合にマッチする。 時刻は ISO 8601 &quot;T&quot; 表記でなければならない。 指定可能な範囲は
+1970-01-01T00:00:00 から 2038-01-19T04:17:07 である。
+<DT><DD>
+--datestart と --datestop は、指定されなかった場合、それぞれ 1970-01-01 と 2038-01-19 とみなされます。
+<DT><B>--timestart</B> <I>hh</I><B>:</B><I>mm</I>[<B>:</B><I>ss</I>]<DD>
+<DT><B>--timestop</B> <I>hh</I><B>:</B><I>mm</I>[<B>:</B><I>ss</I>]<DD>
+指定された時刻 (日付は含まない) の範囲にある場合にマッチする。 指定可能な範囲は 00:00:00 から 23:59:59 である。
+(&quot;06:03&quot; のように) 先頭に 0 を付けてもよい。 この場合も 10 進数として正しく解釈される。
+<DT>[<B>!</B>] <B>--monthdays</B> <I>day</I>[<B>,</B><I>day</I>...]<DD>
+指定された月の日付にマッチする。 指定可能な値は <B>1</B> から <B>31</B> である。 もちろん <B>31</B> を指定した場合 31
+日がない月ではマッチしない。 同じことが 2 月 29 日についても言える。
+<DT>[<B>!</B>] <B>--weekdays</B> <I>day</I>[<B>,</B><I>day</I>...]<DD>
+指定した曜日にマッチする。 指定可能な値は <B>Mon</B>, <B>Tue</B>, <B>Wed</B>, <B>Thu</B>, <B>Fri</B>, <B>Sat</B>, <B>Sun</B>
+および <B>1</B> から <B>7</B> の値である。 また、2 文字の曜日指定 (<B>Mo</B>, <B>Tu</B> など) も使用できる。
+<DT><B>--contiguous</B><DD>
+<B>--timestop</B> が <B>--timestart</B> よりも小さい場合、複数の期間ではなく、一つの時間帯としてマッチするようにする。 例を参照。
+<DT><B>--kerneltz</B><DD>
+パケットが時刻指定にマッチするかを判定する際に UTC ではなくカーネルタイムゾーンを使用する。
+</DL>
+<P>
+
+About kernel timezones: Linux keeps the system time in UTC, and always does
+so.  On boot, system time is initialized from a referential time
+source. Where this time source has no timezone information, such as the x86
+CMOS RTC, UTC will be assumed. If the time source is however not in UTC,
+userspace should provide the correct system time and timezone to the kernel
+once it has the information.
+<P>
+
+Local time is a feature on top of the (timezone independent) system
+time. Each process has its own idea of local time, specified via the TZ
+environment variable. The kernel also has its own timezone offset
+variable. The TZ userspace environment variable specifies how the UTC-based
+system time is displayed, e.g. when you run <A HREF="../../0MultiFileIdx/man1/date.1.html">date</A>(1), or what you see on your
+desktop clock.  The TZ string may resolve to different offsets at different
+dates, which is what enables the automatic time-jumping in userspace. when
+DST changes. The kernel's timezone offset variable is used when it has to
+convert between non-UTC sources, such as FAT filesystems, to UTC (since the
+latter is what the rest of the system uses).
+<P>
+
+The caveat with the kernel timezone is that Linux distributions may ignore
+to set the kernel timezone, and instead only set the system time. Even if a
+particular distribution does set the timezone at boot, it is usually does
+not keep the kernel timezone offset - which is what changes on DST - up to
+date.  ntpd will not touch the kernel timezone, so running it will not
+resolve the issue. As such, one may encounter a timezone that is always
++0000, or one that is wrong half of the time of the year. As such, <B>using
+--kerneltz is highly discouraged.</B>
+<P>
+
+例をいくつか。 週末にマッチさせる場合:
+<DL COMPACT>
+<DT><DD>
+-m time --weekdays Sa,Su
+</DL>
+<P>
+
+国の祝日に (一度だけ) マッチさせる場合:
+<DL COMPACT>
+<DT><DD>
+-m time --datestart 2007-12-24 --datestop 2007-12-27
+</DL>
+<P>
+
+終了時刻も実際には含まれるので、新年の最初の 1 秒にマッチしないように終了時刻を以下のように指定する必要がある:
+<DL COMPACT>
+<DT><DD>
+-m time --datestart 2007-01-01T17:00 --datestop 2007-01-01T23:59:59
+</DL>
+<P>
+
+昼御飯の時間帯:
+<DL COMPACT>
+<DT><DD>
+-m time --timestart 12:30 --timestop 13:30
+</DL>
+<P>
+
+第 4 金曜日:
+<DL COMPACT>
+<DT><DD>
+-m time --weekdays Fr --monthdays 22,23,24,25,26,27,28
+</DL>
+<P>
+
+(これは数学的な性質を利用している点に留意すること。 一つのルールで「第 4 木曜日 または 第 4 金曜日」と指定することはできない。
+複数ルールで指定することはできるが。)
+<P>
+
+日をまたぐマッチングは期待するようには動かないだろう。例えば、
+<DL COMPACT>
+<DT><DD>
+-m time --weekdays Mo --timestart 23:00 --timestop 01:00 は、月曜日の 0 時から午前 1 時の
+1 時間にマッチし、 その後さらに 23 時からの 1 時間にもマッチする。 これが希望通りでない場合、例えば、月曜日 23 時から 2
+時間にマッチさせたい場合は、 上記に追加で --contiguous オプションも指定する必要がある。
+</DL>
+<A NAME="lbCH">&nbsp;</A>
+<H3>tos</H3>
+
+このモジュールは IPv4 ヘッダーの 8 ビットの Type of Service フィールド (すなわち上位ビットを含まれる) もしくは IPv6
+ヘッダーの (8 ビットの) Priority フィールドにマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--tos</B> <I>value</I>[<B>/</B><I>mask</I>]<DD>
+指定された TOS マーク値を持つパケットにマッチする。 mask が指定されると、 比較の前に TOS マーク値との論理積 (AND) がとられる)。
+<DT>[<B>!</B>] <B>--tos</B> <I>symbol</I><DD>
+IPv4 の tos フィールドに対するマッチを指定する際にシンボル名を使うことができる。 iptables を <B>-m tos -h</B>
+で呼び出すと、利用可能な TOS 名の一覧を得ることができる。
+シンボル名を使った場合、 mask として 0x3F が使用される (0x3F は ECN ビット以外の全ビットである)。
+</DL>
+<A NAME="lbCI">&nbsp;</A>
+<H3>ttl (IPv4 の場合)</H3>
+
+このモジュールは IP ヘッダーの time to live フィールドにマッチする。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--ttl-eq</B> <I>ttl</I><DD>
+指定された TTL 値にマッチする。
+<DT><B>--ttl-gt</B> <I>ttl</I><DD>
+TTL が指定された TTL 値より大きければマッチする。
+<DT><B>--ttl-lt</B> <I>ttl</I><DD>
+TTL が指定された TTL 値より小さければマッチする。
+</DL>
+<A NAME="lbCJ">&nbsp;</A>
+<H3>u32</H3>
+
+U32 は、パケットから最大 4 バイトの数値を取り出して、指定した値を持つかの検査を行う。 どこを取り出すかの指定は汎用的になっており、TCP
+ヘッダーやペイロードから指定したオフセットのデータを取り出すことができる。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--u32</B> <I>tests</I><DD>
+引き数は、以下で説明する小さな言語のプログラムになる。
+<DT><DD>
+tests := location &quot;=&quot; value | tests &quot;&amp;&amp;&quot; location &quot;=&quot; value
+<DT><DD>
+value := range | value &quot;,&quot; range
+<DT><DD>
+range := number | number &quot;:&quot; number
+</DL>
+<P>
+
+数字 1 個 <I>n</I> は <I>n:n</I> と同じものと解釈される。 <I>n:m</I> は <B>&gt;=n</B> かつ <B>&lt;=m</B>
+の範囲の数字と解釈される。
+<DL COMPACT>
+<DT><DD>
+location := number | location operator number
+<DT><DD>
+operator := &quot;&amp;&quot; | &quot;&lt;&lt;&quot; | &quot;&gt;&gt;&quot; | &quot;@&quot;
+</DL>
+<P>
+
+オペレーター <B>&amp;</B>, <B>&lt;&lt;</B>, <B>&gt;&gt;</B>, <B>&amp;&amp;</B> は C と同じ意味である。 <B>=</B>
+は集合の所属を検査するオペレーターで、値は集合として記述する。 <B>@</B> オペレーターは、次のヘッダーへの移動に使うオペレーターで、後で詳しく説明する。
+<P>
+
+現在のところ、テストの大きさにはいくつか実装から来る制約がある。
+<DL COMPACT>
+<DT>    *<DD>
+u32 引き数あたりの &quot;<B>=</B>&quot; は最大 10 個まで (&quot;<B>&amp;&amp;</B>&quot; は 9 個まで)
+<DT>    *<DD>
+value あたりの range は 10 個まで (カンマは 9 個まで)
+<DT>    *<DD>
+一つの location あたりの number は最大 10 個まで (operator は 9 個まで)
+</DL>
+<P>
+
+location の意味を説明するために、 location を解釈する以下のようなマシンを考えてみる。 3 つのレジスターがある。
+<DL COMPACT>
+<DT><DD>
+A は <B>char *</B> 型で、最初は IP ヘッダーのアドレスが入っている。
+<DT><DD>
+B と C は 32 ビット整数で、最初は 0 である。
+</DL>
+<P>
+
+命令は以下の通り。
+<DL COMPACT>
+<DT><DD>
+number B = number;
+<DT><DD>
+C = (*(A+B)&lt;&lt;24) + (*(A+B+1)&lt;&lt;16) + (*(A+B+2)&lt;&lt;8) +
+*(A+B+3)
+<DT><DD>
+&amp;number C = C &amp; number
+<DT><DD>
+&lt;&lt; number C = C &lt;&lt; number
+<DT><DD>
+&gt;&gt; number C = C &gt;&gt; number
+<DT><DD>
+@number A = A + C; この後、命令の数字を実行する
+</DL>
+<P>
+
+[skb-&gt;data,skb-&gt;end] 以外へのメモリアクセスはすべてマッチ失敗となる。 それ以外の場合、計算の結果が C
+の最終的な値となる。
+<P>
+
+ホワイトスペースを入れることはできるが、テストでは必須ではない。 しただし、テストに含まれる文字はシェルでのクォートが必要な場合もよくあるので、
+引き数全体をクォートで囲んでおくとよいだろう。
+<P>
+
+例:
+<DL COMPACT>
+<DT><DD>
+トータル長が 256 以上の IP パケットにマッチする
+<DT><DD>
+IP ヘッダーではバイト 2-3 にトータル長フィールドがある。
+<DT><DD>
+--u32 &quot;<B>0 &amp; 0xFFFF = 0x100:0xFFFF</B>&quot;
+<DT><DD>
+バイト 0-3 を読み出し、
+<DT><DD>
+0xFFFF (バイト 2-3 に対応) の論理積 (AND) を取り、 その値が範囲 [0x100:0xFFFF] にあるか検査する。
+</DL>
+<P>
+
+例: (もっと実用的な、したがってもっと複雑な例)
+<DL COMPACT>
+<DT><DD>
+ICMP タイプが 0 の ICMP パケットにマッチする
+<DT><DD>
+まず ICMP パケットかどうか検査する。 バイト 9 (プロトコル) = 1 であれば真。
+<DT><DD>
+--u32 &quot;<B>6 &amp; 0xFF = 1 &amp;&amp;</B> ...
+<DT><DD>
+バイト 6-9 を読み出し、 <B>&amp;</B> を使ってバイト 6-8 を取り除き、 得られた値を 1 と比較する。 次に、フラグメントではないことを検査する
+(フラグメントの場合、パケットは ICMP パケットの一部かもしれないが、 常にそうだとは言えない)。 <B>注意</B>: 一般的に IP
+ヘッダーより先にあるものとマッチを行う場合にはこの検査は必要である。 このパケットが (フラグメントではない) 完全なパケットであれば、バイト 6
+の最後の 6 ビットとバイト 7 の全ビットが 0 である。 代わりに、 バイト 6 の最後の 5
+ビットを検査するだけで最初のフラグメントを許可することができる。
+<DT><DD>
+... <B>4 &amp; 0x3FFF = 0 &amp;&amp;</B> ...
+<DT><DD>
+最後の検査として、 IP ヘッダー直後のバイト (ICMP タイプ) が 0 かを確認する。 ここで @ 記法を使う必要がある。 IP ヘッダーの長さ
+(IHL) は IP ヘッダー自身のバイト 0 の右半分に 32 ビットワードで格納されている。
+<DT><DD>
+... <B>0 &gt;&gt; 22 &amp; 0x3C @ 0 &gt;&gt; 24 = 0</B>&quot;
+<DT><DD>
+最初の 0 はバイト 0-3 を読み出し、 <B>&gt;&gt;22</B> はその値を 22 ビット右にシフトすることを意味する。 24
+ビットシフトすると最初のバイトが得られるので、 22 ビットだけシフトすると (少し余計なビットが付いているが) その 4 倍の値が得られる。
+<B>&amp;3C</B> で右側の余計な 2 ビットと最初のバイトの先頭 4 ビットを取り除く。 例えば、 IHL が 5 の場合 IP ヘッダーは 20 バイト
+(4 x 5) である。 この場合、バイト 0-1 は (バイナリで) xxxx0101 yyzzzzzz であり、 <B>&gt;&gt;22</B>
+により 10 ビットの値 xxxx0101yy が得られ、 <B>&amp;3C</B> で 010100 が得られる。 <B>@</B>
+は、この数字をパケットの新しいオフセットとして使用し、 この地点から始まる 4 バイトを読み出すことを意味する。 この 4 バイトは ICMP
+ペイロードの最初の 4 バイトであり、 バイト 0 が ICMP タイプである。 したがって、この値を 24
+ビット右にシフトして、最初のバイト以外をすべて取り除き、 その結果を 0 と比較するだけでよい。
+</DL>
+<P>
+
+例:
+<DL COMPACT>
+<DT><DD>
+TCP ペイロードのバイト 8-12 が 1, 2, 5, 8 のいずれかかを検査する
+<DT><DD>
+まず、パケットが TCP パケットであるかを検査する (ICMP と同様)。
+<DT><DD>
+--u32 &quot;<B>6 &amp; 0xFF = 6 &amp;&amp;</B> ...
+<DT><DD>
+次に、フラグメントでないことを検査する (上記と同じ)。
+<DT><DD>
+... <B>0 &gt;&gt; 22 &amp; 0x3C @ 12 &gt;&gt; 26 &amp; 0x3C @ 8 = 1,2,5,8</B>&quot;
+<DT><DD>
+上で説明した通り <B>0&gt;&gt;22&amp;3C</B> で IP ヘッダーのバイト数を計算する。 <B>@</B>
+でこの値をパケットの新しいオフセットとし、これは TCP ヘッダーの先頭である。 TCP ヘッダー長 (これも 32 ビットワード) は TCP
+ヘッダーのバイト 12 の左半分にある。 <B>12&gt;&gt;26&amp;3C</B> で TCP ヘッダーのバイト数を計算する (IP
+ヘッダーの場合と同様)。 &quot;@&quot; を使ってこれを新しいオフセットに設定する。この時点で TCP ペイロードの先頭を指している。 最後に、8
+でペイロードのバイト 8-12 を読み出し、 <B>=</B> を使って取り出した値が 1, 2, 5, 8 のいずれかであるかチェックする。
+</DL>
+<A NAME="lbCK">&nbsp;</A>
+<H3>udp</H3>
+
+これらの拡張は `--protocol udp' が指定された場合に利用できる。 以下のオプションが提供される。
+<DL COMPACT>
+<DT>[<B>!</B>] <B>--source-port</B>,<B>--sport</B> <I>port</I>[<B>:</B><I>port</I>]<DD>
+送信元ポートまたはポート範囲の指定。 詳細は TCP 拡張の <B>--source-port</B> オプションの説明を参照すること。
+<DT>[<B>!</B>] <B>--destination-port</B>,<B>--dport</B> <I>port</I>[<B>:</B><I>port</I>]<DD>
+宛先ポートまたはポート範囲の指定。 詳細は TCP 拡張の <B>--destination-port</B> オプションの説明を参照すること。
+</DL>
+<A NAME="lbCL">&nbsp;</A>
+<H3>unclean (IPv4 の場合)</H3>
+
+このモジュールにはオプションがないが、 おかしく正常でないように見えるパケットにマッチする。 これは実験的なものとして扱われている。
+<A NAME="lbCM">&nbsp;</A>
+<H2>ターゲットの拡張</H2>
+
+
+iptables は拡張ターゲットモジュールを使うことができる: 以下のものが、 標準的なディストリビューションに含まれている。
+<A NAME="lbCN">&nbsp;</A>
+<H3>AUDIT</H3>
+
+このターゲットを使うと、このターゲットにヒットしたパケットに対する監査 (audit) レコードを作成することができる。
+許可/廃棄/拒否されたパケットを記録するのに使用できる。 詳細については auditd(8) を参照。
+<DL COMPACT>
+<DT><B>--type</B> {<B>accept</B>|<B>drop</B>|<B>reject</B>}<DD>
+監査レコード種別を設定する。
+</DL>
+<P>
+
+例:
+<DL COMPACT>
+<DT><DD>
+iptables -N AUDIT_DROP
+<DT><DD>
+iptables -A AUDIT_DROP -j AUDIT --type drop
+<DT><DD>
+iptables -A AUDIT_DROP -j DROP
+</DL>
+<A NAME="lbCO">&nbsp;</A>
+<H3>CHECKSUM</H3>
+
+このターゲットは、 おかしいアプリケーションや古いアプリケーションに対する選択的な対処を可能にする。 mangle テーブルでのみ使用できる。
+<DL COMPACT>
+<DT><B>--checksum-fill</B><DD>
+Compute and fill in the checksum in a packet that lacks a checksum.  This is
+particularly useful, if you need to work around old applications such as
+dhcp clients, that do not work well with checksum offloads, but don't want
+to disable checksum offload in your device.
+</DL>
+<A NAME="lbCP">&nbsp;</A>
+<H3>CLASSIFY</H3>
+
+このモジュールを使うと skb-&gt;priority の値を設定できる (その結果、そのパケットを特定の CBQ クラスに分類できる)。
+<DL COMPACT>
+<DT><B>--set-class</B> <I>major</I><B>:</B><I>minor</I><DD>
+メジャークラスとマイナークラスの値を設定する。値は常に 16 進数として解釈される。  0x が前に付いていない場合であっても 16 進数と解釈される。
+</DL>
+<A NAME="lbCQ">&nbsp;</A>
+<H3>CLUSTERIP (IPv4 の場合)</H3>
+
+このモジュールを使うと、 ノードの前段に明示的に負荷分散装置を置かずに、 特定の IP アドレスと MAC
+アドレスを共有するノードの簡単なクラスターを構成することができる。 コネクションは、このクラスターのノード間で静的に分散される。
+<DL COMPACT>
+<DT><B>--new</B><DD>
+新しい ClusterIP を作成する。 このオプションは、ここで指定する ClusterIP を使うルールの中で一番最初に設定しなければならない。
+<DT><B>--hashmode</B> <I>mode</I><DD>
+ハッシュモードを指定する。 <B>sourceip</B>, <B>sourceip-sourceport</B>,
+<B>sourceip-sourceport-destport</B> のいずれかでなければならない。
+<DT><B>--clustermac</B> <I>mac</I><DD>
+ClusterIP の MAC アドレスを指定する。 リンク層のマルチキャストアドレスでなければならない。
+<DT><B>--total-nodes</B> <I>num</I><DD>
+このクラスターの総ノード数。
+<DT><B>--local-node</B> <I>num</I><DD>
+このクラスターのローカルノード番号。
+<DT><B>--hash-init</B> <I>rnd</I><DD>
+ハッシュの初期化に使用される乱数シード値を指定する。
+</DL>
+<A NAME="lbCR">&nbsp;</A>
+<H3>CONNMARK</H3>
+
+このモジュールは、 コネクションに関連付けられた netfilter の mark 値を設定する。 mark は 32 ビット幅である。
+<DL COMPACT>
+<DT><B>--set-xmark</B> <I>value</I>[<B>/</B><I>mask</I>]<DD>
+<I>mask</I> で指定されたビットを 0 にし、 <I>value</I> と ctmark の XOR を取る。
+<DT><B>--save-mark</B> [<B>--nfmask</B> <I>nfmask</I>] [<B>--ctmask</B> <I>ctmask</I>]<DD>
+指定されたマスクを使って、 パケットマーク (nfmark) をコネクションマーク (ctmark) にコピーする。 新しい ctmark
+値は以下のように決定される。
+<DT><DD>
+ctmark = (ctmark &amp; ~ctmask) ^ (nfmark &amp; nfmask)
+<DT><DD>
+<I>ctmask</I> はどのビットをクリアするかを規定し、 <I>nfmask</I> は nfmark のどのビットを ctmark と XOR
+するかを規定する。 <I>ctmask</I> と <I>nfmask</I> のデフォルト値は 0xFFFFFFFF である。
+<DT><B>--restore-mark</B> [<B>--nfmask</B> <I>nfmask</I>] [<B>--ctmask</B> <I>ctmask</I>]<DD>
+指定されたマスクを使って、 コネクションマーク (ctmark) をパケットマーク (nfmark) にコピーする。 新しい nfmark
+値は以下のように決定される。
+<DT><DD>
+nfmark = (nfmark &amp; ~<I>nfmask</I>) ^ (ctmark &amp; <I>ctmask</I>);
+<DT><DD>
+<I>nfmask</I> はどのビットをクリアするかを規定し、 <I>ctmask</I> は ctmark のどのビットを nfmark と XOR
+するかを規定する。 <I>ctmask</I> と <I>nfmask</I> のデフォルト値は 0xFFFFFFFF である。
+<DT><DD>
+<B>--restore-mark</B> は <B>mangle</B> テーブルでのみ有効である。
+</DL>
+<P>
+
+以下の簡易表現が <B>--set-xmark</B> の代わりに利用できる。
+<DL COMPACT>
+<DT><B>--and-mark</B> <I>bits</I><DD>
+ctmark と <I>bits</I> のビット論理積 (AND) を取る (<B>--set-xmark 0/</B><I>invbits</I> の簡易表現、
+<I>invbits</I> は <I>bits</I> のビット単位の否定である)。
+<DT><B>--or-mark</B> <I>bits</I><DD>
+ctmark と <I>bits</I> のビット論理和 (OR) を取る (<B>--set-xmark</B> <I>bits</I><B>/</B><I>bits</I> の簡易表現)。
+<DT><B>--xor-mark</B> <I>bits</I><DD>
+ctmark と <I>bits</I> のビット XOR を取る (<B>--set-xmark</B> <I>bits</I><B>/0</B> の簡易表現)。
+<DT><B>--set-mark</B> <I>value</I>[<B>/</B><I>mask</I>]<DD>
+コネクションマークを設定する。 mask が指定された場合、 mask で指定されたビットだけが変更される。
+<DT><B>--save-mark</B> [<B>--mask</B> <I>mask</I>]<DD>
+nfmark を ctmark へコピーする。 mask が指定された場合、そのビットだけがコピーされる。
+<DT><B>--restore-mark</B> [<B>--mask</B> <I>mask</I>]<DD>
+ctmark を nfmark にコピーする。 mask が指定されると、 指定されたビットだけがコピーされる。 <B>mangle</B>
+テーブルのみで有効である。
+</DL>
+<A NAME="lbCS">&nbsp;</A>
+<H3>CONNSECMARK</H3>
+
+This module copies security markings from packets to connections (if
+unlabeled), and from connections back to packets (also only if unlabeled).
+Typically used in conjunction with SECMARK, it is valid in the <B>security</B>
+table (for backwards compatibility with older kernels, it is also valid in
+the <B>mangle</B> table).
+<DL COMPACT>
+<DT><B>--save</B><DD>
+If the packet has a security marking, copy it to the connection if the
+connection is not marked.
+<DT><B>--restore</B><DD>
+If the packet does not have a security marking, and the connection does,
+copy the security marking from the connection to the packet.
+<P>
+</DL>
+<A NAME="lbCT">&nbsp;</A>
+<H3>CT</H3>
+
+The CT target allows to set parameters for a packet or its associated
+connection. The target attaches a &quot;template&quot; connection tracking entry to
+the packet, which is then used by the conntrack core when initializing a new
+ct entry. This target is thus only valid in the &quot;raw&quot; table.
+<DL COMPACT>
+<DT><B>--notrack</B><DD>
+このパケットに対するコネクション追跡を無効にする。
+<DT><B>--helper</B> <I>name</I><DD>
+<I>name</I> で指定されるヘルパーをこのコネクションで使用する。 この方法は、あらかじめ設定したポートに対して conntrack
+ヘルパーモジュールをロードするよりも柔軟性がある。
+<DT><B>--ctevents</B> <I>event</I>[<B>,</B>...]<DD>
+Only generate the specified conntrack events for this connection. Possible
+event types are: <B>new</B>, <B>related</B>, <B>destroy</B>, <B>reply</B>, <B>assured</B>,
+<B>protoinfo</B>, <B>helper</B>, <B>mark</B> (this refers to the ctmark, not nfmark),
+<B>natseqinfo</B>, <B>secmark</B> (ctsecmark).
+<DT><B>--expevents</B> <I>event</I>[<B>,</B>...]<DD>
+Only generate the specified expectation events for this connection.
+Possible event types are: <B>new</B>.
+<DT><B>--zone</B> <I>id</I><DD>
+Assign this packet to zone <I>id</I> and only have lookups done in that zone.
+By default, packets have zone 0.
+<DT><B>--timeout</B> <I>name</I><DD>
+Use the timeout policy identified by <I>name</I> for the connection. This is
+provides more flexible timeout policy definition than global timeout values
+available at /proc/sys/net/netfilter/nf_conntrack_*_timeout_*.
+</DL>
+<A NAME="lbCU">&nbsp;</A>
+<H3>DNAT</H3>
+
+このターゲットは <B>nat</B> テーブルの <B>PREROUTING</B>, <B>OUTPUT</B> チェイン、 これらのチェインから呼び出される
+ユーザー定義チェインのみで有効である。 このターゲットはパケットの宛先アドレスを修正する (このコネクションの以降のパケットも修正して分からなく
+(mangle) する)。 さらに、 ルールによるチェックを止めさせる。 このターゲットは以下のオプションを取る。
+<DL COMPACT>
+<DT><B>--to-destination</B> [<I>ipaddr</I>[<B>-</B><I>ipaddr</I>]][<B>:</B><I>port</I>[<B>-</B><I>port</I>]]<DD>
+1 つの新しい宛先 IP アドレス、 または IP アドレスの範囲が指定できる。 また、ルールでプロトコルとして <B>tcp</B>, <B>udp</B>,
+<B>dccp</B>, <B>sctp</B> のいずれが指定されている場合は、ポートの範囲を指定することもできる。 ポートの範囲が指定されていない場合、
+宛先ポートは変更されない。 IP アドレスが指定されなかった場合は、 宛先ポートだけが変更される。 2.6.10 以前のカーネルでは、 複数の
+--to-destination オプションを指定することができる。 これらのカーネルでは、 アドレスの範囲指定や --to-destination
+オプションの複数回指定により 2 つ以上の宛先アドレスを指定した場合、 それらのアドレスを使った単純なラウンドロビンによる負荷分散が行われる。
+それ以降のカーネル (&gt;= 2.6.11-rc1) には複数の範囲を NAT する機能は存在しない。
+<DT><B>--random</B><DD>
+<B>--random</B> オプションを使用すると、 ポートマッピングがランダム化される (カーネル 2.6.22 以降)。
+<DT><B>--persistent</B><DD>
+クライアントの各コネクションに同じ送信元アドレス/宛先アドレスを割り当てる。 これは SAME ターゲットよりも優先される。 persistent
+マッピングのサポートは 2.6.29-rc2 以降で利用可能である。
+<DT>IPv6 サポートは Linux カーネル 3.7 以降で利用可能である。<DD>
+</DL>
+<A NAME="lbCV">&nbsp;</A>
+<H3>DNPT (IPv6 のみ)</H3>
+
+(RFC 6296 で説明されている) ステートレス IPv6-to-IPv6 宛先ネットワークプレフィックス変換を提供する。
+<P>
+
+このターゲットは <B>nat</B> テーブルではなく <B>mangle</B> テーブルで使わなければならない。 以下のオプションを取る。
+<DL COMPACT>
+<DT><B>--src-pfx</B> [<I>prefix/</I><I>length]</I><DD>
+変換を行う送信元プレフィックスとその長さを設定する。
+<DT><B>--dst-pfx</B> [<I>prefix/</I><I>length]</I><DD>
+変換を行う宛先プレフィックスとその長さを設定する。
+</DL>
+<P>
+
+変換を取り消すには SNPT ターゲットを使わなければならない。 例:
+<DL COMPACT>
+<DT><DD>
+ip6tables -t mangle -I POSTROUTING -s fd00::/64  -o vboxnet0 -j SNPT
+--src-pfx fd00::/64 --dst-pfx 2001:e20:2000:40f::/64
+<DT><DD>
+ip6tables -t mangle -I PREROUTING -i wlan0 -d 2001:e20:2000:40f::/64 -j DNPT
+--src-pfx 2001:e20:2000:40f::/64 --dst-pfx fd00::/64
+</DL>
+<P>
+
+IPv6 neighbor proxy を有効にする必要があるかもしれない。
+<DL COMPACT>
+<DT><DD>
+sysctl -w net.ipv6.conf.all.proxy_ndp=1
+</DL>
+<P>
+
+また、変換されたフローに対するコネクション追跡を無効にするには <B>NOTRACK</B> ターゲットを使用する必要がある。
+<A NAME="lbCW">&nbsp;</A>
+<H3>DSCP</H3>
+
+このターゲットは、 IPv4 パケットの TOS ヘッダーにある DSCP ビットの値の書き換えを可能にする。 これはパケットを操作するので、
+mangle テーブルでのみ使用できる。
+<DL COMPACT>
+<DT><B>--set-dscp</B> <I>value</I><DD>
+DSCP フィールドの数値を設定する (10 進または 16 進)。
+<DT><B>--set-dscp-class</B> <I>class</I><DD>
+DSCP フィールドの DiffServ クラスを設定する。
+</DL>
+<A NAME="lbCX">&nbsp;</A>
+<H3>ECN (IPv4 の場合)</H3>
+
+このターゲットは ECN ブラックホール問題への対処を可能にする。 mangle テーブルでのみ使用できる。
+<DL COMPACT>
+<DT><B>--ecn-tcp-remove</B><DD>
+TCP ヘッダーから全ての ECN ビット (訳注: ECE/CWR フラグ) を取り除く。 当然、 <B>-p tcp</B>
+オプションとの組合わせでのみ使用できる。
+</DL>
+<A NAME="lbCY">&nbsp;</A>
+<H3>HL (IPv6 のみ)</H3>
+
+このターゲットを使うと IPv6 ヘッダーの Hop Limit フィールドを変更することができる。 Hop Limit フィールドは IPv4 の
+TTL 値と同じようなものである。 Hop Limit フィールドを設定したり増やすのは、 危険性を非常にはらんでいる。
+したがって、可能な限り避けるべきである。 このターゲットは <B>mangle</B> テーブルでのみ有効である。
+<P>
+
+<B>決してローカルネットワーク内に留まるパケットのフィールド値を設定したり増やしたりしないこと！</B>
+<DL COMPACT>
+<DT><B>--hl-set</B> <I>value</I><DD>
+Hop Limit を `value' に設定する。
+<DT><B>--hl-dec</B> <I>value</I><DD>
+Hop Limit を `value' 回減算する。
+<DT><B>--hl-inc</B> <I>value</I><DD>
+Hop Limit を `value' 回加算する。
+</DL>
+<A NAME="lbCZ">&nbsp;</A>
+<H3>HMARK</H3>
+
+Like MARK, i.e. set the fwmark, but the mark is calculated from hashing
+packet selector at choice. You have also to specify the mark range and,
+optionally, the offset to start from. ICMP error messages are inspected and
+used to calculate the hashing.
+<P>
+
+Existing options are:
+<DL COMPACT>
+<DT><B>--hmark-tuple</B> tuple<DD>
+Possible tuple members are: <B>src</B> meaning source address (IPv4, IPv6
+address), <B>dst</B> meaning destination address (IPv4, IPv6 address), <B>sport</B>
+meaning source port (TCP, UDP, UDPlite, SCTP, DCCP), <B>dport</B> meaning
+destination port (TCP, UDP, UDPlite, SCTP, DCCP), <B>spi</B> meaning Security
+Parameter Index (AH, ESP), and <B>ct</B> meaning the usage of the conntrack
+tuple instead of the packet selectors.
+<DT><B>--hmark-mod</B> <I>value (must be &gt; 0)</I><DD>
+Modulus for hash calculation (to limit the range of possible marks)
+<DT><B>--hmark-offset</B> <I>value</I><DD>
+Offset to start marks from.
+<DT>For advanced usage, instead of using --hmark-tuple, you can specify custom<DD>
+prefixes and masks:
+<DT><B>--hmark-src-prefix</B> <I>cidr</I><DD>
+The source address mask in CIDR notation.
+<DT><B>--hmark-dst-prefix</B> <I>cidr</I><DD>
+The destination address mask in CIDR notation.
+<DT><B>--hmark-sport-mask</B> <I>value</I><DD>
+A 16 bit source port mask in hexadecimal.
+<DT><B>--hmark-dport-mask</B> <I>value</I><DD>
+A 16 bit destination port mask in hexadecimal.
+<DT><B>--hmark-spi-mask</B> <I>value</I><DD>
+A 32 bit field with spi mask.
+<DT><B>--hmark-proto-mask</B> <I>value</I><DD>
+An 8 bit field with layer 4 protocol number.
+<DT><B>--hmark-rnd</B> <I>value</I><DD>
+A 32 bit random custom value to feed hash calculation.
+</DL>
+<P>
+
+<I>例</I>:
+<P>
+
+iptables -t mangle -A PREROUTING -m conntrack --ctstate NEW
+<BR>&nbsp;-j&nbsp;HMARK&nbsp;--hmark-tuple&nbsp;ct,src,dst,proto&nbsp;--hmark-offset&nbsp;10000
+--hmark-mod 10 --hmark-rnd 0xfeedcafe
+<P>
+
+iptables -t mangle -A PREROUTING -j HMARK --hmark-offset 10000 --hmark-tuple
+src,dst,proto --hmark-mod 10 --hmark-rnd 0xdeafbeef
+<A NAME="lbDA">&nbsp;</A>
+<H3>IDLETIMER</H3>
+
+This target can be used to identify when interfaces have been idle for a
+certain period of time.  Timers are identified by labels and are created
+when a rule is set with a new label.  The rules also take a timeout value
+(in seconds) as an option.  If more than one rule uses the same timer label,
+the timer will be restarted whenever any of the rules get a hit.  One entry
+for each timer is created in sysfs.  This attribute contains the timer
+remaining for the timer to expire.  The attributes are located under the
+xt_idletimer class:
+<P>
+
+/sys/class/xt_idletimer/timers/&lt;label&gt;
+<P>
+
+When the timer expires, the target module sends a sysfs notification to the
+userspace, which can then decide what to do (eg. disconnect to save power).
+<DL COMPACT>
+<DT><B>--timeout</B> <I>amount</I><DD>
+This is the time in seconds that will trigger the notification.
+<DT><B>--label</B> <I>string</I><DD>
+This is a unique identifier for the timer.  The maximum length for the label
+string is 27 characters.
+</DL>
+<A NAME="lbDB">&nbsp;</A>
+<H3>LED</H3>
+
+This creates an LED-trigger that can then be attached to system indicator
+lights, to blink or illuminate them when certain packets pass through the
+system. One example might be to light up an LED for a few minutes every time
+an SSH connection is made to the local machine. The following options
+control the trigger behavior:
+<DL COMPACT>
+<DT><B>--led-trigger-id</B> <I>name</I><DD>
+This is the name given to the LED trigger. The actual name of the trigger
+will be prefixed with &quot;netfilter-&quot;.
+<DT><B>--led-delay</B> <I>ms</I><DD>
+This indicates how long (in milliseconds) the LED should be left illuminated
+when a packet arrives before being switched off again. The default is 0
+(blink as fast as possible.) The special value <I>inf</I> can be given to leave
+the LED on permanently once activated. (In this case the trigger will need
+to be manually detached and reattached to the LED device to switch it off
+again.)
+<DT><B>--led-always-blink</B><DD>
+Always make the LED blink on packet arrival, even if the LED is already on.
+This allows notification of new packets even with long delay values (which
+otherwise would result in a silent prolonging of the delay time.)
+<DT>例:<DD>
+<DT>Create an LED trigger for incoming SSH traffic:<DD>
+iptables -A INPUT -p tcp --dport 22 -j LED --led-trigger-id ssh
+<DT>Then attach the new trigger to an LED:<DD>
+echo netfilter-ssh &gt;/sys/class/leds/<I>ledname</I>/trigger
+</DL>
+<A NAME="lbDC">&nbsp;</A>
+<H3>LOG</H3>
+
+マッチしたパケットをカーネルログに記録する。 このオプションがルールに対して設定されると、 Linux
+カーネルはマッチしたパケットについての何らかの情報 (多くの IP/IPv6 ヘッダーフィールドなど) を カーネルログに表示する (カーネルログは
+<I><A HREF="../../util-linux/man1/dmesg.1.html">dmesg</A></I>(1) や syslog で参照できる)。
+<P>
+
+これは &quot;非終了ターゲット&quot; である。 すなわち、 ルールの探索は次のルールへと継続される。 よって、 拒否するパケットをログ記録したければ、
+同じマッチング判断基準を持つ 2 つのルールを使用し、 最初のルールで LOG ターゲットを、 次のルールで DROP (または REJECT)
+ターゲットを指定する。
+<DL COMPACT>
+<DT><B>--log-level</B> <I>level</I><DD>
+ロギングレベル。 (システム固有の) 数値かシンボル名を指定する。 指定できる値は (優先度が高い順に)  <B>emerg</B>, <B>alert</B>,
+<B>crit</B>, <B>error</B>, <B>warning</B>, <B>notice</B>, <B>info</B>, <B>debug</B> である。
+<DT><B>--log-prefix</B> <I>prefix</I><DD>
+指定したプレフィックスをログメッセージの前に付ける。
+プレフィックスは 29 文字までの長さで、
+ログの中でメッセージを区別するのに役立つ。
+<DT><B>--log-tcp-sequence</B><DD>
+TCP シーケンス番号をログに記録する。 ログがユーザーから読める場合、 セキュリティ上の危険がある。
+<DT><B>--log-tcp-options</B><DD>
+TCP パケットヘッダーのオプションをログに記録する。
+<DT><B>--log-ip-options</B><DD>
+IP/IPv6 パケットヘッダーのオプションをログに記録する。
+<DT><B>--log-uid</B><DD>
+パケットを生成したプロセスのユーザー ID をログに記録する。
+</DL>
+<A NAME="lbDD">&nbsp;</A>
+<H3>MARK</H3>
+
+このターゲットを使うと、 そのパケットに関連付けられる Netfilter マーク値を設定する。 例えば、 fwmark に基づくルーティング
+(iproute2 が必要) と組み合わせて使うことができる。 そうする場合には、 ルーティング時に考慮されるようにするには、 mangle テーブルの
+PREROUTING チェインでマークを設定する必要がある。 マークフィールドは 32 ビット幅である。
+<DL COMPACT>
+<DT><B>--set-xmark</B> <I>value</I>[<B>/</B><I>mask</I>]<DD>
+<I>mask</I> で指定されたビットを 0 にし、 <I>value</I> と packet mark (&quot;nfmark&quot;) の XOR を取る。
+<I>mask</I> が省略された場合は 0xFFFFFFFF とみなされる。
+<DT><B>--set-mark</B> <I>value</I>[<B>/</B><I>mask</I>]<DD>
+<I>mask</I> で指定されたビットを 0 にし、 <I>value</I> と packet mark の OR を取る。 <I>mask</I> が省略された場合は
+0xFFFFFFFF とみなされる。
+</DL>
+<P>
+
+以下の簡易表現が利用できる。
+<DL COMPACT>
+<DT><B>--and-mark</B> <I>bits</I><DD>
+nfmark と <I>bits</I> のビット論理積 (AND) を取る (<B>--set-xmark 0/</B><I>invbits</I> の簡易表現、
+<I>invbits</I> は <I>bits</I> のビット単位の否定である)。
+<DT><B>--or-mark</B> <I>bits</I><DD>
+nfmark と <I>bits</I> のビット論理和 (OR) を取る (<B>--set-xmark</B> <I>bits</I><B>/</B><I>bits</I> の簡易表現)。
+<DT><B>--xor-mark</B> <I>bits</I><DD>
+nfmark と <I>bits</I> のビット XOR を取る (<B>--set-xmark</B> <I>bits</I><B>/0</B> の簡易表現)。
+</DL>
+<A NAME="lbDE">&nbsp;</A>
+<H3>MASQUERADE</H3>
+
+このターゲットは <B>nat</B> テーブルの <B>POSTROUTING</B> チェインのみで有効である。 動的割り当て IP (ダイヤルアップ)
+コネクションの場合にのみ使うべきである。 固定 IP アドレスならば、 SNAT ターゲットを使うべきである。 マスカレーディングは、
+パケットが送信されるインターフェースの IP アドレスへのマッピングを指定するのと同じであるが、
+インターフェースが停止した場合にコネクションを<I>忘れる</I>という効果がある。 次のダイヤルアップでは同じインターフェースアドレスになる可能性が低い
+(そのため、 前回確立されたコネクションは失われる) 場合、 この動作は正しい。
+<DL COMPACT>
+<DT><B>--to-ports</B> <I>port</I>[<B>-</B><I>port</I>]<DD>
+このオプションは、 使用する送信元ポートの範囲を指定し、 デフォルトの <B>SNAT</B> 送信元ポートの選択方法 (上記) よりも優先される。
+ルールがプロトコルとして <B>tcp</B>, <B>udp</B>, <B>dccp</B>, <B>sctp</B> を指定している場合にのみ有効である。
+<DT><B>--random</B><DD>
+送信元ポートのマッピングをランダム化する。 <B>--random</B> オプションを使用すると、 ポートマッピングがランダム化される (カーネル
+2.6.21 以降)。
+<DT>IPv6 サポートは Linux カーネル 3.7 以降で利用可能である。<DD>
+</DL>
+<A NAME="lbDF">&nbsp;</A>
+<H3>MIRROR (IPv4 の場合)</H3>
+
+実験的なデモンストレーション用のターゲットであり、 IP ヘッダーの送信元と宛先フィールドを入れ換え、 パケットを再送信するものである。 これは
+<B>INPUT</B>, <B>FORWARD</B>, <B>PREROUTING</B> チェインと、 これらのチェインから呼び出される
+ユーザー定義チェインだけで有効である。 ループ等の問題を回避するため、 外部に送られるパケットは
+いかなるパケットフィルタリングチェイン・コネクション追跡・NAT からも 監視<B>されない</B>。
+<A NAME="lbDG">&nbsp;</A>
+<H3>NETMAP</H3>
+
+このターゲットを使うと、あるアドレスネットワーク全体を別のネットワークアドレスに静的にマッピングできる。 このターゲットは <B>nat</B>
+テーブルでルールでのみ使用できる。
+<DL COMPACT>
+<DT><B>--to</B> <I>address</I>[<B>/</B><I>mask</I>]<DD>
+マッピング先のネットワークアドレス。 変換後のアドレスは以下のようにして構築される。 mask で '1' になっているビットは新しいアドレスが使われ、
+mask で '0' になっているビットは元のアドレスが使われる。
+<DT>IPv6 サポートは Linux カーネル 3.7 以降で利用可能である。<DD>
+</DL>
+<A NAME="lbDH">&nbsp;</A>
+<H3>NFLOG</H3>
+
+このターゲットは、 マッチしたパケットをログに記録する機能を提供する。 このターゲットがルールに設定されると、 Linux
+カーネルはそのログに記録するためにそのパケットをロードされたロギングバックエンドに渡す。 このターゲットは通常は nfnetlink_log
+をロギングバックエンドとして使う組み合わせで使用される。 nfnetlink_log はそのパケットを <I>netlink</I>
+ソケット経由で指定されたマルチキャストグループにマルチキャストする。 1
+つ以上のユーザー空間プロセスがマルチキャストグループを購読しパケットを受信することができる。 LOG と同様に、
+このターゲットは非終了ターゲットであり、 ルールの探索は次のルールへと継続される。
+<DL COMPACT>
+<DT><B>--nflog-group</B> <I>nlgroup</I><DD>
+パケットを送信する netlink グループ (0 - 2^16-1) を指定する (nfnetlink_log の場合のみ利用できる)。
+デフォルトの値は 0 である。
+<DT><B>--nflog-prefix</B> <I>prefix</I><DD>
+ログメッセージの前に付けるプレフィックス文字列。 最大 64 文字までの指定できる。 ログの中でメッセージを区別するのに役に立つ。
+<DT><B>--nflog-range</B> <I>size</I><DD>
+ユーザー空間にコピーするバイト数 (nfnetlink_log の場合のみ利用できる)。 nfnetlink_log
+のインスタンスは自身でコピーする範囲を指定できるが、 このオプションはそれを上書きする。
+<DT><B>--nflog-threshold</B> <I>size</I><DD>
+ユーザー空間にパケットを送信する前に、カーネル内部のキューに入れるパケット数 (nfnetlink_log の場合のみ利用できる)。
+大きめの値を指定するほどパケット単位のオーバヘッドは少なくなるが、 パケットがユーザー空間に届くまでの遅延が大きくなる。 デフォルト値は 1 である。
+</DL>
+<A NAME="lbDI">&nbsp;</A>
+<H3>NFQUEUE</H3>
+
+このターゲットは、 <B>nfnetlink_queue</B> ハンドラーを使ってそのパケットをユーザー空間に渡す。 パケットは 16
+ビットのキュー番号で指定されたキューに入れられる。 ユーザー空間では好きなようにパケットを検査し変更できる。
+ユーザー空間側では、必ずそのパケットを破棄するかカーネルに戻すかのどちらかをしなければならない。 詳細は libnetfilter_queue
+を参照のこと。
+<B>nfnetlink_queue</B> は Linux 2.6.14 で追加された。 <B>queue-balance</B> オプションは Linux
+2.6.31 で、 <B>queue-bypass</B> は Linux 2.6.39 で追加された。
+<DL COMPACT>
+<DT><B>--queue-num</B> <I>value</I><DD>
+使用する QUEUE 番号を指定する。 有効なキュー番号は 0 から 65535 である。 デフォルトは 0 である。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>--queue-balance</B> <I>value</I><B>:</B><I>value</I><DD>
+使用するキューの範囲を指定する。 パケットは指定された範囲のキューに分散される。 これはマルチコアシステムで有用である。
+ユーザー空間プログラムの複数インスタンスをキュー x, x+1, .. x+n で開始し、 &quot;--queue-balance
+<I>x</I><B>:</B><I>x+n</I>&quot; を使用する。 同じコネクションに所属するパケットは同じ nfqueue に入れられる。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>--queue-bypass</B><DD>
+デフォルトでは、 どのユーザー空間プログラムも NFQUEUE をリッスンしていない場合、 キューされるはずのすべてのパケットが破棄される。
+このオプションを使うと、 NFQUEUE ルールは ACCEPT のような動作となり、 パケットは次のテーブルに進む。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>--queue-cpu-fanout</B><DD>
+Linux カーネル 3.10 以降で利用可能。 <B>--queue-balance</B>
+とともに使用されると、このオプションはパケットをキューにマッピングする際のインデックスとして CPU ID を使用する。 これは、 CPU
+ごとにキューがある場合に性能を向上させようというものである。 このオプションを使うには <B>--queue-balance</B> を指定する必要がある。
+</DL>
+<A NAME="lbDJ">&nbsp;</A>
+<H3>NOTRACK</H3>
+
+このターゲットを使うと、そのルールにマッチした全てのパケットでコネクション追跡が無効になる。 これは -j CT --notrack と等価である。
+CT と同様、 NOTRACK は <B>raw</B> テーブルでのみ使用できる。
+<A NAME="lbDK">&nbsp;</A>
+<H3>RATEEST</H3>
+
+The RATEEST target collects statistics, performs rate estimation calculation
+and saves the results for later evaluation using the <B>rateest</B> match.
+<DL COMPACT>
+<DT><B>--rateest-name</B> <I>name</I><DD>
+Count matched packets into the pool referred to by <I>name</I>, which is freely
+choosable.
+<DT><B>--rateest-interval</B> <I>amount</I>{<B>s</B>|<B>ms</B>|<B>us</B>}<DD>
+Rate measurement interval, in seconds, milliseconds or microseconds.
+<DT><B>--rateest-ewmalog</B> <I>value</I><DD>
+Rate measurement averaging time constant.
+</DL>
+<A NAME="lbDL">&nbsp;</A>
+<H3>REDIRECT</H3>
+
+このターゲットは、 <B>nat</B> テーブルの <B>PREROUTING</B> チェインと <B>OUTPUT</B> チェイン、
+およびこれらチェインから呼び出されるユーザー定義チェインでのみ有効である。 このターゲットは、 宛先 IP
+をパケットを受信したインタフェースの最初のアドレスに変更することで、 パケットをそのマシン自身にリダイレクトする
+(ローカルで生成されたパケットはローカルホストのアドレス、 IPv4 では 127.0.0.1、 IPv6 では ::1 にマップされる)。
+<DL COMPACT>
+<DT><B>--to-ports</B> <I>port</I>[<B>-</B><I>port</I>]<DD>
+このオプションは使用される宛先ポート・ポート範囲・複数ポートを指定する。 このオプションが指定されない場合、 宛先ポートは変更されない。
+ルールがプロトコルとして <B>tcp</B>, <B>udp</B>, <B>dccp</B>, <B>sctp</B> を指定している場合にのみ有効である。
+<DT><B>--random</B><DD>
+<B>--random</B> オプションを使用すると、 ポートマッピングがランダム化される (カーネル 2.6.22 以降)。
+<DT>IPv6 サポートは Linux カーネル 3.7 以降で利用可能である。<DD>
+</DL>
+<A NAME="lbDM">&nbsp;</A>
+<H3>REJECT (IPv6 のみ)</H3>
+
+マッチしたパケットの応答としてエラーパケットを送信するために使われる。
+エラーパケットを送らなければ、 <B>DROP</B> と同じであり、 TARGET を終了し、
+ルールの探索を終了する。 このターゲットは、 <B>INPUT</B>, <B>FORWARD</B>,
+<B>OUTPUT</B> チェインと、 これらのチェインから呼ばれる ユーザー定義チェイン
+だけで有効である。 以下のオプションは、 返されるエラーパケットの特性を
+制御する。
+<DL COMPACT>
+<DT><B>--reject-with</B> <I>type</I><DD>
+指定できるタイプは <B>icmp6-no-route</B>, <B>no-route</B>, <B>icmp6-adm-prohibited</B>,
+<B>adm-prohibited</B>, <B>icmp6-addr-unreachable</B>, <B>addr-unreach</B>,
+<B>icmp6-port-unreachable</B> である。 指定したタイプの適切な IPv6 エラーメッセージが返される
+(<B>icmp6-port-unreachable</B> がデフォルトである)。 さらに、 TCP プロトコルにのみマッチするルールに対して、 オプション
+<B>tcp-reset</B> を使うことができる。 このオプションを使うと、 TCP RST パケットが送り返される。 主として <I>ident</I>
+(113/tcp) による探査を阻止するのに役立つ。 <I>ident</I> による探査は、 壊れている (メールを受け取らない) メールホストに
+メールが送られる場合に頻繁に起こる。 <B>tcp-reset</B> はバージョン 2.6.14 以降のカーネルでのみ使用できる。
+</DL>
+<A NAME="lbDN">&nbsp;</A>
+<H3>REJECT (IPv4 の場合)</H3>
+
+マッチしたパケットの応答としてエラーパケットを送信するために使われる。
+エラーパケットを送らなければ、 <B>DROP</B> と同じであり、 TARGET を終了し、
+ルールの探索を終了する。 このターゲットは、 <B>INPUT</B>, <B>FORWARD</B>,
+<B>OUTPUT</B> チェインと、 これらのチェインから呼ばれる ユーザー定義チェイン
+だけで有効である。 以下のオプションは、 返されるエラーパケットの特性を
+制御する。
+<DL COMPACT>
+<DT><B>--reject-with</B> <I>type</I><DD>
+指定できるタイプは <B>icmp-net-unreachable</B>, <B>icmp-host-unreachable</B>,
+<B>icmp-port-unreachable</B>, <B>icmp-proto-unreachable</B>, <B>icmp-net-prohibited</B>,
+<B>icmp-host-prohibited</B>, <B>icmp-admin-prohibited</B> (*) である。指定したタイプの適切な ICMP
+エラーメッセージを返す (<B>icmp-port-unreachable</B> がデフォルトである)。 TCP プロトコルにのみマッチするルールに対して、
+オプション <B>tcp-reset</B> を使うことができる。 このオプションを使うと、 TCP RST パケットが送り返される。 主として
+<I>ident</I> (113/tcp) による探査を阻止するのに役立つ。 <I>ident</I> による探査は、 壊れている (メールを受け取らない)
+メールホストに メールが送られる場合に頻繁に起こる。
+</DL>
+<P>
+
+(*) icmp-admin-prohibited をサポートしないカーネルで、 icmp-admin-prohibited を使用すると、
+REJECT ではなく単なる DROP になる。
+<A NAME="lbDO">&nbsp;</A>
+<H3>SAME (IPv4 の場合)</H3>
+
+Similar to SNAT/DNAT depending on chain: it takes a range of addresses
+(`--to 1.2.3.4-1.2.3.7') and gives a client the same
+source-/destination-address for each connection.
+<P>
+
+N.B.: The DNAT target's <B>--persistent</B> option replaced the SAME target.
+<DL COMPACT>
+<DT><B>--to</B> <I>ipaddr</I>[<B>-</B><I>ipaddr</I>]<DD>
+Addresses to map source to. May be specified more than once for multiple
+ranges.
+<DT><B>--nodst</B><DD>
+Don't use the destination-ip in the calculations when selecting the new
+source-ip
+<DT><B>--random</B><DD>
+Port mapping will be forcibly randomized to avoid attacks based on port
+prediction (kernel &gt;= 2.6.21).
+</DL>
+<A NAME="lbDP">&nbsp;</A>
+<H3>SECMARK</H3>
+
+This is used to set the security mark value associated with the packet for
+use by security subsystems such as SELinux.  It is valid in the <B>security</B>
+table (for backwards compatibility with older kernels, it is also valid in
+the <B>mangle</B> table). The mark is 32 bits wide.
+<DL COMPACT>
+<DT><B>--selctx</B> <I>security_context</I><DD>
+</DL>
+<A NAME="lbDQ">&nbsp;</A>
+<H3>SET</H3>
+
+このモジュールは <B>ipsec</B>(8) で定義できる IP 集合のエントリの追加、削除、その両方を行う。
+<DL COMPACT>
+<DT><B>--add-set</B> <I>setname</I> <I>flag</I>[<B>,</B><I>flag</I>...]<DD>
+集合に指定されたアドレス/ポート (複数可) を追加する
+<DT><B>--del-set</B> <I>setname</I> <I>flag</I>[<B>,</B><I>flag</I>...]<DD>
+集合から指定されたアドレス/ポート (複数可) を削除する
+<DT><DD>
+<I>flag</I> は <B>src</B> や <B>dst</B> の指定であり、 指定できるのは 6 個までである。
+<DT><B>--timeout</B> <I>value</I><DD>
+エントリを追加する際に、 集合定義のデフォルト値ではなく指定したタイムアウト値を使用する
+<DT><B>--exist</B><DD>
+エントリを追加する際に、 エントリが存在する場合、 タイムアウト値を、 指定された値か集合定義のデフォルト値にリセットする
+</DL>
+<P>
+
+-j SET を使用するには ipset のカーネルサポートが必要である。 標準のカーネルでは、 Linux 2.6.39 以降で提供されている。
+<A NAME="lbDR">&nbsp;</A>
+<H3>SNAT</H3>
+
+このターゲットは <B>nat</B> テーブルの <B>POSTROUTING</B>, <B>INPUT</B> チェイン、 これらのチェインから呼び出される
+ユーザー定義チェインのみで有効である。 このターゲットはパケットの送信元アドレスを修正する (このコネクションの以降のパケットも修正して分からなく
+(mangle) する)。 さらに、 ルールによるチェックを止めさせる。 このターゲットには以下のオプションがある:
+<DL COMPACT>
+<DT><B>--to-source</B> [<I>ipaddr</I>[<B>-</B><I>ipaddr</I>]][<B>:</B><I>port</I>[<B>-</B><I>port</I>]]<DD>
+1 つの新しい送信元 IP アドレス、 または IP アドレスの範囲が指定できる。 ルールでプロトコルとして <B>tcp</B>, <B>udp</B>,
+<B>dccp</B>, <B>sctp</B> が指定されている場合、 ポートの範囲を指定することもできる。 ポートの範囲が指定されていない場合、 512
+未満の送信元ポートは、 他の 512 未満のポートにマッピングされる。 512 〜 1023 までのポートは、 1024
+未満のポートにマッピングされる。 それ以外のポートは、 1024 以上のポートにマッピングされる。 可能であれば、 ポートの変換は起こらない。
+2.6.10 以前のカーネルでは、 複数の --to-source オプションを指定することができる。 これらのカーネルでは、 アドレスの範囲指定や
+--to-source オプションの複数回指定により 2 つ以上の送信元アドレスを指定した場合、
+それらのアドレスを使った単純なラウンド・ロビンが行われる。 それ以降のカーネル (&gt;= 2.6.11-rc1) には複数の範囲を NAT
+する機能は存在しない。
+<DT><B>--random</B><DD>
+<B>--random</B> オプションが使用されると、ポートマッピングはランダム化される (カーネル 2.6.21 以降)。
+<DT><B>--persistent</B><DD>
+クライアントの各コネクションに同じ送信元アドレス/宛先アドレスを割り当てる。 これは SAME ターゲットよりも優先される。 persistent
+マッピングのサポートは 2.6.29-rc2 以降で利用可能である。
+</DL>
+<P>
+
+2.6.36-rc1 より前のカーネルでは <B>INPUT</B> チェインで <B>SNAT</B> を使用できない。
+<DL COMPACT>
+<DT>IPv6 サポートは Linux カーネル 3.7 以降で利用可能である。<DD>
+</DL>
+<A NAME="lbDS">&nbsp;</A>
+<H3>SNPT (IPv6 のみ)</H3>
+
+(RFC 6296 で説明されている) ステートレス IPv6-to-IPv6 送信元ネットワークプレフィックス変換を提供する。
+<P>
+
+このターゲットは <B>nat</B> テーブルではなく <B>mangle</B> テーブルで使わなければならない。 以下のオプションを取る。
+<DL COMPACT>
+<DT><B>--src-pfx</B> [<I>prefix/</I><I>length]</I><DD>
+変換を行う送信元プレフィックスとその長さを設定する。
+<DT><B>--dst-pfx</B> [<I>prefix/</I><I>length]</I><DD>
+変換を行う宛先プレフィックスとその長さを設定する。
+</DL>
+<P>
+
+変換を取り消すには DNPT ターゲットを使わなければならない。 例:
+<DL COMPACT>
+<DT><DD>
+ip6tables -t mangle -I POSTROUTING -s fd00::/64  -o vboxnet0 -j SNPT
+--src-pfx fd00::/64 --dst-pfx 2001:e20:2000:40f::/64
+<DT><DD>
+ip6tables -t mangle -I PREROUTING -i wlan0 -d 2001:e20:2000:40f::/64 -j DNPT
+--src-pfx 2001:e20:2000:40f::/64 --dst-pfx fd00::/64
+</DL>
+<P>
+
+IPv6 neighbor proxy を有効にする必要があるかもしれない。
+<DL COMPACT>
+<DT><DD>
+sysctl -w net.ipv6.conf.all.proxy_ndp=1
+</DL>
+<P>
+
+また、変換されたフローに対するコネクション追跡を無効にするには <B>NOTRACK</B> ターゲットを使用する必要がある。
+<A NAME="lbDT">&nbsp;</A>
+<H3>TCPMSS</H3>
+
+このターゲットを用いると、 TCP の SYN パケットの MSS 値を書き換え、 そのコネクションでの最大サイズを制御できる (通常は、
+送信インターフェースの MTU から IPv4 では 40 を、 IPv6 では 60 を引いた値に制限する)。 もちろん <B>-p tcp</B>
+との組み合わせでしか使えない。
+<P>
+
+このターゲットは、 &quot;ICMP Fragmentation Needed&quot; や &quot;ICMPv6 Packet Too Big&quot;
+パケットをブロックしている犯罪的に頭のいかれた ISP やサーバーを乗り越えるために使用される。 Linux
+ファイアウォール/ルーターでは何も問題がないのに、 そこにぶら下がるマシンでは以下のように大きなパケットをやりとりできないというのが、
+この問題の兆候である。
+<DL COMPACT>
+<DT>1.<DD>
+ウェブ・ブラウザで接続しようとすると、 何のデータも受け取らずにハングする
+<DT>2.<DD>
+短いメールは問題ないが、 長いメールがハングする
+<DT>3.<DD>
+ssh は問題ないが、 scp は最初のハンドシェーク後にハングする
+</DL>
+<P>
+
+回避方法: このオプションを有効にし、 以下のようなルールを ファイアウォールの設定に追加する。
+<DL COMPACT>
+<DT><DD>
+<BR>&nbsp;iptables&nbsp;-t&nbsp;mangle&nbsp;-A&nbsp;FORWARD&nbsp;-p&nbsp;tcp&nbsp;--tcp-flags&nbsp;SYN,RST&nbsp;SYN
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-j&nbsp;TCPMSS&nbsp;--clamp-mss-to-pmtu
+<DT><B>--set-mss</B> <I>value</I><DD>
+Explicitly sets MSS option to specified value. If the MSS of the packet is
+already lower than <I>value</I>, it will <B>not</B> be increased (from Linux 2.6.25
+onwards) to avoid more problems with hosts relying on a proper MSS.
+<DT><B>--clamp-mss-to-pmtu</B><DD>
+Automatically clamp MSS value to (path_MTU - 40 for IPv4; -60 for IPv6).
+This may not function as desired where asymmetric routes with differing path
+MTU exist --- the kernel uses the path MTU which it would use to send
+packets from itself to the source and destination IP addresses. Prior to
+Linux 2.6.25, only the path MTU to the destination IP address was considered
+by this option; subsequent kernels also consider the path MTU to the source
+IP address.
+</DL>
+<P>
+
+これらのオプションはどちらか 1 つしか指定できない。
+<A NAME="lbDU">&nbsp;</A>
+<H3>TCPOPTSTRIP</H3>
+
+このターゲットは TCP パケットから TCP オプションを削除する (実際には TCPオプションを NO-OP で置き換える)。
+このターゲットを使うには <B>-p tcp</B> パラメーターを使う必要があるだろう。
+<DL COMPACT>
+<DT><B>--strip-options</B> <I>option</I>[<B>,</B><I>option</I>...]<DD>
+指定されたオプション (複数可) を削除する。 オプションは TCP オプション番号かシンボル名で指定する。 iptables を <B>-j
+TCPOPTSTRIP -h</B> で呼び出すと、指定できるオプションのシンボル名を取得できる。
+</DL>
+<A NAME="lbDV">&nbsp;</A>
+<H3>TEE</H3>
+
+<B>TEE</B> ターゲットは、 パケットのクローンを作成し、
+クローンしたパケットを<B>ローカル</B>ネットワークセグメントにある別のマシンにリダイレクトする。
+言い換えると、ネクストホップがターゲットでなければならないということだ。
+つまり、必要に応じてネクストホップがさらにパケットを転送するように設定する必要があるということだ。
+<DL COMPACT>
+<DT><B>--gateway</B> <I>ipaddr</I><DD>
+クローンしたパケットを指定した IP アドレスで届くホストに送信する。 (IPv4 の場合) 0.0.0.0、 (IPv6 の場合) ::
+は無効である。
+</DL>
+<P>
+
+eth0 に届いたすべての入力トラフィックをネットワーク層のロギングボックスに転送する。
+<P>
+
+-t mangle -A PREROUTING -i eth0 -j TEE --gateway 2001:db8::1
+<A NAME="lbDW">&nbsp;</A>
+<H3>TOS</H3>
+
+このモジュールは IPv4 ヘッダーの Type of Service フィールド (上位ビットも含む) や IPv6 ヘッダーの Priority
+フィールドを設定する。 TOS は DSCP と ECN と同じビットを共有する点に注意すること。 TOS ターゲットは <B>mangle</B>
+テーブルでのみ有効である。
+<DL COMPACT>
+<DT><B>--set-tos</B> <I>value</I>[<B>/</B><I>mask</I>]<DD>
+<I>mask</I> で指定されたビットを 0 にし (下の「注意」を参照)、 <I>value</I> と TOS/Priority フィールド の XOR
+を取る。 <I>mask</I> が省略された場合は 0xFF とみなされる。
+<DT><B>--set-tos</B> <I>symbol</I><DD>
+IPv4 の TOS ターゲットを使用する際にはシンボル名を指定することができる。 暗黙のうち 0xFF が mask として使用される
+(下の「注意」を参照)。 使用できる TOS 名のリストは iptables を <B>-j TOS -h</B> で呼び出すと取得できる。
+</DL>
+<P>
+
+以下の簡易表現が利用できる。
+<DL COMPACT>
+<DT><B>--and-tos</B> <I>bits</I><DD>
+TOS 値と <I>bits</I> のビット論理積 (AND) を取る (<B>--set-tos 0/</B><I>invbits</I> の簡易表現、
+<I>invbits</I> は <I>bits</I> のビット単位の否定である。 下の「注意」を参照)
+<DT><B>--or-tos</B> <I>bits</I><DD>
+TOS 値と <I>bits</I> のビット論理和 (OR) を取る (<B>--set-tos</B> <I>bits</I><B>/</B><I>bits</I>
+の簡易表現。下の「注意」を参照)
+<DT><B>--xor-tos</B> <I>bits</I><DD>
+TOS 値と <I>bits</I> の XOR を取る (<B>--set-tos</B> <I>bits</I><B>/0</B> の簡易表現。下の「注意」を参照)
+</DL>
+<P>
+
+注意: 2.6.38 以前の Linux カーネル (ただし、長期間サポートのリリース 2.6.32 (&gt;=.42), 2.6.33
+(&gt;=.15), 2.6.35 (&gt;=.14) 以外) では、 IPv6 TOS mangling
+がドキュメントに書かれている通りに動作せず、IPv4 バージョンの場合と異なる動作をするというバグがある。 TOS mask はビットが 1
+の場合に対応するビットが 0 にすることを指示するので、 元の TOS フィールドに mask を適用する前に反転する必要がある。 しかしながら、
+上記のカーネルではこの反転が抜けており --set-tos と関連する簡易表現が正しく動作しない。
+<A NAME="lbDX">&nbsp;</A>
+<H3>TPROXY</H3>
+
+このターゲットは、 <B>mangle</B> テーブルで、 <B>PREROUTING</B> チェインと、 <B>PREROUTING</B> チェインから呼び出される
+ユーザー定義チェインでのみ有効である。 このターゲットは、 そのパケットをパケットヘッダーを変更せずにそのままローカルソケットにリダイレクトする。
+また、 mark 値を変更することもでき、 この mark 値は後で高度なルーティングルールで使用することができる。 このターゲットにはオプションが 3
+つある:
+<DL COMPACT>
+<DT><B>--on-port</B> <I>port</I><DD>
+このオプションは使用する宛先ポートを指定する。 このオプションは必須で、 0 は宛先ポートが元々の宛先ポートと同じであることを意味する。 ルールが
+<B>-p tcp</B> または <B>-p udp</B> を指定している場合にのみ有効である。
+<DT><B>--on-ip</B> <I>address</I><DD>
+このオプションは使用する宛先アドレスを指定する。 デフォルトでは、 パケットが到着したインタフェースの IP アドレスが使用される。 ルールが <B>-p
+tcp</B> または <B>-p udp</B> を指定している場合にのみ有効である。
+<DT><B>--tproxy-mark</B> <I>value</I>[<B>/</B><I>mask</I>]<DD>
+Marks packets with the given value/mask. The fwmark value set here can be
+used by advanced routing. (Required for transparent proxying to work:
+otherwise these packets will get forwarded, which is probably not what you
+want.)
+</DL>
+<A NAME="lbDY">&nbsp;</A>
+<H3>TRACE</H3>
+
+This target marks packets so that the kernel will log every rule which match
+the packets as those traverse the tables, chains, rules.
+<P>
+
+A logging backend, such as ip(6)t_LOG or nfnetlink_log, must be loaded for
+this to be visible.  The packets are logged with the string prefix: &quot;TRACE:
+tablename:chainname:type:rulenum &quot; where type can be &quot;rule&quot; for plain rule,
+&quot;return&quot; for implicit rule at the end of a user defined chain and &quot;policy&quot;
+for the policy of the built in chains.
+<BR>
+
+It can only be used in the <B>raw</B> table.
+<A NAME="lbDZ">&nbsp;</A>
+<H3>TTL (IPv4 の場合)</H3>
+
+このターゲットを使うと、 IPv4 の TTL ヘッダーフィールドを変更できる。 TTL フィールドにより、 TTL
+がなくなるまでに、パケットが何ホップ (何個のルータ) を通過できるかが決定される。
+<P>
+
+TTL フィールドを設定したり増やすのは、 危険性を非常にはらんでいる。 したがって、可能な限り避けるべきである。 このターゲットは <B>mangle</B>
+テーブルでのみ有効である。
+<P>
+
+<B>決してローカルネットワーク内に留まるパケットのフィールド値を設定したり増やしたりしないこと！</B>
+<DL COMPACT>
+<DT><B>--ttl-set</B> <I>value</I><DD>
+TTL 値を `value' に設定する。
+<DT><B>--ttl-dec</B> <I>value</I><DD>
+TTL 値を `value' 回減算する。
+<DT><B>--ttl-inc</B> <I>value</I><DD>
+TTL 値を `value' 回加算する。
+</DL>
+<A NAME="lbEA">&nbsp;</A>
+<H3>ULOG (IPv4 の場合)</H3>
+
+このターゲットは NFLOG ターゲットの前身で IPv4 専用である。現在は非推奨となっている。 マッチしたパケットを
+ユーザー空間でログ記録する機能を提供する。 このターゲットがルールに設定されると、 Linux カーネルは、 そのパケットを <I>netlink</I>
+ソケットを用いてマルチキャストする。 そして、 1 つ以上のユーザー空間プロセスが いろいろなマルチキャストグループに登録をおこない、
+パケットを受信する。 LOG と同様、 これは &quot;非終了ターゲット&quot; であり、 ルールの探索は次のルールへと継続される。
+<DL COMPACT>
+<DT><B>--ulog-nlgroup</B> <I>nlgroup</I><DD>
+パケットを送信する netlink グループ (1-32) を指定する。 デフォルトの値は 1 である。
+<DT><B>--ulog-prefix</B> <I>prefix</I><DD>
+指定したプレフィックスをログメッセージの前に付ける。 32 文字までの指定できる。 ログの中でメッセージを区別するのに便利である。
+<DT><B>--ulog-cprange</B> <I>size</I><DD>
+ユーザー空間にコピーするパケットのバイト数。 値が 0 の場合、 サイズに関係なく全パケットをコピーする。 デフォルトは 0 である。
+<DT><B>--ulog-qthreshold</B> <I>size</I><DD>
+カーネル内部のキューに入れられるパケットの数。 例えば、 この値を 10 にした場合、 カーネル内部で 10 個のパケットをまとめ、 1 つの
+netlink マルチパートメッセージとしてユーザー空間に送る。 (過去のものとの互換性のため) デフォルトは 1 である。
+<BR>
+
+<P>
+</DL>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">マッチングの拡張</A><DD>
+<DL>
+<DT><A HREF="#lbAE">addrtype</A><DD>
+<DT><A HREF="#lbAF">ah (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbAG">ah (IPv4 の場合)</A><DD>
+<DT><A HREF="#lbAH">bpf</A><DD>
+<DT><A HREF="#lbAI">cluster</A><DD>
+<DT><A HREF="#lbAJ">comment</A><DD>
+<DT><A HREF="#lbAK">connbytes</A><DD>
+<DT><A HREF="#lbAL">connlimit</A><DD>
+<DT><A HREF="#lbAM">connmark</A><DD>
+<DT><A HREF="#lbAN">conntrack</A><DD>
+<DT><A HREF="#lbAO">cpu</A><DD>
+<DT><A HREF="#lbAP">dccp</A><DD>
+<DT><A HREF="#lbAQ">devgroup</A><DD>
+<DT><A HREF="#lbAR">dscp</A><DD>
+<DT><A HREF="#lbAS">dst (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbAT">ecn</A><DD>
+<DT><A HREF="#lbAU">esp</A><DD>
+<DT><A HREF="#lbAV">eui64 (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbAW">frag (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbAX">hashlimit</A><DD>
+<DT><A HREF="#lbAY">hbh (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbAZ">helper</A><DD>
+<DT><A HREF="#lbBA">hl (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbBB">icmp (IPv4 の場合)</A><DD>
+<DT><A HREF="#lbBC">icmp6 (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbBD">iprange</A><DD>
+<DT><A HREF="#lbBE">ipv6header (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbBF">ipvs</A><DD>
+<DT><A HREF="#lbBG">length</A><DD>
+<DT><A HREF="#lbBH">limit</A><DD>
+<DT><A HREF="#lbBI">mac</A><DD>
+<DT><A HREF="#lbBJ">mark</A><DD>
+<DT><A HREF="#lbBK">mh (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbBL">multiport</A><DD>
+<DT><A HREF="#lbBM">nfacct</A><DD>
+<DT><A HREF="#lbBN">osf</A><DD>
+<DT><A HREF="#lbBO">owner</A><DD>
+<DT><A HREF="#lbBP">physdev</A><DD>
+<DT><A HREF="#lbBQ">pkttype</A><DD>
+<DT><A HREF="#lbBR">policy</A><DD>
+<DT><A HREF="#lbBS">quota</A><DD>
+<DT><A HREF="#lbBT">rateest</A><DD>
+<DT><A HREF="#lbBU">realm (IPv4 の場合)</A><DD>
+<DT><A HREF="#lbBV">recent</A><DD>
+<DT><A HREF="#lbBW">rpfilter</A><DD>
+<DT><A HREF="#lbBX">rt (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbBY">sctp</A><DD>
+<DT><A HREF="#lbBZ">set</A><DD>
+<DT><A HREF="#lbCA">socket</A><DD>
+<DT><A HREF="#lbCB">state</A><DD>
+<DT><A HREF="#lbCC">statistic</A><DD>
+<DT><A HREF="#lbCD">string</A><DD>
+<DT><A HREF="#lbCE">tcp</A><DD>
+<DT><A HREF="#lbCF">tcpmss</A><DD>
+<DT><A HREF="#lbCG">time</A><DD>
+<DT><A HREF="#lbCH">tos</A><DD>
+<DT><A HREF="#lbCI">ttl (IPv4 の場合)</A><DD>
+<DT><A HREF="#lbCJ">u32</A><DD>
+<DT><A HREF="#lbCK">udp</A><DD>
+<DT><A HREF="#lbCL">unclean (IPv4 の場合)</A><DD>
+</DL>
+<DT><A HREF="#lbCM">ターゲットの拡張</A><DD>
+<DL>
+<DT><A HREF="#lbCN">AUDIT</A><DD>
+<DT><A HREF="#lbCO">CHECKSUM</A><DD>
+<DT><A HREF="#lbCP">CLASSIFY</A><DD>
+<DT><A HREF="#lbCQ">CLUSTERIP (IPv4 の場合)</A><DD>
+<DT><A HREF="#lbCR">CONNMARK</A><DD>
+<DT><A HREF="#lbCS">CONNSECMARK</A><DD>
+<DT><A HREF="#lbCT">CT</A><DD>
+<DT><A HREF="#lbCU">DNAT</A><DD>
+<DT><A HREF="#lbCV">DNPT (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbCW">DSCP</A><DD>
+<DT><A HREF="#lbCX">ECN (IPv4 の場合)</A><DD>
+<DT><A HREF="#lbCY">HL (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbCZ">HMARK</A><DD>
+<DT><A HREF="#lbDA">IDLETIMER</A><DD>
+<DT><A HREF="#lbDB">LED</A><DD>
+<DT><A HREF="#lbDC">LOG</A><DD>
+<DT><A HREF="#lbDD">MARK</A><DD>
+<DT><A HREF="#lbDE">MASQUERADE</A><DD>
+<DT><A HREF="#lbDF">MIRROR (IPv4 の場合)</A><DD>
+<DT><A HREF="#lbDG">NETMAP</A><DD>
+<DT><A HREF="#lbDH">NFLOG</A><DD>
+<DT><A HREF="#lbDI">NFQUEUE</A><DD>
+<DT><A HREF="#lbDJ">NOTRACK</A><DD>
+<DT><A HREF="#lbDK">RATEEST</A><DD>
+<DT><A HREF="#lbDL">REDIRECT</A><DD>
+<DT><A HREF="#lbDM">REJECT (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbDN">REJECT (IPv4 の場合)</A><DD>
+<DT><A HREF="#lbDO">SAME (IPv4 の場合)</A><DD>
+<DT><A HREF="#lbDP">SECMARK</A><DD>
+<DT><A HREF="#lbDQ">SET</A><DD>
+<DT><A HREF="#lbDR">SNAT</A><DD>
+<DT><A HREF="#lbDS">SNPT (IPv6 のみ)</A><DD>
+<DT><A HREF="#lbDT">TCPMSS</A><DD>
+<DT><A HREF="#lbDU">TCPOPTSTRIP</A><DD>
+<DT><A HREF="#lbDV">TEE</A><DD>
+<DT><A HREF="#lbDW">TOS</A><DD>
+<DT><A HREF="#lbDX">TPROXY</A><DD>
+<DT><A HREF="#lbDY">TRACE</A><DD>
+<DT><A HREF="#lbDZ">TTL (IPv4 の場合)</A><DD>
+<DT><A HREF="#lbEA">ULOG (IPv4 の場合)</A><DD>
+</DL>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

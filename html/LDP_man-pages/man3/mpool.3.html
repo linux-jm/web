@@ -1,0 +1,156 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MPOOL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MPOOL</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/mpool.3">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mpool - 共有メモリーバッファープール
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/mpool.h">mpool.h</A>&gt;</B>
+
+<B>MPOOL *mpool_open(DBT *</B><I>key</I><B>, int </B><I>fd</I><B>, pgno_t </B><I>pagesize</I><B>, pgno_t </B><I>maxcache</I><B>);</B>
+
+<B>void mpool_filter(MPOOL *</B><I>mp</I><B>, void (*pgin)(void *, pgno_t, void *),</B>
+<B>                  void (*</B><I>pgout</I><B>)(void *, pgno_t, void *),</B>
+<B>                  void *</B><I>pgcookie</I><B>);</B>
+
+<B>void *mpool_new(MPOOL *</B><I>mp</I><B>, pgno_t *</B><I>pgnoaddr</I><B>);</B>
+
+<B>void *mpool_get(MPOOL *</B><I>mp</I><B>, pgno_t </B><I>pgno</I><B>, unsigned int </B><I>flags</I><B>);</B>
+
+<B>int mpool_put(MPOOL *</B><I>mp</I><B>, void *</B><I>pgaddr</I><B>, unsigned int </B><I>flags</I><B>);</B>
+
+<B>int mpool_sync(MPOOL *</B><I>mp</I><B>);</B>
+
+<B>int mpool_close(MPOOL *</B><I>mp</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>大事な注意</I>:
+このページは、バージョン 2.1 までの glibc が提供するインターフェースに
+ついて説明している。バージョン 2.2 以降の glibc では、もはやこれらの
+インターフェースは提供されていない。おそらく、このページではなく、
+<I>libdb</I> ライブラリが提供する API をお探しなのだろう。
+<P>
+
+<I>mpool</I> は、ファイルに対するページ指向のバッファー管理を実装した ライブラリインターフェイスである。
+<P>
+
+関数 <B>mpool_open</B>()  はメモリープールを初期化する。 <I>key</I> 引数はバイト文字列であり、バッファーを共有したい複数プロセス間
+でのネゴシエーションに使われる。 ファイルバッファーが共有メモリーにマップされると、 同じキーを使うプロセスは全てバッファーを共有する。 <I>key</I>
+が NULL だと、バッファーはプライベートなメモリーに割り付けられる。 <I>fd</I> 引数はもとになるファイルのファイルディスクリプターである。
+このファイルディスクリプターはシーク可能でなくてはならない。 <I>key</I> が NULL でなく、かつ既にマップされているファイルにマッチした場合、
+<I>fd</I> 引数は無視される。
+<P>
+
+<I>pagesize</I> 引数はバイト単位でのページサイズであり、ファイルはこのサイズに分割される。 <I>maxcache</I>
+引数は基ファイルをキャッシュするときに用いる最大ページ数である。 この値はファイルバッファーを共有しているプロセスの数には関係ないが、
+ファイルを共有するプロセスが指定したうちの最大値が実際に用いられる。
+<P>
+
+関数 <B>mpool_filter</B>()  は透過的なページ入出力処理を可能にする。 関数 <I>pgin</I> が指定されていると、
+ファイルからメモリープールに読み込まれる度にこの関数が呼び出される。 関数 <I>pgout</I> が指定されていと、
+バッファーからファイルに書き出される度にこの関数が呼び出される。 どちらの関数も、 <I>pgcookie</I>
+ポインター、ページ数、読み書きされるページへのポインターを引数にとる。
+<P>
+
+関数 <B>mpool_new</B>()  は <I>MPOOL</I> ポインターとアドレスを引数にとる。
+新しいページが割り当て可能な場合、ページへのポインターが返され、 ページ数が <I>pgnoaddr</I> アドレスに納められる。 割り当てが不可能な場合は
+NULL が返され、 <I>errno</I> がセットされる。
+<P>
+
+関数 <B>mpool_get</B>()  は <I>MPOOL</I> ポインターとページ数を引数にとる。ページが存在していると、 ページへのポインターが返される。
+存在していないと NULL が返され、 <I>errno</I> がセットされる。 <I>flags</I> 引数は現在使用されていない。
+<P>
+
+関数 <B>mpool_put</B>()  は <I>pgaddr</I> が参照するページを解放する。 <I>pgaddr</I> は以前に <B>mpool_get</B>()
+か <B>mpool_new</B>()  が返したアドレスでなければならない。 flag の値は以下の値の論理和で指定する。
+<DL COMPACT>
+<DT><B>MPOOL_DIRTY</B><DD>
+ページは変更されており、ファイルに書き出す必要がある。
+</DL>
+<P>
+
+<B>mpool_put</B>()  は成功すると 0 を、エラーがあると -1 を返す。
+<P>
+
+関数 <B>mpool_sync</B>()  は <I>MPOOL</I> ポインターの示すページのうち、 変更されたものを全てファイルに書き出す。
+<B>mpool_sync</B>()  は成功すると 0 を、エラーがあると -1 を返す。
+<P>
+
+関数 <B>mpool_close</B>()  はメモリープールクッキーの示す割り当て済みのメモリーを解放する。
+変更されたページはファイルに<B>書き出されない</B>。 <I>mpool_close ()</I> は成功すると 0 を、エラーがあると -1 を返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>エラー</H2>
+
+関数 <B>mpool_open</B>()  は失敗するとライブラリルーチン <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  で指定されているエラーに応じた <I>errno</I>
+をセットする。
+<P>
+
+関数 <B>mpool_get</B>()  は失敗すると次のような <I>errno</I> をセットする。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+要求のあったレコードは存在しない。
+</DL>
+<P>
+
+関数 <B>mpool_new</B>()  と <B>mpool_get</B>()  は失敗するとライブラリルーチン <B><A HREF="../man2/read.2.html">read</A></B>(2),
+<B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  で指定されているエラーに応じた <I>errno</I> をセットする。
+<P>
+
+関数 <B>mpool_sync</B>()  は失敗するとライブラリルーチン <B><A HREF="../man2/write.2.html">write</A></B>(2)  で指定されているエラーに応じた <I>errno</I>
+をセットする。
+<P>
+
+関数 <B>mpool_close</B>()  は失敗するとライブラリルーチン <B><A HREF="../man3/free.3.html">free</A></B>(3)  で指定されているエラーに応じた <I>errno</I>
+をセットする。
+<A NAME="lbAF">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1 にはない。 BSD 系に存在する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/btree.3.html">btree</A></B>(3), <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3), <B><A HREF="../man3/hash.3.html">hash</A></B>(3), <B><A HREF="../man3/recno.3.html">recno</A></B>(3)
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">エラー</A><DD>
+<DT><A HREF="#lbAF">準拠</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,666 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 11.2 dd: ファイルの変換とコピー</title>
+
+<meta name="description" content="GNU Coreutils: 11.2 dd: ファイルの変換とコピー">
+<meta name="keywords" content="GNU Coreutils: 11.2 dd: ファイルの変換とコピー">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="dd-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_78.html#cp-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_80.html#install-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_77.html#Basic-operations" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_77.html#Basic-operations" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_84.html#Special-file-types" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="dd_003a-huairunoBian-Huan-tokopi"></a>
+<h2 class="section">11.2 <code>dd</code>: ファイルの変換とコピー</h2>
+
+<a name="index-dd"></a>
+<a name="index-converting-while-copying-a-file"></a>
+
+<p><code>dd</code> はファイルをコピーする (デフォルトでは、標準入力から標準出力へコピーする)。
+その際、入出力のブロックサイズを変更することができる。
+また、データ形式の変換を行いつつコピーすることもできる。
+</p>
+<p>書式:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">dd [<var>operand</var>]&hellip;
+dd <var>option</var>
+</pre></td></tr></table>
+
+<p>指定できるオプションは、&lsquo;<samp>--help</samp>&rsquo; と &lsquo;<samp>--version</samp>&rsquo; だけである。
+See section <a href="coreutils-ja_2.html#Common-options">共通オプション</a>.  <code>dd</code> では、以下のオペランドが使える。
+オペランドの書式の元になったのは、OS/360 の JCL (Job Control Language) の
+DD 文 (Data Definition statement) である。
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>if=<var>file</var></samp>&rsquo;</dt>
+<dd><a name="index-if"></a>
+<p>標準入力の代わりに、<var>file</var> から読み込む。
+</p>
+</dd>
+<dt> &lsquo;<samp>of=<var>file</var></samp>&rsquo;</dt>
+<dd><a name="index-of"></a>
+<p>標準出力の代わりに、<var>file</var> に書き出す。&lsquo;<samp>conv=notrunc</samp>&rsquo;
+が指定されていない場合、<code>dd</code> は、出力を開始する前に、<var>file</var> を
+0 バイトに (あるいは、&lsquo;<samp>seek=</samp>&rsquo; で指定されたサイズに) 短縮する。
+</p>
+</dd>
+<dt> &lsquo;<samp>ibs=<var>bytes</var></samp>&rsquo;</dt>
+<dd><a name="index-ibs"></a>
+<a name="index-block-size-of-input"></a>
+<a name="index-input-block-size"></a>
+<p>入力ブロックサイズを <var>bytes</var> にする。<code>dd</code> が 1 ブロック <var>bytes</var>
+バイトで読み込みを行うようになる。デフォルトは 512 バイトである。
+</p>
+</dd>
+<dt> &lsquo;<samp>obs=<var>bytes</var></samp>&rsquo;</dt>
+<dd><a name="index-obs"></a>
+<a name="index-block-size-of-output"></a>
+<a name="index-output-block-size"></a>
+<p>出力ブロックサイズを <var>bytes</var> にする。<code>dd</code> が 1 ブロック <var>bytes</var>
+バイトで書き出しを行うようになる。デフォルトは 512 バイトである。
+</p>
+</dd>
+<dt> &lsquo;<samp>bs=<var>bytes</var></samp>&rsquo;</dt>
+<dd><a name="index-bs"></a>
+<a name="index-block-size-1"></a>
+<p>入力、出力、両方のブロックサイズを <var>bytes</var> にする。<code>dd</code> が
+1 ブロック <var>bytes</var> バイトで読み書きを行うようになり、&lsquo;<samp>ibs</samp>&rsquo; や &lsquo;<samp>obs</samp>&rsquo;
+の指定は、あっても無効になる。なお、データ変換を行う &lsquo;<samp>conv</samp>&rsquo;
+オプションが指定されていない場合は、入力は、それがブロックサイズより小さくても、
+読み込まれるやいなや、出力にコピーされることになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>cbs=<var>bytes</var></samp>&rsquo;</dt>
+<dd><a name="index-cbs"></a>
+<a name="index-block-size-of-conversion"></a>
+<a name="index-conversion-block-size"></a>
+<a name="index-fixed_002dlength-records_002c-converting-to-variable_002dlength"></a>
+<a name="index-variable_002dlength-records_002c-converting-to-fixed_002dlength"></a>
+<p>変換ブロックサイズを <var>bytes</var> にする。
+可変長のレコードを固定長のレコードに変換するときや
+(&lsquo;<samp>conv=block</samp>&rsquo;)、その逆を行うとき
+(&lsquo;<samp>conv=unblock</samp>&rsquo;)、固定長レコードの長さとして <var>bytes</var> の値を使用する。
+</p>
+</dd>
+<dt> &lsquo;<samp>skip=<var>n</var></samp>&rsquo;</dt>
+<dd><a name="index-skip"></a>
+<p>入力ファイルで &lsquo;<samp>ibs</samp>&rsquo; バイトのブロックを <var>n</var> 個読み飛ばしてから、
+コピーを行う。&lsquo;<samp>iflag=skip_bytes</samp>&rsquo; が指定されている場合は、<var>n</var>
+はブロック数ではなく、バイト数と見なされる。
+</p>
+</dd>
+<dt> &lsquo;<samp>seek=<var>n</var></samp>&rsquo;</dt>
+<dd><a name="index-seek"></a>
+<p>出力ファイルで &lsquo;<samp>obs</samp>&rsquo; バイトのブロックを <var>n</var> 個スキップしてから、
+コピーを行う。&lsquo;<samp>oflag=seek_bytes</samp>&rsquo; が指定されている場合は、 <var>n</var>
+はブロック数ではなく、バイト数と見なされる。
+</p>
+</dd>
+<dt> &lsquo;<samp>count=<var>n</var></samp>&rsquo;</dt>
+<dd><a name="index-count"></a>
+<p>入力ファイルの末尾まで全部ではなく、&lsquo;<samp>ibs</samp>&rsquo; バイトのブロックを <var>n</var>
+個だけ入力ファイルからコピーする。&lsquo;<samp>iflag=count_bytes</samp>&rsquo;
+が指定されている場合は、<var>n</var> はブロック数ではなく、バイト数と見なされる。
+なお、次のことに注意してほしい。パイプから読み込んでいる場合などに時おり起きることだが、
+入力からの読み込みがブロックの大きさに足りないことがある。そうした場合に
+&lsquo;<samp>iflag=fullblock</samp>&rsquo; が指定してあると、&lsquo;<samp>count=</samp>&rsquo;
+は、一杯になるまで読み込むブロックの個数を意味するようになる。
+入力から読み込みを実行する回数という POSIX で規定されている伝統的な動作ではなくなるのだ。
+</p>
+</dd>
+<dt> &lsquo;<samp>status=<var>level</var></samp>&rsquo;</dt>
+<dd><a name="index-status"></a>
+<p>通常では &lsquo;<samp>INFO</samp>&rsquo; シグナルを受け取った時点や、<code>dd</code> が終了したときに、
+転送情報が標準エラーに出力される。
+<var>level</var> の指定によって、表示する情報の量を調節することができる。
+指定された <var>level</var> のうち、最後のものが優先される。
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>none</samp>&rsquo;</dt>
+<dd><a name="index-none-dd-status_003d"></a>
+<p>情報メッセージや警告メッセージを標準エラーに全く表示しない。
+エラーメッセージは通常どおり出力する。
+</p>
+</dd>
+<dt> &lsquo;<samp>noxfer</samp>&rsquo;</dt>
+<dd><a name="index-noxfer-dd-status_003d"></a>
+<p>最終的な転送速度や転送量の統計を表示しない。通常は、そうした情報がステータス表示の最後の行になる。
+</p>
+</dd>
+<dt> &lsquo;<samp>progress</samp>&rsquo;</dt>
+<dd><a name="index-progress-dd-status_003d"></a>
+<p>各入力ブロックを処理するとき、転送速度と転送量の統計を標準エラーに表示する。
+転送量の統計は 1 行に表示され、最も頻繁な場合、1 秒ごとに出力されるが、
+I/O 待ちが起きると、更新が遅れることがある。
+</p>
+</dd>
+</dl>
+
+</dd>
+<dt> &lsquo;<samp>conv=<var>conversion</var>[,<var>conversion</var>]&hellip;</samp>&rsquo;</dt>
+<dd><a name="index-conv"></a>
+<p><var>conversion</var> 引数 (複数可) で指定されたようにファイルを変換する。
+(コンマの前後にスペースを入れてはいけない。)
+</p>
+<p><var>conversion</var> には次のものが指定できる:
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>ascii</samp>&rsquo;</dt>
+<dd><a name="index-ascii_002c-converting-to"></a>
+<p>POSIX が規定している変換テーブルを使って、EBCDIC を ASCII に変換する。
+変換テーブル中の 256 バイトのすべてについて、1 対 1 の変換が行われる。
+このオプションを指定すると、&lsquo;<samp>conv=unblock</samp>&rsquo; も指定されることになる。
+入力はまず ASCII に変換され、その後で末尾のスペースが除去される。
+</p>
+</dd>
+<dt> &lsquo;<samp>ebcdic</samp>&rsquo;</dt>
+<dd><a name="index-ebcdic_002c-converting-to"></a>
+<p>ASCII を EBCDIC に変換する。これは &lsquo;<samp>ascii</samp>&rsquo; 変換の逆の動作である。
+このオプションを指定すると、&lsquo;<samp>conv=block</samp>&rsquo; も指定されることになる。
+末尾にスペースが追加されてから、EBCDIC に変換される。
+</p>
+</dd>
+<dt> &lsquo;<samp>ibm</samp>&rsquo;</dt>
+<dd><a name="index-alternate-ebcdic_002c-converting-to"></a>
+<p>この指定の動作は &lsquo;<samp>conv=ebcdic</samp>&rsquo; に似ている。
+ただし、POSIX が規定しているもう一つの変換テーブルを使って、変換する点が違う。
+こちらは 1 対 1 の変換ではないが、&lsquo;<samp>~</samp>&rsquo;, &lsquo;<samp>[</samp>&rsquo;, &lsquo;<samp>]</samp>&rsquo;
+について、よく使われる伝統的な慣行を反映している。
+</p>
+<p>&lsquo;<samp>ascii</samp>&rsquo;, &lsquo;<samp>ebcdic</samp>&rsquo;, &lsquo;<samp>ibm</samp>&rsquo; は、どれか一つしか指定できない。
+こうしたオプションの一つを使う場合は、&lsquo;<samp>cbs=</samp>&rsquo; も指定すべきである。
+</p>
+</dd>
+<dt> &lsquo;<samp>block</samp>&rsquo;</dt>
+<dd><a name="index-block-_0028space_002dpadding_0029"></a>
+<p>入力 1 行あたり、&lsquo;<samp>cbs</samp>&rsquo; バイトを出力する。
+入力中の改行はスペースに置き換え、&lsquo;<samp>cbs</samp>&rsquo; バイトに足りない分はスペースで埋める。
+</p>
+</dd>
+<dt> &lsquo;<samp>unblock</samp>&rsquo;</dt>
+<dd><a name="index-unblock"></a>
+<p>&lsquo;<samp>cbs</samp>&rsquo; バイトの大きさからなる各入力ブロックに対して、末尾にスペースがあれば、
+それをすべて削除し、改行を追加する。
+</p>
+<p>&lsquo;<samp>block</samp>&rsquo; と &lsquo;<samp>unblock</samp>&rsquo; は、どちらか一方しか指定できない。
+</p>
+</dd>
+<dt> &lsquo;<samp>lcase</samp>&rsquo;</dt>
+<dd><a name="index-lcase_002c-converting-to"></a>
+<p>大文字を小文字に変換する。
+</p>
+</dd>
+<dt> &lsquo;<samp>ucase</samp>&rsquo;</dt>
+<dd><a name="index-ucase_002c-converting-to"></a>
+<p>小文字を大文字に変換する。
+</p>
+<p>&lsquo;<samp>lcase</samp>&rsquo; と &lsquo;<samp>ucase</samp>&rsquo; は、どちらか一方しか指定できない。
+</p>
+</dd>
+<dt> &lsquo;<samp>sparse</samp>&rsquo;</dt>
+<dd><a name="index-sparse"></a>
+<p>出力ブロックが NUL のみからなっているとき、それを書き出さずに、seek を試みる。
+穴空きファイル (sparse file) をサポートしているシステムでは、
+この動作は、出力ファイルを書き出しているときに、穴空きの出力を作成することになる。
+このオプションを &lsquo;<samp>conv=notrunc</samp>&rsquo; や &lsquo;<samp>oflag=append</samp>&rsquo;
+と一緒に使う際は、気をつけなければならない。&lsquo;<samp>conv=notrunc</samp>&rsquo; が付いていると、
+入力中の NUL ブロックに対応する位置にある、出力ファイル中の存在するデータは、
+そのまま保持されることになる。&lsquo;<samp>oflag=append</samp>&rsquo; を付けた場合は、
+seek は行っても効果がない。なお、&lsquo;<samp>conv=sparse</samp>&rsquo; では、
+出力先がファイルではなく、デバイスの場合も、入力中の NUL ブロックはやはりコピーされない。
+そんなわけで、このオプションが最も役に立つのは、仮想デバイスや、前もって
+0 で初期化したデバイスに対してである。
+</p>
+</dd>
+<dt> &lsquo;<samp>swab</samp>&rsquo;</dt>
+<dd><a name="index-swab-_0028byte_002dswapping_0029"></a>
+<a name="index-byte_002dswapping-1"></a>
+<p>入力された全バイトを 2 個づつ組にして、前後を入れ替える。GNU の
+<code>dd</code> は、他の <code>dd</code> とは違って、読み込むバイトが奇数個でも動作する。
+最後のバイトは （入れ替えるものがないので) そのままコピーするのである。
+</p>
+</dd>
+<dt> &lsquo;<samp>sync</samp>&rsquo;</dt>
+<dd><a name="index-sync-_0028padding-with-ASCII-NULs_0029"></a>
+<p>すべての入力ブロックに対して &lsquo;<samp>ibs</samp>&rsquo; の大きさになるまで、末尾をゼロバイトで埋める。
+&lsquo;<samp>block</samp>&rsquo; や &lsquo;<samp>unblock</samp>&rsquo; と一緒に使用すると、ゼロバイトの代わりにスペースで埋める。
+</p>
+</dd>
+</dl>
+
+<p>以下の <var>conversion</var> は、実のところファイルの扱いに関するフラグなので、内的な処理には影響を及ぼさない。
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>excl</samp>&rsquo;</dt>
+<dd><a name="index-excl"></a>
+<a name="index-creating-output-file_002c-requiring"></a>
+<p>出力ファイルがすでに存在する場合は、実行に失敗する。
+言い換えれば、<code>dd</code> が出力ファイルを自分で作成しなければならないということである。
+</p>
+</dd>
+<dt> &lsquo;<samp>nocreat</samp>&rsquo;</dt>
+<dd><a name="index-nocreat"></a>
+<a name="index-creating-output-file_002c-avoiding"></a>
+<p>出力ファイルを作成しない。言い換えれば、出力ファイルは前もって存在していなければならないということだ。
+</p>
+<p>&lsquo;<samp>excl</samp>&rsquo; と &lsquo;<samp>nocreat</samp>&rsquo; は、どちらか一方しか指定できない。
+</p>
+</dd>
+<dt> &lsquo;<samp>notrunc</samp>&rsquo;</dt>
+<dd><a name="index-notrunc"></a>
+<a name="index-truncating-output-file_002c-avoiding"></a>
+<p>出力ファイルに対して短縮操作をしない (訳注: &lsquo;<samp>of=<var>file</var></samp>&rsquo; の項を参照)。
+</p>
+</dd>
+<dt> &lsquo;<samp>noerror</samp>&rsquo;</dt>
+<dd><a name="index-noerror"></a>
+<a name="index-read-errors_002c-ignoring"></a>
+<p>読み込みエラーがあっても、作業を続行する。
+</p>
+</dd>
+<dt> &lsquo;<samp>fdatasync</samp>&rsquo;</dt>
+<dd><a name="index-fdatasync"></a>
+<a name="index-synchronized-data-writes_002c-before-finishing"></a>
+<p>コマンドを終了する直前に、出力データを同期させる。
+すなわち、出力データをディスクに実際に書き込む。
+</p>
+</dd>
+<dt> &lsquo;<samp>fsync</samp>&rsquo;</dt>
+<dd><a name="index-fsync"></a>
+<a name="index-synchronized-data-and-metadata-writes_002c-before-finishing"></a>
+<p>コマンドを終了する直前に、出力データだけでなく、メタデータも同期させる。
+すなわち、出力データとメタデータをディスクに実際に書き込む。
+</p>
+</dd>
+</dl>
+
+</dd>
+<dt> &lsquo;<samp>iflag=<var>flag</var>[,<var>flag</var>]&hellip;</samp>&rsquo;</dt>
+<dd><a name="index-iflag"></a>
+<p>引数 <var>flag</var> によって指定されたフラグを使って、入力ファイルにアクセスする。
+(コンマの前後にスペースを入れてはいけない。)
+</p>
+</dd>
+<dt> &lsquo;<samp>oflag=<var>flag</var>[,<var>flag</var>]&hellip;</samp>&rsquo;</dt>
+<dd><a name="index-oflag"></a>
+<p>引数 <var>flag</var> によって指定されたフラグを使って、出力ファイルにアクセスする。
+(コンマの前後にスペースを入れてはいけない。)
+</p>
+<p>フラグには次のものがある。どのオペレーティング・システムでも、
+すべてのフラグが使えるわけではない。
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>append</samp>&rsquo;</dt>
+<dd><a name="index-append"></a>
+<a name="index-appending-to-the-output-file"></a>
+<p>追加モードで書き込む。従って、何か別のプロセスが問題のファイルに書き出している場合でも、
+<code>dd</code> の書き込みは、書き込むたびに、そのファイルの今現在の内容に追加されることになる。
+このフラグは出力に対してしか意味がない。なお、このフラグを
+&lsquo;<samp>of=<var>file</var></samp>&rsquo; オペランドと組み合わせて使うのなら、
+&lsquo;<samp>conv=notrunc</samp>&rsquo; も一緒に指定した方がよい。
+さもないと、出力ファイルは、追加書き込みが始まる前に、短縮操作を受けることになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>cio</samp>&rsquo;</dt>
+<dd><a name="index-cio"></a>
+<a name="index-concurrent-I_002fO"></a>
+<p>データに対してコンカレント I/O (CIO) モードを使用する。
+このモードでは、ダイレクト I/O を行いつつ、同じファイルに対するすべての
+I/O は順番に行わなければならないという POSIX の要件は無視する。
+一つのファイルを CIO モードと標準的な方法の両方で同時にオープンすることはできない。
+</p>
+</dd>
+<dt> &lsquo;<samp>direct</samp>&rsquo;</dt>
+<dd><a name="index-direct"></a>
+<a name="index-direct-I_002fO"></a>
+<p>データに対してダイレクト I/O を使用し、バッファ・キャッシュを介さないようにする。
+カーネルが read バッファや write バッファのサイズに制限をかけていることがあるのに注意していただきたい。
+たとえば、出力先のファイルシステムが ext4 で、カーネルが linux
+ベースの場合、出力バッファのサイズが 512 の倍数でなければ、&lsquo;<samp>oflag=direct</samp>&rsquo;
+を指定すると、<code>EINVAL</code> で書き込みに失敗することになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>directory</samp>&rsquo;</dt>
+<dd><a name="index-directory"></a>
+<a name="index-directory-I_002fO"></a>
+
+<p>ファイルがディレクトリでなければ、実行に失敗する。
+ほとんどのオペレーティング・システムがディレクトリに対する I/O
+を許していない。従って、このフラグが役に立つ機会はめったにない。
+</p>
+</dd>
+<dt> &lsquo;<samp>dsync</samp>&rsquo;</dt>
+<dd><a name="index-dsync"></a>
+<a name="index-synchronized-data-reads"></a>
+<p>データに対して同期 I/O を使用する。出力ファイルについては、
+このフラグは、各書き込みごとに出力データをディスクに実際に書き込ませる。
+入力ファイルについてこのフラグが意味を持つかもしれないのは、
+読み込んでいるのがリモートのファイルであり、
+それが何か他のプロセスによって同期的に書き込まれているときである。
+メタデータ (たとえば、最終アクセス日時や最終更新日時) は、必ずしも同期されない。
+</p>
+</dd>
+<dt> &lsquo;<samp>sync</samp>&rsquo;</dt>
+<dd><a name="index-sync"></a>
+<a name="index-synchronized-data-and-metadata-I_002fO"></a>
+<p>データとメタデータに対して同期された I/O を使用する。
+</p>
+</dd>
+<dt> &lsquo;<samp>nocache</samp>&rsquo;</dt>
+<dd><a name="index-nocache"></a>
+<a name="index-discarding-file-cache"></a>
+<p>システムの持つファイルのデータ・キャッシュを廃棄するよう要求する。
+count=0 の場合は、ファイルのキャッシュされたデータ全体を指定することになる。
+それ以外の場合は、ファイルのキャッシュのうち、処理の対象になった部分だけが捨てられる。
+また、count=0 のとき、キャッシュの廃棄に失敗すると、
+その旨メッセージが表示され、終了ステータスに反映する。
+</p>
+<p>念のために言っておくと、
+ストレージへの書き込みがまだ終了していないデータが、キャッシュから捨てられることはない。
+そこで、下記の用例で &ldquo;sync&rdquo; オプションを使っていることに注目していただきたい。
+&lsquo;<samp>nocache</samp>&rsquo; フラグの効率を最大にするために使用しているのである。
+</p>
+<p>用例をいくつか挙げておく。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example"># ファイル全体のキャッシュを捨てるように指示する。
+dd if=ifile iflag=nocache count=0
+
+# ファイル全体のキャッシュを確実に捨てる。
+dd of=ofile oflag=nocache conv=notrunc,fdatasync count=0
+
+# ファイル中の一部分のキャッシュを捨てる。
+dd if=ifile iflag=nocache skip=10 count=10 of=/dev/null
+
+# read-ahead キャッシュのみを使って、データを転送する。
+# &lsquo;<samp>direct</samp>&rsquo; フラグの項も参照すること。
+dd if=ifile of=ofile iflag=nocache oflag=nocache,sync
+</pre></td></tr></table>
+
+</dd>
+<dt> &lsquo;<samp>nonblock</samp>&rsquo;</dt>
+<dd><a name="index-nonblock"></a>
+<a name="index-nonblocking-I_002fO"></a>
+<p>ノンブロッキング I/O を使用する。
+</p>
+</dd>
+<dt> &lsquo;<samp>noatime</samp>&rsquo;</dt>
+<dd><a name="index-noatime"></a>
+<a name="index-access-time"></a>
+<p>ファイルのアクセス日時を更新しない。古いシステムの中には、
+エラーや警告も出さずに、このフラグを無視するものがある。
+そこで、このフラグを使用する前に、有効かどうか、お手元のファイルで試してみるとよい。
+</p>
+</dd>
+<dt> &lsquo;<samp>noctty</samp>&rsquo;</dt>
+<dd><a name="index-noctty"></a>
+<a name="index-controlling-terminal"></a>
+<p>入力 (または、出力) ファイルを <code>dd</code> の制御端末にしない。
+このフラグは、そのファイルが端末でなければ、効果がない。
+このフラグが全く効果を持たないホストが、たくさんある
+(たとえば、GNU/Linux ホストがそうである)。
+</p>
+</dd>
+<dt> &lsquo;<samp>nofollow</samp>&rsquo;</dt>
+<dd><a name="index-nofollow"></a>
+<a name="index-symbolic-links_002c-following"></a>
+<p>シンボリックリンクをたどらない。
+</p>
+</dd>
+<dt> &lsquo;<samp>nolinks</samp>&rsquo;</dt>
+<dd><a name="index-nolinks"></a>
+<a name="index-hard-links"></a>
+<p>ファイルに複数のハードリンクがあれば、実行に失敗する。
+</p>
+</dd>
+<dt> &lsquo;<samp>binary</samp>&rsquo;</dt>
+<dd><a name="index-binary"></a>
+<a name="index-binary-I_002fO"></a>
+<p>バイナリ I/O を使用する。このフラグは、バイナリ I/O とテキスト I/O
+を区別する非標準的なプラットフォームでしか効果がない。
+</p>
+</dd>
+<dt> &lsquo;<samp>text</samp>&rsquo;</dt>
+<dd><a name="index-text"></a>
+<a name="index-text-I_002fO"></a>
+<p>テキスト I/O を使用する。このフラグが標準的なプラットフォームで効果がないのは、
+&lsquo;<samp>binary</samp>&rsquo; と同様である。
+</p>
+</dd>
+<dt> &lsquo;<samp>fullblock</samp>&rsquo;</dt>
+<dd><a name="index-fullblock"></a>
+<p>各ブロックが一杯になるまで入力から読み込む。<code>read</code> システムコールは、
+入力がブロックの分量に足りない場合、早めに戻ってくることがある。
+そうした場合に、<code>read</code> の呼び出しを繰り返して、ブロックの残りを埋めようとする。
+このフラグは、<code>iflag</code> でのみ使用できる。
+このフラグが役に立つのは、たとえばパイプと組み合わせて使うときである。
+パイプとの組み合わせでは、入力からの読み込みがブロックの大きさに足りないことがあるからだ。
+そうした場合に、&lsquo;<samp>count=</samp>&rsquo; の引数が、読み込み動作の回数ではなく、
+読み込むブロック数だと確実に解釈されるようにするには、このフラグが必要になる。
+</p>
+</dd>
+<dt> &lsquo;<samp>count_bytes</samp>&rsquo;</dt>
+<dd><a name="index-count_005fbytes"></a>
+<p>&lsquo;<samp>count=</samp>&rsquo; オペランドをブロック数ではなく、バイト数の指定と見なす。
+そうすることで、I/O ブロックサイズの倍数ではない長さが、指定できるようになるわけだ。
+このフラグは <code>iflag</code> でしか使用できない。
+</p>
+</dd>
+<dt> &lsquo;<samp>skip_bytes</samp>&rsquo;</dt>
+<dd><a name="index-skip_005fbytes"></a>
+<p>&lsquo;<samp>skip=</samp>&rsquo; オペランドをブロック数ではなく、バイト数の指定と見なす。
+そうすることで、I/O ブロックサイズの倍数ではないオフセットが、指定できるようになるわけだ。
+このフラグは <code>iflag</code> でしか使用できない。
+</p>
+</dd>
+<dt> &lsquo;<samp>seek_bytes</samp>&rsquo;</dt>
+<dd><a name="index-seek_005fbytes"></a>
+<p>&lsquo;<samp>seek=</samp>&rsquo; オペランドをブロック数ではなく、バイト数の指定と見なす。
+そうすることで、I/O ブロックサイズの倍数ではないオフセットが、指定できるようになるわけだ。
+このフラグは <code>oflag</code> でしか使用できない。
+</p>
+</dd>
+</dl>
+
+<p>以上のフラグは、すべてのシステムでサポートされているわけではなく、
+サポートされていないシステムで使用しようとすると、&lsquo;<samp>dd</samp>&rsquo; に拒否される。
+標準入力から読み込んでいる場合や、標準出力に書き出している場合は、
+&lsquo;<samp>nofollow</samp>&rsquo; や &lsquo;<samp>noctty</samp>&rsquo; フラグは指定するべきではない。
+また、他のフラグ (たとえば &lsquo;<samp>nonblock</samp>&rsquo;) は、
+対象となるファイルのファイル・ディスクリプタに対する他のプロセスの動作に、<code>dd</code>
+が終了した後までも、影響を及ぼすかもしれない。
+</p>
+</dd>
+</dl>
+
+<a name="index-multipliers-after-numbers"></a>
+<p>上記中の数値を表す文字列  (<var>n</var> や <var>bytes</var>) には、乗数を示す文字を後ろに付けることができる。
+すなわち、&lsquo;<samp>b</samp>&rsquo;=512, &lsquo;<samp>c</samp>&rsquo;=1, &lsquo;<samp>w</samp>&rsquo;=2, &lsquo;<samp>x<var>m</var></samp>&rsquo;=<var>m</var>
+といった文字である (訳注: 最後のものは、10xM という表記は 10M と書くのと同じだということ)。
+あるいは、&lsquo;<samp>k</samp>&rsquo;=1024 のような、ブロックサイズに付ける標準の接尾辞の一つを続けてもよい
+(see section <a href="coreutils-ja_5.html#Block-size">ブロックサイズ</a>)。
+</p>
+<p>&lsquo;<samp>bs=</samp>&rsquo;, &lsquo;<samp>ibs=</samp>&rsquo;, &lsquo;<samp>obs=</samp>&rsquo;, &quot;&lsquo;<samp>cbs=</samp>&rsquo; を使って指定するブロックサイズは、
+大きすぎない方がよい。数メガバイトを越える値は、一般的に言って無駄だし、
+(ギガバイト &hellip; エクサバイトを使ったときのように) 全く逆効果だったり、
+エラーの元になったりする。
+</p>
+<p>データのオフセット位置やサイズが I/O ブロックサイズの倍数ではない場合に、
+そうしたデータを処理するには、&lsquo;<samp>skip_bytes</samp>&rsquo;, &lsquo;<samp>seek_bytes</samp>&rsquo;,
+&lsquo;<samp>count_bytes</samp>&rsquo; といったフラグを使用すればよい。あるいは、<code>dd</code>
+を別々に呼び出すという伝統的な手法を使用することもできる。
+一例を挙げると、以下のシェルコマンドは、1 ブロック を 512 KiB
+にして、ディスクとテープの間でデータをコピーしている。
+ただし、ディスクの先頭にある 4 KiB のラベルについては、保存も復元も行っていない。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">disk=/dev/rdsk/c0t1d0s2
+tape=/dev/rmt/0
+
+# ラベル以外のすべてをディスクからテープへコピーする。
+(dd bs=4k skip=1 count=0 &amp;&amp; dd bs=512k) &lt;$disk &gt;$tape
+
+# テープからディスクへ書き戻す。ただし、ディスクのラベルには手を
+# 付けない。
+(dd bs=4k seek=1 count=0 &amp;&amp; dd bs=512k) &lt;$tape &gt;$disk
+</pre></td></tr></table>
+
+<a name="index-ddrescue"></a>
+<a name="index-disks_002c-failing"></a>
+<p>壊れかけたディスクについては、様々なおまけ機能が付いたツールが他にあり、
+そうしたものを使えば、ディスクが本当にダメになってしまう前に、できるだけ多くのデータを救済することが容易になる。
+たとえば、<a href="http://www.gnu.org/software/ddrescue/">GNU <code>ddrescue</code> がその一つだ</a>。
+しかしながら、場合によっては、そうしたツールが使えないこともあるし、
+管理者にとって <code>dd</code> を操作する方が安心できるということもある。
+そうした場合は、簡単なレスキュー方法として、<code>dd</code> を以下の例で示すように実行すればよい。
+&lsquo;<samp>conv=noerror,sync</samp>&rsquo; オプションを使っているのは、リードエラーがあっても続行し、
+読み込めなかった部分 (bad read) を NUL で埋めるためである。
+また、&lsquo;<samp>iflag=fullblock</samp>&rsquo; は、ショートリードに対する用心だ
+(そうしたことが磁気ディスクを使っているデバイスで起きたことは、これまでにないけれど)。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example"># 壊れかけたディスクのパーティションから (マウントしていない
+# パーティションだ！) データを救済する。
+dd conv=noerror,sync iflag=fullblock &lt;/dev/sda1 &gt; /mnt/rescue.img
+</pre></td></tr></table>
+
+<p>実行中の <code>dd</code> のプロセスに &lsquo;<samp>INFO</samp>&rsquo; シグナルを送ると
+(それが使えないシステムでは、&lsquo;<samp>USR1</samp>&rsquo; シグナルを送る)、
+<code>dd</code> は入出力の統計情報を標準エラーに書き出し、それからコピー作業を続行する。
+以下の例では、<code>dd</code> をバックグラウンドで実行し
+5GB のデータのコピーを行っている。<code>kill</code> コマンドが実行されると、
+<code>dd</code> は実行途中の入出力統計を表示する。
+そして、正常に作業を完了するか、<code>SIGINT</code> シグナルによって中断されたとき、
+最終的な統計情報を出力する。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example"># シェルが子プロセスである dd をうっかり終了させてしまうことが
+# 絶対にないように、USR1 シグナルを「無視する」にしておく。
+# なお、SIGINFO が利用できる場合は、これをやる必要はない。
+trap '' USR1
+
+# シグナルを受けることが引き鉄になって、ショートリードが起きるかも
+# しれない。それを避けるために、dd を iflag=fullblock で実行する。
+dd iflag=fullblock if=/dev/zero of=/dev/null count=5000000 bs=1000 &amp; pid=$!
+
+# 1 秒ごとに統計情報を出力する。
+while kill -s USR1 $pid 2&gt;/dev/null; do sleep 1; done
+</pre></td></tr></table>
+
+<p>上記のスクリプトの出力は、次のようなフォーマットになる。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">3441325+0 records in
+3441325+0 records out
+3441325000 bytes (3.4 GB, 3.2 GiB) copied, 1.00036 s, 3.4 GB/s
+5000000+0 records in
+5000000+0 records out
+5000000000 bytes (5.0 GB, 4.7 GiB) copied, 1.44433 s, 3.5 GB/s
+</pre></td></tr></table>
+
+<p>&lsquo;<samp>status=progress</samp>&rsquo; オプションを付けると、転送統計を表す上記の最後の行が定期的に更新される。
+</p>
+<a name="index-POSIXLY_005fCORRECT-5"></a>
+<p>&lsquo;<samp>INFO</samp>&rsquo; シグナルが存在しないシステムでは、 環境変数 <code>POSIXLY_CORRECT</code>
+が設定されていないかぎり、<code>dd</code> は &lsquo;<samp>INFO</samp>&rsquo; の代わりに &lsquo;<samp>USR1</samp>&rsquo; に反応する。
+</p>
+<p>終了ステータス 0 は成功を示し、0 以外の値は失敗を示す。
+</p>
+
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_78.html#cp-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_80.html#install-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_77.html#Basic-operations" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_77.html#Basic-operations" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_84.html#Special-file-types" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

@@ -1,0 +1,189 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SCHED_SETSCHEDULER</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SCHED_SETSCHEDULER</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated:  2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/sched_setscheduler.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sched_setscheduler, sched_getscheduler - スケジューリングポリシーとパラメーターを設定/取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
+
+ <B>int sched_setscheduler(pid_t </B><I>pid</I><B>, int </B><I>policy</I><B>,</B>
+<B>                       const struct sched_param *</B><I>param</I><B>);</B>
+
+<B>int sched_getscheduler(pid_t </B><I>pid</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>sched_setscheduler</B>() システムコールは、 <I>pid</I> で指定された ID
+を持つスレッドのスケジューリングポリシーとスケジューリングパラメーターの両方を設定する。 <I>pid</I> が 0
+の場合、呼び出したスレッド自身のスケジューリングポリシーとスケジューリングパラメーターが設定される。
+<P>
+
+スケジューリングパラメーターは <I>param</I> 引数で、以下の形式の構造体へのポインターを指定する。
+<P>
+
+
+
+struct sched_param {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;...
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sched_priority;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;...
+};
+
+
+<P>
+
+現在の実装では、この構造体のフィールドは <I>sched_priority</I> だけである。 <I>param</I>
+がどのように解釈されるかは選択されたポリシーによって変わる。
+<P>
+
+現在のところ、 Linux では、 以下の「通常」の (つまり、リアルタイムではない) スケジューリングポリシーが、 <I>policy</I>
+に指定できる値としてサポートされている。
+<DL COMPACT>
+<DT><B>SCHED_OTHER</B><DD>
+
+
+標準の、ラウンドロビンによる時分割型のスケジューリングポリシー。
+<DT><B>SCHED_BATCH</B><DD>
+「バッチ」形式でのプロセスの実行用。
+<DT><B>SCHED_IDLE</B><DD>
+「非常に」低い優先度で動作するバックグラウンドジョブ用。
+</DL>
+<P>
+
+上記のどのポリシーの場合でも、 <I>param-&gt;sched_priority</I> は 0 でなければならない。
+<P>
+
+どの実行可能スレッドを選択するかについて、より正確な制御を必要とする 時間の制約が厳しい特別なアプリケーション用として、
+いろいろな「リアルタイム」ポリシーもサポートされている。 プロセスがこれらのポリシーをいつ使用できるかを決めるルールについては、<B><A HREF="../man7/sched.7.html">sched</A></B>(7)
+を参照。 <I>policy</I> には以下のリアルタイムポリシーを指定できる。
+<DL COMPACT>
+<DT><B>SCHED_FIFO</B><DD>
+ファーストイン、ファーストアウト型のポリシー。
+<DT><B>SCHED_RR</B><DD>
+ラウンドロビン型のポリシー。
+</DL>
+<P>
+
+上記のどのポリシーの場合でも、 <I>param-&gt;sched_priority</I> はそのスレッドのスケジューリングポリシーを指定する。
+指定された <I>policy</I> で <I><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></I>(2) と
+<I><A HREF="../man2/sched_get_priority_max.2.html">sched_get_priority_max</A></I>(2) を呼び出した返り値の範囲の数字を指定する。 Linux では、これらのシステムコールはそれぞれ
+1 と 99 を返す。
+<P>
+
+Linux 2.6.32 以降では、 <B>sched_setscheduler</B>() を呼び出す際に <I>policy</I> に
+<B>SCHED_RESET_ON_FORK</B> フラグを OR で指定できる。このフラグが指定されると、 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+で作成された子プロセスは特権が必要なスケジューリングポリシーを継承しない。 詳細は <B><A HREF="../man7/sched.7.html">sched</A></B>(7) を参照。
+<P>
+
+<B>sched_getscheduler</B>()  は <I>pid</I> で識別されるスレッドの現在のスケジューリングポリシーを返す。<I>pid</I> が 0
+ならば、呼び出した スレッド自身のスケジューリングポリシーが返される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 <B>sched_setscheduler</B>()  は 0 を返す。 成功した場合、 <B>sched_getscheduler</B>()
+は現在のそのスレッドのポリシー (非負の整数) を返す。 エラーの場合、 どちらのコールも -1 を返し、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+無効な引数: <I>pid</I> が負である、または <I>param</I> が NULL である。
+<DT><B>EINVAL</B><DD>
+(<B>sched_setscheduler</B>()) <I>policy</I> が認識できるポリシーではない。
+<DT><B>EINVAL</B><DD>
+(<B>sched_setscheduler</B>()) 引数 <I>param</I> が指定された <I>policy</I> では意味を持たない。
+<DT><B>EPERM</B><DD>
+呼び出したスレッドが適切な特権を持っていない。
+<DT><B>ESRCH</B><DD>
+ID が <I>pid</I> のスレッドが見つからなかった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008 (但し、下記のバグの節も参照)。 <B>SCHED_BATCH</B> と <B>SCHED_IDLE</B>
+ポリシーは Linux 固有である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+Further details of the semantics of all of the above &quot;normal&quot; and
+&quot;real-time&quot; scheduling policies can be found in the <B><A HREF="../man7/sched.7.html">sched</A></B>(7)  manual
+page.  That page also describes an additional policy, <B>SCHED_DEADLINE</B>,
+which is settable only via <B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2).
+<P>
+
+POSIX システムでは <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> に <B>_POSIX_PRIORITY_SCHEDULING</B>
+が定義されている場合にのみ <B>sched_setscheduler</B>()  と <B>sched_getscheduler</B>()  が使用できる。
+<P>
+
+POSIX.1 は、非特権スレッドが <B>sched_setscheduler</B>()  を呼び出すために必要な権限の詳細を規定しておらず、
+詳細はシステムにより異なる。 例えば、Solaris 7 のマニュアルページでは、 呼び出し元の実ユーザー ID または実効ユーザー ID が
+設定対象の実ユーザー ID か保存 (save) set-user-ID と 一致していなければならない、となっている。
+<P>
+
+Linux では、 スケジューリングポリシーとスケジューリングパラメーターは、 実際にはスレッド単位の属性である。 <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2)
+の呼び出しの返り値をこのシステムコールの <I>pid</I> 引数として渡すことができる。 <I>pid</I> に 0 を指定すると、
+呼び出し元のスレッドの属性が設定される。 <B><A HREF="../man2/getpid.2.html">getpid</A></B>(2) コールからの返り値を <I>pid</I> に指定すると、
+スレッドグループのメインスレッドの属性が設定される (POSIX スレッド API を使用している場合は、 <B>sched_*</B>(2)
+システムコールの代わりに <B><A HREF="../man3/pthread_setschedparam.3.html">pthread_setschedparam</A></B>(3), <B><A HREF="../man3/pthread_getschedparam.3.html">pthread_getschedparam</A></B>(3), and
+<B><A HREF="../man3/pthread_setschedprio.3.html">pthread_setschedprio</A></B>(3) を使用すること)。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+POSIX.1 では、成功時に <B>sched_setscheduler</B>()  は直前のスケジューリングポリシーを返すべきとされている。 Linux
+の <B>sched_setscheduler</B>()  はこの要求仕様に準拠しておらず、 成功時には常に 0 を返す。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B>chrt</B>(1), <B><A HREF="../man2/nice.2.html">nice</A></B>(2), <B><A HREF="../man2/sched_get_priority_max.2.html">sched_get_priority_max</A></B>(2),
+<B><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></B>(2), <B><A HREF="../man2/sched_getaffinity.2.html">sched_getaffinity</A></B>(2), <B><A HREF="../man2/sched_getattr.2.html">sched_getattr</A></B>(2),
+<B><A HREF="../man2/sched_getparam.2.html">sched_getparam</A></B>(2), <B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2), <B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2),
+<B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2), <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2), <B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2),
+<B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B>cpuset</B>(7), <B><A HREF="../man7/sched.7.html">sched</A></B>(7)
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

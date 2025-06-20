@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 23.4 nohup: ハングアップ・シグナルで終了しないコマンドを実行する</title>
+
+<meta name="description" content="GNU Coreutils: 23.4 nohup: ハングアップ・シグナルで終了しないコマンドを実行する">
+<meta name="keywords" content="GNU Coreutils: 23.4 nohup: ハングアップ・シグナルで終了しないコマンドを実行する">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="nohup-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_171.html#nice-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_173.html#stdbuf-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_168.html#Modified-command-invocation" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_168.html#Modified-command-invocation" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_175.html#Process-control" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="nohup_003a-hanguatupusigunarudeZhong-Liao-sinaikomandowoShi-Xing-suru"></a>
+<h2 class="section">23.4 <code>nohup</code>: ハングアップ・シグナルで終了しないコマンドを実行する</h2>
+
+<a name="index-nohup"></a>
+<a name="index-hangups_002c-immunity-to"></a>
+<a name="index-immunity-to-hangups"></a>
+<a name="index-logging-out-and-continuing-to-run"></a>
+
+<a name="index-nohup_002eout"></a>
+<p><code>nohup</code> を使って、<var>command</var> を実行すると、
+指定されたコマンドがハングアップ・シグナルを無視するようになる。
+従って、そのコマンドは、ユーザがログアウトした後でも、バックグラウンドで実行を継続することができる。
+</p>
+<p>書式:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">nohup <var>command</var> [<var>arg</var>]&hellip;
+</pre></td></tr></table>
+
+<p>標準入力が端末の場合は、<code>nohup</code>
+から実行されているコマンドが端末を使用していると、端末で行われるセッションが誤解しないように、
+標準入力をリダイレクトする。
+さらに、標準入力の代わりになるファイルのファイル・ディスクリプタを読み込み不可にする。
+<code>nohup</code> から実行されているコマンドが、誤って標準入力から読み込を行おうとした場合に、
+エラーメッセージを出すことができるようにするためである。
+このリダイレクションは GNU の拡張である。
+GNU 以外のホストでも使うことを考えているプログラムでは、GNU の拡張を当てにせず、
+&lsquo;<samp>nohup <var>command</var> [<var>arg</var>]&hellip; 0&gt;/dev/null</samp>&rsquo; を使えばよい。
+</p>
+<a name="index-nohup_002eout-1"></a>
+<p>標準出力が端末の場合、コマンドの標準出力は、(訳注: カレントディレクトリの)
+&lsquo;<tt>nohup.out</tt>&rsquo; というファイルに追加されて行く。
+そのファイルに書き込めない場合は、&lsquo;<tt>$HOME/nohup.out</tt>&rsquo;
+に追記されることになる。そのファイルにも書き込めない場合は、コマンドの実行が行われない。
+<code>nohup</code> によって作成されるのが &lsquo;<tt>nohup.out</tt>&rsquo; であれ、
+&lsquo;<tt>$HOME/nohup.out</tt>&rsquo; であれ、それは、ファイルの所有者にのみ読み書き可能なものになる。
+現在の umask の設定の影響は受けない。
+</p>
+<p>標準エラーが端末の場合、コマンドの標準エラー出力は、基本的には標準出力
+(リダイレクトされているかもしれない) と同じファイル・ディスクリプタにリダイレクトされる。
+ただし、標準出力がクローズされている場合には、標準エラーの端末への出力は、
+リダイレクトされることなく、直接 &lsquo;<tt>nohup.out</tt>&rsquo; や &lsquo;<tt>$HOME/nohup.out</tt>&rsquo;
+というファイルに追加される。どちらのファイルが使用されるかは、上述のとおりである。
+</p>
+<p>コマンドの出力を &lsquo;<tt>nohup.out</tt>&rsquo; 以外のファイルに書き込みたければ、
+リダイレクトすればよい。たとえば、<code>make</code> の出力を &lsquo;<tt>make.log</tt>&rsquo;
+に書き込みたかったら、次のようにする。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">nohup make &gt; make.log
+</pre></td></tr></table>
+
+<p><code>nohup</code> は、実行するコマンドを自動的にバックグラウンドに送ることをしない。
+そこで、ユーザは、コマンドラインの末尾に &lsquo;<samp>&amp;</samp>&rsquo; を付けることで、
+明示的にそれを行わなければならない。また、<code>nohup</code> は、<var>command</var>
+の niceness を変更しない。niceness を変更したかったら、<code>nice</code>
+を使って、&lsquo;<samp>nohup nice <var>command</var></samp>&rsquo; のように実行すればよい。
+</p>
+<p><var>command</var> は、シェルの組み込みコマンドであってはならない (see section <a href="coreutils-ja_14.html#Special-built_002din-utilities">特殊ビルトイン・ユーティリティ</a>)。
+</p>
+<p>指定できるオプションは、&lsquo;<samp>--help</samp>&rsquo; と &lsquo;<samp>--version</samp>&rsquo; だけである。
+See section <a href="coreutils-ja_2.html#Common-options">共通オプション</a>.  オプションはオペランドの前に置かなければならない。
+</p>
+<a name="index-exit-status-of-nohup"></a>
+<p>終了ステータス:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="display">125: <code>POSIXLY_CORRECT</code> が設定されていない場合に、<code>nohup</code> そのものの
+      実行に失敗した。
+126: <var>command</var> は見つかったが、起動できなかった。
+127: <var>command</var> が見つからなかった。 
+それ以外の場合は、<var>command</var> の終了ステータス。
+</pre></td></tr></table>
+
+<p><code>POSIXLY_CORRECT</code> が設定されている場合は、<code>nohup</code>
+そのものが実行に失敗したときの終了ステータスは、125 ではなく 127 になる。
+</p>
+
+<hr size="1">
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

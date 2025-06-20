@@ -1,0 +1,230 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SNMPTRAPD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SNMPTRAPD</H1>
+Section: Maintenance Commands (8)<BR>Updated: 07 Aug 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/ucd-snmp/release/man8/snmptrapd.8">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+snmptrapd - snmp trap メッセージを受信してログに記録する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+snmptrapd [common options] [-P] [-o file] [-s] [-f] [-p port] [-e] [-l [d0-7]] [-a] [-C] [-c confFile] [-F FORMAT]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>snmptrapd</I>
+
+はローカルマシンの SNMP-TRAP ポート (162) に送られてきた
+snmp trap メッセージを受信してログに記録する SNMP アプリケーションである。
+<P>
+
+ログメッセージは以下のような形式である:
+<BR>
+
+<I>Sep 17 22:39:52 suffern snmptrapd: 128.2.13.41:</I>
+
+<I>Cold Start Trap (0) Uptime:</I>
+
+<I>8 days, 0:35:46</I>
+
+<P>
+
+<I>snmptrapd</I>
+
+は UDP ポート 162 をオープンするので、
+root で実行しなければならない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>コマンドライン引き数</H2>
+
+<I>snmpcmd</I>(1)
+
+で説明されているコマンドライン引き数に加え、以下の引き数が使用できる。
+<DL COMPACT>
+<DT>-P<DD>
+ログメッセージを標準エラーに表示する。
+<DT>-o file<DD>
+指定したファイルにメッセージを記録する。
+<DT>-p port<DD>
+デフォルトの 162 番ポートで実行したくない場合に、
+実行させるポートを指定する。
+<DT>-s<DD>
+メッセージを syslog(8) に記録する。
+syslog メッセージは、(デフォルトでは) level を LOG_WARNING、
+facility を LOG_LOCAL0 として送られる。
+syslog 機能を使うと、デーモンは fork されて
+呼び出し元から切り離される。
+これは '-P' フラグまたは  '-o' フラグを使わない場合のデフォルトである。 
+<DT>-n<DD>
+IP アドレスからホスト名への逆変換を行わない。
+<DT>-l [d0-7]<DD>
+使用する syslog facility を指定する。demon または local[0-7]。
+<DT>-a<DD>
+<I>snmptrapd</I>
+
+に AuthenticationFailure trap を無視させる。
+<DT>-d<DD>
+アプリケーションに入出力パケットをダンプさせる。
+<DT>-D<DD>
+デバッグ出力を有効にする。
+<DT>-f<DD>
+syslog() を使用する場合に、
+fork による呼び出し元から切り離しを行わない。
+<DT>-C<DD>
+デフォルトの設定ファイルのセットを読み込ませない。
+<DT>-c confFile<DD>
+confFile を設定ファイルとして読み込ませる。
+<DT>-F FORMAT<DD>
+標準出力にログを記録するときに、フォーマットとして文字列 FORMAT を使う。
+</DL>
+<P>
+
+FORMAT は printf で使われる文字列に似ている。
+<I>snmptrapd </I>
+
+は以下のフォーマット文字列を解釈する:
+<DL COMPACT>
+<DT>%%<DD>
+% という文字
+<DT>%t<DD>
+OS の紀元 (epoch) からの 10 進数での秒数
+<DT>%y<DD>
+現在の年
+<DT>%m<DD>
+現在の月 (数値)
+<DT>%l<DD>
+現在の月内日
+<DT>%h<DD>
+現在の時
+<DT>%j<DD>
+現在の分
+<DT>%k<DD>
+現在の秒
+<DT>%T<DD>
+稼働時間 (up-time) (10 進数での秒数)
+<DT>%Y<DD>
+稼働時間の「年」のフィールド。
+<DT>%M<DD>
+稼働時間の「月 (数値)」のフィールド。
+<DT>%L<DD>
+稼働時間の「月内日」のフィールド。
+<DT>%H<DD>
+稼働時間の「時」のフィールド。
+<DT>%J<DD>
+稼働時間の「分」のフィールド。
+<DT>%K<DD>
+稼働時間の「秒」のフィールド。
+<DT>%A<DD>
+取得可能な場合はエージェントのホスト名。
+取得不可能な場合はエージェントの IP アドレス。
+<DT>%a<DD>
+エージェントの IP アドレス。
+<DT>%B<DD>
+取得可能な場合は PDU のホスト名。
+取得不可能な場合は PDU の IP アドレス。
+<DT>%b<DD>
+PDU の IP アドレス。
+<DT>%N<DD>
+enterprise 文字列。
+<DT>%w<DD>
+trap タイプ (10 進数)
+<DT>%W<DD>
+trap の説明
+<DT>%q<DD>
+trap サブタイプ (10 進数)
+<DT>%P<DD>
+PDU のセキュリティ情報
+(v1/v2c におけるコミュニティ名、v3 におけるユーザーとコンテキスト)
+<DT>%v<DD>
+trap 変数のリスト
+</DL>
+<P>
+
+これらの値に加え、フィールドの幅と精度 (printf と同じ) および
+フラグ値などをオプションとして指定することもできる。
+以下のフラグを指定することができる:
+<DL COMPACT>
+<DT>-<DD>
+左寄せ
+<DT>0<DD>
+先頭を 0 で埋める
+<DT>#<DD>
+別形式を使用する
+</DL>
+<P>
+
+「別形式を使用する」ためのフラグを指定すると、
+いくつかのフォーマットフラグは動作が変更される。
+通常、時間情報のフィールドはローカル時刻に基づいて表示されるが、
+このフラグを使うと GMT を使うようになる。
+また通常、変数リストはタブで区切られるが、
+このフラグを使うとコンマ区切りのリストになる。
+稼働時間の別形式は、元と同じで &quot;3 days, 0:14:34.65&quot; のような形式である。
+<P>
+
+例:
+<P>
+
+&quot;14:03 TRAP3.1 from humpty.ucd.edu&quot; のような形式のメッセージにするためには、
+以下のようにすればよい:
+<P>
+
+<DL COMPACT><DT><DD>
+
+snmptrapd -P -F &quot;%02.2h:%02.2j TRAP%w.%q from %A\n&quot;
+
+</DL>
+
+<P>
+
+上と同じであるが、ローカル時刻ではなく GMT を使いたい場合は、
+以下のようにすればよい:
+<P>
+
+<DL COMPACT><DT><DD>
+
+snmptrapd -P -F &quot;%#02.2h:%#02.2j TRAP%w.%q from %A\n&quot;
+
+</DL>
+
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>拡張性と設定</H2>
+
+<A HREF="../man5/snmptrapd.conf.5.html">snmptrapd.conf</A>(5) の man ページを参照すること。
+<P>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+snmpcmd(1), syslog(8), <A HREF="../man5/variables.5.html">variables</A>(5)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">コマンドライン引き数</A><DD>
+<DT><A HREF="#lbAF">拡張性と設定</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:46 GMT, December 05, 2022
+</BODY>
+</HTML>

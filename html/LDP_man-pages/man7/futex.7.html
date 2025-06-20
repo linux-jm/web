@@ -1,0 +1,140 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FUTEX</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FUTEX</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/futex.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+futex - 高速ユーザー空間ロック機構
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/linux/futex.h">linux/futex.h</A>&gt;</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+Linux カーネルは、ユーザー空間で高速なロック機構やセマフォを使用するための 基礎的要素として futex (&quot;Fast user-space
+mutexes&quot;; 高速ユーザー空間 mutex) を 提供している。 futex は非常に基本的なもので、より高位なロック機構の概念
+(mutex、状態変数 (condition variables)、読み書きロック、セマフォなど) を構築するのに利用されている。
+<P>
+
+実際のところ、多くのプログラマーは futex を直接使うことはなく、 Native POSIX スレッドライブラリ (NPTL;
+<B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7) 参照) などの futex を使って作られたシステムライブラリを使うことだろう。
+<P>
+
+futex はプロセス間やスレッド間で共有することのできるメモリー片で識別される。 これらの異なるプロセスで、futext
+が同じアドレスである必要はない。 裸の姿では futex のセマンティクスはセマフォと同じである。 futex は不可分操作で (atomically)
+インクリメントしたりデクリメントしたりできる カウンターで、プロセスは値が正になるのを待つことができる。
+<P>
+
+futex の操作は、競合がない場合には完全にユーザー空間で行なわれる。 カーネルは競合が起こった場合の仲裁に関与するだけである。
+良識ある設計では競合が起こらないよう努力するが、 futex も競合状態に関して最適化されている。
+<P>
+
+裸の姿では、 futex は不可分なアセンブリ命令でのみ操作される アラインメントの揃った整数である。この整数の大きさはすべてのプラットフォームで 4
+バイトである。複数のプロセスはこの int 型変数を、 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  を用いるか、 共有メモリーセグメントを介するか、 メモリー空間を共有する
+(この場合、 アプリケーションは一般的にマルチスレッドであると呼ばれる) か方法で共有する。
+<A NAME="lbAE">&nbsp;</A>
+<H3>セマンティクス</H3>
+
+<P>
+
+futex の操作はすべてユーザー空間から始まるが、必要に応じて <B><A HREF="../man2/futex.2.html">futex</A></B>(2)  システムコールを用いてカーネルと通信する。
+<P>
+
+futex を &quot;up&quot; するには、 ホスト CPU に対し int 型変数を不可分操作でインクリメントするような、 適切なアセンブリ命令を実行する。
+そのあと、実際に 0 から 1 に変化したかどうかをチェックし、 変化していれば待ちプロセス (waiter) はないということであり、操作は完了する。
+これは競合のない場合であり、高速でよく起こるはずである。
+<P>
+
+競合がある場合、不可分操作のインクリメントでカウンターは -1 (または他の負の数)
+から変化する。これが検出されると、待ちプロセスがあるということである。 ユーザー空間ではカウンターを 1 に設定し、 <B>FUTEX_WAKE</B>
+を用いてカーネルに待ちプロセスを wake (起床) させるよう指示する。
+<P>
+
+futex の獲得を待つ、すなわち futex を &quot;down&quot; するには反対の操作を行なう。 不可分操作でカウンターをデクリメントし、カウンターが 0
+に変化したかどうかを チェックする。変化していれば操作は完了し futex は競合していないということである。 0
+にならなかった場合、プロセスはカウンターを -1 に設定し、 他のプロセスがその futex を up
+するのを待つようカーネルに要求しなければならない。 これは <B>FUTEX_WAIT</B> を行なうことで実現される。
+<P>
+
+<B><A HREF="../man2/futex.2.html">futex</A></B>(2)  システムコールには、省略可能な引数としてタイムアウトを渡すことができ、 カーネルはその futex が up
+されるのをどれくらいの期間待つべきかを 指定することができる。この場合、セマンティクスはもっと複雑になるため、 より詳細な情報を得るにはプログラマは
+<B><A HREF="../man2/futex.2.html">futex</A></B>(2)  を参照すること。 同じページに非同期の futex 待ちについても記されている。
+<A NAME="lbAF">&nbsp;</A>
+<H2>バージョン</H2>
+
+<P>
+
+最初の futex 対応は Linux 2.5.7 で組み込まれたが、 上記のセマンティクスとは異なる。 現在のセマンティクスは Linux
+2.5.40 以降で利用可能である。
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+<P>
+
+再び繰り返しておくが、裸の futex はエンドユーザーが容易に使える概念として 意図されたものではない。
+実装者は、アセンブリ言語に慣れており、以下に挙げる futex ユーザー空間ライブラリの ソースを読み終えていることが要求される。
+<P>
+
+
+
+
+
+
+
+
+このマニュアルページには <B><A HREF="../man2/futex.2.html">futex</A></B>(2)  プリミティブの最も一般的な使用法が 記されている。これは決して唯一の使用法ではない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2), <B><A HREF="../man2/futex.2.html">futex</A></B>(2), <B>get_robust_list</B>(2), <B>set_robust_list</B>(2),
+<B><A HREF="../man2/set_tid_address.2.html">set_tid_address</A></B>(2), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
+<P>
+
+<I>Fuss, Futexes and Furwocks: Fast Userlevel Locking in Linux</I> (proceedings
+of the Ottawa Linux Symposium 2002), futex の使用例ライブラリ, futex-*.tar.bz2
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">セマンティクス</A><DD>
+</DL>
+<DT><A HREF="#lbAF">バージョン</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

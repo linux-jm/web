@@ -1,0 +1,330 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MOUNTD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MOUNTD</H1>
+Section: Maintenance Commands (8)<BR>Updated: 11 August 1997<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/nfs-server/release/man8/mountd.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mountd - NFS マウントデーモン
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+
+<B>/usr/sbin/rpc.mountd</B>
+
+<B>[&nbsp;-f&nbsp;exports-file&nbsp;]</B>
+
+<B>[&nbsp;-d&nbsp;facility&nbsp;]</B>
+
+<B>[&nbsp;-P&nbsp;port&nbsp;]</B>
+
+<B>[&nbsp;-Dhnprv&nbsp;]</B>
+
+<B>[&nbsp;--debug&nbsp;facility ]</B>
+
+<B>[&nbsp;--exports-file=file&nbsp;]</B>
+
+<B>[&nbsp;--help&nbsp;]</B>
+
+<B>[&nbsp;--allow-non-root&nbsp;]</B>
+
+<B>[&nbsp;--re-export&nbsp;]</B>
+
+<B>[&nbsp;--no-spoof-trace&nbsp;]</B>
+
+<B>[&nbsp;--version&nbsp;]</B>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>mountd</I>
+
+プログラムは NFS のマウントデーモンである。
+<I>mountd</I>
+
+は NFS クライアントから MOUNT リクエストを受け取ると、
+エクスポートファイル
+<I>/etc/exports</I>
+
+のリストを参照し、そのリクエストが正当なものかどうかをチェックする。
+クライアントがそのファイルシステムのマウントを許可されている場合には、
+<I>mountd</I>
+
+は要求されたディレクトリのファイルハンドルを作成し、
+そのエントリを
+<I>/etc/rmtab</I>
+
+に追加する。
+UMOUNT リクエストを受け取ると、
+<I>mountd</I>
+
+はクライアントのエントリを
+<I>rmtab</I>
+
+から削除する。
+ただし UMOUNT リクエストの後でも、
+クライアントは依然ファイルハンドルを扱うことが可能であることに注意すること
+(例えばクライアントが同じリモートファイルシステムを
+別々のマウントポイントにマウントしている場合など)。
+またクライアントが
+<I>mountd</I>
+
+に知らせずにリブートすると、
+<I>rmtab</I>
+
+に古いエントリが残ってしまうことにも注意すること。
+<A NAME="lbAE">&nbsp;</A>
+<H3>inetd からの起動</H3>
+
+<I>mountd</I>
+
+は通常システムのブート時に起動するが、
+<I>inetd</I>
+
+から起動することもできる。以下の 2 行を
+<I>/etc/inetd.conf</I>
+
+に追加すればよい:
+<P>
+
+<PRE>
+
+mount/1-2 dgram  rpc/udp wait  root  /usr/sbin/rpc.mountd rpc.mountd
+mount/1-2 stream rpc/tcp wait  root  /usr/sbin/rpc.mountd rpc.mountd
+</PRE>
+
+<P>
+
+<I>inetd</I>
+
+から起動した場合には、適当な期間に動作要求がないと
+<I>mountd</I>
+
+は終了する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-f</B> または <B>\--exports-file</B>
+
+<DD>
+このオプションはエクスポートファイルを指定する。
+エクスポートファイルには、このサーバーがサービスを提供するクライアントと、
+それぞれのマウントに対して適用されるパラメータがリストされている
+(<B><A HREF="../man5/exports.5.html">exports</A></B>(5)
+
+を見よ)。
+デフォルトのエクスポートファイルは
+<I>/etc/exports</I>
+
+である。
+<DT><B>-d facility</B> または <B>--debug facility</B>
+
+<DD>
+それぞれのトランザクションに対する詳細な内容を、
+標準エラー出力にログ表示する。
+<I>facility</I> に指定できるのは、
+<I>call</I>
+
+(すべてのコールを記録)、
+<I>auth</I>
+
+(クライアントの認証)、
+<I>fhcache</I>
+
+(ファイルハンドルのキャッシュ操作)、
+<I>rmtab</I>
+
+(<I>/etc/rmtab</I>
+
+の操作) である。
+デフォルトでは、デーモンがフォアグラウンドで実行されなければ、
+ログ出力は syslogd に送られる。
+<DT><B>-F</B> または <B>--foreground</B>
+
+<DD>
+通常
+<I>mountd</I>
+
+は端末から分離 (detach) するが、このオプションが与えられると分離しない。
+debug 情報は標準エラー出力に表示される。
+<DT><B>-h</B> または <B>--help</B>
+
+<DD>
+ヘルプの短い要約を表示する。
+<DT><B>-n</B> または <B>--allow-non-root</B>
+
+<DD>
+IP の特権ポート以外から来たマウント要求も許可する。
+NFS クライアントの古い実装では、この指定が必要な場合がある。
+逆に新しい実装には、特権ポートのチェックを信頼しないものがある。
+<DT><B>-P portnum</B> または <B>--port portnum</B>
+
+<DD>
+<I>mountd</I>
+
+に
+<B>portnum</B>
+
+ポートを監視させる。
+デフォルトでは、
+<I>mountd</I>
+
+は
+<I>/etc/services</I>
+
+で指定されている mount/udp ポートを監視する
+(あるいはこれが指定されていないと 1024 以下の任意のポートを監視する)。
+<DT><B>-p</B> または <B>--promiscuous</B>
+
+<DD>
+サーバを「無制限 (promiscuous)」モードにする。
+ネットワーク上のすべてのホストに対してサービスを提供する。
+<DT><B>-r</B> または <B>--re-export</B>
+
+<DD>
+インポートした NFS や SMB ファイルシステムの再エクスポートを許す。
+これにより、マシンは NFS/SMB の中継器となる。
+ループバックマウントを再エクスポートするときには特に注意すること。
+マウントポイントに再入すると、クライアントファイルシステムのコードと
+サーバーはデッドロックしてしまう。
+<DT><B>-t</B> または <B>--no-spoof-trace</B>
+
+<DD>
+デフォルトでは、
+<I>mountd</I>
+
+は権限のないクライアントからの全てのアクセスをログに記録する。
+このオプションを使うと、
+<I>exports</I>
+
+ファイルに明示的にリストされている全てのホストについて、
+このような成りすまし行為をログに記録しない。
+<DT><B>-v</B> または <B>--version</B>
+
+<DD>
+プログラムの現在のバージョン番号を表示する。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>アクセス制御</H3>
+
+セキュリティを強化するため、
+<I>mountd</I>
+
+へのアクセスは TCP wrapper ライブラリで制限することができる。
+同ライブラリは Wietse Venema の tcp_wrappers パッケージの一部である。
+このオプションをサポートするかどうかはコンパイル時に指定できる。
+ローカルなネットワーク (例として 192.168.1.0 としよう) だけに
+アクセスを許可したい場合は、以下のような行を
+<I>/etc/hosts.allow</I>
+
+ファイルに追加すればよい:
+<P>
+
+<PRE>
+
+<I>rpc.mountd : 192.168.1. : allow</I>
+<I>rpc.mountd : ALL        : deny</I>
+</PRE>
+
+<P>
+
+
+この例は、TCP wrapper ライブラリが
+オプションをサポートしてコンパイルされた場合に有効である
+(筆者はオプションのサポートを強くすすめる)。
+オプションをサポートしないようにコンパイルされた場合は、
+以下の 2 行を
+<I>/etc/hosts.allow</I> と <I>/etc/hosts.deny</I>
+
+とにそれぞれ追加する必要がある:
+<P>
+
+<PRE>
+
+<I># hosts.allow:</I>
+<I>rpc.mountd : 192.168.1</I>
+<I># hosts.deny</I>
+<I>rpc.mountd : ALL</I>
+</PRE>
+
+<P>
+
+ここの情報を変更したら、変更を有効にするには
+<I>mountd</I>
+
+を再起動する必要がある。一度 kill して再起動するか、
+HUP シグナルを送れば良い。
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+<I>/etc/mtab</I>
+
+の情報は不正確であることのほうが多い。
+<A NAME="lbAI">&nbsp;</A>
+<H2>シグナル</H2>
+
+SIGHUP を受け取ると、
+<I>mountd</I>
+
+は
+<I>exports</I>
+
+ファイルと、
+<I>/etc/hosts.allow</I> および <I>/etc/hosts.deny</I>
+
+ファイルで定義されているすべてのアクセス制限を読みなおす。
+エクスポートの変更を有効にするには、
+<I>nfsd</I>
+
+にも SIGHUP を送る必要があることに注意せよ。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/etc/exports</I>
+
+<BR>
+
+<I>/etc/rmtab</I>
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man5/exports.5.html">exports</A>(5), <A HREF="../man8/nfsd.8.html">nfsd</A>(8), <A HREF="../man8/ugidd.8.html">ugidd</A>(8C), <A HREF="../man8/showmount.8.html">showmount</A>(8)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">inetd からの起動</A><DD>
+</DL>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DL>
+<DT><A HREF="#lbAG">アクセス制御</A><DD>
+</DL>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">シグナル</A><DD>
+<DT><A HREF="#lbAJ">ファイル</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:41 GMT, December 05, 2022
+</BODY>
+</HTML>

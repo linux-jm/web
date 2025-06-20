@@ -1,0 +1,452 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of AIO</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>AIO</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/aio.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+aio - POSIX 非同期 I/O の概要
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+POSIX 非同期 (AIO) インターフェースを使うと、アプリケーションは、非同期
+に (つまり、バックグラウンドで) 実行されるI/O 操作を一つ以上発行できる
+ようになる。アプリケーションは I/O 操作の完了の通知方法を選択することが
+できる。選択できる通知方法は、シグナルの配送、スレッドの起動、通知を行
+わないである。
+<P>
+
+POSIX AIO インターフェースは以下の関数で構成されている。
+<DL COMPACT>
+<DT><B><A HREF="../man3/aio_read.3.html">aio_read</A></B>(3)<DD>
+読み出しリクエストをキューに入れる。
+<B><A HREF="../man2/read.2.html">read</A></B>(2) の非同期版である。
+<DT><B><A HREF="../man3/aio_write.3.html">aio_write</A></B>(3)<DD>
+書き込みリクエストをキューに入れる。
+<B><A HREF="../man2/write.2.html">write</A></B>(2) の非同期版である。
+<DT><B><A HREF="../man3/aio_fsync.3.html">aio_fsync</A></B>(3)<DD>
+ファイルディスクリプターに対して行われた I/O 操作の
+同期 (sync) リクエストをキューに入れる。
+<B><A HREF="../man2/fsync.2.html">fsync</A></B>(2) や <B><A HREF="../man2/fdatasync.2.html">fdatasync</A></B>(2) の非同期版である。
+<DT><B><A HREF="../man3/aio_error.3.html">aio_error</A></B>(3)<DD>
+キューに入れられた I/O リクエストのエラー状態を取得する。
+<DT><B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3)<DD>
+完了した I/O リクエストの終了ステータスを取得する。
+<DT><B><A HREF="../man3/aio_suspend.3.html">aio_suspend</A></B>(3)<DD>
+指定された I/O リクエストの集合 (要素は一つ以上) が完了するまで、
+呼び出し側の実行を停止 (suspend) する。
+<DT><B><A HREF="../man3/aio_cancel.3.html">aio_cancel</A></B>(3)<DD>
+指定されたファイルディスクリプターに関する
+完了していない I/O リクエストのキャンセルを試みる。
+<DT><B><A HREF="../man3/lio_listio.3.html">lio_listio</A></B>(3)<DD>
+一回の関数呼び出しで複数の I/O リクエストをキューに入れる。
+</DL>
+<P>
+
+<I>aiocb</I> (&quot;非同期 I/O 制御ブロック (asynchronous I/O control block)&quot;)
+構造体は、I/O 操作を制御するパラメーターを定義する。この型の引数は上記
+の全ての関数で使用されている。この構造体は以下の通りである。
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/aiocb.h">aiocb.h</A>&gt;
+<P>
+struct aiocb {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;The&nbsp;order&nbsp;of&nbsp;these&nbsp;fields&nbsp;is&nbsp;implementation-dependent&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aio_fildes;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;File&nbsp;descriptor&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;off_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aio_offset;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;File&nbsp;offset&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;volatile&nbsp;void&nbsp;&nbsp;*aio_buf;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Location&nbsp;of&nbsp;buffer&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aio_nbytes;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Length&nbsp;of&nbsp;transfer&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aio_reqprio;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Request&nbsp;priority&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sigevent&nbsp;aio_sigevent;&nbsp;&nbsp;&nbsp;/*&nbsp;Notification&nbsp;method&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aio_lio_opcode;&nbsp;/*&nbsp;Operation&nbsp;to&nbsp;be&nbsp;performed;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lio_listio()&nbsp;only&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Various&nbsp;implementation-internal&nbsp;fields&nbsp;not&nbsp;shown&nbsp;*/
+};
+<P>
+/* Operation codes for 'aio_lio_opcode': */
+<P>
+enum { LIO_READ, LIO_WRITE, LIO_NOP };
+
+
+<P>
+
+この構造体のフィールドは以下の通りである。
+<DL COMPACT>
+<DT><I>aio_fildes</I><DD>
+I/O 操作の実行対象となるファイルディスクリプター。
+<DT><I>aio_offset</I><DD>
+I/O 操作を行うファイルオフセットを示す。
+<DT><I>aio_buf</I><DD>
+読み出し操作、書き込み操作でデータ転送に使用されるバッファー。
+<DT><I>aio_nbytes</I><DD>
+<I>aio_buf</I> が指すバッファーのサイズ。
+<DT><I>aio_reqprio</I><DD>
+このフィールドでは、呼び出したスレッドのリアルタイム優先度から
+減算する値を指定する。この I/O リクエストの実行の優先度を
+決定するために使用される (<B><A HREF="../man3/pthread_setschedparam.3.html">pthread_setschedparam</A></B>(3) 参照)。
+指定する値は 0 と <I>sysconf(_SC_AIO_PRIO_DELTA_MAX)</I> が返す値の間で
+なければならない。このフィールドは、ファイル同期操作では無視される。
+<DT><I>aio_sigevent</I><DD>
+このフィールドは、非同期 I/O 操作が完了した際に呼び出し側に
+どのように通知を行うかを指定する構造体である。
+<I>aio_sigevent.sigev_notify</I> に指定できる値は、
+<B>SIGEV_NONE</B>, <B>SIGEV_SIGNAL</B>, <B>SIGEV_THREAD</B> である。
+詳細は <B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7) を参照。
+<DT><I>aio_lio_opcode</I><DD>
+実行される操作の種別。
+<B><A HREF="../man3/lio_listio.3.html">lio_listio</A></B>(3) でのみ使用される。
+</DL>
+<P>
+
+上記のリストにある標準の関数に加えて、GNU C ライブラリでは
+以下に示す POSIX AIO API に対する拡張が提供されている。
+<DL COMPACT>
+<DT><B><A HREF="../man3/aio_init.3.html">aio_init</A></B>(3)<DD>
+glibc の POSIX AIO 実装の動作を調整するパラメーターを設定する。
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>aiocb</I> 構造体の <I>aio_reqprio</I> フィールドが、0 より小さいか、
+<I>sysconf(_SC_AIO_PRIO_DELTA_MAX)</I> が返す上限よりも大きかった。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>バージョン</H2>
+
+POSIX AIO インターフェイスは glibc バージョン 2.1 以降で提供されている。
+<A NAME="lbAF">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+使用前に制御ブロックバッファーを 0 で埋めるのはよい考えである
+(<B><A HREF="../man3/memset.3.html">memset</A></B>(3) 参照)。I/O 操作が実行中の間は、制御ブロックバッファーと
+<I>aio_buf</I> が指すバッファーを変更してはならない。I/O 操作が完了するまで、
+これらのバッファーは有効な状態に保たなければならない。
+<P>
+
+同じ <I>aiocb</I> 構造体を使って、同時に複数の非同期の読み出し操作や
+書き込み操作を行った場合に、どのような結果になるかは未定義である。
+<P>
+
+
+
+
+現在の Linux では、POSIX AIO 実装は glibc によりユーザー空間で提供
+されている。このため、制限がいくつかあり、最も顕著なものは、I/O 操作を
+実行する複数のスレッドの管理コストが高く、スケーラビリティに欠けること
+である。しばらくの間、カーネルのステートマシンによる非同期 I/O の実装
+の作業が行われているが (<B><A HREF="../man2/io_submit.2.html">io_submit</A></B>(2), <B><A HREF="../man2/io_setup.2.html">io_setup</A></B>(2),
+<B><A HREF="../man2/io_cancel.2.html">io_cancel</A></B>(2), <B><A HREF="../man2/io_destroy.2.html">io_destroy</A></B>(2), <B><A HREF="../man2/io_getevents.2.html">io_getevents</A></B>(2) 参照)、
+この実装はまだ POSIX AIO 実装をカーネルシステムコールにより
+再実装するほど成熟したものてはない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>例</H2>
+
+下記のプログラムは、コマンドライン引数で指定された名前のファイルを
+それぞれオープンし、得られたファイルディスクリプターに対するリクエストを
+<B><A HREF="../man3/aio_read.3.html">aio_read</A></B>(3) を使ってキューに入れる。その後、このプログラムはループに
+入り、定期的に <B><A HREF="../man3/aio_error.3.html">aio_error</A></B>(3) を使ってまだ実行中の各 I/O 操作を監視す
+る。各 I/O リクエストは、シグナルの配送による完了通知が行われるように設
+定される。全ての I/O リクエストが完了した後、<B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3) を使って
+それぞれのステータスを取得する。
+<P>
+
+<B>SIGQUIT</B> シグナル (control-\ をタイプすると生成できる) を送ると、
+このプログラムは <B><A HREF="../man3/aio_cancel.3.html">aio_cancel</A></B>(3) を使って
+完了していない各リクエストにキャンセル要求を送る。
+<P>
+
+以下はこのプログラムを実行した際の出力例である。
+この例では、標準入力に対して 2 つのリクエストを行い、
+&quot;abc&quot; と &quot;x&quot; という 2 行の入力を行っている。
+<P>
+
+
+
+$ <B>./a.out /dev/stdin /dev/stdin</B>
+opened /dev/stdin on descriptor 3
+opened /dev/stdin on descriptor 4
+aio_error():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;request&nbsp;0&nbsp;(descriptor&nbsp;3):&nbsp;In&nbsp;progress
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;request&nbsp;1&nbsp;(descriptor&nbsp;4):&nbsp;In&nbsp;progress
+<B>abc</B>
+I/O completion signal received
+aio_error():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;request&nbsp;0&nbsp;(descriptor&nbsp;3):&nbsp;I/O&nbsp;succeeded
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;request&nbsp;1&nbsp;(descriptor&nbsp;4):&nbsp;In&nbsp;progress
+aio_error():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;request&nbsp;1&nbsp;(descriptor&nbsp;4):&nbsp;In&nbsp;progress
+<B>x</B>
+I/O completion signal received
+aio_error():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;request&nbsp;1&nbsp;(descriptor&nbsp;4):&nbsp;I/O&nbsp;succeeded
+All I/O requests completed
+aio_return():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;request&nbsp;0&nbsp;(descriptor&nbsp;3):&nbsp;4
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;request&nbsp;1&nbsp;(descriptor&nbsp;4):&nbsp;2
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/aio.h">aio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
+<P>
+#define BUF_SIZE 20     /* Size of buffers for read operations */
+<P>
+#define errExit(msg) do { perror(msg); exit(EXIT_FAILURE); } while (0)
+<P>
+struct ioRequest {      /* Application-defined structure for tracking
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I/O&nbsp;requests&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reqNum;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;status;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;aiocb&nbsp;*aiocbp;
+};
+<P>
+static volatile sig_atomic_t gotSIGQUIT = 0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;On&nbsp;delivery&nbsp;of&nbsp;SIGQUIT,&nbsp;we&nbsp;attempt&nbsp;to
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cancel&nbsp;all&nbsp;outstanding&nbsp;I/O&nbsp;requests&nbsp;*/
+<P>
+static void             /* Handler for SIGQUIT */
+quitHandler(int sig)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gotSIGQUIT&nbsp;=&nbsp;1;
+}
+<P>
+#define IO_SIGNAL SIGUSR1   /* Signal used to notify I/O completion */
+<P>
+static void                 /* Handler for I/O completion signal */
+aioSigHandler(int sig, siginfo_t *si, void *ucontext)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(si-&gt;si_code&nbsp;==&nbsp;SI_ASYNCIO)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write(STDOUT_FILENO,&nbsp;&quot;I/O&nbsp;completion&nbsp;signal&nbsp;received\n&quot;,&nbsp;31);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;The&nbsp;corresponding&nbsp;ioRequest&nbsp;structure&nbsp;would&nbsp;be&nbsp;available&nbsp;as
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;ioRequest&nbsp;*ioReq&nbsp;=&nbsp;si-&gt;si_value.sival_ptr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;the&nbsp;file&nbsp;descriptor&nbsp;would&nbsp;then&nbsp;be&nbsp;available&nbsp;via
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioReq-&gt;aiocbp-&gt;aio_fildes&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sigaction&nbsp;sa;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;numReqs;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Total&nbsp;number&nbsp;of&nbsp;queued&nbsp;I/O&nbsp;requests&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;openReqs;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;I/O&nbsp;requests&nbsp;still&nbsp;in&nbsp;progress&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;pathname&gt;&nbsp;&lt;pathname&gt;...\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;numReqs&nbsp;=&nbsp;argc&nbsp;-&nbsp;1;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allocate&nbsp;our&nbsp;arrays&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;ioRequest&nbsp;*ioList&nbsp;=&nbsp;calloc(numReqs,&nbsp;sizeof(*ioList));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ioList&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;calloc&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;aiocb&nbsp;*aiocbList&nbsp;=&nbsp;calloc(numReqs,&nbsp;sizeof(*aiocbList));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(aiocbList&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;calloc&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Establish&nbsp;handlers&nbsp;for&nbsp;SIGQUIT&nbsp;and&nbsp;the&nbsp;I/O&nbsp;completion&nbsp;signal&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_flags&nbsp;=&nbsp;SA_RESTART;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;sa.sa_mask);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_handler&nbsp;=&nbsp;quitHandler;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sigaction(SIGQUIT,&nbsp;&amp;sa,&nbsp;NULL)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sigaction&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_flags&nbsp;=&nbsp;SA_RESTART&nbsp;|&nbsp;SA_SIGINFO;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_sigaction&nbsp;=&nbsp;aioSigHandler;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sigaction(IO_SIGNAL,&nbsp;&amp;sa,&nbsp;NULL)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sigaction&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Open&nbsp;each&nbsp;file&nbsp;specified&nbsp;on&nbsp;the&nbsp;command&nbsp;line,&nbsp;and&nbsp;queue
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;read&nbsp;request&nbsp;on&nbsp;the&nbsp;resulting&nbsp;file&nbsp;descriptor&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;numReqs;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].reqNum&nbsp;=&nbsp;j;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].status&nbsp;=&nbsp;EINPROGRESS;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].aiocbp&nbsp;=&nbsp;&amp;aiocbList[j];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].aiocbp-&gt;aio_fildes&nbsp;=&nbsp;open(argv[j&nbsp;+&nbsp;1],&nbsp;O_RDONLY);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ioList[j].aiocbp-&gt;aio_fildes&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;open&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;opened&nbsp;%s&nbsp;on&nbsp;descriptor&nbsp;%d\n&quot;,&nbsp;argv[j&nbsp;+&nbsp;1],
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].aiocbp-&gt;aio_fildes);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].aiocbp-&gt;aio_buf&nbsp;=&nbsp;malloc(BUF_SIZE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ioList[j].aiocbp-&gt;aio_buf&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].aiocbp-&gt;aio_nbytes&nbsp;=&nbsp;BUF_SIZE;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].aiocbp-&gt;aio_reqprio&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].aiocbp-&gt;aio_offset&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].aiocbp-&gt;aio_sigevent.sigev_notify&nbsp;=&nbsp;SIGEV_SIGNAL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].aiocbp-&gt;aio_sigevent.sigev_signo&nbsp;=&nbsp;IO_SIGNAL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].aiocbp-&gt;aio_sigevent.sigev_value.sival_ptr&nbsp;=
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;ioList[j];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;aio_read(ioList[j].aiocbp);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;aio_read&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;openReqs&nbsp;=&nbsp;numReqs;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Loop,&nbsp;monitoring&nbsp;status&nbsp;of&nbsp;I/O&nbsp;requests&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(openReqs&nbsp;&gt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="../man3/sleep.3.html">sleep</A>(3);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Delay&nbsp;between&nbsp;each&nbsp;monitoring&nbsp;step&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(gotSIGQUIT)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;On&nbsp;receipt&nbsp;of&nbsp;SIGQUIT,&nbsp;attempt&nbsp;to&nbsp;cancel&nbsp;each&nbsp;of&nbsp;the
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;outstanding&nbsp;I/O&nbsp;requests,&nbsp;and&nbsp;display&nbsp;status&nbsp;returned
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;from&nbsp;the&nbsp;cancellation&nbsp;requests&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;got&nbsp;SIGQUIT;&nbsp;canceling&nbsp;I/O&nbsp;requests:&nbsp;\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;numReqs;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ioList[j].status&nbsp;==&nbsp;EINPROGRESS)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;Request&nbsp;%d&nbsp;on&nbsp;descriptor&nbsp;%d:&quot;,&nbsp;j,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].aiocbp-&gt;aio_fildes);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;aio_cancel(ioList[j].aiocbp-&gt;aio_fildes,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].aiocbp);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;AIO_CANCELED)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;I/O&nbsp;canceled\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;if&nbsp;(s&nbsp;==&nbsp;AIO_NOTCANCELED)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;I/O&nbsp;not&nbsp;canceled\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;if&nbsp;(s&nbsp;==&nbsp;AIO_ALLDONE)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;I/O&nbsp;all&nbsp;done\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;aio_cancel&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gotSIGQUIT&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Check&nbsp;the&nbsp;status&nbsp;of&nbsp;each&nbsp;I/O&nbsp;request&nbsp;that&nbsp;is&nbsp;still
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;progress&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;aio_error():\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;numReqs;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ioList[j].status&nbsp;==&nbsp;EINPROGRESS)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;request&nbsp;%d&nbsp;(descriptor&nbsp;%d):&nbsp;&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;j,&nbsp;ioList[j].aiocbp-&gt;aio_fildes);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ioList[j].status&nbsp;=&nbsp;aio_error(ioList[j].aiocbp);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(ioList[j].status)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;0:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;I/O&nbsp;succeeded\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;EINPROGRESS:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;In&nbsp;progress\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;ECANCELED:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Canceled\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;aio_error&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ioList[j].status&nbsp;!=&nbsp;EINPROGRESS)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;openReqs--;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;All&nbsp;I/O&nbsp;requests&nbsp;completed\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Check&nbsp;status&nbsp;return&nbsp;of&nbsp;all&nbsp;I/O&nbsp;requests&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;aio_return():\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;numReqs;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;s;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;aio_return(ioList[j].aiocbp);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;request&nbsp;%d&nbsp;(descriptor&nbsp;%d):&nbsp;%zd\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;j,&nbsp;ioList[j].aiocbp-&gt;aio_fildes,&nbsp;s);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B><A HREF="../man2/io_cancel.2.html">io_cancel</A></B>(2), <B><A HREF="../man2/io_destroy.2.html">io_destroy</A></B>(2), <B><A HREF="../man2/io_getevents.2.html">io_getevents</A></B>(2), <B><A HREF="../man2/io_setup.2.html">io_setup</A></B>(2),
+<B><A HREF="../man2/io_submit.2.html">io_submit</A></B>(2), <B><A HREF="../man3/aio_cancel.3.html">aio_cancel</A></B>(3), <B><A HREF="../man3/aio_error.3.html">aio_error</A></B>(3), <B><A HREF="../man3/aio_init.3.html">aio_init</A></B>(3),
+<B><A HREF="../man3/aio_read.3.html">aio_read</A></B>(3), <B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3), <B><A HREF="../man3/aio_write.3.html">aio_write</A></B>(3), <B><A HREF="../man3/lio_listio.3.html">lio_listio</A></B>(3)
+<P>
+
+&quot;Asynchronous I/O Support in Linux 2.5&quot;, Bhattacharya, Pratt, Pulavarty, and
+Morgan, Proceedings of the Linux Symposium, 2003,
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">エラー</A><DD>
+<DT><A HREF="#lbAE">バージョン</A><DD>
+<DT><A HREF="#lbAF">準拠</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DT><A HREF="#lbAH">例</A><DD>
+<DL>
+<DT><A HREF="#lbAI">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:26 GMT, December 05, 2022
+</BODY>
+</HTML>

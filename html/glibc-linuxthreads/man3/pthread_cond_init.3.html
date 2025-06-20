@@ -1,0 +1,744 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_COND</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_COND</H1>
+Section: C Library Functions (3)<BR>Updated: LinuxThreads<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/glibc-linuxthreads/release/man3/pthread_cond_init.3">roff page</A><HR>
+
+<P>
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+pthread_cond_init, pthread_cond_destroy, pthread_cond_signal, pthread_cond_broadcast, pthread_cond_wait, pthread_cond_timedwait - 条件変数の操作
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<P>
+<B>pthread_cond_t </B><I>cond</I><B> = PTHREAD_COND_INITIALIZER;</B>
+
+<P>
+<B>int pthread_cond_init(pthread_cond_t *</B><I>cond</I><B>, pthread_condattr_t *</B><I>cond_attr</I><B>);</B>
+
+<P>
+<B>int pthread_cond_signal(pthread_cond_t *</B><I>cond</I><B>);</B>
+
+<P>
+<B>int pthread_cond_broadcast(pthread_cond_t *</B><I>cond</I><B>);</B>
+
+<P>
+<B>int pthread_cond_wait(pthread_cond_t *</B><I>cond</I><B>, pthread_mutex_t *</B><I>mutex</I><B>);</B>
+
+<P>
+<B>int pthread_cond_timedwait(pthread_cond_t *</B><I>cond</I><B>, pthread_mutex_t *</B><I>mutex</I><B>, const struct timespec *</B><I>abstime</I><B>);</B>
+
+<P>
+<B>int pthread_cond_destroy(pthread_cond_t *</B><I>cond</I><B>);</B>
+
+<P>
+
+
+
+
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+条件(「条件変数」の省略) は、共有データに対するある述語が満たされる
+まで、スレッドが実行を停止しプロセッサを手放すことを可能にする同期
+装置である。条件に対する基本的な操作は、(述語が真になった場合に)
+条件を送信することと、他のスレッドが条件を送信するまでスレッドの実行
+を停止して条件を待つことである。
+<P>
+
+
+
+
+条件変数はいつでも mutex と結びつけられていなければならない。これは、
+あるスレッドが条件変数を待とうとしている時に、他のスレッドが、
+先のスレッドが実際に条件変数に対して待機するその直前に条件を送信する、
+という競合条件を避けるためである。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>pthread_cond_init</B>
+
+は、条件変数
+<I>cond</I>
+
+を
+<I>cond_attr</I>
+
+で指定された条件属性、または
+<I>cond_attr</I>
+
+が
+<B>NULL</B>
+
+であれば、デフォルトの属性で初期化する。
+LinuxThreads の実装は、いかなる条件変数の属性にも対応していない。
+かくして、
+<I>cond_attr</I>
+
+パラメタは、実のところ無視される。
+<P>
+
+
+
+
+
+型
+<B>pthread_cond_t</B>
+
+の変数は、定数
+<B>PTHREAD_COND_INITIALIZER</B>
+
+を使って静的に初期化することもできる。
+<P>
+
+
+
+
+
+
+
+
+
+
+<B>pthread_cond_signal</B>
+
+は、条件変数
+<I>cond</I>
+
+に備えて待機しているスレッドの一つの実行を再開させる。
+<I>cond</I>
+
+を待っているスレッドがなければ、何も起こらない。
+複数のスレッドが
+<I>cond</I>
+
+を待っていれば、ただ一つのものだけが再開されるが、どれであるかは
+わからない。
+<P>
+
+
+
+
+
+
+
+<B>pthread_cond_broadcast</B>
+
+は
+<I>cond</I>
+
+に備えて待機している全てのスレッドの実行を再開させる。
+<I>cond</I>
+
+を待っているスレッドがなければ、何も起こらない。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>pthread_cond_wait</B>
+
+は
+(
+<B>pthread_mutex_unlock</B>
+
+による)
+<I>mutex</I>
+
+のアンロックと条件変数
+<I>cond</I>
+
+の送信に対する待機を一息で行う。条件変数が送信されるまで
+スレッドの実行は停止され、CPU 時間を消費することはない。
+<I>mutex</I>
+
+は、
+<B>pthread_cond_wait</B>
+
+の開始時点で、これを呼び出すスレッドによってロックされていなければ
+ならない。
+呼び出し側のスレッドに戻る前に
+<B>pthread_cond_wait</B>
+
+は
+<I>mutex</I>
+
+を
+(
+<B>pthread_mutex_lock</B>
+
+によって)再び獲得する。
+<P>
+
+
+
+
+
+mutex のアンロックと条件変数に対する待機は一息に行われる。従って、
+全てのスレッドが条件を送信する前に常に mutex を獲得するのならば、
+スレッドが mutex をアンロックする時点と、それが条件変数を待つ時点
+との中間の時点で、条件の送信が行なわれる(従って無視される)ことが
+不可能となることが保証される。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>pthread_cond_timedwait</B>
+
+は
+<B>pthread_cond_wait</B>
+
+と同じく、一息で
+<I>mutex</I>
+
+のアンロックと
+<I>cond</I>
+
+への待機を行う。しかしまた、待ち時間の長さの設定も行う。
+<I>cond</I>
+
+が
+<I>abstime</I>
+
+で指定された時間内に送信されなかったのならば、
+mutex 
+<I>mutex</I>
+
+が再獲得され
+<B>pthread_cond_timedwait</B>
+
+は、エラー
+<B>ETIMEDOUT</B>
+
+を返す。
+<I>abstime</I>
+
+パラメタは
+<B><A HREF="../../LDP_man-pages/man2/time.2.html">time</A></B>(2)
+
+と
+<B><A HREF="../../LDP_man-pages/man2/gettimeofday.2.html">gettimeofday</A></B>(2)
+
+の起点を同じくする絶対時間を指定する。すなわち
+0 の
+<I>abstime</I>
+
+は 00:00:00 GMT, January 1, 1970 に相当する。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+<P>
+<B>pthread_cond_destroy</B>
+
+は条件変数を破壊し、それが保持している可能性のある資源を開放する。
+<B>pthread_cond_destroy</B>
+
+の開始時点で、いかなるスレッドもその条件変数を待っていてはいけない。
+LinuxThreads の実装では、いかなる資源も条件変数に付随していない。
+従って、
+<B>pthread_cond_destroy</B>
+
+は、条件が待機スレッドを持っていないことを確かめる以外に
+何もしない。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>取り消し</H2>
+
+<P>
+<B>pthread_cond_wait</B>
+
+および
+<B>pthread_cond_timedwait</B>
+
+は、取り消しポイントである。このいずれかの関数で停止している
+スレッドが取り消されると、スレッドは直ちに実行を再開し、
+<B>pthread_cond_wait</B>
+
+と
+<B>pthread_cond_timedwait</B>
+
+の
+<I>mutex</I>
+
+引数を再ロックし、最後に取り消しを実行する。
+結果として、クリーンアップハンドラが呼び出される際に
+<I>mutex</I>
+
+がロックされていることを保証される。
+<P>
+
+
+
+
+
+
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>非同期シグナルに対する安全性</H2>
+
+<P>
+条件関数は非同期シグナルに対して安全ではない。よって、
+シグナルハンドラから呼び出すべきではない。特に、
+<B>pthread_cond_signal</B>
+
+または
+<B>pthread_cond_broadcast</B>
+
+のシグナルハンドラからの呼び出しは、呼び出しスレッドを
+デッドロックする可能性がある。
+<P>
+
+
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+<P>
+全ての条件変数関数は、成功すると 0 を返し、エラーならば非ゼロの
+エラーコードを返す。
+<P>
+
+
+
+
+
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<P>
+<B>pthread_cond_init</B>,
+
+<B>pthread_cond_signal</B>,
+
+<B>pthread_cond_broadcast</B>,
+
+および
+<B>pthread_cond_wait</B>
+
+は、決してエラーコードを返さない。
+<P>
+
+
+
+
+
+
+
+
+
+<B>pthread_cond_timedwait</B>
+
+は、エラーに際して次のエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>ETIMEDOUT</B>
+
+<DD>
+条件変数が
+<I>abstime</I>
+
+で指定された時限までに送信されなかった。
+<P>
+
+
+
+
+
+<DT><B>EINTR</B>
+
+<DD>
+<B>pthread_cond_timedwait</B>
+
+がシグナルによって割り込まれた。
+</DL>
+</DL>
+
+<P>
+
+
+
+
+
+
+
+
+
+
+<B>pthread_cond_destroy</B>
+
+関数は、エラーに際して次のエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EBUSY</B>
+
+<DD>
+いずれかのスレッドが現在
+<I>cond</I>
+
+に対して待機している。
+</DL>
+</DL>
+
+<P>
+
+
+
+
+
+
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+Xavier Leroy &lt;<A HREF="mailto:Xavier.Leroy@inria.fr">Xavier.Leroy@inria.fr</A>&gt;
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/pthread_condattr_init.3.html">pthread_condattr_init</A></B>(3),
+
+<B><A HREF="../man3/pthread_mutex_lock.3.html">pthread_mutex_lock</A></B>(3),
+
+<B><A HREF="../man3/pthread_mutex_unlock.3.html">pthread_mutex_unlock</A></B>(3),
+
+<B><A HREF="../../LDP_man-pages/man2/gettimeofday.2.html">gettimeofday</A></B>(2),
+
+<B><A HREF="../../LDP_man-pages/man2/nanosleep.2.html">nanosleep</A></B>(2).
+
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+<P>
+二つの共有変数
+<I>x</I>
+
+と
+<I>y</I>
+
+があって、mutex 
+<I>mut</I>
+
+により保護されているとしよう。更に、条件変数
+<I>cond</I>
+
+があって、
+<I>x</I>
+
+が
+<I>y</I>
+
+より大きくなれば、送信されるとしよう。
+<P>
+<DL COMPACT><DT><DD>
+<B>
+</B><PRE>
+
+int x,y;
+pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
+</DL>
+</PRE>
+
+<P>
+
+
+
+
+
+<I>x</I>
+
+が
+<I>y</I>
+
+より大きくなるまで待つには、
+次のようにすれば良い:
+<P>
+<DL COMPACT><DT><DD>
+<B>
+</B><PRE>
+
+pthread_mutex_lock(&amp;mut);
+while (x &lt;= y) {
+        pthread_cond_wait(&amp;cond, &amp;mut);
+}
+/* x と y の操作 */
+pthread_mutex_unlock(&amp;mut);
+
+</DL>
+</PRE>
+
+<P>
+
+
+
+
+
+
+
+
+
+<I>x</I>
+
+を
+<I>y</I>
+
+よりも大きくするような
+<I>x</I>
+
+と
+<I>y</I>
+
+の操作は必要に応じて、条件を送信せねばならない:
+<P>
+<DL COMPACT><DT><DD>
+<B>
+</B><PRE>
+
+pthread_mutex_lock(&amp;mut);
+/* x と y を変更する */
+if (x &gt; y) pthread_cond_broadcast(&amp;cond);
+pthread_mutex_unlock(&amp;mut);
+
+</DL>
+</PRE>
+
+<P>
+
+
+
+
+
+
+
+
+
+
+
+起動すべきスレッドが最大限一つであることが確実ならば
+(例えば、
+<I>x</I>
+
+と
+<I>y</I>
+
+を通じて交流するスレッドが二つしかないのならば)、
+<B>pthread_cond_signal</B>
+
+を
+<B>pthread_cond_broadcast</B>
+
+の、少しばかり効率的な代替物として使用できる。
+疑問のある場合には
+<B>pthread_cond_broadcast</B>
+
+を使用せよ。
+<P>
+
+
+
+
+
+
+<I>x</I>
+
+が
+<I>y</I>
+
+より大きくなるのを五秒の時限を設けて待つには次のようにする:
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<DL COMPACT><DT><DD>
+<B>
+</B><PRE>
+
+struct timeval now;
+struct timespec timeout;
+int retcode;
+
+pthread_mutex_lock(&amp;mut);
+gettimeofday(&amp;now);
+timeout.tv_sec = now.tv_sec + 5;
+timeout.tv_nsec = now.tv_usec * 1000;
+retcode = 0;
+while (x &lt;= y &amp;&amp; retcode != ETIMEDOUT) {
+        retcode = pthread_cond_timedwait(&amp;cond, &amp;mut, &amp;timeout);
+}
+if (retcode == ETIMEDOUT) {
+        /* タイムアウト */
+} else {
+        /* x と y の操作 */
+}
+pthread_mutex_unlock(&amp;mut);
+
+</DL>
+</PRE>
+
+<P>
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">取り消し</A><DD>
+<DT><A HREF="#lbAF">非同期シグナルに対する安全性</A><DD>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

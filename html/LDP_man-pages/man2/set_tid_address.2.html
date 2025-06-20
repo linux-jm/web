@@ -1,0 +1,111 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SET_TID_ADDRESS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SET_TID_ADDRESS</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/set_tid_address.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+set_tid_address - スレッド ID へのポインターを設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/linux/unistd.h">linux/unistd.h</A>&gt;</B>
+
+<B>pid_t set_tid_address(int *</B><I>tidptr</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>注</I>: このシステムコールには glibc のラッパー関数は存在しない。「注意」の節を参照。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+各スレッドについて、カーネルは <I>set_child_tid</I> と <I>clear_child_tid</I> という 2 つの属性を保持する。この 2
+つの属性はデフォルトでは NULL である。
+<DL COMPACT>
+<DT><I>set_child_tid</I><DD>
+スレッドが <B>CLONE_CHILD_SETTID</B> フラグを指定した <B><A HREF="../man2/clone.2.html">clone</A></B>(2)  によって開始された場合、
+<I>set_child_tid</I> は <B><A HREF="../man2/clone.2.html">clone</A></B>(2) のシステムコールの <I>ctid</I> 引数で渡された値に設定される。
+<DT><DD>
+<I>set_child_tid</I> が設定された場合、一番最初に新しいスレッドが行うことは、 このアドレスに自身のスレッド ID を書き込むことである。
+<DT><I>clear_child_tid</I><DD>
+スレッドが <B>CLONE_CHILD_CLEARTID</B> フラグを指定した <B><A HREF="../man2/clone.2.html">clone</A></B>(2) によって開始された場合、
+<I>clear_child_tid</I> は <B><A HREF="../man2/clone.2.html">clone</A></B>(2) のシステムコールの <I>ctid</I> 引数で渡された値に設定される。
+</DL>
+<P>
+
+システムコール <B>set_tid_address</B>()  は呼び出し元スレッドの <I>clear_child_tid</I> の値を <I>tidptr</I>
+に設定する。
+<P>
+
+<I>clear_child_tid</I> が NULL でないスレッドが終了すると、そのスレッドが他のスレッドとメモリーを共有していれば、
+<I>clear_child_tid</I> で指定されたアドレスに 0 が書き込まれ、カーネルは以下の処理を実行する。
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;futex(clear_child_tid,&nbsp;FUTEX_WAKE,&nbsp;1,&nbsp;NULL,&nbsp;NULL,&nbsp;0);
+<P>
+
+この処理の結果、このメモリーアドレスに対する futex wait を実行しているスレッドを一つ起こす (wake)。 futex wake
+操作でのエラーは無視される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>set_tid_address</B>()  は常に呼び出し元のスレッド ID を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>set_tid_address</B>()  は常に成功する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+この呼び出しは Linux 2.5.48 以降で存在する。 ここで書かれた詳細は Linux 2.5.49 以降で有効である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+glibc はこのシステムコールに対するラッパー関数を提供していない。 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)  を使って呼び出すこと。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2), <B><A HREF="../man2/futex.2.html">futex</A></B>(2), <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

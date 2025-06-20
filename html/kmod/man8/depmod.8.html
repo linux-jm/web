@@ -1,0 +1,263 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DEPMOD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>DEPMOD</H1>
+Section: depmod (8)<BR>Updated: 2021/01/29<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/kmod/release/man8/depmod.8">roff page</A><HR>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+depmod - modules.dep とマップファイルを生成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<DL COMPACT>
+<DT>
+<B>depmod</B> [<B>-b&nbsp;</B><I>basedir</I>] [<B>-e</B>] [<B>-E&nbsp;</B><I>Module.symvers</I>] [<B>-F&nbsp;</B><I>System.map</I>] [<B>-n</B>] [<B>-v</B>] [<B>-A</B>] [<B>-P&nbsp;</B><I>prefix</I>] [<B>-w</B>]
+[<I>version</I>]
+<DT>
+<B>depmod</B> [<B>-e</B>] [<B>-E&nbsp;</B><I>Module.symvers</I>] [<B>-F&nbsp;</B><I>System.map</I>]
+[<B>-n</B>] [<B>-v</B>] [<B>-P&nbsp;</B><I>prefix</I>] [<B>-w</B>] [<I>version</I>] [<I>filename</I>...]
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+<DD>Linux のカーネルモジュールは、(「シンボル」と呼ばれる)
+サービスを (コード中で EXPORT_SYMBOL バリアントの 1 つを使用して)
+ほかのモジュールが使えるように提供することができます。
+あるモジュールがそうしたシンボルを使用している場合、
+そのモジュールがシンボルを提供する側のモジュールに依存していることは明白です。
+こうした依存関係は、かなり複雑になることがあります。
+<P>
+
+<B>depmod</B> は、/lib/modules/<I>version</I> 以下にある各モジュールを読み込み、
+それがどんなシンボルをエクスポートし、どんなシンボルを必要としているかを特定して、
+モジュールの依存関係のリストを作成します。デフォルトでは、このリストは、
+上記ディレクトリに置かれる modules.dep と、それをバイナリハッシュ化した
+modules.dep.bin という名前のファイルに書き込まれます。
+なお、ファイル名をコマンドラインで指定した場合は、そうしたモジュールのみが調べられます
+(すべてのモジュールを指定しないかぎり、これが役に立つことはめったにありません)。
+<B>depmod</B> はまた、モジュールが提供するシンボルのリストを作成し、modules.symbols
+というファイルと、そのバイナリハッシュ版の
+modules.symbols.bin に書き込みます。最後に、<B>depmod</B>
+は、モジュールがスペシャルデバイス名を供給している場合は、modules.devname
+という名前のファイルを出力します。そうしたスペシャルデバイス名は、普通ブート時に
+(systemd-tmpfiles のようなユーティリティによって) /dev
+ディレクトリに配置されます。
+<P>
+
+引数に <I>version</I> を指定した場合は、現在稼働中のカーネルバージョン
+(<B>uname -r</B> で返ってくるもの)
+ではなく、指定したカーネルバージョンのモジュールディレクトリが使用されます。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<P>
+
+<B>-a</B>, <B>--all</B>
+<DL COMPACT><DT><DD>
+すべてのモジュールを調べます。このオプションは、
+コマンドラインでファイル名を一つも指定しなかった場合、デフォルトで有効になります。
+</DL>
+
+<P>
+
+<B>-A</B>, <B>--quick</B>
+<DL COMPACT><DT><DD>
+このオプションを指定すると、処理を行う前にモジュール群にざっと目を通して、
+modules.dep ファイルより新しいモジュールがあるかどうかを調べます。もしなければ、
+modules.dep などのファイルを作り直さず、何のメッセージも出さずに終了します。
+</DL>
+
+<P>
+
+<B>-b </B><I>basedir</I>, <B>--basedir </B><I>basedir</I>
+<DL COMPACT><DT><DD>
+対象となるモジュール群が、現在、(標準の) ディレクトリ /lib/modules/<I>version</I>
+になく、準備領域 (a staging area) にある場合、
+準備領域で標準ディレクトリ名に先行するディレクトリ名 <I>basedir</I>
+を指定することができます。この <I>basename</I> は、作成される modules.dep
+ファイルでは取り除かれるので、作成されたファイルは、
+そのまま標準の場所に移動することができます。あなたがディストリビューターであり、
+depmod を後であらためて実行しないでも済むように、
+一連のメタデータファイルを前もって作っておく必要があるならば、
+このオプションを使用するとよいでしょう。
+</DL>
+
+<P>
+
+<B>-C</B>, <B>--config </B><I>file or directory</I>
+<DL COMPACT><DT><DD>
+/etc/depmod.d にあるデフォルトの設定ディレクトリの代わりに、
+このオプションで指定するものを使用します。
+</DL>
+
+<P>
+
+<B>-e</B>, <B>--errsyms</B>
+<DL COMPACT><DT><DD>
+このオプションは、<B>-F</B> オプションと一緒に使用した場合、
+あるモジュールが必要としているシンボルに、
+ほかのモジュールやカーネルによって供給されていないものがあると、
+そのシンボルを報告します。通常、モジュールによって提供されていないシンボルがあれば、
+それはカーネルによって提供されるものと見なされます
+(完璧な世界でなら、そうなっているはずです)。しかし、その想定が外れることもあります。
+特に、サードパーティ製のドライバを後日アップデートしたとき、
+それがきちんとインストールされていなかったり、正しくビルドされていなかったりすると、
+そうなります。
+</DL>
+
+<P>
+
+<B>-E</B>, <B>--symvers </B><I>Module.symvers</I>
+<DL COMPACT><DT><DD>
+このオプションは、<B>-e</B> オプションと一緒に使用した場合、
+モジュールが提示しているシンボルのバージョンの中に、カーネルがその
+Module.symvers (訳注: このファイルは、自分でカーネルをビルドすると生成されます)
+で情報を提供しているシンボルのバージョンと一致しないものがあれば、それを報告します。
+このオプションは、<B>-F</B> と一緒には使えません。
+</DL>
+
+<P>
+
+<B>-F</B>, <B>--filesyms </B><I>System.map</I>
+<DL COMPACT><DT><DD>
+カーネルがビルドされたときに作成された System.map
+を指定します。このオプションを使用すると、<B>-e</B>
+オプションが、解決できないシンボルを報告できるようになります。このオプションは、<B>-E</B>
+と一緒には使えません。
+</DL>
+
+<P>
+
+<B>-h</B>, <B>--help</B>
+<DL COMPACT><DT><DD>
+ヘルプメッセージを表示して終了します。
+</DL>
+
+<P>
+
+<B>-n</B>, <B>--show</B>, <B>--dry-run</B>
+<DL COMPACT><DT><DD>
+このオプションを指定すると、生成された modules.dep
+や様々なマップファイルを、モジュールディレクトリに書き込まずに、
+標準出力に書き出します。
+</DL>
+
+<P>
+
+<B>-P</B>
+<DL COMPACT><DT><DD>
+アーキテクチャーによっては、シンボルの前に無関係な文字を付けるものがあります。
+このオプションでは、(たとえば、'_' といった) 無視すべき接頭辞を指定します。
+</DL>
+
+<P>
+
+<B>-v</B>, <B>--verbose</B>
+<DL COMPACT><DT><DD>
+詳細モードでは、<B>depmod</B> は、各モジュールが依存しているすべてのシンボルと、
+そのシンボルを提供しているモジュールのファイル名を (標準出力に) 書き出します。
+</DL>
+
+<P>
+
+<B>-V</B>, <B>--version</B>
+<DL COMPACT><DT><DD>
+プログラムのバージョンを表示して終了します。
+</DL>
+
+<P>
+
+<B>-w</B>
+<DL COMPACT><DT><DD>
+依存関係、エイリアス、シンボルバージョンなどに重複がある場合に警告します。
+</DL>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>著作権</H2>
+
+<P>
+
+このマニュアルページの最初の版は、&quot;Copyright 2002, Rusty Russell,
+IBM Corporation&quot; でした。現在では、&quot;Copyright Jon Masters,
+and others&quot; の部分もあります。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<P>
+
+<B><A HREF="../man5/depmod.d.5.html">depmod.d</A></B>(5), <B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8), <B><A HREF="../man5/modules.dep.5.html">modules.dep</A></B>(5)
+<A NAME="lbAH">&nbsp;</A>
+<H2>著者</H2>
+
+<P>
+
+<B>Jon Masters</B> &lt;<A HREF="mailto:jcm@jonmasters.org">jcm@jonmasters.org</A>&gt;
+<DL COMPACT><DT><DD>
+開発者
+</DL>
+
+<P>
+
+<B>Robby Workman</B> &lt;<A HREF="mailto:rworkman@slackware.com">rworkman@slackware.com</A>&gt;
+<DL COMPACT><DT><DD>
+開発者
+</DL>
+
+<P>
+
+<B>Lucas De Marchi</B> &lt;<A HREF="mailto:lucas.de.marchi@gmail.com">lucas.de.marchi@gmail.com</A>&gt;
+<DL COMPACT><DT><DD>
+開発者
+</DL>
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">著作権</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

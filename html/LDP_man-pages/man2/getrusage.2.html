@@ -1,0 +1,218 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETRUSAGE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETRUSAGE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/getrusage.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getrusage - 資源の使用量を取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;</B>
+<P>
+
+<B>int getrusage(int </B><I>who</I><B>, struct rusage *</B><I>usage</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getrusage</B>()  は <I>who</I> の資源 (resource) の使用量を返す。 <I>who</I> には以下のいずれか一つを指定できる。
+<DL COMPACT>
+<DT><B>RUSAGE_SELF</B><DD>
+呼び出したプロセスの資源使用量、 そのプロセス内の全スレッドが使用している資源の合計を返す。
+<DT><B>RUSAGE_CHILDREN</B><DD>
+呼び出したプロセスの子プロセスのうち、 終了して待ち状態にある全プロセスが使用している資源使用量の統計を返す。
+これらの統計情報には、孫プロセスやその子孫のプロセスのうち、 削除待ちのものが使用している資源も含まれる。
+<DT><B>RUSAGE_THREAD</B> (Linux 2.6.26 以降)<DD>
+呼び出したスレッドに関する資源使用量の統計を返す。 <I>&lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;</I> からこの定数の定義を得るためには、
+((<I>どの</I>ヘッダーファイルをインクルードするよりも前に) 機能検査マクロ <B>_GNU_SOURCE</B> を定義しなければならない。
+</DL>
+<P>
+
+資源使用量は <I>usage</I> が指す構造体に格納されて返される。 構造体は以下の形式である。
+<P>
+
+
+
+struct rusage {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;timeval&nbsp;ru_utime;&nbsp;/*&nbsp;使用されたユーザー&nbsp;CPU&nbsp;時間&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;timeval&nbsp;ru_stime;&nbsp;/*&nbsp;使用されたシステム&nbsp;CPU&nbsp;時間&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_maxrss;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;RAM&nbsp;上に存在する仮想ページのサイズ
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(resident&nbsp;set&nbsp;size)&nbsp;の最大値&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_ixrss;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;共有メモリーの合計サイズ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_idrss;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;非共有データの合計サイズ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_isrss;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;非共有スタックの合計サイズ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_minflt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ページの再利用&nbsp;(ソフトページフォルト)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_majflt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ページフォールト&nbsp;(ハードページフォルト)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_nswap;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;スワップ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_inblock;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ブロック入力操作&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_oublock;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ブロック出力操作&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_msgsnd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;送信された&nbsp;IPC&nbsp;メッセージ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_msgrcv;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;受信された&nbsp;IPC&nbsp;メッセージ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_nsignals;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;受信されたシグナル&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_nvcsw;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;意図したコンテキスト切り替え&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;ru_nivcsw;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;意図しないコンテキスト切り替え&nbsp;*/
+};
+
+
+<P>
+
+すべてのフィールドがサポートされているわけではない。 メンテナンスされていないフィールドには、 カーネルが 0 を設定する
+(メンテナンスされていないフィールドは、 他のシステムとの互換性のために提供されており、 いつか Linux でもサポートされるかもしれない)。
+各フィールドの詳細は以下の通りである。
+<DL COMPACT>
+<DT><I>ru_utime</I><DD>
+ユーザーモードでの実行で消費された合計時間。 <I>timeval</I> 構造体 (秒とミリ秒) で表現される。
+<DT><I>ru_stime</I><DD>
+カーネルモードでの実行で消費された合計時間。 <I>timeval</I> 構造体 (秒とミリ秒) で表現される。
+<DT><I>ru_maxrss</I> (Linux 2.6.32 以降)<DD>
+使用された resident set size の最大値 (キロバイト単位)。 <B>RUSAGE_CHILDREN</B> の場合には、プロセスツリーの
+resident set size の最大値ではなく、 最も大きい子プロセスの resident set size となる。
+<DT><I>ru_ixrss</I> (メンテナンスされていない)<DD>
+
+
+
+このフィールドは現在のところ Linux では未使用である。
+<DT><I>ru_idrss</I> (メンテナンスされていない)<DD>
+
+
+このフィールドは現在のところ Linux では未使用である。
+<DT><I>ru_isrss</I> (メンテナンスされていない)<DD>
+
+
+このフィールドは現在のところ Linux では未使用である。
+<DT><I>ru_minflt</I><DD>
+I/O 動作なしで発生したページフォルトの回数。 再割り当てを待っているページリストからページフレームを「回収」 (reclaim) することで、
+I/O 動作を避けることができる。
+<DT><I>ru_majflt</I><DD>
+I/O 動作を必要とするページフォルトの回数。
+<DT><I>ru_nswap</I> (メンテナンスされていない)<DD>
+
+このフィールドは現在のところ Linux では未使用である。
+<DT><I>ru_inblock</I> (Linux 2.6.22 以降)<DD>
+ファイルシステムが入力を実行する必要があった回数。
+<DT><I>ru_oublock</I> (Linux 2.6.22 以降)<DD>
+ファイルシステムが出力を実行する必要があった回数。
+<DT><I>ru_msgsnd</I> (メンテナンスされていない)<DD>
+
+
+
+このフィールドは現在のところ Linux では未使用である。
+<DT><I>ru_msgrcv</I> (メンテナンスされていない)<DD>
+
+
+
+このフィールドは現在のところ Linux では未使用である。
+<DT><I>ru_nsignals</I> (メンテナンスされていない)<DD>
+
+このフィールドは現在のところ Linux では未使用である。
+<DT><I>ru_nvcsw</I> (Linux 2.6 以降)<DD>
+自分のタイムスライスが完了する前にプロセスが自発的にプロセッサを解放して行われたコンテキストスイッチの回数
+(通常はリソースが利用可能になるのを待つために行われる)。
+<DT><I>ru_nivcsw</I> (Linux 2.6 以降)<DD>
+優先度が自分より高いプロセッサが実行可能になったか、現在のプロセスが自分のタイムスライスを超過したことにより行われたコンテキストスイッチの回数。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>usage</I> がアクセス可能なアドレス空間の外を指している。
+<DT><B>EINVAL</B><DD>
+<I>who</I> が無効である。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getrusage</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.  POSIX.1 は <B>getrusage</B>()
+を規定しているが、規定しているフィールドは <I>ru_utime</I> と <I>ru_stime</I> だけである。
+<P>
+
+<B>RUSAGE_THREAD</B> は Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  の前後でリソース使用量の指標は保持される。
+<P>
+
+今日では <I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I> をインクルードする必要はないが、 インクルードしておけば移植性が増す。 (実際
+<I>struct timeval</I> は <I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I> で定義されている。)
+<P>
+
+
+
+2.6.9 より前のバージョンの Linux カーネルでは、 <B>SIGCHLD</B> の処理が <B>SIG_IGN</B> に設定されていると、
+子プロセスのリソース使用量が <B>RUSAGE_CHILDREN</B> で返される値に自動的に含められる。 しかし POSIX.1-2001
+では、これを明確に禁止している。 この準拠していなかった点は、Linux 2.6.9 以降で改正された。
+<P>
+
+このページの最初で示した構造体の定義は 4.3BSD Reno のものである。
+<P>
+
+古いシステムでは、 <B>getrusage</B>() と同様の目的を持つ関数 <B>vtimes</B>() が提供されていた。後方互換性のため、glibc
+(バージョン 2.32 まで) でも <B>vtimes</B>() を提供している。全ての新しいアプリケーションでは <B>getrusage</B>()
+を使用すべきである。
+<P>
+
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5)  にある <I>/proc/[pid]/stat</I> の説明も参照のこと。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2), <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2), <B><A HREF="../man2/times.2.html">times</A></B>(2), <B><A HREF="../man2/wait.2.html">wait</A></B>(2), <B><A HREF="../man2/wait4.2.html">wait4</A></B>(2),
+<B><A HREF="../man3/clock.3.html">clock</A></B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

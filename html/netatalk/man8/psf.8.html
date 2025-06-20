@@ -1,0 +1,230 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PSF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PSF</H1>
+Section: Maintenance Commands (8)<BR>Updated: 17 Dec 1991<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/netatalk/release/man8/psf.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+psf - PostScript フィルタ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>psf</B>
+
+[
+<B>-n</B>
+
+<I>name</I>
+
+] [
+<B>-h</B>
+
+<I>host</I>
+
+] [
+<B>-w</B>
+
+<I>width</I>
+
+] [
+<B>-l</B>
+
+<I>length</I>
+
+] [
+<B>-i</B>
+
+<I>indent</I>
+
+] [
+<B>-c</B>
+
+]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>psf</B>
+
+は PostScript 印刷をするための
+<B>lpd</B>
+
+フィルタである。
+<B>psf</B>
+
+は、どのフィルタを起動するかを決めるために、
+自分がどういう名前で呼び出されたかを調べる。
+まず、名前のどこかに文字列 ``pap'' がある場合は、
+<B>psf</B>
+
+は AppleTalk を経由してプリンタと通信するために
+<B>pap</B>
+
+を起動する。
+次に、文字列 ``rev'' がある場合は、
+<B>psf</B>
+
+はジョブのページを逆順にするために
+<B>psorder</B>
+
+を起動する。
+最後に、
+<B>psf</B>
+
+が名前の先頭部にフィルター名を付けて呼ばれた場合は、
+そのフィルタを起動する。
+実行するフィルタがない場合、
+<B>psf</B>
+
+は入力のマジックナンバーを調べ、
+入力が PostScript でない場合は PostScript に変換する。
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>クラッジ (KLUDGE)</H2>
+
+デフォルトの設定では、
+<B>psf</B>
+
+は 2 つのクラッジをサポートしている。
+1 番目のクラッジは、自分の名前に文字 `m' があるかどうかを
+<B>psf</B>
+
+にチェックさせる。
+この文字があり、アカウンティングが有効になっている場合、
+<B>psf</B>
+
+は
+<B>pap</B>
+
+を 2 度呼び出す。
+1 度目は初期ページカウントを取得し、印刷ジョブを行うためである。
+2 度目は最終ページカウントを取得するためである。
+これは、プリンタが PAP 出力ファイルを閉じなくなるといった、
+いろいろな PAP 実装に含まれるバグに対処するためのものである。
+その顕著な例は Hewlett-Packard のプリンタである。
+<P>
+
+2 番目のクラッジは、自分の名前に文字 `w' があるかどうかを
+<B>psf</B>
+
+にチェックさせる。
+この文字があり、アカウンティングが有効になっている場合、
+<B>psf</B>
+
+は
+<B>pap</B>
+
+を
+<B>-w</B>
+
+フラグ付きで呼び出す。
+このフラグがつくと、
+<B>pap</B>
+
+はプリンタ状態に文字列 `idle' が現われるまで待つ。
+見つかったら、通常と同じく印刷ジョブが行われる。
+このクラッジは、特に Hewlett-Packard の LaserJet IV に
+対処するためのものである。
+このプリンタは、前のページがまだ印刷されている際中に
+ページカウントを報告する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>例</H2>
+
+以下の
+<B>printcap</B>
+
+エントリの例では、
+テキストファイル・PostScript ファイル・
+<B>troff</B>
+
+の C/A/T 出力・
+<B>TeX</B>
+
+の DVI 出力を
+AppleTalk に接続された LaserWriter Plus で印刷するために
+<B>psf</B>
+
+を起動する。
+LaserWriter Plus はページを降順に積み重ねるので、
+ページを逆順にして、バーストページを最後に印刷する。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+laser|lp|LaserWriter Plus on AppleTalk:\
+    :sd=/usr/spool/lpd/laser:\
+    :lp=/usr/spool/lpd/laser/null:\
+    :lf=/var/adm/lpd-errs:pw#80:hl:\
+    :of=/usr/lib/filters/ofpap:\
+    :if=/usr/lib/filters/ifpaprev:\
+    :tf=/usr/lib/filters/tfpaprev:\
+    :df=/usr/lib/filters/dfpaprev:
+</PRE>
+
+</DL>
+
+<P>
+該当するホストが複数の AppleTalk プリンタにスプールする場合、
+<B>lp</B>
+
+機能として
+<B>/dev/null</B>
+
+を使用すべきではない点に注意すること。
+そうではなく、上の例でやっているように、
+各プリンタに対して
+<B>mknod</B>
+
+を使って null デバイスを作成すべきである。
+<P>
+
+最後に、スプールディレクトリ
+<B>/var/spool/lpd/laser</B>
+
+には
+<B>.paprc</B>
+
+という名前のファイルがある。
+<B>pap</B>
+
+はプリンタの AppleTalk 名を調べるためにこのファイルを読む。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/psorder.1.html">psorder</A></B>(1),
+
+<B><A HREF="../../lpr-linux/man5/printcap.5.html">printcap</A></B>(5),
+
+<B><A HREF="../../lpr-linux/man8/lpd.8.html">lpd</A></B>(8),
+
+<B>mknod</B>(8),
+
+<B>pap</B>(8).
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">クラッジ (KLUDGE)</A><DD>
+<DT><A HREF="#lbAF">例</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:40 GMT, December 05, 2022
+</BODY>
+</HTML>

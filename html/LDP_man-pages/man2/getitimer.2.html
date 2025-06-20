@@ -1,0 +1,186 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETITIMER</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETITIMER</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-07-08<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/getitimer.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getitimer, setitimer - インターバルタイマーの値を取得または設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+
+<B>int getitimer(int </B><I>which</I><B>, struct itimerval *</B><I>curr_value</I><B>);</B>
+<BR>
+<B>int setitimer(int </B><I>which</I><B>, const struct itimerval *</B><I>new_value</I><B>,</B>
+<B>              struct itimerval *</B><I>old_value</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+システムは 1 個のプロセスにつき 3 個のインターバルタイマーを提供する。 それぞれのタイマーは別々の時間領域で減少する。 あるタイマーが満了すると、
+プロセスにシグナルが送られ、 タイマーは (0 でなければ) 指定されたインターバルに再設定される。
+<DL COMPACT>
+<DT><B>ITIMER_REAL</B><DD>
+実時間 (real time) で減少し、満了すると <B>SIGALRM</B> が送られる。
+<DT><B>ITIMER_VIRTUAL</B><DD>
+プロセスが実行されている間のみ減少し、満了すると <B>SIGVTALRM</B> が送られる。
+<DT><B>ITIMER_PROF</B><DD>
+プロセスが実行されていて、 かつシステムがそのプロセスのために処理を行なっている間に減少する。 多くの場合、このタイマーは
+<B>ITIMER_VIRTUAL</B> と組み合わされて、アプリケーションがカーネル空間とユーザー空間で
+どれだけの時間を過ごしたかをプロファイルするのに使用される。 満了すると <B>SIGPROF</B> が送られる。
+</DL>
+<P>
+
+タイマーの値は以下の構造体によって定義される:
+
+
+<PRE>
+
+struct itimerval {
+    struct timeval it_interval; /* Interval for periodic timer */
+    struct timeval it_value;    /* Time until next expiration */
+};
+
+struct timeval {
+    time_t      tv_sec;         /* seconds */
+    suseconds_t tv_usec;        /* microseconds */
+};
+</PRE>
+
+
+
+<P>
+
+<B>getitimer</B>()  関数は、 <I>which</I> で指定されたタイマー (<B>ITIMER_REAL</B>, <B>ITIMER_VIRTUAL</B>,
+<B>ITIMER_PROF</B> のどれか) の現在の値 (すなわち、次のタイマー満了までの残り時間) を、 <I>curr_value</I>
+で指定された構造体に格納する。 <I>it_value</I> フィールドのサブフィールドにはタイマーの残り時間が設定される。 タイマーが無効になっている場合は
+ゼロが設定される。 <I>it_interval</I> フィールドにはタイマーのインターバル (期間) が設定される。 <I>it_interval</I>
+(の両方のサブフィールド) で値 0 が返された場合は、 このタイマーが 1 回限りのタイマーであることを示している。
+<P>
+<B>setitimer</B>()  関数は指定されたタイマーに <I>new_value</I> の値を設定する。 <I>old_value</I> が NULL
+以外の場合、タイマーの古い値 (すなわち <B>getitimer</B>() で返されるのと同じ情報) が <I>old_value</I> に格納される。
+<P>
+
+タイマーは <I>it_value</I> からゼロへ向けて減っていき、シグナルを生成し、 <I>it_interval</I> に初期化される。
+タイマーがゼロに設定された場合 (<I>it_value</I> がゼロか、タイマーが満了した時に <I>it_interval</I> がゼロの場合) は停止する。
+<P>
+
+タイマーの期間は <I>tv_sec</I> と <I>tv_usec</I> の両方により決定される。
+<P>
+
+要求した時間がくる前にタイマーが満了することはないが、 逆にある (短い) 時間だけ満了が遅れることはある。
+どれだけ遅れるかはシステムの時間分解能とシステムの負荷に依存する (<B><A HREF="../man7/time.7.html">time</A></B>(7)  参照; 但し、バグの項も参照のこと)。
+タイマーが満了するとシグナルが生成され、タイマーは初期化される。 プロセスがアクティブな時 (<B>ITIMER_VIRTUAL</B>
+の場合には常にそうである) にタイマーが満了した場合、生成されたシグナルは すぐに配送される。それ以外の場合は、システムの負荷により少しの時間だけ
+遅れて配送される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、0 が返される。エラーが発生した場合、-1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>new_value</I>, <I>old_value</I>, <I>curr_value</I> が有効なポインターではない。
+<DT><B>EINVAL</B><DD>
+<I>which</I> が <B>ITIMER_REAL</B>, <B>ITIMER_VIRTUAL</B>, <B>ITIMER_PROF</B> のどれでもない。 または
+(Linux 2.6.22 以降で)  <I>new_value</I> で指定された構造体の <I>tv_usec</I> フィールドの一つが 0 以上 999999
+以下の範囲に入らない値である。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, SVr4, 4.4BSD (このコールは 4.2BSD で始めて現われた).  POSIX.1-2008 では、
+<B>getitimer</B>()  と <B>setitimer</B>()  は廃止予定とされており、 代わりに POSIX タイマー API
+(<B>timer_gettime</B>(2), <B>timer_settime</B>(2)  など) を使うことが推奨されている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  で作成された子プロセスは、 親プロセスのインターバルタイマーを継承しない。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+の前後ではインターバルタイマーは保存される。
+<P>
+POSIX.1 では、 <B>setitimer</B>()  と、 <B><A HREF="../man2/alarm.2.html">alarm</A></B>(2), <B><A HREF="../man3/sleep.3.html">sleep</A></B>(3), <B><A HREF="../man3/usleep.3.html">usleep</A></B>(3)  という 3
+つのインターフェースとの相互の影響については規定していない。
+<P>
+標準では、次の呼び出しの意味については規定されていない。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;setitimer(which,&nbsp;NULL,&nbsp;&amp;old_value);
+<P>
+(Solaris, BSD 系やおそらく他のシステムもそうだが) 多くのシステムでは、この呼び出しは以下と等価である。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;getitimer(which,&nbsp;&amp;old_value);
+<P>
+Linux では、この呼び出しは <I>new_value</I> フィールドが 0 の呼び出しと等価なものと扱われる。 つまり、タイマーが無効になる。
+<I>Linux のこの間違った機能を使用しないこと</I>。移植性もなく、不必要な機能である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+シグナルの生成と配送は別個のものであり、 前述のシグナルのそれぞれについて一つだけがプロセスのために 待機する。 非常に重い負荷の下では、
+<B>ITIMER_REAL</B> タイマーでは、時間切れにより生成された一つ前のシグナルが配送される前に、 次の時間切れが起こる場合がある。
+そのような場合、 2 個めのイベントに対するシグナルは失われてしまう。
+<P>
+バージョン 2.6.16 より前の Linux カーネルでは、 タイマーの値は jiffy で表現される。 要求が jiffy 表現で
+(<I>include/linux/jiffies.h</I> で定義されている)  <B>MAX_SEC_IN_JIFFIES</B>
+を越える値をタイマーに設定しようとするものの場合、 タイマーは暗黙にこの上限値に切り詰められる。 Linux/i386 の場合 (Linux
+2.6.13 以降では jiffy は 0.004 秒) の場合、 これはタイマーの上限値がおよそ 99.42 日になることを意味する。 Linux
+2.6.16 以降では、カーネルは時間に関する内部表現として 異なる表現を使うようになっており、この上限はなくなった。
+<P>
+
+
+(i386 を含む) いくつかのシステムでは、 バージョン 2.6.12 以前の Linux カーネルは ある種の状況では 1 jiffy
+早くタイマーが終了してしまうというバグがあった。 このバグはカーネル 2.6.12 で修正された。
+<P>
+
+
+
+POSIX.1-2001 では <B>setitimer</B>()  は <I>tv_usec</I> の値が 0 から 999999
+の範囲外である場合には失敗するべきだとしている。 しかし、2.6.21 以前のカーネルの Linux ではエラーにならず、
+対応する秒数の分だけそのタイマーの秒の値が暗黙に調整される。 カーネル 2.6.22 以降では、この標準非準拠の動作は修正され、 <I>tv_usec</I>
+の値が不適切な場合には <B>EINVAL</B> エラーとなる。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2), <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man2/signal.2.html">signal</A></B>(2), <B>timer_create</B>(2),
+<B><A HREF="../man2/timerfd_create.2.html">timerfd_create</A></B>(2), <B><A HREF="../man7/time.7.html">time</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部である。
+プロジェクトの説明とバグ報告に関する情報は <A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

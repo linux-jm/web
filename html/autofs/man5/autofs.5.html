@@ -1,0 +1,378 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of AUTOFS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>AUTOFS</H1>
+Section: File Formats (5)<BR>Updated: 14 Jan 2000<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/autofs/release/man5/autofs.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+autofs - オートマウントシステムマップの書式
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+オートマウントシステムマップは、オートマウントシステムのマスタマップ
+(<B><A HREF="../man5/auto.master.5.html">auto.master</A></B>(5)
+
+を参照) によって参照される
+ファイルまたは NIS マップである。
+オートマウントシステムマップは (auto.master ファイルで指定される) 
+マップのマウントポイント以下のファイルシステムがどのように
+マウントされるかを記述する。
+この man ページでは、
+<B>sun</B>
+
+マップの書式について記述している。
+他のマップ書式 (例えば <B>hesiod</B>) が指定された場合、
+この man ページは適用できない。
+マップは即時に変更可能で、オートマウントシステムはそのマップに対して
+次の操作が行われたときに変更を認識できる。
+これは
+<B>auto.master</B>
+
+マップについては当てはまらない。
+<A NAME="lbAD">&nbsp;</A>
+<H2>書式</H2>
+
+これはテキストファイルの書式の説明である。
+これらのファイルを指定する別の方法もある。
+空行と # で始まる行は全て無視される。
+マップ内の 1 行の基本的な書式は、以下の通りである:
+<P>
+
+<B>key [</B><I>-options</I><B>] location</B>
+
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H3>key</H3>
+
+間接マウントの場合、これはマウントポイントと
+マウントされているファイルシステム内にあるパスとの間のパス名の一部分である。
+このキーは通常はマウントポイント以下のサブディレクトリ名と考えることができる。
+<P>
+直接マウントの場合、これはマウントポイントの完全なパスである。
+このマップはマスタマップにおける /- というマウントポイントと
+常に関連づけられている。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H3>options</H3>
+
+options は存在してもしなくてもよい。
+options は
+<B>auto.master</B>
+
+ファイルでも指定することができる。
+両方で指定されている場合は、両方の値が足し合わされる
+(これが SunOS との違いである)。
+options はコンマで区切られたオプションのリストで、
+<B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)
+
+コマンドに通常与えているものと同じである。
+2 つの特殊なオプションがある。
+<I>-fstype=</I>
+
+はファイルシステムがデフォルトの
+NFS タイプでない場合にファイルシステムタイプを指定するために使用される。
+このオプションは mount コマンドではなく、オートマウントシステムで処理される。
+<I>-strict</I>
+
+はファイルシステムをマウントするときのエラーを
+致命的なものとして扱うために使われる。
+これは複数のファイルシステムがマウントされる
+(`multimounts') 時に重要である。
+このオプションが指定された場合、
+ファイルシステムが 1 つでもマウントできない場合は、
+全てのファイルシステムがマウントされない。
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H3>location</H3>
+
+location はどこからファイルシステムをマウントするかを指定する。
+多くの場合、これは NFS ボリュームで通常は
+<I>host:pathname</I>
+
+という記法が使われ、
+リモートファイルシステムとマウントされるパスを示す。
+マウントされるファイルシステムが (ローカルの
+<I>/dev</I>
+
+エントリや smbfs 共有のように) / で始まる場合は、
+: を前に付ける必要がある (例:
+<I>:/dev/sda1</I>)。
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>例</H2>
+
+<P>
+<DL COMPACT><DT><DD>
+
+
+<PRE>
+kernel    -ro,soft,intr       <A HREF="ftp://ftp.kernel.org">ftp.kernel.org</A>:/pub/linux
+boot      -fstype=ext2        :/dev/hda1
+windoze   -fstype=smbfs       ://windoze/c
+removable -fstype=ext2        :/dev/hdd
+cd        -fstype=iso9660,ro  :/dev/hdc
+floppy    -fstype=auto        :/dev/fd0
+server    -rw,hard,intr       / -ro myserver.me.org:/ \
+                              /usr myserver.me.org:/usr \
+                              /home myserver.me.org:/home
+</PRE>
+
+</DL>
+
+<P>
+1 行目では
+<I><A HREF="ftp://ftp.kernel.org">ftp.kernel.org</A></I>
+
+にあるカーネルのディレクトリの NFS リモートマウントを指定している。
+これは読み込み専用でマウントされる。
+2 行目ではローカルの ide ドライブ上の ext2 ボリュームをマウントしている。
+3 行目は Windows マシンで共有で公開されているドライブの
+自動マウントを可能にしている。
+残りは全く説明の必要がないだろう。
+最後のエントリ (最後の 3 行) はマルチマップ (下記を参照) の例である。
+<P>
+(<B>vfat</B> のように) アクセス許可を持たないファイルシステムに対して
+オートマウントシステムを使った場合は、
+<B>root</B> ユーザとしてマウントされるので、
+(一般の) ユーザは通常はそのファイルシステムに書き込むことができない。
+この問題は (<I>gid=floppy</I> のように)
+オプション <I>gid=&lt;gid&gt;</I> を渡すことで解決できる。
+そうすると、そのファイルシステムは <B>root</B> ではなく
+グループ <B>floppy</B> でマウントされる。
+そしてユーザをそのグループに追加することで、
+ファイルシステムに書き込むことができる。
+以下は autofs マップのエントリの例である:
+<P>
+<DL COMPACT><DT><DD>
+
+
+<PRE>
+floppy-vfat  -fstype=vfat,sync,gid=floppy,umask=002  :/dev/fd0
+</PRE>
+
+</DL>
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>機能</H2>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>マップのキーの置換</H3>
+
+<B>location</B>
+
+における &amp; 文字は、その行にマッチする
+<B>key</B>
+
+フィールドの値に展開される
+(これはワイルドカードキーと共に使った場合にのみ意味があるだろう)。
+<A NAME="lbAK">&nbsp;</A>
+<H3>ワイルドカードキー</H3>
+
+間接マップの
+<B>key</B>
+
+フィールドにおける * は全てのキーにマッチする。
+実用的な例としては、以下のエントリがある:
+<P>
+<DL COMPACT><DT><DD>
+
+
+<PRE>
+*         &amp;:/home/&amp;
+</PRE>
+
+</DL>
+
+<P>
+これにより、パス
+/<I>mountpoint</I>/<I>hostname</I>/<I>local-path</I>
+
+を使って、ローカルにあるホスト全ての home ディレクトリに
+アクセスできるようになる。
+<A NAME="lbAL">&nbsp;</A>
+<H3>変数の置換</H3>
+
+オートマウントマップの key および location フィールドで、
+シェルスクリプトでおなじみの $ を先頭に付けて
+(フィールド名を区切るために中括弧 (curly brace) も使用可)
+以下の特別な変数を使った場合、次のような値に置き換えられる:
+<P>
+<DL COMPACT><DT><DD>
+
+
+<PRE>
+ARCH           アーキテクチャ (uname -m)
+CPU            プロセッサタイプ
+HOST           ホスト名 (uname -n)
+OSNAME         オペレーティングシステム (uname -s)
+OSREL          OS のリリース (uname -r)
+OSVERS         OS のバージョン (uname -v)
+</PRE>
+
+</DL>
+
+<P>
+<B><A HREF="../man8/automount.8.html">automount</A></B>(8)
+
+の -Dvariable=Value マップオプションを使って、
+追加でエントリを定義することができる。
+<A NAME="lbAM">&nbsp;</A>
+<H3>実行可能マップ</H3>
+
+マップに実行可能のマークを付けることができる。
+auto.master マップを解析する初期化スクリプトは、これを
+<B>program</B>
+
+マップとしてオートマウントシステムに渡す。
+<B>program</B>
+
+マップは key を引き数としたスクリプトとして呼び出される。
+エラーが発生した場合、出力は 1 行も返されない。
+成功した場合は、マップを含む 1 行以上が
+(改行は \ でクォートされて) 返される。
+<P>
+
+<B>program</B>
+
+マップを使うためには、
+<B><A HREF="../man8/automount.8.html">automount</A></B>(8)
+
+デーモンは file タイプではなく program タイプとして
+開始されていなければならない。
+これは初期化スクリプトの中で実装されている。
+<P>
+
+実行可能マップは、エラーの場合、
+全く出力を行わないことに加えて失敗を表すエラーコードを返すことができる。
+標準エラー出力へ送られる全ての出力は、システムログに記録される。
+<A NAME="lbAN">&nbsp;</A>
+<H3>マルチマウント</H3>
+
+<B>multi-mount</B>
+
+マップは複数のファイルシステムをマウントするのに使用される。
+これは以下の形式である:
+<P>
+<DL COMPACT><DT><DD>
+
+
+<PRE>
+<B>key [</B><I>-options</I><B>] [mountpoint [</B><I>-options</I><B>] location...]...</B>
+</PRE>
+
+</DL>
+
+<P>
+<P>
+
+改行を `\' でクォートすれば、複数行に渡って書くこともできる。
+このマップが存在する場合、デフォルトのマウントオプションに加えて、
+マウントポイント毎のマウントオプションが追加される。
+<A NAME="lbAO">&nbsp;</A>
+<H3>レプリケートされたサーバ</H3>
+
+<P>
+<DL COMPACT><DT><DD>
+
+
+<PRE>
+パスが同じ複数のレプリケートされたホスト:
+&lt;path&gt; host1,host2,hostn:/path/path
+
+あるものはパスが同じで、あるものはパスが異なる複数のホスト:
+&lt;path&gt; host1,host2:/blah host3:/some/other/path
+
+パスが異なる (可能性がある) 複数のレプリケートされたホスト:
+&lt;path&gt; host1:/path/pathA host2:/path/pathB
+
+重み付けが異なり、パスが同じレプリケートされたホスト:
+&lt;path&gt; host1(5),host2(6),host3(1):/path/path
+
+重み付けが異なり、異なる (可能性がある) パスのレプリケートされたホスト:
+&lt;path&gt; host1(3):/path/pathA host2(5):/path/pathB
+
+その他の書式は不自然でサポートされていないが、
+変形したこれらの書式でも動作する:
+&lt;path&gt; host1(3),host:/blah
+</PRE>
+
+</DL>
+
+<P>
+<A NAME="lbAP">&nbsp;</A>
+<H2>サポート範囲外</H2>
+
+このバージョンのオートマウントシステムは FILE, NIS, LDAP マップに対する
+直接マップのみをサポートしており、
+SunOS 形式のレプリケートされたファイルシステムについては
+<B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)
+
+がサポートする範囲でのみ取り扱う。
+<A NAME="lbAQ">&nbsp;</A>
+<H2>警告</H2>
+
+Sun の multi-mount 書式とは異なり、
+全てのマウントにおいてマウントポイントは必須である。
+<A NAME="lbAR">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/automount.8.html">automount</A></B>(8),
+
+<B><A HREF="../man5/auto.master.5.html">auto.master</A></B>(5),
+
+<B><A HREF="../man8/autofs.8.html">autofs</A></B>(8),
+
+<B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8).
+
+<A NAME="lbAS">&nbsp;</A>
+<H2>著者</H2>
+
+この man ページは Christoph Lameter &lt;<A HREF="mailto:chris@waterf.org">chris@waterf.org</A>&gt; によって
+Debian GNU/Linux システムのために書かれた。
+H. Peter Anvin &lt;<A HREF="mailto:hpa@transmeta.com">hpa@transmeta.com</A>&gt;, Jeremy Fitzhardinge &lt;<A HREF="mailto:jeremy@goop.org">jeremy@goop.org</A>&gt;,
+Ian Kent &lt;<A HREF="mailto:raven@themaw.net">raven@themaw.net</A>&gt; によって編集された。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DL>
+<DT><A HREF="#lbAE">key</A><DD>
+<DT><A HREF="#lbAF">options</A><DD>
+<DT><A HREF="#lbAG">location</A><DD>
+</DL>
+<DT><A HREF="#lbAH">例</A><DD>
+<DT><A HREF="#lbAI">機能</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">マップのキーの置換</A><DD>
+<DT><A HREF="#lbAK">ワイルドカードキー</A><DD>
+<DT><A HREF="#lbAL">変数の置換</A><DD>
+<DT><A HREF="#lbAM">実行可能マップ</A><DD>
+<DT><A HREF="#lbAN">マルチマウント</A><DD>
+<DT><A HREF="#lbAO">レプリケートされたサーバ</A><DD>
+</DL>
+<DT><A HREF="#lbAP">サポート範囲外</A><DD>
+<DT><A HREF="#lbAQ">警告</A><DD>
+<DT><A HREF="#lbAR">関連項目</A><DD>
+<DT><A HREF="#lbAS">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

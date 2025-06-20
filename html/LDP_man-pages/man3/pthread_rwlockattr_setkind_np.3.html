@@ -1,0 +1,146 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_RWLOCKATTR_SETKIND_NP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_RWLOCKATTR_SETKIND_NP</H1>
+Section: C Library Functions (3)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/pthread_rwlockattr_setkind_np.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_rwlockattr_setkind_np, pthread_rwlockattr_getkind_np -
+スレッドの読み書きロック属性オブジェクトの読み書きロック種別の設定、取得を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<B>int pthread_rwlockattr_setkind_np(pthread_rwlockattr_t *</B><I>attr</I><B>,</B>
+<B>                                   int </B><I>pref</I><B>);</B>
+<B>int pthread_rwlockattr_getkind_np(const pthread_rwlockattr_t *</B><I>attr</I><B>,</B>
+<B>                                   int *</B><I>pref</I><B>);</B>
+
+<I>-pthread</I> でコンパイルしてリンクする。
+
+</PRE>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>pthread_rwlockattr_setkind_np</B>(), <B>pthread_rwlockattr_getkind_np</B>():
+<BR>
+
+<DL COMPACT><DT><DD>
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _POSIX_C_SOURCE &gt;= 200809L
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pthread_rwlockattr_setkind_np</B>() 関数は、 <I>attr</I> が参照する読み書きロック属性オブジェクトの「ロック種別
+(lock kind)」を <I>pref</I> で指定された値に設定する。 引数 <I>pref</I> には以下のいずれか一つを設定できる。
+<DL COMPACT>
+<DT><B>PTHREAD_RWLOCK_PREFER_READER_NP</B><DD>
+これがデフォルトである。 スレッドは複数の読み出しロックを保持できる。 つまり、読み出しロックは再帰的である。 Single Unix
+Specification では、 読み出し側がロックをかけようとした際に、書き込みロックはないが書き込み側が待っていた場合の、動作は規定されていない。
+<B>PTHREAD_RWLOCK_PREFER_READER_NP</B> に設定し、読み出し側に優先度を与えるということは、
+たとえ書き込み側が待っていたとしても、読み出し側が要求したロックを受け取ることを意味する。 読み出し側がいる限り、書き込み側は待つことになる。
+<DT><B>PTHREAD_RWLOCK_PREFER_WRITER_NP</B><DD>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+This is intended as the write lock analog of
+<B>PTHREAD_RWLOCK_PREFER_READER_NP</B>.  This is ignored by glibc because the
+POSIX requirement to support recursive read locks would cause this option to
+create trivial deadlocks; instead use
+<B>PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP</B> which ensures the
+application developer will not take recursive read locks thus avoiding
+deadlocks.
+<DT><B>PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP</B><DD>
+ロック種別をこの値に設定すると、 読み出しロックが再帰的に行われない限りは、 書き込み側の待ちを避けることができる。
+</DL>
+<P>
+
+<B>pthread_rwlockattr_getkind_np</B>() 関数は、 <I>attr</I>
+が参照する読み書きロック属性オブジェクトのロック種別属性の値をポインター <I>pref</I> に入れて返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、これらの関数は 0 を返す。 有効なポインター引数が渡された場合、 <B>pthread_rwlockattr_getkind_np</B>()
+は常に成功する。 エラーの場合、 <B>pthread_rwlockattr_setkind_np</B>() は 0 以外のエラー番号を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>pref</I> にサポート外の値が指定された。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+関数 <B>pthread_rwlockattr_getkind_np</B>() と <B>pthread_rwlockattr_setkind_np</B>() は
+glibc 2.1 で初めて登場した。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+これらの関数は非標準の GNU による拡張である。 そのため、名前に &quot;_np&quot; (non-portable; 移植性がない)
+という接尾辞が付いている。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

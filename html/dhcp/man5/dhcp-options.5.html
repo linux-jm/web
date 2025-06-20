@@ -1,0 +1,2202 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of dhcpd-options</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.isc.org/products/DHCP/">ISC DHCP Project</A>
+() より寄贈いただきました。
+</DIV>
+
+
+<H1>dhcpd-options</H1>
+Section: File Formats (5)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/dhcp/contrib/man5/dhcp-options.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+dhcp-options - 動的ホスト構成プロトコルのオプション
+<A NAME="lbAC">&nbsp;</A>
+<H2>解説</H2>
+
+動的ホスト構成プロトコル (DHCP: Dynamic Host Configuration Protocol) を
+使用することにより、クライアントは DHCP サーバから、ネットワーク設定や
+ネットワーク上で利用可能な様々なサービスについて記述している
+<B>オプション</B>
+
+を受け取ることができます。
+<B><A HREF="../../dhcp2/man8/dhcpd.8.html">dhcpd</A>(8)</B>
+
+や
+<B><A HREF="../man8/dhclient.8.html">dhclient</A>(8)</B>
+
+を設定するときに、しばしばオプションを宣言する必要があるでしょう。
+ここでは、オプションを宣言する文法、
+そして宣言可能なオプションの名前と書式を文書化しています。
+<A NAME="lbAD">&nbsp;</A>
+<H2>リファレンス: オプション文</H2>
+
+<P>
+
+DHCP <I>option</I> 文は、常にキーワード <I>option</I> で開始し、
+単一のオプション名が続き、オプションデータが続きます。
+オプションの名前とデータの書式は後述します。
+すべての DHCP オプションを網羅的に指定する必要はなく、
+クライアントに必要なオプションのみを指定します。
+<P>
+
+オプションデータには、次のように様々な書式があります:
+<P>
+
+<B>ip-address</B>
+
+データタイプは、明示的な IP アドレス (例えば 239.254.197.10) または
+ドメイン名 (例えば haagen.isc.org) のどちらでも指定可能です。
+ドメイン名で指定する場合、
+そのドメイン名を解決すると単一の IP アドレスになるようにしてください。
+<P>
+
+<B>int32</B>
+
+データタイプは符号付き 32 ビット整数を指定します。
+<B>uint32</B>
+
+データタイプは符号無し 32 ビット整数を指定します。
+<B>int16</B>
+
+および
+<B>uint16</B>
+
+のデータタイプは、符号付きおよび符号無しの 16 ビット整数を指定します。
+<B>int8</B>
+
+および
+<B>uint8</B>
+
+のデータタイプは、符号付きおよび符号無しの 8 ビット整数を指定します。
+符号無し 8 ビット整数は、オクテットと呼ばれることもあります。
+<P>
+
+<B>text</B>
+
+データタイプは NVT ASCII 文字列を指定します。
+文字列はダブルクォートで括る必要があります。
+例えば root-path オプションを指定する文法は、次のようになります。
+<PRE>
+
+option root-path &quot;10.0.1.4:/var/tmp/rootfs&quot;;
+</PRE>
+
+<P>
+
+<B>domain-name</B>
+
+データタイプはドメイン名を指定します。
+文字列をダブルクォートで括っていけません。
+このデータタイプは、他の既存の DHCP オプションには使われません。
+ドメイン名は、text オプションであるかのように保持されます。
+
+
+<P>
+
+<B>flag</B>
+
+データタイプはブール値を指定します。
+ブール値は true または false のいずれかです
+(もしくは、on または off の方が分かりやすければ、こちらでもかまいません)。
+<P>
+
+<B>string</B>
+
+データタイプは、ダブルクォートで括られる NVT ASCII 文字列か、
+コロン区切りの 16 進数で指定されるオクテットの連続のいずれかを指定します。
+例えば次のようになります:
+<PRE>
+
+  option dhcp-client-identifier &quot;CLIENT-FOO&quot;;
+もしくは
+  option dhcp-client-identifier 43:4c:49:45:54:2d:46:4f:4f;
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>式を用いたオプション値の設定</H2>
+
+
+クライアントが送出するいくつかの値を、DHCP オプションの値を設定するのに
+使えると便利なことがあります。
+これをするには式の評価が利用できます。
+<B><A HREF="../man5/dhcp-eval.5.html">dhcp-eval</A>(5)</B>
+
+マニュアルページに式の書き方が述べられています。
+評価の結果をオプションに代入するには、オプションを次のように定義します:
+<PRE>
+
+  <B>option </B><I>my-option </I><B>= </B><I>expression </I><B>;</B>
+</PRE>
+
+<P>
+
+例えば次のようにします:
+<PRE>
+
+  option hostname = binary-to-ascii (16, 8, &quot;-&quot;,
+                                     substring (hardware, 1, 6));
+</PRE>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>標準 DHCP オプション</H2>
+
+次に示す様々なオプションに関する記述は、
+DHCP オプションに関する最新の IETF ドラフト文書からのものです。
+名前が掲載されていないオプションは、まだ実装されていないかもしれませんが、
+設定ファイルに定義することで、そのようなオプションを使えるかもしれません。
+詳しくは、この先の「新規オプションの定義」から続く記述を参照してください。
+<P>
+
+ここに記述されているオプションのうちのいくつかは、DHCP サーバもしくは
+クライアントによって自動的に生成されるもので、ユーザには設定できません。
+そのようなオプションの値は、受信側の DHCP プロトコルエージェント
+(サーバもしくはクライアント) の設定ファイル中の、例えば条件式などで
+使われます。
+しかしこのオプションの値は、送信側のエージェントの設定ファイル中では
+使われることはありません。
+というのも、その値は、設定ファイルが処理された後に決定されるからです。
+以降の記述において、そのようなオプションには
+「ユーザが設定することはできません」と記されます。
+<P>
+
+標準オプションを示します:
+<P>
+
+<B>option all-subnets-local</B> <I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが接続されている IP ネットワークの全サブネットが
+使用する MTU が、クライアントが直接接続されているサブネットの MTU と
+同じであると、クライアントが仮定してよいかを指定します。
+値 true は、全サブネットは同一の MTU であることを意味します。
+値 false は、直接接続されているネットワークのサブネットには、より小さな MTU を
+持つものがあると、クライアントが仮定すべきであることを意味します。
+</DL>
+
+<P>
+
+<B>option arp-cache-timeout</B> <I>uint32</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、ARP キャッシュエントリのタイムアウトを秒数で指定します。
+</DL>
+
+<P>
+
+<B>option bootfile-name</B> <I>text</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、起動ファイルを指定するために使用します。
+クライアントによってサポートされている場合、
+これは <B>filename</B> 宣言と同じ効果を持ちます。
+BOOTP クライアントで、このオプションをサポートしているものは少ないでしょう。
+DHCP クライアントによってはサポートするものがあり、
+実際必須としているものがあります。
+</DL>
+
+<P>
+
+<B>option boot-size</B> <I>uint16</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアント用のデフォルトのブートイメージの長さを、
+512 オクテットブロック数で指定します。
+</DL>
+
+<P>
+
+<B>option broadcast-address</B> <I>ip-address</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントのサブネットで使用されている
+ブロードキャストアドレスを指定します。
+正当なブロードキャストアドレスの値は、STD 3 (RFC1122) の 3.2.1.3 節に
+規定されています。
+</DL>
+
+<P>
+
+<B>option cookie-servers</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+クッキーサーバオプションは、クライアントが利用可能な
+RFC 865 クッキーサーバのリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option default-ip-ttl</B> <I>uint8;</I>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントがデータグラムを送出するときに使用すべき、
+デフォルトの生存時間 (TTL) を指定します。
+</DL>
+
+<P>
+
+<B>option default-tcp-ttl</B> <I>uint8</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが TCP セグメントを送出するときに使用すべき、
+デフォルトの TTL を指定します。
+最小値は 1 です。
+</DL>
+
+<P>
+
+<B>option dhcp-client-identifier</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションを使って、ホスト宣言中で DHCP クライアント識別子を
+指定することができます。
+このクライアント識別子で照合を行うことで、
+dhcpd はそのホストのレコードを発見することができます。
+<P>
+
+
+DHCP クライアントの中には、ASCII テキストによってクライアント識別子が
+設定された場合、その ASCII テキストの先頭に 0 をつけるものがあることに
+注意してください。
+その場合、
+<PRE>
+
+        option dhcp-client-identifier &quot;foo&quot;;
+
+ではなく、以下のように記述する必要があるでしょう。
+
+        option dhcp-client-identifier &quot;\0foo&quot;;
+</PRE>
+
+</DL>
+
+<P>
+
+<B>option dhcp-lease-time</B> <I>uint32</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、クライアント要求 (DHCPDISCOVER または DHCPREQUEST) の中で、
+クライアントが IP アドレスのリース時間を要求するために使用されます。
+またサーバ応答 (DHCPOFFER) の中で、DHCP サーバが提示したいリース時間を
+指定するのにも、このオプションは使われます。
+<P>
+
+本オプションは、サーバではユーザが直接設定することはできません。
+<B><A HREF="../../dhcp2/man5/dhcpd.conf.5.html">dhcpd.conf</A>(5)</B>
+
+の <I>max-lease-time</I> と default-lease-time サーバオプションを
+参照してください。
+</DL>
+
+<P>
+
+<B>option dhcp-max-message-size</B> <I>uint16</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、クライアントから送出された場合、サーバがクライアントに
+送出するすべての応答の最大サイズを指定します。
+サーバで設定された場合、クライアントが dhcp-max-message-size オプションを
+送信してこなかった際に、このサーバで設定された値が使用されます。
+これは、BOOTP 応答でも DHCP 応答と同様に動作します。
+</DL>
+
+<P>
+
+<B>option dhcp-message</B> <I>text</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、障害が起きた時に、DHCP サーバが DHCPNAK メッセージ中で
+DHCP クライアントへエラーメッセージを提供するのに使用します。
+またクライアントが、提示されたパラメータを拒否した理由を示すために、
+DHCPDECLINE メッセージ中で本オプションを使うこともあります。
+<P>
+
+本オプションは、ユーザが設定することはできません。
+</DL>
+
+<P>
+
+<B>option dhcp-message-type</B> <I>uint8</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、クライアントとサーバの両者から送出され、
+DHCP パケットが含んでいる DHCP メッセージのタイプを指定します。
+本オプションが取り得る値は、以下のとおりです (RFC2132 よりそのまま抜粋)。
+<P>
+
+<PRE>
+             1     DHCPDISCOVER
+             2     DHCPOFFER
+             3     DHCPREQUEST
+             4     DHCPDECLINE
+             5     DHCPACK
+             6     DHCPNAK
+             7     DHCPRELEASE
+             8     DHCPINFORM               
+</PRE>
+
+<P>
+
+本オプションは、ユーザが設定することはできません。
+<P>
+
+</DL>
+
+<B>option dhcp-option-overload</B> <I>uint8</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、DHCP 'sname' もしくは 'file' フィールドが、
+DHCP オプションを保持するために詰め込み過ぎになっていることを
+示すのに使われます。
+DHCP サーバは、返却されたパラメータが、オプションに通常割り当てられた
+空間を超過した場合、本オプションを挿入します。
+<P>
+
+本オプションが存在した場合、クライアントは、標準のオプションフィールドの
+解釈が終了した後、指定された付加フィールドの解釈を行います。
+<P>
+
+本オプションの正当な値は、以下の通りです:
+<P>
+
+<PRE>
+             1   'file' フィールドが、オプション保持に使用されてます
+             2   'sname' フィールドが、オプション保持に使用されてます
+             3   両方のフィールドが、オプション保持に使用されてます
+</PRE>
+
+<P>
+
+本オプションは、ユーザが設定することはできません。
+<P>
+
+</DL>
+
+<P>
+
+<B>option dhcp-parameter-request-list</B> <I>uint16</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、クライアントから送出された場合、
+サーバに返答を希望するオプションをクライアントが指定します。
+通常 ISC DHCP クライアントでは、<I>request</I> 文を用いて行われます。
+本オプションがクライアントから指定されなかった場合、通常 DHCP サーバは、
+スコープ内で有効かつ応答に収まるすべてのオプションを返します。
+本オプションがサーバ上で指定された場合、サーバはその指定されたオプションを
+返します。
+これは、クライアントが要求しなかったオプションを、クライアントに
+強制するのに使用されます。
+また、通常サーバが返すオプションのセットをさらに制限する必要のある
+クライアントに対して、DHCP サーバの応答を調整するのにも使用されます。
+</DL>
+
+<P>
+
+<B>option dhcp-rebinding-time</B> <I>uint32</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、クライアントがアドレスを取得してから REBINDING 状態に
+移行するまでの時間を秒数で指定します。
+<P>
+
+本オプションは、ユーザが設定することはできません。
+<P>
+
+</DL>
+
+<P>
+
+<B>option dhcp-renewal-time</B> <I>uint32</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、クライアントがアドレスを取得してから RENEWING 状態に
+移行するまでの時間を秒数で指定します。
+<P>
+
+本オプションは、ユーザが設定することはできません。
+<P>
+
+</DL>
+
+<P>
+
+<B>option dhcp-requested-address</B> <I>ip-address</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、クライアントが、DHCPDISCOVER 内で特定の IP アドレスが
+割り当てられることを要求するのに使用されます。
+<P>
+
+本オプションは、ユーザが設定することはできません。
+<P>
+
+</DL>
+
+<P>
+
+<B>option dhcp-server-identifier</B> <I>ip-address</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、DHCPOFFER と DHCPREQUEST メッセージ中で使用され、
+また DHCPACK と DHCPNAK メッセージ中にも含まれることがあります。
+DHCP サーバは、クライアントが (訳注: 複数サーバからの) リースの提示を
+区別できるよう、DHCPOFFER に本オプションを含めます。
+DHCP クライアントは、DHCP サーバへユニキャストするすべての DHCP メッセージの
+宛先アドレスとして 'server identifier' フィールドの内容を使用します。
+また DHCP クライアントは、DHCPREQUEST メッセージ中に本オプションを含め、
+複数のリースの提示のどれを受け入れたかを示します。
+<P>
+
+本オプションの値は、サーバの IP アドレスです。
+<P>
+
+本オプションは、ユーザが直接設定することはできません。
+<B></B><I><A HREF="../../dhcp2/man5/dhcpd.conf.5.html">dhcpd.conf</A>(5)</I>
+
+の <I>server-identifier</I> サーバオプションを参照してください。
+<P>
+
+</DL>
+
+<P>
+
+<B>option domain-name</B> <I>text</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、ドメインネームシステムを使用してホスト名を解決するときに
+クライアントが使用すべきドメイン名を指定します。
+</DL>
+
+<P>
+
+<B>option domain-name-servers</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+domain-name-servers オプションは、クライアントが利用可能な
+ドメインネームシステム (STD 13, RFC 1035) のネームサーバのリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option extensions-path</B> <I>text</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、追加オプションを含むファイルのファイル名を指定します。
+この追加オプションは、RFC2132 で規定されている DHCP オプションの書式に沿って
+解釈されます。
+</DL>
+
+<P>
+
+<B>option finger-server</B> <I>ip-address</I> [<B>,</B>
+
+<I>ip-address</I>... ]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+Finger サーバオプションは、クライアントが利用可能な Finger のリストを
+指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option font-servers</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが利用可能な X Window System フォントサーバを
+指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option host-name</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントの名前を指定します。
+この名前は、ローカルドメイン名に修飾されていても、いなくてもかまいせん
+(ドメイン名を指定するには、domain-name オプションの使用をお勧めします)。
+文字集合の制約については RFC 1035 を参照してください。
+クライアントマシンのホスト名が設定されていない場合 (すなわち
+<B>rc.conf(5)</B>
+
+で空文字列に設定されている場合) のみ、
+<B><A HREF="../man8/dhclient-script.8.html">dhclient-script</A>(8)</B>
+
+が本オプションを尊重します。
+</DL>
+
+<P>
+
+<B>option ieee802-3-encapsulation</B> <I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、インタフェースがイーサネットである場合に、
+クライアントがイーサネットバージョン 2 (RFC 894) と
+IEEE 802.3 (RFC 1042) のどちらのカプセル化を使用すべきかを指定します。
+値 false は、クライアントが RFC 894 のカプセル化を使用すべきであることを
+意味します。
+値 true は、クライアントが RFC 1042 のカプセル化を使用すべきであることを
+意味します。
+</DL>
+
+<P>
+
+<B>option ien116-name-servers</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>...
+
+];
+<DL COMPACT><DT><DD>
+<P>
+
+ien116-name-servers オプションは、
+クライアントが利用可能な IEN 116 ネームサーバのリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option impress-servers</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+impress-server オプションは、
+クライアントが利用可能な Imagen Impress サーバのリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option interface-mtu</B> <I>uint16</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、このインタフェースに対して使用する MTU を指定します。
+MTU に対する最小の正当値は 68 です。
+</DL>
+
+<P>
+
+<B>option ip-forwarding</B> <I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが、パケットを転送するように
+自分の IP 層を設定すべきかを指定します。
+値 false は IP 転送を無効にすることを意味し、
+値 true は IP 転送を有効にすることを意味します。
+</DL>
+
+<P>
+
+<B>option irc-server</B> <I>ip-address</I> [<B>,</B>
+
+<I>ip-address</I>... ]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+IRC サーバオプションは、クライアントが利用可能な IRC のリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option log-servers</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+log-server オプションは、クライアントが利用可能な MIT-LCS UDP ログサーバの
+リストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option lpr-servers</B> <I>ip-address </I> [<B>,</B> <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+LPR サーバオプションは、
+クライアントが利用可能な RFC 1179 ラインプリンタサーバのリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option mask-supplier</B> <I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、ICMP を使用したサブネットマスク要求に対して、
+クライアントが応答すべきかを指定します。
+値 false は、クライアントが応答すべきでないことを意味します。
+値 true は、クライアントが応答すべきであることを意味します。
+</DL>
+
+<P>
+
+<B>option max-dgram-reassembly</B> <I>uint16</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが再組み立ての準備をすべき
+最大データグラムサイズを指定します。
+最小の正当値は 576 です。
+
+
+</DL>
+
+<P>
+
+<B>option merit-dump</B> <I>text</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントがクラッシュするときの
+クライアントのコアイメージがダンプされるファイルのパス名を指定します。
+パスの書式は、NVT ASCII 文字集合の文字からなる文字列です。
+</DL>
+
+<P>
+
+<B>option mobile-ip-home-agent</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>... ]<B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが利用可能なモバイル IP ホームエージェントの
+IP アドレスのリストを指定します。
+エージェントは、優先されるものから順にリストしてください。
+ただし、通常エージェントは 1 つでしょう。
+</DL>
+
+<P>
+
+<B>option nds-context</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+nds-context オプションは、NDS クライアントのための最初の
+NetWare ディレクトリサービスの名前を指定します。
+</DL>
+
+<P>
+
+<B>option nds-servers</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>... ]<B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+nds-servers オプションは、NDS サーバの IP アドレスのリストを指定します。
+</DL>
+
+<P>
+
+<B>option nds-tree-name</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+nds-tree-name オプションは、NDS クライアントが使用すべき NDS ツリーの
+名前を指定します。
+</DL>
+
+<P>
+
+<B>option netbios-dd-server</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+NetBIOS データグラム配布サーバ (NBDD) オプションは、
+RFC 1001/1002 の NBDD サーバのリストを、優先されるものから順に指定します。
+</DL>
+
+<P>
+
+<B>option netbios-name-servers</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>...]<B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+NetBIOS ネームサーバ (NBNS) オプションは、 RFC 1001/1002 の
+NBNS ネームサーバのリストを、優先されるものから順に指定します。
+現在では、NetBIOS ネームサービスは WINS と呼ばれることの方が多いです。
+netbios-name-servers オプションを使用して、WINS サーバを指定可能です。
+</DL>
+
+<P>
+
+<B>option netbios-node-type</B> <I>uint8</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+NetBIOS ノードタイプオプションは、
+設定可能な NetBIOS over TCP/IP クライアントを、
+RFC 1001/1002 に記述されているように設定します。
+値は単一のオクテットとして指定され、クライアントタイプを意味します。
+<P>
+
+使用可能なノードタイプは次の通りです:
+<P>
+
+<DL COMPACT>
+<DT><I>1</I>
+
+<DD>
+B ノード: ブロードキャスト - WINS 無し
+<DT><I>2</I>
+
+<DD>
+P ノード: ピア - WINS のみ
+<DT><I>4</I>
+
+<DD>
+M ノード: ミックス - ブロードキャスト後に WINS
+<DT><I>8</I>
+
+<DD>
+H ノード: ハイブリッド - WINS 後にブロードキャスト
+</DL>
+</DL>
+
+<P>
+
+<B>option netbios-scope</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+NetBIOS スコープオプションは、RFC 1001/1002 に規定されているように、
+クライアントの NetBIOS over TCP/IP スコープパラメータを指定します。
+文字集合の制約については RFC1001, RFC1002, RFC1035 を参照してください。
+</DL>
+
+<P>
+
+<B>option nis-domain</B> <I>text</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントの NIS (Sun Network Information Services)
+ドメインを指定します。
+ドメインの書式は、NVT ASCII 文字集合の文字からなる文字列です。
+</DL>
+
+<P>
+
+<B>option nis-servers</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが利用可能な NIS サーバを示す IP アドレスの
+リストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option nisplus-domain</B> <I>text</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントの NIS+ ドメインの名前を指定します。
+ドメインの書式は、NVT ASCII 文字集合の文字からなる文字列です。
+</DL>
+
+<P>
+
+<B>option nisplus-servers</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが利用可能な NIS+ サーバを示す IP アドレスの
+リストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option nntp-server</B> <I>ip-address</I> [<B>,</B>
+
+<I>ip-address</I>... ]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+NNTP サーバオプションは、クライアントが利用可能な NNTP のリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option non-local-source-routing</B> <I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、非ローカルな指定経路 (non-local source route) を持つ
+データグラムを転送するように、クライアントが自分の IP 層を設定すべきかを
+指定します (本項目については [4] の 3.3.5 節を参照してください)。
+値 false はそのようなデータグラムの転送を許可しないことを意味し、
+値 true は転送許可を意味します。
+</DL>
+
+<P>
+
+<B>option ntp-servers</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが利用可能な NTP (RFC 1035) サーバを示す
+IP アドレスを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option nwip-domain</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+NetWare/IP クライアントが使用すべき NetWare/IP ドメインの名前です。
+</DL>
+
+<P>
+
+<B>option nwip-suboptions</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+NetWare/IP クライアント用のサブオプションのシーケンスです。
+詳しくは RFC2242 を参照してください。
+通常、本オプションは特定の NetWare/IP サブオプションを指定することで
+設定されます。
+さらなる情報は「NetWare/IP サブオプション」の章を参照してください。
+</DL>
+
+<P>
+
+<B>option path-mtu-aging-timeout</B> <I>uint32</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、RFC 1191 で定義される機構で発見されたパス MTU 値の
+エージングに使用するタイムアウト (秒単位) を指定します。
+</DL>
+
+<P>
+
+<B>option path-mtu-plateau-table</B> <I>uint16</I> [<B>,</B> <I>uint16</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、RFC 1191 で定義されるパス MTU 探索 (Path MTU Discovery)
+実施時に使用される MTU のサイズの表を指定します。
+表の書式は、最小から順に最大までの、16 ビット符号無し整数のリストです。
+最小 MTU は 68 より小さくてはなりません。
+</DL>
+
+<P>
+
+<B>option perform-mask-discovery</B> <I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが ICMP を使用してサブネットマスク探索を
+実施すべきかを指定します。
+値 false は、クライアントがマスク探索を実施すべきでないことを意味します。
+値 true は、クライアントがマスク探索を実施すべきであることを意味します。
+</DL>
+
+<P>
+
+<PRE>
+<B>option policy-filter</B> <I>ip-address ip-address</I>
+                  [<B>,</B> <I>ip-address ip-address</I>...]<B>;</B>
+</PRE>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、非ローカルな指定経路制御に対するポリシフィルタを指定します。
+フィルタは、IP アドレスとマスクの組のリストからなり、
+到着する指定経路制御されたデータグラム用のフィルタとなる
+宛先/マスクの組を指定します。
+<P>
+
+次ホップアドレスがフィルタのいずれにも適合しない指定経路制御された
+データグラムは、クライアントが破棄すべきです。
+<P>
+
+さらなる情報は STD 3 (RFC1122) を参照してください。
+</DL>
+
+<P>
+
+<B>option pop-server</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>... ]<B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+POP3 サーバオプションは、クライアントが利用可能な POP3 のリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option resource-location-servers</B> <I>ip-address</I>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<B>,&nbsp;</B><I>ip-address</I>...]<B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが利用可能な
+RFC 887 リソースロケーションサーバのリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option root-path</B> <I>text</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントのルートディスクが含まれるパス名を指定します。
+パスの書式は、NVT ASCII 文字集合の文字からなる文字列です。
+</DL>
+
+<P>
+
+<B>option router-discovery</B> <I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、RFC 1256 で定義されるルータ探索 (Router Discovery) 機構を
+使用して、ルータを要請すべきかを指定します。
+値 false は、クライアントがルータ探索を実施すべきでないことを意味します。
+値 true は、クライアントはルータ探索を実施すべきであることを意味します。
+</DL>
+
+<P>
+
+<B>option router-solicitation-address</B> <I>ip-address</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントのルータ要請の送出先アドレスを指定します。
+</DL>
+
+<P>
+
+<B>option routers </B><I>ip-address</I> [<B>,</B> <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+routers オプションは、クライアントのサブネット上にあるルータの
+IP アドレスのリストを指定します。
+ルータは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option slp-directory-agent </B><I>boolean ip-address</I>
+
+[<B>,</B> <I>ip-address</I>... ]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、2 つの項目を指定します:
+1 つ以上のサービスロケーションプロトコルディレクトリエージェント
+(Service Location Protocol Directory Agent) の IP アドレスと、
+これらのアドレスの使用が強制的かどうかです。
+最初のブール値が true であれば、SLP エージェントは、ただ与えられた
+IP アドレスのみを使用すべきです。
+値が false であれば、SLP エージェントは、SLP エージェントの
+能動的もしくは受動的なマルチキャスト探索を追加で行っても構いません
+(詳しくは RFC2165 を参照してください)。
+<P>
+
+本オプションと slp-service-scope オプションにおいて、
+「SLP エージェント」とは、DHCP プロトコルを用いて設定されたマシン上で
+動作しているサービスロケーションプロトコルエージェントを指していることに
+注意してください。
+<P>
+
+また、いくつかの企業は SLP を NDS と呼んでいることも気を付けてください。
+もし NDS ディレクトリエージェントがあり、そのアドレスを設定する必要が
+ある場合は、 slp-directory-agent オプションが利用できるはずです。
+</DL>
+
+<P>
+
+<B>option slp-service-scope </B><I>boolean text</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+サービスロケーションプロトコルのサービススコープオプションは、
+2 つの項目を指定します:
+SLP 用のサービススコープのリストと、このリストの使用が強制的かどうかです。
+最初のブール値が true であれば、SLP エージェントは、本オプションにより
+提供されるスコープのリストのみを使用すべきです。
+そうでなければ、このオプションで提供されるリストに優先して、
+それぞれの固有的の設定を使っても構いません。
+<P>
+
+text 文字列は、SLP エージェントが使用すべきスコープの、コンマ区切りの
+リストとしてください。
+これは省略可能で、その場合 SLP エージェントは、自分が知っている
+すべてのディレクトリエージェントのスコープの一括リストを使います。
+</DL>
+
+<P>
+
+<B>option smtp-server</B> <I>ip-address</I> [<B>,</B>
+
+<I>ip-address</I>... ]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+SMTP サーバオプションは、クライアントが利用可能な SMTP サーバのリストを
+指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<PRE>
+<B>option static-routes</B> <I>ip-address ip-address</I>
+                  [<B>,</B> <I>ip-address ip-address</I>...]<B>;</B>
+</PRE>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが経路キャッシュに組み込むべき
+静的経路のリストを指定します。
+同じ宛先に対して複数の経路が指定されている場合は、
+優先度が低くなる順序でリストされます。
+<P>
+
+経路は IP アドレスの組のリストからなります。
+最初のアドレスは宛先アドレスであり、
+2 番目のアドレスはその宛先に対するルータのアドレスです。
+<P>
+
+デフォルト経路 (0.0.0.0) は、静的経路に対しては不正な宛先です。
+デフォルト経路を指定するには、
+<B>routers</B>
+
+オプションを使用してください。
+また、本オプションは、クラスレスな IP 経路制御を意図したものでは
+ないことに注意して下さい。
+これはサブネットマスクを含んでいません。
+現在、クラスレスな IP 経路制御は、もっとも広く展開されている
+経路制御標準なので、本オプションは実質的に無意味です。
+そして、マイクロソフト DHCP クライアントをはじめとするよく知られた
+DHCP クライアントには実装されていません。
+</DL>
+
+<P>
+
+<PRE>
+<B>option streettalk-directory-assistance-server</B> <I>ip-address</I>
+                                           [<B>,</B> <I>ip-address</I>...]<B>;</B>
+</PRE>
+
+<DL COMPACT><DT><DD>
+<P>
+
+StreetTalk Directory Assistance (STDA) サーバオプションは、
+クライアントが利用可能な STDA のリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option streettalk-server</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>... ]<B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+StreetTalk サーバオプションは、
+クライアントが利用可能な StreetTalk のリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option subnet-mask </B><I>ip-address</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+サブネットマスクオプションは、RFC 950 に従って、
+クライアントのサブネットマスクを指定します。
+スコープ中のどこにもサブネットマスクオプションが指定されていない場合、
+最終手段として、dhcpd は、アドレスを割り当てようとしている
+ネットワークのサブネット宣言から、サブネットマスクを使用します。
+しかし、アドレスを割り当てようとしているネットワークのスコープ中の
+<I>どのような</I>
+
+サブネットマスクオプション宣言であっても、
+サブネット宣言で指定されたサブネットマスクに優先します。
+</DL>
+
+<P>
+
+<B>option subnet-selection</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+(要求が出されたサブネットにつながれたリレーサーバのアドレスに基づいて)
+通常選択されるであろうものではないサブネットのアドレスが必要な場合、
+クライアントが送出します。
+RFC3011 を参照してください。
+このサーバにおいて使われるオプションナンバは 118 です。
+このナンバは以前からずっと定義されていたナンバではなく、
+違う値を使用するクライアントも存在することに注意してください。
+このオプションの使用は少々実験的であると考えるべきでしょう!
+<P>
+
+本オプションは、サーバではユーザが設定することはできません。
+<P>
+
+</DL>
+
+<P>
+
+<B>option swap-server</B> <I>ip-address</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントのスワップサーバの IP アドレスを指定します。
+</DL>
+
+<P>
+
+<B>option tcp-keepalive-garbage</B> <I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、古い実装との互換性のために、ゴミのオクテットと一緒に、
+TCP キープアライブメッセージをクライアントが送るべきかを指定します。
+値 false は、ゴミのオクテットを送るべきでないことを意味します。
+値 true は、ゴミのオクテットを送るべきであることを意味します。
+</DL>
+
+<P>
+
+<B>option tcp-keepalive-interval</B> <I>uint32</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントの TCP がキープアライブ (keepalive)
+メッセージを TCP 接続上に送信する前に待つべき間隔 (秒単位) を指定します。
+時間は 32 ビット符号無し整数で指定します。
+値 0 は、アプリケーションが明示的に要求しない限り、クライアントが
+接続上にキープアライブメッセージを生成すべきでないことを意味します。
+</DL>
+
+<P>
+
+<B>option tftp-server-name</B> <I>text</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは TFTP サーバを指定するのに使用され、クライアントが
+サポートしている場合には <B>server-name</B> 宣言と同じ効果を持ちます。
+BOOTP クライアントは、本オプションをサポートしないでしょう。
+DHCP クライアントによってはサポートしているものがあり、
+実際必須としているものがあります。
+</DL>
+
+<P>
+
+<B>option time-offset </B><I>int32</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+time-offset オプションは、協定世界時 (UTC) を基点として、
+クライアントのサブネットのオフセットを秒で指定します。
+</DL>
+
+<P>
+
+<B>option time-servers </B><I>ip-address</I> [, <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+time-server オプションは、クライアントが利用可能な RFC 868 時刻サーバの
+リストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option trailer-encapsulation</B> <I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、ARP プロトコル使用時に、クライアントがトレイラ使用の
+ネゴシエーション (RFC 893 [14]) をすべきかを指定します。
+値 false は、クライアントがトレイラ使用を試みるべきでないと意味します。
+値 true は、クライアントがトレイラ使用を試みるべきであると意味します。
+</DL>
+
+<P>
+
+<B>option uap-servers</B> <I>text</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、ユーザ認証プロトコル (UAP) に包まれた認証要求を
+処理する能力のあるユーザ認証サービスをそれぞれ指している
+URL のリストを指定します。
+UAP サーバは HTTP 1.1 接続も SSLv3 接続も受け取ることができます。
+リストに含まれた URL にポート部分が含まれてない場合は、
+通常のデフォルトポートが仮定されます
+(つまり http には 80 番、https には 443 番)。
+リストに含まれた URL にパスの部分が含まれてない場合は、
+パスは /uap と仮定されます。
+2 つ以上の URL がこのリストに指定された場合、URL は空白で区切られます。
+</DL>
+
+<P>
+
+<B>option user-class</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、ユーザが識別情報をクライアントに指定する手段として、
+いくつかの DHCP クライアントで使われます。
+これは vendor-class-identifier オプションと同様に使われますが、
+その値は、ベンダではなく、ユーザによって指定されます。
+最近のほとんどの DHCP クライアントは、この識別子に値を指定するための
+ユーザインタフェースを備えています。
+この識別子は、通常テキスト文字列です。
+</DL>
+
+<P>
+
+<B>option vendor-class-identifier</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+本オプションは、ベンダタイプや、可能であれば DHCP クライアントの設定を
+識別するために、いくつかの DHCP クライアントで使われます。
+この情報の内容は、ベンダ固有のバイト文字列で、標準では規定されていません。
+クライアントが送出するベンダクラス識別子を確認するには、
+以下の設定を DHCP サーバ設定ファイルに加えてください:
+<PRE>
+
+set vendor-class option vendor-class-identifier;
+</PRE>
+
+<P>
+
+この設定は、DHCP サーバのリースデータベースファイル中の、
+以下のような set 文を持つ vendor-class-identifier オプションを
+送ってくるクライアントすべてのエントリに作用します。
+<PRE>
+
+set vendor-class &quot;SUNW.Ultra-5_10&quot;;
+</PRE>
+
+<P>
+
+vendor-class-identifier オプションは、通常 DHCP Server によって、
+<B>vendor-encapsulated-options</B>
+
+オプション中で返されるオプションを決定するのに使われます。
+さらなる情報は、dhcpd.conf マニュアルページの VENDOR ENCAPSULATED OPTIONS の
+章を参照してください。
+</DL>
+
+<P>
+
+<B>option vendor-encapsulated-options</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+
+<B>vendor-encapsulated-options</B> オプションは、1 つのベンダ固有値、
+もしくは 1 つまたはそれ以上のベンダ固有サブオプションを含みます。
+本オプションは、通常 DHCP サーバの設定ファイルで設定されるものでは
+ありません。
+通常は、ベンダクラスがベンダ毎に定義され、
+ベンダクラスサブオプションが定義され、そのサブオプションの値が
+定義され、DHCP サーバはそれらをもとに応答を組み上げます。
+<P>
+
+よく知られた DHCP クライアントベンダ (今のところ Microsoft Windows
+2000 DHCP クライアント) 向けのいくつかのデフォルトの動作では、
+このオプションは自動的に設定されますが、その他のものに関しては、
+手動で設定しなければなりません。
+詳細は <I>dhcpd.conf の VENDOR ENCAPSULATED OPTIONS の章を
+参照してください。
+</DL>
+
+<P>
+
+</I><B>option www-server</B> <I>ip-address</I> [<B>,</B>
+
+<I>ip-address</I>... ]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+WWW サーバオプションは、クライアントが利用可能な WWW のリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+</DL>
+
+<P>
+
+<B>option x-display-manager</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>...
+
+]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションは、クライアントが利用可能な X Window System
+ディスプレイマネージャを実行しているシステムのリストを指定します。
+アドレスは、優先されるものから順にリストしてください。
+</DL>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>リレーエージェント情報オプション</H2>
+
+
+IETF ドラフト draft-ietf-dhc-agent-options-11.txt には、
+DHCP リレーエージェントが DHCP パケットを DHCP サーバに転送する際、
+DHCP パケットに付加することのできる一連のカプセル化されたオプションが
+定義されています。
+サーバは、これらのオプションに基づき、アドレス割当の決定
+(や、その他の判断) を行うことができます。
+またサーバは、リレーエージェントを通して返されるどのパケットにも
+これらのオプションを入れて返します。
+これによってリレーエージェントは、配送やアカウンティングなどを
+行うために、これらのオプションに含まれる情報を利用できます。
+<P>
+
+現在のドラフトには 2 つのオプションが定義されています。
+DHCP サーバでこれらのオプションを参照するには、オプション空間名
+&quot;agent&quot; のあとにピリオドをつけ、その後にオプション名を続けてください。
+サーバでこれらのオプションの値を定義することは、
+通常あまり有効ではありませんが、許容されています。
+これらのオプションは、クライアントではサポートされていません。
+<P>
+
+<B>option agent.circuit-id</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+circuit-id サブオプションは、クライアントからサーバへの DHCP パケットを
+受け取ったサーキットを示す、エージェントローカルなサーキット識別子を
+エンコードしています。
+これは、DHCP 応答を適切なサーキットへと送り返せるよう、
+エージェントによって使われることを意図しています。
+現在、このオプションの書式の定義はベンダ依存となっており、
+多分このまま残されるでしょう。
+しかし将来この書式が標準化される可能性も、現在のドラフトには残されています。
+</DL>
+
+<P>
+
+<B>option agent.remote-id</B> <I>string</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+remote-id サブオプションは、サーキットの終端のリモートホストの
+情報をエンコードしています。
+これに含まれるであろう情報は、次のようなものです。
+呼出元 ID 情報、ユーザ名情報、リモート ATM アドレス、ケーブルモデム ID、
+その他の同様な情報。
+原則的には、このオプションの意味はちゃんと定義されていません。
+しかし通常、サーキットの特定のリモートエンドに対して一意であるよう
+管理上保証された、なんらかのオブジェクトと考えるべきものです。
+</DL>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>クライアント FQDN サブオプション</H2>
+
+
+現在、インターネットドラフト draft-ietf-dhc-fqdn-option-00.txt で
+定義されているクライアント FQDN オプションは、まだ標準となってはいません。
+しかしすでに十分広く利用されており、我々もこれを実装しています。
+オプションの書式が複雑なため、ここでは、単独のオプションではなく、
+サブオプション空間に実装しています。
+一般的には、本オプションは、ユーザによって設定されるものではなく、
+自動 DNS 更新システムの一部として使われるべきものです。
+<P>
+
+<B>option fqdn.no-client-update </B><I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションがクライアントから送出された場合、これが true であれば、
+クライアントは自分の A レコードを更新しないことを意味します。
+サーバからクライアントに送出された場合は、クライアントは
+自分の A レコードを更新する <I>べきではない</I> ことを意味します。
+</DL>
+
+<P>
+
+<B>option fqdn.server-update </B><I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本オプションがクライアントからサーバに送出された場合、
+サーバにクライアントの A レコードの更新を要求しています。
+サーバから送出された場合、サーバがクライアントの A レコードを
+更新した (もしくはもうすぐ更新するところ) であることを意味します。
+</DL>
+
+<P>
+
+<B>option fqdn.encoded </B><I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+true であった時、オプションに含まれるドメイン名が、
+ただの ASCII テキストではなく、DNS ワイヤフォーマットで
+エンコードされていることを示してます。
+クライアントは、自分が FQDN オプションの DNS ワイヤフォーマットを
+サポートしてない場合、通常このサブオプションを false に設定します。
+サーバは常に、クライアントが設定したのと同じ値を設定して返すべきです。
+この値が設定ファイルに設定されていた時は、<I>fqdn.fqdn</I> サブオプションを
+エンコードするフォーマットを制御します。
+</DL>
+
+<P>
+
+<B>option fqdn.rcode1 </B><I>flag</I><B>;</B>
+
+<P>
+
+<B>option fqdn.rcode2 </B><I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+これらのオプションはそれぞれ、A レコードと PTR レコードの更新結果を示します。
+これらは、DHCP サーバから DHCP クライアントへのみ送られます。
+これらのフィールドの値は、DNS プロトコル規格により定義されています。
+</DL>
+
+<P>
+
+<B>option fqdn.fqdn </B><I>text</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+クライアントが使用を望むドメイン名を指定します。
+これは完全修飾されたドメイン名でも、単一のラベルでも構いません。
+もし名前に '.' 文字が含まれなければ、その名前は完全修飾されておらず、
+サーバは通常、ローカルに定義されたドメイン中のその名前を更新します。
+</DL>
+
+<P>
+
+もしこれらのサブオプションを使用しようと思っているのであれば、
+クライアント FQDN オプションのドラフト (もしくは、標準になった時はその標準)
+を参照することを強く推奨します。
+この文書は、そのドラフトに比べて大雑把で不完全であり、
+クライアント FQDN オプション規格をすでに理解している人に参照されることを
+単に意図しているものです。
+<A NAME="lbAI">&nbsp;</A>
+<H2>NetWare/IP サブオプション</H2>
+
+
+RFC2242 は、Novell の NetWare/IP クライアント用のカプセル化された
+オプションの組を定義しています。
+DHCP サーバにおいてこれらのオプションを使用するには、オプション空間名
+&quot;nwip&quot; の後にピリオドをつけ、その後にオプション名を続けてください。
+以下のオプションが指定できます:
+<P>
+
+<B>option nwip.nsq-broadcast</B> <I>flag</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+true であった場合、クライアントは、NetWare/IP サーバの位置を
+探すのに NetWare Nearest Server Query を使うべきです。
+本サブオプションが false であった場合、もしくは指定されなかった場合の
+Novell クライアントの動作は規定されていません。
+<P>
+
+</DL>
+
+<B>option nwip.preferred-dss</B> <I>ip-address</I> [<B>,</B> <I>ip-address</I>... ]<B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+本サブオプションには、5 つまでの IP アドレスのリストを指定します。
+それぞれのアドレスは、NetWare ドメイン SAP/RIP サーバ (DSS) の
+IP アドレスです。
+</DL>
+
+<P>
+
+<B>option nwip.nearest-nwip-server</B> <I>ip-address</I>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<B>,</B>&nbsp;<I>ip-address</I>...]<B>;</B>
+<DL COMPACT><DT><DD>
+<P>
+
+本サブオプションには、5 つまでの IP アドレスのリストを指定します。
+それぞれのアドレスは、近接の NetWare IP サーバ
+(Nearest NetWare IP Server) の IP アドレスです。
+</DL>
+
+<P>
+
+<B>option nwip.autoretries</B> <I>uint8</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+起動時に、NetWare/IP クライアントが、与えられた DSS サーバと
+何回通信を試みるべきかを指定します。
+</DL>
+
+<P>
+
+<B>option nwip.autoretry-secs</B> <I>uint8</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+起動時に、NetWare/IP クライアントが、与えられた DSS サーバと
+通信を確立する時に、リトライの間何秒待つべきかを指定します。
+</DL>
+
+<P>
+
+<B>option nwip.nwip-1-1</B> <I>uint8</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+true であった場合、NetWare/IP クライアントは NetWare/IP
+バージョン 1.1 をサポートしているべきです。
+これは、クライアントが NetWare/IP バージョン 1.1 のサーバと
+通信する時のみ必要です。
+</DL>
+
+<P>
+
+<B>option nwip.primary-dss</B> <I>ip-address</I><B>;</B>
+
+<DL COMPACT><DT><DD>
+<P>
+
+NetWare/IP ドメインのプライマリドメイン SAP/RIP サービスサーバ
+(DSS) の IP アドレスを指定します。
+セカンダリ DSS サーバの設定時に、NetWare/IP 管理ユーティリティは、
+この値をプライマリ DSS サーバとして使用します。
+</DL>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>新規オプションの定義</H2>
+
+
+Internet Software Consortium DHCP クライアントとサーバは、
+新規オプションを定義する機構も提供しています。
+それぞれの DHCP オプションは、名前とコード、構造を持っています。
+名前は、使用者がオプションを参照するのに使用されます。
+コードは、DHCP サーバとクライアントがオプションを参照するのに
+使用する番号です。
+構造は、オプションの内容がどのようなものかを記述しています。
+<P>
+
+新規オプションを定義するには、他のオプションでは使われていない名前を
+選ぶ必要があります。
+例えば、&quot;host-name&quot; と言う名前は使用できません。
+というのも、このマニュアルページに出てきたように、
+DHCP プロトコルが既に host-name オプションを定義しているからです。
+このマニュアルページに出てきていないオプション名ならば
+使っても構いませんが、将来出てくるオプションと重ならないように、
+オプション名の最初に独自の文字列をつけることは、多分いい考えでしょう。
+例えば、公式の DHCP オプションには &quot;local&quot; で始まるものがないので、
+&quot;local-host-name&quot; と言う名前は、いくらか安心して定義できるでしょう。
+<P>
+
+名前を選択したら、次はコードを選ばねばなりません。
+DHCP オプションの 128 から 256 までのコードは、
+サイトローカルオプション用として予約されているので、
+この中のコードならどれでも選ぶことができます。
+実際には、プロトコルを少々あいまいに解釈しているベンダがあり、
+128 より大きい値のオプションコードを使用しています。
+この問題を本当に回避する方法はありませんが、
+実際にはそう大きな問題を引き起こすものではないでしょう。
+<P>
+
+オプションの構造とは、単にオプションのデータが表現されている形式です。
+現在 ISC DHCP サーバは、整数、ブール値、文字列そして IP アドレスといった、
+いくつかの単純なデータ型をサポートしており、
+また単一データ型の配列や固定順のデータ型列の配列を定義することもできます。
+<P>
+
+新規オプションは、以下のように宣言されます:
+<P>
+
+<B>option</B>
+
+<I>new-name</I>
+
+<B>code</B>
+
+<I>new-code</I>
+
+<B>=</B>
+
+<I>definition</I>
+
+<B>;</B>
+
+<P>
+
+<I>new-name</I>
+
+と
+<I>new-code</I>
+
+の値は、新規オプション用にあなたが選んだものです。
+<I>definition</I>
+
+は、オプションの構造の定義です。
+<P>
+
+以下の単純なオプションの型定義がサポートされています:
+<P>
+
+<B>ブール値</B>
+
+<P>
+
+<B>option</B>
+
+<I>new-name</I>
+
+<B>code</B>
+
+<I>new-code</I>
+
+<B>=</B>
+
+<B>boolean</B>
+
+<B>;</B>
+
+<P>
+
+ブール型のオプションは、on または off (もしくは true か false) の値を
+持つフラグです。
+ブール型の使用例は、以下のようになります:
+<PRE>
+
+option use-zephyr code 180 = boolean;
+option use-zephyr on;
+
+</PRE>
+
+<B>整数</B>
+
+<P>
+
+<B>option</B>
+
+<I>new-name</I>
+
+<B>code</B>
+
+<I>new-code</I>
+
+<B>=</B>
+
+<I>sign</I>
+
+<B>integer</B>
+
+<I>width</I>
+
+<B>;</B>
+
+<P>
+
+<I>sign</I> トークンは、空白、<I>unsigned</I>、<I>signed</I> のいずれかです。
+width は 8, 16, 32 のいずれかで、整数の bit 数を示します。
+例えば、以下の 2 行は、sql-connection-max オプションの定義と
+使用法を示します:
+<PRE>
+
+option sql-connection-max code 192 = unsigned integer 16;
+option sql-connection-max 1536;
+
+</PRE>
+
+<B>IP アドレス</B>
+
+<P>
+
+<B>option</B>
+
+<I>new-name</I>
+
+<B>code</B>
+
+<I>new-code</I>
+
+<B>=</B>
+
+<B>ip-address</B>
+
+<B>;</B>
+
+<P>
+
+IP アドレス型の構造を持つオプションは、ドメイン名もしくは
+ドット区切りの 4 整数で表現されます。
+以下は、IP アドレス型の使用例です:
+<PRE>
+
+option sql-server-address code 193 = ip-address;
+option sql-server-address sql.example.com;
+
+</PRE>
+
+<P>
+
+<B>テキスト</B>
+
+<P>
+
+<B>option</B>
+
+<I>new-name</I>
+
+<B>code</B>
+
+<I>new-code</I>
+
+<B>=</B>
+
+<B>text</B>
+
+<B>;</B>
+
+<P>
+
+テキスト型のオプションは、ASCII テキスト文字列をエンコードします。
+例えば:
+<PRE>
+
+option sql-default-connection-name code 194 = text;
+option sql-default-connection-name &quot;PRODZA&quot;;
+
+</PRE>
+
+<P>
+
+<B>データ文字列</B>
+
+<P>
+
+<B>option</B>
+
+<I>new-name</I>
+
+<B>code</B>
+
+<I>new-code</I>
+
+<B>=</B>
+
+<B>string</B>
+
+<B>;</B>
+
+<P>
+
+データ文字列型のオプションは、本質的には単なるバイトの集合体です。
+テキスト型のようにクオートされたテキストで指定されるか、
+もしくはコロン区切りの 16 進数のリストで指定されます。
+この時コロンで区切られた中身は、0 から FF の間の値でなければなりません。
+例えば:
+<PRE>
+
+option sql-identification-token code 195 = string;
+option sql-identification-token 17:23:19:a6:42:ea:99:7c:22;
+
+</PRE>
+
+<P>
+
+<B>カプセル化</B>
+
+<P>
+
+<B>option</B>
+
+<I>new-name</I>
+
+<B>code</B>
+
+<I>new-code</I>
+
+<B>=</B>
+
+<B>encapsulate</B>
+
+<I>identifier</I>
+
+<B>;</B>
+
+<P>
+
+カプセル化型のオプションは、<I>identifier</I> で指定された
+オプション空間の中身をカプセル化します。
+現在 DHCP プロトコルに存在するカプセル化オプションの例は、
+vendor-encapsulated-options オプション、netware-suboptions オプション、
+relay-agent-information オプションなどです。
+<PRE>
+
+option space local;
+option local.demo code 1 = text;
+option local-encapsulation code 197 = encapsulate local;
+option local.demo &quot;demo&quot;;
+
+</PRE>
+
+<P>
+
+<B>配列</B>
+
+<P>
+
+オプションは、テキスト型とデータ文字列型以外の上述のいかなるデータ型の
+配列も含むことができます。
+テキスト型とデータ文字列型は、現在配列ではサポートされていません。
+配列定義の例は以下の通りです:
+<PRE>
+
+option kerberos-servers code 200 = array of ip-address;
+option kerberos-servers 10.20.10.1, 10.20.11.1;
+
+</PRE>
+
+<B>レコード</B>
+
+<P>
+
+オプションは、データ型の列で構成されるデータ構造を含むこともできます。
+これはしばしばレコード型と呼ばれます。
+例えば:
+<PRE>
+
+option contrived-001 code 201 = { boolean, integer 32, text };
+option contrived-001 on 1772 &quot;contrivance&quot;;
+
+</PRE>
+
+またレコードの配列のオプションを持つこともできます。
+例えば:
+<PRE>
+
+option new-static-routes code 201 = array of {
+        ip-address, ip-address, ip-address, integer 8 };
+option static-routes
+        10.0.0.0 255.255.255.0 net-0-rtr.example.com 1,
+        10.0.1.0 255.255.255.0 net-1-rtr.example.com 1,
+        10.2.0.0 255.255.224.0 net-2-0-rtr.example.com 3;
+
+</PRE>
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>ベンダカプセル化オプション</H2>
+
+
+DHCP プロトコルには、<B> vendor-encapsulated-options</B> オプションが
+定義されています。
+ベンダは、このオプションによって、ベンダ固有のオプションを
+標準 DHCP オプションに含めて送出することができます。
+<B>vendor-encapsulated-options</B>
+
+オプションの書式は、書式が規定されていない一連のバイト列、
+もしくは一連のオプション列です。
+オプション列中のそれぞれのオプションは、1 バイトのベンダ固有の
+オプションコードの後に 1 バイトのデータ長、
+そしてそのデータ長で指定された大きさのデータが続いたもので構成されます
+(データ長には、データ長自身やオプションコードは含まれません)。
+<P>
+
+本オプションの値は、2 つの方法のいずれかで設定されます。
+1 番目の方法は、単にデータを直接指定するものです。
+データの指定には、テキスト文字列かコロンで区切られた 16 進数値を用います。
+例えば:
+<P>
+
+<PRE>
+option vendor-encapsulated-options
+    2:4:AC:11:41:1:
+    3:12:73:75:6e:64:68:63:70:2d:73:65:72:76:65:72:31:37:2d:31:
+    4:12:2f:65:78:70:6f:72:74:2f:72:6f:6f:74:2f:69:38:36:70:63;
+</PRE>
+
+<P>
+
+本オプションを設定する 2 番目の方法は、DHCP サーバに
+ベンダ固有オプションバッファを作成させるというものです。
+これをするには、以下の 4 つのことをする必要があります:
+オプション空間を定義し、そのオプション空間内にオプションを定義し、
+それらへ値を割り振り、最後にそのオプション空間が
+<B>vendor-encapsulated-options</B>
+
+オプションの生成に使用されることを指定します。
+<P>
+
+ベンダオプションが格納されるオプション空間を新規に定義するには、
+option space 文を使用します:
+<P>
+
+<B>option</B>
+
+<B>space</B>
+
+<I>name</I>
+
+<B>;</B>
+
+<P>
+
+この文書にこれまで書かれているように、
+この name は、オプション定義で使用することができます。
+例えば:
+<PRE>
+
+option space SUNW;
+option SUNW.server-address code 2 = ip-address;
+option SUNW.server-name code 3 = text;
+option SUNW.root-path code 4 = text;
+
+</PRE>
+
+一度、オプション空間とオプションの書式を定義したら、
+それらのオプションの値を定義するスコープを設定でき、
+それらのオプションをいつ使うかを指定することができます。
+例えば、2 つの異なるクラスのクライアントを扱いたいとしましょう。
+前述の例で示したオプション空間の定義を使って、以下のように、
+クライアントから送られてきた vendor-class-identifier オプションに基づいて、
+異なるオプションの値を異なるクライアントに送出することができます。
+<P>
+
+<PRE>
+class &quot;vendor-classes&quot; {
+  match option vendor-class-identifier;
+}
+
+option SUNW.server-address 172.17.65.1;
+option SUNW.server-name &quot;sundhcp-server17-1&quot;;
+
+subclass &quot;vendor-classes&quot; &quot;SUNW.Ultra-5_10&quot; {
+  vendor-option-space SUNW;
+  option SUNW.root-path &quot;/export/root/sparc&quot;;
+}
+
+subclass &quot;vendor-classes&quot; &quot;SUNW.i86pc&quot; {
+  vendor-option-space SUNW;
+  option SUNW.root-path &quot;/export/root/i86pc&quot;;
+}
+</PRE>
+
+<P>
+
+先の例で見たように、通常のスコープルールを適用することで、
+グローバルな値をグローバルスコープ中に定義でき、
+特定のクラスに固有の値だけをローカルスコープに定義できます。
+<B>vendor-option-space</B> 宣言を使うことで、
+<B>vendor-encapsulated-options</B>
+
+オプションを構成するのに、SUNW オプション空間内のオプションを使うよう
+DHCP サーバに指示することができます。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man5/dhclient.conf.5.html">dhclient.conf</A>(5), <A HREF="../man5/dhcp-eval.5.html">dhcp-eval</A>(5), 
+<A HREF="../man8/dhclient.8.html">dhclient</A>(8), RFC2132, RFC2131
+<A NAME="lbAM">&nbsp;</A>
+<H2>作者</H2>
+
+Internet Software Consortium DHCP Distribution
+は、Vixie Labs との契約のもとで、Ted Lemon が記述しました。
+本プロジェクトの資金は、Internet Software Consortium が提供しました。
+Internet Software Consortium に関する情報は、
+<B><A HREF="http://www.isc.org">http://www.isc.org</A></B>
+
+にあります。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">解説</A><DD>
+<DT><A HREF="#lbAD">リファレンス: オプション文</A><DD>
+<DT><A HREF="#lbAE">式を用いたオプション値の設定</A><DD>
+<DT><A HREF="#lbAF">標準 DHCP オプション</A><DD>
+<DT><A HREF="#lbAG">リレーエージェント情報オプション</A><DD>
+<DT><A HREF="#lbAH">クライアント FQDN サブオプション</A><DD>
+<DT><A HREF="#lbAI">NetWare/IP サブオプション</A><DD>
+<DT><A HREF="#lbAJ">新規オプションの定義</A><DD>
+<DT><A HREF="#lbAK">ベンダカプセル化オプション</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">作者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:37 GMT, December 05, 2022
+</BODY>
+</HTML>

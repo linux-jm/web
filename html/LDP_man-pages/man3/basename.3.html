@@ -1,0 +1,174 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of BASENAME</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>BASENAME</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/basename.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+basename, dirname - パス名を解析して各部分を取り出す
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/libgen.h">libgen.h</A>&gt;</B>
+
+<B>char *dirname(char *</B><I>path</I><B>);</B>
+
+<B>char *basename(char *</B><I>path</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+警告: <B>basename</B>()  には異なるバージョンが 2つ存在する。下記の「注意」の節を参照のこと。
+<P>
+
+<B>dirname</B>()  と <B>basename</B>()  は、ヌルで終端されたパス名の文字列を、 ディレクトリ部分・ファイル名部分に分割する。
+通常は、 <B>dirname</B>()  は最後の '/' までの部分 (最後の '/' は含まない) を返し、
+<B>basename</B>()  は最後の '/' 以降の部分を返す。 文字列の末尾についた '/'
+文字は、パス名の一部とはみなされない。
+<P>
+
+<I>path</I> に '/' 文字がない場合は、 <B>dirname</B>()  は文字列 &quot;.&quot; を返し、 <B>basename</B>()  は <I>path</I>
+と同じ内容を返す。 <I>path</I> が文字列 &quot;/&quot; に等しい場合は、 <B>dirname</B>()  も <B>basename</B>()  も文字列 &quot;/&quot;
+を返す。 <I>path</I> が ヌルポインターだったり、空の文字列を指していた場合は、 <B>dirname</B>()  も <B>basename</B>()
+も文字列 &quot;.&quot; を返す。
+<P>
+
+<B>dirname</B>()  の返した文字列、 &quot;/&quot;、 <B>basename</B>()  の返した文字列、 を順に結合すると、完全なパス名が得られる。
+<P>
+
+<B>dirname</B>()  と <B>basename</B>()  は、いずれも <I>path</I> の内容を変更することがある。
+したがって、これらの関数を呼び出す際には コピーを渡すのが望ましい。
+<P>
+
+これらの関数は、静的に割り当てられたメモリーへのポインターを返すことがあり、 これらの領域は後の関数呼び出しで上書きされるかもしれない。
+また、これらの関数は <I>path</I> の一部分を指すポインターを返すこともある。そのため、 <I>path</I>
+で参照される文字列は、関数が返すポインターが不要になるまでは 変更したり free したりすべきではない。
+<P>
+
+以下の一連の例 (SUSv2 から引用) は、 いろいろな path に対して <B>dirname</B>()  と <B>basename</B>()
+が返す文字列を表したものである。
+<DL COMPACT><DT><DD>
+<TABLE>
+<TR VALIGN=top><TD><B>path    </B></TD><TD><B>dirname</B></TD><TD><B>basename</B></TD></TR>
+<TR VALIGN=top><TD>/usr/lib</TD><TD>/usr</TD><TD>lib</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>/usr/   </TD><TD>/</TD><TD>usr</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>usr     </TD><TD>.</TD><TD>usr</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>/       </TD><TD>/</TD><TD>/</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>.       </TD><TD>.</TD><TD>.</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>..      </TD><TD>.</TD><TD>..</TD><TD><BR></TD></TR>
+</TABLE>
+
+</DL>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>dirname</B>()  と <B>basename</B>()  は、いずれもヌルで終端された文字列へのポインターを返す。 (これらのポインターを
+<B><A HREF="../man3/free.3.html">free</A></B>(3)  に渡さないこと。)
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>basename</B>(),
+<B>dirname</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>basename</B>()  には 2種類の異なるバージョンがある。 一つはすでに説明した POSIX バージョンであり、 もう一つは GNU
+バージョンである。 GNU バージョンを使用するには以下のようにする。
+<P>
+
+
+
+<B>    #define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;</B>
+
+
+<P>
+
+GNU バージョンは引数を変更することはなく、 <I>path</I> の末尾が '/'の場合は空の文字列を返す。 特に <I>path</I> が &quot;/&quot;
+の場合も空文字列を返す。 <B>dirname</B>()  には GNU バージョンはない。
+<P>
+
+glibc では、 <I>&lt;<A HREF="file:///usr/include/libgen.h">libgen.h</A>&gt;</I> をインクルードすると POSIX バージョンの <B>basename</B>()
+が使用され、それ以外の場合は GNU バージョンとなる。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+glibc の実装では、これらの関数の POSIX バージョンは <I>path</I> 引数が変更され、 &quot;/usr/&quot;
+などの静的文字列を指定されるとセグメンテーションフォールトを起こす。
+<P>
+
+バージョン 2.2.1 以前の glibc では、 glibc の <B>dirname</B>()  は末尾が '/'
+文字になっているパス名を正しく扱えず、 引数が NULL だとセグメンテーションフォールトを起こした。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+The following code snippet demonstrates the use of <B>basename</B>()  and
+<B>dirname</B>():
+
+
+char *dirc, *basec, *bname, *dname;
+char *path = &quot;/etc/passwd&quot;;
+<P>
+dirc = strdup(path);
+basec = strdup(path);
+dname = dirname(dirc);
+bname = basename(basec);
+printf(&quot;dirname=%s, basename=%s\n&quot;, dname, bname);
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/basename.1.html">basename</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/dirname.1.html">dirname</A></B>(1)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:27 GMT, December 05, 2022
+</BODY>
+</HTML>

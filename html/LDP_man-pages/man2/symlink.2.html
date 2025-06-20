@@ -1,0 +1,220 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SYMLINK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SYMLINK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/symlink.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+symlink, symlinkat - ファイルに新しい名前を付ける
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int symlink(const char *</B><I>target</I><B>, const char *</B><I>linkpath</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;           </B>/* AT_* 定数の定義 */
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int symlinkat(const char *</B><I>target</I><B>, int </B><I>newdirfd</I><B>, const char *</B><I>linkpath</I><B>);</B>
+
+</PRE>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>symlink</B>():
+<DL COMPACT><DT><DD>
+
+<BR>&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500&nbsp;||&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以前:&nbsp;*/&nbsp;_BSD_SOURCE
+</DL>
+
+<P>
+
+<B>symlinkat</B>():
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>glibc 2.10 以降:<DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>glibc 2.10 より前:<DD>
+_ATFILE_SOURCE
+</DL>
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>symlink</B>()  は <I>target</I> という文字列をファイルの内容として持つ <I>linkpath</I> というシンボリックリンク
+(symbolic link) を作成する。
+<P>
+
+シンボリックリンクは実行時に解釈され、 リンクの内容でパスを置き換えて、そのパスを辿ることで、 ファイルやディレクトリに到達する。
+<P>
+
+シンボリックリンクはパスの部分に <I>..</I> を含むかもしれない。これは (もしリンクの最初に使用された場合は) リンクの
+存在するディレクトリの親ディレクトリが参照される。
+<P>
+
+シンボリックリンクは (ソフトリンク (soft link) とも呼ばれ)  存在するファイルを指しているかもしれないし、
+存在しないファイルを指しているかもしれない; 後者の場合は壊れたリンク (dangling link) とも呼ばれる。
+<P>
+
+シンボリックリンクの許可 (permission) は無意味である; リンクを追跡する場合には所有権 (ownership) は無視される。
+ただし、リンクの削除や名前の変更が要求され、かつリンクが存在する ディレクトリにスティッキービット (sticky bit)  (<B>S_ISVTX</B>)
+が設定されている場合には、所有権のチェックが行われる。
+<P>
+
+<I>linkpath</I> が存在する場合には上書きは<I>されない</I>。
+<A NAME="lbAE">&nbsp;</A>
+<H3>symlinkat()</H3>
+
+<B>symlinkat</B>() システムコールは <B>symlink</B>() と全く同様に動作するが、以下で説明する点が異なる。
+<P>
+
+<I>linkpath</I> で指定されたパス名が相対パスの場合、このパス名はファイルディスクリプター <I>newdirfd</I>
+が参照するディレクトリに対する相対パスと解釈される (<B>symlink</B>()
+に相対パス名を渡した場合のように、呼び出したプロセスのカレントワーキングディレクトリに対する相対パスではない)。
+<P>
+
+<I>linkpath</I> で指定されたパス名が相対パスで、 <I>newdirfd</I> が特別な値 <B>AT_FDCWD</B> の場合、
+(<B>symlink</B>() と同様に) <I>linkpath</I> は呼び出したプロセスのカレントワーキングディレクトリに対する相対パスと解釈される。
+<P>
+
+<I>linkpath</I> で指定されたパス名が絶対パスの場合、 <I>newdirfd</I> は無視される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+<I>linkpath</I> を含んでいるディレクトリへの書き込みが拒否されたか、 <I>linkpath</I>
+に含まれているディレクトリのどれかに検索許可が与えられていない (<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)  も参照すること)。
+<DT><B>EDQUOT</B><DD>
+そのファイルシステムのリソース使用量がユーザークォータに達している。対象となるリソースは inode
+かディスクブロックで、どちらになるかはファイルシステムの実装依存である。
+<DT><B>EEXIST</B><DD>
+<I>linkpath</I> が既に存在する。
+<DT><B>EFAULT</B><DD>
+<I>target</I> や <I>linkpath</I> がアクセス可能なアドレス空間の外を指している。
+<DT><B>EIO</B><DD>
+I/O エラーが発生した。
+<DT><B>ELOOP</B><DD>
+<I>linkpath</I> を解決する際に遭遇したシンボリックリンクが多過ぎる。
+<DT><B>ENAMETOOLONG</B><DD>
+<I>target</I> または <I>linkpath</I> が長過ぎる。
+<DT><B>ENOENT</B><DD>
+<I>linkpath</I> に含まれるディレクトリ部分が存在しないか、壊れたリンクであるか、 <I>target</I> か <I>linkpath</I>
+が空文字列である。
+<DT><B>ENOMEM</B><DD>
+十分なカーネルメモリーがない。
+<DT><B>ENOSPC</B><DD>
+そのファイルを含んでいるデバイスに新しいディレクトリエントリーを 作成するための空きがない。
+<DT><B>ENOTDIR</B><DD>
+<I>linkpath</I> に含まれるディレクトリ部分が、実際には、ディレクトリではない。
+<DT><B>EPERM</B><DD>
+<I>linkpath</I> を含んでいるファイルシステム (file system) が シンボリックリンクの作成をサポートしていない。
+<DT><B>EROFS</B><DD>
+<I>linkpath</I> が読み込み専用のファイルシステムに存在している。
+</DL>
+<P>
+
+<B>symlinkat</B>() では以下のエラーも発生する。
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>newdirfd</I> が有効なファイルディスクリプターでない。
+<DT><B>ENOENT</B><DD>
+<I>linkpath</I> が相対パス名で、 <I>newdirfd</I> が削除されたディレクトリを参照している。
+<DT><B>ENOTDIR</B><DD>
+<I>linkpath</I> が相対パスで、 <I>newdirfd</I> がディレクトリ以外のファイルを参照しているファイルディスクリプターである。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>symlinkat</B>()  はカーネル 2.6.16 で Linux に追加された。 ライブラリによるサポートはバージョン 2.4 で glibc
+に追加された。
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+
+<B>symlink</B>(): SVr4, 4.3BSD, POSIX.1-2001, POSIX.1-2008.
+<P>
+
+<B>symlinkat</B>(): POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<I>target</I> についてのチェックは行なわれない。
+<P>
+
+シンボリックリンクによって参照される名前を削除すると (それが他にハードリンク (hard link) を持たなければ) 実際にファイルが削除される。
+この動作が望んだものでない場合は、 <B><A HREF="../man2/link.2.html">link</A></B>(2)  を使用すること。
+<A NAME="lbAK">&nbsp;</A>
+<H3>glibc での注意</H3>
+
+<B>symlinkat</B>() が利用できない古いカーネルでは、 glibc ラッパー関数は <B>symlink</B>()
+を使用するモードにフォールバックする。 <I>pathname</I> が相対パスの場合、 glibc は <I>newdirfd</I> 引数に対応する
+<I>/proc/self/fd</I> のシンボリックリンクに基づいてパス名を構成する。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/ln.1.html">ln</A></B>(1), <B><A HREF="../../util-linux/man1/namei.1.html">namei</A></B>(1), <B><A HREF="../man2/lchown.2.html">lchown</A></B>(2), <B><A HREF="../man2/link.2.html">link</A></B>(2), <B><A HREF="../man2/lstat.2.html">lstat</A></B>(2), <B><A HREF="../man2/open.2.html">open</A></B>(2),
+<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2), <B><A HREF="../man2/rename.2.html">rename</A></B>(2), <B><A HREF="../man2/unlink.2.html">unlink</A></B>(2), <B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7),
+<B><A HREF="../man7/symlink.7.html">symlink</A></B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">symlinkat()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAK">glibc での注意</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

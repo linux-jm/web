@@ -1,0 +1,151 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of OPENDIR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>OPENDIR</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/opendir.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+opendir, fdopendir - ディレクトリをオープンする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/dirent.h">dirent.h</A>&gt;</B>
+
+<B>DIR *opendir(const char *</B><I>name</I><B>);</B>
+<B>DIR *fdopendir(int </B><I>fd</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>fdopendir</B>():
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>glibc 2.10 以降:<DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>glibc 2.10 より前:<DD>
+_GNU_SOURCE
+</DL>
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>opendir</B>() 関数は、ディレクトリ <I>name</I>
+に対応するディレクトリストリームをオープンし、そのストリームへのポインターを返す。ストリームの位置はディレクトリの先頭のエントリーに設定される。
+<P>
+
+<B>fdopendir</B>() 関数は <B>opendir</B>() と同様だが、オープン済みのファイルディスクリプター <I>fd</I>
+により参照されるディレクトリに対するディレクトリストリームを返す。 <B>fdopendir</B>() の呼び出しが成功した後は、 <I>fd</I>
+は実装の内部で使用される。アプリケーションは <I>fd</I> を他の場面で使用すべきではない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+関数 <B>opendir</B>() と <B>fdopendir</B>() はディレクトリストリームへのポインターを返す。 エラーの場合は、NULL が返り、
+<I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+アクセス権限がない。
+<DT><B>EBADF</B><DD>
+<I>fd</I> が読み出し用にオープンされた、有効なファイルディスクリプターではない。
+<DT><B>EMFILE</B><DD>
+オープンされたファイルディスクリプター数がプロセス単位の上限に達している。
+<DT><B>ENFILE</B><DD>
+オープンされたファイルの総数がシステム全体の上限に達している。
+<DT><B>ENOENT</B><DD>
+ディレクトリが存在しないか、または <I>name</I> が空文字列である。
+<DT><B>ENOMEM</B><DD>
+操作を完了するのに十分なメモリーがない。
+<DT><B>ENOTDIR</B><DD>
+<I>name</I> はディレクトリではない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>fdopendir</B>()  は glibc 2.4 以降で利用可能である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>opendir</B>(),
+<B>fdopendir</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>opendir</B>()  は SVr4 と 4.3BSD に存在し、 POSIX.1-2001 で規定されている。 <B>fdopendir</B>()  は
+POSIX.1-2008 で規定されている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+ファイル名エントリーをディレクトリストリームから読み込むには <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3) を使用する。
+<P>
+
+ディレクトリストリームに対応するファイルディスクリプターは <B><A HREF="../man3/dirfd.3.html">dirfd</A></B>(3) を使用して取得できる。
+<P>
+
+<B>opendir</B>() 関数は、 <I>DIR *</I> に対応するファイルディスクリプターの close-on-exec フラグを設定する。
+<B>fdopendir</B>() 関数は、ファイルディスクリプターの close-on-exec フラグの設定を変更しない。 <B>fdopendir</B>()
+の呼び出しが成功した際に、ファイルディスクリプター <I>fd</I> の close-on-exec を設定するかどうかは、 POSIX.1-200x
+では規定されていない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man3/closedir.3.html">closedir</A></B>(3), <B><A HREF="../man3/dirfd.3.html">dirfd</A></B>(3), <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3), <B><A HREF="../man3/rewinddir.3.html">rewinddir</A></B>(3),
+<B><A HREF="../man3/scandir.3.html">scandir</A></B>(3), <B><A HREF="../man3/seekdir.3.html">seekdir</A></B>(3), <B><A HREF="../man3/telldir.3.html">telldir</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

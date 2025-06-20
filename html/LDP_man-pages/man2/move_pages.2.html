@@ -1,0 +1,209 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MOVE_PAGES</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MOVE_PAGES</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/move_pages.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+move_pages - あるプロセスの個々のページを別のノードに移動する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/numaif.h">numaif.h</A>&gt;</B>
+
+<B>long move_pages(int </B><I>pid</I><B>, unsigned long count, void **</B><I>pages</I><B>,</B>
+<B>                const int *</B><I>nodes</I><B>, int *</B><I>status</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>-lnuma</I> とリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>move_pages</B>()  は、プロセス <I>pid</I> の指定されたページ <I>pages</I> を <I>nodes</I>
+で指定されたメモリーノードに移動する。 移動の結果は <I>status</I> に反映される。 <I>flags</I> では移動されるページに関する制約を指定する。
+<P>
+
+<I>pid</I> is the ID of the process in which pages are to be moved.  If <I>pid</I>
+is 0, then <B>move_pages</B>()  moves pages of the calling process.
+<P>
+
+To move pages in another process requires the following privileges:
+<DL COMPACT>
+<DT>*<DD>
+Linux 4.12 以前のカーネルでは、呼び出し元が特権 (<B>CAP_SYS_NICE</B>)  を持っているか、呼び出したプロセスの実ユーザー ID
+か実効ユーザー ID が ページ移動対象のプロセスの実ユーザー ID か保存 set-user-ID のどちらかと一致しなければならない。
+<DT>*<DD>
+
+The older rules allowed the caller to discover various virtual address
+choices made by the kernel that could lead to the defeat of
+address-space-layout randomization for a process owned by the same UID as
+the caller, the rules were changed starting with Linux 4.13.  Since Linux
+4.13, permission is governed by a ptrace access mode
+<B>PTRACE_MODE_READ_REALCREDS</B> check with respect to the target process; see
+<B>ptrace</B>(2).
+</DL>
+<P>
+
+<I>count</I> は移動するページ数である。 <I>count</I> により <I>pages</I>, <I>nodes</I>, <I>status</I> の 3
+つの配列の大きさが定義される。
+<P>
+
+
+
+<I>pages</I> は、移動すべきページへのポインターの配列であり、 各ポインターはページ境界に揃えた値を指定すべきである。 <I>pid</I>
+で指定されたプロセスで見えるアドレスを指定する。
+<P>
+
+<I>nodes</I> は、各ページの希望の移動場所を示す整数値の配列であり、 配列の各要素はノード番号である。 <I>nodes</I> には NULL
+を指定することもでき、この場合には <B>move_pages</B>()  はどのページも移動しないが、各ページが現在配置されているノードを配列
+<I>status</I> に格納して返す。どのページを移動する必要があるかを判断するために、 各ページの状態の取得が必要な場合もある。
+<P>
+
+<I>status</I> is an array of integers that return the status of each page.  The
+array contains valid values only if <B>move_pages</B>()  did not return an
+error.  Preinitialization of the array to a value which cannot represent a
+real numa node or valid error of status array could help to identify pages
+that have been migrated.
+<P>
+
+<I>flags</I> には、どの種類のページを移動するかを指定する。 <B>MPOL_MF_MOVE</B>
+は、そのプロセスが排他的に使用しているページだけを移動することを意味する。 <B>MPOL_MF_MOVE_ALL</B>
+は、複数のプロセス間で共有されているページも移動できることを意味する。 <B>MPOL_MF_MOVE_ALL</B> を使用するためには、そのプロセスが特権
+(<B>CAP_SYS_NICE</B>)  を持っていなければならない。
+<A NAME="lbAE">&nbsp;</A>
+<H3>status 配列に格納されるページ状態</H3>
+
+<I>status</I> 配列の各要素として、以下の値が返される。
+<DL COMPACT>
+<DT><B>0..MAX_NUMNODES</B><DD>
+そのページが配置されているノードを示す。
+<DT><B>-EACCES</B><DD>
+そのページは複数のプロセスによりマップされており、 <B>MPOL_MF_MOVE_ALL</B> が指定された場合にのみ移動できる。
+<DT><B>-EBUSY</B><DD>
+そのページが現在ビジーであり、移動できない。後でもう一度試すこと。 この状況は、ページが I/O の実行中であったり、カーネルの他のサブシステム
+がそのページへの参照を保持している場合に発生する。
+<DT><B>-EFAULT</B><DD>
+そのページが zero page であるか、そのメモリー領域はそのプロセスにより マップされていない。
+<DT><B>-EIO</B><DD>
+ページを書き戻す (write back) ことができない。 ページが dirty で、ファイルシステムが dirty なページを移動できるような
+移動機能を提供していないため、そのページを移動するためにはページを 書き戻さなければならない。
+<DT><B>-EINVAL</B><DD>
+dirty なページを移動できない。 ファイルシステムが dirty なページを移動するための機能を提供しておらず、 ページを書き戻す能力もない。
+<DT><B>-ENOENT</B><DD>
+ページが存在しない。
+<DT><B>-ENOMEM</B><DD>
+移動先のノードでメモリーを確保することができない。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+
+
+On success <B>move_pages</B>()  returns zero.  On error, it returns -1, and sets
+<I>errno</I> to indicate the error.  If positive value is returned, it is the
+number of nonmigrated pages.
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>Positive value</B><DD>
+
+
+The number of nonmigrated pages if they were the result of nonfatal reasons
+(since Linux 4.17).  <B>E2BIG</B> Too many pages to move.  Since Linux 2.6.29,
+the kernel no longer generates this error.
+<DT><B>EACCES</B><DD>
+
+
+移動先のノードのいずれかが現在の CPU 集合では許可されていない。
+<DT><B>EFAULT</B><DD>
+パラメーター配列にアクセスできなかった。
+<DT><B>EINVAL</B><DD>
+<I>flags</I> に <B>MPOL_MF_MOVE</B> でも <B>MPOL_MF_MOVE_ALL</B>
+でもない値が指定されたか、カーネルスレッドのページを移動させようとした。
+<DT><B>ENODEV</B><DD>
+移動先のノードのいずれかがオンラインでない。
+<DT><B>EPERM</B><DD>
+呼び出し元は <B>MPOL_MF_MOVE_ALL</B> を指定したが、十分な特権 (<B>CAP_SYS_NICE</B>)  を持っていない。
+または、呼び出し元が他のユーザーに属するプロセスのページを移動しようとしたが、 それを行えるだけの特権 (<B>CAP_SYS_NICE</B>)
+を持っていなかった。
+<DT><B>ESRCH</B><DD>
+プロセスが存在しない。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>move_pages</B>()  は、バージョン 2.6.18 で初めて Linux に登場した。
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 固有である。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+ライブラリによるサポートについては <B><A HREF="../man7/numa.7.html">numa</A></B>(7)  を参照。
+<P>
+
+
+
+現在の CPU 集合で許可されているノードの集合を取得するには、フラグ <B>MPOL_F_MEMS_ALLOWED</B> を指定して
+<B><A HREF="../man2/get_mempolicy.2.html">get_mempolicy</A></B>(2)  を使用すればよい。 取得した情報は、CPU 集合の手動または自動での再構成により
+いつ何時変化してしまうか分からない。
+<P>
+
+この関数を使用すると、ページの位置 (ノード) が 指定されたアドレスに対して設定されたメモリーポリシー (<B><A HREF="../man2/mbind.2.html">mbind</A></B>(2)  参照)
+や指定されたプロセスに対して設定されたメモリーポリシー (<B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2)  参照) に違反してしまう可能性がある。
+つまり、メモリーポリシーは <B>move_pages</B>()  で使われる移動先ノードを制限しないということである。
+<P>
+
+ヘッダーファイル <I>&lt;<A HREF="file:///usr/include/numaif.h">numaif.h</A>&gt;</I> は glibc には含まれておらず、 <I>libnuma-devel</I>
+か同様のパッケージをインストールする必要がある。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/get_mempolicy.2.html">get_mempolicy</A></B>(2), <B><A HREF="../man2/mbind.2.html">mbind</A></B>(2), <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2), <B>numa</B>(3),
+<B>numa_maps</B>(5), <B>cpuset</B>(7), <B><A HREF="../man7/numa.7.html">numa</A></B>(7), <B>migratepages</B>(8),
+<B>numastat</B>(8)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">status 配列に格納されるページ状態</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

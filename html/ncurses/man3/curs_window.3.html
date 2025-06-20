@@ -1,0 +1,170 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of curs_window</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>curs_window</H1>
+Section: Miscellaneous Library Functions (3X)<BR>Updated: <BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/ncurses/release/man3/curs_window.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<B>newwin</B>, <B>delwin</B>, <B>mvwin</B>, <B>subwin</B>, <B>derwin</B>,
+<B>mvderwin</B>, <B>dupwin</B>, <B>wsyncup</B>, <B>syncok</B>, <B>wcursyncup</B>,
+<B>wsyncdown</B> - <B>curses</B> ウィンドウを生成。
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/curses.h">curses.h</A>&gt;</B>
+<BR>&nbsp;
+<B>WINDOW *newwin(int nlines, int ncols, int begin_y,</B> <B>int begin_x);</B>
+<BR>
+
+<B>int delwin(WINDOW *win);</B>
+<BR>
+
+<B>int mvwin(WINDOW *win, int y, int x);</B>
+<BR>
+
+<B>WINDOW *subwin(WINDOW *orig, int nlines, int ncols,</B> <B>int begin_y, int
+begin_x);</B>
+<BR>
+
+<B>WINDOW *derwin(WINDOW *orig, int nlines, int ncols,</B> <B>int begin_y, int
+begin_x);</B>
+<BR>
+
+<B>int mvderwin(WINDOW *win, int par_y, int par_x);</B>
+<BR>
+
+<B>WINDOW *dupwin(WINDOW *win);</B>
+<BR>
+
+<B>void wsyncup(WINDOW *win);</B>
+<BR>
+
+<B>int syncok(WINDOW *win, bool bf);</B>
+<BR>
+
+<B>void wcursyncup(WINDOW *win);</B>
+<BR>
+
+<B>void wsyncdown(WINDOW *win);</B>
+<BR>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>newwin</B>関数を呼ぶと、与えられた列数と行数を持つ新規ウィンドウを生成し、
+そのポインタを返す。
+ウィンドウの左上の行が <I>begin</I>_<I>y</I>, 列が <I>begin</I>_<I>x</I>である。
+もし、<I>nlines</I> 又は <I>ncols</I> のどちらかがゼロならば、
+デフォルトとして <B>LINES -</B> <I>begin</I>_<I>y</I> 及び <B>COLS -</B><I>begin</I>_<I>x</I>
+<BR>&nbsp;が設定される。
+新規のフルスクリーンウィンドウは<B>newwin(0,0,0,0)</B>を呼ぶことで生成される。
+<P>
+<B>delwin</B>関数は既存のウィンドウを削除し、関連づけられているすべてのメモリを開放する。
+メインウィンドウの削除前にサブウィンドウが削除されねばならない。
+<P>
+<B>mvwin</B>関数はウィンドウを動かし、その結果左上が (<I>x</I>, <I>y</I>)となる。
+もしウィンドウを動かすことでスクリーンからはみだしてしまうならばエラーとなり、
+ウィンドウは動かされない。
+サブウィンドウを動かす事は許されてはいるが、避けるべきである。
+<P>
+<B>subwin</B>関数は与えられた行数 <I>nlines</I>、列数 <I>ncols</I>
+<BR>&nbsp;の新規ウィンドウを生成し、そのポインタを返す。
+ウィンドウはスクリーン上(<I>begin</I>_<I>y</I>, <I>begin</I>_<I>x</I>)にある。
+(この位置はスクリーンに対して相対的なもので、 <I>orig</I> ウィンドウに対してではない。)
+サブウィンドウは <I>orig</I> ウィンドウの中心で生成され、一方のウィンドウへの変更は
+双方のウィンドウに対して影響を及ぼす。
+サブウィンドウは <I>orig</I> ウィンドウとメモリを共有する。
+この関数を使用する際には、サブウィンドウ上で <B>wrefresh</B> を呼ぶ前に
+<BR>&nbsp;<I>orig</I>上で&nbsp;<B>touchwin</B>&nbsp;又は&nbsp;<B>touchline</B>&nbsp;を呼ぶ必要がある。
+<BR>&nbsp;
+<B>derwin</B>関数は <B>subwin</B> を呼ぶのと同様であり、<I>begin</I>_<I>y</I> と
+<BR>&nbsp;<I>begin</I>_<I>x</I>&nbsp;がスクリーンではなく&nbsp;<I>orig</I>
+<BR>&nbsp;ウィンドウに相対的である点を除いては、サブウィンドウとの違いはない。
+<P>
+<B>mvderwin</B>関数は親ウィンドウ内部で得られるウィンドウ(あるいはサブウィンドウ)を動かす。
+スクリーンに対して相対的であるウィンドウの引数は変更されない。
+この関数はスクリーン上で物理的に同じ位置にある親ウィンドウとの差異点を描画する
+のに使用される。
+<P>
+<B>dupwin</B>関数は <I>win</I> ウィンドウの正確な複製を生成する。
+<P>
+<B>wsyncup</B>関数は <I>win</I> で変更がなされた <I>win</I> の祖先のあらゆる位置情報
+を更新する。
+もし <B>syncok</B> が第二引数として <B>TRUE</B> とともに呼び出されたらならば、
+ウィンドウに変更があるときはいつでも <B>wsyncup</B> が自動的に呼ばれる。
+<BR>&nbsp;
+<B>wsyncdown</B>関数は祖先のウィンドウの変更点を <I>win</I> へと反映する。
+この関数は <B>wrefresh</B> により呼び出され、手動で呼び出す必要はないはずだ。
+<BR>&nbsp;
+<B>wcursyncup</B>関数はウィンドウのカーソル位置を反映するために、
+全ての祖先のウィンドウのカーソル位置を更新する。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+整数を返す関数は整数値 <B>ERR</B> を失敗時点で返し、<B>OK</B> (SVr4 では
+<BR>&nbsp;&quot;<B>ERR</B>以外の整数値&quot;と明記。)を成功時に返す。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>注意</H2>
+
+ウィンドウへ多くの些細な変更がなされた場合、<B>wsyncup</B> オプションはパフォーマンスの低下をもたらす。
+<BR>&nbsp;
+<B>syncok</B> がマクロかも知れないことに注意。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+サブウィンドウ関数(<I>subwin</I>, <I>derwin</I>, <I>mvderwin</I>,
+<B>wsyncup</B>, <B>wsyncdown</B>, <B>wcursyncup</B>, <B>syncok</B>)は
+不完全な実装であり、充分にテストがなされていない。
+<BR>&nbsp;
+System V curses 文書は <B>wsyncup</B> 及び <B>wsyncdown</B>
+<BR>&nbsp;の実際の振る舞いについて非常に不明瞭である。
+これらは単に祖先の変更により影響を受ける行を更新することになっているようである。
+ここでの言語、および <B>curses</B> の実装の振る舞いは XPG4 curses 標準に準拠している。
+XPG4 仕様は遅々としながらも更新されるかもしれない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>移植性</H2>
+
+XSI Curses 準拠、第4章でこれらの関数について既述がある。
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>curses</B>(3X), <B>curs_refresh</B>(3X), <B>curs_touch</B>(3X)
+
+
+
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">注意</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">移植性</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:40 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,207 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SPLICE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SPLICE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/splice.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+splice - パイプとの間でデータを継ぎ合わせる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
+
+<B>ssize_t splice(int </B><I>fd_in</I><B>, loff_t *</B><I>off_in</I><B>, int </B><I>fd_out</I><B>,</B>
+<B>               loff_t *</B><I>off_out</I><B>, size_t </B><I>len</I><B>, unsigned int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>splice</B>()  は、カーネルアドレス空間とユーザーアドレス空間との間のコピーを伴わずに、 2
+つのファイルディスクリプター間でデータの移動を行う。 ファイルディスクリプター <I>fd_in</I> からファイルディスクリプター <I>fd_out</I>
+へ最大 <I>len</I> バイトを転送する。 2 つのファイルディスクリプターのうち一つは パイプを参照していなければならない。
+<P>
+
+<I>fd_in</I> と <I>off_in</I> には以下のルールが適用される。
+<DL COMPACT>
+<DT>*<DD>
+<I>fd_in</I> がパイプを参照している場合、 <I>off_in</I> は NULL でなければならない。
+<DT>*<DD>
+<I>fd_in</I> がパイプを参照しておらず、かつ <I>off_in</I> が NULL の場合、 バイトは <I>fd_in</I>
+のファイルオフセットから読み出され、 ファイルオフセットは適切に調整される。
+<DT>*<DD>
+<I>fd_in</I> がパイプを参照しておらず、 <I>off_in</I> が NULL でない場合、 <I>off_in</I> は <I>fd_in</I>
+からのデータ読み出しを開始する先頭オフセットを格納したバッファー へのポインターでなければならない。この場合、 <I>fd_in</I>
+のファイルオフセットは変更されない。
+</DL>
+<P>
+
+<I>fd_out</I> と <I>off_out</I> に関しても同様である。
+<P>
+
+<I>flags</I> 引数には、以下の値の 0 個以上をビット毎の論理和の形で指定する。
+<DL COMPACT>
+<DT><B>SPLICE_F_MOVE</B><DD>
+ページのコピーでなく移動を試みる。 これはカーネルに対するヒントでしかない。 つまり、カーネルがパイプからページを移動できない場合や、
+パイプバッファーがページ全部を参照していない場合は、 ページのコピーが行われることもある。 このフラグの最初の実装にはバグがあった。そのため、
+Linux 2.6.21 以降ではこのフラグの操作はできないようになっている (ただし、 <B>splice</B>()
+コールでこのフラグを指定することは今も認められている)。 将来、正しい実装が行われることだろう。
+<DT><B>SPLICE_F_NONBLOCK</B><DD>
+入出力時に停止 (block) しない。 このフラグを指定すると、 splice によるパイプ操作を非停止モード (nonblocking) で
+行おうとするが、その場合でも <B>splice</B>()  は停止することもある。なぜなら、データのやり取りを行う ファイルディスクリプターは
+(<B>O_NONBLOCK</B> フラグをセットされていない場合) 停止する可能性があるからである。
+<DT><B>SPLICE_F_MORE</B><DD>
+この後の splice でさらに転送されるデータがあることを示す。 このフラグは <I>fd_out</I> がソケットを参照している場合に有用なヒントとなる
+(<B><A HREF="../man2/send.2.html">send</A></B>(2)  の <B>MSG_MORE</B> や <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)  の <B>TCP_CORK</B> の説明も参照)。
+<DT><B>SPLICE_F_GIFT</B><DD>
+<B>splice</B>()  では使用しない。 <B><A HREF="../man2/vmsplice.2.html">vmsplice</A></B>(2)  参照。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+Upon successful completion, <B>splice</B>()  returns the number of bytes spliced
+to or from the pipe.
+<P>
+
+A return value of 0 means end of input.  If <I>fd_in</I> refers to a pipe, then
+this means that there was no data to transfer, and it would not make sense
+to block because there are no writers connected to the write end of the
+pipe.
+<P>
+
+エラーの場合、 <B>splice</B>()  は -1 を返し、 <I>errno</I> にエラーを示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+<B>SPLICE_F_NONBLOCK</B> was specified in <I>flags</I> or one of the file
+descriptors had been marked as nonblocking (<B>O_NONBLOCK</B>)<B>,</B> and the
+operation would block.
+<DT><B>EBADF</B><DD>
+ファイルディスクリプターの一方または両方が有効ではない、 もしくは適切な read-write モードではない。
+<DT><B>EINVAL</B><DD>
+The target filesystem doesn't support splicing.
+<DT><B>EINVAL</B><DD>
+
+
+The target file is opened in append mode.
+<DT><B>EINVAL</B><DD>
+どのファイルディスクリプターもパイプを参照していない。
+<DT><B>EINVAL</B><DD>
+An offset was given for nonseekable device (e.g., a pipe).
+<DT><B>EINVAL</B><DD>
+<I>fd_in</I> と <I>fd_out</I> が同じパイプを参照している。
+<DT><B>ENOMEM</B><DD>
+メモリー不足。
+<DT><B>ESPIPE</B><DD>
+<I>off_in</I> か <I>off_out</I> のいずれかが NULL ではないが、対応するファイルディスクリプターが パイプを参照している。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>splice</B>() システムコールは Linux 2.6.17 で初めて登場した。
+ライブラリによるサポートは glibc バージョン 2.5 で追加された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+3 つのシステムコール (<B>splice</B>(), <B><A HREF="../man2/vmsplice.2.html">vmsplice</A></B>(2), <B><A HREF="../man2/tee.2.html">tee</A></B>(2))
+を使うと、ユーザー空間プログラムは任意のカーネルバッファーに対する 完全な制御ができる。カーネルバッファーは、パイプに使用されているのと
+同種のバッファーを使ってカーネル内に実装されている。 大まかにいうと、これらのシステムコールは以下の仕事を行う:
+<DL COMPACT>
+<DT>&bull;<DD>
+<B>splice</B>() は、バッファーから任意のファイルディスクリプターや、その逆方向、
+もしくはあるバッファーから別のバッファーへの、データ移動を行う。
+<DT>&bull;<DD>
+<B><A HREF="../man2/tee.2.html">tee</A></B>(2) は、あるバッファーから別のバッファーへのデータ「コピー」を行う。
+<DT>&bull;<DD>
+<B><A HREF="../man2/vmsplice.2.html">vmsplice</A></B>(2) は、ユーザー空間からバッファーへのデータ「コピー」を行う。
+</DL>
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ここではコピーの話をしているが、実際のコピーは一般的に回避される。 カーネルは、パイプバッファーをカーネルメモリーのページへのポインター集合として
+実装し、ページへの参照回数を管理することで、これを実現している。 カーネルは、対象となるページを参照する (出力バッファー用の) ポインターを
+新規に作成することでバッファー内のページの「コピー」を作成し、 そのページの参照回数を増やす。つまり、ポインターだけがコピーされ、
+バッファーのページはコピーされない。
+<P>
+
+
+In Linux 2.6.30 and earlier, exactly one of <I>fd_in</I> and <I>fd_out</I> was
+required to be a pipe.  Since Linux 2.6.31, both arguments may refer to
+pipes.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man2/tee.2.html">tee</A></B>(2)  参照。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>copy_file_range</B>(2), <B><A HREF="../man2/sendfile.2.html">sendfile</A></B>(2), <B><A HREF="../man2/tee.2.html">tee</A></B>(2), <B><A HREF="../man2/vmsplice.2.html">vmsplice</A></B>(2), <B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

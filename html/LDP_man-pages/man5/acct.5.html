@@ -1,0 +1,180 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ACCT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ACCT</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man5/acct.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+acct - プロセスアカウンティングファイル
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/acct.h">sys/acct.h</A>&gt;</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+カーネルがプロセスアカウンティングのオプション (<B>CONFIG_BSD_PROCESS_ACCT</B>)  を有効にして作成されていると、以下のように
+<B><A HREF="../man2/acct.2.html">acct</A></B>(2)  を呼び出すとプロセスアカウンティングが開始される。
+<P>
+
+
+acct(&quot;/var/log/pacct&quot;);
+
+<P>
+
+プロセスアカウンティングが有効になっていると、カーネルは システム上の各プロセスが終了するたびにアカウンティングファイルに レコードを書き込む。
+このレコードは、終了したプロセスに関する情報を保持するもので、 <I>&lt;<A HREF="file:///usr/include/sys/acct.h">sys/acct.h</A>&gt;</I> で以下のように定義されている。
+<P>
+
+
+
+#define ACCT_COMM 16
+<P>
+typedef u_int16_t comp_t;
+<P>
+struct acct {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;ac_flag;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Accounting&nbsp;flags&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u_int16_t&nbsp;ac_uid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Accounting&nbsp;user&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u_int16_t&nbsp;ac_gid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Accounting&nbsp;group&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u_int16_t&nbsp;ac_tty;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Controlling&nbsp;terminal&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u_int32_t&nbsp;ac_btime;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Process&nbsp;creation&nbsp;time
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(seconds&nbsp;since&nbsp;the&nbsp;Epoch)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_utime;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;User&nbsp;CPU&nbsp;time&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_stime;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;System&nbsp;CPU&nbsp;time&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_etime;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Elapsed&nbsp;time&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_mem;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Average&nbsp;memory&nbsp;usage&nbsp;(kB)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_io;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Characters&nbsp;transferred&nbsp;(unused)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_rw;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Blocks&nbsp;read&nbsp;or&nbsp;written&nbsp;(unused)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_minflt;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Minor&nbsp;page&nbsp;faults&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_majflt;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Major&nbsp;page&nbsp;faults&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_swaps;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;swaps&nbsp;(unused)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u_int32_t&nbsp;ac_exitcode;&nbsp;&nbsp;/*&nbsp;Process&nbsp;termination&nbsp;status
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(see&nbsp;<A HREF="../man2/wait.2.html">wait</A>(2))&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_comm[ACCT_COMM+1];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Command&nbsp;name&nbsp;(basename&nbsp;of&nbsp;last
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;executed&nbsp;command;&nbsp;null-terminated)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_pad[<I>X</I>];&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;padding&nbsp;bytes&nbsp;*/
+};
+<P>
+enum {          /* Bits that may be set in ac_flag field */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;AFORK&nbsp;=&nbsp;0x01,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Has&nbsp;executed&nbsp;fork,&nbsp;but&nbsp;no&nbsp;exec&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ASU&nbsp;&nbsp;&nbsp;=&nbsp;0x02,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Used&nbsp;superuser&nbsp;privileges&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ACORE&nbsp;=&nbsp;0x08,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Dumped&nbsp;core&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;AXSIG&nbsp;=&nbsp;0x10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Killed&nbsp;by&nbsp;a&nbsp;signal&nbsp;*/
+};
+
+
+<P>
+
+データ型 <I>comp_t</I> は浮動小数点値で、3 ビット幅の基数が 8 の指数部と 13 ビット幅の仮数部から 構成される。 <I>comp_t</I>
+型の値 <I>c</I> は以下のようにして (long 型の) 整数に変換できる。
+<P>
+
+<PRE>
+    v = (c &amp; 0x1fff) &lt;&lt; (((c &gt;&gt; 13) &amp; 0x7) * 3);
+</PRE>
+
+<P>
+
+フィールド <I>ac_utime</I>, <I>ac_stime</I>, <I>ac_etime</I> は &quot;clock ticks&quot; 単位で計測した時間である。
+これらの値を <I>sysconf(_SC_CLK_TCK)</I> で割ると、秒に変換できる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>バージョン 3 のアカウンティングファイルのフォーマット</H3>
+
+カーネル 2.6.8 以降では、 別のバージョンのアカウンティングファイルを生成することができ、 これを使うにはカーネル構築時に
+<B>CONFIG_BSD_PROCESS_ACCT_V3</B> オプションが有効になっている必要がある。
+このオプションが設定されると、アカウンティングファイルに書き込まれる レコードにフィールドが追加される。 また、フィールド <I>c_uid</I> と
+<I>ac_gid</I> の幅が 16 ビットから 32 ビットに拡張される (これは Linux 2.4 以降で UID と GID
+のサイズが増えているのに 対応したものである)。 このレコードは以下のように定義されている。
+<P>
+
+
+
+struct acct_v3 {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_flag;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Flags&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_version;&nbsp;&nbsp;&nbsp;/*&nbsp;Always&nbsp;set&nbsp;to&nbsp;ACCT_VERSION&nbsp;(3)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u_int16_t&nbsp;ac_tty;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Controlling&nbsp;terminal&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u_int32_t&nbsp;ac_exitcode;&nbsp;&nbsp;/*&nbsp;Process&nbsp;termination&nbsp;status&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u_int32_t&nbsp;ac_uid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Real&nbsp;user&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u_int32_t&nbsp;ac_gid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Real&nbsp;group&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u_int32_t&nbsp;ac_pid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Process&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u_int32_t&nbsp;ac_ppid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Parent&nbsp;process&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u_int32_t&nbsp;ac_btime;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Process&nbsp;creation&nbsp;time&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;float&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_etime;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Elapsed&nbsp;time&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_utime;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;User&nbsp;CPU&nbsp;time&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_stime;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;System&nbsp;time&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_mem;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Average&nbsp;memory&nbsp;usage&nbsp;(kB)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_io;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Characters&nbsp;transferred&nbsp;(unused)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_rw;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Blocks&nbsp;read&nbsp;or&nbsp;written
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(unused)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_minflt;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Minor&nbsp;page&nbsp;faults&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_majflt;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Major&nbsp;page&nbsp;faults&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;comp_t&nbsp;&nbsp;&nbsp;&nbsp;ac_swaps;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;swaps&nbsp;(unused)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ac_comm[ACCT_COMM];&nbsp;/*&nbsp;Command&nbsp;name&nbsp;*/
+};
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>バージョン</H2>
+
+<I>acct_v3</I> 構造体はバージョン 2.6 以降の glibc で定義されている。
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+プロセスアカウンティングは BSD 由来である。 この機能はほとんどのシステムに存在するが、標準化されておらず、
+その詳細はシステムによりいくらか異なる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+アカウンティングファイルのレコードは、プロセスの終了時刻の順序となる。
+<P>
+
+バージョン 2.6.9 以前のカーネルでは、 NPTL スレッドライブラリを使って作成されたスレッドでは
+スレッド毎に別々のアカウンティングレコードが書き込まれていた。 Linux 2.6.10 以降では、プロセス内の最後のスレッドが終了すると、
+プロセス全体についてのアカウンティングレコードが一つだけ書き込まれる。
+<P>
+
+<I>/proc/sys/kernel/acct</I> ファイル (<B><A HREF="../man5/proc.5.html">proc</A></B>(5)  で説明されている) は、ディスク容量の残りが少なくなった際の
+プロセスアカウンティングの動作を制御する設定を保持している。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>lastcomm</B>(1), <B><A HREF="../man2/acct.2.html">acct</A></B>(2), <B>accton</B>(8), <B>sa</B>(8)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">バージョン 3 のアカウンティングファイルのフォーマット</A><DD>
+</DL>
+<DT><A HREF="#lbAF">バージョン</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:26 GMT, December 05, 2022
+</BODY>
+</HTML>

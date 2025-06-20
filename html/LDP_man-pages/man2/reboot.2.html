@@ -1,0 +1,184 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of REBOOT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>REBOOT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/reboot.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+reboot - 再起動する。または Ctrl-Alt-Delを有効・無効にする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+/* カーネル 2.1.30 以降では、定数としてシンボリックな名前
+<BR>&nbsp;&nbsp;&nbsp;LINUX_REBOOT_*&nbsp;が定義されており、呼び出しの第&nbsp;4&nbsp;引数として
+<BR>&nbsp;&nbsp;&nbsp;指定することができる。*/
+<P>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/reboot.h">linux/reboot.h</A>&gt;</B>
+<P>
+
+<B>int reboot(int </B><I>magic</I><B>, int </B><I>magic2</I><B>, int </B><I>cmd</I><B>, void
+*</B><I>arg</I><B>);</B>
+<P>
+/* Under glibc and most alternative libc's (including uclibc, dietlibc,
+<BR>&nbsp;&nbsp;&nbsp;musl&nbsp;and&nbsp;a&nbsp;few&nbsp;others),&nbsp;some&nbsp;of&nbsp;the&nbsp;constants&nbsp;involved&nbsp;have&nbsp;gotten
+<BR>&nbsp;&nbsp;&nbsp;symbolic&nbsp;names&nbsp;RB_*,&nbsp;and&nbsp;the&nbsp;library&nbsp;call&nbsp;is&nbsp;a&nbsp;1-argument
+<BR>&nbsp;&nbsp;&nbsp;wrapper&nbsp;around&nbsp;the&nbsp;system&nbsp;call:&nbsp;*/
+<P>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/reboot.h">sys/reboot.h</A>&gt;</B>
+<P>
+
+<B>int reboot(int </B><I>cmd</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>reboot</B>()  はシステムを再起動する。または再起動のキーストロークである Ctrl-Alt-Delete (CAD) を有効/無効にする。
+このキーストロークは <B>loadkeys</B>(1)  によって変更できる。
+<P>
+
+<I>magic</I> が <B>LINUX_REBOOT_MAGIC1</B> (値は 0xfee1dead) であり、かつ <I>magic2</I> が
+<B>LINUX_REBOOT_MAGIC2</B> (672274793) でなければ、このシステムコールは (エラー <B>EINVAL</B> で) 失敗する。
+しかし 2.1.17 からは <B>LINUX_REBOOT_MAGIC2A</B> (85072278) が、 また 2.1.97 からは
+<B>LINUX_REBOOT_MAGIC2B</B> (369367448) が、 2.5.71 からは <B>LINUX_REBOOT_MAGIC2C</B>
+(537993216) が <I>magic2</I> の値として指定できるようになった (これらの定数の 16 進での 表記にはちょっとした意味がある)。
+<P>
+
+<I>cmd</I> 引数には以下の値を指定できる。
+<DL COMPACT>
+<DT><B>LINUX_REBOOT_CMD_CAD_OFF</B><DD>
+(<B>RB_DISABLE_CAD</B>, 0)  CAD を無効にする。 これ以降に CAD キーストロークが入力されると、 <B>SIGINT</B>
+シグナルが init (プロセス 1) に送られる。 このシグナルを受けると、おそらく init プロセスは 前もって定められた動作を行うことになる
+(多分すべてのプロセスの kill, sync, 再起動)。
+<DT><B>LINUX_REBOOT_CMD_CAD_ON</B><DD>
+(<B>RB_ENABLE_CAD</B>, 0x89abcdef)  CAD を有効にする。 これ以降に CAD キーストロークが入力されると、 ただちに
+<B>LINUX_REBOOT_CMD_RESTART</B> に関連付けられた動作が行われるようになる。
+<DT><B>LINUX_REBOOT_CMD_HALT</B><DD>
+(<B>RB_HALT_SYSTEM</B>, 0xcdef0123; Linux 1.1.76 以降)  &quot;System halted.&quot;
+というメッセージが表示され、システムは停止 (halt) する。 制御は ROM モニタに移る (ROM モニタがある場合)。 先に
+<B><A HREF="../man2/sync.2.html">sync</A></B>(2)  を行なわないと、データが失われる。
+<DT><B>LINUX_REBOOT_CMD_KEXEC</B><DD>
+(<B>RB_KEXEC</B>, 0x45584543, Linux 2.6.13 以降) <B><A HREF="../man2/kexec_load.2.html">kexec_load</A></B>(2)
+を使って事前にロードされたカーネルを実行する。このオプションが利用できるのは、カーネルのコンフィグで <B>CONFIG_KEXEC</B>
+が有効になっている場合にのみである。
+<DT><B>LINUX_REBOOT_CMD_POWER_OFF</B><DD>
+(<B>RB_POWER_OFF</B>, 0x4321fedc; Linux 2.1.30 以降)  &quot;Power down&quot;
+というメッセージが表示され、システムは停止 (stop) する。 可能な場合はシステムの電源が落とされる。 先に <B><A HREF="../man2/sync.2.html">sync</A></B>(2)
+を行なわないと、データが失われる。
+<DT><B>LINUX_REBOOT_CMD_RESTART</B><DD>
+(<B>RB_AUTOBOOT</B>, 0x1234567)  &quot;Restarting system.&quot; というメッセージが表示され、
+デフォルトの再起動処理がただちに実行される。 先に <B><A HREF="../man2/sync.2.html">sync</A></B>(2)  を行なわないと、データが失われる。
+<DT><B>LINUX_REBOOT_CMD_RESTART2</B><DD>
+(0xa1b2c3d4; Linux 2.1.30 以降)  &quot;Restarting system with command '%s'&quot;
+というメッセージが表示され、 ただちに ( <I>arg</I> に指定されたコマンドを用いて) 再起動 (restart) が行われる。 先に
+<B><A HREF="../man2/sync.2.html">sync</A></B>(2)  を行なわないと、データが失われる。
+<DT><B>LINUX_REBOOT_CMD_SW_SUSPEND</B><DD>
+(<B>RB_SW_SUSPEND</B>, 0xd000fce1; Linux 2.5.18 以降). システムがディスクにサスペンド (ハイバネーション)
+される。このオプションはカーネルで <B>CONFIG_HIBERNATION</B> が有効になっている場合にのみ利用できる。
+</DL>
+<P>
+
+スーパーユーザーだけが <B>reboot</B>()  を呼び出すことができる。
+<P>
+
+
+上述のアクションの実際の効果はアーキテクチャーに依存する。 i386 アーキテクチャーでは、現在のところ (2.1.122) 付加引数は
+何も行わないが、再起動のタイプをカーネルのコマンドライン引数 (&quot;reboot=...&quot;) によって定めることができる。 これには warm または
+cold と、 hard または BIOS 経由の再起動を 設定できる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>PID 名前空間内での動作</H3>
+
+
+
+Since Linux 3.4, if <B>reboot</B>()  is called from a PID namespace other than
+the initial PID namespace with one of the <I>cmd</I> values listed below, it
+performs a &quot;reboot&quot; of that namespace: the &quot;init&quot; process of the PID
+namespace is immediately terminated, with the effects described in
+<B><A HREF="../man7/pid_namespaces.7.html">pid_namespaces</A></B>(7).
+<P>
+
+The values that can be supplied in <I>cmd</I> when calling <B>reboot</B>()  in this
+case are as follows:
+<DL COMPACT>
+<DT><B>LINUX_REBOOT_CMD_RESTART</B>, <B>LINUX_REBOOT_CMD_RESTART2</B><DD>
+The &quot;init&quot; process is terminated, and <B><A HREF="../man2/wait.2.html">wait</A></B>(2)  in the parent process
+reports that the child was killed with a <B>SIGHUP</B> signal.
+<DT><B>LINUX_REBOOT_CMD_POWER_OFF</B>, <B>LINUX_REBOOT_CMD_HALT</B><DD>
+The &quot;init&quot; process is terminated, and <B><A HREF="../man2/wait.2.html">wait</A></B>(2)  in the parent process
+reports that the child was killed with a <B>SIGINT</B> signal.
+</DL>
+<P>
+
+For the other <I>cmd</I> values, <B>reboot</B>()  returns -1 and <I>errno</I> is set to
+<B>EINVAL</B>.
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+<I>cmd</I> がシステムの停止や再起動を表す値の場合、呼び出しが成功すると <B>reboot</B>()  は返らない。 <I>cmd</I>
+が他の値の場合には、成功すると 0 が返る。 <I>cmd</I> の値に関わらず、失敗の場合には -1 が返り、 <I>errno</I> が適切に設定される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<B>LINUX_REBOOT_CMD_RESTART2</B> の時にユーザースペースのデータの取得に問題があった。
+<DT><B>EINVAL</B><DD>
+magic の数字か <I>cmd</I> が間違っている。
+<DT><B>EPERM</B><DD>
+The calling process has insufficient privilege to call <B>reboot</B>(); the
+caller must have the <B>CAP_SYS_BOOT</B> inside its user namespace.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>reboot</B>()  は Linux に特有であり、移植を考慮したプログラムでは用いるべきではない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>systemctl</B>(1), <B>systemd</B>(1), <B><A HREF="../man2/kexec_load.2.html">kexec_load</A></B>(2), <B><A HREF="../man2/sync.2.html">sync</A></B>(2),
+<B><A HREF="../man7/bootparam.7.html">bootparam</A></B>(7), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../../util-linux/man8/ctrlaltdel.8.html">ctrlaltdel</A></B>(8), <B><A HREF="../../SysVinit/man8/halt.8.html">halt</A></B>(8),
+<B><A HREF="../../SysVinit/man8/shutdown.8.html">shutdown</A></B>(8)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">PID 名前空間内での動作</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

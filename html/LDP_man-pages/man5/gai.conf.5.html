@@ -1,0 +1,111 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GAI.CONF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GAI.CONF</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man5/gai.conf.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+gai.conf - <A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A>(3) 設定ファイル
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3) の呼び出しでは、複数の答えが返る場合がある。 RFC&nbsp;3484 によれば、 これらの答えは、
+最も成功の可能性が高い答えがリストの先頭になるような順番に並び替えなければならない。 RFC には、 並び替えのアルゴリズムが書かれている。
+しかしながら、 静的なルールが常に適切という訳ではない。 この理由から、 RFC では、
+並び替え方法をシステム管理者が動的に変更できるようにすることも要求している。 glibc の実装では、 <I>/etc/gai.conf</I>
+ファイルでこれが実現できるようになっている。
+<P>
+
+設定ファイルの各行は、キーワードとそのパラメーターで構成される。 ホワイトスペースはどこにあっても全て無視される。 '#'
+で始まる行はコメントで、 無視される。
+<P>
+
+現在のところ、認識されるキーワードは以下の通りである。
+<DL COMPACT>
+<DT><B>label</B> <I>netmask</I> <I>precedence</I><DD>
+The value is added to the label table used in the RFC&nbsp;3484 sorting.  If any
+<B>label</B> definition is present in the configuration file, the default table
+is not used.  All the label definitions of the default table which are to be
+maintained have to be duplicated.  Following the keyword, the line has to
+contain a network mask and a precedence value.
+<DT><B>precedence</B> <I>netmask</I> <I>precedence</I><DD>
+このキーワードは <B>label</B> に似ているが、 指定された値を RFC&nbsp;3484 で規定された優先度テーブルに追加する点が異なる。
+繰り返しになるが、 設定ファイルに <B>precedence</B> が一つでもあれば、デフォルトテーブルは使用されない。
+<DT><B>reload</B> &lt;<B>yes</B>|<B>no</B>&gt;<DD>
+このキーワードは、 設定ファイルが前回の読み出し以降に変更されているかをプロセスが確認するかを制御する。 値が &quot;<B>yes</B>&quot; であれば、
+ファイルが再読み込みされる。 再読み込みはマルチスレッドアプリケーションで問題を起こす可能性があり、 一般にはよい考えとは言えない。 デフォルトは
+&quot;<B>no</B>&quot; である。
+<DT><B>scopev4</B> <I>mask</I> <I>value</I><DD>
+IPv4 アドレス用の RFC&nbsp;3484 スコープテーブルに別のルールを追加する。 デフォルトでは、 RFC&nbsp;3438 のセクション 3.2
+で説明されているスコープ ID が使用される。 これらのデフォルト値の変更が必要になることはまずないだろう。
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/etc/gai.conf</I>
+<A NAME="lbAE">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+<I>gai.conf</I> ファイルは glibc バージョン 2.5 以降でサポートされている。
+<A NAME="lbAF">&nbsp;</A>
+<H2>例</H2>
+
+RFC&nbsp;3484 で規定されているデフォルトテーブルは、 以下の設定ファイルを指定するのと同じである。
+<P>
+
+
+
+label  ::1/128       0
+label  ::/0          1
+label  2002::/16     2
+label ::/96          3
+label ::ffff:0:0/96  4
+precedence  ::1/128       50
+precedence  ::/0          40
+precedence  2002::/16     30
+precedence ::/96          20
+precedence ::ffff:0:0/96  10
+
+
+
+
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3), RFC&nbsp;3484
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">ファイル</A><DD>
+<DT><A HREF="#lbAE">バージョン</A><DD>
+<DT><A HREF="#lbAF">例</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

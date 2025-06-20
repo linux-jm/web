@@ -1,0 +1,326 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_SIGNAL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_SIGNAL</H1>
+Section: C Library Functions (3)<BR>Updated: LinuxThreads<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/glibc-linuxthreads/release/man3/pthread_sigmask.3">roff page</A><HR>
+
+<P>
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_sigmask, pthread_kill, sigwait - スレッド内でのシグナルハンドリング
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+
+<P>
+<B>int pthread_sigmask(int </B><I>how</I><B>, const sigset_t *</B><I>newmask</I><B>, sigset_t *</B><I>oldmask</I><B>);</B>
+
+<P>
+<B>int pthread_kill(pthread_t </B><I>thread</I><B>, int </B><I>signo</I><B>);</B>
+
+<P>
+<B>int sigwait(const sigset_t *</B><I>set</I><B>, int *</B><I>sig</I><B>);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+<B>pthread_sigmask</B>
+
+は呼び出しスレッドのシグナルマスクを
+引数
+<I>how</I>
+
+および
+<I>newmask</I>
+
+で指定されるように変更する。
+<I>oldmask</I>
+
+が
+<B>NULL</B>
+
+でないときには、直前のシグナルマスクが
+<I>oldmask</I>
+
+で指し示される領域に格納される。
+<P>
+引数
+<I>how</I>
+
+および
+<I>newmask</I>
+
+の意味は
+<B><A HREF="../../LDP_man-pages/man2/sigprocmask.2.html">sigprocmask</A></B>(2)
+
+の引数の意味と同じである。
+<I>how</I>
+
+が
+<B>SIG_SETMASK</B>
+
+のときには、
+シグナルマスクが
+<I>newmask</I>
+
+に設定される。
+<I>how</I>
+
+が
+<B>SIG_BLOCK</B>
+
+のときには、
+<I>newmask</I>
+
+で指定されるシグナルが現時点のシグナルマスクに追加される。
+<I>how</I>
+
+が
+<B>SIG_UNBLOCK</B>
+
+のときには、
+<I>newmask</I>
+
+で指定されるシグナルが現時点のシグナルマスクから取り除かれる。
+<P>
+シグナルマスクはスレッドごとに設定されることを思い出してほしい。
+しかし
+<B><A HREF="../../LDP_man-pages/man2/sigaction.2.html">sigaction</A></B>(2)
+
+で設定される
+シグナルアクションとシグナルハンドラは、
+すべてのスレッドで共通である。
+<P>
+<B>pthread_kill</B>
+
+はシグナル番号
+<I>signo</I>
+
+のシグナルを
+スレッド
+<I>thread</I>
+
+に送信する。
+シグナルは
+<B><A HREF="../../LDP_man-pages/man2/kill.2.html">kill</A></B>(2)
+
+に書かれているように配送されハンドルされる。
+<P>
+<B>sigwait</B>
+
+は
+<I>set</I>
+
+で指定されるシグナルのうちいずれか 1 つが呼び出しスレッドに
+配送されるまで呼び出しスレッドの実行を停止する。
+そして受信したシグナルの数を
+<I>sig</I>
+
+で指し示される領域に格納して返る。
+<I>set</I>
+
+で指定されるシグナルは
+<B>sigwait</B>
+
+に入るときにブロックされていなければならず、無視されてはならない。
+配送されたシグナルに対するシグナルハンドラが登録されていても、
+ハンドラ関数は呼び出され
+<I>ない</I>
+
+。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>取り消し</H2>
+
+<P>
+<B>sigwait</B>
+
+は取り消しポイントである。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+<P>
+成功すると、0 が返る。
+失敗の場合、非 0 のエラーコードが返る。
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<P>
+関数
+<B>pthread_sigmask</B>
+
+はエラーのとき、次のようなエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+<I>how</I>
+
+が
+<B>SIG_SETMASK</B>
+
+および
+<B>SIG_BLOCK</B>
+
+、
+<B>SIG_UNBLOCK</B>
+
+のいずれでもない。
+<P>
+<DT><B>EFAULT</B>
+
+<DD>
+<I>newmask</I>
+
+または
+<I>oldmask</I>
+
+が無効なアドレスを指している。
+</DL>
+</DL>
+
+<P>
+関数
+<B>pthread_kill</B>
+
+はエラーのとき、次のようなエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+<I>signo</I>
+
+は有効なシグナル番号でない。
+<P>
+<DT><B>ESRCH</B>
+
+<DD>
+スレッド
+<I>thread</I>
+
+は存在しない (例えば、そのスレッドはすでに終了している) 。
+</DL>
+</DL>
+
+<P>
+関数
+<B>sigwait</B>
+
+がエラーを返すことはない。
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>著者</H2>
+
+Xavier Leroy &lt;<A HREF="mailto:Xavier.Leroy@inria.fr">Xavier.Leroy@inria.fr</A>&gt;
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../LDP_man-pages/man2/sigprocmask.2.html">sigprocmask</A></B>(2),
+
+<B><A HREF="../../LDP_man-pages/man2/kill.2.html">kill</A></B>(2),
+
+<B><A HREF="../../LDP_man-pages/man2/sigaction.2.html">sigaction</A></B>(2),
+
+<B><A HREF="../../LDP_man-pages/man2/sigsuspend.2.html">sigsuspend</A></B>(2).
+
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<P>
+<B>sigwait</B>
+
+が確実に機能するように、
+配送を待つシグナルは、呼び出しスレッドだけでなく
+すべてのスレッドでブロックされていなければならない。
+そうでない場合、POSIX のシグナル配送機構は
+シグナルを受信するスレッドが
+<B>sigwait</B>
+
+を呼び出しているスレッドとなることを保証しない。
+これを実現する最もよい方法は、
+どのスレッドを生成するよりも前にそれらのシグナルをブロックし、
+プログラム中では
+<B>sigwait</B>
+
+を呼び出す以外、ブロックを解除しないことである。
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+<P>
+LinuxThreads のシグナルハンドリングは POSIX 標準とは大きく異なっている。
+POSIX 標準によると、「非同期の」 (外部の) シグナルは
+プロセス全体 (すべてのスレッドの集まり) に対して発行され、
+その後特定の 1 つのスレッドに配送される。
+実際にシグナルを受信するスレッドは
+その時点でシグナルをブロックしていないスレッドのいずれかとなる。
+<P>
+LinuxThreads では、
+それぞれのスレッドが実際には固有の PID をもつカーネルプロセスであるため、
+外部のシグナルは特定の 1 つのスレッドに直接配送される。
+例えば、もし別のスレッドが
+<B>sigwait</B>
+
+を使ってそのシグナルをブロックしても、
+そのスレッドが再開されることはない。
+<P>
+<B>sigwait</B>
+
+の LinuxThreads の実装では、
+<B>sigwait</B>
+
+は待ちの期間中、
+<I>set</I>
+
+に含まれるシグナルに対応するダミーのシグナルハンドラを登録する。
+シグナルハンドラはすべてのスレッドで共通であるため、
+他のスレッドはこれらのシグナルに対して独自のシグナルハンドラを登録してはならない。
+あるいはその代わりに、すべてのスレッドが
+これらのシグナルをブロックしなければならない
+(このことはとにかく推奨されている -- 注意のセクションを参照のこと) 。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">取り消し</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">著者</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

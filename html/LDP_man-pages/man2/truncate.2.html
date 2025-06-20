@@ -1,0 +1,221 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TRUNCATE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TRUNCATE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated:  2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/truncate.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+truncate, ftruncate - 指定した長さにファイルを切り詰める
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<P>
+
+<B>int truncate(const char *</B><I>path</I><B>, off_t </B><I>length</I><B>);</B>
+<BR>
+
+<B>int ftruncate(int </B><I>fd</I><B>, off_t </B><I>length</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+
+<P>
+
+<B>truncate</B>():
+<DL COMPACT><DT><DD>
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.12&nbsp;以降:&nbsp;*/&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以前:&nbsp;*/&nbsp;_BSD_SOURCE
+</DL>
+
+<P>
+
+<B>ftruncate</B>():
+<DL COMPACT><DT><DD>
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.3.5&nbsp;以降:&nbsp;*/&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以前:&nbsp;*/&nbsp;_BSD_SOURCE
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>truncate</B>()  は <I>path</I> で指定されるファイルを、 <B>ftruncate</B>()  は <I>fd</I> で参照されるファイルを
+<I>length</I> バイトの長さになるように延長する、もしくは切り詰める。
+<P>
+
+もし切り詰める前のファイルが <I>length</I> より長ければ、length バイトを越える部分のデータは失われる。 もし切り詰める前のファイルが
+<I>length</I> より短かければ、伸張される。 伸張された部分を読んだ場合はヌルバイト ('\0') の列が返される。
+<P>
+
+ファイルオフセットは変更されない。
+<P>
+
+大きさが変更されると、ファイルの st_ctime と st_mtime フィールド (それぞれ最終状態変更時刻、最終修正時刻; <B>inode</B>(7)
+参照) が更新される。 また、set-user-ID と set-group-ID のモードビットがクリアされるかもしれない。
+<P>
+
+<B>ftruncate</B>()  の場合、ファイルは書き込み用に開いていなければならない。 <B>truncate</B>()
+の場合、ファイルは書き込み可能でなければならない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>truncate</B>()  では以下のエラーコードが定義されている。
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+パスで指定されているディレクトリに検索許可のないものがある (訳注:x ビットが立っていない)。
+あるいは、指定されたファイルに対する書き込み許可を持っていない。 (<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)  も参照のこと)
+<DT><B>EFAULT</B><DD>
+引数 <I>path</I> がプロセスに割り当てられているアドレス空間外を指している。
+<DT><B>EFBIG</B><DD>
+引数 <I>length</I> が最大ファイルサイズより大きい。(XSI)
+<DT><B>EINTR</B><DD>
+完了待ちで停止 (block) している間に、呼び出しが シグナルハンドラーにより割り込まれた。 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  と <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+を参照。
+<DT><B>EINVAL</B><DD>
+引数 <I>length</I> が負数であるか、最大ファイルサイズより大きい。
+<DT><B>EIO</B><DD>
+inode の更新時に I/O エラーが発生した。
+<DT><B>EISDIR</B><DD>
+指定されたファイルはディレクトリである。
+<DT><B>ELOOP</B><DD>
+パス名を解釈する際にシンボリックリンクが多すぎた。
+<DT><B>ENAMETOOLONG</B><DD>
+パス名中のディレクトリ名が 255 文字を越えている、もしくはパス名全体が 1023 文字を越えている。
+<DT><B>ENOENT</B><DD>
+指定された名前のファイルが存在しない。
+<DT><B>ENOTDIR</B><DD>
+パス名の構成要素がディレクトリではない。
+<DT><B>EPERM</B><DD>
+
+
+下層にあるファイルシステムでは、現在のファイル長を越えて ファイルを伸長することができない。
+<DT><B>EPERM</B><DD>
+操作が file seal により禁止されている。 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2) 参照。
+<DT><B>EROFS</B><DD>
+ファイルが読み込み専用 (read only) のファイルシステム上にある。
+<DT><B>ETXTBSY</B><DD>
+ファイルが実行中の実行ファイルである。
+</DL>
+<P>
+
+<B>ftruncate</B>()  にも同様のエラーが適用される。 但し、 <I>path</I> に関するエラーの場合は、ファイルディスクリプター <I>fd</I>
+に関するエラーとなる。
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>fd</I> が適切なファイルディスクリプターでない。
+<DT><B>EBADF</B> または <B>EINVAL</B><DD>
+<I>fd</I> で指定されているものが書き込みモードで開かれていない。
+<DT><B>EINVAL</B><DD>
+<I>fd</I> does not reference a regular file or a POSIX shared memory object.
+<DT><B>EINVAL</B> または <B>EBADF</B><DD>
+The file descriptor <I>fd</I> is not open for writing.  POSIX permits, and
+portable applications should handle, either error for this case.  (Linux
+produces <B>EINVAL</B>.)
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+
+
+
+
+
+
+
+
+POSIX.1-2001, POSIX.1-2008, 4.4BSD, SVr4 (これらのコールは 4.2BSD で初めて登場した)。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>ftruncate</B>()  can also be used to set the size of a POSIX shared memory
+object; see <B><A HREF="../man3/shm_open.3.html">shm_open</A></B>(3).
+<P>
+
+
+「説明」の節で述べた詳細は XSI 準拠のシステムについてのものである。
+XSI 非準拠のシステムの場合、POSIX 標準は <B>ftruncate</B>() に対して <I>length</I> が
+ファイルの長さより長かった場合、 エラーを返すかファイルを伸張するかの二つの
+動作を許容している。 <B>truncate</B>() に対しては全く規定されていない。
+ほとんどの UNIX 実装と同様、Linux はネイティブ (Linux 由来) の ファイルシステム
+の扱いでは XSI 要求仕様にしたがっている。 しかしながら、いくつかの非ネイティブ
+のファイルシステムでは、 <B>truncate</B>() や <B>ftruncate</B>() を使って現在のファイル
+長を越えてファイルを伸長することができない。 Linux での有名な例としては
+VFAT がある。
+<P>
+
+元々の Linux の <B>truncate</B>() と <B>ftruncate</B>() システムコールは
+大きなファイルオフセットを扱えるように設計されていなかった。
+その結果、大きなファイルファイルを扱うことができる <B>truncate64</B>() と <B>ftruncate64</B>()
+システムコールが Linux 2.4 で追加された。
+ただし、glibc を使ったアプリケーションではこれらの詳細は気にする必要はない。
+glibc のラッパー関数は新しいシステムコールが利用できる場合にはそれらを利用する
+ようになっているからである。
+<P>
+
+いくつかの 32 ビットアーキテクチャーでは、これらのシステムコールの呼び出し時のシグネチャーが違っています。理由は <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
+で説明されている通りです。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+
+glibc 2.12 のヘッダーファイルにはバグがあり、 <B>ftruncate</B>()  の宣言を公開するのに必要な
+<B>_POSIX_C_SOURCE</B> の最小値が 200112L ではなく 200809L となっていた。 このバグは、これ以降のバージョンの
+glibc では修正されている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../../GNU_coreutils/man1/truncate.1.html">truncate</A></B>(1),&nbsp;<B><A HREF="../man2/open.2.html">open</A></B>(2),&nbsp;<B><A HREF="../man2/stat.2.html">stat</A></B>(2),&nbsp;<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

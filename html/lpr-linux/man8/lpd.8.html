@@ -1,0 +1,398 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LPD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LPD</H1>
+Section: Maintenance Commands (8)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/lpr-linux/release/man8/lpd.8">roff page</A><HR>
+<BR>BSD mandoc<BR>
+BSD 4.4
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<B>lpd</B>
+
+ - ラインプリンタ スプーラー デーモン
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>lpd</B>
+
+[-<B>l</B>
+
+]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>lpd</B>
+
+は、ラインプリンタデーモン (スプール領域ハンドラー) であり、起動時に
+rc(8)
+
+
+ファイルから呼び出されるのが普通である。
+これは、
+<A HREF="../man5/printcap.5.html">printcap</A>(5)
+
+
+ファイルをひととおり調べてプリンタ情報を入手し、クラッシュ後に残されていた
+ファイルがあればそれらをすべて印刷する。そして、システムコール
+<A HREF="../../LDP_man-pages/man2/listen.2.html">listen</A>(2)
+
+
+及び
+<A HREF="../../LDP_man-pages/man2/accept.2.html">accept</A>(2)
+
+
+を利用して、キュー内にあるファイルの印刷要求受付、
+スプール領域へのファイル転送、キューの表示、
+ならびにキュー内のジョブの削除を行なう。
+いずれの場合も、子プロセスをフォーク(fork)して要求を処理し、
+親プロセスは引き続いて他の要求を受け入れれるようにしている。
+<P>
+
+オプション :
+<DL COMPACT>
+<P>
+
+<DT><B>-l</B>
+
+
+<DD>
+-<B>l</B>
+
+フラグを立てると、
+<B>lpd</B>
+
+はネットワークから受け取った有効な要求のログをとる。
+これは、デバッグを行なうのに有用である。
+</DL>
+<P>
+
+<P>
+
+アクセス制御には 2 つの方法がある。まず 1 つ目は、
+/etc/hosts.equiv
+
+若しくは
+/etc/hosts.lpd
+
+ファイルに列挙されているマシンからの要求のみを受け付けるというものである。
+2 つ目の方法は、もし
+<B>rs</B>
+
+がアクセスされようとしているプリンタの
+printcap
+
+
+エントリに指定してあれば、
+そのプリンタが接続されているマシンにアカウントを持ったユーザーに限り，
+<I>lpr</I>
+
+要求が受理されるというものである。
+<P>
+
+ラインプリンタキューがディスクを全て使い果たすことのないよう、
+各スプールディレクトリ内のファイル
+<I>minfree</I>
+
+には、空きとして残しておくディスクブロックの数が書き込まれる。
+この
+<I>minfree</I>
+
+の編集には、いかなるエディタを使っても構わない。
+<P>
+
+デーモンは、排他的アクセスのためのロック(後述)をセットした後、
+ファイルの処理を開始し、スプールディレクトリを調べ、
+<I>cf</I>
+
+で始まるファイルをさがす。
+各
+<I>cf</I>
+
+ファイルでは、印刷されるべきファイルや(印刷以外で)実行される
+べき動作が指定されている。そのそれぞれの行は、一つのキー文字で始まっ
+ており、それはその行の残りの部分とともに何をするべきかを表している。
+<DL COMPACT>
+<P>
+
+<DT><B>J</B>
+<DD>
+ジョブの名前。バーストページにおいてジョブ名として使われる文字列。
+<DT><B>C</B>
+<DD>
+分類。バーストページにおいて分類行に使われる文字列。
+<DT><B>L</B>
+<DD>
+リテラル。パスワードファイルから得られた識別情報。
+これは、バナーページを印刷させる。
+<DT><B>T</B>
+<DD>
+タイトル。
+<A HREF="../../0MultiFileIdx/man1/pr.1.html">pr</A>(1)
+
+
+のタイトルとして使われる文字列。
+<DT><B>H</B>
+<DD>
+ホスト名。
+lpr
+
+
+が呼び出されたマシンの名前。
+<DT><B>P</B>
+<DD>
+人。
+lpr
+
+
+を呼び出した人のログイン名。
+これは、所有権を確認するために
+lprm
+
+
+によって利用される。
+<DT><B>M</B>
+<DD>
+現在のプリントジョブが完了した時点で、指定されたユーザーに対してメールを送る。
+<DT><B>f</B>
+<DD>
+整形されたファイル。印刷するファイル(これは，既に整形してある)の名前。
+<DT><B>l</B>
+<DD>
+``f'' に似ているが、これは制御文字を通し、改ページをさせない。
+<DT><B>p</B>
+<DD>
+<A HREF="../../0MultiFileIdx/man1/pr.1.html">pr</A>(1)
+
+
+をフィルタとして使うことで印刷されるべきファイルの名前。
+<DT><B>t</B>
+<DD>
+troff ファイル。その内容は
+<A HREF="../../GNU_groff/man1/troff.1.html">troff</A>(1)
+
+
+(cat 写植コマンド)の出力である。
+<DT><B>n</B>
+<DD>
+ditroff ファイル。その内容はデバイス非依存 troff 出力である。
+<DT><B>r</B>
+<DD>
+DVI ファイル。その内容は
+<B>Tex </B>
+
+出力である。
+DVI フォーマットは、スタンフォード大学で開発されたものである。
+<DT><B>g</B>
+<DD>
+グラフファイル。その内容は
+plot(3)
+
+
+によって作成されたデータである。
+<DT><B>c</B>
+<DD>
+cifplot ファイル。その内容は
+<I>cifplot</I>
+
+によって作成されたデータである。
+<DT><B>v</B>
+<DD>
+ラスタイメージ(raster image)ファイル。
+<DT><B>r</B>
+<DD>
+FORTRAN キャリッジ制御文字(FORTRAN carriage control characters)を含んだテキストデータからなるファイル。
+<DT><B>1</B>
+<DD>
+troff のフォント R 。
+デフォルトの代わりに使用するフォントファイルの名前。
+<DT><B>2</B>
+<DD>
+troff のフォント I 。
+デフォルトの代わりに使用するフォントファイルの名前。
+<DT><B>3</B>
+<DD>
+troff のフォント B 。
+デフォルトの代わりに使用するフォントファイルの名前。
+<DT><B>4</B>
+<DD>
+troff のフォント S 。
+デフォルトの代わりに使用するフォントファイルの名前。
+<DT><B>W</B>
+<DD>
+横幅。
+<A HREF="../../0MultiFileIdx/man1/pr.1.html">pr</A>(1)
+
+
+やテキストフィルタで使用されるページ幅(文字数で指定)を変更する。
+<DT><B>I</B>
+<DD>
+インデント。出力に施すインデントの(アスキー文字での)文字数。
+<DT><B>U</B>
+<DD>
+アンリンク(unlink)。印刷終了時に削除されるファイル名。
+<DT><B>N</B>
+<DD>
+ファイル名。印刷されるファイル名。標準入力(
+lpr
+
+
+がパイプラインにおいて呼び出された場合)の場合は空白。
+</DL>
+<P>
+
+<P>
+
+もしファイルをオープンできないときは、
+<I>LOG_LPR</I>
+
+機能を使い、
+<A HREF="../../LDP_man-pages/man3/syslog.3.html">syslog</A>(3)
+
+
+を通じてメッセージが記録される。
+<B>lpd</B>
+
+は、そのファイルの印刷を見送るまでに最大 20 回まで再オープンを試みる。
+<P>
+
+<B>lpd</B>
+
+は、
+<A HREF="../../LDP_man-pages/man2/flock.2.html">flock</A>(2)
+
+
+を使ってロックファイルへの排他的アクセスを提供し、
+複数のデーモンが同時にアクティブになるのを防ぐ。
+もし、不意にデーモンが殺されたり死んだりしても、ロックファイルを削除する
+必要はない。
+ロックファイルは、読むことの可能な
+<B>ASCII</B>
+
+形式で保持され、2 つの行をその内容としている。
+1 行目はデーモンのプロセス id であり、2 行目は現在の印刷ジョブの
+制御ファイル名である。
+2 行目は、
+<A HREF="../man1/lpq.1.html">lpq</A>(1)
+
+
+と
+<A HREF="../man1/lprm.1.html">lprm</A>(1)
+
+
+に使われるため、
+<B>lpd</B>
+
+の現在の状態を反映するよう更新される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<P>
+
+<DT><B>/etc/printcap
+
+</B>
+<DD>
+プリンタ記述ファイル
+<DT><B>/var/spool/*
+
+</B>
+<DD>
+スプールディレクトリ(の集まり)
+<DT><B>/var/spool/*/minfree
+
+</B>
+<DD>
+最低限残しておくべき空き領域
+<DT><B>/dev/lp*
+
+</B>
+<DD>
+ラインプリンタデバイス
+<DT><B>/var/run/printer
+
+</B>
+<DD>
+ローカルでの要求に対するソケット(socket)
+<DT><B>/etc/hosts.equiv
+
+</B>
+<DD>
+プリンタへのアクセスが許可されているマシンの名前のリスト
+<DT><B>/etc/hosts.lpd
+
+</B>
+<DD>
+プリンタへのアクセスは許可されているが、同じ管理制御の下には置かれていない
+マシンの名前のリスト
+</DL>
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man8/lpc.8.html">lpc</A>(8),
+
+
+pac(8),
+
+
+<A HREF="../man1/lpr.1.html">lpr</A>(1),
+
+
+<A HREF="../man1/lpq.1.html">lpq</A>(1),
+
+
+<A HREF="../man1/lprm.1.html">lprm</A>(1),
+
+
+<A HREF="../../LDP_man-pages/man3/syslog.3.html">syslog</A>(3),
+
+
+<A HREF="../man5/printcap.5.html">printcap</A>(5)
+
+
+<DL COMPACT><DT><DD>
+<P>
+<I>&quot;BSD 4.3 ラインプリンタマニュアル&quot;</I>
+</DL>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>履歴</H2>
+
+<B></B>
+
+
+デーモンは、Version 6 AT&amp;T UNIX で登場した。
+<P>
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">ファイル</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">履歴</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

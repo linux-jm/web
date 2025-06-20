@@ -1,0 +1,255 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UNICODE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>UNICODE</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/unicode.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+unicode - 汎用文字集合
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+国際規格 ISO 10646 は汎用文字集合 (Universal Character Set (UCS))
+を定義している。
+UCS は他規格の文字集合の文字を全て含んでいる。
+さらに、
+「双方向の互換性」(&quot;round-trip compatibility&quot;) を保証する。
+つまり、他の符号から UCS に変換しさらに元の符号に変換したとしても、
+何の情報も失なわれないように変換テーブルを作成することができる。
+<P>
+
+UCS は現実的に知られている全ての言語を表現するのに必要な文字を含んでいる。
+これにはラテン文字、ギリシャ文字、キリル文字、ヘブライ文字、アラビア文字、
+アルメニア文字、グルジア文字だけでなく、中国・日本・韓国で使われている漢字、
+さらには、平仮名、片仮名、ハングル文字、
+デーヴァナーガリー文字、ベンガル文字、グルムキー文字、グジャラート文字、
+オリヤー文字、タミール文字、テルグ文字、カナラ文字、マラヤーラム文字、
+タイ文字、ラオス文字、クメール文字、ボポモフォ文字 (注音字母)、
+チベット文字、ルーン文字、エチオピア文字、カナダ音節文字、
+チェロキー文字、モンゴル文字、
+オガム文字、ミャンマー文字、シンハラ文字、
+ターナ文字、イ (彝) 文字などが含まれる。
+まだカバーされていない文字に付いても、
+コンピュータで使用するために
+どのようなエンコードがもっとも良いかという研究が進められており、
+最終的には追加されるだろう。
+ヒエログリフや歴史的ないろいろなインド＝ヨーロッパ言語だけでなく、
+テングワール文字、キアス文字、クリンゴン文字などの人工的な言語も選ばれている。
+UCS は、これらの文字に加えて、TeX, PostScript, APL, MS-DOS, MS-Windows,
+Macintosh, OCR フォント、数多くのワードプロセッサーや
+出版システム、などが提供する
+図形記号・印字記号・数学記号・科学記号などの多くを含むようになった。
+<P>
+
+UCS 規格 (ISO 10646) は 31 ビットの文字集合アーキテクチャーを記述しており、
+128 個の 24 ビット <I>群 (group)</I> から構成されている。
+各群は 256 個の 16 ビット <I>面 (plane)</I> に分割されており、
+各文字は 256 個の 8 ビット <I>区 (row)</I> の 256 <I>点 (column)</I> の中に位置する。
+この規格の Part 1 (ISO 10646-1) では、
+最初の 65534 個のコード位置 (0x0000 〜 0xfffd) を定義している。
+これは第 0 群の第 0 面である <I>基本多言語面 (Basic Multilingual Plane (BMP))</I> を構成する。
+この規格の Part 2 (ISO 10646-2) では、第 0 群の BMP の外部である
+0x10000 〜 0x10ffff の範囲にある <I>補助面 (supplementary planes)</I> に文字を追加した。
+この規格では 0x10ffff を越えた位置に文字を追加する予定はないので、
+予想できる将来においては、
+全コード空間のうちグループ 0 の一部分は実際には使われることはない。
+BMP には他の文字集合で一般に使われる全ての文字が含まれている。
+ISO 10646-2 で追加された補助面は、
+特定の科学分野・辞書出版・印刷産業・高次プロトコル・
+何かのファンの間などで使われる特殊な文字だけをカバーする。
+<P>
+
+UCS 文字を 2 バイトのワードで表現するのが UCS-2 形式である (BMP 文字のみ)。
+また、UCS-4 では文字を 4 バイトのワードで表現する。
+さらに、ASCII を処理するソフトウェアへの下位互換のために
+UTF-8 エンコード形式がある。
+また、0x10ffff までの非 BMP 文字を扱う UCS-2 対応ソフトウェアとの互換のために
+UTF-16 エンコード形式がある。
+<P>
+
+UCS 文字集合の 0x0000 から 0x007f は、古典的な US-ASCII 文字集合の文字と同じである。
+また 0x0000 から 0x00ff の範囲では、ISO 8859-1 (Latin-1) 文字集合の文字と同じである。
+<A NAME="lbAD">&nbsp;</A>
+<H3>合成文字 (Combining characters)</H3>
+
+UCS のいくつかのコードポイントは
+<I>合成文字 (combining characters)</I>
+に割り当てられている。
+これらはタイプライターの移動しないアクセントキーに似ている。
+合成文字は直前の文字にアクセントのみを加える。
+最も重要なアクセント付きの文字はそれ自身のコードを UCS に持っている。
+一方で合成文字機構は全ての文字にアクセントや発音区別符号を加えることができる。
+合成文字は常にそれが修正する文字に続く。
+例えばドイツ語の文字 A ウムラウト (&quot;Latin capital letter A with diaeresis&quot;) は
+UCS に前もって準備されたコード 0x00c4 でも、
+通常の A &quot;Latin capital letter A&quot; に
+&quot;combining diaeresis (合成分音記号)&quot; を続けた組合せ
+(0x0041 0x0308) のどちらでも表現することができる。
+<P>
+
+合成文字は、タイ文字や数学植字のエンコード・
+国際音声字母を使うユーザーなどには必須である。
+<A NAME="lbAE">&nbsp;</A>
+<H3>実装レベル</H3>
+
+全てのシステムに合成文字のような進んだサポートを期待しているわけではない。
+ISO 10646-1 は以下の三段階の UCS の <I>実装レベル</I> を指定している。
+<DL COMPACT>
+<DT>Level 1<DD>
+合成文字とハングル・ジャモ文字 (いろいろな韓国・朝鮮文字の符号化。
+この符号化では、ハングル音節のグリフが
+3 つまたは 2 つの母音・子音コードの組み合わせで符号化される) はサポートしない。
+<DT>Level 2<DD>
+Level 1 と同様だが、合成文字を必須とする言語のための文字
+(例えば、タイ文字・ラオス文字・ヘブライ文字・アラビア文字・
+デーヴァナーガリー文字・マレヤーラム文字) は使える。
+<DT>Level 3<DD>
+全ての UCS 文字をサポートする。
+</DL>
+<P>
+
+ユニコードコンソーシアム (Unicode Consortium) から発行された Unicode 3.0 Standard
+は、ISO 10646-1:2000 に記述された UCS Basic Multilingual Plane
+の level 3 実装と全く同じである。
+Unicode 3.1 では ISO 10646-2 の補助面が追加されている。
+Unicode Consortium から発行される Unicode 規格と技術レポートにより、
+いろいろな文字の意味と推奨される使用法についての更なる情報が得られる。
+これらの規格書や技術レポートで、Unicode 文字列を
+編集・並べ替え・比較・正規化・変換・表示するための
+ガイドラインとアルゴリズムが分かる。
+<A NAME="lbAF">&nbsp;</A>
+<H3>Linux における Unicode</H3>
+
+GNU/Linux では、C 言語の型 <B>wchar_t</B> は符号付き 32 ビット整数型である。
+その値は C ライブラリにより (すべてのロケールにおいて) 常に
+UCS コードの値として解釈される。
+これを GNU C ライブラリがアプリケーションに知らせるための規約として、
+定数 <B>__STDC_ISO_10646__</B> を定義する。
+これは ISO C99 規格で指定されている。
+<P>
+
+ASCII 互換の UTF-8 マルチバイトエンコードでは、入出力ストリーム・端末通信・
+プレーンテキストファイル・ファイル名・環境変数において、
+UCS/Unicode を ASCII のように使うことができる。
+UTF-8 を文字エンコードとして使うことを
+全てのアプリケーションに知らせるためには、
+(&quot;LANG=en_GB.UTF-8&quot; のように) 環境変数を使って適切な
+<I>ロケール (locale)</I> を選択しなければならない。
+<P>
+
+<B>nl_langinfo(CODESET)</B> 関数は選択されたエンコードの名前を返す。
+内部的な <I>wchar_t</I> 文字や文字列をシステム文字列エンコードに変換 (逆変換) するのに使われる
+<B><A HREF="../man3/wctomb.3.html">wctomb</A></B>(3) や <B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3)、さらには <B><A HREF="../man3/wcwidth.3.html">wcwidth</A></B>(3) といったライブラリ関数は、
+文字出力でどれだけカーソルが進んだか (0-2) を返す。
+<P>
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>私用領域 (Private Use Areas; PUA)</H3>
+
+
+基本多言語面 (Basic Multilingual Plane (BMP)) では、 0xe000 〜 0xf8ff
+の範囲は、規格ではいかなる文字も割り当てず、私的な使用のために予約されている。 Linux
+コミュニティでは、このプライベートエリアをさらに細かく分割して使用する。 0xe000 〜 0xefff
+の範囲はエンドユーザーが個々に使用することができる。 0xf000 〜 0xf8ff の範囲は Linux Zone で全ての Linux
+ユーザーで共通に使用する。 Linux Zone への文字割り当ての登録は LANANA (The Linux Assigned Names And
+Numbers Authority) により管理されており、登録自体は Linux カーネルソースの
+<I>Documentation/admin-guide/unicode.rst</I> (Linux 4.10 より前は
+<I>Documentation/unicode.txt</I>) で行われている。
+<P>
+
+この他に 2 つの面が私的な使用のために予約されている: 第 15 面 (追加私用領域 A; Supplementary Private Use
+Area-A, 0xf0000 〜 0xffffd の範囲) と第 16 面 (追加私用領域 B; Supplementary Private Use
+Area-B, 0x100000 〜 0x10fffd の範囲)。
+<A NAME="lbAH">&nbsp;</A>
+<H3>文献</H3>
+
+<DL COMPACT>
+<DT>*<DD>
+Information technology --- Universal Multiple-Octet Coded Character Set
+(UCS) --- Part 1: Architecture and Basic Multilingual Plane.  International
+Standard ISO/IEC 10646-1, International Organization for Standardization,
+Geneva, 2000.
+<DT><DD>
+これは UCS の公式な仕様である。
+
+
+から入手できる。
+<DT>*<DD>
+The Unicode Standard, Version 3.0.  The Unicode Consortium, Addison-Wesley,
+Reading, MA, 2000, ISBN 0-201-61633-5.
+<DT>*<DD>
+S. Harbison, G. Steele. C: A Reference Manual. Fourth edition, Prentice
+Hall, Englewood Cliffs, 1995, ISBN 0-13-326224-3.
+<DT><DD>
+C プログラム言語についてのとても良い参考書である。
+第四版では、ワイド文字やマルチバイト文字エンコードを扱うための
+多くの新しい C ライブラリ関数が
+加えられた ISO C90 規格の 1994 Amendment 1 をカバーしている。
+しかし、ワイド文字やマルチバイト文字のサポートを
+更に改善した ISO C99 は、まだカバーしていない。
+<DT>*<DD>
+Unicode 技術レポート。
+<DL COMPACT><DT><DD>
+
+
+</DL>
+
+<DT>*<DD>
+Markus Kuhn: UNIX/Linux のための UTF-8 と Unicode の FAQ。
+<DL COMPACT><DT><DD>
+
+
+</DL>
+
+<DT>*<DD>
+Bruno Haible: Unicode HOWTO.
+<DL COMPACT><DT><DD>
+
+
+</DL>
+
+
+
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/locale.1.html">locale</A></B>(1), <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3), <B><A HREF="../man7/charsets.7.html">charsets</A></B>(7), <B><A HREF="../man7/utf-8.7.html">utf-8</A></B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">合成文字 (Combining characters)</A><DD>
+<DT><A HREF="#lbAE">実装レベル</A><DD>
+<DT><A HREF="#lbAF">Linux における Unicode</A><DD>
+<DT><A HREF="#lbAG">私用領域 (Private Use Areas; PUA)</A><DD>
+<DT><A HREF="#lbAH">文献</A><DD>
+</DL>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,2819 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PROC</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PROC</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2015-01-22<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man5/proc.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+proc - プロセスの情報を含む擬似ファイルシステム
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<I>proc</I> ファイルシステムは擬似的なファイルシステムであり、 カーネル内のデータへのインターフェースとして使用される。 一般的には
+<I>/proc</I> にマウントされる。 大部分のファイルは読み出し専用 (read-only) であるが、 いくつかのファイルは書き込み可能であり、
+そのファイルに書き込めばカーネルの内部変数を変更できる。
+<P>
+
+以下のリストでは <I>/proc</I> 階層以下のファイルやディレクトリの多くについて説明している。
+
+<DL COMPACT>
+<DT><I>/proc/[pid]</I><DD>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+実行中のプロセスについてのサブディレクトリ。 サブディレクトリ名は (そのプロセスの) プロセス ID である。
+各サブディレクトリは、以下の擬似ファイルとディレクトリを含む。
+<DT><I>/proc/[number]/auxv</I> (カーネル 2.6.0-test7 以降)<DD>
+実行時にプロセスに渡された ELF インタープリター情報が格納されている。 個々のエントリーは、<I>unsigned long</I> 型の ID 1 個に
+<I>unsigned long</I> 型の値 1 個が続くフォーマットである。 最後のエントリーには 0 が 2 個入っている。
+<B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3) も参照。
+<DT><I>/proc/[pid]/cgroup</I> (Linux 2.6.24 以降)<DD>
+
+このファイルは、プロセスやタスクが所属するコントロールグループを示す。
+cgroup の各階層についてエントリーが 1 つあり、
+各エントリーは以下の形式のコロン区切りのフィールドで構成される。
+<PRE>
+
+<TT>    5:cpuacct,cpu,cpuset:/daemons</TT>
+</PRE>
+
+<DT><DD>
+コロン区切りの各フィールドは、左から右の順で、以下の意味を持つ。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>1.<DD>
+階層 ID 番号
+<DT>2.<DD>
+その階層に関連付けたサブシステムの集合
+<DT>3.<DD>
+プロセスが所属する階層内のコントロールグループ
+</DL>
+</DL>
+
+<DT><DD>
+このファイルが存在するのは、カーネルのコンフィギュレーションオプショ
+ン <B>CONFIG_CGROUPS</B> を有効にした場合だけである。
+<DT><I>/proc/[pid]/clear_refs</I> (Linux 2.6.22 以降)<DD>
+<P>
+
+
+
+
+
+
+このファイルは書き込み専用ファイルで、書き込めるのはプロセスの所有者だけである。
+<P>
+このファイルには以下の値を書き込むことができる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>1 (Linux 2.6.22 以降)<DD>
+
+Reset the PG_Referenced and ACCESSED/YOUNG bits for all the pages associated
+with the process.  (Before kernel 2.6.32, writing any nonzero value to this
+file had this effect.)
+<DT>2 (Linux 2.6.32 以降)<DD>
+
+Reset the PG_Referenced and ACCESSED/YOUNG bits for all anonymous pages
+associated with the process.
+<DT>3 (Linux 2.6.32 以降)<DD>
+
+Reset the PG_Referenced and ACCESSED/YOUNG bits for all file-mapped pages
+associated with the process.
+</DL>
+</DL>
+
+<DT><DD>
+Clearing the PG_Referenced and ACCESSED/YOUNG bits provides a method to
+measure approximately how much memory a process is using.  One first
+inspects the values in the &quot;Referenced&quot; fields for the VMAs shown in
+<I>/proc/[pid]/smaps</I> to get an idea of the memory footprint of the process.
+One then clears the PG_Referenced and ACCESSED/YOUNG bits and, after some
+measured time interval, once again inspects the values in the &quot;Referenced&quot;
+fields to get an idea of the change in memory footprint of the process
+during the measured interval.  If one is interested only in inspecting the
+selected mapping types, then the value 2 or 3 can be used instead of 1.
+<P>
+A further value can be written to affect a different bit:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>4 (Linux 3.11 以降)<DD>
+
+Clear the soft-dirty bit for all the pages associated with the process.
+This is used (in conjunction with <I>/proc/[pid]/pagemap</I>)  by the
+check-point restore system to discover which pages of a process have been
+dirtied since the file <I>/proc/[pid]/clear_refs</I> was written to.
+</DL>
+</DL>
+
+<DT><DD>
+Writing any value to <I>/proc/[pid]/clear_refs</I> other than those listed above
+has no effect.
+<P>
+<I>/proc/[pid]/clear_refs</I> ファイルが存在するのは、カーネルのコンフィギュレーションオプション
+<B>CONFIG_PROC_PAGE_MONITOR</B> を有効にした場合だけである。
+<DT><I>/proc/[pid]/cmdline</I><DD>
+
+この読み出し専用のファイルはプロセスの完全なコマンド行を保持する。 ただし、そのプロセスがゾンビプロセスの場合は、 このファイルは空となる。 つまり、
+このファイルを読み出しても一文字も返らない。 このファイルではコマンドライン引き数が、 ヌルバイト ('\0')
+で区切られた文字列として書かれており、 最後の文字列の後にヌルバイトが一つ置かれる。
+<DT><I>/proc/[pid]/comm</I> (Linux 2.6.33 以降)<DD>
+
+This file exposes the process's <I>comm</I> value---that is, the command name
+associated with the process.  Different threads in the same process may have
+different <I>comm</I> values, accessible via <I>/proc/[pid]/task/[tid]/comm</I>.  A
+thread may modify its <I>comm</I> value, or that of any of other thread in the
+same thread group (see the discussion of <B>CLONE_THREAD</B> in <B><A HREF="../man2/clone.2.html">clone</A></B>(2)), by
+writing to the file <I>/proc/self/task/[tid]/comm</I>.  Strings longer than
+<B>TASK_COMM_LEN</B> (16) characters are silently truncated.
+<P>
+This file provides a superset of the <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)  <B>PR_SET_NAME</B> and
+<B>PR_GET_NAME</B> operations, and is employed by <B><A HREF="../man3/pthread_setname_np.3.html">pthread_setname_np</A></B>(3)  when
+used to rename threads other than the caller.
+<DT><I>/proc/[pid]/coredump_filter</I> (Linux 2.6.23 以降)<DD>
+<B><A HREF="../man5/core.5.html">core</A></B>(5)  参照。
+<DT><I>/proc/[pid]/cpuset</I> (Linux 2.6.12 以降)<DD>
+
+<B>cpuset</B>(7)  参照。
+<DT><I>/proc/[pid]/cwd</I><DD>
+プロセスのカレントワーキングディレクトリへのシンボリックリンク。 例えば、プロセス 20 のカレントワーキングディレクトリを見つけるためには、
+次のようにすればよい。
+<P>
+
+<PRE>
+$<B> cd /proc/20/cwd; /bin/pwd</B>
+</PRE>
+
+
+<P>
+<I>pwd</I> コマンドはシェルの内部コマンドのことがよくあり、
+うまく動作しないかもしれない。
+<B><A HREF="../../GNU_bash/man1/bash.1.html">bash</A></B>(1) では <I>pwd&nbsp;-P</I> を使ってもよい。
+<P>
+
+マルチスレッドプロセスでは、メインスレッドがすでに終了している場合、 このシンボリックリンクの内容は参照できない (スレッドの終了は通常
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)  を呼び出しにより行われる)。
+<DT><I>/proc/[pid]/environ</I><DD>
+このファイルはプロセスの環境変数を含んでいる。 各エントリーはヌルバイト ('\0') で区切られていて、
+末尾にヌルバイトがあるかもしれない。 したがって、プロセス 1 の環境変数を表示するためには 次のようにすればよい。
+
+<PRE>
+
+$<B> strings /proc/1/environ</B>
+</PRE>
+
+
+<DT><I>/proc/[pid]/exe</I><DD>
+
+Linux 2.2 以降では、このファイルはシンボリックリンクで、 実行可能コマンドの実際のパス名を格納している。
+このシンボリックリンクは通常のように辿ることができる; これをオープンすると実行可能ファイルがオープンされる。 (コマンドラインで)
+<I>/proc/[pid]/exe</I> と入力すると、プロセス番号 [pid] で実行されている 実行可能ファイルをもう一つ実行することができる。
+マルチスレッドプロセスでは、メインスレッドがすでに終了している場合、 このシンボリックリンクの内容は参照できない (スレッドの終了は通常
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)  を呼び出しにより行われる)。
+<P>
+Linux 2.0 以前では、 <I>/proc/[pid]/exe</I> は実行されたバイナリへのポインターで、シンボリックリンクのように見える。
+Linux 2.0 以前では、このファイルに対して <B><A HREF="../man2/readlink.2.html">readlink</A></B>(2)  を実行すると、次のフォーマットの文字列が返る。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;[デバイス番号]:iノード番号
+<P>
+たとえば、[0301]:1502 はメジャーデバイス番号 03 (IDE, MFM などのドライブ)  マイナーデバイス番号 01
+(最初のドライブの最初のパーティション) の デバイス上の iノード番号 1502 である。
+<P>
+<I>-inum</I> オプションをつけて <B><A HREF="../../GNU_findutils/man1/find.1.html">find</A></B>(1) を使うと、
+このファイルの所在を探すことができる。
+<DT><I>/proc/[pid]/fd/</I><DD>
+プロセスがオープンしたファイル各々に対するエントリーを含むサブディレクトリ。 ファイルディスクリプターがファイル名で、
+実際のファイルへのシンボリックリンクになっている。 したがって 0 は標準入力、1 は標準出力、2 は標準エラー出力、などとなる。
+<P>
+パイプやソケットのファイルディスクリプターでは、 エントリーはファイル種別が inode という内容を持つシンボリックリンクとなる。
+このファイルに対して <B><A HREF="../man2/readlink.2.html">readlink</A></B>(2) を呼び出すと以下の形式の文字列が返る。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;type:[inode]
+<P>
+例えば、 <I>socket:[2248868]</I> は inode が 2248868 のソケットである。 ソケットの場合、 その inode を元に
+<I>/proc/net/</I> 以下のファイルを参照し詳しい情報を得ることができる。
+<P>
+対応する inode がないファイルディスクリプター (例えば <B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2), <B><A HREF="../man2/eventfd.2.html">eventfd</A></B>(2),
+<B><A HREF="../man2/inotify_init.2.html">inotify_init</A></B>(2), <B><A HREF="../man2/signalfd.2.html">signalfd</A></B>(2), <B>timerfd</B>(2) により生成されたファイルディスクリプター) では、
+エントリーはその内容が以下の形式のシンボリックリンクとなる。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;anon_inode:&lt;file-type&gt;
+<P>
+<I>file-type</I> は角括弧で囲まれる場合がある。
+<P>
+例えば、 epoll ファイルディスクリプターは、 内容が文字列 <I>anon_inode:[eventpoll]</I>
+のシンボリックリンクを持つ場合がある。
+<P>
+
+マルチスレッドプロセスでは、メインスレッドがすでに終了している場合、 このディレクトリの内容は参照できない (スレッドの終了は通常
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)  を呼び出しにより行われる)。
+<P>
+コマンドライン引き数としてファイル名を受け取るが、引き数が 渡されなかった場合
+に標準入力から入力を受け取らないようなプログラムや、 コマンドライン引き数とし
+て書き込みファイルを受け取るが、引き数が 渡されなかった場合に標準出力に出力を
+行わないようなプログラムであっても、 <I>/proc/[pid]/fd</I> を使うことで標準入力や
+標準出力を使用できるようになる。 例えば、 <I>-i</I> を入力ファイルを指定するフラ
+グ、 <I>-o</I> を出力ファイルを指定するフラグと仮定すると、
+
+<PRE>
+
+$<B> foobar -i /proc/self/fd/0 -o /proc/self/fd/1 ...</B>
+</PRE>
+
+
+<P>
+
+
+
+
+を実行することにより、フィルタとして動作させることができる。
+<P>
+<I>/proc/self/fd/N</I> は、ある種の UNIX や UNIX 風のシステムにある <I>/dev/fd/N</I>
+とだいたい同じである。 事実 Linux のたいていの MAKEDEV スクリプトは、
+<I>/dev/fd</I> を <I>/proc/self/fd</I> へのシンボリックリンクにしている。
+<P>
+ほとんどのシステムでは、シンボリックリンク <I>/dev/stdin</I>, <I>/dev/stdout</I>, <I>/dev/stderr</I>
+が提供されており、それぞれ <I>/proc/self/fd</I> 内のファイル <I>0</I>, <I>1</I>, <I>2</I> にリンクされている。
+したがって、上述のサンプルコマンドは次のようにも書くことができる。
+
+<PRE>
+
+$<B> foobar -i /dev/stdin -o /dev/stdout ...</B>
+</PRE>
+
+
+
+
+
+<DT><I>/proc/[pid]/fdinfo/</I> (Linux 2.6.22 以降)<DD>
+このサブディレクトリには、そのプロセスがオープンしているファイル毎の エントリーが入っており、ファイルディスクリプターがファイル名となっている。
+各ファイルの内容を読み出すことで、対応するファイルディスクリプターに関する 情報を得ることができる。以下に例を示す。
+
+<PRE>
+
+$<B> cat /proc/12015/fdinfo/4</B>
+pos:    1000
+flags:  01002002
+</PRE>
+
+
+<P>
+<I>pos</I> フィールドは 10 進数で、現在のファイルオフセットを示す。 <I>flags</I> フィールドは 8 進数で、
+ファイルのアクセスモードとファイル状態フラグを示す (<B><A HREF="../man2/open.2.html">open</A></B>(2)  参照)。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+このディレクトリのファイルは、プロセスの所有者だけが読み出すことができる。
+<DT><I>/proc/[pid]/io</I> (kernel 2.6.20 以降)<DD>
+
+このファイルは、 プロセスの I/O 統計情報を表示する。 以下に例を挙げる。
+
+<PRE>
+
+#<B> cat /proc/3828/io</B>
+rchar: 323934931
+wchar: 323929600
+syscr: 632687
+syscw: 632675
+read_bytes: 0
+write_bytes: 323932160
+cancelled_write_bytes: 0
+</PRE>
+
+
+<P>
+フィールドの詳細は以下の通りである。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>rchar</I>: 読み出し文字数<DD>
+このタスクがきっかけでストレージから読み出されたバイト数。 この値は、単純に <B><A HREF="../man2/read.2.html">read</A></B>(2)
+や同様のシステムコールからこのプロセスに渡されたバイト数の合計である。 この値には、 端末入出力なども含まれ、 実際に物理ディスク I/O
+が必要であったか (読み出しがページキャッシュからの読み出しで十分であったか) どうかは関係ない。
+<DT><I>wchar</I>: 書き込み文字数<DD>
+このタスクがきっかけで行われたか行われるはずのディスクへの書き込みバイト数。 <I>rchar</I> と同じ注意があてはまる。
+<DT><I>syscr</I>: 読み出しシステムコール数<DD>
+読み出し I/O 操作---<B><A HREF="../man2/read.2.html">read</A></B>(2) や <B>pread</B>(29 などのシステムコール---を試みた回数。
+<DT><I>syscw</I>: 書き込みシステムコール数<DD>
+書き込み I/O 操作---<B><A HREF="../man2/write.2.html">write</A></B>(2) や <B>pwrite</B>(29 などのシステムコール---を試みた回数。
+<DT><I>read_bytes</I>: 読み出しバイト数<DD>
+このプロセスが実際にストレージ層から取得しようとしたバイト数。 ブロックデバイス上のファイルシステムでは正確な値となる。
+<DT><I>write_bytes</I>: 書き込みバイト数<DD>
+このプロセスが実際にストレージ層に転送しようとしたバイト数。
+<DT><I>cancelled_write_bytes</I>:<DD>
+The big inaccuracy here is truncate.  If a process writes 1MB to a file and
+then deletes the file, it will in fact perform no writeout.  But it will
+have been accounted as having caused 1MB of write.  In other words: this
+field represents the number of bytes which this process caused to not
+happen, by truncating pagecache.  A task can cause &quot;negative&quot; I/O too.  If
+this task truncates some dirty pagecache, some I/O which another task has
+been accounted for (in its <I>write_bytes</I>)  will not be happening.
+</DL>
+</DL>
+
+<DT><DD>
+<I>注意</I>: 現在の実装では 32 ビットシステムでは少しいやらしい点がある。 プロセス B が 64
+ビットカウンターの一つを更新している途中に、プロセス A がプロセス B の <I>/proc/[pid]/io</I> を読んだ場合、 プロセス A
+に更新中の結果が見えることがある。
+<DT><I>/proc/[pid]/gid_map</I> (Linux 3.5 以降)<DD>
+<I>/proc/[pid]/uid_map</I> の説明を参照すること。
+<P>
+<DT><I>/proc/[pid]/limits</I> (Linux 2.6.24 以降)<DD>
+
+このファイルは、そのプロセスの各リソース制限について、 ソフトリミット、ハードリミット、計測単位を表示する (<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)  参照)。
+Linux 2.6.35 以前では、 プロセスの実 UID を持つプロセスだけが、 このファイルを読み出すことができる。 Linux 2.6.36
+以降では、 システム上のすべてのユーザーがこのファイルを読み出すことができる。
+<DT><I>/proc/[pid]/map_files/</I> (kernel 3.3 以降)<DD>
+
+このサブディレクトリには、 メモリーマップされたファイルに対応するエントリーが置かれる (<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2) 参照)。
+エントリーの名前がメモリー領域の (16 進数表現の) 開始アドレスと終了アドレスの組で、
+エントリーはマップされているファイルへのシンボリックリンクである。 以下に例を示す。 なお、 出力は幅が 80
+文字のディスプレイに合うように折り返して整形されている。
+
+<PRE>
+
+$<B> ls -l /proc/self/map_files/</B>
+lr--------. 1 root root 64 Apr 16 21:31
+            3252e00000-3252e20000 -&gt; /usr/lib64/ld-2.15.so
+...
+</PRE>
+
+
+<P>
+これらのエントリーが存在するのは <B>MAP_FILE</B> フラグでマッピングされたメモリー領域についてであるが、 Linux での無名の共有メモリー
+(<B>MAP_ANON | MAP_SHARED</B> で作成された領域) の実装方法では、
+このディレクトリに無名の共有メモリーに関するエントリーも存在する。 以下は、 マッピング元のファイルが削除された <I>/dev/zero</I>
+ファイルでの例である。
+
+<PRE>
+
+
+lrw-------. 1 root root 64 Apr 16 21:33
+            7fc075d2f000-7fc075e6f000 -&gt; /dev/zero (deleted)
+</PRE>
+
+
+<P>
+このディレクトリが存在するのは、 カーネルのコンフィギュレーションオプション <B>CONFIG_CHECKPOINT_RESTORE</B>
+が有効になっている場合だけである。
+<DT><I>/proc/[pid]/maps</I><DD>
+現在マッピングされているメモリー領域とそのアクセスパーミッションを含む。 メモリーマッピングについての詳しい情報は <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2) を参照。
+<P>
+ファイルのフォーマットは以下のとおり:
+<P>
+
+<PRE>
+<I>address           perms offset  dev   inode       pathname</I>
+00400000-00452000 r-xp 00000000 08:02 173521      /usr/bin/dbus-daemon
+00651000-00652000 r--p 00051000 08:02 173521      /usr/bin/dbus-daemon
+00652000-00655000 rw-p 00052000 08:02 173521      /usr/bin/dbus-daemon
+00e03000-00e24000 rw-p 00000000 00:00 0           [heap]
+00e24000-011f7000 rw-p 00000000 00:00 0           [heap]
+...
+35b1800000-35b1820000 r-xp 00000000 08:02 135522  /usr/lib64/ld-2.15.so
+35b1a1f000-35b1a20000 r--p 0001f000 08:02 135522  /usr/lib64/ld-2.15.so
+35b1a20000-35b1a21000 rw-p 00020000 08:02 135522  /usr/lib64/ld-2.15.so
+35b1a21000-35b1a22000 rw-p 00000000 00:00 0
+35b1c00000-35b1dac000 r-xp 00000000 08:02 135870  /usr/lib64/libc-2.15.so
+35b1dac000-35b1fac000 ---p 001ac000 08:02 135870  /usr/lib64/libc-2.15.so
+35b1fac000-35b1fb0000 r--p 001ac000 08:02 135870  /usr/lib64/libc-2.15.so
+35b1fb0000-35b1fb2000 rw-p 001b0000 08:02 135870  /usr/lib64/libc-2.15.so
+...
+f2c6ff8c000-7f2c7078c000 rw-p 00000000 00:00 0    [stack:986]
+...
+7fffb2c0d000-7fffb2c2e000 rw-p 00000000 00:00 0   [stack]
+7fffb2d48000-7fffb2d49000 r-xp 00000000 00:00 0   [vdso]
+</PRE>
+
+
+<P>
+<I>address</I> フィールドは、 そのマッピングが占めているプロセスのアドレス空間である。 <I>perms</I>
+フィールドはパーミッションのセットである。
+<P>
+<PRE>
+r = read
+w = write
+x = execute
+s = shared
+p = private (copy on write)
+</PRE>
+
+
+<P>
+<I>offset</I> はファイル (などの) 中でのオフセット、 <I>dev</I> はデバイス (メジャーデバイス番号:マイナーデバイス番号)、
+<I>inode</I> はそのデバイスの i ノード番号である。 0 は、BSS (初期化されていないデータ領域) の場合のように、 このメモリー領域はどの
+i ノードとも関連付けられていないことを意味する。
+<P>
+<I>pathname</I> フィールドは、 通常そのマッピングに対応するファイルである。 ELF ファイルの場合、 ELF プログラムヘッダーの
+Offset フィールドを見ることで (<I>readelf&nbsp;-l</I>))、 簡単に <I>offset</I> との対応付けをすることができる。
+<P>
+これに加え、 役に立つ擬似パス名がある。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>[stack]</I><DD>
+初期プロセスのスタック (初期プロセスはメインスレッドとも呼ばれる)。
+<DT><I>[stack:&lt;tid&gt;]</I> (Linux 3.4 以降)<DD>
+
+スレッドのスタック (<I>&lt;tid&gt;</I> はスレッド ID である)。 パス <I>/proc/[pid]/task/[tid]/</I>
+に対応する。
+<DT><I>[vdso]</I><DD>
+動的にリンクされる仮想共有オブジェクト (virtual dynamically linked shared object)。
+<DT><I>[heap]</I><DD>
+プロセスのヒープ。
+
+</DL>
+</DL>
+
+<DT><DD>
+<I>pathname</I> が空の場合、 その領域は <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2) を使って確保された無名マッピングである。 <B><A HREF="../../GNU_gdb/man1/gdb.1.html">gdb</A></B>(1),
+<B>strace</B>(1) などを使ってプロセスを実行しない限り、 この領域をプロセスのソースと対応付ける簡単な方法はない。
+<P>
+Linux 2.0 ではパス名を書いたフィールドがない。
+<DT><I>/proc/[pid]/mem</I><DD>
+このファイルは、 <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)
+を通して、プロセスのメモリーのページにアクセスするために使われる。
+<DT><I>/proc/[pid]/mountinfo</I> (Linux 2.6.26 以降)<DD>
+
+このファイルには、マウントポイントについての情報が入っている。 以下のような形式の行から構成される。
+<PRE>
+
+<TT>36 35 98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
+(1)(2)(3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)</TT>
+</PRE>
+
+<DT><DD>
+括弧付きの数字は、以下の説明のためのものである。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>(1)<DD>
+マウント ID: マウントの一意な識別子 (<B><A HREF="../man2/umount.2.html">umount</A></B>(2)  の後は再利用されるかもしれない)。
+<DT>(2)<DD>
+parent ID: 親マウントの ID (マウントツリーの最上位の場合は自分自身の ID となる)。
+<DT>(3)<DD>
+major:minor: ファイルシステム上のファイルの <I>st_dev</I> の値 (<B><A HREF="../man2/stat.2.html">stat</A></B>(2)  参照)。
+<DT>(4)<DD>
+ルート: そのファイルシステム内のマウントのルート。
+<DT>(5)<DD>
+マウントポイント: マウントポイントのそのプロセスのルートからの相対パス。
+<DT>(6)<DD>
+マウントオプション: 各マウントのオプション。
+<DT>(7)<DD>
+オプションフィールド: &quot;tag[:value]&quot; 形式のフィールドが 0 個以上並ぶ。
+<DT>(8)<DD>
+セパレータ: オプションフィールドの終わりを示す。
+<DT>(9)<DD>
+ファイルシステム種別: ファイルシステムの名前。 &quot;type[.subtype]&quot; という形式となる。
+<DT>(10)<DD>
+マウント元: ファイルシステム固有の情報。ない場合は &quot;none&quot; となる。
+<DT>(11)<DD>
+super options: スーパーブロック単位のオプション。
+</DL>
+</DL>
+
+<DT><DD>
+解釈する側は認識できないオプションフィールドは全て無視すべきである。 現在のところ、オプションフィールドとしては以下のようなものがある。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>shared:X<DD>
+マウントはピアグループ (peer group) X で共有されている。
+<DT>master:X<DD>
+マウントはピアグループ (peer group) X のスレーブである。
+<DT>propagate_from:X<DD>
+マウントはスレーブであり、ピアグループ X (*) から mount propagation を受信する。
+<DT>unbindable<DD>
+マウントは unbind できない。
+</DL>
+</DL>
+
+<DT><DD>
+(*) X は、プロセスの root で直近の dominant peer group である。 X がマウントの直接のマスターである場合や、 同じ
+root に dominant peer group がない場合は、 &quot;master:X&quot; フィールドだけが存在し、
+&quot;propagate_from:X&quot; フィールドは存在しない。
+<P>
+mount propagation の詳細については、 Linux カーネルソースツリー内の
+<I>Documentation/filesystems/sharedsubtree.txt</I> を参照。
+<DT><I>/proc/[pid]/mounts</I> (Linux 2.4.19 以降)<DD>
+そのプロセスのマウント名前空間に現在マウントされている 全ファイルシステムのリスト。 このファイルのフォーマットは <B><A HREF="../../util-linux/man5/fstab.5.html">fstab</A></B>(5)
+に載っている。 カーネル 2.6.15 以降では、このファイルを監視することができる (pollable)。
+このファイルを読み出し用にオープンした後で、このファイルに変更があると (つまりファイルシステムのマウントやアンマウントがあると)、
+<B><A HREF="../man2/select.2.html">select</A></B>(2)  ではそのファイルディスクリプターは読み出し可能となり、 <B><A HREF="../man2/poll.2.html">poll</A></B>(2)  と <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+ではそのファイルはエラー状態として通知される。 詳細は <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7) を参照。
+<DT><I>/proc/[pid]/mountstats</I> (Linux 2.6.17 以降)<DD>
+このファイルを通じて、そのプロセスのマウント名前空間内のマウントポイントに関する 各種情報 (統計、設定情報) を参照できる。
+ファイルの各行は以下のフォーマットである。
+<PRE>
+
+device /dev/sda7 mounted on /home with fstype ext3 [statistics]
+(       1      )            ( 2 )             (3 ) (4)
+</PRE>
+
+<DT><DD>
+各行のフィールドは以下の通りである。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>(1)<DD>
+マウントされているデバイス名 (対応するデバイスがない場合は &quot;nodevice&quot; となる)。
+<DT>(2)<DD>
+マウントポイントのファイルシステムツリーにおけるパス名。
+<DT>(3)<DD>
+ファイルシステム種別。
+<DT>(4)<DD>
+追加の統計や設定情報。 現在のところ (Linux 2.6.26 時点では)、 このフィールドで情報が提供されているのは NFS
+ファイルシステムだけである。
+</DL>
+</DL>
+
+<DT><DD>
+このファイルはプロセスの所有者だけが読み出すことができる。
+<P>
+詳しい情報は <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7) を参照。
+<DT><I>/proc/[pid]/ns/</I> (Linux 3.0 以降)<DD>
+
+このサブディレクトリには、名前空間毎に 1 エントリーが置かれる。
+各エントリーは <B><A HREF="../man2/setns.2.html">setns</A></B>(2) による操作をサポートしている。
+詳細な情報は <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7) を参照。
+<P>
+<DT><I>/proc/[pid]/numa_maps</I> (Linux 2.6.14 以降)<DD>
+<B><A HREF="../man7/numa.7.html">numa</A></B>(7)  を参照。
+<DT><I>/proc/[pid]/oom_adj</I> (Linux 2.6.11 以降)<DD>
+このファイルは、メモリー不足 (OOM) の状況下でどのプロセスを殺すべきかを選択す
+るのに使用されるスコアを調整するのに使用される。カーネルは、プロセスの
+<I>oom_score</I> 値のビットシフト操作に、この値を使用する。この値として有効な値
+は -16 から +15 までと、特別な意味を持つ -17 である。 -17 はそのプロセス
+に対する OOM-killing を完全に無効にすることを意味する。正の値ほど、そのプロ
+セスが OOM-killer により殺される可能性が高くなり、負の値ほど可能性が低くなる。
+<DT><DD>
+このファイルのデフォルト値は 0 である。 新しいプロセスは親プロセスの <I>oom_adj</I> の設定を継承する。
+このファイルを変更するためには、プロセスは特権 (<B>CAP_SYS_RESOURCE</B>) を持っていなければならない。
+<DT><DD>
+Linux 2.6.36 以降では、 このファイルの使用は非推奨とされ、 代わりに <I>/proc/[pid]/oom_score_adj</I>
+が推奨されている。
+<DT><I>/proc/[pid]/oom_score</I> (Linux 2.6.11 以降)<DD>
+
+
+このファイルは、OOM-killer のプロセス選択用として、カーネルが このプロセス
+に対して与えた現在のスコアを表示する。 高いスコアは、そのプロセスが
+OOM-killer により選択される 可能性が高いことを意味する。 このスコアの基本は
+そのプロセスが使用しているメモリー量であり、 以下の要因により加算 (+) 減算 (-)
+が行われる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+そのプロセスが多くの子プロセスを <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  を使って作成しているか (+)。
+<DT>*<DD>
+そのプロセスが長時間実行されて来たか、
+もしくは 多くの CPU 時間を使用しているか (-)。
+<DT>*<DD>
+そのプロセスが低い nice 値 (&gt; 0) を持っているか (+)。
+<DT>*<DD>
+
+そのプロセスが特権を持っているか (-)。
+<DT>*<DD>
+
+そのプロセスが direct hardware access を行っているか (-)。
+</DL>
+</DL>
+
+<DT><DD>
+<I>oom_score</I> は、そのプロセスの <I>oom_score_adj</I> や <I>oom_adj</I> 設定で規定される調整にも影響を与える。
+<DT><I>/proc/[pid]/oom_score_adj</I> (Linux 2.6.36 以降)<DD>
+
+This file can be used to adjust the badness heuristic used to select which
+process gets killed in out-of-memory conditions.
+<P>
+The badness heuristic assigns a value to each candidate task ranging from 0
+(never kill) to 1000 (always kill) to determine which process is targeted.
+The units are roughly a proportion along that range of allowed memory the
+process may allocate from, based on an estimation of its current memory and
+swap use.  For example, if a task is using all allowed memory, its badness
+score will be 1000.  If it is using half of its allowed memory, its score
+will be 500.
+<P>
+There is an additional factor included in the badness score: root processes
+are given 3% extra memory over other tasks.
+<P>
+The amount of &quot;allowed&quot; memory depends on the context in which the
+OOM-killer was called.  If it is due to the memory assigned to the
+allocating task's cpuset being exhausted, the allowed memory represents the
+set of mems assigned to that cpuset (see <B>cpuset</B>(7)).  If it is due to a
+mempolicy's node(s) being exhausted, the allowed memory represents the set
+of mempolicy nodes.  If it is due to a memory limit (or swap limit) being
+reached, the allowed memory is that configured limit.  Finally, if it is due
+to the entire system being out of memory, the allowed memory represents all
+allocatable resources.
+<P>
+The value of <I>oom_score_adj</I> is added to the badness score before it is
+used to determine which task to kill.  Acceptable values range from -1000
+(OOM_SCORE_ADJ_MIN) to +1000 (OOM_SCORE_ADJ_MAX).  This allows user space to
+control the preference for OOM-killing, ranging from always preferring a
+certain task or completely disabling it from OOM killing.  The lowest
+possible value, -1000, is equivalent to disabling OOM-killing entirely for
+that task, since it will always report a badness score of 0.
+<P>
+Consequently, it is very simple for user space to define the amount of
+memory to consider for each task.  Setting a <I>oom_score_adj</I> value of +500,
+for example, is roughly equivalent to allowing the remainder of tasks
+sharing the same system, cpuset, mempolicy, or memory controller resources
+to use at least 50% more memory.  A value of -500, on the other hand, would
+be roughly equivalent to discounting 50% of the task's allowed memory from
+being considered as scoring against the task.
+<P>
+For backward compatibility with previous kernels, <I>/proc/[pid]/oom_adj</I> can
+still be used to tune the badness score.  Its value is scaled linearly with
+<I>oom_score_adj</I>.
+<P>
+Writing to <I>/proc/[pid]/oom_score_adj</I> or <I>/proc/[pid]/oom_adj</I> will
+change the other with its scaled value.
+<DT><I>/proc/[pid]/pagemap</I> (Linux 2.6.25 以降)<DD>
+このファイルは、 プロセスの各仮想ページの物理ページフレームやスワップ領域へのマッピングを表示する。
+各仮想ページに 64 ビットの値 1 つが対応し、 各ビットは以下のとおりである。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>63<DD>
+セットされている場合、 このページは RAM に存在する。
+<DT>62<DD>
+セットされている場合、 このページはスワップ領域に存在する。
+<DT>61 (Linux 3.5 以降)<DD>
+このページはファイルマップされたページか共有無名ページである。
+<DT>60-56 (Linux 3.11 以降)<DD>
+
+ゼロ。
+<DT>55 (Linux 3.11 以降)<DD>
+PTE が soft-dirty である (カーネルのソースファイル <I>Documentation/vm/soft-dirty.txt</I> を参照)。
+<DT>54-0<DD>
+このページが RAM に存在する場合 (ビット 63)、 これらのビットはページフレーム番号を示す。 このページフレーム番号は
+<I>/proc/kpageflags</I> と <I>/proc/kpagecount</I> のインデックスに使用できる。 このページがスワップに存在する場合
+(ビット 62)、 ビット 4-0 はスワップ種別を示し、 ビット 54-5 はスワップオフセットを示す。
+</DL>
+</DL>
+
+<DT><DD>
+Linux 3.11 より前では、 ビット 60-55 はページサイズの基数 2 の log を示すのに使われていた。
+<DT><DD>
+<I>/proc/[pid]/pagemap</I> を効率的に活用するには、 <I>/proc/[pid]/maps</I>
+を使ってメモリーのどの領域が実際にマップされているかを判断し、 seek でマップされていない領域をスキップするのがよい。
+<DT><DD>
+<I>/proc/[pid]/pagemap</I> ファイルが存在するのは、カーネルのコンフィギュレーションオプション
+<B>CONFIG_PROC_PAGE_MONITOR</B> を有効にした場合だけである。
+<DT><I>/proc/[pid]/personality</I> (Linux 2.6.28 以降)<DD>
+
+This read-only file exposes the process's execution domain, as set by
+<B><A HREF="../man2/personality.2.html">personality</A></B>(2).  The value is displayed in hexadecimal notation.
+<DT><I>/proc/[pid]/root</I><DD>
+UNIX と Linux では、 ファイルシステムのルート (/) をプロセスごとに別々にできる。 これはシステムコール <B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)
+によって設定する。 このファイルはプロセスのルートディレクトリを指すシンボリックリンクで、 <I>exe</I> や <I>fd/*</I>
+などと同じような動作をする。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+マルチスレッドプロセスでは、メインスレッドがすでに終了している場合、 このシンボリックリンクの内容は参照できない (スレッドの終了は通常
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)  を呼び出しにより行われる)。
+<DT><I>/proc/[pid]/smaps</I> (Linux 2.6.14 以降)<DD>
+このファイルは、そのプロセスの各マッピングのメモリー消費量を表示する (<B><A HREF="../../procps/man1/pmap.1.html">pmap</A></B>(1)
+コマンドは解析しやすいであろう形式で同様の情報を表示する)。 マッピングのそれぞれについて、以下のような内容が表示される。
+
+<PRE>
+
+00400000-0048a000 r-xp 00000000 fd:03 960637       /bin/bash
+Size:                552 kB
+Rss:                 460 kB
+Pss:                 100 kB
+Shared_Clean:        452 kB
+Shared_Dirty:          0 kB
+Private_Clean:         8 kB
+Private_Dirty:         0 kB
+Referenced:          460 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
+
+</PRE>
+
+
+最初の行には、 <I>/proc/[pid]/maps</I> で表示されるマッピングと同じ情報が表示される。 残りの行には、マッピングのサイズ、現在 RAM
+上に存在するマッピングの量 (&quot;Rss&quot;)、 このマッピングのこのプロセスの proportional share (&quot;Pss&quot;)、
+マッピング内の共有ページのうちクリーンなページ数とダーティページ数、
+マッピング内のプライベートページのうちクリーンなページ数とダーティページ数、を示す。 &quot;Referenced&quot; は参照された (referenced)
+かアクセスされたと現在印が付いているメモリー量を示す。 &quot;Anonymous&quot; はどのファイルにも属していないメモリー量を示す。 &quot;Swap&quot;
+は使用中だがスワップされている無名メモリー (would-be-anonymous memory) の量を示す。
+<P>
+The &quot;KernelPageSize&quot; entry is the page size used by the kernel to back a
+VMA.  This matches the size used by the MMU in the majority of cases.
+However, one counter-example occurs on PPC64 kernels whereby a kernel using
+64K as a base page size may still use 4K pages for the MMU on older
+processors.  To distinguish, this patch reports &quot;MMUPageSize&quot; as the page
+size used by the MMU.
+<P>
+The &quot;Locked&quot; indicates whether the mapping is locked in memory or not.
+<P>
+&quot;VmFlags&quot; field represents the kernel flags associated with the particular
+virtual memory area in two letter encoded manner.  The codes are the
+following:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;rd&nbsp;&nbsp;-&nbsp;readable
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;wr&nbsp;&nbsp;-&nbsp;writable
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ex&nbsp;&nbsp;-&nbsp;executable
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sh&nbsp;&nbsp;-&nbsp;shared
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mr&nbsp;&nbsp;-&nbsp;may&nbsp;read
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mw&nbsp;&nbsp;-&nbsp;may&nbsp;write
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;me&nbsp;&nbsp;-&nbsp;may&nbsp;execute
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ms&nbsp;&nbsp;-&nbsp;may&nbsp;share
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gd&nbsp;&nbsp;-&nbsp;stack&nbsp;segment&nbsp;grows&nbsp;down
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pf&nbsp;&nbsp;-&nbsp;pure&nbsp;PFN&nbsp;range
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;dw&nbsp;&nbsp;-&nbsp;disabled&nbsp;write&nbsp;to&nbsp;the&nbsp;mapped&nbsp;file
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;lo&nbsp;&nbsp;-&nbsp;pages&nbsp;are&nbsp;locked&nbsp;in&nbsp;memory
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;io&nbsp;&nbsp;-&nbsp;memory&nbsp;mapped&nbsp;I/O&nbsp;area
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sr&nbsp;&nbsp;-&nbsp;sequential&nbsp;read&nbsp;advise&nbsp;provided
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;rr&nbsp;&nbsp;-&nbsp;random&nbsp;read&nbsp;advise&nbsp;provided
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;dc&nbsp;&nbsp;-&nbsp;do&nbsp;not&nbsp;copy&nbsp;area&nbsp;on&nbsp;fork
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;de&nbsp;&nbsp;-&nbsp;do&nbsp;not&nbsp;expand&nbsp;area&nbsp;on&nbsp;remapping
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ac&nbsp;&nbsp;-&nbsp;area&nbsp;is&nbsp;accountable
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nr&nbsp;&nbsp;-&nbsp;swap&nbsp;space&nbsp;is&nbsp;not&nbsp;reserved&nbsp;for&nbsp;the&nbsp;area
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ht&nbsp;&nbsp;-&nbsp;area&nbsp;uses&nbsp;huge&nbsp;tlb&nbsp;pages
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nl&nbsp;&nbsp;-&nbsp;non-linear&nbsp;mapping
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ar&nbsp;&nbsp;-&nbsp;architecture&nbsp;specific&nbsp;flag
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;dd&nbsp;&nbsp;-&nbsp;do&nbsp;not&nbsp;include&nbsp;area&nbsp;into&nbsp;core&nbsp;dump
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sd&nbsp;&nbsp;-&nbsp;soft-dirty&nbsp;flag
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mm&nbsp;&nbsp;-&nbsp;mixed&nbsp;map&nbsp;area
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hg&nbsp;&nbsp;-&nbsp;huge&nbsp;page&nbsp;advise&nbsp;flag
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nh&nbsp;&nbsp;-&nbsp;no-huge&nbsp;page&nbsp;advise&nbsp;flag
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mg&nbsp;&nbsp;-&nbsp;mergeable&nbsp;advise&nbsp;flag
+<P>
+<I>/proc/[pid]/smaps</I> ファイルが存在するのは、カーネルのコンフィギュレーションオプション
+<B>CONFIG_PROC_PAGE_MONITOR</B> を有効にした場合だけである。
+<DT><I>/proc/[pid]/stack</I> (Linux 2.6.29 以降)<DD>
+
+This file provides a symbolic trace of the function calls in this process's
+kernel stack.  This file is provided only if the kernel was built with the
+<B>CONFIG_STACKTRACE</B> configuration option.
+<DT><I>/proc/[pid]/stat</I><DD>
+プロセスの状態についての情報。 これは <B><A HREF="../../procps/man1/ps.1.html">ps</A></B>(1)  で使われ、 カーネルのソースファイル <I>fs/proc/array.c</I>
+で定義されている。
+<P>
+各フィールドを順番に、 <B><A HREF="../man3/scanf.3.html">scanf</A></B>(3)  のフォーマット指定子付きで以下に示す。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>(1) <I>pid</I> &nbsp;%d<DD>
+<BR>
+
+プロセス ID。
+<DT>(2) <I>comm</I> &nbsp;%s<DD>
+括弧でくくられた実行形式のファイル名。 実行形式がスワップアウトされているかどうかによらず、 見ることができる。
+<DT>(3) <I>state</I> &nbsp;%c<DD>
+プロセスの状態を示す、以下のいずれか 1 文字。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>R<DD>
+実行中 (Running)
+<DT>S<DD>
+Sleeping in an interruptible wait
+<DT>D<DD>
+Waiting in uninterruptible disk sleep
+<DT>Z<DD>
+ゾンビ (Zombie)
+<DT>T<DD>
+(シグナルでの) 停止、または (Linux 2.6.33 より前では) トレースによる停止
+<DT>t<DD>
+
+トレースによる停止 (Tracing stop) (Linux 2.6.33 以降)
+<DT>W<DD>
+ページング中 (Linux 2.6.0 より前のみ)
+<DT>X<DD>
+死亡 (Dead) (Linux 2.6.0 以降)
+<DT>x<DD>
+
+
+死亡 (Dead) (Linux 2.6.33 から 3.13 までのみ)
+<DT>K<DD>
+
+
+Wakekill (Linux 2.6.33 から 3.13 までのみ)
+<DT>W<DD>
+
+
+Waking (Linux 2.6.33 から 3.13 までのみ)
+<DT>P<DD>
+
+
+Parked (Linux 3.9 から 3.13 までのみ)
+</DL>
+</DL>
+
+<DT>(4) <I>ppid</I> &nbsp;%d<DD>
+このプロセスの親プロセスの PID。
+<DT>(5) <I>pgrp</I> &nbsp;%d<DD>
+プロセスのプロセスグループ ID。
+<DT>(6) <I>session</I> &nbsp;%d<DD>
+プロセスのセッション ID。
+<DT>(7) <I>tty_nr</I> &nbsp;%d<DD>
+プロセスの制御端末 (マイナーデバイス番号はビット 31〜20 と 7〜0 にまたがって格納され、 メジャーデバイス番号はビット 15〜8
+に格納される)。
+<DT>(8) <I>tpgid</I> &nbsp;%d<DD>
+
+プロセスの制御端末のフォアグランド・プロセスグループの ID。
+<DT>(9) <I>flags</I> &nbsp;%u<DD>
+プロセスのカーネルフラグワード。 ビットの意味は、 <I>&lt;<A HREF="file:///usr/include/linux/sched.h">linux/sched.h</A>&gt;</I> で定義されている PF_* を参照すること。
+詳細はカーネルのバージョンに依存する。
+<P>
+このフィールドのフォーマットは Linux 2.6 より前では %lu であった。
+<DT>(10) <I>minflt</I> &nbsp;%lu<DD>
+プロセスが引き起こしたマイナーフォールト (minor fault、ディスクから メモリーページへのロードを必要としないフォールト) の回数。
+<DT>(11) <I>cminflt</I> &nbsp;%lu<DD>
+(そのプロセスが終了を待っている) 子プロセスが引き起こしたマイナーフォールトの回数。
+<DT>(12) <I>majflt</I> &nbsp;%lu<DD>
+プロセスが引き起こしたメジャーフォールト (major fault、ディスクからメモリーページへのロードを必要とするフォールト) の回数。
+<DT>(13) <I>cmajflt</I> &nbsp;%lu<DD>
+(そのプロセスが終了を待っている) 子プロセスが引き起こしたメジャーフォールトの回数。
+<DT>(14) <I>utime</I> &nbsp;%lu<DD>
+このプロセスがユーザーモードでスケジューリングされた時間の合計。 clock tick 単位で計測される
+(<I>sysconf(_SC_CLK_TCK)</I> で割った値が表示される)。 この値にはゲスト時間 <I>guest_time</I> (仮想 CPU
+の実行に消費された時間)
+も含まれる。これは、ゲスト時間のフィールドを認識しないアプリケーションにおいて、ゲスト時間分を計算に入れ損ねないようにするためである。
+<DT>(15) <I>stime</I> &nbsp;%lu<DD>
+プロセスのカーネルモードでの実行時間 (単位 jiffies)。 このプロセスがカーネルモードでスケジューリングされた時間の合計。 clock tick
+単位で計測される (<I>sysconf(_SC_CLK_TCK)</I> で割った値が表示される)。
+<DT>(16) <I>cutime</I> &nbsp;%ld<DD>
+このプロセスの子プロセスで、終了待ち (waited-for) のプロセスが、 ユーザーモードでスケジューリングされた時間の合計。 clock tick
+単位で計測される (<I>sysconf(_SC_CLK_TCK)</I> で割った値が表示される)。 (<B><A HREF="../man2/times.2.html">times</A></B>(2)  も参照すること。)
+この値にはゲスト時間 <I>cguest_time</I> (仮想 CPU を実行するのに消費した時間、下記参照) も含まれる。
+<DT>(17) <I>cstime</I> &nbsp;%ld<DD>
+このプロセスの子プロセスで、終了待ち (waited-for) のプロセスが、カーネルモードでスケジューリングされた時間の合計。 clock tick
+単位で計測される (<I>sysconf(_SC_CLK_TCK)</I> で割った値が表示される)。
+<DT>(18) <I>priority</I> &nbsp;%ld<DD>
+(Linux 2.6 の場合の説明) リアルタイムスケジューリングポリシー (下記の
+<I>policy ;</I> <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2) 参照) で動作しているプロセスでは、 この
+値はスケジューリング優先度を反転した値 (スケジューリング優先度を マイナスにし
+た値) となる。値は -2 から -100 までの範囲の数値で、 それぞれリアルタイム優先
+度の 1 から 99 に対応する。 リアルタイム以外のスケジューリングポリシーで動作し
+ているプロセスでは、 この値はカーネル内で管理されている nice 値そのもの
+(<B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2)) となる。 カーネルは nice 値を 0 (高) から 39 (低) の範囲
+の値として保持しており、 それぞれユーザーに見える nice 値の -20 から 19 に対応
+する。
+<P>
+
+Linux 2.6 より前では、このプロセスに割り当てられたスケジューリング 重みを変換した値が表示されていた。
+<DT>(19) <I>nice</I> &nbsp;%ld<DD>
+
+
+
+
+
+
+
+
+
+
+nice 値 (<B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2) 参照)。 19 (最低優先) から -20 (最高優先)
+の範囲の値である。
+<DT>(20) <I>num_threads</I> &nbsp;%ld<DD>
+このプロセスのスレッド数 (Linux 2.6 以降)。 カーネル 2.6 より前では、このフィールドは削除されたフィールドの 場所埋めとして 0
+にハードコードされていた。
+<DT>(21) <I>itrealvalue</I> &nbsp;%ld<DD>
+インターバルタイマーによって、次に <B>SIGALRM</B> がプロセスへ送られるまでの時間 (単位 jiffies)。 カーネル 2.6.17
+以降では、このフィールドはメンテナンスされなくなり、 0 にハードコードされている。
+<DT>(22) <I>starttime</I> &nbsp;%llu<DD>
+プロセスの起動時刻。システムが起動した時刻が起点である。 Linux 2.6 より前のカーネルでは、 この値の単位は jiffies であった。
+Linux 2.6 以降では、 値の単位はクロック tick である (<I>sysconf(_SC_CLK_TCK)</I> で割った値となる)。
+<P>
+このフィールドのフォーマットは Linux 2.6 より前では %lu であった。
+<DT>(23) <I>vsize</I> &nbsp;%lu<DD>
+仮想メモリーのサイズ。単位はバイト。
+<DT>(24) <I>rss</I> &nbsp;%ld<DD>
+Resident Set Size。プロセスが持っている実メモリー上のページ数。
+これはちょうどテキスト、データ、スタック空間に使われているページ数である。 デマンドロードされていないページや
+スワップアウトされたページの数は含んでいない。
+<DT>(25) <I>rsslim</I> &nbsp;%lu<DD>
+このプロセスの rss の現在のソフトリミット (バイト単位)。 <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2) の <B>RLIMIT_RSS</B> の説明を参照。
+<DT>(26) <I>startcode</I> &nbsp;%lu<DD>
+プログラムテキストが実行可能であるような領域の先頭アドレス。
+<DT>(27) <I>endcode</I> &nbsp;%lu<DD>
+プログラムテキストが実行可能であるような領域の末尾アドレス。
+<DT>(28) <I>startstack</I> &nbsp;%lu<DD>
+スタックの開始アドレス (すなわち、スタックの底)。
+<DT>(29) <I>kstkesp</I> &nbsp;%lu<DD>
+現在の ESP (スタックポインター) の値。 プロセスのカーネルスタックページにある。
+<DT>(30) <I>kstkeip</I> &nbsp;%lu<DD>
+現在の EIP (インストラクションポインター) の値。
+<DT>(31) <I>signal</I> &nbsp;%lu<DD>
+処理待ちのシグナルのビットマップ。 10
+進数で表示される。このフィールドは廃止予定である。リアルタイムシグナルに関する情報は表示されないからである。代わりに
+<I>/proc/[pid]/status</I> を使うこと。
+<DT>(32) <I>blocked</I> &nbsp;%lu<DD>
+ブロックされた (blocked) シグナルのビットマップ。 10 進数で表示される。 このフィールドは廃止予定である。
+リアルタイムシグナルに関する情報は表示されないからである。 代わりに <I>/proc/[pid]/status</I> を使うこと。
+<DT>(33) <I>sigignore</I> &nbsp;%lu<DD>
+無視された (ignored) シグナルのビットマップ。 10 進数で表示される。 このフィールドは廃止予定である。
+リアルタイムシグナルに関する情報は表示されないからである。 代わりに <I>/proc/[pid]/status</I> を使うこと。
+<DT>(34) <I>sigcatch</I> &nbsp;%lu<DD>
+捕捉された (caught) シグナルのビットマップ。 10 進数で表示される。 このフィールドは廃止予定である。
+リアルタイムシグナルに関する情報は表示されないからである。 代わりに <I>/proc/[pid]/status</I> を使うこと。
+<DT>(35) <I>wchan</I> &nbsp;%lu<DD>
+This is the &quot;channel&quot; in which the process is waiting.  It is the address of
+a location in the kernel where the process is sleeping.  The corresponding
+symbolic name can be found in <I>/proc/[pid]/wchan</I>.
+<DT>(36) <I>nswap</I> &nbsp;%lu<DD>
+
+スワップされたページ数 (メンテナンスされていない)。
+<DT>(37) <I>cnswap</I> &nbsp;%lu<DD>
+
+子プロセスの <I>nswap</I> の累計 (メンテナンスされていない)。
+<DT>(38) <I>exit_signal</I> &nbsp;%d &nbsp;(Linux 2.1.22 以降)<DD>
+プロセスが死んだときに親プロセスに送られるシグナル。
+<DT>(39) <I>processor</I> &nbsp;%d &nbsp;(Linux 2.2.8 以降)<DD>
+このプロセスを最後に実行した CPU の番号。
+<DT>(40) <I>rt_priority</I> &nbsp;%u &nbsp;(Linux 2.5.19 以降)<DD>
+リアルタイムスケジューリングの優先度。 リアルタイムポリシーの元でスケジューリングされるプロセスでは 1 から 99 の範囲の値となり、
+リアルタイム以外のスケジューリングポリシーのプロセスでは 0 となる (<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)  参照)。
+<DT>(41) <I>policy</I> &nbsp;%u &nbsp;(Linux 2.5.19 以降)<DD>
+スケジューリングポリシー (<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)  参照)。 値は、 <I>linux/sched.h</I> の SCHED_*
+定数を使ってデコードすればよい。
+<P>
+このフィールドのフォーマットは Linux 2.6.22 より前は %lu であった。
+<DT>(42) <I>delayacct_blkio_ticks</I> &nbsp;%llu &nbsp;(Linux 2.6.18 以降)<DD>
+(clock tick (100分の1秒) 単位での) ブロック I/O の総遅延量。
+<DT>(43) <I>guest_time</I> &nbsp;%lu &nbsp;(Linux 2.6.24 以降)<DD>
+プロセスのゲスト時間 (ゲスト OS の仮想 CPU を実行するのに消費された時間)。 clock tick 単位で計測される
+(<I>sysconf(_SC_CLK_TCK)</I> で割った値が表示される)。
+<DT>(44) <I>cguest_time</I> &nbsp;%ld &nbsp;(Linux 2.6.24 以降)<DD>
+プロセスの子プロセスのゲスト時間。 clock tick 単位で計測される (<I>sysconf(_SC_CLK_TCK)</I> で割った値が表示される)。
+<DT>(45) <I>start_data</I> &nbsp;%lu &nbsp;(Linux 3.3 以降)<DD>
+
+Address above which program initialized and uninitialized (BSS) data are
+placed.
+<DT>(46) <I>end_data</I> &nbsp;%lu &nbsp;(Linux 3.3 以降)<DD>
+
+Address below which program initialized and uninitialized (BSS) data are
+placed.
+<DT>(47) <I>start_brk</I> &nbsp;%lu &nbsp;(Linux 3.3 以降)<DD>
+
+Address above which program heap can be expanded with <B><A HREF="../man2/brk.2.html">brk</A></B>(2).
+<DT>(48) <I>arg_start</I> &nbsp;%lu &nbsp;(Linux 3.5 以降)<DD>
+
+プログラムのコマンドライン引き数 (<I>argv</I>) が置かれる開始アドレス。
+<DT>(49) <I>arg_end</I> &nbsp;%lu &nbsp;(Linux 3.5 以降)<DD>
+
+プログラムのコマンドライン引き数 (<I>argv</I>) が置かれる終了アドレス。
+<DT>(50) <I>env_start</I> &nbsp;%lu &nbsp;(Linux 3.5 以降)<DD>
+
+プログラムの環境 (environment) が置かれる開始アドレス。
+<DT>(51) <I>env_end</I> &nbsp;%lu &nbsp;(Linux 3.5 以降)<DD>
+
+プログラムの環境 (environment) が置かれる終了アドレス。
+<DT>(52) <I>exit_code</I> &nbsp;%d &nbsp;(Linux 3.5 以降)<DD>
+
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2) が報告する形式のスレッドの終了ステータス。
+</DL>
+</DL>
+
+<DT><I>/proc/[pid]/statm</I><DD>
+(ページ単位で計測した) メモリー使用量についての情報を提供する。 各列は以下の通りである。
+
+<PRE>
+
+size       プログラムサイズの総計
+           (<I>/proc/[pid]/status</I> の VmSize と同じ)
+resident   実メモリー上に存在するページ
+           (<I>/proc/[pid]/status</I> の VmRSS と同じ)
+share      共有ページ (ファイルと関連付けられているページ)
+text       テキスト (コード)
+lib        ライブラリ (Linux 2.6 では未使用)
+data       データ + スタック
+dt         ダーティページ (Linux 2.6 では未使用)
+</PRE>
+
+
+<DT><I>/proc/[pid]/status</I><DD>
+<I>/proc/[pid]/stat</I> と <I>/proc/[pid]/statm</I> にある多くの情報を、人間が解析しやすい形式で提供する。
+以下に例を示す。
+
+<PRE>
+
+$<B> cat /proc/$$/status</B>
+Name:   bash
+State:  S (sleeping)
+Tgid:   3515
+Pid:    3515
+PPid:   3452
+TracerPid:      0
+Uid:    1000    1000    1000    1000
+Gid:    100     100     100     100
+FDSize: 256
+Groups: 16 33 100
+VmPeak:     9136 kB
+VmSize:     7896 kB
+VmLck:         0 kB
+VmHWM:      7572 kB
+VmRSS:      6316 kB
+VmData:     5224 kB
+VmStk:        88 kB
+VmExe:       572 kB
+VmLib:      1708 kB
+VmPTE:        20 kB
+VmSwap:        0 kB
+Threads:        1
+SigQ:   0/3067
+SigPnd: 0000000000000000
+ShdPnd: 0000000000000000
+SigBlk: 0000000000010000
+SigIgn: 0000000000384004
+SigCgt: 000000004b813efb
+CapInh: 0000000000000000
+CapPrm: 0000000000000000
+CapEff: 0000000000000000
+CapBnd: ffffffffffffffff
+Seccomp:        0
+Cpus_allowed:   00000001
+Cpus_allowed_list:      0
+Mems_allowed:   1
+Mems_allowed_list:      0
+voluntary_ctxt_switches:        150
+nonvoluntary_ctxt_switches:     545
+</PRE>
+
+
+<DT><DD>
+フィールドの詳細は以下の通りである。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+<I>Name</I>: このプロセスにより実行されたコマンド。
+<DT>*<DD>
+<I>State</I>: プロセスの現在の状態。 &quot;R (running; 実行中)&quot;, &quot;S (sleeping; 休眠状態)&quot;, &quot;D (disk
+sleep; ディスク待ちの休眠状態)&quot;, &quot;T (stopped; 停止状態)&quot;, &quot;T (tracing stop; トレースによる停止)&quot;, &quot;Z
+(zombie; ゾンビ状態)&quot;, &quot;X (dead; 死亡)&quot; のいずれかである。
+<DT>*<DD>
+<I>Tgid</I>: スレッドグループ ID (すなわち、プロセス ID)。
+<DT>*<DD>
+<I>Pid</I>: スレッド ID (<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2)  参照)。
+<DT>*<DD>
+<I>PPid</I>: 親プロセスの PID。
+<DT>*<DD>
+<I>TracerPid</I>: このプロセスをトレースしているプロセスの PID (トレースされていない場合は 0)。
+<DT>*<DD>
+<I>Uid</I>, <I>Gid</I>: 実 UID/GID、実効 UID/GID、保存 set-UID/GID、ファイルシステム UID/GID。
+<DT>*<DD>
+<I>FDSize</I>: 現在割り当てられているファイルディスクリプターのスロット数。
+<DT>*<DD>
+<I>Groups</I>: 補助グループのリスト。
+<DT>*<DD>
+<I>VmPeak</I>: 仮想メモリーサイズのピーク値。
+<DT>*<DD>
+<I>VmSize</I>: 仮想メモリーサイズ。
+<DT>*<DD>
+<I>VmLck</I>: ロックされているメモリーサイズ (<B>mlock</B>(3) 参照)。
+<DT>*<DD>
+<I>VmHWM</I>: 実メモリー上に存在するページサイズ (resident set size)  のピーク値 (&quot;high water mark&quot;)。
+<DT>*<DD>
+<I>VmRSS</I>: 実メモリー上に存在するページサイズ。
+<DT>*<DD>
+<I>VmData</I>, <I>VmStk</I>, <I>VmExe</I>: データ、スタック、テキストセグメントのサイズ。
+<DT>*<DD>
+<I>VmLib</I>: 共有ライブラリコードのサイズ。
+<DT>*<DD>
+<I>VmPTE</I>: ページテーブルエントリーのサイズ (Linux 2.6.10 以降)。
+<DT>*<DD>
+
+<I>VmSwap</I>: スワップアウトされた仮想メモリーサイズ (Linux 2.6.34 以降).
+<DT>*<DD>
+<I>Threads</I>: このスレッドが属するプロセスのスレッド数。
+<DT>*<DD>
+<I>SigQ</I>: このフィールドにはスラッシュで区切られた 2 つの数字が入っている。この数字はこのプロセスの実ユーザー ID
+宛にキューイングされたシグナルに関するものである。一つ目の数字は、この実ユーザー ID
+宛に現在キューイングされているシグナル数である。二つ目の数字は、このプロセス宛にキューイングされたシグナル数に関するリソース上限値である
+(<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2) の <B>RLIMIT_SIGPENDING</B> の説明を参照)。
+<DT>*<DD>
+<I>SigPnd</I>, <I>ShdPnd</I>: スレッド宛およびプロセス全体宛の処理待ちシグナルの数 (<B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7),
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照)。
+<DT>*<DD>
+<I>SigBlk</I>, <I>SigIgn</I>, <I>SigCgt</I>: ブロックされるシグナル、無視されるシグナル、捕捉待ちのシグナルを 示すマスク値
+(<B><A HREF="../man7/signal.7.html">signal</A></B>(7))。
+<DT>*<DD>
+<I>CapInh</I>, <I>CapPrm</I>, <I>CapEff</I>: 継承可能 (inheritable)、許可 (permitted)、実効
+(effective)  の各ケーパビリティセットで有効になっているケーパビリティのマスク値 (<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)  参照)。
+<DT>*<DD>
+<I>CapBnd</I>: ケーパビリティバウンディングセット (Linux 2.6.26 以降、 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)  参照)。
+<DT>*<DD>
+
+<I>Seccomp</I>: Seccomp mode of the process (since Linux 3.8, see
+<B>seccomp</B>(2)).  0 means <B>SECCOMP_MODE_DISABLED</B>; 1 means
+<B>SECCOMP_MODE_STRICT</B>; 2 means <B>SECCOMP_MODE_FILTER</B>.  This field is
+provided only if the kernel was built with the <B>CONFIG_SECCOMP</B> kernel
+configuration option enabled.
+<DT>*<DD>
+<I>Cpus_allowed</I>: このプロセスが実行を許可されている CPU のマスク値 (Linux 2.6.24 以降、 <B>cpuset</B>(7)
+参照)。
+<DT>*<DD>
+<I>Cpus_allowed_list</I>: 前項と同じだが、「リスト形式」での表示 (Linux 2.6.26 以降、 <B>cpuset</B>(7)
+参照)。
+<DT>*<DD>
+<I>Mems_allowed</I>: このプロセスが使用できるメモリーノードのマスク値 (Linux 2.6.24 以降、 <B>cpuset</B>(7)
+参照)。
+<DT>*<DD>
+<I>Mems_allowed_list</I>: 前項と同じだが、「リスト形式」での表示 (Linux 2.6.26 以降、 <B>cpuset</B>(7)
+参照)。
+<DT>*<DD>
+<I>voluntary_ctxt_switches</I>, <I>nonvoluntary_ctxt_switches</I>:
+自発的/非自発的なコンテキストスイッチの回数 (Linux 2.6.23 以降)。
+</DL>
+</DL>
+
+<DT><I>/proc/[pid]/syscall</I> (Linux 2.6.27 以降)<DD>
+
+This file exposes the system call number and argument registers for the
+system call currently being executed by the process, followed by the values
+of the stack pointer and program counter registers.  The values of all six
+argument registers are exposed, although most system calls use fewer
+registers.
+<P>
+If the process is blocked, but not in a system call, then the file displays
+-1 in place of the system call number, followed by just the values of the
+stack pointer and program counter.  If process is not blocked, then file
+contains just the string &quot;running&quot;.
+<P>
+カーネルの設定で <B>CONFIG_HAVE_ARCH_TRACEHOOK</B> が有効になっている場合にのみ、このファイルは存在する。
+<DT><I>/proc/[pid]/task</I> (Linux 2.6.0-test6 以降)<DD>
+このディレクトリには、そのプロセスのスレッド情報を含む サブディレクトリが 1 スレッドにつき 1 つ置かれる。
+各サブディレクトリの名前はスレッドのスレッド ID (<I>[tid]</I>)  を示す数字である <B>(</B><A HREF="../man2/gettid.2.html">gettid</A><B>(2)</B> を参照)。
+これらの各サブディレクトリには、 <I>/proc/[pid]</I> ディレクトリ以下と同じ名前と内容のファイル群がある。
+すべてのスレッドで共有される属性の場合、 <I>task/[tid]</I> サブディレクトリ以下の各ファイルの内容は 親ディレクトリ
+<I>/proc/[pid]</I> の対応するファイルと同じになることだろう (例えば、マルチスレッドプロセスではファイル <I>task/[tid]/cwd</I>
+はいずれも親ディレクトリ内の <I>/proc/[pid]/cwd</I> と同じ値を持つことになる。なぜなら、一つのプロセスに属すすべての
+スレッドは作業ディレクトリを共有するからである)。 スレッド毎に独立な属性の場合、 <I>task/[tid]</I>
+サブディレクトリ以下の各ファイルは異なる値を持つことがある (例えば、ファイル <I>task/[tid]/status</I>
+はスレッド毎に異なる値を持つ可能性がある)。
+<P>
+
+マルチスレッドプロセスでは、メインスレッドがすでに終了している場合、 <I>/proc/[pid]/task</I> ディレクトリの内容は参照できない
+(スレッドの終了は通常 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)  を呼び出しにより行われる)。
+<DT><I>/proc/[pid]/uid_map</I>, <I>/proc/[pid]/gid_map</I> (Linux 3.5 以降)<DD>
+
+These files expose the mappings for user and group IDs inside the user
+namespace for the process <I>pid</I>.  The description here explains the details
+for <I>uid_map</I>; <I>gid_map</I> is exactly the same, but each instance of &quot;user
+ID&quot; is replaced by &quot;group ID&quot;.
+<P>
+The <I>uid_map</I> file exposes the mapping of user IDs from the user namespace
+of the process <I>pid</I> to the user namespace of the process that opened
+<I>uid_map</I> (but see a qualification to this point below).  In other words,
+processes that are in different user namespaces will potentially see
+different values when reading from a particular <I>uid_map</I> file, depending
+on the user ID mappings for the user namespaces of the reading processes.
+<P>
+<P>
+Each line in the file specifies a 1-to-1 mapping of a range of contiguous
+between two user namespaces.  The specification in each line takes the form
+of three numbers delimited by white space.  The first two numbers specify
+the starting user ID in each user namespace.  The third number specifies the
+length of the mapped range.  In detail, the fields are interpreted as
+follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>(1)<DD>
+The start of the range of user IDs in the user namespace of the process
+<I>pid</I>.
+<DT>(2)<DD>
+The start of the range of user IDs to which the user IDs specified by field
+one map.  How field two is interpreted depends on whether the process that
+opened <I>uid_map</I> and the process <I>pid</I> are in the same user namespace, as
+follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>a)<DD>
+If the two processes are in different user namespaces: field two is the
+start of a range of user IDs in the user namespace of the process that
+opened <I>uid_map</I>.
+<DT>b)<DD>
+If the two processes are in the same user namespace: field two is the start
+of the range of user IDs in the parent user namespace of the process
+<I>pid</I>.  (The &quot;parent user namespace&quot; is the user namespace of the process
+that created a user namespace via a call to <B><A HREF="../man2/unshare.2.html">unshare</A></B>(2)  or <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+with the <B>CLONE_NEWUSER</B> flag.)  This case enables the opener of <I>uid_map</I>
+(the common case here is opening <I>/proc/self/uid_map</I>)  to see the mapping
+of user IDs into the user namespace of the process that created this user
+namespace.
+</DL>
+</DL>
+
+<DT>(3)<DD>
+The length of the range of user IDs that is mapped between the two user
+namespaces.
+</DL>
+</DL>
+
+<DT><DD>
+After the creation of a new user namespace, the <I>uid_map</I> file may be
+written to exactly once to specify the mapping of user IDs in the new user
+namespace.  (An attempt to write more than once to the file fails with the
+error <B>EPERM</B>.)
+<DT><DD>
+The lines written to <I>uid_map</I> must conform to the following rules:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+The three fields must be valid numbers, and the last field must be greater
+than 0.
+<DT>*<DD>
+Lines are terminated by newline characters.
+<DT>*<DD>
+There is an (arbitrary) limit on the number of lines in the file.  As at
+Linux 3.8, the limit is five lines.
+<DT>*<DD>
+The range of user IDs specified in each line cannot overlap with the ranges
+in any other lines.  In the current implementation (Linux 3.8), this
+requirement is satisfied by a simplistic implementation that imposes the
+further requirement that the values in both field 1 and field 2 of
+successive lines must be in ascending numerical order.
+</DL>
+</DL>
+
+<DT><DD>
+Writes that violate the above rules fail with the error <B>EINVAL</B>.
+<P>
+In order for a process to write to the <I>/proc/[pid]/uid_map</I>
+(<I>/proc/[pid]/gid_map</I>)  file, the following requirements must be met:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+The process must have the <B>CAP_SETUID</B> (<B>CAP_SETGID</B>)  capability in the
+user namespace of the process <I>pid</I>.
+<DT>*<DD>
+The process must have the <B>CAP_SETUID</B> (<B>CAP_SETGID</B>)  capability in the
+parent user namespace.
+<DT>*<DD>
+The process must be in either the user namespace of the process <I>pid</I> or
+inside the parent user namespace of the process <I>pid</I>.
+</DL>
+</DL>
+
+For further details, see <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
+<DT><I>/proc/[pid]/wchan</I> (Linux 2.6.0 以降)<DD>
+The symbolic name corresponding to the location in the kernel where the
+process is sleeping.
+<DT><I>/proc/apm</I><DD>
+Advanced Power Management のバージョンとバッテリ情報。 カーネルのコンパイル時に <B>CONFIG_APM</B>
+を定義したときに存在する。
+<DT><I>/proc/buddyinfo</I><DD>
+This file contains information which is used for diagnosing memory
+fragmentation issues.  Each line starts with the identification of the node
+and the name of the zone which together identify a memory region This is
+then followed by the count of available chunks of a certain order in which
+these zones are split.  The size in bytes of a certain order is given by the
+formual:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(2^order)&nbsp;*&nbsp;PAGE_SIZE
+<P>
+The binary buddy allocator algorithm inside the kernel will split one chunk
+into two chunks of a smaller order (thus with half the size) or combine two
+contiguous chunks into one larger chunk of a higher order (thus with double
+the size) to satisfy allocation requests and to counter memory
+fragmentation.  The order matches the column number, when starting to count
+at zero.
+<P>
+For example on a x86_64 system:
+<P>
+
+<PRE>
+Node 0, zone     DMA     1    1    1    0    2    1    1    0    1    1    3
+Node 0, zone   DMA32    65   47    4   81   52   28   13   10    5    1  404
+Node 0, zone  Normal   216   55  189  101   84   38   37   27    5    3  587
+</PRE>
+
+
+<P>
+In this example, there is one node containing three zones and there are 11
+different chunk sizes.  If the page size is 4 kilobytes, then the first zone
+called <I>DMA</I> (on x86 the first 16 megabyte of memory) has 1 chunk of 4
+kilobytes (order 0) available and has 3 chunks of 4 megabytes (order 10)
+available.
+<P>
+If the memory is heavily fragmented, the counters for higher order chunks
+will be zero and allocation of large contiguous areas will fail.
+<P>
+Further information about the zones can be found in <I>/proc/zoneinfo</I>.
+<DT><I>/proc/bus</I><DD>
+インストールされている各バス用にサブディレクトリがある。
+<DT><I>/proc/bus/pccard</I><DD>
+PCMCIA デバイスの情報が書かれるサブディレクトリ。 カーネルのコンパイル時に <B>CONFIG_PCMCIA</B> を定義したときに存在する。
+<DT><I>/proc/[pid]/timers</I> (Linux 3.10 以降)<DD>
+
+
+このプロセスの POSIX タイマーのリスト。 各タイマーは文字列 &quot;ID:&quot; で始まる行に表示される。 例:
+<P>
+
+<PRE>
+ID: 1
+signal: 60/00007fff86e452a8
+notify: signal/pid.2634
+ClockID: 0
+ID: 0
+signal: 60/00007fff86e452a8
+notify: signal/pid.2634
+ClockID: 1
+</PRE>
+
+
+<P>
+各タイマーに表示される行の意味は次の通りである。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>ID</I><DD>
+このタイマーの ID。 この ID は <B>timer_create</B>(2) が返すタイマー ID と同じではない。 <I>siginfo_t</I> 構造化の
+<I>si_timerid</I> フィールドで参照できるカーネル内部での ID と同じである (<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2) 参照)。
+<DT><I>signal</I><DD>
+このタイマーが通知の配送に使用するシグナル番号である。 スラッシュの後ろは、シグナルハンドラーに渡される
+<I>sigev_value.sival_ptr</I> 値である。 シグナルで通知されるタイマーでのみ有効である。
+<DT><I>notify</I><DD>
+スラッシュの前の部分は、このタイマーが使用する通知の配送方法であり、「スレッド」「シグナル」「なし」のいずれかである。 スラッシュのすぐ後には、
+<B>SIGEV_THREAD_ID</B> 通知を行うタイマーでは文字列の &quot;tid&quot; が、 もしくは他の方法で通知するタイマーでは &quot;pid&quot;
+が表示される。 &quot;.&quot; の後ろは、 そのタイマーがシングルで通知を配送する場合にはシグナルの配送対象となるプロセスの PID である。
+<DT><I>ClockID</I><DD>
+このフィールドはタイマーが時間を計測するのに使用するクロックを示す。 ほとんどのクロックでは、このフィールドは <I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I>
+で公開されるユーザー空間の <B>CLOCK_*</B> 定数のいずれかの数字である。 <B>CLOCK_PROCESS_CPUTIME_ID</B>
+タイマーでは、このフィールドに -6 が表示される。 <B>CLOCK_THREAD_CPUTIME_ID</B> タイマーでは -2 が表示される。
+</DL>
+</DL>
+
+<DT><I>/proc/bus/pccard/drivers</I><DD>
+<DT><I>/proc/bus/pci</I><DD>
+いくつかのサブディレクトリがあり、 PCI バス・インストールされているデバイス・ デバイスドライバの情報が書かれた仮想ファイルがある。
+これらのファイルのうちいくつかは ASCII フォーマットではない。
+<DT><I>/proc/bus/pci/devices</I><DD>
+PCI デバイスの情報。 <B><A HREF="../../pciutils/man8/lspci.8.html">lspci</A></B>(8)  や <B><A HREF="../../pciutils/man8/setpci.8.html">setpci</A></B>(8)  でアクセスすることができる。
+<DT><I>/proc/cmdline</I><DD>
+ブート時に Linux カーネルに渡された引き数。 引き数の受け渡しは、たいてい <B><A HREF="../../lilo/man8/lilo.8.html">lilo</A></B>(8)  や <B>grub</B>(8)
+といったブートマネージャを使って行われる。
+<DT><I>/proc/config.gz</I> (Linux 2.6 以降)<DD>
+このファイルでは、現在実行中のカーネルの構築時に使用された 設定オプションを参照できる。 書式は、 (<I>make xconfig</I>, <I>make
+config</I> などを使って) カーネルの設定を変更した際に生成される <I>.config</I> ファイルのものと同じである。
+ファイルの内容は圧縮されており、 <B><A HREF="../../GNU_gzip/man1/zcat.1.html">zcat</A></B>(1) や <B><A HREF="../../GNU_gzip/man1/zgrep.1.html">zgrep</A></B>(1) を使うと、表示や検索ができる。 ファイルが変更されていない限り、
+<I>/proc/config.gz</I> の内容は次のコマンドで得られる内容と同じである。
+
+<PRE>
+
+cat /lib/modules/$(uname -r)/build/.config
+</PRE>
+
+
+<DT><DD>
+<I>/proc/config.gz</I> が提供されるのは、カーネルの設定で <B>CONFIG_IKCONFIG_PROC</B>
+が有効になっている場合のみである。
+<DT><I>/proc/cpuinfo</I><DD>
+このファイルは、CPU およびシステムアーキテクチャーに依存する項目を 集めたもので、リストの内容はサポートされているアーキテクチャー毎に異なる。 2
+つだけ共通の項目がある。 <I>processor</I> はプロセッサ番号で、 <I>bogomips</I> はカーネルの初期化時に計算されるシステム定数である。
+SMP マシンでは各 CPU についての情報が書かれている。 <B>lscpu</B>(1) コマンドはこのファイルから情報を収集する。
+<DT><I>/proc/devices</I><DD>
+メジャーデバイス番号とデバイスグループのテキスト形式のリスト。 MAKEDEV スクリプトはこのファイルを使って、
+カーネルとの整合性を保つことができる。
+<DT><I>/proc/diskstats</I> (Linux 2.5.69 以降)<DD>
+このファイルには各ディスクデバイスのディスク I/O 統計情報が書かれている。 更に詳しい情報は、Linux カーネルソースファイル
+<I>Documentation/iostats.txt</I> を参照すること。
+<DT><I>/proc/dma</I><DD>
+登録されている <I>ISA</I> DMA (direct memory access) チャネルのリスト。
+<DT><I>/proc/driver</I><DD>
+空のサブディレクトリ。
+<DT><I>/proc/execdomains</I><DD>
+実行ドメインのリスト (ABI パーソナリティ)。
+<DT><I>/proc/fb</I><DD>
+カーネルのコンパイル時に <B>CONFIG_FB</B> が定義されている場合、フレームバッファーの情報が書かれる。
+<DT><I>/proc/filesystems</I><DD>
+カーネルが対応しているファイルシステムのテキスト形式のリスト。 カーネルに組み込まれてコンパイルされたファイルシステムと、
+カーネルモジュールが現在ロードされているファイルシステムが列挙される (<B><A HREF="../man5/filesystems.5.html">filesystems</A></B>(5)  参照)。 ファイルシステムに
+&quot;nodev&quot; という印が付いている場合、 そのファイルシステムがマウントするためのブロックデバイスを 必要としないことを意味する (例えば、
+仮想ファイルシステム、ネットワークファイルシステムなど)。
+<P>
+ちなみに、マウント時にファイルシステムが指定されず、 どうやってもファイルシステムの種類を判定できなかった際に、 このファイルを <B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)
+が使用するかもしれない。 その場合、このファイルに含まれるファイルシステムが試される (ただし、&quot;nodev&quot; の印がついたものは除く)。
+<DT><I>/proc/fs</I><DD>
+
+
+マウントされているファイルシステムに関する情報を提供するファイルが入ったサブディレクトリが入っている。
+<DT><I>/proc/ide</I><DD>
+このディレクトリは IDE バスをもつシステムに存在する。 各 IDE チャネルとそれに取り付けられている各デバイスごとにディレクトリがあり、
+以下のファイルが含まれている。
+<P>
+
+<PRE>
+cache              バッファーサイズ (KB)
+capacity           セクタ数
+driver             ドライバのバージョン
+geometry           物理ジオメトリと論理ジオメトリ
+identify           16 進数表記
+media              メディアのタイプ
+model              製造者のモデル番号
+settings           ドライブの設定
+smart_thresholds   16 進数表記
+smart_values       16 進数表記
+</PRE>
+
+
+<P>
+<B><A HREF="../../hdparm/man8/hdparm.8.html">hdparm</A></B>(8)  ユーティリティは、分かりやすい形式で この情報にアクセスするための手段を提供する。
+<DT><I>/proc/interrupts</I><DD>
+IO デバイス毎の CPU 別の割り込み回数の記録に使われる。 Linux 2.6.24 以降、少なくとも i386 と x86_64
+アーキテクチャーでは、 (デバイスと関連がない) システム内部の割り込みについても記録される。 システム内部の割り込みには、NMI
+(nonmaskable interrupt), LOC (local timer interrupt) や、SMP システムでは TLB (TLB
+flush interrupt), RES (rescheduling interrupt), CAL (remote function call
+interrupt)  などがある。 簡単に読むことのできるフォーマットで、ASCII で表記されている。
+<DT><I>/proc/iomem</I><DD>
+Linux 2.4 における I/O メモリーマップ。
+<DT><I>/proc/ioports</I><DD>
+現在登録され使われている I/O ポート領域のリスト。
+<DT><I>/proc/kallsyms</I> (Linux 2.5.71 以降)<DD>
+カーネルの外部シンボル定義を保持する。 <B>modules</B>(X)  関係のツールがローダーブルモジュールを動的にリンクしたり バインド (bind)
+するのに使われる。 Linux 2.5.47 以前では、微妙に異なる書式の似たようなファイルが <I>ksyms</I> という名前であった。
+<DT><I>/proc/kcore</I><DD>
+このファイルはシステムの物理メモリーを表現しており、 ELF コアファイル形式 (core file format) で保持されている。
+この擬似ファイルと strip されていないカーネルのバイナリ (<I>/usr/src/linux/vmlinux</I>)  [訳注:
+パッケージに依存する]) があれば、 GDB はカーネル内の任意のデータ構造の現在の状態を調べられる。
+<P>
+このファイルの大きさは物理メモリー (RAM) のサイズに 4KB を加えた値である。
+<DT><I>/proc/kmsg</I><DD>
+このファイルは <B><A HREF="../man2/syslog.2.html">syslog</A></B>(2)  システムコールでカーネルメッセージを読み出す代りに使える。
+プロセスがこのファイルを読むためにはスーパーユーザー権限が必要であり、 ファイルを読み出すのは 1 つのプロセスのみに限るべきである。
+カーネルメッセージを記録するために、 <B><A HREF="../man2/syslog.2.html">syslog</A></B>(2)  システムコールの機能を使う syslog プロセスが稼働している場合、
+このファイルを読み出すべきではない。
+<P>
+このファイルの中の情報は <B><A HREF="../../util-linux/man1/dmesg.1.html">dmesg</A></B>(1)  によって表示される。
+<DT><I>/proc/kpagecount</I> (Linux 2.6.25 以降)<DD>
+このファイルには、 各物理ページフレームがマッピングされた回数が 64 ビットカウンターとして入っている。 インデックスはページフレーム番号である
+(<I>/proc/[pid]/pagemap</I> の議論を参照)。
+<DT><DD>
+<I>/proc/kpagecount</I> ファイルが存在するのは、カーネルのコンフィギュレーションオプション
+<B>CONFIG_PROC_PAGE_MONITOR</B> を有効にした場合だけである。
+<DT><I>/proc/kpageflags</I> (Linux 2.6.25 以降)<DD>
+このファイルには、 各物理ページフレームに対応する 64 ビットマスクが入っている。 インデックスはページフレーム番号である
+(<I>/proc/[pid]/pagemap</I> の議論を参照)。 各ビットは以下のとおりである。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;-&nbsp;KPF_LOCKED
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1&nbsp;-&nbsp;KPF_ERROR
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;-&nbsp;KPF_REFERENCED
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3&nbsp;-&nbsp;KPF_UPTODATE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4&nbsp;-&nbsp;KPF_DIRTY
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5&nbsp;-&nbsp;KPF_LRU
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;6&nbsp;-&nbsp;KPF_ACTIVE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7&nbsp;-&nbsp;KPF_SLAB
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8&nbsp;-&nbsp;KPF_WRITEBACK
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;9&nbsp;-&nbsp;KPF_RECLAIM
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;10&nbsp;-&nbsp;KPF_BUDDY
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;11&nbsp;-&nbsp;KPF_MMAP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Linux&nbsp;2.6.31&nbsp;以降)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;12&nbsp;-&nbsp;KPF_ANON&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Linux&nbsp;2.6.31&nbsp;以降)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;13&nbsp;-&nbsp;KPF_SWAPCACHE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Linux&nbsp;2.6.31&nbsp;以降)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;14&nbsp;-&nbsp;KPF_SWAPBACKED&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Linux&nbsp;2.6.31&nbsp;以降)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;15&nbsp;-&nbsp;KPF_COMPOUND_HEAD&nbsp;&nbsp;(Linux&nbsp;2.6.31&nbsp;以降)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;16&nbsp;-&nbsp;KPF_COMPOUND_TAIL&nbsp;&nbsp;(Linux&nbsp;2.6.31&nbsp;以降)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;16&nbsp;-&nbsp;KPF_HUGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Linux&nbsp;2.6.31&nbsp;以降)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;18&nbsp;-&nbsp;KPF_UNEVICTABLE&nbsp;&nbsp;&nbsp;&nbsp;(Linux&nbsp;2.6.31&nbsp;以降)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;19&nbsp;-&nbsp;KPF_HWPOISON&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Linux&nbsp;2.6.31&nbsp;以降)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;20&nbsp;-&nbsp;KPF_NOPAGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Linux&nbsp;2.6.31&nbsp;以降)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;21&nbsp;-&nbsp;KPF_KSM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Linux&nbsp;2.6.32&nbsp;以降)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;22&nbsp;-&nbsp;KPF_THP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Linux&nbsp;3.4&nbsp;以降)
+<P>
+
+
+これらのビットの意味の詳しい説明は、 カーネルのソースファイル <I>Documentation/vm/pagemap.txt</I> を参照。 カーネル
+2.6.29 より前では、 <B>KPF_WRITEBACK</B>, <B>KPF_RECLAIM</B>, <B>KPF_BUDDY</B>, <B>KPF_LOCKED</B>
+は正しい値を返さなかった。
+<DT><DD>
+<I>/proc/kpageflags</I> ファイルが存在するのは、カーネルのコンフィギュレーションオプション
+<B>CONFIG_PROC_PAGE_MONITOR</B> を有効にした場合だけである。
+<DT><I>/proc/ksyms</I> (Linux 1.1.23-2.5.47)<DD>
+<I>/proc/kallsyms</I> を参照。
+<DT><I>/proc/loadavg</I><DD>
+このファイルの最初の 3 つのフィールドはロードアベレージの数値で、 1, 5, 15 分
+あたりの実行キュー内 (state R) または ディスク I/O 待ち (state D) のジョブ数
+を与える。 これは <B><A HREF="../../0MultiFileIdx/man1/uptime.1.html">uptime</A></B>(1) などのプログラムによって得られる値と同じである。
+4 番目のフィールドはスラッシュ (/) で区切られた 2 つの数値から構成される。
+この数値のうち最初のものは、現在実行可能なカーネルスケジュールエンティティ
+(プロセス、スレッド) の数である。スラッシュの後の数値は、現在システム上に
+存在するカーネルスケジュールエンティティの数である。 5 番目のフィールドは
+システム上に最も最近生成されたプロセスの PID である。
+<DT><I>/proc/locks</I><DD>
+このファイルは現在のファイルロック (<B><A HREF="../man2/flock.2.html">flock</A></B>(2) と <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))  とリース (<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))  を表示する。
+<DT><I>/proc/malloc</I> (Linux 2.2 以前のみ)<DD>
+
+コンパイルのときに <B>CONFIGDEBUGMALLOC</B> が定義されているときのみ、このファイルは存在する。
+<DT><I>/proc/meminfo</I><DD>
+このファイルはシステムのメモリー使用状況の統計情報を表示する。 <B><A HREF="../../procps/man1/free.1.html">free</A></B>(1) はこのファイルを使って、 そのシステムの
+(物理メモリーとスワップの両方の) 未使用と使用中のメモリー量と、 カーネルが使用している共有メモリーとバッファーの使用量を表示する。
+このファイルの各行は、パラメーター名の後に、 コロン、 パラメーター値が続く。 最後に (&quot;kB&quot; などの) 計測単位がある場合もある。
+以下のリストでは、 フィールド名と、フィールド値を読み込むのに必要なフォーマット指定子 (format specifier) について説明する。
+特に注記がある場合を除くと、すべてのフィールドが少なくとも Linux 2.6.0 以降では存在する。
+いくつかのフィールドは、カーネルでオプションが有効になっている場合にのみ表示される。 こうした依存関係についてはリスト内に注記がある。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>MemTotal</I> %lu<DD>
+使用可能な RAM の総量 (つまり、 物理 RAM サイズからいくつかの予約ビットとカーネルのバイナリコードの分を引いた値)。
+<DT><I>MemFree</I> %lu<DD>
+<I>LowFree</I>+<I>HighFree</I> の合計値。
+<DT><I>Buffers</I> %lu<DD>
+Relatively temporary storage for raw disk blocks that shouldn't get
+tremendously large (20MB or so).
+<DT><I>Cached</I> %lu<DD>
+ディスクから読み出したファイルのインメモリーキャッシュ (ページキャッシュ)。 <I>SwapCached</I> は含まれない。
+<DT><I>SwapCached</I> %lu<DD>
+一度スワップアウトされ、その後スワップインされたが、まだスワップファイルにも存在するメモリー。 (メモリーが残り少ない場合、
+これらのページは、すでにスワップファイルに存在するので、もう一度スワップアウトする必要がない。 これにより I/O が節約できる。)
+<DT><I>Active</I> %lu<DD>
+最近使用されたメモリーで、通常は本当に必要にならない限り回収されないメモリー。
+<DT><I>Inactive</I> %lu<DD>
+最近あまり使用されていないメモリー。 他の使用するために優先して回収すべきメモリー。
+<DT><I>Active(anon)</I> %lu (Linux 2.6.28 以降)<DD>
+[後で記載する]
+<DT><I>Inactive(anon)</I> %lu (Linux 2.6.28 以降)<DD>
+[後で記載する]
+<DT><I>Active(file)</I> %lu (Linux 2.6.28 以降)<DD>
+[後で記載する]
+<DT><I>Inactive(file)</I> %lu (Linux 2.6.28 以降)<DD>
+[後で記載する]
+<DT><I>Unevictable</I> %lu (Linux 2.6.28 以降)<DD>
+(Linux 2.6.28 から 2.6.30 まででは <B>CONFIG_UNEVICTABLE_LRU</B> が必要であった。)  [後で記載する]
+<DT><I>Mlocked</I> %lu (Linux 2.6.28 以降)<DD>
+(Linux 2.6.28 から 2.6.30 まででは <B>CONFIG_UNEVICTABLE_LRU</B> が必要であった。)  [後で記載する]
+<DT><I>HighTotal</I> %lu<DD>
+(Linux 2.6.19 以降では <B>CONFIG_HIGHMEM</B> が必要) highmem の総量。 highmem は物理メモリーの
+860MB 付近よりも上の部分のメモリー領域全体のことである。 highmem 領域はユーザー空間プログラムとページキャッシュで使用される。
+カーネルはこのメモリーにアクセスするのに小技を使っており、 lowmem よりもアクセスが遅くなる。
+<DT><I>HighFree</I> %lu<DD>
+(Linux 2.6.19 以降では <B>CONFIG_HIGHMEM</B> が必要) 未使用の highmem 量。
+<DT><I>LowTotal</I> %lu<DD>
+(Starting with Linux 2.6.19, <B>CONFIG_HIGHMEM</B> is required.)  Total amount
+of lowmem.  Lowmem is memory which can be used for everything that highmem
+can be used for, but it is also available for the kernel's use for its own
+data structures.  Among many other things, it is where everything from
+<I>Slab</I> is allocated.  Bad things happen when you're out of lowmem.
+<DT><I>LowFree</I> %lu<DD>
+(Linux 2.6.19 以降では <B>CONFIG_HIGHMEM</B> が必要) 未使用の lowmem 量。
+<DT><I>MmapCopy</I> %lu (Linux 2.6.29 以降)<DD>
+(<B>CONFIG_MMU</B> が必要)  [後で記載する]
+<DT><I>SwapTotal</I> %lu<DD>
+利用可能なスワップ空間の総量。
+<DT><I>SwapFree</I> %lu<DD>
+現在未使用のスワップ空間の量。
+<DT><I>Dirty</I> %lu<DD>
+ディスクに書き戻されるのを待っているメモリー。
+<DT><I>Writeback</I> %lu<DD>
+現在ディスクに書き戻し中のメモリー。
+<DT><I>AnonPages</I> %lu (Linux 2.6.18 以降)<DD>
+ユーザー空間ページテーブルにマッピングされているファイルと関連付けられていないページ。
+<DT><I>Mapped</I> %lu<DD>
+(<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2) で) メモリーにマッピングされているファイル。 ライブラリなど。
+<DT><I>Shmem</I> %lu (Linux 2.6.32 以降)<DD>
+[後で記載する]
+<DT><I>Slab</I> %lu<DD>
+カーネル内のデータ構造体のキャッシュ。
+<DT><I>SReclaimable</I> %lu (Linux 2.6.19 以降)<DD>
+回収可能な <I>Slab</I>。 キャッシュなど。
+<DT><I>SUnreclaim</I> %lu (Linux 2.6.19 以降)<DD>
+メモリー消費が激しい際でも回収できない <I>Slab</I>。
+<DT><I>KernelStack</I> %lu (Linux 2.6.32 以降)<DD>
+カーネルスタックに割り宛てられているメモリー量。
+<DT><I>PageTables</I> %lu (Linux 2.6.18 以降)<DD>
+Amount of memory dedicated to the lowest level of page tables.
+<DT><I>Quicklists</I> %lu (Linux 2.6.27 以降)<DD>
+(<B>CONFIG_QUICKLIST</B> が必要)  [後で記載する]
+<DT><I>NFS_Unstable</I> %lu (Linux 2.6.18 以降)<DD>
+サーバに送信されたが、まだ永続的なストレージには書き込まれていない NFS ページ。
+<DT><I>Bounce</I> %lu (Linux 2.6.18 以降)<DD>
+Memory used for block device &quot;bounce buffers&quot;.
+<DT><I>WritebackTmp</I> %lu (Linux 2.6.26 以降)<DD>
+FUSE で一時的なライトバックバッファーに使われているメモリー。
+<DT><I>CommitLimit</I> %lu (Linux 2.6.10 以降)<DD>
+This is the total amount of memory currently available to be allocated on
+the system, expressed in kilobytes.  This limit is adhered to only if strict
+overcommit accounting is enabled (mode 2 in
+<I>/proc/sys/vm/overcommit_memory</I>).  The limit is calculated according to
+the formula described under <I>/proc/sys/vm/overcommit_memory</I>.  For further
+details, see the kernel source file
+<I>Documentation/vm/overcommit-accounting</I>.
+<DT><I>Committed_AS</I> %lu<DD>
+The amount of memory presently allocated on the system.  The committed
+memory is a sum of all of the memory which has been allocated by processes,
+even if it has not been &quot;used&quot; by them as of yet.  A process which allocates
+1GB of memory (using <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  or similar), but touches only 300MB of
+that memory will show up as using only 300MB of memory even if it has the
+address space allocated for the entire 1GB.
+<P>
+This 1GB is memory which has been &quot;committed&quot; to by the VM and can be used
+at any time by the allocating application.  With strict overcommit enabled
+on the system (mode 2 in IR /proc/sys/vm/overcommit_memory ), allocations
+which would exceed the <I>CommitLimit</I> will not be permitted.  This is useful
+if one needs to guarantee that processes will not fail due to lack of memory
+once that memory has been successfully allocated.
+<DT><I>VmallocTotal</I> %lu<DD>
+vmalloc メモリー領域の総量。
+<DT><I>VmallocUsed</I> %lu<DD>
+使用中の vmalloc 領域の量。
+<DT><I>VmallocChunk</I> %lu<DD>
+vmalloc 領域の未使用の連続するブロックの最大サイズ。
+<DT><I>HardwareCorrupted</I> %lu (Linux 2.6.32 以降)<DD>
+(<B>CONFIG_MEMORY_FAILURE</B> が必要) [後で記載する]
+<DT><I>AnonHugePages</I> %lu (Linux 2.6.38 以降)<DD>
+(<B>CONFIG_TRANSPARENT_HUGEPAGE</B> が必要)
+ユーザー空間ページテーブルにマッピングされているファイルと関連付けられていないヒュージページ。
+<DT><I>HugePages_Total</I> %lu<DD>
+(<B>CONFIG_HUGETLB_PAGE</B> が必要) ヒュージページのプールサイズ。
+<DT><I>HugePages_Free</I> %lu<DD>
+(<B>CONFIG_HUGETLB_PAGE</B> が必要) プール内の割り当てられていないヒュージページ数。
+<DT><I>HugePages_Rsvd</I> %lu (Linux 2.6.17 以降)<DD>
+(<B>CONFIG_HUGETLB_PAGE</B> が必要) プールから割り当てが宣言されたが、まだ割り当てが行われていないヒュージページ数。
+これらの予約ヒュージページにより、 アプリケーションがメモリーフォールト時にヒュージページのプールからヒュージページが割り当てられることが保証される。
+<DT><I>HugePages_Surp</I> %lu (Linux 2.6.24 以降)<DD>
+(<B>CONFIG_HUGETLB_PAGE</B> is required.)  This is the number of huge pages in
+the pool above the value in <I>/proc/sys/vm/nr_hugepages</I>.  The maximum
+number of surplus huge pages is controlled by
+<I>/proc/sys/vm/nr_overcommit_hugepages</I>.
+<DT><I>Hugepagesize</I> %lu<DD>
+(<B>CONFIG_HUGETLB_PAGE</B> が必要) ヒュージページのサイズ。
+</DL>
+</DL>
+
+<DT><I>/proc/modules</I><DD>
+現在システムにロードされているモジュールのテキスト形式のリスト。 <B><A HREF="../../0MultiFileIdx/man8/lsmod.8.html">lsmod</A></B>(8)  も参照。
+<DT><I>/proc/mounts</I><DD>
+カーネル 2.4.19 より前では、このファイルは現在システムにマウントされている 全てのファイルシステムのリストであった。 Linux 2.4.19
+でプロセス単位のマウント名前空間が導入されたことに伴い、 このファイルは <I>/proc/self/mounts</I> へのリンクとなった。
+<I>/proc/self/mounts</I> はそのプロセス自身のマウント名前空間のマウントポイントのリストである。 このファイルのフォーマットは
+<B><A HREF="../../util-linux/man5/fstab.5.html">fstab</A></B>(5)  に記述されている。
+<DT><I>/proc/mtrr</I><DD>
+Memory Type Range Registers。 詳細は、Linux カーネルソースファイル <I>Documentation/mtrr.txt</I>
+を参照すること。
+<DT><I>/proc/net</I><DD>
+さまざまなネットワークについての擬似ファイルで、 それぞれがネットワーク層の各種の状態を与える。 これらのファイルの内容は ASCII 形式なので、
+<B><A HREF="../../0MultiFileIdx/man1/cat.1.html">cat</A></B>(1)  で読み出せる。 とはいえ基本コマンドの <B><A HREF="../../net-tools/man8/netstat.8.html">netstat</A></B>(8)  はこれらのファイルの内容のよりすっきりとした表示を提供する。
+<DT><I>/proc/net/arp</I><DD>
+アドレス解決に使われるカーネルの ARP テーブルの ASCII 可読なダンプを保持している。 動的結合されたものと固定 (preprogrammed)
+の両方の APP エントリーを見ることができる。フォーマットは以下のとおり:
+<P>
+<PRE>
+<TT>IP address     HW type   Flags     HW address          Mask   Device
+192.168.0.50   0x1       0x2       00:50:BF:25:68:F3   *      eth0
+192.168.0.250  0x1       0xc       00:00:00:00:00:00   *      eth0</TT>
+</PRE>
+
+
+<P>
+ここで IP address はマシンの IPv4 アドレス、 HW type はそのアドレスの RFC&nbsp;826 で定められているハードウェアの形式、
+Flags は ARP 構造体 (<I>/usr/include/linux/if_arp.h</I> 内で定義されている) の内部フラグ、 HW
+address はその IP アドレスにマップされているデータリンク層のアドレス (もしわかっていれば) である。
+<DT><I>/proc/net/dev</I><DD>
+擬似ファイル dev はネットワークデバイスの状態情報を含んでいる。 これは送受信したパケット数、エラーとコリジョン (collision) の回数、
+その他の基本的な統計を与える。 これらは <B><A HREF="../../net-tools/man8/ifconfig.8.html">ifconfig</A></B>(8)  がデバイスの状態を報告するのに使われる。 フォーマットは以下のとおり:
+<P>
+<PRE>
+<TT>Inter-|   Receive                                                |  Transmit
+ face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+    lo: 2776770   11307    0    0    0     0          0         0  2776770   11307    0    0    0     0       0          0
+  eth0: 1215645    2751    0    0    0     0          0         0  1782404    4324    0    0    0   427       0          0
+  ppp0: 1622270    5552    1    0    0     0          0         0   354130    5669    0    0    0     0       0          0
+  tap0:    7714      81    0    0    0     0          0         0     7714      81    0    0    0     0       0          0</TT>
+</PRE>
+
+
+
+
+
+
+
+<DT><I>/proc/net/dev_mcast</I><DD>
+<I>/usr/src/linux/net/core/dev_mcast.c</I> で定義されており、以下の形式である。
+<PRE>
+indx interface_name  dmi_u dmi_g dmi_address
+2    eth0            1     0     01005e000001
+3    eth1            1     0     01005e000001
+4    eth2            1     0     01005e000001
+</PRE>
+
+<DT><I>/proc/net/igmp</I><DD>
+Internet Group Management Protocol (インターネットグループ管理プロトコル)。
+<I>/usr/src/linux/net/core/igmp.c</I> で定義されている。
+<DT><I>/proc/net/rarp</I><DD>
+このファイルは <I>arp</I> と同じフォーマットで 逆アドレス解決サービス (reverse address lookup services)
+<B><A HREF="../../net-tools/man8/rarp.8.html">rarp</A></B>(8)  に提供するために使われる現在の逆マップデータベースの内容を含んでいる。 RARP
+がカーネルコンフィグレーションに設定されていなければ、 このファイルは存在しない。
+<DT><I>/proc/net/raw</I><DD>
+
+
+
+
+RAW ソケットテーブルのダンプを保持している。 ほとんどの情報はデバッグ以外では
+使われない。 &quot;sl&quot; の値はソケットのカーネルハッシュスロット、
+&quot;local_address&quot; はローカルアドレスとプロトコル番号のペア
+[訳者追加: &quot;rem_address&quot; はリモートアドレスとプロトコル番号のペア]。
+&quot;st&quot; はソケットの内部状態。 &quot;tx_queue&quot; と &quot;rx_queue&quot; はカーネルメモリーを
+消費している 送信/受信データキューのサイズ。 &quot;tr&quot; と &quot;tm-&gt;when&quot; と
+&quot;rexmits&quot; フィールドは RAW では使われていない。
+&quot;uid&quot; フィールドはソケット生成者の実効 UID を保持している。
+<DT><I>/proc/net/snmp</I><DD>
+このファイルは SNMP エージェントが必要とする IP, ICMP, TCP, UDP 管理情報を ASCII データとして保持している。
+<DT><I>/proc/net/tcp</I><DD>
+TCP ソケットテーブルのダンプを保持している。 大部分の情報はデバッグ以外には使われない。 sl はソケットのカーネルハッシュスロットの値、
+&quot;local_address&quot; はローカルアドレスとポート番号のペアである。 (ソケットが接続している場合は) &quot;rem_address&quot;
+はリモートアドレスとポート番号の対である。 &quot;st&quot; はソケットの内部状態である。 &quot;tx_queue&quot; と &quot;rx_queue&quot;
+はカーネルメモリーを消費している送信/受信データキューのサイズ。 &quot;tr&quot; と &quot;tm-&gt;when&quot; と &quot;rexmits&quot;
+フィールドはソケット状態のカーネル 内部情報を保持しているが、 これらが役に立つのはデバッグのときだけである。 &quot;uid&quot;
+フィールドはソケット生成者の実効 UID を保持している。
+<DT><I>/proc/net/udp</I><DD>
+UDP ソケットテーブルのダンプを保持している。 大部分の情報はデバッグ以外には
+使われない。 sl はソケットのカーネルハッシュスロットの値、 &quot;local_address&quot;
+はローカルアドレスとポート番号のペアである。 (ソケットが接続している場合は)
+&quot;rem_address&quot; はリモートアドレスとポート番号のペアである。 &quot;st&quot; はソケットの
+内部状態である。 &quot;tx_queue&quot; と &quot;rx_queue&quot; はカーネルメモリーを消費している
+送信/受信データキューのサイズ。 &quot;tr&quot; と &quot;tm-&gt;when&quot; と &quot;rexmits&quot;
+フィールドは UDP では使われていない。 &quot;uid&quot; フィールドはソケット生成者の
+実効 UID を保持している。 フォーマットは以下のとおり:
+<P>
+<PRE>
+<TT>sl  local_address rem_address   st tx_queue rx_queue tr rexmits  tm-&gt;when uid
+ 1: 01642C89:0201 0C642C89:03FF 01 00000000:00000001 01:000071BA 00000000 0
+ 1: 00000000:0801 00000000:0000 0A 00000000:00000000 00:00000000 6F000100 0
+ 1: 00000000:0201 00000000:0000 0A 00000000:00000000 00:00000000 00000000 0</TT>
+</PRE>
+
+<DT><I>/proc/net/unix</I><DD>
+UNIX ドメインソケットのリスト。 フォーマットは以下のとおり:
+<PRE>
+
+<TT>Num RefCount Protocol Flags    Type St Path
+ 0: 00000002 00000000 00000000 0001 03
+ 1: 00000001 00000000 00010000 0001 01 /dev/printer</TT>
+
+</PRE>
+
+<P>
+ここで、Num はカーネルのテーブルスロット数、 RefCount はソケットを使用して
+いるユーザー数、 Protocol はいまのところいつも 0 で、Flags はソケットの状態
+を保持している カーネル内部のフラグである。 Type はいまのところいつも 1
+(UNIX ドメインのデータグラムソケットは、現在のカーネルではサポートされていない
+[訳注: 2.0.34 ではサポートされているようだ])。
+St はソケットの内部状態で、Path は(もしあれば) ソケットのパス名である。
+<DT><I>/proc/net/netfilter/nfnetlink_queue</I><DD>
+このファイルは netfilter ユーザー空間キューイングが使用されている場合 netfilter ユーザー空間キューイングの情報を表示する。
+各行が各キューの情報を表示する。 ユーザー空間で購読されていないキューは表示されない。
+<PRE>
+
+   1   4207     0  2 65535     0     0        0  1
+  (1)   (2)    (3)(4)  (5)    (6)   (7)      (8)
+</PRE>
+
+<DT><DD>
+各行のフィールドは以下の通りである。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>(1)<DD>
+キューの ID。 これは <B><A HREF="../../iptables/man8/iptables.8.html">iptables</A></B>(8) NFQUEUE ターゲットの <B>--queue-num</B> や
+<B>--queue-balance</B> オプションで指定された値と一致する。 詳しい情報は <B><A HREF="../../iptables/man8/iptables-extensions.8.html">iptables-extensions</A></B>(8) を参照。
+<DT>(2)<DD>
+キューを購読している netlink ポート ID。
+<DT>(3)<DD>
+現在キューに入っていてアプリケーションが処理するのを待っているパケット数。
+<DT>(4)<DD>
+キューのコピーモード。 値は 1 (メタデータのみ) か 2 (ペイロードデータもユーザー空間にコピーする) のいずれかである。
+<DT>(5)<DD>
+コピーする範囲。 つまり、 最大で何バイトのパケットペイロードをユーザー空間にコピーする必要があるかを示す。
+<DT>(6)<DD>
+キューでの破棄数。 すでに多数のパケットがユーザー空間が必ず必要な受け入れ/破棄の判定を送り返すのを待っていたため、
+カーネルがドロップする必要があったパケット数。
+<DT>(7)<DD>
+キューのユーザーでのドロップ数。 netlink サブシステム内で破棄されたパケット数。 このようなパケットの破棄が通常起こるのは、
+対応するソケットバッファーが一杯の場合、 つまり、 ユーザー空間がメッセージを十分な速度で読み出せない場合である。
+<DT>(8)<DD>
+シーケンス番号。 キューに入ったすべてのパケットには 32 ビットの単調増加のシーケンス番号が関連付けられる。 これは一番最近キューに入ったパケットの
+ID となる。
+</DL>
+</DL>
+
+<DT><DD>
+最後の数字は互換性のためだけに存在し、 常に 1 である。
+<DT><I>/proc/partitions</I><DD>
+各パーティションのメジャー番号とマイナー番号が書かれている。 さらに、 1024 バイトブロック数とパーティション名も書かれている。
+<DT><I>/proc/pci</I><DD>
+カーネルの初期化時に見つかったすべての PCI デバイスのリストと その設定。
+<P>
+
+
+
+
+
+このファイルは非推奨であり、新しい PCI 用の <I>/proc</I> インターフェイス (<I>/proc/bus/pci</I>)  を使うこと。
+このファイルは Linux 2.2 でオプションになった (カーネルのコンパイル時に <B>CONFIG_PCI_OLD_PROC</B>
+をセットすると利用可能であった)。 Linux 2.4 で再びオプションなしで有効に戻った。 さらに、Linux 2.6 で非推奨となり
+(<B>CONFIG_PCI_LEGACY_PROC</B> をセットするとまだ利用可能であった)、 最終的に Linux 2.6.17
+以降で完全に削除された。
+<DT><I>/proc/profile</I> (Linux 2.4 以降)<DD>
+このファイルは、 カーネルが <I>profile=1</I> コマンドラインオプションで起動された場合にのみ存在する。 このファイルは、
+カーネルのプロファイリング情報を <B>readprofile</B>(1) を使って読み込めるバイナリ形式で公開する。 このファイルに
+(例えば、空の文字列を) 書き込むと、プロファイリングカウンターがリセットされる。 いくつかのアーキテクチャーでは、 サイズ
+<I>sizeof(int)</I> のバイナリ整数である「プロファイリング倍率」を書き込むとプロファイリングの割り込み頻度を設定できる。
+<DT><I>/proc/scsi</I><DD>
+<I>scsi</I> 中間レベル擬似ファイルといくつかの SCSI 低レベルドライバの ディレクトリを含むディレクトリ。 これらのファイルは ASCII
+で表現されているので <B><A HREF="../../0MultiFileIdx/man1/cat.1.html">cat</A></B>(1)  で読める。
+<P>
+いくつかのファイルは書き込み可能で、サブシステムの設定を変更したり、 特定の機能をオン/オフすることができる。
+<DT><I>/proc/scsi/scsi</I><DD>
+カーネルが知っているすべての SCSI デバイスのリスト。 このリストは起動時に (コンソールで) 見られるものとほぼ同じである。 scsi
+は現在のところ <I>add-single-device</I> コマンドのみをサポートしている。 これによりルート (root)
+は既知のデバイスリストへ活線挿抜 (hotplugged)  デバイスを加えることができる。
+<P>
+次のコマンドを実行すると、
+
+<PRE>
+
+echo 'scsi add-single-device 1 0 5 0' &gt; /proc/scsi/scsi
+
+</PRE>
+
+
+ホストアダプター scsi1 は SCSI チャネル 0 で ID 5 LUN 0 のデバイスを探す。 もしこのアドレスに既知のデバイスがあるか、
+不正なアドレスであったならばエラーが返る。
+<DT><I>/proc/scsi/[drivername]</I><DD>
+いまのところ <I>[drivername]</I> は NCR53c7xx, aha152x, aha1542, aha1740, aic7xxx,
+buslogic, eata_dma, eata_pio, fdomain, in2000, pas16, qlogic, scsi_debug,
+seagate, t128, u15-24f, ultrastore, wd7000 のどれかである。 少なくとも 1 つの SCSI
+ホストバスアダプター (HBA) に ドライバが割り当てられていると、そのドライバに対応したディレクトリが現れる。 それぞれのディレクトリには、
+登録されたホストアダプターに対応してファイルが作られる。 このファイルの名前は、システムの初期化の際に ホストアダプターに割り当てられた番号になる。
+<P>
+これらのファイルを読めばドライバとホストアダプターの設定や 統計などを見ることができる。
+<P>
+これらのファイルへの書き込みはホストアダプターごとに異なる動作を引き起こす。 たとえば <I>latency</I> と <I>nolatency</I>
+コマンドを用いると、 ルート (root、スーパーユーザー) は eata_dma ドライバの隠し測定コードの オン/オフを切り替えることができる。
+また <I> lockup</I> と <I>unlock</I> コマンドを用いると、ルートは scsi_debug ドライバがシミュレートするバスロックアップ
+(bus lockup) を 制御することができる。
+<DT><I>/proc/self</I><DD>
+このディレクトリはプロセスに (プロセス自身の)  <I>/proc</I> ファイルシステムへのアクセスを参照させる。 これは <I>/proc</I> 内の
+(このプロセスの) プロセス ID が名前となっている ディレクトリと全く同一である。
+<DT><I>/proc/slabinfo</I><DD>
+Linux 2.6.16 以降では、 カーネル設定オプション <B>CONFIG_SLAB</B> が有効の場合にのみ、このファイルは存在する。
+カーネルキャッシュの情報。 <I>/proc/slabinfo</I> のフィールドは以下のとおり。
+
+<PRE>
+
+cache-name
+num-active-objs
+total-objs
+object-size
+num-active-slabs
+total-slabs
+num-pages-per-slab
+</PRE>
+
+
+<P>
+詳細は <B><A HREF="../man5/slabinfo.5.html">slabinfo</A></B>(5)  を参照すること。
+<DT><I>/proc/stat</I><DD>
+カーネル/システムの統計。 アーキテクチャーによって異なる。 共通エントリーには以下のものが含まれる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>cpu  3357 0 4313 1362393</I><DD>
+
+各種状態で消費された時間の合計値。 時間は USER_HZ を単位として計測される (ほとんどのアーキテクチャーでは USER_HZ は 1/100
+秒で、 正しい値は <I>sysconf(_SC_CLK_TCK)</I> を使って取得できる)。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>user</I><DD>
+(1) ユーザーモードで消費した時間。
+<DT><I>nice</I><DD>
+(2) 低い優先度 (nice) のユーザーモードで消費した時間。
+<DT><I>system</I><DD>
+(3) システムモードで消費した時間。
+<DT><I>idle</I><DD>
+
+
+
+(4)  タスク待ち (idle task) で消費した時間。 この値は擬似ファイル <I>/proc/uptime</I> の 2 番目のエントリーの値を
+USER_HZ 倍した値になるはずである。
+<DT><I>iowait</I> (Linux 2.5.41 以降)<DD>
+(5) I/O の完了待ちの時間。
+<DT><I>irq</I> (Linux 2.6.0-test4 以降)<DD>
+(6) 割り込みの処理に使った時間。
+<DT><I>softirq</I> (Linux 2.6.0-test4 以降)<DD>
+(7) ソフト割り込みの処理に使った時間。
+<DT><I>steal</I> (Linux 2.6.11 以降)<DD>
+(8) 盗まれた時間 (stolen time)。仮想化環境での動作時に他のオペレーティングシステムにより消費された時間である。
+<DT><I>guest</I> (Linux 2.6.24 以降)<DD>
+
+(9) Linux カーネルの制御下のゲストオペレーティングシステムの仮想 CPU の 実行に消費された時間。
+<DT><I>guest_nice</I> (Linux 2.6.33 以降)<DD>
+
+(10) nice が適用されたゲスト (Linux カーネルの制御下のゲストオペレーティングシステムの仮想 CPU) の 実行に消費された時間。
+</DL>
+</DL>
+
+<DT><I>page 5741 1808</I><DD>
+システムが (ディスクから) ページイン/ページアウトしたページ数。
+<DT><I>swap 1 0</I><DD>
+スワップイン/スワップアウトされたページ数。
+<DT><I>intr 1462898</I><DD>
+この行はシステム起動時以降に処理された割り込みの回数を示す。 最初の欄は処理された割り込み全ての合計であり、
+これには番号が割り振られていないアーキテクチャー固有の割り込みも含まれる。 それ以降の欄はそれぞれ番号が割り振られた割り込みについての合計である。
+番号が割り振られていない割り込みは表示されず、 全体の合計にのみ加算される。
+<DT><I>disk_io: (2,0):(31,30,5764,1,2) (3,0):</I>...<DD>
+(メジャー番号, ディスクインデックス番号):(情報なし (noinfo), 読み込み回数, 読み込みブロック数, 書き出し回数, 書き出しブロック数)
+<BR>
+
+(Linux 2.4 のみ)
+<DT><I>ctxt 115315</I><DD>
+コンテクストスイッチの延べ回数。
+<DT><I>btime 769041601</I><DD>
+起動時刻、紀元 (Epoch; 1970-01-01 00:00:00 +0000 (UTC)) からの秒数。
+<DT><I>processes 86031</I><DD>
+システム起動時からの延べフォーク (fork) 数。
+<DT><I>procs_running 6</I><DD>
+実行中状態のプロセス数 (Linux 2.5.45 以降)。
+<DT><I>procs_blocked 2</I><DD>
+I/O 完了待ちで停止 (blocked) しているプロセス数 (Linux 2.5.45 以降)。
+</DL>
+</DL>
+
+<DT><I>/proc/swaps</I><DD>
+使用中のスワップ領域。 <B><A HREF="../../util-linux/man8/swapon.8.html">swapon</A></B>(8)  も参照すること。
+<DT><I>/proc/sys</I><DD>
+このディレクトリ (1.3.57 以降に存在) はカーネル変数に対応するいくつかの
+ファイルとサブディレクトリを含む。 これらの変数は読み出し可能である。
+また場合によっては <I>/proc</I> ファイルシステムや、 (非推奨の) システムコール
+<B><A HREF="../man2/sysctl.2.html">sysctl</A></B>(2) を用いて書き換えることもできる。
+<DT><I>/proc/sys/abi</I> (Linux 2.4.10 以降)<DD>
+
+このディレクトリにはアプリケーションのバイナリ情報が入ったファイルが置かれる。 更に詳しい情報は、 Linux カーネルソースファイル
+<I>Documentation/sysctl/abi.txt</I> を参照すること。
+<DT><I>/proc/sys/debug</I><DD>
+このディレクトリは空の場合もある。
+<DT><I>/proc/sys/dev</I><DD>
+このディレクトリにはデバイス特有の情報 (たとえば <I>dev/cdrom/info</I>)  が含まれる。
+このディレクトリが空になっているシステムもある。
+<DT><I>/proc/sys/fs</I><DD>
+このディレクトリには、ファイルシステムに関連するカーネル変数用の
+ディレクトリとサブディレクトリが含まれる。
+<DT><I>/proc/sys/fs/binfmt_misc</I><DD>
+このディレクトリ以下のファイルについてのドキュメントは、 Linux カーネルソースの <I>Documentation/binfmt_misc.txt</I>
+にある。
+<DT><I>/proc/sys/fs/dentry-state</I> (Linux 2.2 以降)<DD>
+このファイルには、ディレクトリキャッシュ (dcache) の状態に関する情報が 入っている。ファイルには、 <I>nr_dentry</I>,
+<I>nr_unused</I>, <I>age_limit</I> (秒単位の age), <I>want_pages</I> (システムがリクエストしたページ数),
+ダミーの 2 つの値、 という 6 つの数字が書かれている。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+<I>nr_dentry</I> は割り当てられた dentry (dcache エントリー) の数である。 このフィールドは Linux 2.2
+では使用されない。
+<DT>*<DD>
+<I>nr_unused</I> は未使用の dentry 数である。
+<DT>*<DD>
+
+<I>age_limit</I> は、メモリーが不足している場合に次に dcache entry を再要求できるように なるまでの残り時間 (秒数) である。
+<DT>*<DD>
+
+<I>want_pages</I> は、カーネルが shrink_dcache_pages() を呼び出したが dcache がまだ縮小されていない場合に、0
+以外の値となる。
+</DL>
+</DL>
+
+<DT><I>/proc/sys/fs/dir-notify-enable</I><DD>
+このファイルは <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  に記述されている <I>dnotify</I> インターフェースをシステム全体で無効にしたり有効にしたりする。
+このファイルに値 0 が書かれている場合はインターフェースが無効になり、 値 1 の場合は有効になる。
+<DT><I>/proc/sys/fs/dquot-max</I><DD>
+このファイルにはキャッシュされるディスク quota エントリーの最大数が書かれている。 (2.4 系の)
+システムの中には、このファイルが存在しないものもある。 キャッシュされるディスク quota エントリーの空きが非常に少なく、
+とても多くのシステムユーザーが同時に存在する場合、 この制限を上げるといいかもしれない。
+<DT><I>/proc/sys/fs/dquot-nr</I><DD>
+このファイルには割り当てられているディスク quota のエントリー数と、 空いているディスク quota のエントリー数が書かれている。
+<DT><I>/proc/sys/fs/epoll</I> (Linux 2.6.28 以降)<DD>
+このディレクトリには、ファイル <I>max_user_watches</I> がある。 これらは、 <I>epoll</I>
+インターフェースが消費するカーネルメモリー量を制限するのに使用できる。 詳細は <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  を参照。
+<DT><I>/proc/sys/fs/file-max</I><DD>
+このファイルは、 システム全体でプロセスがオープンできるファイル数の上限を定義する (<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2) も参照;
+<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2) を使うと、 オープンできるファイル数のプロセス毎の上限 <B>RLIMIT_NOFILE</B> を設定できる)。
+ファイルハンドルを使い果たしたというエラーメッセージ (&quot;VFS: file-max limit &lt;number&gt; reached&quot;
+を探すとよい) がカーネルログに大量に出る場合は、以下のようにこの値を増加させてみるとよい。
+<BR>
+
+<P>
+<BR>
+
+<PRE>
+<TT>    echo 100000 &gt; /proc/sys/fs/file-max</TT>
+</PRE>
+
+<P>
+特権プロセス (<B>CAP_SYS_ADMIN</B>) は <I>file-max</I> 上限を上書きできる。
+<DT><I>/proc/sys/fs/file-nr</I><DD>
+This (read-only) file contains three numbers: the number of allocated file
+handles (i.e., the number of files presently opened); the number of free
+file handles; and the maximum number of file handles (i.e., the same value
+as <I>/proc/sys/fs/file-max</I>).  If the number of allocated file handles is
+close to the maximum, you should consider increasing the maximum.  Before
+Linux 2.6, the kernel allocated file handles dynamically, but it didn't free
+them again.  Instead the free file handles were kept in a list for
+reallocation; the &quot;free file handles&quot; value indicates the size of that
+list.  A large number of free file handles indicates that there was a past
+peak in the usage of open file handles.  Since Linux 2.6, the kernel does
+deallocate freed file handles, and the &quot;free file handles&quot; value is always
+zero.
+<DT><I>/proc/sys/fs/inode-max</I> (Linux 2.2 までにのみ存在)<DD>
+このファイルには、メモリー内 inode の最大値が書かれている。 この値は <I>file-max</I> の値の 3-4 倍にすべきである。 これは
+<I>stdin</I>, <I>stdout</I>, ネットワークソケットを扱うにも inode が必要なためである。 日常的に inode
+を使い果たしている場合は、この値を増やす必要がある。
+<P>
+Linux 2.4 以降では、 inode 数の静的な上限はなくなり、 このファイルは削除された。
+<DT><I>/proc/sys/fs/inode-nr</I><DD>
+このファイルには、 <I>inode-state</I> の最初の 2 つの値が書かれている。
+<DT><I>/proc/sys/fs/inode-state</I><DD>
+このファイルには 7 つの数字が入っている。 <I>nr_inodes</I>, <I>nr_free_inodes</I>, <I>preshrink</I> と 4
+つのダミーの値 (常に 0) である。
+<P>
+
+
+
+<I>nr_inodes</I> はシステムが割り当て済みの inode 数である。 <I>nr_free_inodes</I> は未使用の inode 数である。
+<P>
+<I>preshrink</I> は、 <I>nr_inodes</I> &gt; <I>inode-max</I> で、 システムがさらに inode
+を割り当てるのではなく inode リストを刈り取る (余分なものを回収する) 必要がある場合に、 0 以外になる。 Linux 2.4 以降では、
+このフィールドはダミーの値 (常に 0) である。
+<DT><I>/proc/sys/fs/inotify</I> (Linux 2.6.13 以降)<DD>
+このディレクトリには、ファイル <I>max_queued_events</I>, <I>max_user_instances</I>, and
+<I>max_user_watches</I> がある。これらは、 <I>inotify</I> インターフェースが消費するカーネルメモリー量を制限するのに利用できる。
+詳細は <B><A HREF="../man7/inotify.7.html">inotify</A></B>(7)  を参照。
+<DT><I>/proc/sys/fs/lease-break-time</I><DD>
+このファイルは、ファイルを保持しているプロセスに対して カーネルがシグナルを送り、
+他のプロセスがそのファイルをオープンするのを待っていることを通知してから、 そのプロセスに対してカーネルがファイルのリース (lease, 貸し出し)
+(<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  を参照) を許す猶予期間を指定する。 リースホルダ (lease holder: ファイルの貸し出しを受けているプロセス)
+が 猶予期間中にリースを削除するか階級を低くしない場合、 カーネルはファイルのリースを強制的に止める。
+<DT><I>/proc/sys/fs/leases-enable</I><DD>
+このファイルはシステム全体でのファイルリース (<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  を参照) を有効または無効にする。 ファイルに値 0
+が書き込まれている場合、リースは無効である。 0 以外の場合にはリースは有効である。
+<DT><I>/proc/sys/fs/mqueue</I> (Linux 2.6.6 以降)<DD>
+このディレクトリにはファイル <I>msg_max</I>, <I>msgsize_max</I>, and <I>queues_max</I> がある。これらは POSIX
+メッセージキューで使用されるリソースの 制御を行う。 詳細は <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7)  を参照。
+<DT><I>/proc/sys/fs/nr_open</I> (Linux 2.6.25 以降)<DD>
+
+This file imposes ceiling on the value to which the <B>RLIMIT_NOFILE</B>
+resource limit can be raised (see <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)).  This ceiling is
+enforced for both unprivileged and privileged process.  The default value in
+this file is 1048576.  (Before Linux 2.6.25, the ceiling for
+<B>RLIMIT_NOFILE</B> was hard-coded to the same value.)
+<DT><I>/proc/sys/fs/overflowgid</I> と <I>/proc/sys/fs/overflowuid</I><DD>
+これらのファイルにより、ユーザーは固定 UID と固定 GID の値を変更できる。 デフォルトは 65534 である。 Linux の UID と
+GID は 32 ビットであるが、 16 ビットの UID と GID しかサポートしないファイルシステムもある。
+このようなファイルシステムが書き込みを許可してマウントされた場合、 65535 を超える UID と GID は、
+ディスクに書き込まれる前にオーバーフロー値に変換される。
+<DT><I>/proc/sys/fs/pipe-max-size</I> (Linux 2.6.35 以降)<DD>
+このファイルの値により、 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2) の <B>F_SETPIPE_SZ</B> 操作で増やすことができるパイプ容量の上限値が定義される。
+この上限は非特権プロセスにのみ適用される。 このファイルのデフォルト値は 1,048,576 である。 このファイルに設定した値は切り上げられて、
+実装側で利用するのに都合のよい値に変更される場合がある。 切り上げられた値を確認するには、 値を設定した後でこのファイルの内容を表示すればよい。
+このファイルに設定できる最小値はシステムのページサイズである。
+<DT><I>/proc/sys/fs/protected_hardlinks</I> (Linux 3.6 以降)<DD>
+
+このファイルの値が 0 の場合、 ハードリンクの作成には何の制限も適用されない (すなわち、 Linux 3.6 より前の伝統的な動作である)。
+このファイルの値が 1 の場合、以下の条件のいずれか一つが成立する場合にのみ、 リンク先のファイルへのハードリンクが作成できる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+呼び出し元が <B>CAP_FOWNER</B> ケーパビリティを持っている。
+<DT>*<DD>
+そのリンクを作成中のプロセスのファイルシステム UID が、 リンク先ファイルの所有者 (UID) と一致する (<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)
+に説明があるが、 通常、 プロセスのファイルシステム UID はプロセスの実効 UID と同じである)。
+<DT>*<DD>
+以下の条件が全て成立する。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>&bull;<DD>
+リンク先が通常のファイルである。
+<DT>&bull;<DD>
+リンク先ファイルで set-user-ID 許可ビットが有効になっていない。
+<DT>&bull;<DD>
+リンク先ファイルで、 許可ビット set-group-ID と group-executable が同時に有効になっていない。
+<DT>&bull;<DD>
+呼び出し元は、 リンク先ファイルの読み出し、書き込み許可を持っている
+(ファイルの許可マスクで許可されているか、適切なケーパビリティを持っているかは問わない)。
+</DL>
+</DL>
+
+</DL>
+</DL>
+
+<DT><DD>
+The default value in this file is 0.  Setting the value to 1 prevents a
+longstanding class of security issues caused by hard-link-based
+time-of-check, time-of-use races, most commonly seen in world-writable
+directories such as <I>/tmp</I>.  The common method of exploiting this flaw is
+to cross privilege boundaries when following a given hard link (i.e., a root
+process follows a hard link created by another user).  Additionally, on
+systems without separated partitions, this stops unauthorized users from
+&quot;pinning&quot; vulnerable set-user-ID and set-group-ID files against being
+upgraded by the administrator, or linking to special files.
+<DT><I>/proc/sys/fs/protected_symlinks</I> (Linux 3.6 以降)<DD>
+
+このファイルの値が 0 の場合、 以下のシンボリックリンクを辿る際に何の制限も適用されない (すなわち、 Linux 3.6
+より前の伝統的な動作である)。 このファイルの値が 1 の場合、 以下の状況においてのみシンボリックリンクが辿られる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+そのリンクを辿っているプロセスのファイルシステム UID が、 シンボリックリンクの所有者 (UID) と一致する (<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)
+に説明があるが、 通常、 プロセスのファイルシステム UID はプロセスの実効 UID と同じである)。
+<DT>*<DD>
+そのリンクが world-writable の sticky ビットがセットされたディレクトリではない。
+<DT>*<DD>
+シンボリックリンクとその親ディレクトリが同じ所有者 (UID) である。
+</DL>
+</DL>
+
+<DT><DD>
+システムコールが上記の制約によりシンボリックリンクを辿れなかった場合は、 <I>errno</I> にエラー <B>EACCES</B> が設定される。
+<DT><DD>
+The default value in this file is 0.  Setting the value to 1 avoids a
+longstanding class of security issues based on time-of-check, time-of-use
+races when accessing symbolic links.
+<DT><I>/proc/sys/fs/suid_dumpable</I> (Linux 2.6.13 以降)<DD>
+
+このファイルの値により、set-user-ID されたバイナリや、 保護がかかった (protected) バイナリ / tainted な
+(汚染された; ライセンスがカーネルと適合しない) バイナリに対して、コアダンプファイルを 生成するかどうかが決定される。 以下の
+3つの値を指定することができる:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>0&nbsp;(default)</I><DD>
+この値を指定すると、以前と同じ (Linux 2.6.13 より前の) 動作をする。 (<B><A HREF="../man2/seteuid.2.html">seteuid</A></B>(2), <B><A HREF="../man2/setgid.2.html">setgid</A></B>(2)
+などを呼び出すことや、set-user-ID や set-group-ID されたプログラムを 実行することで) 資格情報 (credentials)
+が変更されているプロセスや、 プロセスの実行バイナリの読み出し許可がないプロセスに対して、 コアダンプを生成しない。
+<DT><I>1&nbsp;(&quot;debug&quot;)</I><DD>
+すべてのプロセスで、可能であればコアダンプを行う。 コアダンプファイルの所有者は、ダンプを行うプロセスのファイルシステム UID
+となり、セキュリティ上の考慮は行われない。 この値は、システムデバッグの場面だけを想定して設けられている。 ptrace のチェックも行われない。
+<DT><I>2&nbsp;(&quot;suidsafe&quot;)</I><DD>
+通常はダンプされないようなバイナリ (上記の &quot;0&quot; 参照) を root だけが読み出し可能な形でダンプする。
+この場合、ユーザーはそのコアダンプファイルを削除することはできるが、 読むことはできない。 セキュリティ上の理由から、このモードのコアダンプでは、
+既存のダンプファイルや他のファイルを上書きすることはない。 このモードは、管理者が通常の環境で問題を解析しようとする際に 適している。
+<DT><DD>
+
+
+さらに、 Linux 3.6 以降では、 <I>/proc/sys/kernel/core_pattern</I>
+は絶対パス名かパイプコマンドでなければならない。 <B><A HREF="../man5/core.5.html">core</A></B>(5) に詳しい説明がある。 <I>core_pattern</I>
+がこれらのルールに合致しない場合は、 警告がカーネルログに書き込まれ、 コアダンプは生成されない。
+</DL>
+</DL>
+
+<DT>このファイルはスーパブロックの値を制御する。<DD>
+この値はカーネルがマウントできるファイルシステムの最大値になる。 現在、 <I>super-max</I> で許可されているファイルシステム数以上に
+マウントする必要がある場合は、この値を増加させるだけでよい。
+<DT><I>/proc/sys/fs/super-nr</I><DD>
+このファイルには現在マウントされているファイルシステム数が書かれている。
+<DT><I>/proc/sys/kernel</I><DD>
+このディレクトリには、以下で説明する様々なカーネルパラメーターを 制御するためのファイルが配置されている。
+<DT><I>/proc/sys/kernel/acct</I><DD>
+このファイルには 3 つの値が含まれている: <I>highwater</I>, <I>lowwater</I>, <I>frequency</I> である。
+BSD-style process accounting が有効になっている場合、 これら 3 つの値が動作を制御する。
+ログファイルのあるファイルシステムの空き領域が <I>lowwater</I> パーセント以下になった場合は、ログ記録を一時停止する。 空き領域が
+<I>highwater</I> パーセント以上になった場合に、ログ記録を再開する。 <I>frequency</I> はカーネルが空き領域のチェックをする頻度である
+(単位は秒)。 デフォルトの値は、4, 2, 30 である。 つまり、空き領域が 2% 以下になるとログ記録を一時停止し、 空き領域が 4%
+以上となったときに再開する。 空き領域についての情報は 30 秒間有効である点に注意すること。
+<DT><I>/proc/sys/kernel/cap_last_cap</I> (Linux 3.2 以降)<DD>
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7) 参照。
+<DT><I>/proc/sys/kernel/cap-bound</I> (Linux 2.2 to 2.6.24 以降)<DD>
+<I>/proc/sys/kernel/cap-bound</I> このファイルにはカーネルの <I>capability bounding set</I> (符号付き
+10 進数表現) の値が書かれている。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  中は、このセットとプロセスに許可されている権限の AND がとられる。 Linux
+2.6.25 以降では、システム全体のケーパビリティバウンディングセットは なくなり、スレッド単位のバウンディングセットに置き換えられた。
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)  を参照。
+<DT><I>/proc/sys/kernel/core_pattern</I><DD>
+<B><A HREF="../man5/core.5.html">core</A></B>(5)  参照。
+<DT><I>/proc/sys/kernel/core_uses_pid</I><DD>
+<B><A HREF="../man5/core.5.html">core</A></B>(5)  参照。
+<DT><I>/proc/sys/kernel/ctrl-alt-del</I><DD>
+このファイルはキーボードの Ctrl-Alt-Del の扱いを制御する。 このファイルにある値が 0 の場合、 Ctrl-Alt-Del が捕捉されると
+<B>init</B>(1)  プログラムに送られて、正しく再起動される。 値が 0 より大きい場合、Vulcan Nerve Pinch (tm)
+に反応して、 Linux はダーティバッファーを同期させることなく、すぐに再起動を行う。 注意: プログラム (dosemu など) に &quot;raw&quot;
+モードのキーボードがある場合、 ctrl-alt-del はカーネルの tty レイヤーに到達する前に プログラムに遮断され、
+プログラムに送られてどのように扱うかが決められる。
+<DT><I>/proc/sys/kernel/dmesg_restrict</I> (Linux 2.6.37 以降)<DD>
+
+このファイルの値により誰がカーネル syslog の内容を参照できるかが決定される。 このファイルの値が 0 であれば、制限はなくなる。 値が 1
+であれば、 特権ユーザーだけがカーネル syslog を読み出すことができる
+(詳細は <B><A HREF="../man2/syslog.2.html">syslog</A></B>(2) を参照)。 Linux 3.4 以降では <B>CAP_SYS_ADMIN</B>
+ケーパビリティを持ったユーザーだけがこのファイルの値を変更できる。
+<DT><I>/proc/sys/kernel/domainname</I> と <I>/proc/sys/kernel/hostname</I><DD>
+これらのファイルは、コマンド <B><A HREF="../../net-tools/man1/domainname.1.html">domainname</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/hostname.1.html">hostname</A></B>(1)  と全く同じ方法で、 マシンの NIS/YP
+ドメイン名とホスト名の設定に使える。 すなわち
+<P>
+
+<PRE>
+#<B> echo 'darkstar' &gt; /proc/sys/kernel/hostname</B>
+#<B> echo 'mydomain' &gt; /proc/sys/kernel/domainname</B>
+</PRE>
+
+
+<P>
+は、以下と同じ効果がある。
+<P>
+
+<PRE>
+#<B> hostname 'darkstar'</B>
+#<B> domainname 'mydomain'</B>
+</PRE>
+
+
+<P>
+注意: 典型的な darkstar.frop.org という名前には、 ホスト名 &quot;darkstar&quot; と DNS (Internet Domain
+Name Server)  ドメイン名 &quot;frop.org&quot; が含まれているが、DNS ドメイン名と NIS (Network Information
+Service) または YP (Yellow Pages) のドメイン名を混同してはならない。 一般にこれら 2 つのドメイン名は異なる。
+詳細な議論は、 <B><A HREF="../../0MultiFileIdx/man1/hostname.1.html">hostname</A></B>(1)  の man ページを参照すること。
+<DT><I>/proc/sys/kernel/hotplug</I><DD>
+このファイルはホットプラグポリシーエージェントのパスが書かれている。 このファイルのデフォルト値は <I>/sbin/hotplug</I> である。
+<DT><I>/proc/sys/kernel/htab-reclaim</I><DD>
+(PowerPC のみ) このファイルを 0 以外の値に設定すると、 PowerPC htab (カーネルソースファイル
+<I>Documentation/powerpc/ppc_htab.txt</I> 参照) を、システムがアイドルループになるたびに切り詰める。
+<DT><I>/proc/sys/kernel/kptr_restrict</I> (Linux 2.6.38 以降)<DD>
+
+
+
+The value in this file determines whether kernel addresses are exposed via
+<I>/proc</I> files and other interfaces.  A value of 0 in this file imposes no
+restrictions.  If the value is 1, kernel pointers printed using the <I>%pK</I>
+format specifier will be replaced with zeros unless the user has the
+<B>CAP_SYSLOG</B> capability.  If the value is 2, kernel pointers printed using
+the <I>%pK</I> format specifier will be replaced with zeros regardless of the
+user's capabilities.  The initial default value for this file was 1, but the
+default was changed to 0 in Linux 2.6.39.  Since Linux 3.4, only users with
+the <B>CAP_SYS_ADMIN</B> capability can change the value in this file.
+<DT><I>/proc/sys/kernel/l2cr</I><DD>
+(PowerPC のみ) このファイルには G3 プロセッサボードの L2 キャッシュを制御するフラグが含まれる。 0 の場合、キャッシュは無効になる。
+0 以外の場合は有効になる。
+<DT><I>/proc/sys/kernel/modprobe</I><DD>
+このファイルには、カーネルモジュールローダーへのパスが含まれる。 デフォルトの値は <I>/sbin/modprobe</I>
+である。このファイルは、<B>CONFIG_MODULES</B> オプション (Linux 2.6.26 以前では <B>CONFIG_KMOD</B>)
+を有効にしてカーネルが作成されている場合にのみ存在する。 このファイルについては、Linux カーネルソースファイル
+<I>Documentation/kmod.txt</I> (カーネル 2.4 以前のみに存在) に記述されている。
+<DT><I>/proc/sys/kernel/modules_disabled</I> (Linux 2.6.31 以降)<DD>
+
+
+他のモジュールが有効になったカーネルへのモジュールのロードが許可されるかを示すオン・オフ値である。 デフォルト値はオフ (0) だが、 オン (1)
+に設定することができる。 一度オンにすると、 モジュールをロードすることもアンロードすることもできなくなり、 この値をオフに戻すこともできない。
+このファイルが存在するのは、 カーネルが <B>CONFIG_MODULES</B> オプションを有効にしてコンパイルされている場合だけである。
+<DT><I>/proc/sys/kernel/msgmax</I> (Linux 2.2 以降)<DD>
+このファイルは、System V メッセージキューに書き込まれる 1 つのメッセージの 最大バイト数を、システム全体で制限する。
+<DT><I>/proc/sys/kernel/msgmni</I> (Linux 2.4 以降)<DD>
+このファイルはメッセージキュー識別子の最大数をシステム全体で制限する。
+<DT><I>/proc/sys/kernel/msgmnb</I> (Linux 2.2 以降)<DD>
+このファイルは、 <I>msg_qbytes</I> の設定を初期化するシステム全体のパラメーターで
+ある。 <I>msg_qbytes</I> は以降で作成されるメッセージキューで使われる。
+<I>msg_qbytes</I> 設定では、メッセージキューに書き込まれる最大バイト数を指定する。
+<DT><I>/proc/sys/kernel/ngroups_max</I> (Linux 2.6.4 以降)<DD>
+このファイルは、プロセスグループのメンバー数の上限値を表示する読み出し専用のファイルである。
+<DT><I>/proc/sys/kernel/ostype</I> と <I>/proc/sys/kernel/osrelease</I><DD>
+これらのファイルは文字列 <I>/proc/version</I> の各部分を与える。
+<DT><I>/proc/sys/kernel/overflowgid</I> と <I>/proc/sys/kernel/overflowuid</I><DD>
+これらのファイルは <I>/proc/sys/fs/overflowgid</I> と <I>/proc/sys/fs/overflowuid</I>
+を複製したものである。
+<DT><I>/proc/sys/kernel/panic</I><DD>
+このファイルはカーネル変数 <I>panic_timeout</I> への読み出しと書き込みのアクセスを与える。 この値が 0 ならば、パニック時にカーネルは
+(無限) ループに入る。 0 でなければ、その秒数だけ待ってから自動的に再起動する。 ソフトウェア watchdog ドライバを使っている場合、
+推奨される設定は 60 である。
+<DT><I>/proc/sys/kernel/panic_on_oops</I> (Linux 2.5.68 以降)<DD>
+このファイルは、oops や BUG が起こった場合のカーネルの動作を制御する。 ファイルに 0 が書かれている場合、システムは操作を続行しようとする。
+1 が書かれている場合、システムは (klogd が oops 出力を記録する時間を与えるために) 数秒間遅延した後、 panic を起こす。
+<I>/proc/sys/kernel/panic</I> ファイルも 0 でない場合、マシンは再起動される。
+<DT><I>/proc/sys/kernel/pid_max</I> (Linux 2.5.34 以降)<DD>
+
+
+
+このファイルは、PID をいくつで終了にするかを指定する (すなわち、このファイルの値は最大 PID より 1 大きい)。 この値より大きな PID
+値は割り当てられない。 したがって、このファイルの値はプロセスやスレッドの全体数のシステム全体での上限としても機能する。 このファイルのデフォルト値は
+32768 であり、 その場合には以前のカーネルと同じ PID の範囲になる。 32ビットのプラットフォームでは、 <I>pid_max</I> の最大値は
+32768 である。 64ビットのプラットフォームでは、 2^22 (<B>PID_MAX_LIMIT</B>, 約 4,000,000)
+までの任意の値を設定できる。
+<DT><I>/proc/sys/kernel/powersave-nap</I> (PowerPC のみ)<DD>
+このファイルにはフラグが書かれている。 フラグが設定されると、Linux-PPC は 省電力の &quot;nap&quot; モードを使う。
+設定されない場合は、&quot;doze&quot; モードが使われる。
+<DT><I>/proc/sys/kernel/printk</I><DD>
+<B><A HREF="../man2/syslog.2.html">syslog</A></B>(2) 参照。
+<DT><I>/proc/sys/kernel/pty</I> (Linux 2.6.4 以降)<DD>
+このディレクトリは、UNIX 98 疑似端末 (<B><A HREF="../man4/pts.4.html">pts</A></B>(4) を参照) の数に関連する
+2 つのファイルを含む。
+<DT><I>/proc/sys/kernel/pty/max</I><DD>
+このファイルは疑似端末の最大数を定義する。
+<DT><I>/proc/sys/kernel/pty/nr</I><DD>
+この読み出し専用のファイルは、現在いくつの疑似端末が使われているかを表す。
+<DT><I>/proc/sys/kernel/random</I><DD>
+このディレクトリは、ファイル <I>/dev/random</I> の操作を制御する様々なパラメーターが書かれている。 詳細は <B><A HREF="../man4/random.4.html">random</A></B>(4)
+を参照。
+<DT><I>/proc/sys/kernel/random/uuid</I> (Linux 2.4 以降)<DD>
+この読み出し専用のファイルから読み出しを行うごとに、 ランダムに生成した 128 ビットの UUID を、 標準の UUID 形式の文字列として返す。
+<DT><I>/proc/sys/kernel/real-root-dev</I><DD>
+このファイルは Linux カーネルソースファイル <I>Documentation/initrd.txt</I> に記述されている。
+<DT><I>/proc/sys/kernel/reboot-cmd</I> (Sparc のみ) <DD>
+このファイルは SPARC ROM/Flash ブートローダーに引き数を渡す方法を 提供しているように思われる。
+再起動後に何をするかを指定しているのだろうか？
+<DT><I>/proc/sys/kernel/rtsig-max</I><DD>
+(2.6.7 までのカーネルにのみ存在する。 <B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)  を参照すること)  このファイルはシステムで発行される POSIX
+real-time (queued) signal の 最大数を調整するのに使用される。
+<DT><I>/proc/sys/kernel/rtsig-nr</I><DD>
+(2.6.7 までのカーネルにのみ存在する)  このファイルは現在キューに入っている POSIX real-time signal の数を表す。
+<DT><I>/proc/sys/kernel/sched_rr_timeslice_ms</I> (Linux 3.9 以降)<DD>
+<B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2) 参照。
+<DT><I>/proc/sys/kernel/sched_rt_period_us</I> (Linux 2.6.25 以降)<DD>
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7)  参照。
+<DT><I>/proc/sys/kernel/sched_rt_runtime_us</I> (Linux 2.6.25 以降)<DD>
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7)  参照。
+<DT><I>/proc/sys/kernel/sem</I> (Linux 2.4 以降)<DD>
+このファイルには System V IPC セマフォを制限する 4 つの値が書かれている。 これらのフィールドは次の順番に並んでいる:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>SEMMSL<DD>
+セマフォ集合ごとのセマフォ数の最大値。
+<DT>SEMMNS<DD>
+システム全体での、全てのセマフォ集合におけるセマフォ数の制限。
+<DT>SEMOPM<DD>
+<B><A HREF="../man2/semop.2.html">semop</A></B>(2)  コールに指定されるオペレーション数の最大値。
+<DT>SEMMNI<DD>
+システム全体でのセマフォ識別子の最大値。
+</DL>
+</DL>
+
+<DT><I>/proc/sys/kernel/sg-big-buff</I><DD>
+このファイルは、汎用 SCSI デバイス (sg) のバッファーサイズの最大値を表す。 今はこれを変更することはできないが、 コンパイル時に
+<I>include/scsi/sg.h</I> を編集して <B>SG_BIG_BUFF</B> の値を変えれば変更できる。
+ただし、この値を変更する理由はないだろう。
+<DT><I>/proc/sys/kernel/shm_rmid_forced</I> (Linux 3.1 以降)<DD>
+
+
+If this file is set to 1, all System V shared memory segments will be marked
+for destruction as soon as the number of attached processes falls to zero;
+in other words, it is no longer possible to create shared memory segments
+that exist independently of any attached process.
+<DT><DD>
+The effect is as though a <B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2)  <B>IPC_RMID</B> is performed on all
+existing segments as well as all segments created in the future (until this
+file is reset to 0).  Note that existing segments that are attached to no
+process will be immediately destroyed when this file is set to 1.  Setting
+this option will also destroy segments that were created, but never
+attached, upon termination of the process that created the segment with
+<B><A HREF="../man2/shmget.2.html">shmget</A></B>(2).
+<DT><DD>
+Setting this file to 1 provides a way of ensuring that all System V shared
+memory segments are counted against the resource usage and resource limits
+(see the description of <B>RLIMIT_AS</B> in <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2))  of at least one
+process.
+<DT><DD>
+Because setting this file to 1 produces behavior that is nonstandard and
+could also break existing applications, the default value in this file is
+0.  Only set this file to 1 if you have a good understanding of the
+semantics of the applications using System V shared memory on your system.
+<DT><I>/proc/sys/kernel/shmall</I> (Linux 2.2 以降)<DD>
+このファイルには System V 共有メモリーの総ページ数の システム全体での制限が書かれている。
+<DT><I>/proc/sys/kernel/shmmax</I> (Linux 2.2 以降)<DD>
+このファイルを通じて、(System V IPC) 共有メモリーセグメントを作成するときの 最大サイズの実行時上限 (run-time limit)
+を取得または設定できる。 現在は 1GB までの共有メモリーセグメントが カーネルでサポートされている。 この値のデフォルトは <B>SHMMAX</B>
+である。
+<DT><I>/proc/sys/kernel/shmmni</I> (Linux 2.4 以降)<DD>
+このファイルは、システム全体で作成可能な System V 共有メモリーセグメント数を指定する。
+<DT><I>/proc/sys/kernel/sysrq</I><DD>
+このファイルは、SysRq キーにより起動が許可されている関数群を制御する ものである。デフォルトでは、ファイルの内容は 1 であり、
+これは起こり得る全ての SysRq リクエストが許可されることを意味する (古いバージョンのカーネルでは、SysRq はデフォルトでは無効になっており、
+実行時に明示的に有効にする必要があったが、今はそうではない)。 このファイルで指定可能な値は以下の通り。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;0&nbsp;-&nbsp;sysrq&nbsp;を完全に無効にする
+<BR>&nbsp;&nbsp;&nbsp;1&nbsp;-&nbsp;sysrq&nbsp;の全ての関数を有効にする
+<BR>&nbsp;&nbsp;&gt;1&nbsp;-&nbsp;許可する&nbsp;sysrq&nbsp;関数のビットマスク。内訳は以下の通り。
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;-&nbsp;コンソールのログレベルの制御を有効にする
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4&nbsp;-&nbsp;キーボードの制御を有効にする&nbsp;(SAK,&nbsp;unraw)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8&nbsp;-&nbsp;プロセスなどのデバッグダンプを有効にする
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;16&nbsp;-&nbsp;sync&nbsp;コマンドを有効にする
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;32&nbsp;-&nbsp;読み出し専用での再マウントを有効にする
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;64&nbsp;-&nbsp;プロセスへのシグナル発行を有効にする&nbsp;(term,&nbsp;kill,&nbsp;oom-kill)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;128&nbsp;-&nbsp;リブート/電源オフを許可する
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256&nbsp;-&nbsp;全てのリアルタイムタスクの&nbsp;nice&nbsp;値の変更を許可する
+<P>
+カーネル設定オプション <B>CONFIG_MAGIC_SYSRQ</B> が有効な場合のみ、このファイルは存在する。 詳細は、Linux
+カーネルソースファイル <I>Documentation/sysrq.txt</I> を参照のこと。
+<DT><I>/proc/sys/kernel/version</I><DD>
+このファイルには、以下のような文字列が書かれている:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;#5&nbsp;Wed&nbsp;Feb&nbsp;25&nbsp;21:49:24&nbsp;MET&nbsp;1998
+<P>
+&quot;#5&quot; はこのソースで構築された 5 番目のカーネルであることを意味する。 その後にある日付はカーネルが構築された時刻を表す。
+<DT><I>/proc/sys/kernel/threads-max</I> (Linux 2.3.11 以降)<DD>
+このファイルは、システム全体で作成可能なスレッド数 (タスク数) の上限を指定する。
+<DT><I>/proc/sys/kernel/zero-paged</I> (PowerPC のみ) <DD>
+このファイルはフラグを含む。 (0 以外の値で) 有効された場合、Linux-PPC はアイドルループで pre-zero page
+を行うので、get_free_pages の速度が向上する可能性がある。
+<DT><I>/proc/sys/net</I><DD>
+このディレクトリにはネットワーク関係の情報が入っている。 このディレクトリにあるファイルのいくつかについては、 <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)  や
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7)  に説明がある。
+<DT><I>/proc/sys/net/core/somaxconn</I><DD>
+このファイルは <B><A HREF="../man2/listen.2.html">listen</A></B>(2)  の <I>backlog</I> 引き数の上限値を規定する。 詳細は <B><A HREF="../man2/listen.2.html">listen</A></B>(2)
+のマニュアルページを参照。
+<DT><I>/proc/sys/proc</I><DD>
+このディレクトリは空の場合もある。
+<DT><I>/proc/sys/sunrpc</I><DD>
+このディレクトリはネットワークファイルシステム (NFS) への Sun remote procedure call (遠隔手続き呼び出し)
+をサポートする。 これが存在しないシステムもある。
+<DT><I>/proc/sys/vm</I><DD>
+このディレクトリにはメモリー管理の調整、バッファーやキャッシュ管理のための ファイルがある。
+<DT><I>/proc/sys/vm/compact_memory</I> (Linux 2.6.35 以降)<DD>
+When 1 is written to this file, all zones are compacted such that free
+memory is available in contiguous blocks where possible.  The effect of this
+action can be seen by examining <I>/proc/buddyinfo</I>.
+<DT><DD>
+カーネルの設定で <B>CONFIG_COMPACTION</B> が有効になっている場合にのみ存在する。
+<DT><I>/proc/sys/vm/drop_caches</I> (Linux 2.6.16 以降)<DD>
+このファイルに書き込みを行うと、カーネルに、 クリーンなキャッシュ、 dentry、 inode をメモリーから追い出して、
+メモリーを解放させることができる。 この機能はメモリー管理のテストや再現可能なファイルシステムのベンチマークを行うのに役立つ。
+このファイルへの書き込みはキャッシュの利点を失うことになるので、システム全体の性能は低下する可能性がある。
+<P>
+ページキャッシュを解放するには、以下のようにする。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;1&nbsp;&gt;&nbsp;/proc/sys/vm/drop_caches
+<P>
+dentry と inode を解放するには、以下のようにする。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;2&nbsp;&gt;&nbsp;/proc/sys/vm/drop_caches
+<P>
+ページキャッシュ、 dentry、 inode を解放するには、以下のようにする。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;3&nbsp;&gt;&nbsp;/proc/sys/vm/drop_caches
+<P>
+このファイルへの書き込みは非破壊的な操作で、 ダーティな (dirty) オブジェクトは 解放されないので、 この操作を行う際は最初に
+<B><A HREF="../../0MultiFileIdx/man1/sync.1.html">sync</A></B>(1) を実行しておくべきである。
+<DT><I>/proc/sys/vm/legacy_va_layout</I> (Linux 2.6.9 以降)<DD>
+
+0 以外の場合、新しい 32ビットメモリーマッピング配置が無効になり、 カーネルは全てのプロセスに対して従来の (カーネル 2.4 の) 配置方法を
+使用する。
+<DT><I>/proc/sys/vm/memory_failure_early_kill</I> (Linux 2.6.32 以降)<DD>
+
+このファイルは、カーネルが処理できない訂正不能なメモリーエラー (通常はメモリーモジュールでの 2 ビットエラー)
+がバックグラウンドでハードウェアにより検出された際に、プロセスをどのように kill するかを制御する。
+(ページの有効なコピーがディスク上にも存在するなど)
+いくつかの場面では、カーネルはアプリケーションに影響を与えずに透過的に故障を処理する。しかし、データの最新のコピーが他にはない場合には、データ破壊が波及するのを防ぐため、カーネルはプロセスを
+kill する。
+<P>
+このファイルは以下のいずれかの値を持つ。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>1:<DD>
+データ破壊が検出されるとすぐに、故障が検出され復元できないページ (corrupted-and-not-reloadable page)
+をマップしている全てのプロセスを kill する。この機能は、(カーネル内部で割り当てられたデータやスワップのキャッシュなど)
+少数のいくつかのタイプのページではサポートされていないが、大半のユーザーページではこの機能は働く。
+<DT>0:<DD>
+データ破壊が検出されたページの全てのプロセスからの unmap のみを行い、そのページにアクセスしようとしたプロセスのみを kill する。
+</DL>
+</DL>
+
+<DT><DD>
+この kill は <I>si_code</I> に <B>BUS_MCEERR_AO</B> を設定した <B>SIGBUS</B>
+シグナルを使って行われる。プロセス側では必要であればこのシグナルを処理することができる。詳細は <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2) を参照。
+<P>
+この機能は、高度なマシンチェック機構を持ったアーキテクチャー/プラットフォームにおいてのみ有効であり、ハードウェア機能にも依存している。
+<P>
+アプリケーションは <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2) の <B>PR_MCE_KILL</B> 操作を使って個別に
+<I>memory_failure_early_kill</I> の設定を上書きすることができる。
+<DT><DD>
+カーネルの設定で <B>CONFIG_MEMORY_FAILURE</B> が有効になっている場合にのみ
+存在する。
+<DT><I>/proc/sys/vm/memory_failure_recovery</I> (Linux 2.6.32 以降)<DD>
+
+メモリー故障回復 (memory failure recovery) を有効にする
+<BR>&nbsp;(プラットフォームがサポートしている場合)
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>1:<DD>
+回復を試みる。
+<DT>0:<DD>
+メモリー故障時には常に panic を起こす。
+</DL>
+</DL>
+
+<DT><DD>
+カーネルの設定で <B>CONFIG_MEMORY_FAILURE</B> が有効になっている場合にのみ
+存在する。
+<DT><I>/proc/sys/vm/oom_dump_tasks</I> (Linux 2.6.25 以降)<DD>
+
+カーネルが OOM-killing を実行する際に、システム全体のタスクダンプ (カーネルスレッドを除く) を生成するかを制御する。 ダンプには、タスク
+(スレッド、プロセス) 毎に以下の情報が出力される: スレッド ID、実ユーザー ID、スレッドグループ ID (プロセス ID)、
+仮想メモリーサイズ、Resident Set Size (実メモリー上に存在するページサイズ)、 タスクがスケジューリングされた CPU、
+oom_adj スコア (<I>/proc/[pid]/oom_adj</I> の説明を参照)、コマンド名。 このダンプ情報は、なぜ OOM-killer
+が起動されたかを知り、 その原因となったならず者のタスクを特定するのに役に立つ。
+<P>
+このファイルの内容が値 0 の場合、ダンプ情報の出力は行われない。 タスクが何千もある非常に巨大なシステムでは、
+各々のタスクについてメモリー状態をダンプするのは適切でないかもしれない。 そのようなシステムでは、ダンプ情報が必要でもないときに メモリー不足
+(OOM) の状況で性能面の不利益が起こらないようにすべきだろう。
+<P>
+このファイルの内容が 0 以外の場合、 OOM-killer が実際にメモリーを占有したタスクを kill する度に ダンプ情報が出力される。
+<P>
+デフォルト値は 0 である。
+<DT><I>/proc/sys/vm/oom_kill_allocating_task</I> (Linux 2.6.24 以降)<DD>
+
+このファイルは、メモリー不足 (OOM) の状況が起こった際に、 メモリー不足のきっかけとなったタスクを kill するかどうかを制御する。
+<P>
+このファイルが 0 に設定された場合、 OOM-killer はタスクリスト全体をスキャンし、経験則に基づき kill するタスクを選択する。
+通常は、kill した場合に多くのメモリーが解放できる、 ならず者のメモリー占有タスクが選択される。
+<P>
+このファイルが 0 以外に設定された場合、 OOM-killer はメモリー不足の状況が発生するきっかけとなったタスクを 単純に kill
+するだけである。 これにより、たいていは重い処理となるタスクリストのスキャンを回避できる。
+<P>
+<I>/proc/sys/vm/panic_on_oom</I> が 0 以外の場合、
+<I>/proc/sys/vm/oom_kill_allocating_task</I> にどのような値が入っていたとしても、
+<I>/proc/sys/vm/panic_on_oom</I> の方が優先される。
+<P>
+デフォルト値は 0 である。
+<DT><I>/proc/sys/vm/overcommit_kbytes</I> (Linux 3.14 以降)<DD>
+
+この書き込み可能なファイルは、 <I>/proc/sys/vm/overcommit_memory</I> が値 2 の際に、 <I>CommitLimit</I>
+を制御する <I>/proc/sys/vm/overcommit_ratio</I> の別の設定手段を提供するものである。
+<I>overcommit_ratio</I> が割合をパーセントで指定するのに対し、 このファイルではオーバーコミットするメモリー量を絶対値 (kB 単位)
+で指定できる。 これにより、 メモリーサイズが非常に大きなシステムで <I>CommitLimit</I> を極め細かく制御できる。
+<P>
+<I>overcommit_kbytes</I> と <I>overcommit_ratio</I> のいずれか一方だけが効果を持つ。
+<I>overcommit_kbytes</I> が 0 以外の値を持つ場合、 <I>CommitLimit</I> を計算するのに
+<I>overcommit_kbytes</I> が使用され、 それ以外の場合 <I>overcommit_ratio</I> が使用される。
+これらのファイルのいずれかに値を書き込むと、 他のファイルの値は 0 に設定される。
+<DT><I>/proc/sys/vm/overcommit_memory</I><DD>
+このファイルにはカーネル仮想メモリーのアカウントモードが書かれている。 値は以下の通り:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><DD>
+0: 発見的なオーバーコミット (heuristic overcommit) (これがデフォルトである)
+<BR>
+
+1: 常にオーバーコミットし、チェックしない。
+<BR>
+
+2: 常にチェックし、オーバーコミットしない。
+</DL>
+</DL>
+
+<DT><DD>
+モード 0 では、 <B>MAP_NORESERVE</B> を設定して呼び出された <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  はチェックされない。
+またデフォルトのチェックはとても脆弱で、 プロセスを &quot;OOM-kill&quot; してしまうリスクを引き起こす。 Linux 2.4 では 0
+以外の値はモード 1 を意味する。
+<P>
+モード 2 (Linux 2.6 以降で利用可能) では、 割り当て可能な仮想アドレス空間 (<I>/proc/meminfo</I> の
+<I>CommitLimit</I>) は以下で計算される。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;CommitLimit&nbsp;=&nbsp;(total_RAM&nbsp;-&nbsp;total_huge_TLB)&nbsp;*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;overcommit_ratio&nbsp;/&nbsp;100&nbsp;+&nbsp;total_swap
+<P>
+個々の説明:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+<I>total_RAM</I> はシステム上の RAM の総量
+<DT>*<DD>
+<I>total_huge_TLB</I> はヒュージページ用に確保されたメモリー総量
+<DT>*<DD>
+<I>overcommit_ratio</I> は <I>/proc/sys/vm/overcommit_ratio</I> の値
+<DT>*<DD>
+<I>total_swap</I> はスワップ空間の総量
+</DL>
+</DL>
+
+<DT><DD>
+例えば、 物理 RAM が 16GB で、 スワップが 16GB で、 ヒュージページ専用の空間がなく、 <I>overcommit_ratio</I> が
+50 のシステムでは、 この式から <I>CommitLimit</I> として 24GB の値が得られる。
+<P>
+Linux 3.14 以降では、 <I>/proc/sys/vm/overcommit_kbytes</I> の値が 0 でない場合、
+<I>CommitLimit</I> は代わりに以下のように計算される。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;CommitLimit&nbsp;=&nbsp;overcommit_kbytes&nbsp;+&nbsp;total_swap
+<DT><I>/proc/sys/vm/overcommit_ratio</I> (Linux 2.6.0 以降)<DD>
+この書き込み可能なファイルは、 オーバーコミットできるメモリーの割合をパーセントで定義する。 このファイルのデフォルト値は 50 である。
+<I>/proc/sys/vm/overcommit_memory</I> の説明を参照。
+<DT><I>/proc/sys/vm/panic_on_oom</I> (Linux 2.6.18 以降)<DD>
+
+このファイルは、メモリー不足時にカーネルパニックを 起こすか起こさないかを制御する。
+<P>
+このファイルに値 0 を設定すると、 カーネルの OOM-killer がならず者のプロセスを kill する。 普通は、OOM-killer
+がならず者のプロセスを kill することができ、 システムは何とか動き続けることができる。
+<P>
+このファイルに値 1 を設定すると、 メモリー不足の状況が発生すると、カーネルは普通はパニックする。 しかしながら、プロセスが メモリーポリシー
+(<B><A HREF="../man2/mbind.2.html">mbind</A></B>(2)  の <B>MPOL_BIND</B>)  や cpusets (<B>cpuset</B>(7))
+を使って特定のノードへのメモリー割り当てを制限していて、 それらのノードでメモリー枯渇状態に至った場合は、 一つのプロセスが OOM-killer
+により kill されるだけかもしれない。 この場合には、カーネルパニックは発生しない。 なぜなら、他のノードのメモリーには空きがあるかもしれず、
+したがって、システム全体としてはメモリー不足の状況にまだ達していないかも しれないからである。
+<P>
+このファイルに値 2 を設定すると、 メモリー不足の状況が発生するとカーネルは常にパニックを起こす。
+<P>
+デフォルト値は 0 である。 1 と 2 はクラスタリングのフェイルオーバー用である。 フェイルオーバーの方針に応じてどちらかの値を選択すること。
+<DT><I>/proc/sys/vm/swappiness</I><DD>
+
+このファイルの値により、カーネルがどの程度激しくメモリーページの スワップを行う
+かが制御される。 大きな値ほどスワップが激しくなり、小さい値ほど激しくなくなる。
+デフォルト値は 60 である。
+<DT><I>/proc/sysrq-trigger</I> (Linux 2.4.21 以降)<DD>
+このファイルに文字 character を書き込むと、 キーボードから ALT-SysRq-&lt;character&gt; を入力した場合と
+同じ SysRq 関数が起動される (<I>/proc/sys/kernel/sysrq</I> の説明を参照)。 通常、このファイルへ書き込みができるのは
+<I>root</I> だけである。詳細については、Linux カーネルソースファイルの <I>Documentation/sysrq.txt</I> を参照のこと。
+<DT><I>/proc/sysvipc</I><DD>
+疑似ファイル <I>msg</I>, <I>sem</I>, <I>shm</I> を含むサブディレクトリ。 これらのファイルは、現在システム上に存在する System V
+プロセス間通信 (Interprocess Communication, IPC) オブジェクト (それぞれ:
+メッセージキュー、セマフォ、共有メモリー)  のリストであり、 <B>ipcs</B>(1)  で取得できる情報と同じものを提供する。
+これらのファイルにはヘッダーがあり、理解しやすいように (1 行につき 1 個の IPC オブジェクトの形式で) フォーマットされている。
+<B>svipc</B>(7)  にはこれらのファイルから分かる情報の詳細な背景が書かれている。
+<DT><I>/proc/thread-self</I> (Linux 3.17 以降)<DD>
+
+このディレクトリは、<I>/proc</I> ファイルシステムにアクセスしたスレッドを参照している。 これは、同じスレッドのプロセススレッド ID
+(<I>[tid]</I>) の名前の <I>/proc/self/task/[tid]</I> ディレクトリと同一である。
+<DT><I>/proc/timer_list</I> (Linux 2.6.21 以降)<DD>
+
+This read-only file exposes a list of all currently pending
+(high-resolution) timers, all clock-event sources, and their parameters in a
+human-readable form.
+<DT><I>/proc/timer_stats</I> (Linux 2.6.21 以降)<DD>
+
+
+
+This is a debugging facility to make timer (ab)use in a Linux system visible
+to kernel and user-space developers.  It can be used by kernel and
+user-space developers to verify that their code does not make undue use of
+timers.  The goal is to avoid unnecessary wakeups, thereby optimizing power
+consumption.
+<P>
+If enabled in the kernel (<B>CONFIG_TIMER_STATS</B>), but not used, it has
+almost zero runtime overhead and a relatively small data-structure
+overhead.  Even if collection is enabled at runtime, overhead is low: all
+the locking is per-CPU and lookup is hashed.
+<P>
+The <I>/proc/timer_stats</I> file is used both to control sampling facility and
+to read out the sampled information.
+<P>
+The timer_stats functionality is inactive on bootup.  A sampling period can
+be started using the following command:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;echo&nbsp;1&nbsp;&gt;&nbsp;/proc/timer_stats
+<P>
+The following command stops a sampling period:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;echo&nbsp;0&nbsp;&gt;&nbsp;/proc/timer_stats
+<P>
+The statistics can be retrieved by:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;$&nbsp;cat&nbsp;/proc/timer_stats
+<P>
+While sampling is enabled, each readout from <I>/proc/timer_stats</I> will see
+newly updated statistics.  Once sampling is disabled, the sampled
+information is kept until a new sample period is started.  This allows
+multiple readouts.
+<P>
+<I>/proc/timer_stats</I> のサンプル出力。
+<P>
+<PRE>
+$<B> cat /proc/timer_stats</B>
+Timer Stats Version: v0.3
+Sample period: 1.764 s
+Collection: active
+  255,     0 swapper/3        hrtimer_start_range_ns (tick_sched_timer)
+   71,     0 swapper/1        hrtimer_start_range_ns (tick_sched_timer)
+   58,     0 swapper/0        hrtimer_start_range_ns (tick_sched_timer)
+    4,  1694 gnome-shell      mod_delayed_work_on (delayed_work_timer_fn)
+   17,     7 rcu_sched        rcu_gp_kthread (process_timeout)
+...
+    1,  4911 kworker/u16:0    mod_delayed_work_on (delayed_work_timer_fn)
+   1D,  2522 kworker/0:0      queue_delayed_work_on (delayed_work_timer_fn)
+1029 total events, 583.333 events/sec
+
+</PRE>
+
+
+<DT><DD>
+The output columns are:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+
+a count of the number of events, optionally (since Linux 2.6.23) followed by
+the letter 'D' if this is a deferrable timer;
+<DT>*<DD>
+the PID of the process that initialized the timer;
+<DT>*<DD>
+the name of the process that initialized the timer;
+<DT>*<DD>
+the function where the timer was initialized; and
+<DT>*<DD>
+(in parentheses)  the callback function that is associated with the timer.
+</DL>
+</DL>
+
+<DT><I>/proc/tty</I><DD>
+疑似ファイルを含むサブディレクトリ。 tty ドライバとライン設定 (line discipline) の書かれた サブディレクトリも含まれる。
+<DT><I>/proc/uptime</I><DD>
+このファイルは システム起動時から経過した時間 (秒) と アイドル (idle) しているプロセスが消費した時間 (秒) の 2 つの数を含む。
+<DT><I>/proc/version</I><DD>
+現在稼働しているカーネルのバージョン識別子である文字列。 これには <I>/proc/sys/ostype</I>,
+<I>/proc/sys/osrelease</I>, <I>/proc/sys/version</I> の内容が含まれる。 たとえばこのように:
+<PRE>
+<TT>Linux version 1.0.9 (<A HREF="mailto:quinlan@phaze">quinlan@phaze</A>) #1 Sat May 14 01:51:54 EDT 1994</TT>
+</PRE>
+
+
+
+
+
+
+<DT><I>/proc/vmstat</I> (Linux 2.6 以降)<DD>
+このファイルは仮想メモリーの様々な統計情報を表示する。
+<DT><I>/proc/zoneinfo</I> (Linux 2.6.13 以降)<DD>
+
+このファイルはメモリーのゾーン (memory zone) に関する情報を表示する。 仮想メモリーの振舞いを分析するのに役立つ。
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>注意</H2>
+
+ほとんどの文字列 (たとえば環境変数やコマンド行) は内部表現のままなので、
+各フィールドはヌルバイト ('\0') で区切られている。だから、
+<I>od -c</I> や <I>tr &quot;\000&quot; &quot;\n&quot;</I> を使えば、それらはより読みやすくなる。
+また <I>echo `cat &lt;file&gt;`</I> でもよい。
+<P>
+
+
+
+このマニュアルは不完全であり、たぶん不正確で、しばしば更新される必要がある。
+<A NAME="lbAE">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/cat.1.html">cat</A></B>(1), <B><A HREF="../../util-linux/man1/dmesg.1.html">dmesg</A></B>(1), <B><A HREF="../../GNU_findutils/man1/find.1.html">find</A></B>(1), <B><A HREF="../../procps/man1/free.1.html">free</A></B>(1), <B><A HREF="../../procps/man1/ps.1.html">ps</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/tr.1.html">tr</A></B>(1),
+<B><A HREF="../../0MultiFileIdx/man1/uptime.1.html">uptime</A></B>(1), <B><A HREF="../man2/chroot.2.html">chroot</A></B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/readlink.2.html">readlink</A></B>(2), <B><A HREF="../man2/syslog.2.html">syslog</A></B>(2),
+<B><A HREF="../man5/slabinfo.5.html">slabinfo</A></B>(5), <B><A HREF="../man7/hier.7.html">hier</A></B>(7), <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7), <B><A HREF="../man7/time.7.html">time</A></B>(7), <B><A HREF="../../net-tools/man8/arp.8.html">arp</A></B>(8),
+<B><A HREF="../../hdparm/man8/hdparm.8.html">hdparm</A></B>(8), <B><A HREF="../../net-tools/man8/ifconfig.8.html">ifconfig</A></B>(8), <B>init</B>(1), <B><A HREF="../../0MultiFileIdx/man8/lsmod.8.html">lsmod</A></B>(8), <B><A HREF="../../pciutils/man8/lspci.8.html">lspci</A></B>(8),
+<B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8), <B><A HREF="../../net-tools/man8/netstat.8.html">netstat</A></B>(8), <B><A HREF="../../procinfo/man8/procinfo.8.html">procinfo</A></B>(8), <B><A HREF="../../net-tools/man8/route.8.html">route</A></B>(8), <B><A HREF="../../procps/man8/sysctl.8.html">sysctl</A></B>(8)
+<P>
+Linux カーネルのソースファイル: <I>Documentation/filesystems/proc.txt</I>
+<I>Documentation/sysctl/fs.txt</I>, <I>Documentation/sysctl/kernel.txt</I>,
+<I>Documentation/sysctl/net.txt</I>, and <I>Documentation/sysctl/vm.txt</I>.
+<A NAME="lbAF">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">注意</A><DD>
+<DT><A HREF="#lbAE">関連項目</A><DD>
+<DT><A HREF="#lbAF">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

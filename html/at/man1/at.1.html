@@ -1,0 +1,216 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of AT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>AT</H1>
+Section: User Commands  (1)<BR>Updated: 2009-11-14<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/at/release/man1/at.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+at, batch, atq, atrm - 後に実行するジョブのキュー操作、確認、削除
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>at</B> [<B>-V</B>] [<B>-q</B> <I>queue</I>] [<B>-f</B> <I>file</I>] [<B>-u</B> <I>username</I>]
+[<B>-mMlv</B>] <I>timespec</I> ...&quot;
+<BR>
+
+<B>at</B> [<B>-V</B>] [<B>-q</B> <I>queue</I>] [<B>-f</B> <I>file</I>] [<B>-u</B> <I>username</I>]
+[<B>-mMkv</B>] [<B>-t</B> <I>time</I>]
+<BR>
+
+<B>at -c</B> <I>job</I> [...]
+<BR>
+
+<B>at</B> [<B>-V</B>] -l [<B>-o</B> <I>timeformat</I>] <I>[job</I> <I>...</I>]
+<BR>
+
+<B>atq</B> [<B>-V</B>] [<B>-q</B> <I>queue</I>] [<B>-o</B> <I>timeformat</I>] <I>[job</I> <I>...</I>]
+<BR>
+
+<B>at</B> [<B>-rd</B>] <I>job</I> [...]
+<BR>
+
+<B>atrm</B> [<B>-V</B>] <I>job</I> [...]
+<BR>
+
+<B>batch</B>
+<BR>
+
+<B>at -b</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>at</B> と <B>batch</B> は、 標準入力や指定されたファイルからコマンドを読み取って、 <B>/bin/sh</B> を使って後で実行します。
+<DL COMPACT>
+<DT><B>at</B><DD>
+指定された時間にコマンドを実行します。
+<DT><B>atq</B><DD>
+ペンディングとなっているユーザージョブの一覧を表示します。 ただしスーパーユーザーが起動した場合には、 全ユーザーのジョブを表示します。 出力行の書式は
+(各ジョブを 1 行ずつに) 、ジョブ番号、日付、時間、キュー、ユーザー名を表示します。
+<DT><B>atrm</B><DD>
+ジョブ番号によって識別されるジョブを削除します。
+<DT><B>batch</B><DD>
+システムの負荷レベルが許容される範囲にある場合にコマンドを実行します。 つまり負荷平均が 0.8 以下、 または <B>atd</B>
+で指定された値以下の場合にコマンドを実行します。
+</DL>
+<P>
+
+<B>at</B> では複雑な時間指定ができます。 これは POSIX.2 標準を拡張したものです。 ジョブを実行する時刻は <B>HH:MM</B>
+という形式で指定できます。 (すでにその時刻が過ぎている場合は、 次の日として扱われます。) また <B>midnight</B> (真夜中), <B>noon</B>
+(正午), <B>teatime</B> (午後 4 時のティータイム) を指定できます。 午前午後を表す <B>AM</B>, <B>PM</B> も指定可能です。
+さらにコマンドを実行する日付を指定することもできます。 日付の書式は <B>month-name</B> <B>day</B> であり、 任意として <B>year</B>
+を指定します。 あるいは <I>MMDD</I>[<I>CC</I>]<I>YY</I>, <I>MM</I>/<I>DD</I>/[<I>CC</I>]<I>YY</I>,
+<I>DD</I>.<I>MM</I>.[<I>CC</I>]<I>YY</I>, [<I>CC</I>]<I>YY</I>-<I>MM</I>-<I>DD</I> が可能です。 日付の指定は、
+時刻の指定の後に行わなければなりません。 時間の指定において、 <B>now</B> <B>+</B> <I>count</I> <I>time-units</I>
+といった記述もできます。 ここにおいて time-units とは <B>minutes</B>, <B>hours</B>, <B>days</B>, <B>weeks</B>
+のことです。 <B>at</B> に対しては、 時刻の後ろにサフィックスとして <B>today</B> をつければ、 本日の実行を指示することになります。
+サフィックスとして <B>tomorrow</B> をつければ明日の実行となります。
+<P>
+
+たとえば今から 3 日後の午後 4 時にジョブを実行する場合は、 <B>at 4pm + 3 days</B> と指定します。 7 月 31 日の
+10:00am にジョブを実行するには、 <B>at 10am Jul 31</B> と指定します。 明日の 1am であれば <B>at 1am
+tomorrow</B> とします。
+<P>
+
+ジョブの実行に指定された時刻、日付が完全に過去であった場合、 ジョブはできる限りそのときに実行されます。 たとえば今が 8pm であって <B>at
+6pm today</B> と実行すると、 8:05pm には実行されているはずです。
+<P>
+
+時間指定に関する定義は <I>/usr/share/doc/at/timespec</I> に記述されています。
+<P>
+
+<B>at</B> と <B>batch</B> はともに標準入力から読み込みを行い、 あるいは <B>-f</B> オプションが指定されていればファイルから読み込みを行って、
+処理が実行されます。 ワーキングディレクトリ、 環境変数 (ただし <B>BASH_VERSINFO</B>, <B>DISPLAY</B>, <B>EUID</B>,
+<B>GROUPS</B>, <B>SHELLOPTS</B>, <B>TERM</B>, <B>UID</B>, <B>_</B> を除く)、 umask は、
+いずれも処理実行時の値が保持されます。
+<P>
+現在の <B>at</B> は setuid プログラムとして実装されています。 したがって他の環境変数 (つまり <B>LD_LIBRARY_PATH</B> や
+<B>LD_PRELOAD</B> など) も、 同様にエクスポートされません。 これは将来変更されるかもしれません。 これを回避するには、
+ジョブ内において明示的にそれらの変数を設定してください。
+<P>
+<B>at</B> と <B>batch </B> のコマンドが <B><A HREF="../../0MultiFileIdx/man1/su.1.html">su</A></B>(1) シェルから呼び出された場合、 現在の userid が保持されます。
+このユーザーに対しては、 コマンド実行によって標準エラー出力や標準出力への書き込みが発生した際には、 その内容がメール送信されます。 メールは
+<B>/usr/sbin/sendmail</B> コマンドを使って送信されます。 <B><A HREF="../../0MultiFileIdx/man1/su.1.html">su</A></B>(1) シェルから <B>at</B> が実行されると、
+ログインシェルの所有者がメールを受信します。
+<P>
+
+スーパーユーザーであれば、 いつでもこのコマンドを使用できます。 それ以外のユーザーが利用できるかどうかは、 <I>/etc/at.allow</I>
+ファイルまたは <I>/etc/at.deny</I> によって決まります。 詳しくは <B><A HREF="../man5/at.allow.5.html">at.allow</A></B>(5) を参照してください。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-V</B><DD>
+標準エラー出力にバージョン番号を表示して、 正常終了します。
+<DT><B>-q</B><I> queue</I><DD>
+指定されたキューを使用します。  キューの指定には英字 1 文字を使います。 有効な文字は <B>a</B> から <B>z</B> と <B>A</B> から <B>Z</B>
+です。 キュー <B>a</B> は <B>at</B> に対するデフォルトであり、 キュー <B>b</B> は <B>batch</B> に対するデフォルトです。
+これ以降の文字を使ったキューは、 それだけ nice 値が大きいものとして実行されます。 特別なキューとして &quot;=&quot; があり、
+現在実行中のキューを示すものとして、 この文字が予約されています。
+</DL>
+<P>
+
+英大文字を指定してジョブが登録された場合、 そのジョブは指定時刻に batch を使って実行されるものとして扱われます。 指定時刻になると、
+負荷平均に関するバッチ処理ルールが適用されます。 <B>atq</B> に対して特定のキューが指定されると、 そのキュー内にある未実行ジョブを表示するだけです。
+<DL COMPACT>
+<DT><B>-m</B><DD>
+ジョブが終了する際に、 出力が何もなくても、 ユーザーに対してメールを送信します。
+<DT><B>-M</B><DD>
+ユーザーにメールを送信しません。
+<DT><B>-u</B><I> username</I><DD>
+現在ユーザーではなく <I>username</I> にメールを送信します。
+<DT><B>-f</B><I> file</I><DD>
+ジョブを標準入力からではなく <I>file</I> から読み込みます。
+<DT><B>-t</B><I> time</I><DD>
+時刻 <I>time</I> にジョブを実行します。 書式は [[CC]YY]MMDDhhmm[.ss] とします。
+<DT><B>-l</B><DD>
+<B>atq</B> のエイリアスです。
+<DT><B>-r</B><DD>
+<B>atrm</B> のエイリアスです。
+<DT><B>-d</B><DD>
+<B>atrm</B> のエイリアスです。
+<DT><B>-b</B><DD>
+<B>batch</B> のエイリアスです。
+<DT><B>-v</B><DD>
+ジョブを読み込む前に、 ジョブが実行される時間を表示します。
+</DL>
+<P>
+
+表示される時間は &quot;Thu Feb 20 14:50:00 1997&quot; といった書式です。
+<DL COMPACT>
+<DT><B>-c</B><DD>
+コマンドラインから指定されたジョブの内容を標準出力に表示します。
+<DT><B>-o</B><I> fmt</I><DD>
+ジョブ一覧に対して strftime のような時間書式を用います。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/var/spool/atjobs</I>
+<BR>
+
+<I>/var/spool/atspool</I>
+<BR>
+
+<I>/proc/loadavg</I>
+<BR>
+
+<I>/var/run/utmp</I>
+<BR>
+
+<I>/etc/at.allow</I>
+<BR>
+
+<I>/etc/at.deny</I>
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man5/at.allow.5.html">at.allow</A></B>(5), <B><A HREF="../man5/at.deny.5.html">at.deny</A></B>(5), <B><A HREF="../man8/atd.8.html">atd</A></B>(8), <B>cron</B>(1), <B><A HREF="../../0MultiFileIdx/man1/nice.1.html">nice</A></B>(1), <B>sh</B>(1),
+<B><A HREF="../../LDP_man-pages/man2/umask.2.html">umask</A></B>(2).
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+Linux において <B>batch</B> が正しく処理されるためには、 <I>/proc</I> にマウントされた <I>proc</I>
+タイプのディレクトリが存在している必要があります。
+<P>
+
+ファイル <I>/var/run/utmp</I> が利用できないか壊れている場合、 あるいは <B>at</B> の実行時にユーザーがログインしていない場合は、
+環境変数 <B>LOGNAME</B> に示される userid のユーザーにメールが送信されます。 これが未定義かあるいは空の場合は、 現在の userid
+に対して処理が行われます。
+<P>
+
+現在実装されている <B>At</B> や <B>batch</B> では、 ユーザー間でのリソース競合時には適していません。
+利用環境においてこれが発生する場合は、<B>nqs</B> のような別のバッチシステムの利用が必要かもしれません。
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+Thomas Koenig がほとんどを作りました。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

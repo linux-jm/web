@@ -1,0 +1,253 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of XINETD.LOG</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>XINETD.LOG</H1>
+Section: File Formats (5)<BR>Updated: 28 April 1993<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/xinetd/release/man5/xinetd.log.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+xinetd.log - xinetd サービスのログ形式
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+サービスへのアクセスが試みられたときに、サービスの設定によって
+いろいろな程度でのログ出力を行える。
+そのサービスに対するログ出力が有効になっていれば、
+<B>xinetd</B>
+
+は下記の形式で 1 行のログエントリを生成する
+(全てのエントリには、最初にタイムスタンプがつく)。
+<P>
+<DL COMPACT><DT><DD>
+<I>entry</I>: <I>service-id</I> <I>data</I>
+</DL>
+
+<P>
+
+<I>data</I>
+
+は
+<I>entry</I>
+
+に依存する。
+<I>entry</I>
+
+には以下のものがある。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><FONT SIZE="-1"><B>START</B></FONT>
+<DD>
+サーバが起動されたときに生成される
+<DT><FONT SIZE="-1"><B>EXIT</B></FONT>
+<DD>
+サーバが終了したときに生成される
+<DT><FONT SIZE="-1"><B>FAIL</B></FONT>
+<DD>
+サーバを起動できなかったときに生成される
+<DT><FONT SIZE="-1"><B>DATA</B></FONT>
+<DD>
+サーバの起動に失敗し、サービスが
+<I>RECORD</I>
+
+ログオプションをサポートしているときに生成される
+<DT><FONT SIZE="-1"><B>USERID</B></FONT>
+<DD>
+<I>USERID</I>
+
+ログオプションが指定されていれば生成される
+<DT><FONT SIZE="-1"><B>NOID</B></FONT>
+<DD>
+<I>USERID</I>
+
+ログオプションと
+<I>IDONLY</I>
+
+サービスフラグが指定されていて、
+かつ相手側ホストが誰がサービスにアクセスしようとしているかを
+識別できなかった場合に生成される
+</DL>
+</DL>
+
+<P>
+
+適切なログオプションを使用している場合に、角括弧の内側に現れる
+情報について以下に述べる。
+<P>
+
+<I>START</I>
+
+エントリでは次の形式である。
+<P>
+<DL COMPACT><DT><DD>
+START: <I>service-id</I> [pid=%d] [from=%d.%d.%d.%d]
+</DL>
+
+<P>
+
+<I>EXIT </I>
+
+エントリでは次の形式である。
+<P>
+<DL COMPACT><DT><DD>
+EXIT: <I>service-id</I> [<I>type</I>=%d] [pid=%d] [duration=%d(sec)]
+</DL>
+
+<P>
+<I>type</I>
+
+は
+<FONT SIZE="-1"><B>status</B></FONT>
+と
+<FONT SIZE="-1"><B>signal</B></FONT>
+のどちらかである。
+数値は、終了ステータスか、プロセスを終了させたシグナル番号のどちらかである。
+<P>
+
+<I>FAIL</I>
+
+エントリは以下の形式である。
+<P>
+<DL COMPACT><DT><DD>
+FAIL: <I>service-id</I> <I>reason</I> [from=%d.%d.%d.%d]
+</DL>
+
+<P>
+<I>reasons</I>
+
+には以下のものがある。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><FONT SIZE="-1"><B>fork</B></FONT>
+<DD>
+ある連続した回数、フォークに失敗した(回数は設定可能なパラメータである)。
+<DT><FONT SIZE="-1"><B>time</B></FONT>
+<DD>
+時間チェックに失敗した
+<DT><FONT SIZE="-1"><B>address</B></FONT>
+<DD>
+アドレスチェックに失敗した
+<DT><FONT SIZE="-1"><B>service_limit</B></FONT>
+<DD>
+そのサービスに対する同時サービス数(instances)の制限を越えた
+<DT><FONT SIZE="-1"><B>process_limit</B></FONT>
+<DD>
+フォークしたプロセス数が制限を越えた
+</DL>
+</DL>
+
+<P>
+
+<I>DATA</I>
+
+エントリは以下の形式である。
+<P>
+<DL COMPACT><DT><DD>
+DATA: <I>service-id</I> <I>data</I>
+</DL>
+
+<P>
+ログ出力される
+<I>data</I>
+
+はサービスに依存する。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><FONT SIZE="-1"><B>login</B></FONT>
+<DD>
+remote_user=%s local_user=%s tty=%s
+<DT><FONT SIZE="-1"><B>exec</B></FONT>
+<DD>
+remote_user=%s verify=<I>status</I> command=%s
+<BR>
+
+<I>status</I>
+
+には以下のものがある。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>ok</I>
+
+<DD>
+パスワードは正しかった
+<DT><I>failed</I>
+
+<DD>
+パスワードが正しくなかった
+<DT><I>baduser</I>
+
+<DD>
+そのようなユーザは存在しない
+</DL>
+</DL>
+
+<DT><FONT SIZE="-1"><B>shell</B></FONT>
+<DD>
+remote_user=%s local_user=%s command=%s
+<DT><FONT SIZE="-1"><B>finger</B></FONT>
+<DD>
+<I>受け取った文字列</I>
+
+または
+<I>空行</I>
+
+</DL>
+</DL>
+
+<P>
+
+<I>USERID</I>
+
+は以下の形式である。
+<P>
+<DL COMPACT><DT><DD>
+USERID: <I>service-id</I> <I>text</I>
+</DL>
+
+<P>
+<I>text</I>
+
+は相手側ホストの ident デーモンからの返事のうち、ポート番号を除いたもの
+である(ポート番号は返事に含まれている)。
+<P>
+
+<I>NOID</I>
+
+は以下の形式である。
+<P>
+<DL COMPACT><DT><DD>
+NOID: <I>service-id</I> <I>IP-address</I> <I>reason</I> 
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>関連項目</H2>
+
+<I>xinetd</I>(1),
+
+<I><A HREF="../man5/xinetd.conf.5.html">xinetd.conf</A></I>(5)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:51 GMT, December 05, 2022
+</BODY>
+</HTML>

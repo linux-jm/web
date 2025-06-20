@@ -1,0 +1,232 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ATALKD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ATALKD</H1>
+Section: Maintenance Commands (8)<BR>Updated: 17 Nov 1995<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/netatalk/release/man8/atalkd.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+atalkd - AppleTalk RTMP, NBP, ZIP, AEP の管理をする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/usr/sbin/atalkd</B>
+
+[
+<B>-f</B>
+
+<I>configfile</I>
+
+] [
+<B>-1</B>
+
+|
+<B>-2</B>
+
+]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>atalkd</B>
+
+は全てのユーザーレベル AppleTalk ネットワーク管理の責任を負う。
+これには、ルーティング・名前の登録と照合・ゾーンの照合・
+AppleTalk エコープロトコル
+(<B><A HREF="../../netkit/man8/ping.8.html">ping</A></B>(8)
+
+に似たもの) が含まれる。
+<B>atalkd</B>
+
+は、通常、ブート時に
+<B>/etc/rc</B>
+
+から起動される。
+最初に設定ファイル
+<B>/etc/netatalk/atalkd.conf</B>
+
+を読み込む。
+設定ファイルがない場合、
+<B>atalkd</B>
+
+は使用可能な全てのインターフェースを設定しようと試み、
+設定ファイルを作成する。
+このファイルには 1 行に 1 つのインターフェースが並べて書かれている。
+`<B>#</B>'
+
+が最初にある行は、空行と同様に、無視される。
+書式は以下の通り。
+<DL COMPACT><DT><DD>
+<P>
+<I>interface</I>
+
+[
+<B>-seed</B>
+
+] [
+<B>-phase</B>
+
+<I>number</I>
+
+] [
+<B>-net</B>
+
+<I>net-range</I>
+
+] [
+<B>-addr</B>
+
+<I>address</I>
+
+] [
+<B>-zone</B>
+
+<I>zonename</I>
+
+] ...
+<P>
+</DL>
+
+<I>interface</I>
+
+以外のフィールドは省略可能である点に注意すること。
+ループバックインターフェースは自動的に設定される。
+<B>-seed</B>
+
+を指定した場合、他の全てのフィールドが存在しなければならない。
+ルータがこのシード情報を認めない場合、
+<B>atalkd</B>
+
+はブートせずに終了する。
+<B>-seed</B>
+
+が指定されない場合、他の全ての情報は自動設定で上書きされる。
+<B>-phase</B>
+
+オプションが指定されない場合、
+コマンドラインで与えられるデフォルトのフェーズが使われる
+(デフォルトは 2 である)。
+<B>-addr</B>
+
+は指定されているが、
+<B>-net</B>
+
+が指定されていない場合、
+<I>net-range</I>
+
+は 1 であると仮定する。
+<P>
+
+各インターフェースの最初の
+<B>-zone</B>
+
+ディレクティブは「デフォルト」ゾーンである。
+フェーズ 1 では、1 つのゾーンしかない。
+フェーズ 2 では、ネットワーク上の全てのルータは
+デフォルトゾーンに設定され、これを認めなければならない。
+<B>atalkd</B>
+
+は、``*'' を第 1 インターフェースのデフォルトゾーンに対応づける。
+注意:
+マシンのデフォルトゾーンはローカルルータの設定によって決められる;
+デフォルトゾーンがない場合、
+<B>afpd</B>
+
+のような各サービスは、個別に希望するゾーンを指定しなければならない。
+<B><A HREF="../man3/nbp_name.3.html">nbp_name</A></B>(3)
+
+を参照すること。
+<A NAME="lbAE">&nbsp;</A>
+<H2>ルーティング</H2>
+
+既存の AppleTalk インターネットに netatalk ルータで接続している場合は、
+適切なネットワークアドレスを取得するために、
+まずはローカルのネットワーク管理者に相談すべきである。
+<P>
+
+<B>atalkd</B>
+
+は、複数のインターフェースを設定することにより、
+インターフェース間のルーティング機能を提供する。
+各インターフェースは 1 〜 65279 の間で他と重ならない
+<I>net-range</I>
+
+を割り当てなければならない
+(0 と 65535 は不正であり、
+65280 〜 65534 のアドレスはスタートアップのために予約されている)。
+最も小さく有効な
+<I>net-range</I>
+
+を選ぶのが最も良い。
+つまり、イーサーネット上に 3 台のマシンがある場合、
+1000-2000 という
+<I>net-range</I>
+
+を選んではならない。
+各
+<I>net-range</I>
+
+には、それに割り当てられたゾーンの任意のリストが存在できる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>例</H2>
+
+以下は sun4/40 の設定ファイルの例である。
+マシンには 2 つのインターフェース
+``le0'' と ``le1'' がある。
+``le0'' インターフェースは、
+ネットワーク上の他のルータによって自動的に設定される。
+このマシンは ``le1'' インターフェースについてのみルーティングを行う。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+le0
+le1 -seed -net 9461-9471 -zone netatalk -zone Argus
+</PRE>
+
+</DL>
+
+<P>
+2 つ以上のインターフェースがある場合、
+<B>atalkd</B>
+
+は自動的にルータとして動作する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><B>/etc/netatalk/atalkd.conf</B>
+
+<DD>
+設定ファイル
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+いくつかのシステムでは、atalkd が再起動できない。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">ルーティング</A><DD>
+<DT><A HREF="#lbAF">例</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:40 GMT, December 05, 2022
+</BODY>
+</HTML>

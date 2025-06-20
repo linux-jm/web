@@ -1,0 +1,272 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TSEARCH</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TSEARCH</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/tsearch.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+tsearch, tfind, tdelete, twalk, tdestroy - 二分探索木 (binary search tree) の操作
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</B>
+
+<B>typedef enum { preorder, postorder, endorder, leaf } VISIT;</B>
+
+<B>void *tsearch(const void *</B><I>key</I><B>, void **</B><I>rootp</I><B>,</B>
+<B>                int (*</B><I>compar</I><B>)(const void *, const void *));</B>
+
+<B>void *tfind(const void *</B><I>key</I><B>, void *const *</B><I>rootp</I><B>,</B>
+<B>                int (*</B><I>compar</I><B>)(const void *, const void *));</B>
+
+<B>void *tdelete(const void *</B><I>key</I><B>, void **</B><I>rootp</I><B>,</B>
+<B>                int (*</B><I>compar</I><B>)(const void *, const void *));</B>
+
+<B>void twalk(const void *</B><I>root</I><B>,</B>
+<B>                void (*</B><I>action</I><B>)(const void *</B><I>nodep</I><B>, VISIT </B><I>which</I><B>,</B>
+<B>                               int </B><I>depth</I><B>));</B>
+
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</B>
+
+<B>void twalk_r(const void *</B><I>root</I><B>,</B>
+<B>                void (*</B><I>action</I><B>)(const void *</B><I>nodep</I><B>, VISIT </B><I>which</I><B>,</B>
+<B>                               void *</B><I>closure</I><B>),</B>
+<B>                void *</B><I>closure</I><B>);</B>
+
+<B>void tdestroy(void *</B><I>root</I><B>, void (*</B><I>free_node</I><B>)(void *</B><I>nodep</I><B>));</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>tsearch</B>(), <B>tfind</B>(), <B>twalk</B>(), <B>tdelete</B>()  は 二分探索木を操作する関数である。
+これらの関数は Knuth (6.2.2) Algorithm T に基づいている。 木構造における各ノードの最初のフィールドは、対応するデータ
+アイテムへのポインターである。 (参照先のデータは、呼び出しプログラムで用意する。)  <I>compar</I> は比較ルーチンへのポインターである。
+比較ルーチンは、アイテムへのポインター 2 つを引数に持つ。 比較ルーチンの返り値は、1 つ目のアイテムが 2 つ目のアイテムよりも
+「小さい、等しい、大きい」によって、 「負、0、正」の整数値でなければならない。
+<P>
+
+<B>tsearch</B>()  searches the tree for an item.  <I>key</I> points to the item to
+be searched for.  <I>rootp</I> points to a variable which points to the root of
+the tree.  If the tree is empty, then the variable that <I>rootp</I> points to
+should be set to NULL.  If the item is found in the tree, then <B>tsearch</B>()
+returns a pointer to the corresponding tree node.  (In other words,
+<B>tsearch</B>()  returns a pointer to a pointer to the data item.)  If the item
+is not found, then <B>tsearch</B>()  adds it, and returns a pointer to the
+corresponding tree node.
+<P>
+
+<B>tfind</B>()  は、 <B>tsearch</B>()  に似ているが、 アイテムが見つからなかった場合 NULL を返す点が異なる。
+<P>
+
+<B>tdelete</B>()  は木構造からアイテムを削除する。 引数は <B>tsearch</B>()  と同じである。
+<P>
+
+<B>twalk</B>()  は、二分木を深さ優先 (depth-first) で、 左から右にたどっていく関数である。 <I>root</I>
+は起点となるノードへのポインターである。 <I>root</I> に根以外のノードを指定すると、部分木が対象となる。 <B>twalk</B>()
+は、ノードを訪れる度にユーザー関数 <I>action</I> を呼び出す (内部ノードに対しては 3 回、葉に対しては 1 回呼び出しが行われる)。
+<I>action</I> には以下の順に 3 つの引数が与えられる。 最初の引数は訪れたノードへのポインターである。 ノードの構造体は規定されていないが、
+ポインターを要素へのポインターのポインターにキャストし、 ノードに格納された要素にアクセスすることができる。
+アプリケーションは、この引数が指す構造体を変更してはならない。 2 番目の引数には、内部ノードの場合は訪問回数に応じて <B>preorder</B>,
+<B>postorder</B>, <B>endorder</B> のいずれかの整数が、 葉を最初に訪れた場合は <B>leaf</B> の値が渡される (これらのシンボルは
+<I>&lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</I> で定義されている)。  3 番目の引数はノードの深さで、根の場合は深さ 0 である。
+<P>
+
+(より一般的には、<B>preorder</B>, <B>postorder</B>, <B>endorder</B> は <B>preorder</B>, <B>inorder</B>,
+<B>postorder</B> として知られている: それぞれ、子要素を辿る前・最初の子要素を辿った後かつ 2 番目の子要素を辿る前・
+子要素を辿った後ということを表している。 よって <B>postorder</B> という名前を選ぶのは少し紛らわしい。)
+<P>
+
+<B>twalk_r</B>()  is similar to <B>twalk</B>(), but instead of the <I>depth</I>
+argument, the <I>closure</I> argument pointer is passed to each invocation of
+the action callback, unchanged.  This pointer can be used to pass
+information to and from the callback function in a thread-safe fashion,
+without resorting to global variables.
+<P>
+
+<B>tdestroy</B>()  は <I>root</I> が指す木構造全体を削除し、 <B>tsearch</B>()  関数で確保されたリソースを全て解放する。
+木構造の各ノードについて、関数 <I>free_node</I> が呼び出される。 データへのポインターがこの関数の引数として渡される。
+そのような動作が必要でなければ、 <I>free_node</I> は何もしない関数へのポインターでなければならない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>tsearch</B>()  returns a pointer to a matching node in the tree, or to the
+newly added node, or NULL if there was insufficient memory to add the item.
+<B>tfind</B>()  returns a pointer to the node, or NULL if no match is found.  If
+there are multiple items that match the key, the item whose node is returned
+is unspecified.
+<P>
+
+<B>tdelete</B>()  returns a pointer to the parent of the node deleted, or NULL
+if the item was not found.  If the deleted node was the root node,
+<B>tdelete</B>()  returns a dangling pointer that must not be accessed.
+<P>
+
+<I>rootp</I> が NULL の場合、 <B>tsearch</B>(), <B>tfind</B>(), <B>tdelete</B>()  は NULL を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>twalk_r</B>() は glibc バージョン 2.30 以降で利用可能である。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>tsearch</B>(),
+<B>tfind</B>(),
+<BR>
+
+<B>tdelete</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe race:rootp<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>twalk</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe race:root<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>twalk_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe race:root<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>tdestroy</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4.  The functions <B>tdestroy</B>()  and
+<B>twalk_r</B>()  are GNU extensions.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<B>twalk</B>()  は根へのポインターを引数にとるが、 ほかの関数は根へのポインターへのポインターである。
+<P>
+
+<B>tdelete</B>()  は、削除したノードの使用していたメモリーを解放するが、
+ノードに対応するデータのメモリーは、ユーザーが解放しなければならない。
+<P>
+
+下のプログラム例は、ユーザー関数が &quot;endorder&quot; か &quot;leaf&quot; を引数にして 呼び出されて以降は、 <B>twalk</B>()
+がそのノードを参照しないことを前提としている。 これは GNU ライブラリの実装では機能するが、System V のマニュアルには存在しない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは 12 個の乱数を二分木に挿入した後、 挿入した数を順番に出力する (挿入の際、重複した乱数は 1 つにまとめられる)。
+<P>
+
+
+#define _GNU_SOURCE     /* Expose declaration of tdestroy() */
+#include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stddef.h">stddef.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+<P>
+static void *root = NULL;
+<P>
+static void *
+xmalloc(size_t n)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;*p;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;p&nbsp;=&nbsp;<A HREF="/cgi-bin/man/man2html?n+malloc">malloc</A>(n);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(p)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;p;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;insufficient&nbsp;memory\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+}
+<P>
+static int
+compare(const void *pa, const void *pb)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(*(int&nbsp;*)&nbsp;pa&nbsp;&lt;&nbsp;*(int&nbsp;*)&nbsp;pb)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(*(int&nbsp;*)&nbsp;pa&nbsp;&gt;&nbsp;*(int&nbsp;*)&nbsp;pb)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;
+}
+<P>
+static void
+action(const void *nodep, VISIT which, int depth)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;*datap;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(which)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;preorder:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;postorder:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;datap&nbsp;=&nbsp;*(int&nbsp;**)&nbsp;nodep;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%6d\n&quot;,&nbsp;*datap);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;endorder:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;leaf:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;datap&nbsp;=&nbsp;*(int&nbsp;**)&nbsp;nodep;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%6d\n&quot;,&nbsp;*datap);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+<P>
+int
+main(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;**val;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;srand(time(NULL));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;12;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;*ptr&nbsp;=&nbsp;xmalloc(sizeof(*ptr));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ptr&nbsp;=&nbsp;rand()&nbsp;&amp;&nbsp;0xff;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;=&nbsp;tsearch(ptr,&nbsp;&amp;root,&nbsp;compare);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(val&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;if&nbsp;(*val&nbsp;!=&nbsp;ptr)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;free(ptr);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;twalk(root,&nbsp;action);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tdestroy(root,&nbsp;free);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/bsearch.3.html">bsearch</A></B>(3), <B><A HREF="../man3/hsearch.3.html">hsearch</A></B>(3), <B><A HREF="../man3/lsearch.3.html">lsearch</A></B>(3)  <B><A HREF="../man3/qsort.3.html">qsort</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">バージョン</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

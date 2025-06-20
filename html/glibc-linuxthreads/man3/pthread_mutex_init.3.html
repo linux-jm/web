@@ -1,0 +1,421 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_MUTEX</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_MUTEX</H1>
+Section: C Library Functions (3)<BR>Updated: LinuxThreads<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/glibc-linuxthreads/release/man3/pthread_mutex_init.3">roff page</A><HR>
+
+<P>
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_mutex_init, pthread_mutex_lock, pthread_mutex_trylock, 
+pthread_mutex_unlock, pthread_mutex_destroy - mutex の操作
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<P>
+<B>pthread_mutex_t </B><I>fastmutex</I><B> = PTHREAD_MUTEX_INITIALIZER;</B>
+
+<P>
+<B>pthread_mutex_t </B><I>recmutex</I><B> = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;</B>
+
+<P>
+<B>pthread_mutex_t </B><I>errchkmutex</I><B> = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;</B>
+
+<P>
+<B>int pthread_mutex_init(pthread_mutex_t *</B><I>mutex</I><B>, const pthread_mutexattr_t *</B><I>mutexattr</I><B>);</B>
+
+<P>
+<B>int pthread_mutex_lock(pthread_mutex_t *</B><I>mutex</I><B>));</B>
+
+<P>
+<B>int pthread_mutex_trylock(pthread_mutex_t *</B><I>mutex</I><B>);</B>
+
+<P>
+<B>int pthread_mutex_unlock(pthread_mutex_t *</B><I>mutex</I><B>);</B>
+
+<P>
+<B>int pthread_mutex_destroy(pthread_mutex_t *</B><I>mutex</I><B>);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+mutex は、排他制御 (MUTual EXclusion) の仕組みであり、共有データの同時更新
+からの保護、クリティカルセクション (critical section) や
+モニタの実装などに使われる。
+<P>
+mutex は二つの状態を取りうる。それは、アンロック状態(どのスレッドにも
+保有されていない)とロック状態(一つのスレッドに保有されている)である。
+二つの異なるスレッドが同時に一つの mutex を保有することはない。既に他の
+スレッドによってロックされた mutex をロックしようとするスレッドは、保有
+側のスレッドが先にその mutex をアンロックするまで実行を停止させられる。
+<P>
+<B>pthread_mutex_init</B>
+
+は
+<I>mutex</I>
+
+が指す mutex オブジェクトを、
+<I>mutexattr</I>
+
+で指定された mutex 属性オブジェクトに従って初期化する。
+<I>mutexattr</I>
+
+が
+<B>NULL</B>,
+
+ならば、デフォルトの属性がこのかわりに使われる。
+<P>
+LinuxThreads の実装はただ一つの属性
+<I>mutex kind</I>
+
+だけに対応している。この属性は、「速い」(``fast'')、
+「再帰的な」(``recursive'')、または
+「エラー検査を行なう」(``error checking'')のいずれかを
+指定するものである。
+mutex の種別(kind)は、その mutex を既に保有しているスレッドが、
+それを再びロックできるかどうかを決定する。
+デフォルトの種別は「速い」である。mutex 属性のより詳しい情報は、
+<B><A HREF="../man3/pthread_mutexattr_init.3.html">pthread_mutexattr_init</A></B>(3)
+
+を見よ。
+<P>
+<B>pthread_mutex_t</B>
+
+型の変数は、(速い mutex に対する)定数
+<B>PTHREAD_MUTEX_INITIALIZER</B>
+
+と、(再帰的 mutex に対する)
+<B>PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP</B>
+
+および、(エラー検査を行なう mutex に対する)
+<B>PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP</B>
+
+で、静的に初期化することもできる。
+<P>
+<B>pthread_mutex_lock</B>
+
+は、与えられた mutex をロックする。mutex が現在ロックされていなければ、
+それはロックされ、呼び出しスレッドによって所有される。この場合
+<B>pthread_mutex_lock</B>
+
+は直ちに返る。mutex が他のスレッドによって既にロックされていたのならば、
+<B>pthread_mutex_lock</B>
+
+は mutex がアンロックされるまで呼び出しスレッドの実行を停止させる。
+<P>
+mutex が呼び出し側のスレッドにより既にロックされている場合には、
+<B>pthread_mutex_lock</B>
+
+の振舞いは、mutex の種別に依存する。mutex の種別が「速い」であれば、
+呼び出しスレッドは mutex がアンロックされるまで実行を停止する。
+従って事実上呼び出しスレッドのデッドロックを引き起こす。
+mutex の種別が「エラーをチェックする」であれば、
+<B>pthread_mutex_lock</B>
+
+はエラーコード
+<B>EDEADLK</B>
+
+とともに直ちに戻る。mutex の種別が「再帰的」ならば、
+<B>pthread_mutex_lock</B>
+
+は成功し直ちに戻る。この際、呼び出しスレッドが、その mutex を
+ロックした回数を記録する。この mutex がアンロック状態に戻るには、
+同数の
+<B>pthread_mutex_unlock</B>
+
+操作が実行されねばならない。
+<P>
+<B>pthread_mutex_trylock</B>
+
+は
+<B>pthread_mutex_lock</B>
+
+と同様に振舞うが、mutex が既に他のスレッドによって
+(あるいは、「速い」 mutex の場合、呼び出しスレッドによって)
+ロックされている場合、呼び出しスレッドをブロックしない。
+かわりに、
+<B>pthread_mutex_trylock</B>
+
+はエラーコード
+<B>EBUSY</B>
+
+で直ちに戻る。
+<P>
+<B>pthread_mutex_unlock</B>
+
+は、与えられた mutex をアンロックする。
+<B>pthread_mutex_unlock</B>
+
+の開始時点で、この mutex は呼び出しスレッドによりロックされ
+所有されているものと仮定される。
+<BR>&nbsp;mutex&nbsp;が「速い」種別のものならば、
+<B>pthread_mutex_unlock</B>
+
+は常にそれをアンロック状態に戻す。それが「再帰的な」種別ならば、
+<BR>&nbsp;mutex&nbsp;のロック計数(この&nbsp;mutex&nbsp;に対して
+<B>pthread_mutex_lock</B>
+
+操作が呼び出しスレッドで実行された回数)
+を一つ減らし、この計数がゼロになった時に、初めて mutex が
+実際にアンロックされる。
+<P>
+「エラーを検査する」mutex に対しては、
+<B>pthread_mutex_unlock</B>
+
+は実行時に実際に、mutex が開始時点でロックされているか、
+また、それは現在
+<B>pthread_mutex_unlock</B>
+
+を呼んでいるのと同じスレッドによってロックされたかどうか、を検査する。
+これらの条件が満たされない場合には、エラーコードが返され、mutex は
+不変のままにされる。「速い」mutex と「再帰的な」mutex はこのような
+チェックを行なわなず、よって、ロックされた mutex を所有者以外の
+スレッドによってアンロックすることを可能にしている。これは、移植性の
+ない振舞いであり、これに依存するようなことはすべきでない。
+<P>
+<B>pthread_mutex_destroy</B>
+
+は、mutex オブジェクトを破壊し、それが保持している可能性のある
+資源を開放する。mutex は関数の開始時点でアンロックされていなければ
+ならない。LinuxThreads の実装では、いかなる資源も mutex オブジェクトに
+付随していない。故に
+<B>pthread_mutex_destroy</B>
+
+は実際のところ、mutex がアンロックされているかどうかを検査する
+以外のことは何もしない。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>取り消し</H2>
+
+<P>
+いかなる mutex 関数も取り消しポイントではない。
+<B>pthread_mutex_lock</B>
+
+でさえも、それが任意の時間スレッドの実行を停止させうるという
+事実にも関わらず、取り消しポイントではない。これにより、取り消し
+ポイントにおける mutex の状態は予測可能となり、取り消しハンドラが、
+スレッドの実行停止以前にアンロックされる必要のある mutex まさにそれ
+のみを、正確にアンロックすることを可能にしている。この結果、遅延
+取り消しを用いるスレッドは、決して余計な時間 mutex を所有することはない。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>非同期シグナルに対する安全性</H2>
+
+<P>
+mutex 関数は非同期シグナルに対して安全ではない。これの
+意味するところは、それらはシグナルハンドラから呼ぶべきではない、
+ということである。特に
+<B>pthread_mutex_lock</B>
+
+または
+<B>pthread_mutex_unlock</B>
+
+のシグナルハンドラからの呼び出しは、呼び出しスレッドをデッド
+ロックさせる恐れがある。
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+<P>
+<B>pthread_mutex_init</B>
+
+は、常に 0 を返す。他の mutex 関数は、成功すれば 0 を返し、
+エラーでは非ゼロのエラーコードを返す。
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<P>
+<B>pthread_mutex_lock</B>
+
+はエラーの際、次のエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+mutex が適切に初期化されていない。
+<P>
+<DT><B>EDEADLK</B>
+
+<DD>
+mutex は既に呼び出しスレッドによりロックされている。
+(「エラー検査を行なう」 mutexes のみ)
+</DL>
+</DL>
+
+<P>
+<B>pthread_mutex_trylock</B>
+
+はエラーの際、次のエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EBUSY</B>
+
+<DD>
+現在ロックされているので mutex を取得できない。
+<P>
+<DT><B>EINVAL</B>
+
+<DD>
+mutex が適切に初期化されていない。
+</DL>
+</DL>
+
+<P>
+<B>pthread_mutex_unlock</B>
+
+はエラーの際、次のエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+mutex が適切に初期化されていない。
+<P>
+<DT><B>EPERM</B>
+
+<DD>
+呼び出しスレッドは mutex を所有していない。(「エラーを検査する」 mutex のみ)
+</DL>
+</DL>
+
+<P>
+<B>pthread_mutex_destroy</B>
+
+はエラーの際、次のエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EBUSY</B>
+
+<DD>
+mutex は現在ロックされている。
+</DL>
+</DL>
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+Xavier Leroy &lt;<A HREF="mailto:Xavier.Leroy@inria.fr">Xavier.Leroy@inria.fr</A>&gt;
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/pthread_mutexattr_init.3.html">pthread_mutexattr_init</A></B>(3),
+
+<B><A HREF="../man3/pthread_mutexattr_setkind_np.3.html">pthread_mutexattr_setkind_np</A></B>(3),
+
+<B><A HREF="../man3/pthread_cancel.3.html">pthread_cancel</A></B>(3).
+
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+<P>
+共有される大域変数
+<I>x</I>
+
+は mutex により次のように保護される:
+<P>
+<DL COMPACT><DT><DD>
+<B>
+</B><PRE>
+
+int x;
+pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
+
+</DL>
+</PRE>
+
+<P>
+全ての
+<I>x</I>
+
+へのアクセスとその変更は
+<B>pthread_mutex_lock</B>
+
+と
+<B>pthread_mutex_unlock</B>
+
+によって、次のように囲まれていなければならない:
+<P>
+<DL COMPACT><DT><DD>
+<B>
+</B><PRE>
+
+pthread_mutex_lock(&amp;mut);
+/* x の操作 */
+pthread_mutex_unlock(&amp;mut);
+
+</DL>
+</PRE>
+
+<P>
+[訳注] glibc-linuxthreads の最新のドキュメントは Texinfo 形式で提供されている。
+上の記述は glibc-linuxthreads-2.2 以降では正しくない。
+以下は glibc-linuxthreads-2.3.1 の Texinfo ファイルからの引用である。
+種別 (kind) が型 (type) に変更されている。
+<P>
+LinuxThreads 実装はただ 1 つの mutex 属性に対応している。
+それは mutex 型 (mutex type) で、
+「速い (fast) 」、「再帰的な (recursive) 」、
+「時刻情報つき (timed) 」、「エラー検査を行なう (error checking) 」の
+いずれかである。
+mutex 型は、
+あるスレッドが自分自身ですでに保持している mutex をロックできるかどうかを
+決定する。
+デフォルトの mutex 型は「時刻情報つき (timed) 」である。
+<P>
+<B>pthread_mutex_t</B>
+
+型の変数は、定数
+<B>PTHREAD_MUTEX_INITIALIZER</B>
+
+( 時刻情報つき (timed) mutex 用 ) 、
+<B>PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP</B>
+
+( 再帰的な (recursive) mutex 用 ) 、
+<B>PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP</B>
+
+( 速い (fast) mutex 用 ) 、
+<B>PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP</B>
+
+( エラー検査を行なう (error checking) mutex 用 ) を用いて
+静的に初期化することもできる。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">取り消し</A><DD>
+<DT><A HREF="#lbAF">非同期シグナルに対する安全性</A><DD>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

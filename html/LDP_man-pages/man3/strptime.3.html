@@ -1,0 +1,319 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STRPTIME</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>STRPTIME</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated:  2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/strptime.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+strptime - 文字列であらわされている時間を tm 構造体の時間に変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#define _XOPEN_SOURCE</B> /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</B>
+<P>
+
+<B>char *strptime(const char *</B><I>s</I><B>, const char *</B><I>format</I><B>,</B> <B>struct tm
+*</B><I>tm</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>strptime</B>() 関数は <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3) の逆関数である。 ポインター <I>s</I> が指す文字列を <I>format</I>
+で指定されたフォーマットを使って「要素別の時刻」に変換し、<I>tm</I> が指す構造体に格納する。
+<P>
+
+要素別の時刻構造体 <I>tm</I> は <I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I> 内で以下の様に定義されている。
+<P>
+
+
+
+struct tm {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tm_sec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;秒&nbsp;(0-60)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tm_min;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;分&nbsp;(0-59)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tm_hour;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;時間&nbsp;(0-23)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tm_mday;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;月内の日付&nbsp;(1-31)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tm_mon;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;月&nbsp;(0-11)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tm_year;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;年&nbsp;-&nbsp;1900&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tm_wday;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;曜日&nbsp;(0-6,&nbsp;日曜&nbsp;=&nbsp;0)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tm_yday;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;年内通算日&nbsp;(0-365,&nbsp;1&nbsp;月&nbsp;1&nbsp;日&nbsp;=&nbsp;0)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tm_isdst;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;夏時間&nbsp;*/
+};
+
+
+<P>
+
+<I>tm</I> 構造体の詳細は <B><A HREF="../man3/ctime.3.html">ctime</A></B>(3) を参照。
+<P>
+
+<I>format</I> 引数は、 <B><A HREF="../man3/scanf.3.html">scanf</A></B>(3)  で使われているような、 フィールドディスクリプターとテキスト文字で構成されている文字列である。
+個々のフィールドディスクリプターは <B>%</B> とそれに続く文字からなり、 後者にフィールドディスクリプターを置き換える内容を指定する。
+<I>format</I> 文字列中の他の全ての文字には、入力文字列にマッチする文字がなければならない。 フォーマット文字列中にある空白は例外であり、
+入力文字列中の 0 個以上の空白とマッチする。 2 つのフィールドディスクリプターの間には、 空白・英字・数字がなければならない。
+<P>
+
+<B>strptime</B>()  関数は、入力文字列を左から右へ処理する。 入力された 3 つの要素 (空白・文字・フォーマット) は、順に処理される。
+入力がフォーマット文字列とマッチできない場合、関数は停止する。 残りのフォーマット文字列と入力文字列は処理されない。
+<P>
+
+使用可能なフィールドディスクリプターを以下に挙げる。 (曜日や月の名前といった) 文字列をマッチさせる場合、 大文字と小文字は区別せずに比較する。
+数をマッチさせる場合、前に 0 をつけても構わないが必ずしも必要ではない。
+<DL COMPACT>
+<DT><B>%%</B><DD>
+文字としての <B>%</B>。
+<DT><B>%a</B> または <B>%A</B><DD>
+現在のロケールでの曜日名 (省略名または完全な名前)。
+<DT><B>%b</B> または <B>%B</B> または <B>%h</B><DD>
+現在のロケールでの月名 (省略名または完全な名前)。
+<DT><B>%c</B><DD>
+現在のロケールでの日付と時刻の表現。
+<DT><B>%C</B><DD>
+1 世紀中の年 (0-99)。
+<DT><B>%d</B> または <B>%e</B><DD>
+月内の日付 (1-31)。
+<DT><B>%D</B><DD>
+日付。 <B>%m/%d/%y</B> と同じ。 (これはアメリカ式の日付形式で、 ヨーロッパでは特に <B>%d/%m/%y</B>
+という形式が広く使われているために、 アメリカ人以外には紛らわしく感じられる。 ISO 8601 規格では <B>%Y-%m-%d</B> という形式である。)
+<DT><B>%H</B><DD>
+時間 (0-23)。
+<DT><B>%I</B><DD>
+12 時間制での時間 (1-12)。
+<DT><B>%j</B><DD>
+年の初めからの通算の日付 (1-366)。
+<DT><B>%m</B><DD>
+数字表現の月 (1-12)。
+<DT><B>%M</B><DD>
+分 (0-59)。
+<DT><B>%n</B><DD>
+任意の空白。
+<DT><B>%p</B><DD>
+ロケールの AM (午前) と PM (午後) に対応するもの。 (注意: 対応するものがないかもしれない。)
+<DT><B>%r</B><DD>
+(ロケールの AM と PM を使った) 12 時間制の時間。 POSIX ロケールでは <B>%I:%M:%S %p</B> と同じ。 現在のロケールにおいて
+<B>LC_TIME</B> パートの <I>t_fmt_ampm</I> が定義されていない場合、 動作は未定義である。
+<DT><B>%R</B><DD>
+<B>%H:%M</B> と同じ。
+<DT><B>%S</B><DD>
+秒 (0-60; 60 は閏秒を示す。以前は 61 も指定できた)。
+<DT><B>%t</B><DD>
+任意の空白。
+<DT><B>%T</B><DD>
+<B>%H:%M:%S</B> と同じ。
+<DT><B>%U</B><DD>
+日曜日を週の始まりとした年通算での週数 (0-53)。 1 月の最初の日曜日を第 1 週目の最初の日する。
+<DT><B>%w</B><DD>
+曜日を表す数字 (0-6)、日曜日 が 0。
+<DT><B>%W</B><DD>
+月曜日を週の始まりとした年通算での週数 (0-53)。 1 月の最初の月曜日を第 1 週目の最初の日する。
+<DT><B>%x</B><DD>
+日付。ロケールの日付フォーマットを使う。
+<DT><B>%X</B><DD>
+時刻。ロケールの時刻フォーマットを使う。
+<DT><B>%y</B><DD>
+1 世紀中の年 (0-99)。 世紀が指定されない場合、 値が 69-99 の範囲のときは 20 世紀の年 (1969-1999)、
+値が 00-68 の範囲のときは 21 世紀の年 (2000-2068) とする。
+<DT><B>%Y</B><DD>
+年。世紀の部分を含む (例: 1991)。
+</DL>
+<P>
+
+E や O という修飾子を使うことで変更できるフィールドディスクリプターもある。 これらの修飾子は、別のフォーマットや仕様を使うことを指示する。
+別のフォーマットや仕様が現在のロケールに存在しないときは、 変更していないフィールドディスクリプターが使われる。
+<P>
+
+E 修飾子は、ロケールに依存した日付と時刻の別の表現形式が 入力文字列に含まれていることを指定する。
+<DL COMPACT>
+<DT><B>%Ec</B><DD>
+日付と時刻。ロケールに依存した別の表現形式を使う。
+<DT><B>%EC</B><DD>
+基準年 (期間) の名前。ロケールに依存した別の表現形式を使う。
+<DT><B>%Ex</B><DD>
+日付。ロケールに依存した別の表現形式を使う。
+<DT><B>%EX</B><DD>
+時刻。ロケールに依存した別の表現形式を使う。
+<DT><B>%Ey</B><DD>
+<B>%EC</B> (年のみ) からのオフセット。ロケールに依存した別の表現形式を使う。
+<DT><B>%EY</B><DD>
+完全な形式の年。別の表現型式を使う。
+</DL>
+<P>
+
+O 修飾子は、ロケールに依存した別のフォーマットの中に 数値の入力があることを指定する。
+<DL COMPACT>
+<DT><B>%Od</B> または <B>%Oe</B><DD>
+月の初めからの通算の日付。ロケールに依存した別の数値シンボルを使う。 0 を頭につけてもよいが、必須ではない。
+<DT><B>%OH</B><DD>
+時間 (24 時間制)。ロケールに依存した別の数値シンボルを使う。
+<DT><B>%OI</B><DD>
+時間 (12 時間制)。ロケールに依存した別の数値シンボルを使う。
+<DT><B>%Om</B><DD>
+月。ロケールに依存した別の数値シンボルを使う。
+<DT><B>%OM</B><DD>
+分。ロケールに依存した別の数値シンボルを使う。
+<DT><B>%OS</B><DD>
+秒。ロケールに依存した別の数値シンボルを使う。
+<DT><B>%OU</B><DD>
+年の初めからの通算の週数 (日曜日を週の始めとする)。 ロケールに依存した別の数値シンボルを使う。
+<DT><B>%Ow</B><DD>
+曜日を表す数字 (日曜日 が 0)、
+ロケールに依存した別の数値シンボルを使う。
+<DT><B>%OW</B><DD>
+年の初めからの通算の週数 (月曜日を週の始めとする)。 ロケールに依存した別の数値シンボルを使う。
+<DT><B>%Oy</B><DD>
+年 (<B>%C</B> からのオフセット)。ロケールに依存した別の数値シンボルを使う。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+この関数の返り値は、関数の中で処理されなかった最初の文字へのポインターである。 フォーマット文字列が必要する以上の文字が入力文字列に含まれている場合、
+返り値は最後に処理された入力文字の次の文字を指す。 すべての入力文字列が処理された場合、 返り値は文字列末尾のヌルバイトを指す。
+<B>strptime</B>()  がフォーマット文字列のすべての比較に失敗し、 エラーが起こった場合、関数はヌルポインターを返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<BR>&nbsp;<B>strptime</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe env locale<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SUSv2.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+原則として、この関数は <I>tm</I> の初期化はせずに、 指定された値のみを入れる。 つまり、この関数の呼び出しの前に <I>tm</I>
+を初期化しなければならない。 他の UNIX システムとは、細かい点で異なる。 glibc の実装では、明示的に指定されないフィールドは変更されない。
+例外として、年・月・日のいずれかの要素が変更された場合に <I>tm_wday</I> と <I>tm_yday</I> が再計算される。
+<P>
+
+
+
+
+
+'y' (1 世紀中の年) の指定は、 glibc 2.0 では、 1950-2049 の範囲として解釈される。 glibc 2.1
+からは 1969-2068 の範囲として解釈される。
+<A NAME="lbAI">&nbsp;</A>
+<H3>glibc での注意</H3>
+
+一貫性を持たせるため、glibc では <B>strptime</B>() に <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)
+と同じフォーマット文字をサポートさせようとしている。多くの場合、対応するフィールドが解釈されるが、 <I>tm</I>
+フィールドは変更されない。使用可能なフォーマット文字を以下に示す。
+<DL COMPACT>
+<DT><B>%F</B><DD>
+<B>%Y-%m-%d</B> と同じ。ISO 8601 の日付形式。
+<DT><B>%g</B><DD>
+ISO 週数に対応した西暦年。世紀は含まず (0-99) の範囲。
+<DT><B>%G</B><DD>
+ISO 週数に対応した西暦年 (例えば 1991)。
+<DT><B>%u</B><DD>
+10 進数表記の曜日 (1-7 で月曜日を 1 とする)。
+<DT><B>%V</B><DD>
+ISO 8601:1988 形式での年通算の 10 進数表記での週数 (1-53)。 1 月 1 日を含む (月曜日から始まる) 週に 4
+日以上が含まれている場合は、 その週を第 1 週とする。 3 日以下しか含まれていない場合は、1 月 1 日を含む週を前年の最終の週として、 次の週を第
+1 週とする。
+<DT><B>%z</B><DD>
+RFC-822/ISO 8601 標準タイムゾーンを指定する。
+<DT><B>%Z</B><DD>
+タイムゾーン名。
+</DL>
+<P>
+
+同様に、 <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)  の GNU 版での拡張に対応するために、 <B>%k</B> は <B>%H、</B> <B>%P</B> は <B>%p</B>
+と等価に扱われる。また、 <B>%l</B> は <B>%I</B> と等価に扱われるようになるはずである。 さらに以下も定義されている。
+<DL COMPACT>
+<DT><B>%s</B><DD>
+紀元 (Epoch; 1970-01-01 00:00:00 +0000 (UTC)) からの通算の秒数。
+閏秒がサポートされていない限り、閏秒はカウントしない。
+</DL>
+<P>
+
+glibc における実装では、2 つのフィールド間の空白は必要ない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下の例は <B>strptime</B>()  と <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)  の使用法を示している。
+<P>
+
+
+#define _XOPEN_SOURCE
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+<P>
+int
+main(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;tm&nbsp;tm;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[255];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;tm,&nbsp;0,&nbsp;sizeof(tm));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strptime(&quot;2001-11-12&nbsp;18:31:01&quot;,&nbsp;&quot;%Y-%m-%d&nbsp;%H:%M:%S&quot;,&nbsp;&amp;tm);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strftime(buf,&nbsp;sizeof(buf),&nbsp;&quot;%d&nbsp;%b&nbsp;%Y&nbsp;%H:%M&quot;,&nbsp;&amp;tm);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;puts(buf);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/time.2.html">time</A></B>(2), <B><A HREF="../man3/getdate.3.html">getdate</A></B>(3), <B><A HREF="../man3/scanf.3.html">scanf</A></B>(3), <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3), <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">glibc での注意</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

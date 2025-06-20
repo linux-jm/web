@@ -1,0 +1,162 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FEXECVE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FEXECVE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated:  2019-10-10<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/fexecve.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fexecve - ファイルディスクリプターで指定されたプログラムを実行する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int fexecve(int </B><I>fd</I><B>, char *const </B><I>argv</I><B>[], char *const </B><I>envp</I><B>[]);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>fexecve</B>():
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>glibc 2.10 以降:<DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>glibc 2.10 より前:<DD>
+_GNU_SOURCE
+</DL>
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>fexecve</B>()  performs the same task as <B><A HREF="../man2/execve.2.html">execve</A></B>(2), with the difference
+that the file to be executed is specified via a file descriptor, <I>fd</I>,
+rather than via a pathname.  The file descriptor <I>fd</I> must be opened
+read-only (<B>O_RDONLY</B>)  or with the <B>O_PATH</B> flag and the caller must have
+permission to execute the file that it refers to.
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>fexecve</B>()  は呼び出しに成功した場合、戻ることはない。 エラーの場合、返り値 -1 で関数が返り、 <I>errno</I>
+が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+エラーは <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  と同じだが、以下のエラーが追加になっている:
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>fd</I> が有効なファイルディスクリプターでない。または <I>argv</I> が NULL である。または <I>envp</I> が NULL である。
+<DT><B>ENOENT</B><DD>
+The close-on-exec flag is set on <I>fd</I>, and <I>fd</I> refers to a script.  See
+BUGS.
+<DT><B>ENOSYS</B><DD>
+The kernel does not provide the <B><A HREF="../man2/execveat.2.html">execveat</A></B>(2)  system call, and the
+<I>/proc</I> filesystem could not be accessed.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>fexecve</B>()  は glibc 2.3.2 以降で実装されている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<BR>&nbsp;<B>fexecve</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2008.  この関数は POSIX.1-2001 では規定されておらず、 他のシステムで広く利用できるわけではない。
+POSIX.1-2008 で規定されている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+
+On Linux with glibc versions 2.26 and earlier, <B>fexecve</B>()  is implemented
+using the <B><A HREF="../man5/proc.5.html">proc</A></B>(5)  filesystem, so <I>/proc</I> needs to be mounted and
+available at the time of the call.  Since glibc 2.27, if the underlying
+kernel supports the <B><A HREF="../man2/execveat.2.html">execveat</A></B>(2)  system call, then <B>fexecve</B>()  is
+implemented using that system call, with the benefit that <I>/proc</I> does not
+need to be mounted.
+<P>
+
+<B>fexecve</B>() の裏にある考えは、呼び出し元が、ファイルを実行する前に実行ファイルの内容を検査 (チェックサムを確認)
+できるようにすることである。単に、ファイルをオープンして内容のチェックサムを検査し、それから <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+を行うのは十分ではない。なぜなら、2 つのステップの間で、ファイル名や、パス名のディレクトリの前の方が入れ換えられる可能性があるからだ
+(例えば、シンボリックリンクのリンク先を変更するなど)。<B>fexecve</B>() は、チェックサムの検査と <B>fexecve</B>()
+の呼び出しの間で、ファイルの<I>内容</I>を変更できる可能性があるという問題への対策にはならない。この問題に対する対応策は、確実に、ファイルのアクセス許可を設定し、悪意のあるユーザーがファイルを変更できないようにすることである。
+<P>
+
+<B>fexecve</B>() を使用する際の理にかなった方法は、 <I>fd</I> に close-on-exec フラグをセットし、
+実行するプログラムを通じてそのファイルディスクリプターが外部にもれないようにすることである。 この方法は 2 つの理由から理にかなっている。 1
+つ目は、 これにより不必要にファイルディスクリプターが消費されるのを防ぐことができる
+(実行されるプログラムは普通プログラム自身が参照するファイルを参照する必要はない)。 2 つ目は、 <B>fexecve</B>() が再帰的に使用された場合、
+close-on-exec フラグを利用することで、 再帰の各ステップで新しいプログラムに一つ余計にファイルディスクリプターが渡されることによる、
+ファイルディスクリプターの枯渇を防ぐことができる (ただし「バグ」を参照)。
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+<I>fd</I> がスクリプトを参照していて (つまり、 最初の行に文字 <I>#!</I>
+で始まるスクリプトインタープリターの指示がある実行テキストファイルである)、 <I>fd</I> に close-on-exec フラグがセットされていた場合、
+<B>fexecve</B>() はエラー <B>ENOENT</B> で失敗する。 このエラーが起こるのは、 スクリプトインタープリターが実行される時点までに、
+close-on-exec フラグにより <I>fd</I> がすでにクローズされてしまっているからである。 そのため、 スクリプトを参照する場合には、
+close-on-exec フラグを <I>fd</I> にセットすることはできず、 「注意」の節で説明されている問題が起こり得る。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2), <B><A HREF="../man2/execveat.2.html">execveat</A></B>(2)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

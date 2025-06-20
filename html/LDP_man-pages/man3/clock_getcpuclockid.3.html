@@ -1,0 +1,180 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CLOCK_GETCPUCLOCKID</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>CLOCK_GETCPUCLOCKID</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated:  2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/clock_getcpuclockid.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+clock_getcpuclockid - プロセスの CPU 時刻のクロック ID を取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</B>
+<PRE>
+
+ <B>int clock_getcpuclockid(pid_t </B><I>pid</I><B>, clockid_t *</B><I>clockid</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>-lrt</I> とリンクする (バージョン 2.17 より前の glibc のみ)
+<P>
+
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>clock_getcpuclockid</B>():
+<DL COMPACT><DT><DD>
+<BR>&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>clock_getcpuclockid</B>() 関数は、 プロセス ID が <I>pid</I> のプロセスの CPU 時刻のクロック ID を取得し、
+その ID を <I>clockid</I> が指す場所に入れて返す。 <I>pid</I> が 0 の場合、 呼び出し元のプロセスの CPU 時刻のクロック ID
+が返される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>clock_getcpuclockid</B>() は 0 を返す。 エラーの場合、
+「エラー」の節のリストにある正のエラー番号のいずれかを返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>ENOSYS</B><DD>
+カーネルが他のプロセスのプロセス単位の CPU 時刻のクロックの取得に対応しておらず、 かつ <I>pid</I> が呼び出し元のプロセスを指していなかった。
+<DT><B>EPERM</B><DD>
+呼び出し元プロセスが <I>pid</I> で指定されたプロセスの CPU 時刻のクロックにアクセスする許可を持っていなかった。(POSIX.1-2001
+で規定されている。 カーネルが他のプロセスのプロセス単位の CPU 時刻のクロックの取得に対応していない場合には、 このエラーは発生しない。)
+<DT><B>ESRCH</B><DD>
+ID が <I>pid</I> のプロセスが存在しない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>clock_getcpuclockid</B>() 関数は glibc バージョン 2.2 以降で利用可能である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<BR>&nbsp;<B>clock_getcpuclockid</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+<BR>&nbsp;POSIX.1-2001,&nbsp;POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<I>pid</I> に 0 を指定して <B>clock_getcpuclockid</B>() を呼び出して得られたクロック ID を引数として
+<B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2) の呼び出すのは、 クロック ID <B>CLOCK_PROCESS_CPUTIME_ID</B> を使って
+<B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2) の呼び出すのと同じである。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+以下のサンプルプログラムは、 コマンドラインで指定された ID を持つプロセスの CPU 時刻のクロック ID を取得し、
+<B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2) を使ってそのクロックの時刻を取得する。 以下は実行例である。
+<P>
+
+
+
+$<B> ./a.out 1</B>                 # Show CPU clock of init process
+CPU-time clock for PID 1 is 2.213466748 seconds
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+<BR>&nbsp;#define&nbsp;_XOPEN_SOURCE&nbsp;600
+#include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;clockid_t&nbsp;clockid;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;timespec&nbsp;ts;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s&nbsp;&lt;process-ID&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(clock_getcpuclockid(atoi(argv[1]),&nbsp;&amp;clockid)&nbsp;!=&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;clock_getcpuclockid&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(clock_gettime(clockid,&nbsp;&amp;ts)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;clock_gettime&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;CPU-time&nbsp;clock&nbsp;for&nbsp;PID&nbsp;%s&nbsp;is&nbsp;%jd.%09ld&nbsp;seconds\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[1],&nbsp;(intmax_t)&nbsp;ts.tv_sec,&nbsp;ts.tv_nsec);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/clock_getres.2.html">clock_getres</A></B>(2), <B>timer_create</B>(2), <B><A HREF="../man3/pthread_getcpuclockid.3.html">pthread_getcpuclockid</A></B>(3),
+<B><A HREF="../man7/time.7.html">time</A></B>(7)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DL>
+<DT><A HREF="#lbAL">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:27 GMT, December 05, 2022
+</BODY>
+</HTML>

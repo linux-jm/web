@@ -1,0 +1,383 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PCMCIA</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PCMCIA</H1>
+Section: File Formats (5)<BR>Updated: 2000/10/16 16:37:38<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/pcmcia-cs/release/man5/pcmcia.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+/etc/pcmcia/config - PCMCIA カードの設定データベース
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+PCMCIA カード設定ファイルは
+<B><A HREF="../man8/cardmgr.8.html">cardmgr</A></B>(8)
+
+が起動時に読み込む。
+この設定ファイルは、カードサービスが利用できる
+IO ポート・メモリ・IRQ といったリソースを定義し、
+デバイスドライバのロードや初期化の方法を指定し、
+それぞれの PCMCIA カードの詳細について記述する。
+<A NAME="lbAD">&nbsp;</A>
+<H2>リソースの記述</H2>
+
+リソースのエントリには 3 つの種類がある。
+<B>include</B>,
+
+<B>exclude</B>,
+
+<B>reserve</B>
+
+である。
+include したリソースは、
+カードサービスがクライアントとなる各種ドライバに割り当てる。
+カードサービスの制御下にあるリソースは exclude することもできる。
+例えばシステムの特定のデバイスがそのリソースを使うような場合である。
+リソースは reserve することもできる。
+この場合は、そのリソースを特に使いたいと要求するクライアントが現われるか、
+あるいは他に割り当て可能なリソースが無くなるまで、
+そのリソースは割り当てない。
+<P>
+
+リソースのタイプには 3 つの種類がある。
+<B>port</B>,
+
+<B>memory</B>,
+
+<B>irq</B>
+
+である。
+デフォルトでは、カードサービスは他のデバイスドライバが使っていない
+irq を自由に使えるものと仮定する。
+しかし、カードサービスは I/O ポートとアドレスの範囲に関しては
+なんの仮定も行わない。 Linux のドライバの中には
+リソースの利用状況を登録しない物があるからである。
+そのため、
+IO ポートとメモリの範囲については、
+PCMCIA デバイスが使って良い部分を明示的に指定しなければならない。
+<P>
+
+これらをまとめると、設定ファイルの内容は以下のようになる:
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+include port 0x300-0x3ff, memory 0xd0000-0xdffff
+reserve irq 3
+exclude irq 4, port 0x3f8-0x3ff
+</DL>
+</PRE>
+
+<P>
+この例では、カードサービスは I/O ポートの 0x300 から
+0x3ff と、メモリの 0xd0000  から 0xdffff までを割り当てて良いことになる。
+exclude 指定をした irq 4 と I/O ポートの 0x3f8 から 0x3ff は、
+利用可能であっても使わない。
+reserve 指定した irq 3 は、
+特にその割り込みをクライアントが必要とした場合に限って利用する。
+<P>
+
+カードサービスは、他のカーネルデバイスドライバに割り当てられている
+リソースは決して利用しない。
+<B>include</B>/<B>exclude</B>/<B>reserve</B>
+
+メカニズムは、カードサービスが使おうと試みるリソースを指定するもので、
+Linux のリソースマネージャーに登録されないデバイスと
+うまく共存するための仕組みなのである。
+
+
+
+
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>デバイスドライバの記述</H2>
+
+カードサービスの全てのクライアントドライバは、
+32 文字のタグによって識別される。
+設定ファイル中の
+<B>device</B>
+
+エントリがクライアントドライバを記述する。
+必須のフィールドは識別用のタグのみで、
+その他のフィールドには、
+そのデバイスを利用するためにロードすべきカーネルモジュールや
+デバイスの実体を有効/無効するために実行するスクリプトを指定する。
+ドライバの実体がソケットに割り当てられると、
+ドライバは cardmgr にシステムから見たそのデバイスの名称
+(ネットワークデバイスならば
+<I>eth0</I>、
+
+モデムならば
+<I>cua1</I>
+
+など)
+を通知する。
+この名称は設定用スクリプトに渡される。例えば:
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+device &quot;pcnet_cs&quot;
+  class &quot;network&quot;
+  module &quot;net/8390&quot; opts &quot;ei_debug=4&quot;, &quot;pcnet_cs&quot;
+</DL>
+</PRE>
+
+<P>
+という指定では、
+<B>pcnet_cs</B>
+
+デバイスは 2 つのローダブルモジュールが必要であることを示している。
+1 つめのモジュール (8390) はモジュールディレクトリの
+<I>net</I>
+
+サブディレクトリにあり、指定したパラメータ
+<I>ei_debug=4</I>
+
+と共にロードされる。
+2 つめのモジュール (de650_cs) は
+<I>pcmcia</I>
+
+サブディレクトリにある。
+このデバイス (pcnet_cs) は
+<I>network</I>
+
+というクラスに属し、デバイスの起動と終了には、
+設定ファイルと同じディレクトリにある
+<I>network スクリプト (/etc/pcmcia/network) が利用される。</I>
+
+<P>
+
+デバイスドライバ宣言の外部で、
+特定のカーネルモジュールのデフォルトのオプションを指定することもできる。
+これはローカルな設定オプションを
+メインのカード設定ファイルから分離するのに便利である。
+
+
+
+
+
+
+
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+module &quot;pcnet_cs&quot; opts &quot;mem_speed=600&quot;
+</DL>
+</PRE>
+
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>カードの記述</H2>
+
+card 宣言は、PCMCIA カードとそのクライアントドライバとを
+結びつけるものである。
+card 宣言は、カードの名称・カードが挿入された際の識別方法・
+利用するドライバ、の 3 つの部分からなる。
+カードを識別するには 6 つのメソッド (方法) がある。
+<B>version</B>
+
+メソッドはカード識別に VERSION_1 id 文字列を用いる。
+<B>manfid</B>
+
+メソッドはカードの MANFID タプルコードを用いる。
+<B>pci</B>
+
+メソッドは CardBus カードの PCI デバイス ID を用いる。
+<B>tuple</B>
+
+メソッドはカードの任意の CIS タプルに埋めこまれた文字列を用いる。
+<B>function</B>
+
+メソッドはカードの function ID を用いる。
+<B>anonymous</B>
+
+メソッドは CIS を持たないカードにマッチする
+(これは旧式のタイプ I メモリカードに用いる物である)。
+以下にいくつか例を示す。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+card &quot;Linksys Ethernet Card&quot;
+  tuple 0x40, 0x0009, &quot;E-CARD PC Ethernet Card&quot;
+  bind &quot;pcnet_cs&quot;
+</DL>
+</PRE>
+
+<P>
+このカードは 0x40 タプルのオフセット 0x0009 から始まる
+文字列 &quot;E-CARD PC Ethernet Card&quot; によって識別され、
+<B>pcnet_cs</B>
+
+ドライバにバインドされる
+(ドライバはあらかじめ
+<B>driver</B>
+
+宣言で定義されていなければならない)。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+card &quot;Connectware LANdingGear Adapter&quot;
+  manfid 0x0057, 0x1004
+  bind &quot;pcnet_cs&quot;
+</DL>
+</PRE>
+
+<P>
+このカードは MANFID タプルの内容によって識別される。
+<B>pci</B>
+
+メソッドも同じ形式で、
+<B>manfid</B>
+
+の代わりに
+<B>pci</B>
+
+と書く。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+card &quot;D-Link DE-650 Ethernet Card&quot;
+  version &quot;D-Link&quot;, &quot;DE-650&quot;
+  bind &quot;pcnet_cs&quot;
+</DL>
+</PRE>
+
+<P>
+このカードは VERISON_1 タプルによって識別され、
+<B>pcnet_cs</B>
+
+ドライバにバインドされる。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+card &quot;Serial port device&quot;
+  function serial_port
+  bind &quot;serial_cs&quot;
+</DL>
+</PRE>
+
+<P>
+これは CIS function ID が 0x02 (シリアルポートカードに対応)
+のあらゆるカードを
+<B>serial_cs</B>
+
+ドライバにバインドする。
+function ID は数字でも良いし、定義済みの function である
+<B>memory_card</B>,
+
+<B>serial_port</B>,
+
+<B>parallel_port</B>,
+
+<B>fixed_disk</B>,
+
+<B>video_adapter</B>,
+
+<B>network_adapter</B>,
+
+<B>aims_card</B>
+
+のいずれかでもかまわない。
+<P>
+
+最後に、カードで見付かった設定情報とは異なるものを
+カードサービスに用いさせるような指定も設定ファイルでは可能である。
+カードの設定情報が特に不完全・不正確である場合にこれを使えることもある。
+新しい設定はファイルから読み込む。例を示す:
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+card &quot;Evil broken card&quot;
+  manfid 0x1234, 0x5678
+  cis &quot;fixup.cis&quot;
+  bind &quot;serial_cs&quot;
+</DL>
+</PRE>
+
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>メモリ領域定義</H2>
+
+メモリ領域定義は、特定の形式のメモリデバイスを
+Memory Technology Driver (MTD) に関連付けするために用いられる。
+MTD はメモリアクセスを、デバイス独立なやり方で提供する。
+カードがこの種のメモリデバイスであると識別されると、
+カードサービスはそのメモリ領域全てに対して MTD を読み込もうとする。
+<P>
+
+メモリ領域定義は
+<B>region</B>
+
+キーワードと識別文字列から始まる。
+次に識別メソッドである
+<B>default</B> か <B>jedec</B>
+
+が来る。
+<B>default</B>
+
+は他に分類されなかったすべての領域で使う MTD を指定し、
+<B>jedec</B>
+
+はメモリ領域を JEDEC の識別コードによって識別する。
+例えば
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+region &quot;Intel Series 2 Flash&quot;
+  jedec 0x89 0xa2
+  mtd &quot;iflash2_mtd&quot;
+</DL>
+</PRE>
+
+<P>
+は、 JEDEC がマッチすれば
+<B>iflash_mtd</B>
+
+ドライバがロードされることを示している。
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ </H2>
+
+今のところ
+<B>reserve</B>
+
+キーワードの実装はこのバージョンのカードサービスにはあまり便利でない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+David Hinds - <A HREF="mailto:dahinds@users.sourceforge.net">dahinds@users.sourceforge.net</A>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/cardmgr.8.html">cardmgr</A></B>(8)
+
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">リソースの記述</A><DD>
+<DT><A HREF="#lbAE">デバイスドライバの記述</A><DD>
+<DT><A HREF="#lbAF">カードの記述</A><DD>
+<DT><A HREF="#lbAG">メモリ領域定義</A><DD>
+<DT><A HREF="#lbAH">バグ </A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:43 GMT, December 05, 2022
+</BODY>
+</HTML>

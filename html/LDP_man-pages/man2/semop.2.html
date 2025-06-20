@@ -1,0 +1,328 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SEMOP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SEMOP</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/semop.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+semop, semtimedop - System V セマフォの操作
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;</B>
+
+<B>int semop(int </B><I>semid</I><B>, struct sembuf *</B><I>sops</I><B>, size_t </B><I>nsops</I><B>);</B>
+
+<B>int semtimedop(int </B><I>semid</I><B>, struct sembuf *</B><I>sops</I><B>, size_t </B><I>nsops</I><B>,</B>
+<B>               const struct timespec *</B><I>timeout</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>semtimedop</B>(): _GNU_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+System&nbsp;V セマフォ集合 (semaphore set) のメンバーの各セマフォは 以下の関連情報を持っている:
+<P>
+
+
+
+unsigned short  semval;   /* semaphore value */
+unsigned short  semzcnt;  /* # waiting for zero */
+unsigned short  semncnt;  /* # waiting for increase */
+pid_t           sempid;   /* PID of process that last
+
+
+<P>
+
+<B>semop</B>()  は <I>semid</I> で指定されたセマフォ集合の選択されたセマフォに対して操作を行う。 <I>sops</I> は <I>nsops</I>
+個の要素の配列を指し、配列の各要素は個々のセマフォに対する操作を示す構造体である。その型は <I>struct sembuf</I> で、次のメンバを持つ:
+<P>
+
+
+
+unsigned short sem_num;  /* セマフォ番号 */
+short          sem_op;   /* セマフォ操作 */
+short          sem_flg;  /* 操作フラグ */
+
+
+<P>
+
+<I>sem_flg</I> には <B>IPC_NOWAIT</B> と <B>SEM_UNDO</B> が設定できる。 <B>SEM_UNDO</B>
+が指定された操作は、そのプロセスが終了した時に自動的に取り消される。
+<P>
+
+<I>sops</I> に含まれる操作の集合は、 <I>配列の順序</I> で、 <I>アトミックに</I> 実行される。
+すなわち、全ての操作が完全に実行されるか、全く実行されないかの どちらかとなる。 全ての操作が直ちに実行できない場合のこのシステムコールの振る舞いは
+個々の操作の <I>sem_flg</I> フィールドに <B>IPC_NOWAIT</B> が存在するかによって決まり、後述のようになる。
+<P>
+
+それぞれの操作はセマフォ集合の <I>sem_num</I>番目 のセマフォに対して実行される。セマフォ集合の最初のセマフォには 番号 0 が振られる。
+そして操作は三種類あり、 <I>sem_op</I> の値で区別される。
+<P>
+
+<I>sem_op</I> が正の整数の場合、その値をセマフォの値 (<I>semval</I>) に加算する。 さらに、この操作で <B>SEM_UNDO</B>
+が指定されていた場合は、 システムはこのセマフォのの調整値 (<I>semadj</I>) から値 <I>sem_op</I> を減算する。 この操作は必ず実行でき、
+スレッドの停止は起こらない。 呼び出し元プロセスは対象のセマフォ集合を変更する許可がなければならない。
+<P>
+
+<I>sem_op</I> が 0 の場合、「ゼロまで待つ」操作である。この場合、プロセスは そのセマフォ集合に対する読み込み許可がなければならない。
+<I>semval</I> が 0 ならば、操作は直ちに行われる。 <I>semval</I> が 0 でない場合、 <I>sem_flg</I> に
+<B>IPC_NOWAIT</B> が指定されていれば、 <B>semop</B>()  は失敗し、 <B>errno</B> に <B>EAGAIN</B> が設定される (このとき
+<I>sops</I> に対する操作は全く実行されない)。 <I>sem_flg</I> に <B>IPC_NOWAIT</B> が指定されていない場合、 <I>semzcnt</I>
+(セマフォ値が 0 になるのを待っているスレッドの数) を 1 増加させて、 以下のいずれかが起こるまでスレッドを停止 (sleep) する。
+<DL COMPACT>
+<DT>&bull;<DD>
+<I>semval</I> が 0 になった: このとき <I>semzcnt</I> の値は 1 減算される。
+<DT>&bull;<DD>
+セマフォ集合が削除された: このとき <B>semop</B>()  は失敗し、 <I>errno</I> に <B>EIDRM</B> が設定される。
+<DT>&bull;<DD>
+呼び出し元スレッドがシグナルを捕獲した: このとき <I>semzcnt</I> の値は 1 減算され、 <B>semop</B>()  は失敗し <I>errno</I> に
+<B>EINTR</B> が設定される。
+</DL>
+<P>
+
+<I>sem_op</I> が 0 未満の場合、プロセスにはそのセマフォ集合を変更する許可がなければ ならない。 <I>semval</I> が <I>sem_op</I>
+の絶対値以上の場合は、操作は直ちに実行される: <I>semval</I> から <I>sem_op</I> の絶対値を減算し、さらに、この操作に
+<B>SEM_UNDO</B> が指定されている場合は、このセマフォの調整値 (<I>semadj</I>) に <I>sem_op</I> の絶対値を加算する。
+<I>semval</I> が <I>sem_op</I> の絶対値より小さく、 <I>sem_flg</I> に <B>IPC_NOWAIT</B> が指定された場合は、
+<B>semop</B>()  は失敗し、 <I>errno</I> に <B>EAGAIN</B> が設定される (このとき <I>sops</I> の操作は全く実行されない)。
+<I>semval</I> が <I>sem_op</I> の絶対値より小さく、 <B>IPC_WAIT</B> が指定されていない場合は、 <I>semncnt</I>
+(このセマフォの値が増加するのを待っているスレッド数のカウンター)  を 1 増加させて、以下のいずれかが起こるまでスレッドを停止 (sleep)
+する。
+<DL COMPACT>
+<DT>&bull;<DD>
+<I>semval</I> が <I>sem_op</I> の絶対値以上になった。この時点で、操作は上述の通り実行される。
+<DT>&bull;<DD>
+セマフォ集合がシステムから削除された: このとき <B>semop</B>()  は失敗し <I>errno</I> に <B>EIDRM</B> が設定される。
+<DT>&bull;<DD>
+呼び出したスレッドがシグナルを捕獲した: このとき <I>semncnt</I> が 1 減算され、 <B>semop</B>()  は失敗し <I>errno</I> に
+<B>EINTR</B> が設定される。
+</DL>
+<P>
+
+
+
+操作が成功した場合、 <I>sops</I> が指す配列によって操作対象となった各セマフォの <I>sempid</I> メンバーには呼び出し元のプロセス ID
+が設定される。さらに <I>sem_otime</I> に現在時刻が設定される。
+<A NAME="lbAE">&nbsp;</A>
+<H3>semtimedop()</H3>
+
+<B>semtimedop</B>() 関数の振る舞いは <B>semop</B>() と全く同じだが、呼び出し元
+スレッドが停止する場合、停止期間の上限が <I>timeout</I> 引数の指す
+<I>timespec</I> 構造体で指定された時間となる点だけが異なる (この停止期間は
+システムクロックの粒度に切り上げられ、カーネルのスケジューリング遅延に
+より、この停止期間は少しだけ長くなる可能性がある)。
+指定した制限時間に達した場合は、 <B>semtimedop</B>() は失敗し、 <I>errno</I> に
+<B>EAGAIN</B> が設定される (このとき <I>sops</I> の操作は実行されない)。
+<I>timeout</I> 引数が NULL の場合、 <B>semtimedop</B>() 関数の振る舞いは
+<B>semop</B>() 関数と全く同じになる。
+<P>
+
+<B>semtimedop</B>() がシグナルにより割り込まれた場合、呼び出しはエラー <B>EINTR</B> で失敗し、 <I>timeout</I>
+の内容は変更されないままとなる点に注意すること。
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 <B>semop</B>()  と <B>semtimedop</B>()  は 0 を返す。そうでなければ -1 を返し、 エラーを示す
+<I>errno</I> を設定する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+失敗した場合、 <I>errno</I> に以下のどれかが設定される:
+<DL COMPACT>
+<DT><B>E2BIG</B><DD>
+<I>nsops</I> 引数が <B>SEMOPM</B> より大きい。 <B>SEMOPM</B> は一回のシステムコールで許される操作の最大個数である。
+<DT><B>EACCES</B><DD>
+The calling process does not have the permissions required to perform the
+specified semaphore operations, and does not have the <B>CAP_IPC_OWNER</B>
+capability in the user namespace that governs its IPC namespace.
+<DT><B>EAGAIN</B><DD>
+操作を直ちに処理することができず、かつ <I>sem_flg</I> に <B>IPC_NOWAIT</B> が指定されているか <I>timeout</I>
+で指定された制限時間が経過した。
+<DT><B>EFAULT</B><DD>
+引数 <I>sops</I> か <I>timeout</I> が指しているアドレスにアクセスできない。
+<DT><B>EFBIG</B><DD>
+ある操作で、 <I>sem_num</I> の値が 0 未満か、集合内のセマフォの数以上である。
+<DT><B>EIDRM</B><DD>
+セマフォ集合が削除された。
+<DT><B>EINTR</B><DD>
+このシステムコールで停止している時にスレッドがシグナルを捕獲した。 <B>single</B>(7) 参照。
+<DT><B>EINVAL</B><DD>
+セマフォ集合が存在しないか、 <I>semid</I> が 0 未満であるか、 <I>nsops</I> が正の数でない。
+<DT><B>ENOMEM</B><DD>
+ある操作で <I>sem_flg</I> に <B>SEM_UNDO</B> が指定されたが、システムにアンドゥ構造体に割り当てる十分なメモリーがない。
+<DT><B>ERANGE</B><DD>
+ある操作で <I>sem_op+semval</I> が <B>SEMVMX</B> より大きい。 <B>SEMVMX</B> は <I>semval</I>
+の最大値で、その値は実装依存である。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>semtimedop</B>()  は Linux 2.5.52 で初めて登場し、 それからカーネル 2.4.22 にも移植された。
+<B>semtimedop</B>()  の glibc でのサポートはバージョン 2.3.3 で初めて登場した。
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+
+POSIX.1-2001, POSIX.1-2008, SVr4.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+Linux や POSIX の全てのバージョンでは、 <I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I> と <I>&lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</I>
+のインクルードは必要ない。しかしながら、いくつかの古い実装ではこれらのヘッダーファイルのインクルードが必要であり、 SVID
+でもこれらのインクルードをするように記載されている。このような古いシステムへの移植性を意図したアプリケーションではこれらのファイルをインクルードする必要があるかもしれない。
+<P>
+
+あるプロセスの <I>sem_undo</I> 構造体は <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  で生成された子プロセスには継承されないが、 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+システムコールの場合は継承される。
+<P>
+
+<B>semop</B>()  はシグナルハンドラーによって中断された後に、 決して自動的に再開することはない。 たとえシグナルハンドラーの設定時に
+<B>SA_RESTART</B> フラグがセットされていても再開することはない
+<P>
+
+セマフォの調整値 (<I>semadj</I>) は、プロセス毎のセマフォ毎の整数で、 <B>SEM_UNDO</B>
+フラグを指定して行われた、セマフォに対するすべての操作の合計値を反転したものである。 各プロセスは <I>semadj</I> の値のリストを保持する ---
+リストのそれぞれの値は <B>SEM_UNDO</B> を使って操作が行われた個々のセマフォに対応する。 プロセスが終了する際、 セマフォ毎の
+<I>semadj</I> の各々の値が対応するセマフォに加算される。 これにより、そのプロセスがそのセマフォに対して行った操作の影響が取り消される
+(ただし、下記の「バグ」を参照)。 <B><A HREF="../man2/semctl.2.html">semctl</A></B>(2) の <B>SETVAL</B> や <B>SETALL</B> を使ってセマフォの値が直接設定された場合、
+すべてのプロセスの対応する <I>semadj</I> の値がクリアされる。 <B><A HREF="../man2/clone.2.html">clone</A></B>(2) の <B>CLONE_SYSVSEM</B> フラグを使うと、
+複数のプロセスがひとつの <I>semadj</I> リストを共有できる。 詳細は <B><A HREF="../man2/clone.2.html">clone</A></B>(2) を参照。
+<P>
+
+あるセマフォの <I>semval</I>, <I>sempid</I>, <I>semzcnt</I>, <I>semnct</I> の値はいずれも、適切な操作を指定して
+<B><A HREF="../man2/semctl.2.html">semctl</A></B>(2)  を呼び出すことで取得できる。
+<A NAME="lbAK">&nbsp;</A>
+<H3>セマフォの上限</H3>
+
+セマフォ集合のリソースに関する制限のうち、 <B>semop</B>()  に影響を及ぼすものを以下に挙げる:
+<DL COMPACT>
+<DT><B>SEMOPM</B><DD>
+
+
+
+Maximum number of operations allowed for one <B>semop</B>()  call.  Before Linux
+3.19, the default value for this limit was 32.  Since Linux 3.19, the
+default value is 500.  On Linux, this limit can be read and modified via the
+third field of <I>/proc/sys/kernel/sem</I>.  <I>Note</I>: this limit should not be
+raised above 1000, because of the risk of that <B>semop</B>()  fails due to
+kernel memory fragmentation when allocating memory to copy the <I>sops</I>
+array.
+<DT><B>SEMVMX</B><DD>
+<I>semval</I> が取り得る最大値: 実装依存 (32767)。
+</DL>
+<P>
+
+以下の値に関しては実装依存の制限はない。 終了時の調整 (adjust on exit) の最大値 (<B>SEMAEM</B>)、
+システム全体のアンドゥ構造体の最大数 (<B>SEMMNU</B>)、 プロセスあたりのアンドゥ構造体の最大数。
+<A NAME="lbAL">&nbsp;</A>
+<H2>バグ</H2>
+
+プロセスが終了する際、プロセスに対応する <I>semadj</I> の集合を使って、 <B>SEM_UNDO</B>
+フラグ付きで実行された全てのセマフォ操作の影響を取り消す。 これによりある問題が発生する: これらのセマフォの調整を行っていると、 中にはセマフォの値が
+0 未満の値にしようとする場合が出てくる。 このような場合、どのように実装するべきか? ひとつの考えられる手法は、全てのセマフォ調整が実行されるまで
+停止することである。しかし、この方法ではプロセスの終了が 長時間にわたって停止されることがあるので望ましくない。
+しかもどれくらい長時間になるかは分からない。 別の選択肢として、このようなセマフォ調整を完全に無視してしまう方法がある (これはセマフォ操作として
+<B>IPC_NOWAIT</B> が指定するのと少し似ている)。 Linux は第三の手法を採用している: セマフォの値を出来るだけ (つまり 0 まで)
+減少させて、プロセスの終了を直ちに続行できるようにしている。
+<P>
+
+
+
+
+
+カーネル 2.6.x (x &lt;= 10) には、ある状況においてセマフォ値が 0 になるのを 待っているスレッドが、セマフォ値が実際に 0
+になったときに起床 (wake up)  されない、というバグがある。このバグはカーネル 2.6.11 で修正されている。
+<A NAME="lbAM">&nbsp;</A>
+<H2>例</H2>
+
+以下の部分的なコードは、 セマフォ 0 の値が 0 になるのを待ってから、 セマフォの値を 1 加算する処理を、 <B>semop</B>()
+を使ってアトミック (atomically) に行う。
+<P>
+
+
+
+struct sembuf sops[2];
+int semid;
+<P>
+/* Code to set <I>semid</I> omitted */
+<P>
+sops[0].sem_num = 0;        /* Operate on semaphore 0 */
+sops[0].sem_op = 0;         /* Wait for value to equal 0 */
+sops[0].sem_flg = 0;
+<P>
+sops[1].sem_num = 0;        /* Operate on semaphore 0 */
+sops[1].sem_op = 1;         /* Increment value by one */
+sops[1].sem_flg = 0;
+<P>
+if (semop(semid, sops, 2) == -1) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;semop&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+}
+
+
+<P>
+
+A further example of the use of <B>semop</B>()  can be found in <B><A HREF="../man2/shmop.2.html">shmop</A></B>(2).
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2), <B><A HREF="../man2/semctl.2.html">semctl</A></B>(2), <B><A HREF="../man2/semget.2.html">semget</A></B>(2), <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/sem_overview.7.html">sem_overview</A></B>(7), <B>sysvipc</B>(7), <B><A HREF="../man7/time.7.html">time</A></B>(7)
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">semtimedop()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAK">セマフォの上限</A><DD>
+</DL>
+<DT><A HREF="#lbAL">バグ</A><DD>
+<DT><A HREF="#lbAM">例</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

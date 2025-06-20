@@ -1,0 +1,290 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of IDENT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/index.html">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>IDENT</H1>
+Section: User Commands  (1)<BR>Updated: 1999/08/27<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_rcs/contrib/man1/ident.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+ident - ファイル内の RCS キーワードを読み出す
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>ident</B>
+
+[
+<B>-q</B>
+
+] [
+<B>-V</B>
+
+] [
+<I>file</I>
+
+... ]
+<A NAME="lbAD">&nbsp;</A>
+<H2>解説</H2>
+
+<B>ident</B>
+
+は、指定されたファイルがあればそのファイルから、指定がない場合には標準入力から、
+<B>$</B><I>keyword</I><B>:</B><I>&nbsp;text&nbsp;</I><B>$</B>
+
+なるパターンを検索します。
+<P>
+
+これらのパターンは、通常 <FONT SIZE="-1">RCS</FONT> の
+<B><A HREF="../man1/co.1.html">co</A></B>(1)
+
+コマンドにより自動的に挿入されますが、
+手作業で入れることも可能です。オプション
+<B>-q</B>
+
+を指定すると、ファイル中に
+キーワードが発見できなくても警告メッセージを出力しません。
+<B>-V</B>
+
+を指定すると、
+<B>ident</B>
+
+のバージョン番号を表示します。
+<P>
+
+<B>ident</B>
+
+は、テキストファイルと同様にオブジェクトファイルやダンプファイルにも使
+用することができます。
+たとえば、以下の C 言語プログラム
+<B>f.c</B>
+
+で、
+<DL COMPACT>
+<DT><DD>
+<B>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+<BR>
+
+static char const rcsid[] =
+<BR>
+
+<BR>&nbsp;&nbsp;&quot;$Id:&nbsp;f.c,v&nbsp;1.5 1999/08/27 23:36:42 peter Exp&nbsp;$&quot;;
+<BR>
+
+int main() { return printf(&quot;%s\n&quot;, rcsid) == EOF; }
+</B>
+</DL>
+<P>
+
+<B>f.c</B>
+
+が
+<B>f.o</B>
+
+にコンパイルされているなら、以下のコマンド
+<DL COMPACT>
+<DT><DD>
+<B>ident  f.c  f.o</B>
+
+</DL>
+<P>
+
+は、次のような出力を行います。
+<PRE>
+<DL COMPACT>
+<DT><DD><B>f.c:
+    $Id: f.c,v 1.5 1999/08/27 23:36:42 peter Exp $
+f.o:
+    $Id: f.c,v 1.5 1999/08/27 23:36:42 peter Exp $
+</B></PRE>
+
+</DL>
+<P>
+
+C 言語プログラムで上記のような文字列
+<B>rcsid</B>
+
+が定義され、かつ使われていないとき、
+<B>lint</B>(1)
+
+が警告を出したり、 C コンパイラによっては最適化により文字列を削除する
+場合があります。もっとも、よい解決策は上のプログラム例のように文字列
+<B>rcsid</B>
+
+を使うことです。
+<P>
+
+<B>ident</B>
+
+は、 * がサポートする
+<I>keyword</I>
+
+でなくても、すべての
+<B>$</B><I>keyword</I><B>:</B><I>&nbsp;text&nbsp;</I><B>$</B>
+
+パターンを表示します。
+これにより、
+<B>$XConsortium$</B>
+
+のような非標準の keyword についても情報が得られます。
+<A NAME="lbAE">&nbsp;</A>
+<H2>キーワード</H2>
+
+つぎに現在、
+<B><A HREF="../man1/co.1.html">co</A></B>(1)
+
+が扱う keyword を挙げます。デフォルトでは、すべての時刻は協定世界時
+(<FONT SIZE="-1">UTC</FONT> しばしば <FONT SIZE="-1">GMT</FONT>と呼ばれます) で表されますが、
+チェックアウトのときに、
+<B>co</B>
+
+の
+<B>-z</B><I>zone</I>
+
+オプションを使ったファイルについては、数字によるタイムゾーンが付加され
+ます。
+<DL COMPACT>
+<DT><B>$Author$</B>
+
+<DD>
+そのリビジョンをチェックインしたユーザ名です。
+<DT><B>$Date$</B>
+
+<DD>
+そのリビジョンをチェックインした日付と時刻です。
+<DT><B>$Header$</B>
+
+<DD>
+<FONT SIZE="-1">RCS</FONT> ファイルのフルパス名を含んだ標準のヘッダ、リビジョン番号、
+作者、状態、およびロックされている場合にはロックした人です。
+<DT><B>$Id$</B>
+
+<DD>
+<FONT SIZE="-1">RCS</FONT> ファイルの名前がフルパスでないことを除いて、
+<B>$Header$</B>,
+
+と同じです。
+<DT><B>$Locker$</B>
+
+<DD>
+そのリビジョンをロックした人のユーザ名 (ロックされていない場合は空白)
+です。
+<DT><B>$Log$</B>
+
+<DD>
+チェックインのときに書かれたログメッセージです。
+<B>ident</B>
+
+の目的としては、
+<B>$RCSfile$</B>
+
+と等価です。
+<DT><B>$Name$</B>
+
+<DD>
+リビジョンをチェックアウトするときに使うシンボル名です(ないかもしれま
+せん)。
+<DT><B>$RCSfile$</B>
+
+<DD>
+フルパスでない <FONT SIZE="-1">RCS</FONT> ファイルの名前です。
+<DT><B>$Revision$</B>
+
+<DD>
+そのリビジョンのリビジョン番号です。
+<DT><B>$Source$</B>
+
+<DD>
+<FONT SIZE="-1">RCS</FONT> ファイルのフルパス名です。
+<DT><B>$State$</B>
+
+<DD>
+<B><A HREF="../man1/rcs.1.html">rcs</A></B>(1)
+
+or
+<B><A HREF="../man1/ci.1.html">ci</A></B>(1)
+
+の
+<B>-s</B>
+
+オプションで付けられたそのリビジョンの状態です。
+</DL>
+<P>
+
+<B><A HREF="../man1/co.1.html">co</A></B>(1)
+
+は以下の文字をエスケープシーケンスで表現することにより、
+キーワードの文字列の形を保ちます。
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+
+<I>char     escape sequence</I>
+tab      <B>\t</B>
+newline  <B>\n</B>
+space    <B>\040
+$        \044
+\        \\</B>
+</PRE>
+
+</DL>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>作者</H2>
+
+Author: Walter F. Tichy.
+<BR>
+
+Manual Page Revision: 1.5; Release Date: 1999/08/27.
+<BR>
+
+Copyright &#169; 1982, 1988, 1989 Walter F. Tichy.
+<BR>
+
+Copyright &#169; 1990, 1992, 1993 Paul Eggert.
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man1/ci.1.html">ci</A>(1), <A HREF="../man1/co.1.html">co</A>(1), <A HREF="../man1/rcs.1.html">rcs</A>(1), <A HREF="../man1/rcsdiff.1.html">rcsdiff</A>(1), <A HREF="../man1/rcsintro.1.html">rcsintro</A>(1), <A HREF="../man1/rcsmerge.1.html">rcsmerge</A>(1), <A HREF="../man1/rlog.1.html">rlog</A>(1),
+<A HREF="../man5/rcsfile.5.html">rcsfile</A>(5)
+<BR>
+
+Walter F. Tichy,
+<FONT SIZE="-1">RCS</FONT>--A System for Version Control,
+<I>Software--Practice &amp; Experience</I>
+
+<B>15</B>,
+
+7 (July 1985), 637-654.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">解説</A><DD>
+<DT><A HREF="#lbAE">キーワード</A><DD>
+<DT><A HREF="#lbAF">作者</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:25 GMT, December 05, 2022
+</BODY>
+</HTML>

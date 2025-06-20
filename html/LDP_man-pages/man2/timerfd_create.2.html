@@ -1,0 +1,401 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TIMERFD_CREATE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TIMERFD_CREATE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2011-09-14<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/timerfd_create.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+timerfd_create, timerfd_settime, timerfd_gettime - ファイルディスクリプター経由で通知するタイマー
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/timerfd.h">sys/timerfd.h</A>&gt;</B>
+
+<B>int timerfd_create(int </B><I>clockid</I><B>, int </B><I>flags</I><B>);</B>
+
+<B>int timerfd_settime(int </B><I>fd</I><B>, int </B><I>flags</I><B>,</B>
+<B>                    const struct itimerspec *</B><I>new_value</I><B>,</B>
+<B>                    struct itimerspec *</B><I>old_value</I><B>);</B>
+
+<B>int timerfd_gettime(int </B><I>fd</I><B>, struct itimerspec *</B><I>curr_value</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらのシステムコールは、満了通知をファイルディスクリプター経由で配送する タイマーの生成と操作を行う。 これらは、 <B><A HREF="../man2/setitimer.2.html">setitimer</A></B>(2)
+や <B>timer_create</B>(2)  を用いる方法の代わりとなるものであり、このファイルディスクリプターを <B><A HREF="../man2/select.2.html">select</A></B>(2),
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  で監視できるという利点がある。
+<P>
+
+これらのシステムコールを使うのは、それぞれ <B>timer_create</B>(2), <B>timer_settime</B>(2),
+<B>timer_gettime</B>(2)  を使うのと同様である (<B>timer_getoverrun</B>(2)
+に対応するものはなく、以下で説明するように この機能は <B><A HREF="../man2/read.2.html">read</A></B>(2)  により提供される)。
+<A NAME="lbAE">&nbsp;</A>
+<H3>timerfd_create()</H3>
+
+
+
+
+
+
+
+<B>timerfd_create</B>()  は新規のタイマーオブジェクトを生成し、そのタイマーを参照するファイル ディスクリプターを返す。
+<I>clockid</I> 引き数は、タイマーの進捗を管理するためのクロックを指定するもので、 <B>CLOCK_REALTIME</B> か
+<B>CLOCK_MONOTONIC</B> のいずれかでなければならない。 <B>CLOCK_REALTIME</B>
+はシステム全体で使用されるクロックで、このクロックは変更可能である。 <B>CLOCK_MONOTONIC</B>
+は変更されることのないクロックで、(システム時刻の手動での変更などの)  システムクロックの不連続な変化の影響を受けない。 これらのクロックの現在の値は
+<B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2)  を使って取得できる。
+<P>
+Linux 2.6.27 以降では、 以下の値のいくつかをビット単位の論理和 (OR) で指定することで、 <B>timerfd_create</B>()
+の振舞いを変更することができる。
+<DL COMPACT>
+<DT><B>TFD_NONBLOCK</B><DD>
+新しく生成されるオープンファイル記述 (open file description) の <B>O_NONBLOCK</B>
+ファイルステータスフラグをセットする。 このフラグを使うことで、 <B>O_NONBLOCK</B> をセットするために <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+を追加で呼び出す必要がなくなる。
+<DT><B>TFD_CLOEXEC</B><DD>
+新しいファイルディスクリプターに対して close-on-exec (<B>FD_CLOEXEC</B>)  フラグをセットする。
+このフラグが役に立つ理由については、 <B><A HREF="../man2/open.2.html">open</A></B>(2)  の <B>O_CLOEXEC</B> フラグの説明を参照のこと。
+</DL>
+<P>
+
+バージョン 2.6.26 以前の Linux では、 <I>flags</I> 引き数は未使用であり、0 を指定しなければならない。
+<A NAME="lbAF">&nbsp;</A>
+<H3>timerfd_settime()</H3>
+
+<B>timerfd_settime</B>()  は、ファイルディスクリプター <I>fd</I> により参照されるタイマーを開始したり停止したりする。
+<P>
+<I>new_value</I> 引き数は、タイマーの満了時間 (expiration) の初期値と間隔 (interval) を
+指定する。この引き数で使用されている <I>itimerspec</I> 構造体には 2 つのフィールドがあり、各フィールドは <I>timespec</I>
+型の構造体である。
+
+<PRE>
+
+struct timespec {
+    time_t tv_sec;                /* Seconds */
+    long   tv_nsec;               /* Nanoseconds */
+};
+
+struct itimerspec {
+    struct timespec it_interval;  /* Interval for periodic timer */
+    struct timespec it_value;     /* Initial expiration */
+};
+</PRE>
+
+
+<P>
+
+<I>new_value.it_value</I> はタイマーの満了時間の初期値を、秒とナノ秒で指定する。 <I>new_value.it_value</I>
+のフィールドのうち少なくとも一方に 0 以外の値を設定すると、 タイマーが開始される。 両方のフィールドに 0 を設定すると、タイマーが停止する。
+<P>
+<I>new_value.it_interval</I> はタイマーの一回目の満了後に繰り返しタイマーの満了間隔を、秒とナノ秒で指定する。
+<I>new_value.it_interval</I> のフィールドのうち少なくとも一方に 0 以外の値を設定すると、 繰り返しタイマーが有効になる。
+両方のフィールドに 0 を設定した場合、タイマーは <I>new_value.it_value</I> で指定された時間後に、一回だけ満了して停止する。
+<P>
+<I>flags</I> 引き数には 0 か <B>TFD_TIMER_ABSTIME</B> を指定する。 0 は相対時刻タイマーを意味し、
+<I>new_value.it_value</I> では <I>clockid</I> で指定されたクロックの現在の値からの相対的な時刻を指定する。
+<B>TFD_TIMER_ABSTIME</B> は絶対時刻タイマーを意味し、 <I>new_value.it_interval</I> では <I>clockid</I>
+で指定されたクロックの絶対時刻を指定する。 つまり、クロックの値が <I>new_value.it_interval</I>
+で指定された時刻に達したら、タイマーが満了する。
+<P>
+
+<I>old_value</I> 引き数が NULL でない場合、 <I>old_value</I> 引き数が指す <I>itimerspec</I> 構造体は、
+<B>timerfd_settime</B>() を呼び出した時点でのタイマーの設定を返すのに使用される。 下記の <B>timerfd_gettime</B>()
+の説明を参照。
+<A NAME="lbAG">&nbsp;</A>
+<H3>timerfd_gettime()</H3>
+
+<B>timerfd_gettime</B>()  は、ファイルディスクリプター <I>fd</I> で参照されるタイマーの現在の設定が入った
+<I>itimerspec</I> 構造体を、 <I>curr_value</I> に格納して返す。
+<P>
+<I>it_value</I> フィールドは、タイマーが次に満了するまでの残り時間を返す。 この構造体の両方のフィールドが 0
+であれば、タイマーは現在停止している。 タイマー設定時に <B>TFD_TIMER_ABSTIME</B>
+フラグが指定されたかに関わらず、このフィールドは常に相対値が格納される。
+<P>
+<I>it_interval</I> フィールドは、タイマーの間隔を返す。 この構造体の両方のフィールドが 0 であれば、タイマーは
+<I>new_value.it_value</I> で指定された時間後に一回だけ満了して停止するように設定されている。
+<A NAME="lbAH">&nbsp;</A>
+<H3>タイマーファイルディスクリプターに対する操作</H3>
+
+<B>timerfd_create</B>()  が返すファイルディスクリプターは以下の操作をサポートしている。
+<DL COMPACT>
+<DT><B><A HREF="../man2/read.2.html">read</A></B>(2)<DD>
+<B>timerfd_settime</B>()  を使ってタイマーの設定が最後変更されて以降、または <B><A HREF="../man2/read.2.html">read</A></B>(2)
+の呼び出しに最後に成功して以降に、タイマーの満了が一回以上発生していれば、 <B><A HREF="../man2/read.2.html">read</A></B>(2)  に渡されたバッファーに、タイマー満了回数を示す 8
+バイトの unsigned 型の整数 (<I>uint64_t</I>)  が返される (返される値はホストバイトオーダ、つまりそのホストマシンにおける
+整数の通常のバイトオーダである)。
+<DT><DD>
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  を行った時点でタイマーの満了が発生していなければ、 <B><A HREF="../man2/read.2.html">read</A></B>(2)  は停止 (block)
+する、もしくはファイルディスクリプターが 非停止 (nonblocking) に設定されている場合はエラー <B>EAGAIN</B> で失敗する
+(非停止モードにするには、 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  の <B>F_SETFL</B> 命令で <B>O_NONBLOCK</B> フラグをセットする)。
+<DT><DD>
+渡されたバッファーの大きさが 8 バイト未満の場合、 <B><A HREF="../man2/read.2.html">read</A></B>(2)  はエラー <B>EINVAL</B> で失敗する。
+<DT><B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2) (と同様の操作)<DD>
+一つ以上のタイマー満了が発生していれば、 ファイルディスクリプターは読み出し可能となる (<B><A HREF="../man2/select.2.html">select</A></B>(2)  の <I>readfds</I> 引き数や
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)  の <B>POLLIN</B> フラグ)。
+<DT><DD>
+このファイルディスクリプターは、他のファイルディスクリプター多重 API である <B><A HREF="../man2/pselect.2.html">pselect</A></B>(2), <B><A HREF="../man2/ppoll.2.html">ppoll</A></B>(2),
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  もサポートしている。
+<DT><B><A HREF="../man2/close.2.html">close</A></B>(2)<DD>
+
+ファイルディスクリプターがそれ以降は必要なくなった際には、クローズすべきである。 同じ timer
+オブジェクトに関連付けられたファイルディスクリプターが全て クローズされると、そのタイマーは解除され、
+そのオブジェクト用の資源がカーネルにより解放される。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H3><A HREF="../man2/fork.2.html">fork</A>(2) での扱い</H3>
+
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  が行われると、子プロセスは <B>timerfd_create</B>()  により生成されたファイルディスクリプターのコピーを
+継承する。そのファイルディスクリプターは、親プロセスの対応する ファイルディスクリプターと同じタイマーオブジェクトを参照しており、 子プロセスの
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  でも同じタイマーの満了に関する情報が返される。
+<A NAME="lbAJ">&nbsp;</A>
+<H3><A HREF="../man2/execve.2.html">execve</A>(2) での扱い</H3>
+
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  の前後で <B>timerfd_create</B>()  により生成されたファイルディスクリプターは保持され、
+タイマーが開始されていた場合にはタイマーの満了が発生し続ける。
+<A NAME="lbAK">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>timerfd_create</B>()  は新しいファイルディスクリプターを返す。 エラーの場合、-1 を返し、 <I>errno</I>
+にエラーを示す値を設定する。
+<P>
+<B>timerfd_settime</B>()  と <B>timerfd_gettime</B>()  は成功すると 0 を返す。 エラーの場合、-1 を返し、
+<I>errno</I> にエラーを示す値を設定する。
+<A NAME="lbAL">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>timerfd_create</B>()  は以下のエラーで失敗する可能性がある。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>clockid</I> 引き数が <B>CLOCK_MONOTONIC</B> でも <B>CLOCK_REALTIME</B> でもない。
+<DT><B>EINVAL</B><DD>
+<I>flags</I> が無効である。もしくは、Linux 2.6.26 以前の場合には <I>flags</I> が 0 以外である。
+<DT><B>EMFILE</B><DD>
+オープン済みのファイルディスクリプターの数がプロセスあたりの上限に 達していた。
+<DT><B>ENFILE</B><DD>
+オープン済みのファイル総数がシステム全体の上限に達していた。
+<DT><B>ENODEV</B><DD>
+(カーネル内の) 無名 inode デバイスをマウントできなかった。
+<DT><B>ENOMEM</B><DD>
+タイマーを作成するのに十分なカーネルメモリーがなかった。
+</DL>
+<P>
+
+<B>timerfd_settime</B>()  と <B>timerfd_gettime</B>()  は以下のエラーで失敗する可能性がある。
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>fd</I> が有効なファイルディスクリプターでない。
+<DT><B>EFAULT</B><DD>
+<I>new_value</I>, <I>old_value</I>, <I>curr_value</I> が有効なポインターではない。
+<DT><B>EINVAL</B><DD>
+<I>fd</I> が有効な timerfd ファイルディスクリプターでない。
+</DL>
+<P>
+
+<B>timerfd_settime</B>()  は以下のエラーで失敗することもある。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>new_value</I> が適切に初期化されていない (<I>tv_nsec</I> の一つが 0 から 999,999,999 までの範囲に入っていない)。
+<DT><B>EINVAL</B><DD>
+
+
+<I>flags</I> が無効である。
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H2>バージョン</H2>
+
+これらのシステムコールはカーネル 2.6.25 以降の Linux で利用可能である。 ライブラリ側のサポートはバージョン 2.8 以降の glibc
+で提供されている。
+<A NAME="lbAN">&nbsp;</A>
+<H2>準拠</H2>
+
+これらのシステムコールは Linux 固有である。
+<A NAME="lbAO">&nbsp;</A>
+<H2>バグ</H2>
+
+
+現在のところ、 <B>timerfd_create</B>()  が対応している clockid の種類は <B>timer_create</B>(2)
+よりも少ない。
+<A NAME="lbAP">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは、タイマーを作成し、その進捗をモニターするものである。 このプログラムは最大で 3 個のコマンドライン引き数を取り、
+第一引き数ではタイマーの満了時間の初期値 (秒数単位) を、 第二引き数ではタイマーの間隔 (秒数単位) を、
+第三引き数ではタイマーが何回満了したらプログラムが終了するかを指定する。 第二引き数と第三引き数は省略可能である。
+<P>
+以下のシェルのセッションはこのプログラムの使用例を示したものである。
+
+<PRE>
+
+$<B> a.out 3 1 100</B>
+0.000: timer started
+3.000: read: 1; total=1
+4.000: read: 1; total=2
+<B>^Z </B>                 # type control-Z to suspend the program
+[1]+  Stopped                 ./timerfd3_demo 3 1 100
+$ <B>fg</B>                # Resume execution after a few seconds
+a.out 3 1 100
+9.660: read: 5; total=7
+10.000: read: 1; total=8
+11.000: read: 1; total=9
+<B>^C </B>                 # type control-C to suspend the program
+</PRE>
+
+
+<A NAME="lbAQ">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/sys/timerfd.h">sys/timerfd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;        /* Definition of uint64_t */
+
+#define handle_error(msg) \
+        do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+static void
+print_elapsed_time(void)
+{
+    static struct timespec start;
+    struct timespec curr;
+    static int first_call = 1;
+    int secs, nsecs;
+
+    if (first_call) {
+        first_call = 0;
+        if (clock_gettime(CLOCK_MONOTONIC, &amp;start) == -1)
+            handle_error(&quot;clock_gettime&quot;);
+    }
+
+    if (clock_gettime(CLOCK_MONOTONIC, &amp;curr) == -1)
+        handle_error(&quot;clock_gettime&quot;);
+
+    secs = curr.tv_sec - start.tv_sec;
+    nsecs = curr.tv_nsec - start.tv_nsec;
+    if (nsecs &lt; 0) {
+        secs--;
+        nsecs += 1000000000;
+    }
+    printf(&quot;%d.%03d: &quot;, secs, (nsecs + 500000) / 1000000);
+}
+
+int
+main(int argc, char *argv[])
+{
+    struct itimerspec new_value;
+    int max_exp, fd;
+    struct timespec now;
+    uint64_t exp, tot_exp;
+    ssize_t s;
+
+    if ((argc != 2) &amp;&amp; (argc != 4)) {
+        fprintf(stderr, &quot;%s init-secs [interval-secs max-exp]\n&quot;,
+                argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    if (clock_gettime(CLOCK_REALTIME, &amp;now) == -1)
+        handle_error(&quot;clock_gettime&quot;);
+
+    /* Create a CLOCK_REALTIME absolute timer with initial
+       expiration and interval as specified in command line */
+
+    new_value.it_value.tv_sec = now.tv_sec + atoi(argv[1]);
+    new_value.it_value.tv_nsec = now.tv_nsec;
+    if (argc == 2) {
+        new_value.it_interval.tv_sec = 0;
+        max_exp = 1;
+    } else {
+        new_value.it_interval.tv_sec = atoi(argv[2]);
+        max_exp = atoi(argv[3]);
+    }
+    new_value.it_interval.tv_nsec = 0;
+
+    fd = timerfd_create(CLOCK_REALTIME, 0);
+    if (fd == -1)
+        handle_error(&quot;timerfd_create&quot;);
+
+    if (timerfd_settime(fd, TFD_TIMER_ABSTIME, &amp;new_value, NULL) == -1)
+        handle_error(&quot;timerfd_settime&quot;);
+
+    print_elapsed_time();
+    printf(&quot;timer started\n&quot;);
+
+    for (tot_exp = 0; tot_exp &lt; max_exp;) {
+        s = read(fd, &amp;exp, sizeof(uint64_t));
+        if (s != sizeof(uint64_t))
+            handle_error(&quot;read&quot;);
+
+        tot_exp += exp;
+        print_elapsed_time();
+        printf(&quot;read: %llu; total=%llu\n&quot;,
+                (unsigned long long) exp,
+                (unsigned long long) tot_exp);
+    }
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAR">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/eventfd.2.html">eventfd</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/setitimer.2.html">setitimer</A></B>(2),
+<B><A HREF="../man2/signalfd.2.html">signalfd</A></B>(2), <B>timer_create</B>(2), <B>timer_gettime</B>(2),
+<B>timer_settime</B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7), <B><A HREF="../man7/time.7.html">time</A></B>(7)
+<A NAME="lbAS">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部である。
+プロジェクトの説明とバグ報告に関する情報は <A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">timerfd_create()</A><DD>
+<DT><A HREF="#lbAF">timerfd_settime()</A><DD>
+<DT><A HREF="#lbAG">timerfd_gettime()</A><DD>
+<DT><A HREF="#lbAH">タイマーファイルディスクリプターに対する操作</A><DD>
+<DT><A HREF="#lbAI">fork(2) での扱い</A><DD>
+<DT><A HREF="#lbAJ">execve(2) での扱い</A><DD>
+</DL>
+<DT><A HREF="#lbAK">返り値</A><DD>
+<DT><A HREF="#lbAL">エラー</A><DD>
+<DT><A HREF="#lbAM">バージョン</A><DD>
+<DT><A HREF="#lbAN">準拠</A><DD>
+<DT><A HREF="#lbAO">バグ</A><DD>
+<DT><A HREF="#lbAP">例</A><DD>
+<DL>
+<DT><A HREF="#lbAQ">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAR">関連項目</A><DD>
+<DT><A HREF="#lbAS">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

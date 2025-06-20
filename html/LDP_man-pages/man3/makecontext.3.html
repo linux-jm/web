@@ -1,0 +1,223 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MAKECONTEXT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MAKECONTEXT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/makecontext.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+makecontext, swapcontext - ユーザーコンテキストを操作する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/ucontext.h">ucontext.h</A>&gt;</B>
+<P>
+
+<B>void makecontext(ucontext_t *</B><I>ucp</I><B>, void (*</B><I>func</I><B>)(),</B> <B>int
+</B><I>argc</I><B>, ...);</B>
+<P>
+
+<B>int swapcontext(ucontext_t *</B><I>oucp</I><B>, const ucontext_t *</B><I>ucp</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+In a System V-like environment, one has the type <I>ucontext_t</I> (defined in
+<I>&lt;<A HREF="file:///usr/include/ucontext.h">ucontext.h</A>&gt;</I> and described in <B><A HREF="../man3/getcontext.3.html">getcontext</A></B>(3))  and the four
+functions <B><A HREF="../man3/getcontext.3.html">getcontext</A></B>(3), <B><A HREF="../man3/setcontext.3.html">setcontext</A></B>(3), <B>makecontext</B>(), and
+<B>swapcontext</B>()  that allow user-level context switching between multiple
+threads of control within a process.
+<P>
+
+<B>makecontext</B>()  関数は、ポインター <I>ucp</I> が指すコンテキストを変更する (<I>ucp</I> は以前の
+<B><A HREF="../man3/getcontext.3.html">getcontext</A></B>(3)  呼び出しで得られたものである)。 <B>makecontext</B>()
+を起動する前には、呼び出し者は、このコンテキスト用に 新しいスタックを確保し、そのアドレスを <I>ucp-&gt;uc_stack</I> に代入し、
+さらに後継のコンテキストを定義し、そのアドレスを <I>ucp-&gt;uc_link</I> に 代入しなければならない。
+<P>
+
+このコンテキストが将来 (<B><A HREF="../man3/setcontext.3.html">setcontext</A></B>(3)  または <B>swapcontext</B>()  によって)  有効にされると、関数
+<I>func</I> が呼ばれ、 引数として <I>argc</I> 以降の整数 (<I>int</I>)  引数の列が渡される。 呼び出し者は <I>argc</I>
+にこれらの引数の個数を指定しなければならない。 この関数が戻ると、後継のコンテキストが有効になる。 後継コンテキストのポインターが NULL
+の場合、そのスレッドが終了する。
+<P>
+
+<B>swapcontext</B>()  関数は現在のコンテキストを ポインター <I>oucp</I> が指す構造体に保存し、 ポインター <I>ucp</I>
+が指すコンテキストを有効にする。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>swapcontext</B>()  は返らない (しかし後に <I>oucp</I> が有効になった場合には返ることがある。 このときには
+<B>swapcontext</B>()  は 0 を返すように見える。)  失敗すると、 <B>swapcontext</B>()  は -1 を返し、
+<I>errno</I> をエラーに応じて設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>ENOMEM</B><DD>
+スタックに割り当てる空間が残っていない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>makecontext</B>()  と <B>swapcontext</B>()  は、バージョン 2.1 以降の glibc で提供されている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>makecontext</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe race:ucp<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>swapcontext</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe race:oucp race:ucp<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+SUSv2, POSIX.1-2001.  POSIX.1-2008 では、移植性の問題から <B>makecontext</B>()  と
+<B>swapcontext</B>()  の仕様が削除されている。 代わりに、アプリケーションを POSIX スレッドを使って書き直すことが 推奨されている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<I>ucp-&gt;uc_stack</I> の解釈は <B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2)  の場合と同じである。 すなわちこの構造体には、
+スタックとして用いられるメモリー領域の開始アドレスと長さが含まれ、 これはスタックが伸びる方向がどちらであるかには関係しない。
+したがって、ユーザープログラムはこの件については心配しなくてよい。
+<P>
+
+<I>int</I> とポインター型が同じ大きさであるアーキテクチャーでは (x86-32 はその例であり、両方の型とも 32 ビットである)、
+<B>makecontext</B>()  の <I>argc</I> 以降の引数としてポインターを渡してもうまく動くかもしれない。
+しかしながら、このようにすると、移植性は保証されず、 標準に従えば動作は未定義であり、ポインターが <I>int</I>
+よりも大きいアーキテクチャーでは正しく動作しないことだろう。 それにも関わらず、バージョン 2.8 以降の glibc では、
+<B>makecontext</B>()  に変更が行われ、(x86-64 などの) いくつかの 64 ビットアーキテクチャーで
+引数としてポインターを渡すことができるようになっている。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+以下のサンプルプログラムは、 <B><A HREF="../man3/getcontext.3.html">getcontext</A></B>(3), <B>makecontext</B>(), <B>swapcontext</B>()
+の使用方法の例を示すものである。 このプログラムを実行すると、以下のような出力が得られる:
+<P>
+
+
+
+$<B> ./a.out</B>
+main: swapcontext(&amp;uctx_main, &amp;uctx_func2)
+func2: started
+func2: swapcontext(&amp;uctx_func2, &amp;uctx_func1)
+func1: started
+func1: swapcontext(&amp;uctx_func1, &amp;uctx_func2)
+func2: returning
+func1: returning
+main: exiting
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/ucontext.h">ucontext.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+<P>
+static ucontext_t uctx_main, uctx_func1, uctx_func2;
+<P>
+#define handle_error(msg) \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+static void
+func1(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;func1:&nbsp;started\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;func1:&nbsp;swapcontext(&amp;uctx_func1,&nbsp;&amp;uctx_func2)\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(swapcontext(&amp;uctx_func1,&nbsp;&amp;uctx_func2)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;swapcontext&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;func1:&nbsp;returning\n&quot;);
+}
+<P>
+static void
+func2(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;func2:&nbsp;started\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;func2:&nbsp;swapcontext(&amp;uctx_func2,&nbsp;&amp;uctx_func1)\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(swapcontext(&amp;uctx_func2,&nbsp;&amp;uctx_func1)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;swapcontext&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;func2:&nbsp;returning\n&quot;);
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;func1_stack[16384];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;func2_stack[16384];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(getcontext(&amp;uctx_func1)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;getcontext&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uctx_func1.uc_stack.ss_sp&nbsp;=&nbsp;func1_stack;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uctx_func1.uc_stack.ss_size&nbsp;=&nbsp;sizeof(func1_stack);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uctx_func1.uc_link&nbsp;=&nbsp;&amp;uctx_main;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;makecontext(&amp;uctx_func1,&nbsp;func1,&nbsp;0);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(getcontext(&amp;uctx_func2)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;getcontext&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uctx_func2.uc_stack.ss_sp&nbsp;=&nbsp;func2_stack;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uctx_func2.uc_stack.ss_size&nbsp;=&nbsp;sizeof(func2_stack);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Successor&nbsp;context&nbsp;is&nbsp;f1(),&nbsp;unless&nbsp;argc&nbsp;&gt;&nbsp;1&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uctx_func2.uc_link&nbsp;=&nbsp;(argc&nbsp;&gt;&nbsp;1)&nbsp;?&nbsp;NULL&nbsp;:&nbsp;&amp;uctx_func1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;makecontext(&amp;uctx_func2,&nbsp;func2,&nbsp;0);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;main:&nbsp;swapcontext(&amp;uctx_main,&nbsp;&amp;uctx_func2)\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(swapcontext(&amp;uctx_main,&nbsp;&amp;uctx_func2)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;swapcontext&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;main:&nbsp;exiting\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2), <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2), <B><A HREF="../man3/getcontext.3.html">getcontext</A></B>(3),
+<B><A HREF="../man3/sigsetjmp.3.html">sigsetjmp</A></B>(3)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DL>
+<DT><A HREF="#lbAL">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

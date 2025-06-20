@@ -1,0 +1,332 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SYMLINK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SYMLINK</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/symlink.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+symlink - シンボリックリンクの取り扱い
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+シンボリックリンクは他のファイルへのポインターとして振る舞うファイルである。
+その挙動を理解するには、まずハードリンクがどのように機能するかを理解しておかなければならない。
+<P>
+
+あるファイルへのハードリンクは、 元々のファイルと区別することができない。 なぜなら、
+ハードリンクは元々のファイル名の裏にあるオブジェクトへの参照だからである。 (より正確には、 あるファイルへのハードリンクはそれぞれ同じ <I>inode
+番号</I> への参照である。 inode 番号は inode テーブルへのインデックスで、 inode
+テーブルはファイルシステム上のすべてのファイルについてのメタデータを保持している。 <B><A HREF="../man2/stat.2.html">stat</A></B>(2) 参照。)
+ファイルへの変更は、ファイルの参照に使用された名前とは独立に行われる。 ハードリンクはディレクトリを参照することはできない
+(これはファイルシステムツリー内でループが発生する可能性を防止するためであり、 ループが発生すると、 多くのプログラムが混乱してしまうことだろう)。
+また、 ハードリンクは異なるファイルシステム上のファイルを参照することもできない (inode
+番号はファイルシステムをまたがると一意ではないからである)。
+<P>
+
+シンボリックリンクは特別な種類のファイルで、 ファイルの内容はそのリンクの参照先の別のファイルのパス名を示す文字列である (シンボリックリンクの内容は
+<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2) を使って読むことができる)。 言い換えると、 シンボリックリンクは別の名前へのポインターであり、
+ファイルの裏にあるオブジェクトへのポインターではない。 この理由から、
+シンボリックリンクではディレクトリへの参照やファイルシステム境界を越える参照を行うことができる。
+<P>
+
+シンボリックリンクが参照する先のパス名が存在しないといけないという要件はない。 存在しないパス名を参照するシンボリックリンクは「壊れた
+(dangling) リンク」と呼ばれる。
+<P>
+
+
+シンボリックリンクとその参照先のオブジェクトは一つのファイルシステムの名前空間内に共存するので、
+リンクそのものと参照先のオブジェクトの間で混乱が生じる可能性がある。 かなり昔からあるシステムでは、
+コマンドやシステムコールはいくらかアドホックな方法の独自のリンクの辿り方の決まり事を採用している。 ここでは、 Linux
+や他のシステムで実装されている、 もっと広く使われている方法のルールについて概要を説明する。 サイト固有のアプリケーションもこれらのルールに準拠し、
+可能な限りユーザーインターフェースが一貫したものになるようにすることが重要である。
+<A NAME="lbAD">&nbsp;</A>
+<H3>Magic links</H3>
+
+There is a special class of symbolic-link-like objects known as &quot;magic
+links&quot;, which can be found in certain pseudofilesystems such as <B><A HREF="../man5/proc.5.html">proc</A></B>(5)
+(examples include <I>/proc/[pid]/exe</I> and <I>/proc/[pid]/fd/*</I>).  Unlike
+normal symbolic links, magic links are not resolved through
+pathname-expansion, but instead act as direct references to the kernel's own
+representation of a file handle.  As such, these magic links allow users to
+access files which cannot be referenced with normal paths (such as unlinked
+files still referenced by a running program ).
+<P>
+
+
+Because they can bypass ordinary <B>mount_namespaces</B>(7)-based restrictions,
+magic links have been used as attack vectors in various exploits.
+<A NAME="lbAE">&nbsp;</A>
+<H3>シンボリックリンクの所有権、アクセス許可、タイムスタンプ</H3>
+
+既存のシンボリックリンクの所有者とグループは <B><A HREF="../man2/lchown.2.html">lchown</A></B>(2) を使って変更することができる。 シンボリックリンクの所有権が問題となる場面は、
+スティッキービット (<B><A HREF="../man2/stat.2.html">stat</A></B>(2) 参照) がセットされたディレクトリで、 そのリンクの削除や名前の変更を行おうとしている場合だけである。
+<P>
+
+シンボリックリンクの最終アクセス時刻と最終修正時刻は <B><A HREF="../man2/utimensat.2.html">utimensat</A></B>(2) や <B><A HREF="../man3/lutimes.3.html">lutimes</A></B>(3) で変更できる。
+<P>
+
+
+Linux では、通常のシンボリックリンクのアクセス許可 (permission) はどの操作でも使用されない。 アクセス許可は常に 0777
+(すべてのユーザーカテゴリーにおいて読み出し、書き込み、実行が可能) で、変更できない。
+<P>
+
+However, magic links do not follow this rule.  They can have a non-0777
+mode, though this mode is not currently used in any permission checks.
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>シンボリックリンクを参照するファイルディスクリプターを取得する</H3>
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2) に <B>O_PATH</B> と <B>O_NOFOLLOW</B>
+の両方のフラグを指定すると、ファイルディスクリプターが得られる。このファイルディスクリプターは <B><A HREF="../man2/fstatat.2.html">fstatat</A></B>(2),
+<B><A HREF="../man2/fchownat.2.html">fchownat</A></B>(2), <B><A HREF="../man2/fchmodat.2.html">fchmodat</A></B>(2), <B>linkat</B> (2), <B><A HREF="../man2/readlinkat.2.html">readlinkat</A></B>(2) などのシステムコールの
+<I>dirfd</I> 引数として渡して、 (シンボリックリンクが参照するファイルではなく) シンボリックリンク自身に対する操作を行うことができる。
+<P>
+
+デフォルトでは (すなわち <B>AT_SYMLINK_FOLLOW</B> フラグが指定されなかった場合)、 <B><A HREF="../man2/name_to_handle_at.2.html">name_to_handle_at</A></B>(2)
+がシンボリックリンクに適用された場合、 (シンボリックリンクが参照するファイルではなく) シンボリックリンクへのハンドルが返される。 それ以降の
+<B><A HREF="../man2/open_by_handle_at.2.html">open_by_handle_at</A></B>(2) で <B>O_PATH</B> フラグを指定することで、 (シンボリックリンクが参照するファイルではなく)
+シンボリックリンクに対するファイルディスクリプターを得ることができる。 繰り返しになるが、 このファイルディスクリプターを上述のシステムコールで使用し、
+シンボリックリンク自身に操作を行うことができる。
+<A NAME="lbAG">&nbsp;</A>
+<H3>システムコールやコマンドによるシンボリックリンクの扱い</H3>
+
+シンボリックリンクは、 リンク自身に対する操作か、 リンクが参照するオブジェクトに対する操作のいずれかとして扱われる。 後者の場合、
+アプリケーションやシステムコールはリンクを<I>辿る (follow)</I>と呼ばれる。 シンボリックリンクは他のシンボリックリンクを参照することもできる。
+この場合、 シンボリックリンクでないオブジェクトが見つかるか、 存在しないファイルを参照するシンボリックリンクが見つかるか、 ループが検出されるまで、
+リンクの展開が行われる。 (ループの検出は辿ることができるリンクの数に上限を設けることで行われる。 この上限を超過した場合はエラーとなる。)
+<P>
+
+3 つの領域に分けて議論する必要がある。以下の 3 つである。
+<DL COMPACT>
+<DT>1.<DD>
+システムコールのファイル名引数としてシンボリックリンクが使用される場合。
+<DT>2.<DD>
+ファイルツリーを辿っていないユーティリティーのコマンドライン引数としてシンボリックリンクが指定される場合。
+<DT>3.<DD>
+ファイルツリーを辿っているユーティリティーがシンボリックリンクを見つけた場合 (コマンドラインで指定される場合もあれば、
+ファイル階層を辿っている途中で遭遇する場合もある)。
+</DL>
+<P>
+
+
+Before describing the treatment of symbolic links by system calls and
+commands, we require some terminology.  Given a pathname of the form
+<I>a/b/c</I>, the part preceding the final slash (i.e., <I>a/b</I>)  is called the
+<I>dirname</I> component, and the part following the final slash (i.e., <I>c</I>)
+is called the <I>basename</I> component.
+<A NAME="lbAH">&nbsp;</A>
+<H3>システムコールにおけるシンボリックリンクの取り扱い</H3>
+
+最初の領域は、システムコールのファイル名引数としてシンボリックリンクが使用される場合である。
+<P>
+
+The treatment of symbolic links within a pathname passed to a system call is
+as follows:
+<DL COMPACT>
+<DT>1.<DD>
+Within the dirname component of a pathname, symbolic links are always
+followed in nearly every system call.  (This is also true for commands.)
+The one exception is <B>openat2</B>(2), which provides flags that can be used to
+explicitly prevent following of symbolic links in the dirname component.
+<DT>2.<DD>
+Except as noted below, all system calls follow symbolic links in the
+basename component of a pathname.  For example, if there were a symbolic
+link <I>slink</I> which pointed to a file named <I>afile</I>, the system call
+<I>open(&quot;slink&quot; ...)</I> would return a file descriptor referring to the file
+<I>afile</I>.
+</DL>
+<P>
+
+Various system calls do not follow links in the basename component of a
+pathname, and operate on the symbolic link itself.  They are: <B><A HREF="../man2/lchown.2.html">lchown</A></B>(2),
+<B><A HREF="../man2/lgetxattr.2.html">lgetxattr</A></B>(2), <B><A HREF="../man2/llistxattr.2.html">llistxattr</A></B>(2), <B><A HREF="../man2/lremovexattr.2.html">lremovexattr</A></B>(2), <B><A HREF="../man2/lsetxattr.2.html">lsetxattr</A></B>(2),
+<B><A HREF="../man2/lstat.2.html">lstat</A></B>(2), <B><A HREF="../man2/readlink.2.html">readlink</A></B>(2), <B><A HREF="../man2/rename.2.html">rename</A></B>(2), <B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2), and <B><A HREF="../man2/unlink.2.html">unlink</A></B>(2).
+<P>
+
+
+Certain other system calls optionally follow symbolic links in the basename
+component of a pathname.  They are: <B><A HREF="../man2/faccessat.2.html">faccessat</A></B>(2), <B><A HREF="../man2/fchownat.2.html">fchownat</A></B>(2),
+<B><A HREF="../man2/fstatat.2.html">fstatat</A></B>(2), <B><A HREF="../man2/linkat.2.html">linkat</A></B>(2), <B><A HREF="../man2/name_to_handle_at.2.html">name_to_handle_at</A></B>(2), <B><A HREF="../man2/open.2.html">open</A></B>(2),
+<B><A HREF="../man2/openat.2.html">openat</A></B>(2), <B><A HREF="../man2/open_by_handle_at.2.html">open_by_handle_at</A></B>(2), and <B><A HREF="../man2/utimensat.2.html">utimensat</A></B>(2); see their manual
+pages for details.  Because <B><A HREF="../man3/remove.3.html">remove</A></B>(3)  is an alias for <B><A HREF="../man2/unlink.2.html">unlink</A></B>(2), that
+library function also does not follow symbolic links.  When <B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2)  is
+applied to a symbolic link, it fails with the error <B>ENOTDIR</B>.
+<P>
+
+<B><A HREF="../man2/link.2.html">link</A></B>(2) については特別に議論が必要である。 POSIX.1-2001 では <B><A HREF="../man2/link.2.html">link</A></B>(2) は <I>oldpath</I>
+がシンボリックリンクであればこれを展開するように規定している。 しかしながら、 Linux はシンボリックリンクを展開しない。 (デフォルトでは
+Solaris も同じだが、 適切なコンパイラーオプションを指定することで POSIX.1-2001 で規定された動作をさせることができる。)
+POSIX.1-2008 では、どちらの動作の実装も認められるように規定が変更された。
+<A NAME="lbAI">&nbsp;</A>
+<H3>ファイルツリーを辿らないコマンド</H3>
+
+二つ目の領域は、 ファイルツリーを辿らないコマンドの、 コマンドライン引数のファイル名としてシンボリックリンクが指定される場合である。
+<P>
+
+以下に述べる場合を除くと、 コマンドはコマンドライン引数で指定された名前のシンボリックリンクを辿る。 例えば、 <I>afile</I>
+という名前のファイルを指しているシンボリックリンク <I>slink</I> があったとすると、 コマンド <I>cat slink</I> は <I>afile</I>
+の内容を表示することになる。
+<P>
+
+大事な点として意識しておくべきなのは、 このルールが適用されるコマンドの中には、
+オプション次第ではファイルツリーを辿る場合があるコマンドもあるということである。  例えば、 コマンド <I>chown file</I>
+はこのルールに含まれるが、 コマンド <I>chown&nbsp;-R file</I> はツリーを辿る動作をするのであてはまらない (後者の場合は、3
+つ目の領域に該当する)。
+<P>
+
+シンボリックリンクを辿るのではなく、 コマンドがシンボリックリンク自身に対して操作を行うことを明示的に指示したい場合、 例えば、 <I>chown
+slink</I> で <I>slink</I> がシンボリックリンクかどうかに関わらず、 <I>slink</I> のファイル自身の所有権を変更したい場合は、 <I>-h</I>
+オプションを使用すべきである。 上記の例では、 <I>chown root slink</I> は <I>slink</I> が参照するファイルの所有権を変更するが、
+<I>chown&nbsp;-h root slink</I> は <I>slink</I> 自身の所有権を変更する。
+<P>
+
+このルールにはいくつかの例外がある。
+<DL COMPACT>
+<DT>*<DD>
+コマンド <B><A HREF="../../0MultiFileIdx/man1/mv.1.html">mv</A></B>(1) と <B><A HREF="../../0MultiFileIdx/man1/rm.1.html">rm</A></B>(1) は引数で指定された名前のシンボリックリンクを辿らないが、
+それぞれシンボリックリンク自身の名前変更と削除を行おうとする。 (シンボリックリンクが相対パスでファイルを参照している場合、
+そのシンボリックリンクを別のディレクトリに移動すると、動かなくなることが非常によくある。 移動の結果、 パスが正しくないものになってしまうからである。)
+<DT>*<DD>
+<B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1) コマンドもこのルールの例外である。 昔からあるシステムとの互換性のため (<B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1) がツリーを辿らない場合、つまり <I>-R</I>
+オプションが指定されなかった場合)、 <B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1) コマンドはオプション <I>-H</I> か <I>-L</I> が指定された場合、もしくはオプション
+<I>-F</I>, <I>-d</I>, <I>-l</I> が指定されなかった場合、 引数として指定されたシンボリックリンクを辿る。 (<B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1) コマンドは、
+ファイルツリーを辿らない場合であっても、 オプション <I>-H</I> と <I>-L</I> がその動作に影響を与える唯一のコマンドである。)
+<DT>*<DD>
+
+
+
+
+
+
+<B><A HREF="../../file/man1/file.1.html">file</A></B>(1) コマンドもこのルールの例外である。 <B><A HREF="../../file/man1/file.1.html">file</A></B>(1) コマンドは、
+デフォルトでは引数で指定されたシンボリックリンクを辿らない。 <B><A HREF="../../file/man1/file.1.html">file</A></B>(1) コマンドは、 <I>-L</I> オプションが指定された場合、
+引数で指定されたシンボリックリンクを辿る。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>ファイルツリーを辿るコマンド</H3>
+
+次のコマンドは指定された場合もしくは常にファイルツリーを辿る: <B><A HREF="../../0MultiFileIdx/man1/chgrp.1.html">chgrp</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/chmod.1.html">chmod</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/chown.1.html">chown</A></B>(1),
+<B><A HREF="../../0MultiFileIdx/man1/cp.1.html">cp</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/du.1.html">du</A></B>(1), <B><A HREF="../../GNU_findutils/man1/find.1.html">find</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1), <B>pax</B>(1), <B><A HREF="../../0MultiFileIdx/man1/rm.1.html">rm</A></B>(1), <B><A HREF="../../GNU_tar/man1/tar.1.html">tar</A></B>(1)。
+<P>
+
+重要なのは、 ファイルツリーを辿っている際に見つかったシンボリックリンクにも、 コマンドライン引数として渡されたシンボリックリンクにも、
+以下のルールが等しく適用される点である。
+<P>
+
+「1 つ目のルール」は、 ディレクトリ以外のファイルを参照するシンボリックリンクに適用される。
+シンボリックリンクに適用される操作はシンボリックリンク自身に行われるが、 そうでない場合はリンクは無視される。
+<P>
+
+コマンド <I>rm&nbsp;-r slink directory</I> は <I>slink</I> を削除するとともに、
+ファイルツリーを辿る途中で見つけたシンボリックリンクも削除する。 シンボリックリンクは削除できるからである。 <B><A HREF="../../0MultiFileIdx/man1/rm.1.html">rm</A></B>(1) が <I>slink</I>
+が参照するファイルに影響をおよぼすことはない。
+<P>
+
+「2 つ目のルール」は、 ディレクトリを参照するシンボリックリンクに適用される。 デフォルトでは、 ディレクトリを参照するシンボリックリンクを辿らない。
+この動作はしばしば「物理的な」ツリー探索 (&quot;physical&quot; walk) と呼ばれる。 これに対して
+(ディレクトリを参照するシンボリックリンクを辿る場合は) 「論理的な」ツリー探索 (&quot;logical&quot; walk) と呼ばれる。
+<P>
+
+一貫性を持たせるため、ファイルツリーを辿るコマンドが可能な限り従っている慣習がいくつかある。
+<DL COMPACT>
+<DT>*<DD>
+<I>-H</I> (&quot;half-logical&quot;) フラグを指定すると、 参照先のファイル種別に関わらず、
+コマンドにコマンドラインで指定されたシンボリックリンクを辿らせることができる。 このフラグは、
+コマンドラインの名前空間を論理的な名前空間のように見せるためのものである。 (常にファイルツリーを辿るわけではないコマンドでは、 <I>-R</I>
+フラグを一緒に指定しない限り、 <I>-H</I> フラグは無視される点に注意。)
+<DT><DD>
+例えば、 コマンド <I>chown&nbsp;-HR user slink</I> は <I>slink</I> が指すファイルを頂点とするファイル階層を辿る。 <I>-H</I>
+は上記で説明した <I>-h</I> フラグとは同じではないことに注意。 <I>-H</I> フラグを指定すると、 アクションを実行する場合でも、
+ツリーを辿る場合でも、 コマンドラインで指定されたシンボリックリンクの解決 (dereference) を行う。
+ユーザーがシンボリックリンクが指すファイル名を指定したのと同じように見える。
+<DT>*<DD>
+<I>-L</I> (&quot;logical&quot;) フラグを指定すると、 参照先のファイル種別に関わらず、 コマンドが、
+コマンドラインで指定された名前のシンボリックリンクも、 ファイルツリーを辿る際に見つけたシンボリックリンクも辿るようになる。 このフラグは、
+名前空間全体を論理的な名前空間のように見せるためのものである。 (常にファイルツリーを辿るわけではないコマンドでは、 <I>-R</I>
+フラグを一緒に指定しない限り、 <I>-L</I> フラグは無視される点に注意。)
+<DT><DD>
+例えば、 コマンド <I>chown&nbsp;-LR user slink</I> は <I>slink</I> が参照するファイルの所有者を変更する。
+<I>slink</I> がディレクトリを参照する場合、 <B>chown</B> はそのシンボリックリンクが参照するディレクトリを頂点とするファイル階層を辿る。
+また、 <B>chown</B> が辿るファイルツリー内でシンボリックリンクが見つかった場合、 <I>slink</I> と同じように処理される。
+<DT>*<DD>
+<I>-P</I> (&quot;physical&quot;) フラグを指定すると、 コマンドはデフォルトの動作をするようになる。
+このフラグは名前空間全体を物理的な名前空間のように見せるためのものである。
+</DL>
+<P>
+
+デフォルトでファイルツリーを辿らないコマンドでは、 <I>-R</I> フラグが同時に指定されなかった場合、 フラグ <I>-H</I>, <I>-L</I>, <I>-P</I>
+は無視される。 また、 <I>-H</I>, <I>-L</I>, <I>-P</I> は複数回同時に指定できるが、 最後に指定されたオプションでコマンドの動作が決定される。
+この動作は、 コマンドのエイリアスにある動作を指定しておいて、 コマンドラインでその動作を上書きできるようにするためである。
+<P>
+
+コマンド <B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1) と <B><A HREF="../../0MultiFileIdx/man1/rm.1.html">rm</A></B>(1) には、 これらのルールに対する例外がある。
+<DL COMPACT>
+<DT>*<DD>
+<B><A HREF="../../0MultiFileIdx/man1/rm.1.html">rm</A></B>(1) コマンドは、 参照先のファイルではなく、シンボリックリンクに対して操作を行う。 したがって、 シンボリックリンクを辿ることはない。
+<B><A HREF="../../0MultiFileIdx/man1/rm.1.html">rm</A></B>(1) コマンドはオプション <I>-H</I>, <I>-L</I>, <I>-P</I> をサポートしていない。
+<DT>*<DD>
+古いシステムとの互換性を持たせるため、 <B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1) コマンドは少し違った動作をする。 オプション <I>-F</I>, <I>-d</I>, <I>-l</I>
+を指定した場合、 <B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1) はコマンドラインで指定されたシンボリックリンクを辿る。 <I>-L</I> フラグが指定された場合、
+コマンドラインで指定された場合でも、 ファイルツリーを辿る際に見つかった場合でも、 ファイル種別に関わらず、 <B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1)
+はすべてのシンボリックリンクを辿る。
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/chgrp.1.html">chgrp</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/chmod.1.html">chmod</A></B>(1), <B><A HREF="../../GNU_findutils/man1/find.1.html">find</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/ln.1.html">ln</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/mv.1.html">mv</A></B>(1),
+<B><A HREF="../../util-linux/man1/namei.1.html">namei</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/rm.1.html">rm</A></B>(1), <B><A HREF="../man2/lchown.2.html">lchown</A></B>(2), <B><A HREF="../man2/link.2.html">link</A></B>(2), <B><A HREF="../man2/lstat.2.html">lstat</A></B>(2),
+<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2), <B><A HREF="../man2/rename.2.html">rename</A></B>(2), <B><A HREF="../man2/symlink.2.html">symlink</A></B>(2), <B><A HREF="../man2/unlink.2.html">unlink</A></B>(2), <B><A HREF="../man2/utimensat.2.html">utimensat</A></B>(2),
+<B><A HREF="../man3/lutimes.3.html">lutimes</A></B>(3), <B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">Magic links</A><DD>
+<DT><A HREF="#lbAE">シンボリックリンクの所有権、アクセス許可、タイムスタンプ</A><DD>
+<DT><A HREF="#lbAF">シンボリックリンクを参照するファイルディスクリプターを取得する</A><DD>
+<DT><A HREF="#lbAG">システムコールやコマンドによるシンボリックリンクの扱い</A><DD>
+<DT><A HREF="#lbAH">システムコールにおけるシンボリックリンクの取り扱い</A><DD>
+<DT><A HREF="#lbAI">ファイルツリーを辿らないコマンド</A><DD>
+<DT><A HREF="#lbAJ">ファイルツリーを辿るコマンド</A><DD>
+</DL>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

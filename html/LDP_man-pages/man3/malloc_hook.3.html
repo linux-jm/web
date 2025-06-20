@@ -1,0 +1,163 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MALLOC_HOOK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MALLOC_HOOK</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/malloc_hook.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+__malloc_hook, __malloc_initialize_hook, __memalign_hook, __free_hook,
+__realloc_hook, __after_morecore_hook - malloc デバッグ用の変数
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/malloc.h">malloc.h</A>&gt;</B>
+
+<B>void *(*__malloc_hook)(size_t </B><I>size</I><B>, const void *</B><I>caller</I><B>);</B>
+
+<B>void *(*__realloc_hook)(void *</B><I>ptr</I><B>, size_t </B><I>size</I><B>, const void *</B><I>caller</I><B>);</B>
+
+<B>void *(*__memalign_hook)(size_t </B><I>alignment</I><B>, size_t </B><I>size</I><B>,</B>
+<B>                         const void *</B><I>caller</I><B>);</B>
+
+<B>void (*__free_hook)(void *</B><I>ptr</I><B>, const void *</B><I>caller</I><B>);</B>
+
+<B>void (*__malloc_initialize_hook)(void);</B>
+
+<B>void (*__after_morecore_hook)(void);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+GNU C ライブラリでは、適切なフック関数 (hook function) を指定することで <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3), <B><A HREF="../man3/realloc.3.html">realloc</A></B>(3),
+<B><A HREF="../man3/free.3.html">free</A></B>(3)  の動作を変更することができる。例えば、動的にメモリー割り当てを行う プログラムのデバッグにこれらのフックを使うことができる。
+<P>
+
+変数 <B>__malloc_initialize_hook</B> は malloc の実装が初期化される際に一度だけ呼ばれる関数へのポインターである。
+この変数は書き換え可能 (weak) であり、アプリケーション内で 以下のような定義で上書きできる:
+<P>
+
+
+
+void (*__malloc_initialize_hook)(void) = my_init_hook;
+
+
+<P>
+
+なお、関数 <I>my_init_hook</I>()  で全てのフックの初期化をすることができる。
+<P>
+
+<B>__malloc_hook</B>, <B>__realloc_hook</B>, <B>__memalign_hook</B>, <B>__free_hook</B>
+で指される 4 つの関数は、各々 <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3), <B><A HREF="../man3/realloc.3.html">realloc</A></B>(3), <B><A HREF="../man3/memalign.3.html">memalign</A></B>(3), <B><A HREF="../man3/free.3.html">free</A></B>(3)
+とよく似たプロトタイプを持っているが、 一番最後の引数 <I>caller</I> をとる点が異なる。 引数 <I>caller</I> には、
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  などの呼び出し元 (caller) のアドレスが格納される。
+<P>
+
+変数 <B>__after_morecore_hook</B> は、領域の追加要求があり <B><A HREF="../man2/sbrk.2.html">sbrk</A></B>(2)
+が呼ばれた後で毎回呼び出される関数へのポインターである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>準拠</H2>
+
+これらの関数は GNU による拡張である。
+<A NAME="lbAF">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+The use of these hook functions is not safe in multithreaded programs, and
+they are now deprecated.  From glibc 2.24 onwards, the
+<B>__malloc_initialize_hook</B> variable has been removed from the API.
+Programmers should instead preempt calls to the relevant functions by
+defining and exporting functions such as &quot;malloc&quot; and &quot;free&quot;.
+<A NAME="lbAG">&nbsp;</A>
+<H2>例</H2>
+
+これらの変数の使い方の簡単な例を以下に示す。
+<P>
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/malloc.h">malloc.h</A>&gt;
+<P>
+/* 使おうとするフックのプロトタイプ宣言 */
+static void my_init_hook(void);
+static void *my_malloc_hook(size_t, const void *);
+<P>
+/* 元々のフックを保存するための変数 */
+static void *(*old_malloc_hook)(size_t, const void *);
+<P>
+/* C ライブラリから呼ばれる初期化フックを上書きする */
+void (*__malloc_initialize_hook) (void) = my_init_hook;
+<P>
+static void
+my_init_hook(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;old_malloc_hook&nbsp;=&nbsp;__malloc_hook;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__malloc_hook&nbsp;=&nbsp;my_malloc_hook;
+}
+<P>
+static void *
+my_malloc_hook(size_t size, const void *caller)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;*result;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;元々のフックを全て戻す&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__malloc_hook&nbsp;=&nbsp;old_malloc_hook;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;malloc&nbsp;の再帰的呼び出し&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;result&nbsp;=&nbsp;malloc(size);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;現在設定されているフック&nbsp;(underlying&nbsp;hook)&nbsp;を保存する&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;old_malloc_hook&nbsp;=&nbsp;__malloc_hook;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;printf()&nbsp;は&nbsp;malloc()&nbsp;を呼び出す可能性があるので
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ここでもガードを行う&nbsp;(元々のフックのままにしておく)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;malloc(%zu)&nbsp;called&nbsp;from&nbsp;%p&nbsp;returns&nbsp;%p\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size,&nbsp;caller,&nbsp;result);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ユーザーが使おうとするフックを再設定する&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__malloc_hook&nbsp;=&nbsp;my_malloc_hook;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;result;
+}
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/mallinfo.3.html">mallinfo</A></B>(3), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3), <B>mcheck</B>(3), <B>mtrace</B>(3)
+<A NAME="lbAI">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">準拠</A><DD>
+<DT><A HREF="#lbAF">注意</A><DD>
+<DT><A HREF="#lbAG">例</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

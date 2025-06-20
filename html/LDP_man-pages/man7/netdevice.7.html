@@ -1,0 +1,289 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of NETDEVICE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>NETDEVICE</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/netdevice.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+netdevice - Linux ネットワークデバイスへの低レベルアクセス
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/ioctl.h">sys/ioctl.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/net/if.h">net/if.h</A>&gt;</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+この man ページでは、ネットワークデバイスを設定するために 用いるソケットインターフェースについて解説する。
+<P>
+
+Linux はネットワークデバイスを設定するための標準的な ioctl を いくつか備えている。これらはどんなソケットのファイルディスクリプターにも
+用いることができる。ファミリーやタイプは何でもよい。 これらの ioctl のほとんどは <I>ifreq</I> 構造体を渡す。
+<P>
+
+
+
+struct ifreq {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;ifr_name[IFNAMSIZ];&nbsp;/*&nbsp;Interface&nbsp;name&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;union&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr&nbsp;ifr_addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr&nbsp;ifr_dstaddr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr&nbsp;ifr_broadaddr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr&nbsp;ifr_netmask;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr&nbsp;ifr_hwaddr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ifr_flags;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ifr_ifindex;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ifr_metric;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ifr_mtu;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;ifmap&nbsp;&nbsp;&nbsp;&nbsp;ifr_map;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ifr_slave[IFNAMSIZ];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ifr_newname[IFNAMSIZ];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ifr_data;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;};
+};
+
+
+<P>
+
+通常、ユーザーによる設定対象デバイスの指定は、 <I>ifr_name</I> にインターフェースの名前をセットすることによって行う。
+他の構造体の全てのメンバは、メモリーを共有する。
+<A NAME="lbAE">&nbsp;</A>
+<H3>ioctl</H3>
+
+「特権が必要」と記述されている ioctl を実行するには、 実効ユーザー ID が 0 か、 <B>CAP_NET_ADMIN</B>
+権限が必要である。これが満たされていない場合は <B>EPERM</B> が返される。
+<DL COMPACT>
+<DT><B>SIOCGIFNAME</B><DD>
+<I>ifr_ifindex</I> を受け取り、インターフェースの名前を <I>ifr_name</I> に入れて返す。これは結果を <I>ifr_name</I>
+として返す唯一の ioctl である。
+<DT><B>SIOCGIFINDEX</B><DD>
+インターフェースの interface index を取得し、 <I>ifr_ifindex</I> に入れて返す。
+<DT><B>SIOCGIFFLAGS</B>, <B>SIOCSIFFLAGS</B><DD>
+
+デバイスの active フラグワードを取得または設定する。 <I>ifr_flags</I> には以下の値のビットマスクが入る。
+
+<TABLE>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2>デバイスフラグ<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_UP</TD><TD>インターフェースは動作中。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_BROADCAST</TD><TD>有効なブロードキャストアドレスがセットされている。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_DEBUG</TD><TD>内部のデバッグフラグ。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_LOOPBACK</TD><TD>インターフェースはループバックである。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_POINTOPOINT</TD><TD>インターフェースは point-to-point リンクである。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_RUNNING</TD><TD>リソースが割り当て済み。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_NOARP</TD><TD>
+arp プロトコルがない。 L2 宛先アドレスが設定されていない。
+<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_PROMISC</TD><TD>インターフェースは promiscuous モードである。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_NOTRAILERS</TD><TD>trailer の利用を避ける。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_ALLMULTI</TD><TD>全てのマルチキャストパケットを受信する。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_MASTER</TD><TD>負荷分散グループのマスターである。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_SLAVE</TD><TD>負荷分散グループのスレーブである。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_MULTICAST</TD><TD>マルチキャストをサポートしている。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_PORTSEL</TD><TD>ifmap によってメディアタイプを選択できる。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_AUTOMEDIA</TD><TD>自動メディア選択が有効になっている。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_DYNAMIC</TD><TD>
+このインターフェースが閉じると、アドレスは失われる。
+<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_LOWER_UP</TD><TD>ドライバからの L1 アップの通知 (Linux 2.6.17 以降)<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_DORMANT</TD><TD>ドライバからの休止状態の通知 (Linux 2.6.17 以降)<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_ECHO</TD><TD>送られたパケットをエコーする (Linux 2.6.25 以降)<BR></TD></TR>
+</TABLE>
+
+
+</DL>
+<P>
+
+active フラグワードの設定は特権が必要な操作である。
+読み出しはどんなプロセスからも可能である。
+<DL COMPACT>
+<DT><B>SIOCGIFPFLAGS</B>, <B>SIOCSIFPFLAGS</B><DD>
+デバイスの拡張 (プライベート) フラグを取得または設定する。
+<I>ifr_flags</I> には以下の値のビットマスクが入る。
+<TABLE>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2>プライベートフラグ<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_802_1Q_VLAN</TD><TD>インターフェースは 802.1Q VLAN デバイスである。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_EBRIDGE</TD><TD>インターフェースは Ethernet ブリッジデバイスである。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_SLAVE_INACTIVE</TD><TD>インターフェースは非アクティブな bonding のスレーブである。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_MASTER_8023AD</TD><TD>インターフェースは 802.3ad bonding のマスターである。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_MASTER_ALB</TD><TD>インターフェースは balanced-alb bonding のマスターである。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_BONDING</TD><TD>インターフェースは bonding のマスターかスレーブである。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_SLAVE_NEEDARP</TD><TD>インターフェースは検証に APR が必要である。<BR></TD></TR>
+<TR VALIGN=top><TD>IFF_ISATAP</TD><TD>インターフェースは RFC4214 ISATAP インターフェースである。<BR></TD></TR>
+</TABLE>
+
+</DL>
+<P>
+
+拡張 (プライベート) インターフェースフラグの設定には特権が必要である。
+<DL COMPACT>
+<DT><B>SIOCGIFADDR</B>, <B>SIOCSIFADDR</B><DD>
+<I>ifr_addr</I> を用いてデバイスのアドレスの設定/取得を行う。
+インターフェースのアドレスの設定は特権が必要な操作である。
+互換性確保のため、設定/取得ができるのは <B>AF_INET</B> アドレスだけである。
+<DT><B>SIOCGIFDSTADDR</B>, <B>SIOCSIFDSTADDR</B><DD>
+point-to-point デバイスの宛先アドレスを <I>ifr_dstaddr</I> を用いて
+設定/取得する。互換性確保のため、
+設定/取得ができるのは <B>AF_INET</B> アドレスだけである。
+宛先アドレスの設定は特権が必要な操作である。
+<DT><B>SIOCGIFBRDADDR</B>, <B>SIOCSIFBRDADDR</B><DD>
+デバイスのブロードキャストアドレスを <I>ifr_brdaddr</I> を用いて
+設定/取得する。互換性確保のため、
+設定/取得ができるのは <B>AF_INET</B> アドレスだけである。
+ブロードキャストアドレスの設定は特権が必要な操作である。
+<DT><B>SIOCGIFNETMASK</B>, <B>SIOCSIFNETMASK</B><DD>
+デバイスのネットワークマスクを <I>ifr_netmask</I> を用いて
+設定/取得する。互換性確保のため、
+設定/取得ができるのは <B>AF_INET</B> アドレスだけである。
+ネットワークマスクの設定は特権が必要な操作である。
+<DT><B>SIOCGIFMETRIC</B>, <B>SIOCSIFMETRIC</B><DD>
+デバイスのメトリックを <I>ifr_metric</I> を用いて取得・設定する。 これはまだ実装されていない。読み出そうとすると <I>ifr_metric</I>
+に 0 をセットして返り、設定しようとすると <B>EOPNOTSUPP</B> が返る。
+<DT><B>SIOCGIFMTU</B>, <B>SIOCSIFMTU</B><DD>
+デバイスの MTU (Maximum Transfer Unit) を <I>ifr_mtu</I> を用いて取得・設定する。 MTU
+の設定は特権が必要な操作である。 MTU の値を小さくしすぎるとカーネルがクラッシュするかもしれない。
+<DT><B>SIOCGIFHWADDR</B>, <B>SIOCSIFHWADDR</B><DD>
+デバイスのハードウェアアドレスを <I>ifr_hwaddr</I> を用いて取得・設定する。 ハードウェアアドレスは <I>sockaddr</I>
+構造体に設定される。 <I>sa_family</I> には ARPHRD_* デバイスタイプが入り、 <I>sa_data</I> にはバイト 0 から始まる L2
+ハードウェアアドレスが入る。 ハードウェアアドレスの設定は特権が必要な操作である。
+<DT><B>SIOCSIFHWBROADCAST</B><DD>
+デバイスのハードウェアブロードキャストアドレスを <I>ifr_hwaddr</I> の値に設定する。この操作には特権が必要である。
+<DT><B>SIOCGIFMAP</B>, <B>SIOCSIFMAP</B><DD>
+インターフェースのハードウェアのパラメーターを <I>ifr_map</I> を用いて取得・設定する。 パラメーターの設定は特権が必要な操作である。
+<DT><DD>
+
+
+struct ifmap {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;&nbsp;&nbsp;mem_start;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;&nbsp;&nbsp;mem_end;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;&nbsp;base_addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;&nbsp;irq;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;&nbsp;dma;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;&nbsp;port;
+};
+
+
+<DT><DD>
+ifmap 構造体の解釈はデバイスドライバとアーキテクチャーに依存する。
+<DT><B>SIOCADDMULTI</B>, <B>SIOCDELMULTI</B><DD>
+デバイスのリンク層のマルチキャストフィルターから、 <I>ifr_hwaddr</I> のアドレスを追加・削除する。これらの操作には特権が必要である。
+別の方法が <B><A HREF="../man7/packet.7.html">packet</A></B>(7)  で解説されている。
+<DT><B>SIOCGIFTXQLEN</B>, <B>SIOCSIFTXQLEN</B><DD>
+デバイスの送信キューの長さを <I>ifr_qlen</I> に取得・設定する。送信キューの長さの設定には特権が必要である。
+<DT><B>SIOCSIFNAME</B><DD>
+<I>ifr_name</I> で指定したインターフェースの名前を <I>ifr_newname</I> に変更する。この操作には特権が必要である。インターフェースが
+up していない 時にのみ使用できる。
+<DT><B>SIOCGIFCONF</B><DD>
+インターフェースの (ネットワーク層の) アドレスのリストを返す。 現在のところ、互換性のため返されるのは <B>AF_INET</B> (IPv4)
+系のアドレスだけである。 他の操作と違い、この ioctl では <I>ifconf</I> 構造体を渡す。
+<DT><DD>
+
+
+struct ifconf {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ifc_len;&nbsp;/*&nbsp;バッファーサイズ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;union&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ifc_buf;&nbsp;/*&nbsp;バッファーアドレス&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;ifreq&nbsp;&nbsp;&nbsp;*ifc_req;&nbsp;/*&nbsp;構造体の配列&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;};
+};
+
+
+<DT><DD>
+<I>ifc_req</I> が NULL の場合、 <B>SIOCGIFCONF</B> はすべての取得できるアドレスを受け取るのに必要なバッファーサイズ
+(バイト数) を <I>ifc_len</I> に格納して返す。 それ以外の場合は、<I>ifc_req</I> には <I>ifreq</I>
+構造体の配列へのポインターを渡す。 この構造体の配列には現在アクティブな L3 インターフェースアドレスがすべて格納される。 <I>ifc_len</I>
+はバイト単位の配列のサイズを渡す。 <I>ifreq</I> 構造体内では、 <I>ifr_name</I> にインターフェース名が、 <I>ifr_addr</I>
+にそのアドレスが入る。 実際に格納されたバイト数は <I>ifc_len</I> で返される。
+<DT><DD>
+<I>ifc_len</I> で指定されたサイズがすべてのアドレスを格納するのに不十分な場合、 カーネルは超過分をスキップし、成功を返す。
+この状況になった場合、それを検出する信頼できる方法はない。 したがって、 前もって <I>ifc_req</I> を NULL に設定して
+<B>SIOCGIFCONF</B> を呼び出して必要なバッファーサイズを決定するか、 返された <I>ifc_len</I> と元の値の差分が
+<I>sizeof(struct ifreq)</I> よりも小さい場合は必ずバッファーを大きくして再度呼び出すか、 のいずれかを行うことが推奨される。
+<DT><DD>
+
+
+
+
+
+
+
+
+
+<I>ifconf</I> か <I>ifreq</I> 構造体へのアクセスでエラーが置こった場合には <B>EFAULT</B> が返される。
+</DL>
+<P>
+
+ほとんどのプロトコルには、専用のインターフェースオプションを 設定するための独自の ioctl が存在する。 説明は各プロトコルの man
+ページを見よ。 IP アドレスの設定に関しては <B><A HREF="../man7/ip.7.html">ip</A></B>(7) を参照。
+<P>
+
+さらに、デバイスによってはプライベートな ioctl がある。 これらはここでは説明しない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>注意</H2>
+
+<B>SIOCGIFCONF</B> and the other ioctls that accept or return only <B>AF_INET</B>
+socket addresses are IP-specific and perhaps should rather be documented in
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7).
+<P>
+
+アドレスがなかったり、 <B>IFF_RUNNING</B> フラグがセットされていないインターフェースの名前は <I>/proc/net/dev</I>
+で知ることができる。
+<P>
+
+ローカル IPV6 IP アドレスは <I>/proc/net</I> か <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)  で知ることができる。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+glibc 2.1 では <I>&lt;<A HREF="file:///usr/include/net/if.h">net/if.h</A>&gt;</I> に <I>ifr_newname</I> マクロがない。
+とりあえずの対応策として、以下のコードを追加しておくこと。
+<P>
+
+
+
+#ifndef ifr_newname
+#define ifr_newname     ifr_ifru.ifru_slave
+#endif
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/ip.7.html">ip</A></B>(7), <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)
+<A NAME="lbAI">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">ioctl</A><DD>
+</DL>
+<DT><A HREF="#lbAF">注意</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

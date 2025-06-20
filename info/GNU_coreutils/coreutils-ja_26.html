@@ -1,0 +1,481 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 4.2 pr: ページ付けや段組みをしてファイルを表示する</title>
+
+<meta name="description" content="GNU Coreutils: 4.2 pr: ページ付けや段組みをしてファイルを表示する">
+<meta name="keywords" content="GNU Coreutils: 4.2 pr: ページ付けや段組みをしてファイルを表示する">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="pr-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_25.html#fmt-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_27.html#fold-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_24.html#Formatting-file-contents" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_24.html#Formatting-file-contents" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_28.html#Output-of-parts-of-files" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="pr_003a-peziFu-keyaDuan-Zu-miwositehuairuwoBiao-Shi-suru"></a>
+<h2 class="section">4.2 <code>pr</code>: ページ付けや段組みをしてファイルを表示する</h2>
+
+<a name="index-pr"></a>
+<a name="index-printing_002c-preparing-files-for"></a>
+<a name="index-multicolumn-output_002c-generating"></a>
+<a name="index-merging-files-in-parallel"></a>
+
+<p><code>pr</code> は、各 <var>file</var> (&lsquo;<samp>-</samp>&rsquo; は標準入力を表す)
+を標準出力に書き出す。<var>file</var> が指定されていない場合は、標準入力を対象にする。
+その際、ページ付けを行い、指定があれば段組みをして出力する。また、すべての
+<var>file</var> を一つに統合し、1 段 1 ファイルの形式で平行して表示することもできる。
+</p>
+<p>(訳注: <code>pr</code> はページ構成をするコマンドであって、
+長い行の折り返しなどの整形をするわけではない。そうしたことは、<code>fmt</code> や
+<code>fold</code> の仕事である。なお、<code>pr</code> の日本語対応は十分ではない。
+とくに段組みがうまくいかない。)
+</p>
+<p>書式:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">pr [<var>option</var>]&hellip; [<var>file</var>]&hellip;
+</pre></td></tr></table>
+
+<a name="index-LC_005fMESSAGES"></a>
+<p>デフォルトでは、5 行のヘッダが各ページに付く。2 行の空行、
+日付・ファイル名・ページ番号からなる 1 行、そしてもう 2 行の空行という形式である。
+5 行の空行からなるフッタも出力される。デフォルトのページ長 (<var>page_length</var>)
+は 66 行なので、本文に使用されるデフォルトの行数は、56 行になる。
+ヘッダのテキスト行は、&lsquo;<samp><var>date</var> <var>string</var> <var>page</var></samp>&rsquo; の形を取り、
+<var>string</var> の両側に空白を入れて、行の幅がページ幅 (<var>page_width</var>)
+いっぱいになるようにしている。<var>date</var> は日付であり (詳細については、
+&lsquo;<samp>--date-format</samp>&rsquo; (&lsquo;<samp>-D</samp>&rsquo;) オプションを参照)、
+<var>string</var> は中央揃えのヘッダ文字列 (訳注: デフォルトではファイル名)、
+<var>page</var> はページ番号である。<var>page</var> という単語の綴りは、
+<code>LC_MESSAGES</code> ロケール・カテゴリによって変わってくる。デフォルトの C
+ロケールでは、&lsquo;<samp>Page <var>number</var></samp>&rsquo; であり、<var>number</var> の位置には
+10 進数のページ番号が入る。
+</p>
+<p>入力にフォームフィード (Form feed) があると、出力では改ページが行われる。
+フォームフィードが続くと、白紙のページが生ずる。
+</p>
+<p>段組みをした場合、どの段の幅も同じになり、段と段の間には任意の文字列
+(デフォルトはスペース) が置かれる。多段組みの出力では、&lsquo;<samp>-J</samp>&rsquo;
+オプションを使用しないかぎり、各行は常に <var>page_width</var> (デフォルトは 72)
+文字までに切り詰められる (訳注: これは、各段や段間の空白などを合計した 1 行の長さが、
+最長でも <var>page_width</var> 文字までになるということであって、
+各段がそれぞれ <var>page_width</var> 文字になるということではない)。
+1 段のみの出力では、デフォルトでは行の切り詰めは行われない。
+その場合でも、行の切り詰めを行うには、&lsquo;<samp>-W</samp>&rsquo; を使用する。
+</p>
+<p>このプログラムでは以下のオプションが使用できる。参照: <a href="coreutils-ja_2.html#Common-options">共通オプション</a>.
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>+<var>first_page</var>[:<var>last_page</var>]</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--pages=<var>first_page</var>[:<var>last_page</var>]</samp>&rsquo;</dt>
+<dd><a name="index-_002bpage_005frange"></a>
+<a name="index-_002d_002dpages_003dpage_005frange"></a>
+<p>表示を <var>first_page</var> ページから始めて、 <var>last_page</var> ページで終了する。
+&lsquo;<samp>:<var>last_page</var></samp>&rsquo; の指定を省略するのは、ファイルの最後までということである。
+スキップするページ数を計算する際、入力ファイル中にフォームフィードがあると、
+そのたびに 1 ページ進むことになる。ページ番号は、&lsquo;<samp>+<var>first_page</var></samp>&rsquo;
+を指定してもしなくても同じになる。デフォルトでは、
+入力ファイルの最初のページからページ数を数えるからだ (表示される最初のページからではない)。
+行番号については &lsquo;<samp>-N</samp>&rsquo; オプションで変更することができる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-<var>column</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--columns=<var>column</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dcolumn"></a>
+<a name="index-_002d_002dcolumns"></a>
+<a name="index-down-columns"></a>
+<p>個々の <var>file</var> に対して <var>column</var> 段に段組みした出力を生成する
+(デフォルトは 1 段)。&lsquo;<samp>-a</samp>&rsquo; オプションを使用しない場合、ページ内で本文は、
+段内を上から下へと進む。段が増えると、段の幅は自動的に狭くなる。
+ただし、&lsquo;<samp>-W/-w</samp>&rsquo; を同時に使用して、<var>page_width</var>
+を増加させている場合は、そのかぎりではない。このオプションを使うと、
+切り詰められる行がたぶん生じるだろう。ページごとの各段の行数は、
+できるだけ揃えられる。多段組みの本文出力では、オプション &lsquo;<samp>-e</samp>&rsquo; と
+&lsquo;<samp>-i</samp>&rsquo; が有効になる。&lsquo;<samp>-J</samp>&rsquo; オプションと一緒に使った場合は、
+段の整列と行の切り詰めは行われない。各行は、元の長さのまま、不定長フィールドとして
+(free field format) 結合されるのである。その際も、&lsquo;<samp>-S</samp>&rsquo;
+オプションによってフィールド・セパレータを指定することは可能だ。なお
+&lsquo;<samp>-<var>column</var></samp>&rsquo; は、&lsquo;<samp>-m</samp>&rsquo; オプションと一緒に使用できない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-a</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--across</samp>&rsquo;</dt>
+<dd><a name="index-_002da-1"></a>
+<a name="index-_002d_002dacross"></a>
+<a name="index-across-columns"></a>
+<p>個々の <var>file</var> を段組みで表示するとき、本文の各行が、段内を上から下へではなく、
+左の段から右の段へと進むようにする。&lsquo;<samp>-<var>column</var></samp>&rsquo;
+オプションに指定する段の数は、2 以上でなければならない。
+行が段の幅に納まらないほど長い場合、その行は切り詰められる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-c</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--show-control-chars</samp>&rsquo;</dt>
+<dd><a name="index-_002dc-2"></a>
+<a name="index-_002d_002dshow_002dcontrol_002dchars"></a>
+<p>制御文字をハット表記 (たとえば、&lsquo;<samp>^G</samp>&rsquo;) を使って表示する。
+他の非表示文字は、バックスラッシュ付きの 8 進数表記になる。<code>pr</code>
+のデフォルトでは、非表示文字の表示文字化は行われない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-d</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--double-space</samp>&rsquo;</dt>
+<dd><a name="index-_002dd-3"></a>
+<a name="index-_002d_002ddouble_002dspace"></a>
+<a name="index-double-spacing"></a>
+<p>ダブルスペースで出力する (訳注: すなわち、行間を 1 行分あける)。
+</p>
+</dd>
+<dt> &lsquo;<samp>-D <var>format</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--date-format=<var>format</var></samp>&rsquo;</dt>
+<dd><a name="index-time-formats"></a>
+<a name="index-formatting-times"></a>
+<p>ヘッダの日付を <var>format</var> を用いて整形する。<var>format</var> には、コマンド
+&lsquo;<samp>date +<var>format</var></samp>&rsquo; で使うのと同じ指定法が使用できる。See section <a href="coreutils-ja_151.html#date-invocation"><code>date</code>: システムの日付や時刻を表示、設定する</a>.
+&lsquo;<samp>%</samp>&rsquo; で始まる日時の指定を除いて、<var>format</var> 中の文字はそのまま表示される。
+従って、このオプションを使用すれば、ヘッダの日付の位置に任意の文字列を指定することもできるわけだ。
+たとえば、&lsquo;<samp>--date-format=&quot;Monday morning&quot;</samp>&rsquo; といった具合に。
+</p>
+<a name="index-POSIXLY_005fCORRECT-2"></a>
+<a name="index-LC_005fTIME"></a>
+<p>デフォルトの日付書式は &lsquo;<samp>%Y-%m-%d %H:%M</samp>&rsquo; という形である (たとえば、
+&lsquo;<samp>2001-12-04 23:59</samp>&rsquo;)。だが、環境変数 <code>POSIXLY_CORRECT</code> が設定され、
+しかも <code>LC_TIME</code> ロケール・カテゴリが POSIX ロケールを指定している場合は、
+デフォルトの書式は &lsquo;<samp>%b %e %H:%M %Y</samp>&rsquo; になる
+(たとえば、&lsquo;<samp>Dec&nbsp;&nbsp;4 23:59 2001</samp>&rsquo;)。
+</p>
+<a name="index-TZ"></a>
+<p>タイムスタンプは、タイムゾーンのルールに従って表示されるが、
+そのルールを指定しているのは、環境変数 <code>TZ</code> である。
+<code>TZ</code> が設定されていない場合は、システムのデフォルトのルールに従って表示される。
+See <a href="../libc/TZ-Variable.html#TZ-Variable">(libc)TZ Variable</a> section &lsquo;Specifying the Time Zone with <code>TZ</code>&rsquo; in <cite>The GNU C Library Reference Manual</cite>.
+</p>
+</dd>
+<dt> &lsquo;<samp>-e[<var>in-tabchar</var>[<var>in-tabwidth</var>]]</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--expand-tabs[=<var>in-tabchar</var>[<var>in-tabwidth</var>]]</samp>&rsquo;</dt>
+<dd><a name="index-_002de-1"></a>
+<a name="index-_002d_002dexpand_002dtabs"></a>
+<a name="index-input-tabs"></a>
+<p>入力の際にタブをスペースに展開する。省略できる引数 <var>in-tabchar</var> は、
+入力で使われるタブ文字である (デフォルトは TAB 文字)。
+これも省略できる二番目の引数 <var>in-tabwidth</var> は、
+入力で使われるタブ文字の幅である。(デフォルトは 8 桁)。
+</p>
+</dd>
+<dt> &lsquo;<samp>-f</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>-F</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--form-feed</samp>&rsquo;</dt>
+<dd><a name="index-_002dF"></a>
+<a name="index-_002df-2"></a>
+<a name="index-_002d_002dform_002dfeed"></a>
+<p>複数個の改行文字ではなく、1 個のフォームフィードを使用して、
+出力する各ページを分離する。このオプションによって、
+66 行というデフォルトのページの長さが変わることはない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-h <var>header</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--header=<var>header</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dh-2"></a>
+<a name="index-_002d_002dheader"></a>
+<p>ヘッダのファイル名の部分を、中央揃えの <var>header</var> という文字列で置き換える。
+シェル上では、<var>header</var> はクォートするべきである。また、&lsquo;<samp>-h</samp>&rsquo;
+との間に空白を入れた方がよい。
+</p>
+</dd>
+<dt> &lsquo;<samp>-i[<var>out-tabchar</var>[<var>out-tabwidth</var>]]</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--output-tabs[=<var>out-tabchar</var>[<var>out-tabwidth</var>]]</samp>&rsquo;</dt>
+<dd><a name="index-_002di-3"></a>
+<a name="index-_002d_002doutput_002dtabs"></a>
+<a name="index-output-tabs"></a>
+<p>出力の際にスペースをタブで置き換える。省略できる引数 <var>out-tabchar</var>
+は、出力で使われるタブ文字である (デフォルトは TAB 文字)。
+これも省略できる二番目の引数 <var>out-tabwidth</var> は、出力で使われるタブ文字の幅である
+(デフォルトは 8 桁)。
+</p>
+</dd>
+<dt> &lsquo;<samp>-J</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--join-lines</samp>&rsquo;</dt>
+<dd><a name="index-_002dJ"></a>
+<a name="index-_002d_002djoin_002dlines"></a>
+<p>長い行は長いまま結合する。段組みオプション &lsquo;<samp>-<var>column</var></samp>&rsquo;, &lsquo;<samp>-a -<var>column</var></samp>&rsquo;,
+&lsquo;<samp>-m</samp>&rsquo; と併せて使用する。&lsquo;<samp>-W/-w</samp>&rsquo; による行の切り詰めが無効になる。
+段の整列も行わなくなる。&lsquo;<samp>--sep-string[=<var>string</var>]</samp>&rsquo; と併せて使ってもよい。
+&lsquo;<samp>-J</samp>&rsquo; というオプションが (&lsquo;<samp>-W</samp>&rsquo; や &lsquo;<samp>--sep-string</samp>&rsquo; とともに)
+新たに設けられたのは、&lsquo;<samp>-w</samp>&rsquo; や &lsquo;<samp>-s</samp>&rsquo; という、前からある (POSIX に準拠した)
+オプションを 3 種の段組みオプションと組み合わせて使ったときの混乱を解消するためである。
+</p>
+
+</dd>
+<dt> &lsquo;<samp>-l <var>page_length</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--length=<var>page_length</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dl-2"></a>
+<a name="index-_002d_002dlength"></a>
+<p>1 ページの行数を、ヘッダ行 (及び フッタ行) を含めて、<var>page_length</var>
+行にする (デフォルトは 66 行)。<var>page_length</var> が 10 行以下だったら、
+&lsquo;<samp>-t</samp>&rsquo; オプションが指定されたかのように、 ヘッダとフッタは省略する。
+</p>
+</dd>
+<dt> &lsquo;<samp>-m</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--merge</samp>&rsquo;</dt>
+<dd><a name="index-_002dm"></a>
+<a name="index-_002d_002dmerge"></a>
+<p>すべての <var>file</var> を統合し、各段に 1 ファイルを割り当てて、平行表示する。
+長すぎて段に納まらない行があれば、&lsquo;<samp>-J</samp>&rsquo; オプションが使用されていないかぎり、
+切り詰めが行われる。&lsquo;<samp>--sep-string[=<var>string</var>]</samp>&rsquo;
+を指定してもよい。いづれかの <var>file</var> に (フォームフィードの指定により)
+空白のページが存在すると、空白の段が生ずるが、それでも段を分離する記号の
+<var>string</var> は表示される。すなわち、統合されたファイルの最初から最後まで、
+行番号と (訳注: これはもちろん、&lsquo;<samp>-n</samp>&rsquo; オプションが指定されている場合)
+段の分離記号は、連続して表示されるわけだ。
+ただし、統合されたページのどの段も空白の場合は、分離記号も行番号も表示されない。
+デフォルトのヘッダは、&lsquo;<samp><var>date</var> <var>page</var></samp>&rsquo; という形式になり、
+中央には長い空白が挿入される。&lsquo;<samp>-h</samp>&rsquo; や &lsquo;<samp>--header</samp>&rsquo; オプションを
+&lsquo;<samp>-m</samp>&rsquo; と一緒に使えば、この中央の空白部分に文字列を入れることができる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-n[<var>number-separator</var>[<var>digits</var>]]</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--number-lines[=<var>number-separator</var>[<var>digits</var>]]</samp>&rsquo;</dt>
+<dd><a name="index-_002dn-2"></a>
+<a name="index-_002d_002dnumber_002dlines"></a>
+<p><var>digits</var> の幅の行番号を表示する (<var>digits</var> のデフォルトは 5 桁)。
+通常の多段組みの出力では、行番号は、各段ごとに本文の最初の <var>digits</var>
+桁分の位置を占めるが、&lsquo;<samp>-m</samp>&rsquo; の出力の場合は、各行の先頭だけに表示される。
+1 段組みでは、&lsquo;<samp>-m</samp>&rsquo; の場合と同様、各行の先頭に付く。
+デフォルトでは、行数は、入力ファイルの最初の行から数え始める
+(表示される最初の行からではない。&lsquo;<samp>--page</samp>&rsquo; や &lsquo;<samp>-N</samp>&rsquo; オプションを参照)。
+省略可能な引数 <var>number-separator</var> は、行番号の後ろに付けて、
+後に続く本文と区別するための文字であり、デフォルトのセパレータはタブ文字である。
+厳密に言うと、常にタブが表示されるのは、1 段組みの出力のときだけである。
+タブの幅は、本来タブの現れる位置によって変化し、たとえば、&lsquo;<samp>-o</samp>&rsquo;
+オプションで指定される左の余白 (<var>margin</var>) によって変わってくるものである。
+しかし、多段組みの出力では、「出力される段の幅が同じになる」ことが優先されるため
+(POSIX の仕様)、タブの幅は、最初の段における値に固定され、左の余白の値が変わっても、
+変化することはない。従って、<var>number-separator</var> であるタブの位置には、
+常に一定数のスペースが表示されることになる。スペースをタブに置き換えるかどうかは、
+出力される位置次第である。
+</p>
+</dd>
+<dt> &lsquo;<samp>-N <var>line_number</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--first-line-number=<var>line_number</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dN-1"></a>
+<a name="index-_002d_002dfirst_002dline_002dnumber"></a>
+<p>表示される最初のページの最初の行を <var>line_number</var> として行を数えて行く
+(入力ファイルの最初の行以外から表示を始めるときによく使う)。
+</p>
+</dd>
+<dt> &lsquo;<samp>-o <var>margin</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--indent=<var>margin</var></samp>&rsquo;</dt>
+<dd><a name="index-_002do-1"></a>
+<a name="index-_002d_002dindent"></a>
+<a name="index-indenting-lines"></a>
+<a name="index-left-margin"></a>
+<p>スペース <var>margin</var> 個分の余白で各行をインデントする (デフォルトは、
+スペース 0 個)。ページの横幅は、&lsquo;<samp>-W/-w</samp>&rsquo; で指定した <var>page_width</var>
+と余白を合計したサイズになる。行番号付きの 1 段組み出力では、
+行から少しはみ出す文字が生ずるかもしれない (&lsquo;<samp>-n</samp>&rsquo; オプション参照)。
+</p>
+</dd>
+<dt> &lsquo;<samp>-r</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--no-file-warnings</samp>&rsquo;</dt>
+<dd><a name="index-_002dr-1"></a>
+<a name="index-_002d_002dno_002dfile_002dwarnings"></a>
+<p>引数 <var>file</var> がオープンできないときも、警告メッセージを表示しない
+(終了ステータスは、それでもやはり 0 以外になる)。
+</p>
+</dd>
+<dt> &lsquo;<samp>-s[<var>char</var>]</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--separator[=<var>char</var>]</samp>&rsquo;</dt>
+<dd><a name="index-_002ds-5"></a>
+<a name="index-_002d_002dseparator-1"></a>
+<p>段と段の区切りに 1 個の文字 <var>char</var> を使う。&lsquo;<samp>-s</samp>&rsquo;
+オプションを指定したときのデフォルトの <var>char</var> は、&lsquo;<samp>-w</samp>&rsquo;
+オプションを同時に指定しなければタブ、指定すれば「なし」である。
+なお、&lsquo;<samp>-s</samp>&rsquo; オプションを指定しない場合のデフォルトのセパレータはスペースだ。
+&lsquo;<samp>-s[char]</samp>&rsquo; オプションを使用すると、&lsquo;<samp>-w</samp>&rsquo; も同時に指定しないかぎり、
+3 種の段組みオプション (&lsquo;<samp>-COLUMN</samp>&rsquo;|&lsquo;<samp>-a -COLUMN</samp>&rsquo;|&lsquo;<samp>-m</samp>&rsquo;)
+のすべてにおいて、行の切り詰めが行われない。これは、POSIX に準拠した仕様である。
+</p>
+
+</dd>
+<dt> &lsquo;<samp>-S[<var>string</var>]</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--sep-string[=<var>string</var>]</samp>&rsquo;</dt>
+<dd><a name="index-_002dS-2"></a>
+<a name="index-_002d_002dsep_002dstring"></a>
+<p>出力される段の区切りに、文字列 <var>string</var> を使用する。&lsquo;<samp>-s</samp>&rsquo;
+オプションが &lsquo;<samp>-W/-w</samp>&rsquo; オプションに影響を及ぼすのとは異なり、
+&lsquo;<samp>-S</samp>&rsquo; オプションは &lsquo;<samp>-W/-w</samp>&rsquo; オプションに影響を及ぼさない。
+また、行の切り詰めや段の整列にも影響しない。&lsquo;<samp>-S</samp>&rsquo; オプションを指定せずに、
+&lsquo;<samp>-J</samp>&rsquo; オプションを指定すると、<code>pr</code>
+はデフォルトの出力セパレータであるタブを使用する
+(訳注: &lsquo;<samp>-J</samp>&rsquo; 使用時のデフォルトということだと思う)。&lsquo;<samp>-S</samp>&rsquo; も
+&lsquo;<samp>-J</samp>&rsquo; も指定しない場合、<code>pr</code> が区切りに使用するのはスペースである
+(&lsquo;<samp>-S&quot; &quot;</samp>&rsquo; と同じこと)。&lsquo;<samp>-S</samp>&rsquo; だけで、引数の &lsquo;<samp><var>string</var></samp>&rsquo; を指定しないと、
+空文字列 (&lsquo;<samp>&quot;&quot;</samp>&rsquo;) を指定したことになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-t</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--omit-header</samp>&rsquo;</dt>
+<dd><a name="index-_002dt-3"></a>
+<a name="index-_002d_002domit_002dheader"></a>
+<p>常とは異なり、各ページにヘッダ (とフッタ) を表示しない。
+また、ページの最下部を (空行やフォームフィードで) 埋めることもしない。
+ページ構成は行わないが、入力ファイルにあるフォームフィードは、
+そのままにしておく。つまり、あらかじめ決めておいたページ分割が、
+変更されないということだ。&lsquo;<samp>-t</samp>&rsquo; や &lsquo;<samp>-T</samp>&rsquo; オプションは、
+他のオプションと組み合わせて使うと、便利なことがある。たとえば、&lsquo;<samp>-t -e4</samp>&rsquo;
+は、入力ファイルのタブ文字を 4 個のスペースに展開するが、
+それ以外何の変更も行わない。&lsquo;<samp>-t</samp>&rsquo; オプションを使用すると、
+&lsquo;<samp>-h</samp>&rsquo; オプションが無効になる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-T</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--omit-pagination</samp>&rsquo;</dt>
+<dd><a name="index-_002dT-1"></a>
+<a name="index-_002d_002domit_002dpagination"></a>
+<p>ヘッダ (とフッタ) を表示しない。さらに、入力ファイルにあるフォームフィードをすべて取り除く。
+</p>
+</dd>
+<dt> &lsquo;<samp>-v</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--show-nonprinting</samp>&rsquo;</dt>
+<dd><a name="index-_002dv-3"></a>
+<a name="index-_002d_002dshow_002dnonprinting-1"></a>
+<p>非表示文字をバックスラッシュ付きの 8 進数表記で表示する。
+</p>
+</dd>
+<dt> &lsquo;<samp>-w <var>page_width</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--width=<var>page_width</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dw-4"></a>
+<a name="index-_002d_002dwidth-2"></a>
+<p>本文を多段組み出力にしたときにのみ、ページの幅を <var>page_width</var> 文字にする
+(<var>page_width</var> のデフォルトは 72 字)。各段の幅が等しくなるようにするため、
+ページ幅が指定した <var>page_width</var> より狭くなることがある。
+多段組みで &lsquo;<samp>-w</samp>&rsquo; オプションを指定せず、&lsquo;<samp>-s[CHAR]</samp>&rsquo;
+オプションだけ指定すると、デフォルトのページ幅が無効になり、
+行の切り詰めや段の整列も行われなくなる。
+すなわち、各段の長い行が長いまま結合されてしまうのだ。なお、1 段組みの出力では、
+<var>page_width</var> の指定はできない。以上は、POSIX に準拠した仕様である。
+</p>
+</dd>
+<dt> &lsquo;<samp>-W <var>page_width</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--page_width=<var>page_width</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dW"></a>
+<a name="index-_002d_002dpage_005fwidth"></a>
+<p>ページの幅を <var>page_width</var> 文字にする。この指定は、
+段組みオプションがあってもなくても、有効である。段組みオプションとともに使った場合、
+各段の幅が等しくなるようにするため、ページ幅が指定した <var>page_width</var>
+より狭くなることがある。&lsquo;<samp>-J</samp>&rsquo; オプションを使用しないかぎり、本文の行が切り詰められる。
+3 種の段組みオプション (&lsquo;<samp>-<var>column</var></samp>&rsquo;, &lsquo;<samp>-a -<var>column</var></samp>&rsquo;,
+&lsquo;<samp>-m</samp>&rsquo;) と組み合わせて使った場合、段の整列が常に行われる。
+セパレータを指定するオプションの &lsquo;<samp>-S</samp>&rsquo; や &lsquo;<samp>-s</samp>&rsquo; が、
+&lsquo;<samp>-W</samp>&rsquo; オプションを無効にすることはない。デフォルトは 72 文字である。
+&lsquo;<samp>-W <var>page_width</var></samp>&rsquo; オプションもなく、
+段組みオプションも全く指定されていない場合に、行の切り詰めが行われることは絶対にない
+(下位互換を維持しつつ、よく行われる作業のほとんどに対応するために、そうなっている)。
+この動作は、&lsquo;<samp>-W 72 -J</samp>&rsquo; と同じである。
+なお、ヘッダ行が切り詰められることは絶対にない。
+</p>
+</dd>
+</dl>
+
+<p>終了ステータス 0 は成功を示し、0 以外の値は失敗を示す。
+</p>
+
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_25.html#fmt-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_27.html#fold-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_24.html#Formatting-file-contents" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_24.html#Formatting-file-contents" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_28.html#Output-of-parts-of-files" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

@@ -1,0 +1,515 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of POLL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>POLL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/poll.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+poll, ppoll - ファイルディスクリプターにおけるイベントを待つ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/poll.h">poll.h</A>&gt;</B>
+
+<B>int poll(struct pollfd *</B><I>fds</I><B>, nfds_t </B><I>nfds</I><B>, int </B><I>timeout</I><B>);</B>
+
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/poll.h">poll.h</A>&gt;</B>
+
+<B>int ppoll(struct pollfd *</B><I>fds</I><B>, nfds_t </B><I>nfds</I><B>,</B>
+<B>        const struct timespec *</B><I>tmo_p</I><B>, const sigset_t *</B><I>sigmask</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>poll</B>()  performs a similar task to <B><A HREF="../man2/select.2.html">select</A></B>(2): it waits for one of a
+set of file descriptors to become ready to perform I/O.  The Linux-specific
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  API performs a similar task, but offers features beyond those
+found in <B>poll</B>().
+<P>
+
+監視するファイルディスクリプター集合は、 <I>fds</I> 引数で指定する。 <I>fds</I> は、以下の型の構造体の配列である。
+<P>
+
+
+
+struct pollfd {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;fd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;file&nbsp;descriptor&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;events;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;requested&nbsp;events&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;revents;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;returned&nbsp;events&nbsp;*/
+};
+
+
+<P>
+
+<I>nfds</I> には、 <I>fds</I> 配列の要素数を指定する。
+<P>
+
+<I>fd</I> フィールドには、オープンされたファイルのファイルディスクリプターが入る。 このフィールドが負の場合、対応する <I>events</I>
+フィールドは無視され、 <I>revents</I> には 0 が返される。(この機能により、一つの <B>poll</B>()
+の呼び出しで簡単にあるファイルディスクリプターを無視することができる。 単に <I>fd</I> フィールドの符号を反転するだけでよい。
+ただし、この方法はファイルディスクリプター 0 を無視するのには使用できない点に注意すること。)
+<P>
+
+構造体の <I>events</I> 要素は入力パラメーターで、 ファイルディスクリプター <I>fd</I> に関して、
+アプリケーションが興味を持っているイベントのビットマスクを指定する。 このフィールドには 0 を指定することもでき、 その場合 <I>revents</I>
+で返されるイベントは <B>POLLHUP</B>, <B>POLLERR</B>, <B>POLLNVAL</B> だけである (下記参照)。
+<P>
+
+<I>revents</I> 要素は出力パラメーターで、実際に起こったイベントがカーネルにより設定される。 <I>revents</I> で返されるビット列には、
+<I>events</I> で指定したもののどれか、もしくは <B>POLLERR</B>, <B>POLLHUP</B>, <B>POLLNVAL</B> のうちの一つが含まれる
+(<B>POLLERR</B>, <B>POLLHUP</B>, <B>POLLNVAL</B> の 3つのビットは <I>events</I>
+に指定しても意味がなく、対応した状態が真の場合に <I>revents</I> に設定される)。
+<P>
+
+どのファイルディスクリプターにも要求したイベントが発生しておらず、 エラーも起こらない場合、 <B>poll</B>()
+はイベントのうちいずれか一つが発生するまで停止 (block) する。
+<P>
+
+<I>timeout</I> 引数は、 ファイルディスクリプターが利用可能になるまで <B>poll</B>() が停止する時間をミリ秒で指定する。 <B>poll</B>()
+の呼び出しは以下のいずれかになるまで停止する。
+<DL COMPACT>
+<DT>&bull;<DD>
+ファイルディスクリプターが利用可能になる
+<DT>&bull;<DD>
+呼び出しがシグナルハンドラーにより割り込まれた
+<DT>&bull;<DD>
+タイムアウトが満了する
+</DL>
+<P>
+
+<I>timeout</I> 時間はシステムクロックの粒度に切り上げられ、 カーネルのスケジューリング遅延により少しだけ長くなる可能性がある点に注意すること。
+<I>timeout</I> に負の値を指定した場合、タイムアウト時間が無限大を意味する。 <I>timeout</I> を 0 に指定した場合、I/O
+可能なファイルディスクリプターがない場合であっても、 <B>poll</B>() はすぐに返る。
+<P>
+
+<I>events</I> に指定したり、 <I>revents</I> で返されるビットは <I>&lt;<A HREF="file:///usr/include/poll.h">poll.h</A>&gt;</I> で定義されている:
+<DL COMPACT>
+<DT><B>POLLIN</B><DD>
+読み出し可能なデータがある。
+<DT><B>POLLPRI</B><DD>
+There is some exceptional condition on the file descriptor.  Possibilities
+include:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>&bull;<DD>
+There is out-of-band data on a TCP socket (see <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)).
+<DT>&bull;<DD>
+A pseudoterminal master in packet mode has seen a state change on the slave
+(see <B>ioctl_tty</B>(2)).
+<DT>&bull;<DD>
+A <I>cgroup.events</I> file has been modified (see <B>cgroups</B>(7)).
+</DL>
+</DL>
+
+<DT><B>POLLOUT</B><DD>
+書き込みが可能になった。ただし、ソケットやパイプで利用可能な空間よりも大きなデータを書き込んだ場合には (<B>O_NONBLOCK</B>
+がセットされている場合以外は) やはり停止することになる。
+<DT><B>POLLRDHUP</B> (Linux 2.6.17 以降)<DD>
+ストリームソケットの他端が、コネクションを close したか、 コネクションの書き込み側を shutdown した。 この定義を有効にするには、
+(「どの」ヘッダーファイルをインクルードするよりも前に)  <B>_GNU_SOURCE</B> 機能検査マクロを定義しなければならない。
+<DT><B>POLLERR</B><DD>
+Error condition (only returned in <I>revents</I>; ignored in <I>events</I>).  This
+bit is also set for a file descriptor referring to the write end of a pipe
+when the read end has been closed.
+<DT><B>POLLHUP</B><DD>
+Hang up (only returned in <I>revents</I>; ignored in <I>events</I>).  Note that when
+reading from a channel such as a pipe or a stream socket, this event merely
+indicates that the peer closed its end of the channel.  Subsequent reads
+from the channel will return 0 (end of file)  only after all outstanding
+data in the channel has been consumed.
+<DT><B>POLLNVAL</B><DD>
+Invalid request: <I>fd</I> not open (only returned in <I>revents</I>; ignored in
+<I>events</I>).
+</DL>
+<P>
+
+<B>_XOPEN_SOURCE</B> を定義してコンパイルした場合には、以下の定義も行われる。
+ただし、上記のリストにあるビット以上の情報が得られる訳ではない。
+<DL COMPACT>
+<DT><B>POLLRDNORM</B><DD>
+<B>POLLIN</B> と同じ。
+<DT><B>POLLRDBAND</B><DD>
+
+優先帯域データ (priority band data) が読み出し可能である (普通は Linux では使用されない)。
+<DT><B>POLLWRNORM</B><DD>
+<B>POLLOUT</B> と同じ。
+<DT><B>POLLWRBAND</B><DD>
+優先帯域データ (priority data) が書き込み可能である。
+</DL>
+<P>
+
+Linux では <B>POLLMSG</B> も定義されているが、使用されていない。
+<A NAME="lbAE">&nbsp;</A>
+<H3>ppoll()</H3>
+
+<B>poll</B>()  と <B>ppoll</B>()  の関係は <B><A HREF="../man2/select.2.html">select</A></B>(2)  と <B><A HREF="../man2/pselect.2.html">pselect</A></B>(2)  の関係と同じようなものである:
+<B><A HREF="../man2/pselect.2.html">pselect</A></B>(2)  と同様に、 <B>ppoll</B>()  を使うと、アプリケーションはファイルディスクリプターの状態変化
+もしくはシグナルの捕捉を安全に待つことができる。
+<P>
+
+<I>timeout</I> 引数の精度の違いを除くと、以下の <B>ppoll</B>()  の呼び出しは、
+<P>
+
+
+
+ready = ppoll(&amp;fds, nfds, tmo_p, &amp;sigmask);
+
+
+<P>
+
+次の呼び出しを <I>atomic</I> に実行するのとほぼ等価である。
+<P>
+
+
+
+sigset_t origmask;
+int timeout;
+<P>
+timeout = (tmo_p == NULL) ? -1 :
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tmo_p-&gt;tv_sec&nbsp;*&nbsp;1000&nbsp;+&nbsp;tmo_p-&gt;tv_nsec&nbsp;/&nbsp;1000000);
+pthread_sigmask(SIG_SETMASK, &amp;sigmask, &amp;origmask);
+ready = poll(&amp;fds, nfds, timeout);
+pthread_sigmask(SIG_SETMASK, &amp;origmask, NULL);
+
+
+<P>
+
+The above code segment is described as <I>nearly</I> equivalent because whereas
+a negative <I>timeout</I> value for <B>poll</B>()  is interpreted as an infinite
+timeout, a negative value expressed in <I>*tmo_p</I> results in an error from
+<B>ppoll</B>().
+<P>
+
+なぜ <B>ppoll</B>()  が必要なのかについての説明は <B><A HREF="../man2/pselect.2.html">pselect</A></B>(2)  の説明を参照のこと。
+<P>
+
+<I>sigmask</I> 引数に NULL が指定された場合、シグナルマスクの操作は行われない (したがって、 <B>ppoll</B>()  の
+<B>poll</B>()  との違いは <I>timeout</I> 引数の精度だけとなる)。
+<P>
+
+<I>tmo_p</I> 引数は <B>ppoll</B>()  が停止する時間の上限を指定するものである。 この引数には以下の型の構造体へのポインターを指定する。
+<P>
+
+
+
+struct timespec {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;seconds&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;&nbsp;tv_nsec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;nanoseconds&nbsp;*/
+};
+
+
+<P>
+
+<I>tmo_p</I> に NULL が指定された場合、 <B>ppoll</B> は無限に停止することがあり得る。
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+On success, <B>poll</B>()  returns a nonnegative value which is the number of
+elements in the <I>pollfds</I> whose <I>revents</I> fields have been set to a
+nonzero value (indicating an event or an error).  A return value of zero
+indicates that the system call timed out before any file descriptors became
+read.
+<P>
+
+On error, -1 is returned, and <I>errno</I> is set to indicate the cause of the
+error.
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>fds</I> points outside the process's accessible address space.  The array
+given as argument was not contained in the calling program's address space.
+<DT><B>EINTR</B><DD>
+要求されたイベントのどれかが起こる前にシグナルが発生した。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EINVAL</B><DD>
+<I>nfds</I> の値が <B>RLIMIT_NOFILE</B> を超えた。
+<DT><B>EINVAL</B><DD>
+(<B>ppoll</B>())  The timeout value expressed in <I>*ip</I> is invalid (negative).
+<DT><B>ENOMEM</B><DD>
+Unable to allocate memory for kernel data structures.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>poll</B>() システムコールは Linux 2.1.23 で導入された。このシステムコールが存在しない古いカーネルでは、 glibc は
+<B><A HREF="../man2/select.2.html">select</A></B>(2) を使用して <B>poll</B>() ラッパー関数のエミュレーションを行う。
+<P>
+
+<B>ppoll</B>()  システムコールは カーネル 2.6.16 で Linux に追加された。 <B>ppoll</B>()  ライブラリコールは glibc
+2.4 に追加された。
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+
+<B>poll</B>() は POSIX.1-2001 と POSIX.1-2008 に準拠している。 <B>ppoll</B>()  は Linux 固有である。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+The operation of <B>poll</B>()  and <B>ppoll</B>()  is not affected by the
+<B>O_NONBLOCK</B> flag.
+<P>
+
+
+On some other UNIX systems, <B>poll</B>()  can fail with the error <B>EAGAIN</B> if
+the system fails to allocate kernel-internal resources, rather than
+<B>ENOMEM</B> as Linux does.  POSIX permits this behavior.  Portable programs
+may wish to check for <B>EAGAIN</B> and loop, just as with <B>EINTR</B>.
+<P>
+
+いくつかの実装では、値 -1 を持った非標準の定数 <B>INFTIM</B> が定義されており、 <B>poll</B>()  の <I>timeout</I>
+の指定に使用できる。 この定数は glibc では定義されていない。
+<P>
+
+<B>poll</B>() で監視中のファイルディスクリプターが別のスレッドによってクローズされた場合に何が起こるかの議論については、 <B><A HREF="../man2/select.2.html">select</A></B>(2)
+を参照してほしい。
+<A NAME="lbAK">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+Linux の <B>ppoll</B>()  システムコールは <I>tmo_p</I> 引数を変更する。 しかし、glibc のラッパー関数は、システムコールに渡す
+timeout 引数 としてローカル変数を使うことでこの動作を隠蔽している。 このため、glibc の <B>ppoll</B>()  関数では
+<I>tmo_p</I> 引数は変更されない。
+<P>
+
+The raw <B>ppoll</B>()  system call has a fifth argument, <I>size_t sigsetsize</I>,
+which specifies the size in bytes of the <I>sigmask</I> argument.  The glibc
+<B>ppoll</B>()  wrapper function specifies this argument as a fixed value (equal
+to <I>sizeof(kernel_sigset_t)</I>).  See <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  for a discussion on
+the differences between the kernel and the libc notion of the sigset.
+<A NAME="lbAL">&nbsp;</A>
+<H2>バグ</H2>
+
+<B><A HREF="../man2/select.2.html">select</A></B>(2)  の「バグ」の節に書かれている、誤った準備完了通知 (spurious readiness notifications)
+についての議論を参照のこと。
+<A NAME="lbAM">&nbsp;</A>
+<H2>例</H2>
+
+The program below opens each of the files named in its command-line
+arguments and monitors the resulting file descriptors for readiness to read
+(<B>POLLIN</B>).  The program loops, repeatedly using <B>poll</B>()  to monitor the
+file descriptors, printing the number of ready file descriptors on return.
+For each ready file descriptor, the program:
+<DL COMPACT>
+<DT>&bull;<DD>
+displays the returned <I>revents</I> field in a human-readable form;
+<DT>&bull;<DD>
+if the file descriptor is readable, reads some data from it, and displays
+that data on standard output; and
+<DT>&bull;<DD>
+if the file descriptors was not readable, but some other event occurred
+(presumably <B>POLLHUP</B>), closes the file descriptor.
+</DL>
+<P>
+
+Suppose we run the program in one terminal, asking it to open a FIFO:
+<P>
+
+
+
+$ <B>mkfifo myfifo</B>
+$ <B>./poll_input myfifo</B>
+
+
+<P>
+
+In a second terminal window, we then open the FIFO for writing, write some
+data to it, and close the FIFO:
+<P>
+
+
+
+$ <B>echo aaaaabbbbbccccc &gt; myfifo</B>
+
+
+<P>
+
+In the terminal where we are running the program, we would then see:
+<P>
+
+
+
+Opened &quot;myfifo&quot; on fd 3
+About to poll()
+Ready: 1
+<BR>&nbsp;&nbsp;fd=3;&nbsp;events:&nbsp;POLLIN&nbsp;POLLHUP
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;read&nbsp;10&nbsp;bytes:&nbsp;aaaaabbbbb
+About to poll()
+Ready: 1
+<BR>&nbsp;&nbsp;fd=3;&nbsp;events:&nbsp;POLLIN&nbsp;POLLHUP
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;read&nbsp;6&nbsp;bytes:&nbsp;ccccc
+<P>
+About to poll()
+Ready: 1
+<BR>&nbsp;&nbsp;fd=3;&nbsp;events:&nbsp;POLLHUP
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;closing&nbsp;fd&nbsp;3
+All file descriptors closed; bye
+
+
+<P>
+
+In the above output, we see that <B>poll</B>()  returned three times:
+<DL COMPACT>
+<DT>&bull;<DD>
+On the first return, the bits returned in the <I>revents</I> field were
+<B>POLLIN</B>, indicating that the file descriptor is readable, and <B>POLLHUP</B>,
+indicating that the other end of the FIFO has been closed.  The program then
+consumed some of the available input.
+<DT>&bull;<DD>
+The second return from <B>poll</B>()  also indicated <B>POLLIN</B> and <B>POLLHUP</B>;
+the program then consumed the last of the available input.
+<DT>&bull;<DD>
+
+On the final return, <B>poll</B>()  indicated only <B>POLLHUP</B> on the FIFO, at
+which point the file descriptor was closed and the program terminated.
+</DL>
+<A NAME="lbAN">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+/* poll_input.c
+<P>
+<BR>&nbsp;&nbsp;&nbsp;Licensed&nbsp;under&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;v2&nbsp;or&nbsp;later.
+*/
+#include &lt;<A HREF="file:///usr/include/poll.h">poll.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+<P>
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;nfds,&nbsp;num_open_fds;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;pollfd&nbsp;*pfds;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;file...\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;num_open_fds&nbsp;=&nbsp;nfds&nbsp;=&nbsp;argc&nbsp;-&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pfds&nbsp;=&nbsp;calloc(nfds,&nbsp;sizeof(struct&nbsp;pollfd));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pfds&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Open&nbsp;each&nbsp;file&nbsp;on&nbsp;command&nbsp;line,&nbsp;and&nbsp;add&nbsp;it&nbsp;'pfds'&nbsp;array&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;nfds;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pfds[j].fd&nbsp;=&nbsp;open(argv[j&nbsp;+&nbsp;1],&nbsp;O_RDONLY);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pfds[j].fd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;open&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Opened&nbsp;\&quot;%s\&quot;&nbsp;on&nbsp;fd&nbsp;%d\n&quot;,&nbsp;argv[j&nbsp;+&nbsp;1],&nbsp;pfds[j].fd);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pfds[j].events&nbsp;=&nbsp;POLLIN;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Keep&nbsp;calling&nbsp;poll()&nbsp;as&nbsp;long&nbsp;as&nbsp;at&nbsp;least&nbsp;one&nbsp;file&nbsp;descriptor&nbsp;is
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;open&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(num_open_fds&nbsp;&gt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ready;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;About&nbsp;to&nbsp;poll()\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ready&nbsp;=&nbsp;poll(pfds,&nbsp;nfds,&nbsp;-1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ready&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;poll&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Ready:&nbsp;%d\n&quot;,&nbsp;ready);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Deal&nbsp;with&nbsp;array&nbsp;returned&nbsp;by&nbsp;poll()&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;nfds;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[10];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pfds[j].revents&nbsp;!=&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;fd=%d;&nbsp;events:&nbsp;%s%s%s\n&quot;,&nbsp;pfds[j].fd,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(pfds[j].revents&nbsp;&amp;&nbsp;POLLIN)&nbsp;&nbsp;?&nbsp;&quot;POLLIN&nbsp;&quot;&nbsp;&nbsp;:&nbsp;&quot;&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(pfds[j].revents&nbsp;&amp;&nbsp;POLLHUP)&nbsp;?&nbsp;&quot;POLLHUP&nbsp;&quot;&nbsp;:&nbsp;&quot;&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(pfds[j].revents&nbsp;&amp;&nbsp;POLLERR)&nbsp;?&nbsp;&quot;POLLERR&nbsp;&quot;&nbsp;:&nbsp;&quot;&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pfds[j].revents&nbsp;&amp;&nbsp;POLLIN)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;s&nbsp;=&nbsp;read(pfds[j].fd,&nbsp;buf,&nbsp;sizeof(buf));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;read&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;read&nbsp;%zd&nbsp;bytes:&nbsp;%.*s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s,&nbsp;(int)&nbsp;s,&nbsp;buf);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;POLLERR&nbsp;|&nbsp;POLLHUP&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;closing&nbsp;fd&nbsp;%d\n&quot;,&nbsp;pfds[j].fd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(close(pfds[j].fd)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;close&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;num_open_fds--;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;All&nbsp;file&nbsp;descriptors&nbsp;closed;&nbsp;bye\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/select_tut.2.html">select_tut</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7),
+<B><A HREF="../man7/time.7.html">time</A></B>(7)
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">ppoll()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAK">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAL">バグ</A><DD>
+<DT><A HREF="#lbAM">例</A><DD>
+<DL>
+<DT><A HREF="#lbAN">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

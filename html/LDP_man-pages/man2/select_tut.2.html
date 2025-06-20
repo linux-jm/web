@@ -1,0 +1,520 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SELECT_TUT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SELECT_TUT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/select_tut.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+select, pselect - 同期 I/O の多重化
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B><A HREF="../man2/select.2.html">select</A></B>(2)  参照。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+システムコール <B>select</B>() や <B>pselect</B>() を使うと、効率的に複数のファイルディスクリプターを監視し、
+そのファイルディスクリプターのいずれかが 「ready (準備ができた)」状態、つまり I/O (入出力) が可能になっているかや、
+ファイルディスクリプターのいずれかが 「例外状態 (exceptional condition)」が発生したか、を調べることができる。
+<P>
+
+
+This page provides background and tutorial information on the use of these
+system calls.  For details of the arguments and semantics of <B>select</B>()
+and <B>pselect</B>(), see <B><A HREF="../man2/select.2.html">select</A></B>(2).
+<A NAME="lbAE">&nbsp;</A>
+<H3>シグナルとデータイベントを組み合わせる</H3>
+
+ファイルディスクリプターが I/O 可能な状態になるのと同時に シグナルも待ちたい場合には、 <B>pselect</B>()  が便利である。
+シグナルを受信するプログラムは、通常は、 シグナルハンドラーをグローバルなフラグを立てるためだけに使う。 このグローバルなフラグは、
+そのイベントをプログラムのメインループで 処理しなければならないことを示す。 シグナルを受けると <B>select</B>()  (や
+<B>pselect</B>())  は <I>errno</I> に <B>EINTR</B> をセットして戻ることになる。
+シグナルがプログラムのメインループで処理されるためにはこの動作が不可欠で、 これがないと <B>select</B>()  は永遠に停止し続けることになる。
+<P>
+
+さて、メインループのどこかにこのグローバルフラグをチェックする 条件文があるとしよう。ここで少し考えてみないといけない。 「シグナルが条件文の後、しかし
+<B>select</B>()  コールの前に到着したら どうなるのか？」 答えは「その <B>select</B>()
+は、たとえ解決待ちのイベントがあったとしても、 永遠に停止する」である。 この競合状態は <B>pselect</B>()  コールによって解決できる。
+このコールを使うと、 <B>pselect</B>() でのみ受信したいシグナルの集合をシグナルマスクに設定することができる。
+例えば、問題となっているイベントが子プロセスの終了の場合を考えよう。 メインループが始まる前に、 <B>SIGCHLD</B> を
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  でブロックする。 <B>pselect</B>()  コールでは <B>SIGCHLD</B>
+を、もともとのシグナルマスクを使って有効にするのだ。 このプログラムは次のようになる。
+<P>
+
+
+static volatile sig_atomic_t got_SIGCHLD = 0;
+<P>
+static void
+child_sig_handler(int sig)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;got_SIGCHLD&nbsp;=&nbsp;1;
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigset_t&nbsp;sigmask,&nbsp;empty_mask;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sigaction&nbsp;sa;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd_set&nbsp;readfds,&nbsp;writefds,&nbsp;exceptfds;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;r;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;sigmask);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigaddset(&amp;sigmask,&nbsp;SIGCHLD);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sigprocmask(SIG_BLOCK,&nbsp;&amp;sigmask,&nbsp;NULL)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;sigprocmask&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_flags&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_handler&nbsp;=&nbsp;child_sig_handler;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;sa.sa_mask);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sigaction(SIGCHLD,&nbsp;&amp;sa,&nbsp;NULL)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;sigaction&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;empty_mask);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;main&nbsp;loop&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Initialize&nbsp;readfds,&nbsp;writefds,&nbsp;and&nbsp;exceptfds
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;before&nbsp;the&nbsp;pselect()&nbsp;call.&nbsp;(Code&nbsp;omitted.)&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r&nbsp;=&nbsp;pselect(nfds,&nbsp;&amp;readfds,&nbsp;&amp;writefds,&nbsp;&amp;exceptfds,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NULL,&nbsp;&amp;empty_mask);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(r&nbsp;==&nbsp;-1&nbsp;&amp;&amp;&nbsp;errno&nbsp;!=&nbsp;EINTR)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Handle&nbsp;error&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(got_SIGCHLD)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;got_SIGCHLD&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Handle&nbsp;signalled&nbsp;event&nbsp;here;&nbsp;e.g.,&nbsp;wait()&nbsp;for&nbsp;all
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;terminated&nbsp;children.&nbsp;(Code&nbsp;omitted.)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;main&nbsp;body&nbsp;of&nbsp;program&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>実例</H3>
+
+実際のところ <B>select</B>()  の大事な点は何なのか？ ファイルディスクリプターは好きなときに読み書きできるんじゃないの？
+<B>select</B>()  の重要なところは、複数のディスクリプターを同時に監視でき、
+なんの動きもなければプロセスを適切にスリープ状態に移行するところにあるのだ。 UNIX プログラマは、
+複数のファイルディスクリプターの入出力を同時に扱わねばならず、 しかもデータの流れは間欠的である、という状況によく出会う。 単に <B><A HREF="../man2/read.2.html">read</A></B>(2)
+や <B><A HREF="../man2/write.2.html">write</A></B>(2)  コールのシーケンスを作るだけでは、それらのコールのどれかが ファイルディスクリプターからのデータを待ってブロックしており、
+別のファイルディスクリプターには I/O が可能なのに使えない、 ということになってしまうだろう。 <B>select</B>()
+を使うとこの状況に効果的に対処できる。
+<A NAME="lbAG">&nbsp;</A>
+<H3>SELECT の掟</H3>
+
+<B>select</B>()  を使おうとした多くの人は、理解しにくい挙動に出くわし、結果的に
+できたものは移植性がないか、よくてもギリギリのものになってしまう。 例えば、上記のプログラムは、 集合に含まれるファイルディスクリプターを非停止
+(nonblocking) モード にしなくても、どこにもブロックが生じないよう注意して書かれている。 微妙な間違いによって、 <B>select</B>()
+を使う利点は簡単に失われてしまう。 そこで、 <B>select</B>()  コールを使うときに注意すべき重要事項を列挙しておくことにする。
+<DL COMPACT>
+<DT>1.<DD>
+<B>select</B>()  を使うときは、タイムアウトは設定すべきでない。 処理するデータが無いときには、
+あなたのプログラムには何もすることは無いはずである。 タイムアウトに依存したコードは通常移植性がなく、 デバッグも難しくなる。
+<DT>2.<DD>
+上述したように、 効率的なプログラムを書くには <I>nfds</I> の値を適切に計算して与えなければならない。
+<DT>3.<DD>
+<B>select</B>()  コールの終了後に結果をチェックして、 適切に対応するつもりのないファイルディスクリプターは、 どの集合にも加えてはならない。
+次のルールも参照。
+<DT>4.<DD>
+<B>select</B>()  から返った後には、全ての集合の全てのファイルディスクリプターについて 読み書き可能な状態になっているかをチェックすべきである。
+<DT>5.<DD>
+<B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/recv.2.html">recv</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2)
+といった関数は、こちらが要求した全データを読み書きする必要は<I>ない</I>。 もし全データを読み書きするなら、それはトラフィックの負荷が小さく、
+ストリームが速い場合だろう。この条件は常に満たされるとは限らない。 これらの関数が頑張っても 1 バイトしか送受信できないような場合も
+考慮に入れてやらなければならない。
+<DT>6.<DD>
+処理するデータ量が小さいことがはっきりとわかっている場合を除いて、 一度に 1 バイトずつ読み書きするようなことはしてはならない。
+バッファーの許すかぎりのデータをまとめて読み書きしないと、 非常に効率が悪い。下記の例ではバッファーは 1024 バイトにしているが、
+このサイズを大きくするのは簡単だろう。
+<DT>7.<DD>
+
+Calls to <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/recv.2.html">recv</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2), and <B>select</B>()
+can fail with the error <B>EINTR</B>, and calls to <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/recv.2.html">recv</A></B>(2)
+<B><A HREF="../man2/write.2.html">write</A></B>(2), and <B><A HREF="../man2/send.2.html">send</A></B>(2)  can fail with <I>errno</I> set to <B>EAGAIN</B>
+(<B>EWOULDBLOCK</B>).  These results must be properly managed (not done properly
+above).  If your program is not going to receive any signals, then it is
+unlikely you will get <B>EINTR</B>.  If your program does not set nonblocking
+I/O, you will not get <B>EAGAIN</B>.
+<DT>8.<DD>
+決して、引数に長さ 0 のバッファーを指定して <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/recv.2.html">recv</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2)
+を呼び出してはならない。
+<DT>9.<DD>
+<B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/recv.2.html">recv</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2)  が <B>7.</B> に示した以外のエラーで失敗した場合や、
+入力系の関数の一つがファイル末尾を表す 0 を返した場合は、 そのファイルディスクリプターをもう一度 select に渡しては<I>ならない</I>。
+下記の例では、そのファイルディスクリプターをただちにクローズし、 そこには -1 をセットして、 それが集合に含まれ続けるのを許さないようにしている。
+<DT>10.<DD>
+タイムアウトの値は <B>select</B>()  を呼ぶたびに初期化すべきである。 OS によっては timeout
+構造体が変更される場合があるからである。 但し、 <B>pselect</B>()  は自分の timeout 構造体を変更することはない。
+<DT>11.<DD>
+
+
+
+
+
+
+
+
+
+
+
+
+<B>select</B>()  はファイルディスクリプター集合を変更するので、 <B>select</B>()
+がループの中で使用されている場合には、呼び出しを行う前に毎回 ディスクリプター集合を初期化し直さなければならない。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>返り値</H2>
+
+<B><A HREF="../man2/select.2.html">select</A></B>(2)  参照。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+一般的に言って、ソケットをサポートする全てのオペレーティングシステムは <B>select</B>()  もサポートしている。 <B>select</B>()
+を使うと、プログラマがスレッド、フォーク、IPC、シグナル、メモリー共有、 等々を使ってもっと複雑な方法で解決しようとする多くの問題が、
+移植性がありかつ効率的な方法で解決できる。
+<P>
+
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)  システムコールは <B>select</B>()  と同じ機能を持っており、 まばらなファイルディスクリプター集合を監視する場合に
+いくらか効率がよい。 現在では広く利用可能であるが、以前は <B>select</B>()  より移植性の面で劣っていた。
+<P>
+
+Linux 独自の <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  API は、多数のファイルディスクリプターを監視する場合に <B><A HREF="../man2/select.2.html">select</A></B>(2)  や
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)  よりも効率的なインターフェースを提供している。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+<B>select</B>()  の本当に便利な点を示す、よい例を紹介する。 以下のリストは、ある TCP ポートから別のポートへ転送を行う TCP
+フォワードプログラムである。
+<P>
+
+
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+<P>
+static int forward_port;
+<P>
+#undef max
+#define max(x,y) ((x) &gt; (y) ? (x) : (y))
+<P>
+static int
+listen_socket(int listen_port)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_in&nbsp;addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;lfd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;yes;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;lfd&nbsp;=&nbsp;socket(AF_INET,&nbsp;SOCK_STREAM,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(lfd&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;socket&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;yes&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(setsockopt(lfd,&nbsp;SOL_SOCKET,&nbsp;SO_REUSEADDR,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;yes,&nbsp;sizeof(yes))&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;setsockopt&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(lfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;addr,&nbsp;0,&nbsp;sizeof(addr));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_port&nbsp;=&nbsp;htons(listen_port);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_family&nbsp;=&nbsp;AF_INET;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(bind(lfd,&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;addr,&nbsp;sizeof(addr))&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;bind&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(lfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;accepting&nbsp;connections&nbsp;on&nbsp;port&nbsp;%d\n&quot;,&nbsp;listen_port);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;listen(lfd,&nbsp;10);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;lfd;
+}
+<P>
+static int
+connect_socket(int connect_port, char *address)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_in&nbsp;addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;cfd;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cfd&nbsp;=&nbsp;socket(AF_INET,&nbsp;SOCK_STREAM,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cfd&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;socket&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;addr,&nbsp;0,&nbsp;sizeof(addr));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_port&nbsp;=&nbsp;htons(connect_port);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_family&nbsp;=&nbsp;AF_INET;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!inet_aton(address,&nbsp;(struct&nbsp;in_addr&nbsp;*)&nbsp;&amp;addr.sin_addr.s_addr))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;inet_aton():&nbsp;bad&nbsp;IP&nbsp;address&nbsp;format\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(cfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(connect(cfd,&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;addr,&nbsp;sizeof(addr))&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;connect()&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown(cfd,&nbsp;SHUT_RDWR);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(cfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;cfd;
+}
+<P>
+#define SHUT_FD1 do {                                \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;=&nbsp;0)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown(fd1,&nbsp;SHUT_RDWR);&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(fd1);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd1&nbsp;=&nbsp;-1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+#define SHUT_FD2 do {                                \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;=&nbsp;0)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown(fd2,&nbsp;SHUT_RDWR);&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(fd2);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd2&nbsp;=&nbsp;-1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+#define BUF_SIZE 1024
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;h;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd1&nbsp;=&nbsp;-1,&nbsp;fd2&nbsp;=&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf1[BUF_SIZE],&nbsp;buf2[BUF_SIZE];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;buf1_avail&nbsp;=&nbsp;0,&nbsp;buf1_written&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;buf2_avail&nbsp;=&nbsp;0,&nbsp;buf2_written&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;4)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage\n\tfwd&nbsp;&lt;listen-port&gt;&nbsp;&quot;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&lt;forward-to-port&gt;&nbsp;&lt;forward-to-ip-address&gt;\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;signal(SIGPIPE,&nbsp;SIG_IGN);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;forward_port&nbsp;=&nbsp;atoi(argv[2]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;h&nbsp;=&nbsp;listen_socket(atoi(argv[1]));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(h&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ready,&nbsp;nfds&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd_set&nbsp;readfds,&nbsp;writefds,&nbsp;exceptfds;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_ZERO(&amp;readfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_ZERO(&amp;writefds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_ZERO(&amp;exceptfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(h,&nbsp;&amp;readfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nfds&nbsp;=&nbsp;max(nfds,&nbsp;h);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf1_avail&nbsp;&lt;&nbsp;BUF_SIZE)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(fd1,&nbsp;&amp;readfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Note:&nbsp;nfds&nbsp;is&nbsp;updated&nbsp;below,&nbsp;when&nbsp;fd1&nbsp;is&nbsp;added&nbsp;to
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exceptfds.&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf2_avail&nbsp;&lt;&nbsp;BUF_SIZE)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(fd2,&nbsp;&amp;readfds);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf2_avail&nbsp;-&nbsp;buf2_written&nbsp;&gt;&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(fd1,&nbsp;&amp;writefds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf1_avail&nbsp;-&nbsp;buf1_written&nbsp;&gt;&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(fd2,&nbsp;&amp;writefds);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(fd1,&nbsp;&amp;exceptfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nfds&nbsp;=&nbsp;max(nfds,&nbsp;fd1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(fd2,&nbsp;&amp;exceptfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nfds&nbsp;=&nbsp;max(nfds,&nbsp;fd2);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ready&nbsp;=&nbsp;select(nfds&nbsp;+&nbsp;1,&nbsp;&amp;readfds,&nbsp;&amp;writefds,&nbsp;&amp;exceptfds,&nbsp;NULL);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ready&nbsp;==&nbsp;-1&nbsp;&amp;&amp;&nbsp;errno&nbsp;==&nbsp;EINTR)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ready&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;select()&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(FD_ISSET(h,&nbsp;&amp;readfds))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;socklen_t&nbsp;addrlen;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_in&nbsp;client_addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addrlen&nbsp;=&nbsp;sizeof(client_addr);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;client_addr,&nbsp;0,&nbsp;addrlen);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;accept(h,&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;client_addr,&nbsp;&amp;addrlen);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;accept()&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf1_avail&nbsp;=&nbsp;buf1_written&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf2_avail&nbsp;=&nbsp;buf2_written&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd1&nbsp;=&nbsp;fd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd2&nbsp;=&nbsp;connect_socket(forward_port,&nbsp;argv[3]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;connect&nbsp;from&nbsp;%s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inet_ntoa(client_addr.sin_addr));
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Skip&nbsp;any&nbsp;events&nbsp;on&nbsp;the&nbsp;old,&nbsp;closed&nbsp;file
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;descriptors.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;NB:&nbsp;read&nbsp;OOB&nbsp;data&nbsp;before&nbsp;normal&nbsp;reads&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;FD_ISSET(fd1,&nbsp;&amp;exceptfds))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;c;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;recv(fd1,&nbsp;&amp;c,&nbsp;1,&nbsp;MSG_OOB);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;&lt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;send(fd2,&nbsp;&amp;c,&nbsp;1,&nbsp;MSG_OOB);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;FD_ISSET(fd2,&nbsp;&amp;exceptfds))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;c;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;recv(fd2,&nbsp;&amp;c,&nbsp;1,&nbsp;MSG_OOB);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;&lt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;send(fd1,&nbsp;&amp;c,&nbsp;1,&nbsp;MSG_OOB);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;FD_ISSET(fd1,&nbsp;&amp;readfds))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;read(fd1,&nbsp;buf1&nbsp;+&nbsp;buf1_avail,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BUF_SIZE&nbsp;-&nbsp;buf1_avail);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;&lt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf1_avail&nbsp;+=&nbsp;nbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;FD_ISSET(fd2,&nbsp;&amp;readfds))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;read(fd2,&nbsp;buf2&nbsp;+&nbsp;buf2_avail,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BUF_SIZE&nbsp;-&nbsp;buf2_avail);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;&lt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf2_avail&nbsp;+=&nbsp;nbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;FD_ISSET(fd1,&nbsp;&amp;writefds)&nbsp;&amp;&amp;&nbsp;buf2_avail&nbsp;&gt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;write(fd1,&nbsp;buf2&nbsp;+&nbsp;buf2_written,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf2_avail&nbsp;-&nbsp;buf2_written);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;&lt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf2_written&nbsp;+=&nbsp;nbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;FD_ISSET(fd2,&nbsp;&amp;writefds)&nbsp;&amp;&amp;&nbsp;buf1_avail&nbsp;&gt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;write(fd2,&nbsp;buf1&nbsp;+&nbsp;buf1_written,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf1_avail&nbsp;-&nbsp;buf1_written);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;&lt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf1_written&nbsp;+=&nbsp;nbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Check&nbsp;if&nbsp;write&nbsp;data&nbsp;has&nbsp;caught&nbsp;read&nbsp;data&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buf1_written&nbsp;==&nbsp;buf1_avail)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf1_written&nbsp;=&nbsp;buf1_avail&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buf2_written&nbsp;==&nbsp;buf2_avail)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf2_written&nbsp;=&nbsp;buf2_avail&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;One&nbsp;side&nbsp;has&nbsp;closed&nbsp;the&nbsp;connection,&nbsp;keep
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;writing&nbsp;to&nbsp;the&nbsp;other&nbsp;side&nbsp;until&nbsp;empty&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&lt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf1_avail&nbsp;-&nbsp;buf1_written&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&lt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf2_avail&nbsp;-&nbsp;buf2_written&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<P>
+
+上記のプログラムは、ほとんどの種類の TCP 接続をフォワードする。 <B>telnet</B> サーバによって中継される OOB シグナルデータも扱える。
+このプログラムは、データフローを双方向に同時に送るという、 ややこしい問題も処理できる。 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+コールを使って、各ストリームごとに専用のスレッドを用いるほうが効率的だ、 という人もいるかもしれない。しかし、これは考えているよりずっとややこしい。
+あるいは、 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  を使って非ブロック I/O をセットすれば良い、というアイデアもあるだろう。
+これにも実際には問題があり、タイムアウトが非効率的に起こってしまう。
+<P>
+
+このプログラムは一度にひとつ以上の同時接続を扱うことはできないが、 その様に拡張するのは簡単で、バッファーのリンクリストを (接続ごとにひとつずつ)
+使えばよい。 現時点のものでは、新しい接続がくると古い接続は落ちてしまう。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2), <B><A HREF="../man2/connect.2.html">connect</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/recv.2.html">recv</A></B>(2),
+<B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2), <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">シグナルとデータイベントを組み合わせる</A><DD>
+<DT><A HREF="#lbAF">実例</A><DD>
+<DT><A HREF="#lbAG">SELECT の掟</A><DD>
+</DL>
+<DT><A HREF="#lbAH">返り値</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

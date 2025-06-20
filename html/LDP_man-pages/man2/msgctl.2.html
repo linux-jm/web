@@ -1,0 +1,278 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MSGCTL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MSGCTL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/msgctl.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+msgctl - System V メッセージ制御操作
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/msg.h">sys/msg.h</A>&gt;</B>
+
+<B>int msgctl(int </B><I>msqid</I><B>, int </B><I>cmd</I><B>, struct msqid_ds *</B><I>buf</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>msgctl</B>()  はメッセージキュー識別子 <I>msqid</I> で指定された System&nbsp;V メッセージキュー (message queue)
+に対して <I>cmd</I> で指定された制御操作を行なう。
+<P>
+
+<I>msqid_ds</I> データ構造体は <I>&lt;<A HREF="file:///usr/include/sys/msg.h">sys/msg.h</A>&gt;</I> で以下のように定義されている:
+<P>
+
+
+
+struct msqid_ds {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;ipc_perm&nbsp;msg_perm;&nbsp;&nbsp;&nbsp;/*&nbsp;Ownership&nbsp;and&nbsp;permissions&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_stime;&nbsp;&nbsp;/*&nbsp;Time&nbsp;of&nbsp;last&nbsp;<A HREF="../man2/msgsnd.2.html">msgsnd</A>(2)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_rtime;&nbsp;&nbsp;/*&nbsp;Time&nbsp;of&nbsp;last&nbsp;<A HREF="../man2/msgrcv.2.html">msgrcv</A>(2)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_ctime;&nbsp;&nbsp;/*&nbsp;Time&nbsp;of&nbsp;creation&nbsp;or&nbsp;last
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;modification&nbsp;by&nbsp;msgctl()&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;&nbsp;&nbsp;msg_cbytes;&nbsp;/*&nbsp;#&nbsp;of&nbsp;bytes&nbsp;in&nbsp;queue&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msgqnum_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_qnum;&nbsp;&nbsp;&nbsp;/*&nbsp;#&nbsp;number&nbsp;of&nbsp;messages&nbsp;in&nbsp;queue&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msglen_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_qbytes;&nbsp;/*&nbsp;Maximum&nbsp;#&nbsp;of&nbsp;bytes&nbsp;in&nbsp;queue&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_lspid;&nbsp;&nbsp;/*&nbsp;PID&nbsp;of&nbsp;last&nbsp;<A HREF="../man2/msgsnd.2.html">msgsnd</A>(2)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_lrpid;&nbsp;&nbsp;/*&nbsp;PID&nbsp;of&nbsp;last&nbsp;<A HREF="../man2/msgrcv.2.html">msgrcv</A>(2)&nbsp;*/
+};
+
+
+<P>
+
+<I>msgid_ds</I> 構造体のフィールドは以下の通りである:
+<DL COMPACT>
+<DT><I>msg_perm</I><DD>
+This is an <I>ipc_perm</I> structure (see below) that specifies the access
+permissions on the message queue.
+<DT><I>msg_stime</I><DD>
+最後の <B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2) システムコールの時刻。
+<DT><I>msg_rtime</I><DD>
+最後の <B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2) システムコールの時刻。
+<DT><I>msg_ctime</I><DD>
+Time of creation of queue or time of last <B>msgctl</B>()  <B>IPC_SET</B> operation.
+<DT><I>msg_cbytes</I><DD>
+Number of bytes in all messages currently on the message queue.  This is a
+nonstandard Linux extension that is not specified in POSIX.
+<DT><I>msg_qnum</I><DD>
+Number of messages currently on the message queue.
+<DT><I>msg_qbytes</I><DD>
+Maximum number of bytes of message text allowed on the message queue.
+<DT><I>msg_lspid</I><DD>
+最後の <B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2) システムコールを実行したプロセスの ID。
+<DT><I>msg_lrpid</I><DD>
+最後の <B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2) システムコールを実行したプロセスの ID。
+</DL>
+<P>
+
+<I>ipc_perm</I> 構造体は以下のように定義されている (強調されたフィールドは <B>IPC_SET</B> を使って設定可能である):
+<P>
+
+
+
+struct ipc_perm {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;key_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__key;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;<A HREF="../man2/msgget.2.html">msgget</A>(2)&nbsp;に与えるキー&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>uid</B>;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;所有者の実効&nbsp;UID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>gid</B>;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;所有者の実効&nbsp;GID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cuid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;作成者の実効&nbsp;UID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cgid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;作成者の実効&nbsp;GID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;<B>mode</B>;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;許可&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;__seq;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;シーケンス番号&nbsp;*/
+};
+
+
+<P>
+
+The least significant 9 bits of the <I>mode</I> field of the <I>ipc_perm</I>
+structure define the access permissions for the message queue.  The
+permission bits are as follows:
+<TABLE>
+<TR VALIGN=top><TD>0400</TD><TD>ユーザーによる読み出し<BR></TD></TR>
+<TR VALIGN=top><TD>0200</TD><TD>ユーザーによる書き込み<BR></TD></TR>
+<TR VALIGN=top><TD>0040</TD><TD>グループによる読み出し<BR></TD></TR>
+<TR VALIGN=top><TD>0020</TD><TD>グループによる書き込み<BR></TD></TR>
+<TR VALIGN=top><TD>0004</TD><TD>他人 (others) による読み出し<BR></TD></TR>
+<TR VALIGN=top><TD>0002</TD><TD>他人 (others) による書き込み<BR></TD></TR>
+</TABLE>
+
+<P>
+
+ビット 0100, 0010, 0001 (実行ビット) をシステムは使用しない。
+<P>
+
+<I>cmd</I> として有効な値は:
+<DL COMPACT>
+<DT><B>IPC_STAT</B><DD>
+<I>msqid</I> に関連づけられたメッセージキューデータ構造体から、ポインター <I>buf</I> が指し示す <I>msqid_ds</I>
+構造体に情報をコピーする。 呼び出し側はメッセージキューに対する読み込み許可を持っていなければならない。
+<DT><B>IPC_SET</B><DD>
+Write the values of some members of the <I>msqid_ds</I> structure pointed to by
+<I>buf</I> to the kernel data structure associated with this message queue,
+updating also its <I>msg_ctime</I> member.
+<DT><DD>
+The following members of the structure are updated: <I>msg_qbytes</I>,
+<I>msg_perm.uid</I>, <I>msg_perm.gid</I>, and (the least significant 9 bits of)
+<I>msg_perm.mode</I>.
+<DT><DD>
+The effective UID of the calling process must match the owner
+(<I>msg_perm.uid</I>)  or creator (<I>msg_perm.cuid</I>)  of the message queue, or
+the caller must be privileged.  Appropriate privilege (Linux: the
+<B>CAP_SYS_RESOURCE</B> capability) is required to raise the <I>msg_qbytes</I> value
+beyond the system parameter <B>MSGMNB</B>.
+<DT><B>IPC_RMID</B><DD>
+メッセージキューをただちに削除する。 同時にその構造体の読み書きの待ち状態にあったプロセスに通知する (エラーが返り、 <I>errno</I> が
+<B>EIDRM</B> に設定される)。 呼び出したプロセスが適切な特権を持っているか、 呼び出したプロセスの実効ユーザー ID がメッセージキューの作成者か
+所有者の実効ユーザー ID でなければならない。この場合、 <B>msgctl</B>() の第 3 引数は無視される。
+<DT><B>IPC_INFO</B> (Linux 固有)<DD>
+システム全体でのメッセージキューの制限とパラメーターに関する情報を、 <I>buf</I> が指す構造体に入れて返す。 この構造体は <I>msginfo</I>
+型である (そのためキャストが必要である)。 <I>msginfo</I> は <B>_GNU_SOURCE</B> 機能検査マクロが定義された場合に
+<I>&lt;<A HREF="file:///usr/include/sys/msg.h">sys/msg.h</A>&gt;</I> で以下のように定義される:
+<DT><DD>
+
+
+struct msginfo {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;msgpool;&nbsp;/*&nbsp;メッセージデータの保持に使用される
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;バッファープールの大きさ&nbsp;(1024&nbsp;バイト単位);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;カーネル内では未使用&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;msgmap;&nbsp;&nbsp;/*&nbsp;メッセージマップの最大エントリー数;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;カーネル内では未使用&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;msgmax;&nbsp;&nbsp;/*&nbsp;一つのメッセージに書き込み可能な
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;最大バイト数&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;msgmnb;&nbsp;&nbsp;/*&nbsp;一つのキューに書き込み可能な最大バイト数;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<A HREF="../man2/msgget.2.html">msgget</A>(2)&nbsp;での)&nbsp;キュー作成中の&nbsp;msg_qbytes
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;の初期化に使用される&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;msgmni;&nbsp;&nbsp;/*&nbsp;メッセージキューの数の最大値&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;msgssz;&nbsp;&nbsp;/*&nbsp;メッセージセグメントのサイズ;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;カーネル内では未使用&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;msgtql;&nbsp;&nbsp;/*&nbsp;システム上の全キューの最大メッセージ数;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;カーネル内では未使用&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;msgseg;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;最大セグメント数;&nbsp;カーネル内では未使用&nbsp;*/
+};
+
+
+<DT><DD>
+設定 <I>msgmni ,</I> <I>msgmax ,</I> <I>msgmnb</I> は <I>/proc</I> にある同じ名前のファイル経由で変更可能である。 詳しくは
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5)  を参照。
+<DT><B>MSG_INFO</B> (Linux 固有)<DD>
+<B>IPC_INFO</B> のときと同じ情報を格納した <I>msginfo</I> 構造体を返す。 但し、以下のフィールドにはメッセージキューが
+消費しているシステム資源に関する情報が格納される点が異なる。 <I>msgpool</I> フィールドは現在システム上に存在するメッセージキューの数を返す。
+<I>msgmap</I> フィールドはシステム上の全てのキューに入っているメッセージ総数を返す。 <I>msgtql</I>
+フィールドはシステム上の全てのキューに入っている全メッセージの 総バイト数を返す。
+<DT><B>MSG_STAT</B> (Linux 固有)<DD>
+<B>IPC_STAT</B> と同じく <I>msqid_ds</I> 構造体を返す。 但し、 <I>msqid</I>
+引数は、キュー識別子ではなく、システム上の全てのメッセージキュー に関する情報を管理するカーネルの内部配列へのインデックスである。
+<DT><B>MSG_STAT_ANY</B> (Linux 固有, Linux 4.17 以降)<DD>
+Return a <I>msqid_ds</I> structure as for <B>MSG_STAT</B>.  However,
+<I>msg_perm.mode</I> is not checked for read access for <I>msqid</I> meaning that
+any user can employ this operation (just as any user may read
+<I>/proc/sysvipc/msg</I> to obtain the same information).
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+On success, <B>IPC_STAT</B>, <B>IPC_SET</B>, and <B>IPC_RMID</B> return 0.  A successful
+<B>IPC_INFO</B> or <B>MSG_INFO</B> operation returns the index of the highest used
+entry in the kernel's internal array recording information about all message
+queues.  (This information can be used with repeated <B>MSG_STAT</B> or
+<B>MSG_STAT_ANY</B> operations to obtain information about all queues on the
+system.)  A successful <B>MSG_STAT</B> or <B>MSG_STAT_ANY</B> operation returns the
+identifier of the queue whose index was given in <I>msqid</I>.
+<P>
+
+エラーの場合は -1 を返し、 <I>errno</I> を適切に設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+失敗した場合、 <I>errno</I> は以下の値の中のどれか一つに設定される:
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+The argument <I>cmd</I> is equal to <B>IPC_STAT</B> or <B>MSG_STAT</B>, but the calling
+process does not have read permission on the message queue <I>msqid</I>, and
+does not have the <B>CAP_IPC_OWNER</B> capability in the user namespace that
+governs its IPC namespace.
+<DT><B>EFAULT</B><DD>
+引数 <I>cmd</I> が <B>IPC_SET</B> か <B>IPC_STAT</B> で、ポインター <I>buf</I> で指されているアドレスがアクセス可能でない。
+<DT><B>EIDRM</B><DD>
+メッセージキューが削除された。
+<DT><B>EINVAL</B><DD>
+<I>cmd</I> または <I>msqid</I> に不正な値が設定された。 もしくは、 <B>MSG_STAT</B> 操作の場合に、 <I>msqid</I>
+で指定されたインデックス値が現在未使用の配列のスロットを参照いていた。
+<DT><B>EPERM</B><DD>
+引数 <I>cmd</I> が <B>IPC_SET</B> か <B>IPC_RMID</B> であるが、呼び出したプロセスの実効ユーザー ID がメッセージキューの
+(<I>msg_perm.cuid</I> として見つかる) 作成者 と (<I>msg_perm.uid</I> として見つかる) 所有者のいずれでもなく、
+かつ呼び出し者に特権がない (Linux では <B>CAP_SYS_ADMIN</B> ケーパビリティがない)。
+<DT><B>EPERM</B><DD>
+<B>IPC_SET</B> で <I>msg_qbytes</I> をシステムパラメーター <B>MSGMNB</B>
+より大きな値に設定しようとしたが、呼び出し元が特権を持っていなかった (Linux では、 <B>CAP_SYS_RESOURCE</B>
+ケーパビリティを持っていなかった)。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+
+POSIX.1-2001, POSIX.1-2008, SVr4.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+Linux や POSIX の全てのバージョンでは、 <I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I> と <I>&lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</I>
+のインクルードは必要ない。しかしながら、いくつかの古い実装ではこれらのヘッダーファイルのインクルードが必要であり、 SVID
+でもこれらのインクルードをするように記載されている。このような古いシステムへの移植性を意図したアプリケーションではこれらのファイルをインクルードする必要があるかもしれない。
+<P>
+
+<B>IPC_INFO</B>, <B>MSG_STAT</B>, <B>MSG_INFO</B> 操作は、 <B>ipcs</B>(1)
+プログラムで割り当て済の資源に関する情報を提供するために 使用されている。将来、これらの操作は変更されたり、 <I>/proc</I>
+ファイルシステムのインターフェースに移動されるかもしれない。
+<P>
+
+<I>struct msqid_ds</I> 内の多くのフィールドは、 Linux 2.2 では <I>short</I> だったが、Linux 2.4 では
+<I>long</I> になった。 この利点を生かすには、glibc-2.1.91 以降の環境下で 再コンパイルすれば十分である。
+(カーネルは新しい形式の呼び出しと古い形式の呼び出しを <I>cmd</I> 内の <B>IPC_64</B> フラグで区別する。)
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/msgget.2.html">msgget</A></B>(2), <B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2), <B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+<B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7), <B>sysvipc</B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

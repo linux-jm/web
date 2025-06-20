@@ -1,0 +1,74 @@
+.\" -*- nroff -*-
+.\"*******************************************************************
+.\"
+.\" This file was generated with po4a. Translate the source file.
+.\"
+.\"*******************************************************************
+.\"
+.\" Japanese Version Copyright (c) 1998, 1999 NAKANO Takeo all rights reserved.
+.\" Translated Mon 23 Nov 1998 by NAKANO Takeo <nakano@apm.seikei.ac.jp>
+.\" Updated Fri 22 Oct 1999 by NAKANO Takeo
+.\" Updated Wed 11 Apr 2001 by Yuichi SATO <sato@complex.eng.hokudai.ac.jp>
+.\"
+.TH RPC.YPXFRD 8 "August 2001" "YP Server" "Reference Manual"
+.SH 名前
+rpc.ypxfrd \- NIS マップ転送サーバー
+.SH 書式
+\fB/usr/sbin/rpc.ypxfrd\fP [ \fB\-d path\fP ] [ \fB\-p port\fP ] [ \fB\-\-debug\fP ]
+.br
+\fB/usr/sbin/rpc.ypxfrd\fP \fB\-\-version\fP
+.LP
+.SH 説明
+.LP
+\fBrpc.ypxfrd\fP は非常に大きな NIS マップを NIS マスターから NIS スレーブサーバーに
+転送する際に、転送を高速化するために用いられる。 NIS スレーブサーバーは、新しいマップがあるというメッセージを
+受け取ると、そのマップを取得するために \fBypxfr\fP を起動する。 \fBypxfr\fP は yp_all()
+関数を用いてマップの内容をマスターサーバーから 読み込もうとする。この情報はデーターベースライブラリを
+通して保存されるため、マップのサイズが非常に大きくなると、 このプロセスは数分もかかってしまうことがある。
+.LP
+\fBrpc.ypxfrd\fP サーバーは、 NIS スレーブサーバーにマスターのマップファイルを
+単純にコピーさせ、転送プロセスを高速化する。スレーブサーバーが ゼロからマップを生成するのに比べ、これはずっと短時間ですむ。 \fBrpc.ypxfrd\fP
+は RPC ベースの転送プロトコルを用いるので、新しいマップを 生成する必要はなくなる。
+
+\fBrpc.ypxfrd\fP は inetd から起動することもできるが、起動には時間がかかるので、 \fBypserv\fP の後に
+/etc/init.d/ypxfrd から起動するのが良い。
+.SH オプション
+.TP 
+\fB\-\-debug\fP
+サーバーをデバッグモードで起動する。 デバッグモードでは、サーバーはバックグラウンドへ待避せず、 アクセス要求を受けるたびに細かなステータスメッセージを
+標準エラー出力に表示する。
+.TP 
+\fB\-d\fP\fI directory\fP
+/var/yp の代わりに \fBrpc.ypxfrd\fP が用いるディレクトリを指定する。
+.TP 
+\fB\-p\fP\fI port\fP
+\fBrpc.ypxfrd\fP がバインドするポート番号を指定する。このオプションを用いると、 ルータに NIS ポートへのパケットをフィルタリングさせ、
+インターネットからの NIS サーバーへのアクセスを制限できる。
+.TP 
+\fB\-\-version\fP
+バージョン番号を表示する。
+.SH セキュリティ
+\fBrpc.ypxfrd\fP はホストのチェックに \fBypserv\fP と同じ機能を用いる。まず \fBrpc.ypxfrd\fP は要求元のアドレスを
+\fB/var/yp/securenets\fP または tcp wrapper でチェックする。ホストのサーバーへの接続が 許されている場合には、
+\fBrpc.ypxfrd\fP は \fB/etc/ypserv.conf\fP から要求されたマップのルールをチェックする。マップの名前が
+ルールにマッチしない場合には、 \fBrpc.ypxfrd\fP はそのマップの YP_SECURE キーを調べる。キーが存在していると、
+\fBrpc.ypxfrd\fP は特権ポートからの要求だけを許可する。
+.SH ファイル
+/etc/ypserv.conf /var/yp/securenets
+.SH 関連項目
+\fBypserv\fP(8), \fBmakedbm\fP(8), \fByppush\fP(8), \fBypxfr\fP(8)
+.LP
+.SH バグ
+FreeBSD の \fBypxfrd\fP プロトコルは SunOS のものとは互換性がない。これは残念なことではあるが、 不可避なものであった。 Sun
+のプロトコルはフリーに入手できるものでは なかったし、仮に入手ができたとしても有用なものにはなりえなかったろう。 後者の理由は、 SunOS NIS
+v2 の実装がマップのデーターベースにオリジナルの ndbm パッケージを用いているのに対し、他の実装では GNU DBM や Berkeley DB
+を用いているからである。これらのパッケージはまったく異なったファイル フォーマットを用いている上、 ndbm と gdbm ではバイトオーダーンの違いを
+賢く扱うことができない。したがって big endian なシステムで生成された gdbm や ndbm のデーターベースは、 little
+endian なシステムでは読むことが できないのである。 FreeBSD の \fBypxfrd\fP
+プロトコルは、マスターとスレーブの両方が同じデーターベースパッケージを 使っているかどうかを、また必要に応じて、両システムでのバイトオーダーが等しいか
+どうかをチェックする。
+.LP
+.SH 作者
+ypxfrd プロトコルと FreeBSD への実装: Bill Paul <wpaul@ctr.columbia.edu>
+.br
+Linux への実装: Thorsten Kukuk <kukuk@suse.de>

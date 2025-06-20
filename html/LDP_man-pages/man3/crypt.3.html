@@ -1,0 +1,261 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CRYPT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>CRYPT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2018-04-30<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/crypt.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+crypt, crypt_r - パスワードとデータの暗号化
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _XOPEN_SOURCE</B>       /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>char *crypt(const char *</B><I>key</I><B>, const char *</B><I>salt</I><B>);</B>
+
+ <B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/crypt.h">crypt.h</A>&gt;</B>
+
+<B>char *crypt_r(const char *</B><I>key</I><B>, const char *</B><I>salt</I><B>,</B>
+<B>              struct crypt_data *</B><I>data</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>-lcrypt</I> でリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>crypt</B>()  はパスワード暗号化関数である。 鍵探索のハードウェアによる実装を妨げるように(その他にもいろいろ)  変更した Data
+Encryption Standard アルゴリズムを元にしている。
+<P>
+
+<I>key</I> はユーザーが入力するパスワードである。
+<P>
+
+<I>salt</I> は集合 [<B>a-zA-Z0-9./</B>] から選ばれた 2 文字の文字列である。 この文字列はアルゴリズムの出力を 4096
+通りにかき乱すのに使われる。
+<P>
+
+<I>key</I> の最初の 8 文字の各文字から下位 7 ビットをとって 56 ビットの鍵が得られる。 この 56 ビットの鍵は特定の文字列(ふつうはすべて
+0 の文字列)  を繰り返し暗号化するのに用いられる。 返り値は暗号化されたパスワードへのポインターで、13 の印字可能な ASCII 文字
+からなる(最初の 2 文字は salt そのもの)。 返り値は、関数呼出しのたびに上書きされる静的なデータへのポインターである。
+<P>
+
+警告: 鍵空間は
+
+2**56
+= 7.2e16 の可能な値から成る。 この鍵空間の全探索は強力な並列計算機を使えば可能である。また <B>crack</B>(1)
+のようなソフトウェアはこの鍵空間の中で、多くの人にパスワードとして 使われるような鍵についての全探索が可能である。
+それゆえ、パスワードを選択するときには、すくなくとも、 一般的に使われる単語と名前は避けるべきである。 <B><A HREF="../../shadow/man1/passwd.1.html">passwd</A></B>(1)
+を使う時にはクラックされうるパスワードについての検査をすることが 推奨される。
+<P>
+
+DES アルゴリズムにはいくつかの癖があり、それによってパスワード認証以外に <B>crypt</B>()  を使うのはたいへんよくない選択となっている。もし
+<B>crypt</B>()  を暗号プロジェクトに使おうという案をもっているならば、それはやめたほうが よい。暗号化についてのよい本と誰でも入手できる DES
+ライブラリのひとつを 手にいれるべきだ。
+<P>
+
+<B>crypt_r</B>()  は <B>crypt</B>()  の再入可能版である。 <I>data</I> で示される構造体は結果データの保存と情報の管理に使われる。
+この構造体に対して(メモリーを割り当てること以外に)呼び出し元がするべき唯一の ことは、 <B>crypt_r</B>()  の初回の呼び出しの前に
+<I>data-&gt;initialized</I> をゼロにすることだけである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功の場合には、暗号化されたパスワードへのポインターが返される。 エラーの場合には NULL が返される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>salt</I> が間違ったフォーマットである。
+<DT><B>ENOSYS</B><DD>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>crypt</B>()  関数が実装されていない。多分アメリカの輸出規制のために。
+<DT><B>EPERM</B><DD>
+<I>/proc/sys/crypto/fips_enabled</I> が 0 でない値で、 DES などの弱い暗号タイプを利用しようとした。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>crypt</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:crypt<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>crypt_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>crypt</B>(): POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.  <B>crypt_r</B>()  は GNU
+拡張である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Availability in glibc</H3>
+
+The <B>crypt</B>(), <B><A HREF="../man3/encrypt.3.html">encrypt</A></B>(3), and <B><A HREF="../man3/setkey.3.html">setkey</A></B>(3)  functions are part of the
+POSIX.1-2008 XSI Options Group for Encryption and are optional.  If the
+interfaces are not available, then the symbolic constant <B>_XOPEN_CRYPT</B> is
+either not defined, or it is defined to -1 and availability can be checked
+at run time with <B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3).  This may be the case if the downstream
+distribution has switched from glibc crypt to <I>libxcrypt</I>.  When
+recompiling applications in such distributions, the programmer must detect
+if <B>_XOPEN_CRYPT</B> is not available and include <I>&lt;<A HREF="file:///usr/include/crypt.h">crypt.h</A>&gt;</I> for the
+function prototypes; otherwise <I>libxcrypt</I> is an ABI-compatible drop-in
+replacement.
+<A NAME="lbAK">&nbsp;</A>
+<H3>Features in glibc</H3>
+
+この関数の glibc 版は追加の暗号化アルゴリズムに対応している。
+<P>
+
+If <I>salt</I> is a character string starting with the characters &quot;$<I>id</I>$&quot;
+followed by a string optionally terminated by &quot;$&quot;, then the result has the
+form:
+<DL COMPACT><DT><DD>
+<P>
+
+$<I>id</I>$<I>salt</I>$<I>encrypted</I>
+</DL>
+
+<P>
+
+DES を使う代わりに、 <I>id</I> で使用する暗号化手法を識別し、これがパスワード文字列の残りの部分を解釈する 方法を決定する。 <I>id</I>
+の値として、以下の値に対応している:
+<DL COMPACT><DT><DD>
+<TABLE>
+<TR VALIGN=top><TD>ID  | Method</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>1   | MD5</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>2a  | Blowfish (本流の glibc には入っていない;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>| いくつかの Linux ディストリビューションで追加されている)</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>5   | SHA-256 (glibc 2.7 以降)</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>6   | SHA-512 (glibc 2.7 以降)</TD><TD><BR></TD></TR>
+</TABLE>
+
+</DL>
+
+<P>
+
+Thus, $5$<I>salt</I>$<I>encrypted</I> and $6$<I>salt</I>$<I>encrypted</I> contain the
+password encrypted with, respectively, functions based on SHA-256 and
+SHA-512.
+<P>
+
+&quot;<I>salt</I>&quot; stands for the up to 16 characters following &quot;$<I>id</I>$&quot; in the
+salt.  The &quot;<I>encrypted</I>&quot; part of the password string is the actual computed
+password.  The size of this string is fixed:
+<TABLE>
+<TR VALIGN=top><TD>MD5     | 22 characters</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>SHA-256 | 43 characters</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>SHA-512 | 86 characters</TD><TD><BR></TD></TR>
+</TABLE>
+
+<P>
+&quot;<I>salt</I>&quot; と &quot;<I>encrypted</I>&quot; の文字は [<B>a-zA-Z0-9./</B>] の集合から 選ばれる。 MD5 と SHA
+の実装では、 <I>key</I> 全体が意味がある (DES の場合には最初の 8 文字だけに意味がある)。
+<P>
+
+
+Since glibc 2.7, the SHA-256 and SHA-512 implementations support a
+user-supplied number of hashing rounds, defaulting to 5000.  If the
+&quot;$<I>id</I>$&quot; characters in the salt are followed by &quot;rounds=<I>xxx</I>$&quot;, where
+<I>xxx</I> is an integer, then the result has the form
+<DL COMPACT><DT><DD>
+<P>
+
+$<I>id</I>$<I>rounds=yyy</I>$<I>salt</I>$<I>encrypted</I>
+</DL>
+
+<P>
+
+where <I>yyy</I> is the number of hashing rounds actually used.  The number of
+rounds actually used is 1000 if <I>xxx</I> is less than 1000, 999999999 if
+<I>xxx</I> is greater than 999999999, and is equal to <I>xxx</I> otherwise.
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1), <B><A HREF="../../shadow/man1/passwd.1.html">passwd</A></B>(1), <B><A HREF="../man3/encrypt.3.html">encrypt</A></B>(3), <B><A HREF="../man3/getpass.3.html">getpass</A></B>(3), <B><A HREF="../man5/passwd.5.html">passwd</A></B>(5)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">Availability in glibc</A><DD>
+<DT><A HREF="#lbAK">Features in glibc</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

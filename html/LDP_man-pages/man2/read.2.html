@@ -1,0 +1,179 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of READ</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>READ</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2018-02-02<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/read.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+read - ファイルディスクリプターから読み込む
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>ssize_t read(int </B><I>fd</I><B>, void *</B><I>buf</I><B>, size_t </B><I>count</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>read</B>()  はファイルディスクリプター (file descriptor)  <I>fd</I> から最大 <I>count</I> バイトを <I>buf</I>
+で始まるバッファーへ読み込もうとする。
+<P>
+
+seek に対応しているファイルでは、read
+はファイルオフセットから行われ、ファイルオフセットは読み込んだバイト数分だけ進められる。ファイルオフセットがファイル末尾かそれより先の場合は、読み出しは行われず、
+<B>read</B>() は 0 を返す。
+<P>
+
+<I>count</I> が 0 の場合、 <B>read</B>() は以下で説明するエラーを検出する<I>場合がある</I>。 どのエラーもなかった場合、もしくは
+<B>read</B>() がエラーのチェックを行わない場合、 <I>count</I> が 0 で呼び出された <B>read</B>() は 0 を返し、何も行わない。
+<P>
+
+According to POSIX.1, if <I>count</I> is greater than <B>SSIZE_MAX</B>, the result
+is implementation-defined; see NOTES for the upper limit on Linux.
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、読み込んだバイト数を返す (0 はファイルの終りを意味する)。 ファイル位置はこの数だけ進められる。
+この数が要求した数より小さかったとしてもエラーではない; 例えば今すぐには実際にそれだけの数しかない場合 (ファイルの最後に近いのかも
+しれないし、パイプ (pipe) や端末 (terminal) から読み込んでいるかもしれない) や <B>read</B>()  がシグナル (signal)
+によって割り込まれた場合にこれは起こりえる。
+<P>
+
+エラーの場合は、-1 が返され、 <I>errno</I> が適切に設定される。この場合はファイル位置が変更されるかどうかは 不定である。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+ファイルディスクリプター <I>fd</I> がソケット以外のファイルを参照していて、 非停止 (nonblocking) モード
+(<B>O_NONBLOCK</B>)  に設定されており、読み込みを行うと停止する状況にある。 <B>O_NONBLOCK</B> フラグの詳細は
+<B><A HREF="../man2/open.2.html">open</A></B>(2) を参照。
+<DT><B>EAGAIN</B> または <B>EWOULDBLOCK</B><DD>
+
+ファイルディスクリプター <I>fd</I> がソケットを参照していて、非停止 (nonblocking) モード (<B>O_NONBLOCK</B>)
+に設定されており、読み込みを行うと停止する状況にある。 POSIX.1-2001 は、この場合にどちらのエラーを返すことも認めており、 これら 2
+つの定数が同じ値を持つことも求めていない。 したがって、移植性が必要なアプリケーションでは、両方の可能性を 確認すべきである。
+<DT><B>EBADF</B><DD>
+<I>fd</I> が有効なファイルディスクリプターでないか、読み込みのために オープン (open) されていない。
+<DT><B>EFAULT</B><DD>
+<I>buf</I> がアクセス可能なアドレス空間の外にある。
+<DT><B>EINTR</B><DD>
+何のデータも読み込まないうちにシグナルに割り込まれた。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EINVAL</B><DD>
+<I>fd</I> は読み込みに適していないオブジェクトを参照している。 もしくは、ファイルが <B>O_DIRECT</B> フラグを指定してオープンされているが、
+<I>buf</I> に指定されたアドレス、 <I>count</I> に指定された値、 ファイルオフセットのいずれかの アラインメントが不適切である。
+<DT><B>EINVAL</B><DD>
+<I>fd</I> が <B><A HREF="../man2/timerfd_create.2.html">timerfd_create</A></B>(2)  の呼び出しで作成されたが、 <B>read</B>()  に間違ったサイズのバッファーが渡された。
+さらなる情報は <B><A HREF="../man2/timerfd_create.2.html">timerfd_create</A></B>(2)  を参照のこと。
+<DT><B>EIO</B><DD>
+I/O error.  This will happen for example when the process is in a background
+process group, tries to read from its controlling terminal, and either it is
+ignoring or blocking <B>SIGTTIN</B> or its process group is orphaned.  It may
+also occur when there is a low-level I/O error while reading from a disk or
+tape.  A further possible cause of <B>EIO</B> on networked filesystems is when
+an advisory lock had been taken out on the file descriptor and this lock has
+been lost.  See the <I>Lost locks</I> section of <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  for further
+details.
+<DT><B>EISDIR</B><DD>
+<I>fd</I> がディレクトリを参照している。
+</DL>
+<P>
+
+<I>fd</I> に接続されたオブジェクトによっては、他のエラーが起こるかもしれない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+SVr4, 4.3BSD, POSIX.1-2001.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+The types <I>size_t</I> and <I>ssize_t</I> are, respectively, unsigned and signed
+integer data types specified by POSIX.1.
+<P>
+
+
+On Linux, <B>read</B>()  (and similar system calls) will transfer at most
+0x7ffff000 (2,147,479,552) bytes, returning the number of bytes actually
+transferred.  (This is true on both 32-bit and 64-bit systems.)
+<P>
+
+NFS において。少量のデータを読み込む場合、最初の時のみにタイム スタンプが更新され、続くコールでは更新されないだろう。
+これはクライアント側で属性のキャッシングを行なうためである。 なぜならば、もし全ての NFS クライアントが <I>st_atime</I>
+(最終ファイルアクセス時刻)  の更新をサーバーに送らず、クライアント側でキャッシュを読むことに満足して いれば、サーバー側での read
+は発生しないので <I>st_atime</I> の更新は行なわれからだ。 UNIX の方式では、クライアント側の属性のキャッシングを無効にすることで、
+これを得ることができる。しかしほとんどの状況ではこれは続くサーバーの 負荷を増加させ、パフォーマンスの低下をもたらす。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+POSIX.1-2008/SUSv4 セクション XSI 2.9.7 (&quot;Thread Interactions with Regular File
+Operations&quot;) によると、
+<P>
+
+<DL COMPACT><DT><DD>
+以下のすべての関数では、 通常ファイルもしくはシンボリックリンクに対する操作では POSIX.1-2008
+で規定された効果が互いにアトミックに行われなければならない: ...
+</DL>
+
+<P>
+
+
+
+
+
+
+
+
+
+
+
+この後に書かれている API の中に <B>read</B>() と <B><A HREF="../man2/readv.2.html">readv</A></B>(2) である。 スレッド（やプロセス)
+間でアトミックに適用することが求められる効果の一つとして、 ファイルオフセットの更新がある。 しかしながら、 バージョン 3.14 より前の Linux
+では、 この限りではない。 オープンファイル記述 (open file description) を共有する 2 つのプロセスが同時に
+<B>read</B>() (や <B><A HREF="../man2/readv.2.html">readv</A></B>(2)) を実行した場合、 この I/O 操作ではファイルオフセットの更新に関してはアトミックではなく、 2
+つのプロセスの read で取得されるデータブロックが (間違って) 重なる可能性がある。 この問題は Linux 3.14 で修正された。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/close.2.html">close</A></B>(2), <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2), <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2), <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2), <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man2/pread.2.html">pread</A></B>(2),
+<B><A HREF="../man2/readdir.2.html">readdir</A></B>(2), <B><A HREF="../man2/readlink.2.html">readlink</A></B>(2), <B><A HREF="../man2/readv.2.html">readv</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2),
+<B><A HREF="../man3/fread.3.html">fread</A></B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

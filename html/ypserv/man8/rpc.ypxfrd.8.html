@@ -1,0 +1,119 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RPC.YPXFRD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RPC.YPXFRD</H1>
+Section: Reference Manual (8)<BR>Updated: August 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/ypserv/release/man8/rpc.ypxfrd.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rpc.ypxfrd - NIS マップ転送サーバー
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/usr/sbin/rpc.ypxfrd</B> [ <B>-d path</B> ] [ <B>-p port</B> ] [ <B>--debug</B> ]
+<BR>
+
+<B>/usr/sbin/rpc.ypxfrd</B> <B>--version</B>
+<P>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+<B>rpc.ypxfrd</B> は非常に大きな NIS マップを NIS マスターから NIS スレーブサーバーに
+転送する際に、転送を高速化するために用いられる。 NIS スレーブサーバーは、新しいマップがあるというメッセージを
+受け取ると、そのマップを取得するために <B>ypxfr</B> を起動する。 <B>ypxfr</B> は yp_all()
+関数を用いてマップの内容をマスターサーバーから 読み込もうとする。この情報はデーターベースライブラリを
+通して保存されるため、マップのサイズが非常に大きくなると、 このプロセスは数分もかかってしまうことがある。
+<P>
+
+<B>rpc.ypxfrd</B> サーバーは、 NIS スレーブサーバーにマスターのマップファイルを
+単純にコピーさせ、転送プロセスを高速化する。スレーブサーバーが ゼロからマップを生成するのに比べ、これはずっと短時間ですむ。 <B>rpc.ypxfrd</B>
+は RPC ベースの転送プロトコルを用いるので、新しいマップを 生成する必要はなくなる。
+<P>
+<B>rpc.ypxfrd</B> は inetd から起動することもできるが、起動には時間がかかるので、 <B>ypserv</B> の後に
+/etc/init.d/ypxfrd から起動するのが良い。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>--debug</B><DD>
+サーバーをデバッグモードで起動する。 デバッグモードでは、サーバーはバックグラウンドへ待避せず、 アクセス要求を受けるたびに細かなステータスメッセージを
+標準エラー出力に表示する。
+<DT><B>-d</B><I> directory</I><DD>
+/var/yp の代わりに <B>rpc.ypxfrd</B> が用いるディレクトリを指定する。
+<DT><B>-p</B><I> port</I><DD>
+<B>rpc.ypxfrd</B> がバインドするポート番号を指定する。このオプションを用いると、 ルータに NIS ポートへのパケットをフィルタリングさせ、
+インターネットからの NIS サーバーへのアクセスを制限できる。
+<DT><B>--version</B><DD>
+バージョン番号を表示する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>セキュリティ</H2>
+
+<B>rpc.ypxfrd</B> はホストのチェックに <B>ypserv</B> と同じ機能を用いる。まず <B>rpc.ypxfrd</B> は要求元のアドレスを
+<B>/var/yp/securenets</B> または tcp wrapper でチェックする。ホストのサーバーへの接続が 許されている場合には、
+<B>rpc.ypxfrd</B> は <B>/etc/ypserv.conf</B> から要求されたマップのルールをチェックする。マップの名前が
+ルールにマッチしない場合には、 <B>rpc.ypxfrd</B> はそのマップの YP_SECURE キーを調べる。キーが存在していると、
+<B>rpc.ypxfrd</B> は特権ポートからの要求だけを許可する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+/etc/ypserv.conf /var/yp/securenets
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/ypserv.8.html">ypserv</A></B>(8), <B><A HREF="../man8/makedbm.8.html">makedbm</A></B>(8), <B><A HREF="../man8/yppush.8.html">yppush</A></B>(8), <B><A HREF="../man8/ypxfr.8.html">ypxfr</A></B>(8)
+<P>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+FreeBSD の <B>ypxfrd</B> プロトコルは SunOS のものとは互換性がない。これは残念なことではあるが、 不可避なものであった。 Sun
+のプロトコルはフリーに入手できるものでは なかったし、仮に入手ができたとしても有用なものにはなりえなかったろう。 後者の理由は、 SunOS NIS
+v2 の実装がマップのデーターベースにオリジナルの ndbm パッケージを用いているのに対し、他の実装では GNU DBM や Berkeley DB
+を用いているからである。これらのパッケージはまったく異なったファイル フォーマットを用いている上、 ndbm と gdbm ではバイトオーダーンの違いを
+賢く扱うことができない。したがって big endian なシステムで生成された gdbm や ndbm のデーターベースは、 little
+endian なシステムでは読むことが できないのである。 FreeBSD の <B>ypxfrd</B>
+プロトコルは、マスターとスレーブの両方が同じデーターベースパッケージを 使っているかどうかを、また必要に応じて、両システムでのバイトオーダーが等しいか
+どうかをチェックする。
+<P>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>作者</H2>
+
+ypxfrd プロトコルと FreeBSD への実装: Bill Paul &lt;<A HREF="mailto:wpaul@ctr.columbia.edu">wpaul@ctr.columbia.edu</A>&gt;
+<BR>
+
+Linux への実装: Thorsten Kukuk &lt;<A HREF="mailto:kukuk@suse.de">kukuk@suse.de</A>&gt;
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">セキュリティ</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">作者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:51 GMT, December 05, 2022
+</BODY>
+</HTML>

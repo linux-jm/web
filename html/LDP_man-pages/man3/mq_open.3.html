@@ -1,0 +1,214 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MQ_OPEN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MQ_OPEN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/mq_open.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mq_open - メッセージキューをオープンする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>           /* For O_* constants */
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>        /* For mode constants */
+<B>#include &lt;<A HREF="file:///usr/include/mqueue.h">mqueue.h</A>&gt;</B>
+
+<B>mqd_t mq_open(const char *</B><I>name</I><B>, int </B><I>oflag</I><B>);</B>
+<B>mqd_t mq_open(const char *</B><I>name</I><B>, int </B><I>oflag</I><B>, mode_t </B><I>mode</I><B>,</B>
+<B>              struct mq_attr *</B><I>attr</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>-lrt</I> でリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>mq_open</B>()  は、新しい POSIX メッセージキューを作成するか、既存のキューを オープンする。キューは <I>name</I> で識別される。
+<I>name</I> の構成の詳細については <B>mq_overview (7)</B> を参照。
+<P>
+
+<I>oflag</I> 引数には、関数呼び出しの操作を制御するフラグを指定する (oflag の値の定義は <I>&lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</I>
+のインクルードにより得られる)。 <I>oflag</I> には、以下のうちいずれか一つを必ず指定しなければならない。
+<DL COMPACT>
+<DT><B>O_RDONLY</B><DD>
+メッセージの受信専用としてキューをオープンする。
+<DT><B>O_WRONLY</B><DD>
+メッセージの送信専用としてキューをオープンする。
+<DT><B>O_RDWR</B><DD>
+メッセージの送受信両用としてキューをオープンする。
+</DL>
+<P>
+
+0 個以上の下記のフラグを、ビット単位の OR (論理和) で <I>oflag</I> に追加で指定できる。
+<DL COMPACT>
+<DT><B>O_CLOEXEC</B> (Linux 2.6.26 以降)<DD>
+
+メッセージキュー記述子に close-on-exec フラグをセットする。 なぜこのフラグが有用かについての議論は <B><A HREF="../man2/open.2.html">open</A></B>(2) を参照。
+<DT><B>O_CREAT</B><DD>
+
+存在しない場合、メッセージキューを作成する。 メッセージキューの所有者 (ユーザー ID) とグループ所有権 (グループ ID) は、
+それぞれ呼び出し元プロセスの実効ユーザー ID と実効グループ ID に設定される。
+<DT><B>O_EXCL</B><DD>
+<B>O_CREAT</B> が <I>oflag</I> に指定され、かつ指定された名前 <I>name</I> を持つキューがすでに存在する場合、エラー <B>EEXIST</B>
+で失敗する。
+<DT><B>O_NONBLOCK</B><DD>
+非停止 (nonblocking) モードでキューをオープンする。 <B><A HREF="../man3/mq_receive.3.html">mq_receive</A></B>(3)  と <B><A HREF="../man3/mq_send.3.html">mq_send</A></B>(3)  は、通常は停止
+(block) する状況において、エラー <B>EAGAIN</B> で失敗するようになる。
+</DL>
+<P>
+
+<I>oflag</I> に <B>O_CREAT</B> を指定する場合、追加で 2つの引数を与える必要がある。 <I>mode</I>
+引数は、新しいキューに適用される許可設定 (permission) を、 <B><A HREF="../man2/open.2.html">open</A></B>(2)  と同じように指定する (許可ビットのシンボル定義は
+<I>&lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</I> のインクルードにより得られる)。 許可設定はプロセスの umask でマスクされる。
+<P>
+
+The fields of the <I>struct mq_attr</I> pointed to <I>attr</I> specify the maximum
+number of messages and the maximum size of messages that the queue will
+allow.  This structure is defined as follows:
+<P>
+
+
+
+struct mq_attr {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;mq_flags;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;フラグ&nbsp;(mq_open()&nbsp;では無視される)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;mq_maxmsg;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;キューの最大メッセージ数&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;mq_msgsize;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;最大メッセージサイズ&nbsp;(バイト単位)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;mq_curmsgs;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;キューに現在入っているメッセージ数
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(mq_open()&nbsp;では無視される)&nbsp;*/
+};
+
+
+<P>
+
+Only the <I>mq_maxmsg</I> and <I>mq_msgsize</I> fields are employed when calling
+<B>mq_open</B>(); the values in the remaining fields are ignored.
+<P>
+
+<I>attr</I> が NULL の場合、キューは実装で定義されたデフォルト属性で作成される。 Linux 3.5 以降では、2 つの <I>/proc</I>
+ファイルがあり、これらのデフォルト値を制御できる。 詳細は <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7) を参照。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>mq_open</B>()  はメッセージキュー記述子 (message queue descriptor) を返す。
+メッセージキュー記述子は他のメッセージキュー関連の関数で使用される。 エラーの場合、 <B>mq_open</B>()  は <I>(mqd_t)&nbsp;-1</I>
+を返し、 <I>errno</I> にエラーを示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+キューは存在するが、呼び出し元が指定されたモードでそのキュー をオープンする許可を持たない。
+<DT><B>EACCES</B><DD>
+
+<I>name</I> にスラッシュが 2 個以上含まれていた。
+<DT><B>EEXIST</B><DD>
+<I>oflag</I> に <B>O_CREAT</B> と <B>O_EXCL</B> の両方が指定されたが、指定された名前 <I>name</I> を持つキューがすでに存在する。
+<DT><B>EINVAL</B><DD>
+
+
+<I>name</I> doesn't follow the format in <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7).
+<DT><B>EINVAL</B><DD>
+<I>oflag</I> に <B>O_CREAT</B> が指定され、かつ <I>attr</I> が NULL 以外だが、 <I>attr-&gt;mq_maxmsg</I> か
+<I>attr-&gt;mq_msqsize</I> が不正であった。 これらのフィールドは両方とも 0 より大きくなければならない。
+プロセスが特権を持たない (<B>CAP_SYS_RESOURCE</B> ケーパビリティを持たない) 場合、 <I>attr-&gt;mq_maxmsg</I> と
+<I>attr-&gt;mq_msgsize</I> は、それぞれ上限 <I>msg_max</I>、 <I>msgsize_max</I> 以下でなければならない。
+また、特権プロセスの場合でも、 <I>attr-&gt;mq_maxmsg</I> は <B>HARD_MAX</B> 上限を超えることはできない。
+(これらの上限に関する詳細は <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7)  を参照。)
+<DT><B>EMFILE</B><DD>
+The per-process limit on the number of open file and message queue
+descriptors has been reached (see the description of <B>RLIMIT_NOFILE</B> in
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)).
+<DT><B>ENAMETOOLONG</B><DD>
+<I>name</I> が長過ぎる。
+<DT><B>ENFILE</B><DD>
+システム全体でオープンしているファイルとメッセージキューの合計数がシステム全体の上限に達している。
+<DT><B>ENOENT</B><DD>
+<B>O_CREAT</B> フラグが <I>oflag</I> に指定されなかったが、指定された名前 <I>name</I> を持つキューが存在しない。
+<DT><B>ENOENT</B><DD>
+
+<I>name</I> が &quot;/&quot; だけで、その後ろに他の文字が続いていなかった。
+<DT><B>ENOMEM</B><DD>
+十分なメモリーがない。
+<DT><B>ENOSPC</B><DD>
+新しいメッセージキューを作成するのに十分な空間がない。 このエラーはおそらく <I>queues_max</I> 上限に抵触したため起こったのだろう。
+<B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7)  を参照。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>mq_open</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+The <B>mq_open</B>()  library function is implemented on top of a system call of
+the same name.  The library function performs the check that the <I>name</I>
+starts with a slash (/), giving the <B>EINVAL</B> error if it does not.  The
+kernel system call expects <I>name</I> to contain no preceding slash, so the C
+library function passes <I>name</I> without the preceding slash (i.e.,
+<I>name+1</I>)  to the system call.
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+2.6.14 より前のカーネルには、 プロセスの umask が <I>mode</I> で指定された許可設定に適用されなかった。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/mq_close.3.html">mq_close</A></B>(3), <B><A HREF="../man3/mq_getattr.3.html">mq_getattr</A></B>(3), <B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3), <B><A HREF="../man3/mq_receive.3.html">mq_receive</A></B>(3),
+<B><A HREF="../man3/mq_send.3.html">mq_send</A></B>(3), <B><A HREF="../man3/mq_unlink.3.html">mq_unlink</A></B>(3), <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

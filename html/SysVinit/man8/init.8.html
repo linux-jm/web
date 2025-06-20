@@ -1,0 +1,459 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of INIT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>INIT</H1>
+Section: Linux System Administrator's Manual (8)<BR>Updated: 23 August 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/SysVinit/release/man8/init.8">roff page</A><HR>
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+init, telinit - プロセス制御の初期化
+
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/sbin/init</B>
+
+[<B> -a </B>]
+
+[<B> -s </B>]
+
+[<B> -b </B>]
+
+[<B> -z xxx </B>]
+
+[<B> 0123456Ss </B>]
+
+<BR>
+
+<B>/sbin/telinit</B>
+
+[<B> -t sec </B>]
+
+[<B> 0123456sSQqabcUu </B>]
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+<B>init</B>
+
+は全てのプロセスの親である。
+その主な役割は、<B>/etc/inittab</B> (<I><A HREF="../man5/inittab.5.html">inittab</A></I>(5) 参照)
+ファイルに書かれたスクリプトに従ってプロセスを作り出すことにある。
+通常このファイルには、ユーザがログイン可能な各接続ラインごとに
+<B>getty</B> を生成させるためのエントリが記されている。
+また、特定のシステムが必要とする、自律的なプロセスの制御も行う。
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>ランレベル</H2>
+
+<I>ランレベル</I> とはシステムのソフトウェア的な設定で、
+指定したプロセス群のみを存在させるようにするものである。
+それぞれのランレベルで <B>init</B> が作り出すプロセスは
+<B>/etc/inittab</B> ファイルで定められている。
+<B>init</B> は <B>0-6</B>, <B>S</B>, <B>s</B> という
+8 つのランレベルのうちの一つを取ることができる。
+ランレベルは特権ユーザが <B>telinit</B> を実行することによって変更される。
+<B>telinit</B> は <B>init</B> に適切なシグナルを送り、
+どのランレベルに変更すべきかを指示する。
+<P>
+
+ランレベル <B>0</B>, <B>1</B>, <B>6</B> は予約されている。
+ランレベル 0 はシステムを停止するために、
+ランレベル 6 はシステムをリブートするために、
+ランレベル 1 はシステムをシングルユーザモードにするために用いられる。
+ランレベル <B>S</B> は直接用いるためのものではなく、
+ランレベル <B>1</B> になった時に実行されるスクリプトのために存在する。
+この詳細は <B><A HREF="../man8/shutdown.8.html">shutdown</A></B>(8) および <B><A HREF="../man5/inittab.5.html">inittab</A></B>(5)
+各 man ページを参照のこと。
+<P>
+
+文書には書かれてはいないが、ランレベル 7-9 も使用できる。
+文書に書かれていないのは、「伝統的な」
+Unix の派生種はランレベル 7-9 を使用していないからである。
+参考のために言っておくと、実はランレベル <I>S</I> と <I>s</I> も同様である。
+内部的には、この 2 つは同一のランレベルのエイリアスになっている。
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>ブート</H2>
+
+カーネルブートの最後のステップとして <B>init</B> が起動されると、
+<B>init</B> は <B>/etc/inittab</B> ファイルを検索し、
+<B>initdefault</B> というエントリが存在するか調べる
+(<I><A HREF="../man5/inittab.5.html">inittab</A></I>(5) 参照)。
+<B>initdefault</B> はシステムが最初に取るべきランレベルを定義する。
+<B>/etc/inittab</B> ファイル中にそのようなエントリがない場合、
+あるいは <B>/etc/inittab</B> ファイル自体が存在しない場合は、
+システムコンソールからランレベルを入力しなければならない。
+<P>
+
+ランレベルを <B>S</B> または <B>s</B> にすると、
+システムはシングルユーザモードに入る。
+この場合は <B>/etc/inittab</B> ファイルを必要としない。
+シングルユーザモードでは、<B>/dev/console</B> で
+<B>/sbin/sulogin</B> が起動される。
+<P>
+
+シングルユーザモードに入るとき、
+<B>init</B> は <B>/etc/ioctl.save</B> からコンソールの
+<I><A HREF="../../LDP_man-pages/man2/ioctl.2.html">ioctl</A></I>(2) の状態を読み込む。
+このファイルが存在しない場合は、<B>init</B>
+はコンソールの接続ラインを
+<B>9600 baud</B> で <B>CLOCAL</B> という設定
+(訳注: ローカルに直接接続されている状態) に初期化する。
+シングルユーザモードを抜ける際には、
+次回のシングルユーザモードセッションでも同じ設定を利用できるよう、
+コンソールの <I>ioctl</I> の状態を
+<B>/etc/ioctl.save</B> ファイルに保存する。
+<P>
+
+初めてマルチユーザモードに入るとき、
+<B>init</B> は
+<B>boot</B> エントリと <B>bootwait</B> エントリを実行し、
+ユーザがログイン可能となる前にファイルシステムをマウントできるようにする。
+そして、ランレベルにマッチする全てのエントリを処理する。
+<P>
+
+新たなプロセスを起動するとき、
+<B>init</B> はまず <I>/etc/initscript</I> ファイルが存在するかを調べ、
+存在する場合はそのスクリプトを用いてプロセスを起動する。
+<P>
+
+子プロセスが終了するごとに、
+<B>init</B> はその旨と終了した理由とを、
+<B>/var/run/utmp</B> と <B>/var/log/wtmp</B> とに記録する
+(ただしこれらのファイルが存在する場合)。
+<A NAME="lbAG">&nbsp;</A>
+<H2>ランレベルの変更</H2>
+
+指示された全てのプロセスを生成すると、<B>init</B> は
+子孫のプロセスが死ぬか、powerfail シグナルが発せられるか、
+<B>telinit</B> からランレベルを変更せよとのシグナルが送られるまで待機する。
+この 3 つのいずれかが起きた場合は、
+<B>init</B> は <B>/etc/inittab</B> ファイルを再度調べる。
+このファイルには、いつでも新たなエントリを追加できる。
+しかし、上の 3 条件のどれかが起きるまでは、
+<B>init</B> は待機状態を続ける。
+新たなエントリを即座に反映させるには、
+<B>telinit Q</B> または <B>q</B> コマンドを用いて
+<B>init</B> を目覚めさせ、
+<B>/etc/inittab</B> ファイルを再度調べさせればよい。
+<P>
+
+シングルユーザモードにない時に <B>init</B> が powerfail シグナル (SIGPWR)
+を受け取ると、<B>init</B> は <B>/etc/powerstatus</B> ファイルを読み込む。
+そしてこのファイルの内容に基づいてコマンドを実行する。
+<DL COMPACT>
+<DT>F(AIL)<DD>
+電源供給が途絶え、UPS が電源を供給している。
+<B>powerwait</B> エントリと <B>powerfail</B> エントリを実行する。
+<DT>O(K)<DD>
+電源供給が回復している。<B>powerokwait</B> エントリを実行する。
+<DT>L(OW)<DD>
+電源供給が途絶え、UPS のバッテリー容量が少なくなっている。
+<B>powerfailnow</B> エントリを実行する。
+</DL>
+<P>
+
+/etc/powerstatus が存在しないか、その内容が
+<B>F</B>, <B>O</B>, <B>L</B> のいずれでもない場合、
+init は <B>F</B> を読み込んだものとして動作する。
+<P>
+
+<B>SIGPWR</B> と <B>/etc/powerstatus</B> の利用は推奨されない。
+<B>init</B> と通信したい場合は、
+制御チャネル <B>/dev/initctl</B> を使うべきである。
+これに関する詳しい記述は、
+<B>sysvinit</B> パッケージのソースコードを参照すること。
+<P>
+
+<B>init</B> は、ランレベルを変更するよう要請を受けると、
+まず新たなランレベルでは定義されていない全てのプロセスに対して
+警告シグナル <FONT SIZE="-1"><B>SIGTERM</B></FONT> を送る。
+その後 5 秒間待機してから
+<FONT SIZE="-1"><B>SIGKILL</B></FONT> シグナルを送り、それらのプロセスを強制的に終了させる。
+<B>init</B> は、
+これら全てのプロセス (およびそれらの子孫) の属するプロセスグループが、
+もともと <B>init</B> が彼らのために生成したものと同じであると仮定している。
+あるプロセスが自分のプロセスグループ属性を変えてしまった場合は、
+上記のシグナルを受け取らない。
+したがって、そのようなプロセスは別の方法で終了させる必要がある。
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>telinit</H2>
+
+<B>/sbin/telinit</B> は <B>/sbin/init</B> にリンクされている。
+<B>/sbin/telinit</B> は一文字の引数を受け取り、
+<B>init</B> にシグナルを送って適切な動作を行なわせる。
+<B>telinit</B> への指示には、
+以下に示すような引数が利用できる。
+<DL COMPACT>
+<DT><B>0</B>,<B>1</B>,<B>2</B>,<B>3</B>,<B>4</B>,<B>5</B>,<B>6</B><DD>
+指定されたランレベルに変更するよう <B>init</B> に伝える。
+<DT><B>a</B>,<B>b</B>,<B>c</B><DD>
+<B>/etc/inittab</B> 中で、ランレベル <B>a</B>, <B>b</B>, <B>c</B>
+のいずれかを含むエントリだけを実行するよう <B>init</B> に伝える。
+<DT><B>Q</B> または <B>q</B><DD>
+<B>/etc/inittab</B> ファイルを調べ直すよう <B>init</B> に伝える。
+<DT><B>S</B> または <B>s</B><DD>
+シングルユーザモードに切り替えるよう <B>init</B> に伝える。
+<DT><B>U</B> または <B>u</B><DD>
+(状態はそのままで) 自分自身を再実行するよう <B>init</B> に伝える。
+<B>/etc/inittab</B> は調べ直さない。
+ランレベルは <B>Ss12345</B> のいずれかでなければならない。
+それ以外の場合は、この要求は黙って無視される。
+</DL>
+<P>
+
+<B>init</B> がプロセスに TERM シグナルを送ってから
+KILL シグナルを送るまでの時間を、<B>telinit</B> から指示することもできる。
+デフォルトでは 5 秒に設定されているが、<B>-t sec</B> オプションで変更できる。
+<P>
+
+<B>telinit</B> は適切な特権を持ったユーザのみが実行できる。
+<P>
+
+<B>init</B> のバイナリは、自分の <I>プロセスID</I> を見て、
+自分が <B>init</B> なのか <B>telinit</B> なのかを判断する。
+本物の <B>init</B> のプロセス ID は常に <B>1</B> である。
+よって、<B>telinit</B> を起動するかわりに <B>init</B> を起動しても構わない。
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>環境変数</H2>
+
+<B>init</B> は子プロセスに以下のような環境変数を設定する:
+<DL COMPACT>
+<DT><B>PATH</B><DD>
+<I>/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin</I>
+<DT><B>INIT_VERSION</B><DD>
+名前の通り。
+あるスクリプトが <B>init</B>
+により直接実行されたのかどうかを見分けるのに便利。
+<DT><B>RUNLEVEL</B><DD>
+システムの現在のランレベル。
+<DT><B>PREVLEVEL</B><DD>
+直前のランレベル (ランレベルを変更した場合に便利)。
+<DT><B>CONSOLE</B><DD>
+システムコンソール。これは実際はカーネルから継承したものである。
+しかしこれが設定されていなかった場合は、
+<B>init</B> はデフォルトで <B>/dev/console</B> を設定する。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>ブートフラグ</H2>
+
+ブートモニタ (例えば LILO) から <B>init</B>
+に様々なフラグを渡すことが可能である。
+<B>init</B> は以下のようなフラグを受け付ける:
+<DL COMPACT>
+<DT><B>-s, S, single</B>
+
+<DD>
+シングルユーザモードでブートする。
+このモードでは <I>/etc/inittab</I> を参照する。
+またシングルユーザモードのシェルが起動される前に 
+ブートアップ rc スクリプトが実行される。
+<DT><B>1-5</B>
+
+<DD>
+ブート時に入るべきランレベル。
+<DT><B>-b, emergency</B>
+
+<DD>
+他の起動用スクリプトは実行せず、
+直接シングルユーザシェルへとブートする。
+<DT><B>-a, auto</B>
+
+<DD>
+LILO ブートローダは、
+デフォルトのコマンドラインで (ユーザの介入なしに)
+カーネルを起動すると、
+コマンドラインに単語 &quot;auto&quot; を追加する。
+<B>init</B> はこの単語を見つけると、&quot;AUTOBOOT&quot; 環境変数を &quot;yes&quot; に設定する。
+ただしこの機能をセキュリティの判断には使えない。
+あたりまえだが、
+ユーザーは &quot;auto&quot; や -a を手動でコマンドラインに追加することもできる。
+<DT><B>-z xxx</B>
+
+<DD>
+-z の引数は無視される。
+これを使うとコマンドラインが少し長くなるので、
+そのためにスタックを若干余分に使用するようになる。
+すると <B>init</B> にコマンドラインを操作し、
+<B><A HREF="../../procps/man1/ps.1.html">ps</A></B>(1) に現在のランレベルを表示させるようにできる。
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>インターフェース</H2>
+
+init はメッセージのやりとりのために、
+/dev にある FIFO である <I>/dev/initctl</I> を listen している。
+<B>telinit</B> はこれを用いて init と通信する。
+このインターフェースは十分に文書化されていない。
+興味を持った人は、<B>init</B> のソース tar アーカイブの
+<I>src/</I> サブディレクトリにある
+<I>initreq.h</I> を調べてほしい。
+<A NAME="lbAL">&nbsp;</A>
+<H2>シグナル</H2>
+
+init はいくつかのシグナルに反応する。
+<DL COMPACT>
+<DT><B>SIGHUP</B>
+
+<DD>
+init は
+<I>/etc/initrunlvl </I>
+
+と
+<I>/var/log/initrunlvl</I>
+
+を探す。
+もしこれらのどちらかのファイルがあり、
+ランレベルが ASCII コードで書かれていたら、
+init はそのランレベルに切り替わる。
+<I>これは過去との互換性のためだけに存在する!</I>
+通常の場合 (これらのファイルがない場合)、
+init は <B>telinit q</B> が実行されたときと同じ動作をする。
+<DT><B>SIGUSR1</B>
+
+<DD>
+このシグナルを受け取ると、init は制御用 FIFO である
+<B>/dev/initctl</B> を一旦クローズして再オープンする。
+ブートスクリプトが /dev を再マウントした時に便利である。
+<DT><B>SIGINT</B>
+
+<DD>
+通常、カーネルは CTRL-ALT-DEL が押されるとこのシグナルを init に送る。
+これにより <I>ctrlaltdel</I> アクションが実行される。
+<DT><B>SIGWINCH</B>
+
+<DD>
+カーネルは <I>KeyboardSignal</I> キーが押されるとこのシグナルを送る。
+これにより <I>kbrequest</I> アクションが実行される。
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>init</B> は System V の init と互換である。
+<B>init</B> は
+<I>/etc/init.d</I> ディレクトリや <I>/etc/rc{runlevel}.d</I>
+ディレクトリのスクリプトと密接に連係しながら動作する。
+あなたのシステムがこの規則に従っているなら、
+<I>/etc/init.d</I> ディレクトリに <I>README</I> があり、
+スクリプトがどのように動作するかが説明されているはずである。
+
+
+<A NAME="lbAN">&nbsp;</A>
+<H2>ファイル</H2>
+
+<PRE>
+/etc/inittab
+/etc/initscript
+/dev/console
+/etc/ioctl.save
+/var/run/utmp
+/var/log/wtmp
+/dev/initctl
+</PRE>
+
+
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>警告</H2>
+
+<B>init</B> は、
+生成したプロセスとその子孫とが、
+それらのために作ったプロセスグループに留まっていると仮定している。
+プロセスグループが元々のものと変わっている場合は、
+<B>init</B> はそのプロセスを kill できないので、
+異なる二つのプロセスが同一の端末ラインから入力を読み込む、
+といった現象が起きてしまう可能性がある。
+
+
+<A NAME="lbAP">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>init</B> は、あるエントリが 2 分間に
+10 回以上繰り返して再生成されるのを発見すると、
+コマンド文字列に誤りがあるとみなし、
+システムコンソールにエラーメッセージを表示し、
+5 分以上経過するかシグナルを受け取るまで、
+それ以上そのエントリの再生成を拒否する。
+こうすることによって、<B>/etc/inittab</B> 中に書き間違いがあったり、
+そのエントリで使用するプログラムが削除されている場合に、
+システム資源を使い尽くしてしまうことを防いでいる。
+
+
+<A NAME="lbAQ">&nbsp;</A>
+<H2>著者</H2>
+
+Miquel van Smoorenburg (<A HREF="mailto:miquels@cistron.nl">miquels@cistron.nl</A>)。
+もとの man ページは
+Michael Haardt (<A HREF="mailto:u31b3hs@pool.informatik.rwth-aachen.de">u31b3hs@pool.informatik.rwth-aachen.de</A>) による。
+
+
+<A NAME="lbAR">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>getty</B>(1),
+
+<B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1),
+
+<B>sh</B>(1),
+
+<B><A HREF="../man8/runlevel.8.html">runlevel</A></B>(8),
+
+<B><A HREF="../man8/shutdown.8.html">shutdown</A>(8),</B>
+
+<B><A HREF="../../0MultiFileIdx/man1/kill.1.html">kill</A></B>(1),
+
+<B><A HREF="../man5/inittab.5.html">inittab</A></B>(5),
+
+<B><A HREF="../man5/initscript.5.html">initscript</A></B>(5),
+
+<B><A HREF="../../LDP_man-pages/man5/utmp.5.html">utmp</A></B>(5)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">ランレベル</A><DD>
+<DT><A HREF="#lbAF">ブート</A><DD>
+<DT><A HREF="#lbAG">ランレベルの変更</A><DD>
+<DT><A HREF="#lbAH">telinit</A><DD>
+<DT><A HREF="#lbAI">環境変数</A><DD>
+<DT><A HREF="#lbAJ">ブートフラグ</A><DD>
+<DT><A HREF="#lbAK">インターフェース</A><DD>
+<DT><A HREF="#lbAL">シグナル</A><DD>
+<DT><A HREF="#lbAM">準拠</A><DD>
+<DT><A HREF="#lbAN">ファイル</A><DD>
+<DT><A HREF="#lbAO">警告</A><DD>
+<DT><A HREF="#lbAP">返り値</A><DD>
+<DT><A HREF="#lbAQ">著者</A><DD>
+<DT><A HREF="#lbAR">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

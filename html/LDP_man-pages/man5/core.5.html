@@ -1,0 +1,540 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CORE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>CORE</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated:  2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man5/core.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+core - コアダンプファイル
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+ある種のシグナルを受けた場合のデフォルトのアクションは、 プロセスを終了し (terminate)、 <I>コアダンプファイル (core dump
+file)</I> を生成することである。コアダンプファイルは、ディスク上に生成される 終了時のプロセスのメモリーイメージを内容とするファイルである。
+このイメージをデバッガ (例えば <B><A HREF="../../GNU_gdb/man1/gdb.1.html">gdb</A></B>(1))  に読み込んで、 プログラムが終了した時点のプログラムの状態を検査することができる。
+どのシグナルを受けたときにプロセスがコアダンプを生成するかのリストは <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  に書かれている。
+<P>
+
+プロセスはソフトリソース制限 <B>RLIMIT_CORE</B> を設定することで、「コアダンプ」シグナルを受信した際に生成される
+コアダンプファイルのサイズに上限を課すことができる。詳細は <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)  を参照。
+<P>
+
+コアダンプファイルが生成されない状況がいくつかある:
+<DL COMPACT>
+<DT>*<DD>
+プロセスがコアファイルを書き込む許可を持たない場合 (デフォルトでは、コアファイルは <I>core</I> か <I>core.pid</I> (<I>pid</I>
+はコアダンプを行うプロセスの ID) という名前で、カレントワーキングディレクトリに生成される。 命名規則の詳細は下記を参照)。
+コアファイルを生成しようとしたディレクトリが書き込み可能でない場合、 もしくは同じ名前のファイルが存在し、そのファイルが書き込み可能でも
+通常のファイルでもない場合 (例えば、ディレクトリやシンボリックリンク)、 コアファイルの生成は失敗する。
+<DT>*<DD>
+コアダンプに使おうとしたのと同じ名前の (書き込み可能な、通常の) ファイルが すでに存在し、そのファイルに対するハードリンクが 2個以上ある場合。
+<DT>*<DD>
+コアダンプファイルを生成しようとしたファイルシステムがフルであるか、 inode が全て使用されているか、読み込み専用でマウントされている場合。
+または、そのユーザーのディスク使用量がそのファイルシステムの クオータ (quota) に達している。
+<DT>*<DD>
+コアダンプファイルを生成しようとしたディレクトリが存在しない場合。
+<DT>*<DD>
+プロセス毎のリソース制限 <B>RLIMIT_CORE</B> (コアファイルのサイズ) か <B>RLIMIT_FSIZE</B> (ファイルサイズ) が 0
+に設定されている場合。 <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)  やシェルの <I>ulimit</I> コマンドのドキュメント (<B>csh</B>(1)  の
+<I>limit</I>)  を参照。
+<DT>*<DD>
+The binary being executed by the process does not have read permission
+enabled.  (This is a security measure to ensure that an executable whose
+contents are not readable does not produce a---possibly readable---core
+dump containing an image of the executable.)
+<DT>*<DD>
+
+
+The process is executing a set-user-ID (set-group-ID) program that is owned
+by a user (group) other than the real user (group)  ID of the process, or
+the process is executing a program that has file capabilities (see
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)).  (However, see the description of the <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+<B>PR_SET_DUMPABLE</B> operation, and the description of the
+<I>/proc/sys/fs/suid_dumpable</I> file in <B><A HREF="../man5/proc.5.html">proc</A></B>(5).)
+<DT>*<DD>
+<I>/proc/sys/kernel/core_pattern</I> is empty and
+<I>/proc/sys/kernel/core_uses_pid</I> contains the value 0.  (These files are
+described below.)  Note that if <I>/proc/sys/kernel/core_pattern</I> is empty
+and <I>/proc/sys/kernel/core_uses_pid</I> contains the value 1, core dump files
+will have names of the form <I>.pid</I>, and such files are hidden unless one
+uses the <B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1)  <I>-a</I> option.
+<DT>*<DD>
+
+(Linux 3.7 以降) カーネルの設定で <B>CONFIG_COREDUMP</B> オプションが有効になっていない。
+</DL>
+<P>
+
+上記に加えて、 <B><A HREF="../man2/madvise.2.html">madvise</A></B>(2) の <B>MADV_DONTDUMP</B>
+フラグが使用されている場合、プロセスのアドレス空間の一部がコアダンプから除外される場合がある。
+<P>
+
+
+On systems that employ <B>systemd</B>(1)  as the <I>init</I> framework, core dumps
+may instead be placed in a location determined by <B>systemd</B>(1).  See below
+for further details.
+<A NAME="lbAD">&nbsp;</A>
+<H3>コアダンプファイルの名前</H3>
+
+デフォルトでは、コアダンプファイルの名前は <I>core</I> となるが、コアダンプファイルの名前を決めるのに使われるテンプレートを
+<I>/proc/sys/kernel/core_pattern</I> ファイルに定義することで、ファイル名を変更することができる
+(<I>/proc/sys/kernel/core_pattern</I> は Linux 2.6 および 2.4.21 以降で利用できる)。 テンプレートには
+% 指示子 (specifier) を入れることができる。 これはコアファイルが生成される際に、以下の値に置き換えられる。
+<P>
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>%%<DD>
+1 つの % 文字。
+<DT>%c<DD>
+クラッシュしたプロセスのコアファイルのサイズに関するソフトリソース上限 (Linux 2.6.24 以降)。
+<DT>%d<DD>
+
+ダンプモード --- <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2) <B>PR_GET_DUMPABLE</B> が返す値と同じ (Linux 3.7 以降)。
+<DT>%e<DD>
+The process or thread's <I>comm</I> value, which typically is the same as the
+executable filename (without path prefix, and truncated to a maximum of 15
+characters), but may have been modified to be something different; see the
+discussion of <I>/proc/[pid]/comm</I> and <I>/proc/[pid]/task/[tid]/comm</I> in
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5).
+<DT>%E<DD>
+実行ファイルのパス名。スラッシュ ('/') は感嘆符 ('!') に置き換えられる。 (Linux 3.0 以降)
+<DT>%g<DD>
+ダンプされたプロセスの実グループ ID (real GID) の数値。
+<DT>%h<DD>
+ホスト名 (<B><A HREF="../man2/uname.2.html">uname</A></B>(2) で返される <I>nodename</I> と同じ)。
+<DT>%i<DD>
+
+コアダンプのきっかけとなったスレッドの TID; そのスレッドが属している PID 名前空間での TID (Linux 3.18 以降)。
+<DT>%I<DD>
+
+コアダンプのきっかけとなったスレッドの TID; そのスレッドの初期 PID 名前空間での TID (Linux 3.18 以降)。
+<DT>%p<DD>
+ダンプされるプロセスの PID; そのプロセスが属している PID 名前空間での PID。
+<DT>%P<DD>
+
+ダンプされるプロセスの PID; 初期 PID 名前空間での PID (Linux 3.12 以降)。
+<DT>%s<DD>
+ダンプを引き起こしたシグナルの番号。
+<DT>%t<DD>
+ダンプ時刻、紀元 (Epoch; 1970-01-01 00:00:00 +0000 (UTC))  からの秒数。
+<DT>%u<DD>
+ダンプされたプロセスの実ユーザー ID (real UID) の数値。
+
+</DL>
+</DL>
+
+<P>
+
+テンプレートの末尾に 1 個だけ % がある場合、 その % はコアファイル名には含められない。また、上で列挙されて いない %
+と文字の組み合わせがあった場合も同様である。 テンプレートにおける他の文字は、 コアファイル名としてそのまま使われる。 テンプレートには
+'/' 文字を入れることができ、 ディレクトリ名の区切り文字と解釈される。 結果として生成されるコアファイル名の最大サイズは 128
+バイトである (2.6.19 より前のカーネルでは 64 バイト)。 このファイルのデフォルト値は &quot;core&quot; である。 以前のものとの互換性のため、
+<I>/proc/sys/kernel/core_pattern</I> に <I>%p</I> が含まれず、 かつ
+<I>/proc/sys/kernel/core_uses_pid</I> (下記参照) が 0 でない場合は、.PID がコアファイル名に追加される。
+<P>
+
+Paths are interpreted according to the settings that are active for the
+crashing process.  That means the crashing process's mount namespace (see
+<B>mount_namespaces</B>(7)), its current working directory (found via
+<B><A HREF="../man2/getcwd.2.html">getcwd</A></B>(2)), and its root directory (see <B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)).
+<P>
+
+バージョン 2.4 以降の Linux では コアダンプファイルの名前を制御する原始的な方法も提供されている。
+<I>/proc/sys/kernel/core_uses_pid</I> ファイルに値 0 が書かれている場合、コアダンプファイルは単純に <I>core</I>
+という名前になる。このファイルに 0 以外の値が書かれている場合、 コアダンプファイルは <I>core.PID</I>
+という形式の名前になり、ファイル名にプロセス ID が含まれる。
+<P>
+
+
+Linux 3.6 以降では、<I>/proc/sys/fs/suid_dumpable</I> が 2 (&quot;suidsafe&quot;)
+に設定されている場合、テンプレートは、絶対パス名 (先頭に '/' 文字があるパス名) かパイプ (以下で説明)
+のどちらかでなければならない。
+<A NAME="lbAE">&nbsp;</A>
+<H3>コアダンプのプログラムへのパイプ</H3>
+
+カーネル 2.6.19 以降では、Linux は <I>/proc/sys/kernel/core_pattern</I>
+ファイルの別の構文をサポートしている。 このファイルの最初の文字がパイプ記号 (<B>|</B>) であれば、
+その行の残りの部分は実行されるユーザー空間プログラムのコマンドラインとして解釈される。
+<P>
+
+
+Since kernel 5.3.0, the pipe template is split on spaces into an argument
+list <I>before</I> the template parameters are expanded.  In earlier kernels,
+the template parameters are expanded first and the resulting string is split
+on spaces into an argument list.  This means that in earlier kernels
+executable names added by the <I>%e</I> and <I>%E</I> template parameters could get
+split into multiple arguments.  So the core dump handler needs to put the
+executable names as the last argument and ensure it joins all parts of the
+executable name using spaces.  Executable names with multiple spaces in them
+are not correctly represented in earlier kernels, meaning that the core dump
+handler needs to use mechanisms to find the executable name.
+<P>
+
+コアダンプは、ファイルに書き込まれるのではなく、 プログラムの標準入力として渡される。 以下の点に注意すること。
+<DL COMPACT>
+<DT>*<DD>
+プログラムは絶対パス名 (もしくはルートディレクトリ <I>/</I> からの 相対パス名) で指定されなければならない。 また、'|'
+文字の直後から始めなければならない。
+<DT>*<DD>
+コマンドライン引数には、上記のリストにある % 指示子を含めることができる。 例えば、ダンプされるプロセスの PID を渡すには、 引数に <I>%p</I>
+を指定する。
+<DT>*<DD>
+プログラムを実行するために生成されるプロセスは、 ユーザー、グループとも <I>root</I> として実行される。
+<DT>*<DD>
+Running as <I>root</I> does not confer any exceptional security bypasses.
+Namely, LSMs (e.g., SELinux) are still active and may prevent the handler
+from accessing details about the crashed process via <I>/proc/[pid]</I>.
+<DT>*<DD>
+The program pathname is interpreted with respect to the initial mount
+namespace as it is always executed there.  It is not affected by the
+settings (e.g., root directory, mount namespace, current working directory)
+of the crashing process.
+<DT>*<DD>
+The process runs in the initial namespaces (PID, mount, user, and so on)
+and not in the namespaces of the crashing process.  One can utilize
+specifiers such as <I>%P</I> to find the right <I>/proc/[pid]</I> directory and
+probe/enter the crashing process's namespaces if needed.
+<DT>*<DD>
+The process starts with its current working directory as the root
+directory.  If desired, it is possible change to the working directory of
+the dumping process by employing the value provided by the <I>%P</I> specifier
+to change to the location of the dumping process via <I>/proc/[pid]/cwd</I>.
+<DT>*<DD>
+コマンドライン引数をプログラムに与えることができ (Linux 2.6.24 以降)、 引数はホワイトスペースで区切る (1行の最大長は 128
+バイトが上限である)。
+<DT>*<DD>
+
+The <B>RLIMIT_CORE</B> limit is not enforced for core dumps that are piped to a
+program via this mechanism.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3> /proc/sys/kernel/core_pipe_limit</H3>
+
+When collecting core dumps via a pipe to a user-space program, it can be
+useful for the collecting program to gather data about the crashing process
+from that process's <I>/proc/[pid]</I> directory.  In order to do this safely,
+the kernel must wait for the program collecting the core dump to exit, so as
+not to remove the crashing process's <I>/proc/[pid]</I> files prematurely.  This
+in turn creates the possibility that a misbehaving collecting program can
+block the reaping of a crashed process by simply never exiting.
+<P>
+
+
+Since Linux 2.6.32, the <I>/proc/sys/kernel/core_pipe_limit</I> can be used to
+defend against this possibility.  The value in this file defines how many
+concurrent crashing processes may be piped to user-space programs in
+parallel.  If this value is exceeded, then those crashing processes above
+this value are noted in the kernel log and their core dumps are skipped.
+<P>
+
+
+A value of 0 in this file is special.  It indicates that unlimited processes
+may be captured in parallel, but that no waiting will take place (i.e., the
+collecting program is not guaranteed access to
+<I>/proc/&lt;crashing-PID&gt;</I>).  The default value for this file is 0.
+<A NAME="lbAG">&nbsp;</A>
+<H3>どのマッピングをコアダンプに書き込むかを制御する</H3>
+
+カーネル 2.6.23 以降では、Linux 固有のファイル <I>/proc/[pid]/coredump_filter</I> を使って、対応するプロセス
+ID を持つプロセスに対してコアダンプが行われる 際に、どのメモリーセグメントをコアダンプファイルに書き込むかを制御できる。
+<P>
+
+このファイルの値はメモリーマッピング種別 (<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  参照) のビットマスクである。
+マスク内のあるビットがセットされると、そのビットに対応する種別の メモリーマッピングがダンプされる。セットされていないものはダンプされない。
+このファイルの各ビットは以下の意味を持つ。
+<P>
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>bit 0<DD>
+無名のプライベートマッピング (anonymous private mappings) をダンプする。
+<DT>bit 1<DD>
+無名の共有マッピング (anonymous shared mappings) をダンプする。
+<DT>bit 2<DD>
+ファイルと関連付けられたプライベートマッピング (file-backed private mappings) をダンプする。
+<DT>bit 3<DD>
+
+
+ファイルと関連付けられた共有マッピング (file-backed shared mappings) をダンプする。
+<DT>bit 4 (Linux 2.6.24 以降)<DD>
+ELF ヘッダーをダンプする。
+<DT>bit 5 (Linux 2.6.28 以降)<DD>
+プライベートなヒュージページ (private huge page) をダンプする。
+<DT>bit 6 (Linux 2.6.28 以降)<DD>
+共有されたヒュージページ (shared huge page) をダンプする。
+<DT>bit 7 (Linux 4.4 以降)<DD>
+
+プライベートな DAX ページをダンプする。
+<DT>bit 8 (Linux 4.4 以降)<DD>
+
+共有された DAX ページをダンプする。
+</DL>
+</DL>
+
+
+<P>
+
+デフォルトでは、ビット 0, 1, 4, 5 がセットされる。 (ビット 4 がセットされるのは、カーネルが設定オプション
+<B>CONFIG_CORE_DUMP_DEFAULT_ELF_HEADERS</B> を有効にして作成された場合である)。このデフォルト値は
+<I>coredump_filter</I> ブートオプションを使うことで起動時に変更できる。
+<P>
+
+The value of this file is displayed in hexadecimal.  (The default value is
+thus displayed as 33.)
+<P>
+
+<I>coredump_filter</I> の値に関わらず、フレームバッファーなどの memory-mapped I/O に関する
+ページは決してダンプされず、仮想 DSO ページ (<B><A HREF="../man7/vdso.7.html">vdso</A></B>(7)) は常にダンプされる。
+<P>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  で作成される子プロセスは親プロセスの <I>coredump_filter</I> の値を継承する。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+の前後で <I>coredump_filter</I> の値は保持される。
+<P>
+
+例のように、プログラムを実行する前に親シェルの <I>coredump_filter</I> を設定しておくと役立つことがある。
+<P>
+
+
+
+$<B> echo 0x7 &gt; /proc/self/coredump_filter</B>
+$<B> ./some_program</B>
+
+
+<P>
+
+
+このファイルが提供されるのは、カーネルが設定オプション <B>CONFIG_ELF_CORE</B> を有効にして作成された場合だけである。
+<A NAME="lbAH">&nbsp;</A>
+<H3>Core dumps and systemd</H3>
+
+On systems using the <B>systemd</B>(1)  <I>init</I> framework, core dumps may be
+placed in a location determined by <B>systemd</B>(1).  To do this, <B>systemd</B>(1)
+employs the <I>core_pattern</I> feature that allows piping core dumps to a
+program.  One can verify this by checking whether core dumps are being piped
+to the <B>systemd-coredump</B>(8)  program:
+<P>
+
+
+
+$ <B>cat /proc/sys/kernel/core_pattern</B>
+|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %e
+
+
+<P>
+
+In this case, core dumps will be placed in the location configured for
+<B>systemd-coredump</B>(8), typically as <B>lz4</B>(1)  compressed files in the
+directory <I>/var/lib/systemd/coredump/</I>.  One can list the core dumps that
+have been recorded by <B>systemd-coredump</B>(8)  using <B>coredumpctl</B>(1):
+<P>
+
+
+$ <B>coredumpctl list | tail -5</B>
+Wed 2017-10-11 22:25:30 CEST  2748 1000 1000 3 present  /usr/bin/sleep
+Thu 2017-10-12 06:29:10 CEST  2716 1000 1000 3 present  /usr/bin/sleep
+Thu 2017-10-12 06:30:50 CEST  2767 1000 1000 3 present  /usr/bin/sleep
+Thu 2017-10-12 06:37:40 CEST  2918 1000 1000 3 present  /usr/bin/cat
+Thu 2017-10-12 08:13:07 CEST  2955 1000 1000 3 present  /usr/bin/cat
+
+<P>
+
+The information shown for each core dump includes the date and time of the
+dump, the PID, UID, and GID of the dumping process, the signal number that
+caused the core dump, and the pathname of the executable that was being run
+by the dumped process.  Various options to <B>coredumpctl</B>(1)  allow a
+specified coredump file to be pulled from the <B>systemd</B>(1)  location into a
+specified file.  For example, to extract the core dump for PID 2955 shown
+above to a file named <I>core</I> in the current directory, one could use:
+<P>
+
+
+
+$ <B>coredumpctl dump 2955 -o core</B>
+
+
+<P>
+
+For more extensive details, see the <B>coredumpctl</B>(1)  manual page.
+<P>
+
+To (persistently) disable the <B>systemd</B>(1)  mechanism that archives core
+dumps, restoring to something more like traditional Linux behavior, one can
+set an override for the <B>systemd</B>(1)  mechanism, using something like:
+<P>
+
+
+
+# <B>echo &quot;kernel.core_pattern=core.%p&quot; &gt; \</B>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>/etc/sysctl.d/50-coredump.conf</B>
+# <B>/lib/systemd/systemd-sysctl</B>
+
+
+<P>
+
+It is also possible to temporarily (i.e., until the next reboot) change the
+<I>core_pattern</I> setting using a command such as the following (which causes
+the names of core dump files to include the executable name as well as the
+number of the signal which triggered the core dump):
+<P>
+
+
+
+# <B>sysctl -w kernel.core_pattern=&quot;%e-%s.core&quot;</B>
+
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<B><A HREF="../../GNU_gdb/man1/gdb.1.html">gdb</A></B>(1)  の <I>gcore</I> コマンドを使用すると、実行中のプロセスのコアダンプを取得できる。
+<P>
+
+
+
+
+
+
+
+
+
+
+バージョン 2.6.27 以前の Linux では、 マルチスレッドプロセス (より正確には、 <B><A HREF="../man2/clone.2.html">clone</A></B>(2)  の <B>CLONE_VM</B>
+で生成された別プロセスとメモリーを共有しているプロセス)  がコアダンプを生成する場合、 コアファイル名にプロセス ID が必ず付加される。 ただし、
+<I>/proc/sys/kernel/core_pattern</I> の <I>%p</I> 指定によりコアファイル名のどこか他の場所にプロセス ID が
+すでに含まれている場合は、プロセス ID が末尾に付加されない。 (この機能が主に役に立つのはすでに使われなくなった LinuxThreads
+実装を利用している場合である。 LinuxThreads 実装では、プロセス内の個々のスレッドは異なるプロセス ID を持つ。)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは <I>/proc/sys/kernel/core_pattern</I> ファイルのパイプ構文の使用例を示している。
+以下のシェルのセッションはこのプログラムの使用例を示すものである (コンパイルして <I>core_pattern_pipe_test</I>
+という名前の実行ファイルを作成している)。
+<P>
+
+
+
+<BR>&nbsp;$<B>&nbsp;cc&nbsp;-o&nbsp;core_pattern_pipe_test&nbsp;core_pattern_pipe_test.c</B>
+$<B> su</B>
+Password:
+#<B> echo &quot;|$PWD/core_pattern_pipe_test %p UID=%u GID=%g sig=%s&quot; &gt; \</B>
+<B>/proc/sys/kernel/core_pattern</B>
+#<B> exit</B>
+$<B> sleep 100</B>
+<B>^\</B>                     # type control-backslash
+Quit (core dumped)
+$<B> cat core.info</B>
+argc=5
+argc[0]=&lt;/home/mtk/core_pattern_pipe_test&gt;
+argc[1]=&lt;20575&gt;
+argc[2]=&lt;UID=1000&gt;
+argc[3]=&lt;GID=100&gt;
+argc[4]=&lt;sig=3&gt;
+Total bytes in core dump: 282624
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+/* core_pattern_pipe_test.c */
+<P>
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+<P>
+#define BUF_SIZE 1024
+<P>
+<BR>&nbsp;int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nread,&nbsp;tot;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[BUF_SIZE];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;FILE&nbsp;*fp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;cwd[PATH_MAX];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Change&nbsp;our&nbsp;current&nbsp;working&nbsp;directory&nbsp;to&nbsp;that&nbsp;of&nbsp;the
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;crashing&nbsp;process&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;snprintf(cwd,&nbsp;PATH_MAX,&nbsp;&quot;/proc/%s/cwd&quot;,&nbsp;argv[1]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;chdir(cwd);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Write&nbsp;output&nbsp;to&nbsp;file&nbsp;&quot;core.info&quot;&nbsp;in&nbsp;that&nbsp;directory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fp&nbsp;=&nbsp;fopen(&quot;core.info&quot;,&nbsp;&quot;w+&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fp&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Display&nbsp;command-line&nbsp;arguments&nbsp;given&nbsp;to&nbsp;core_pattern
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pipe&nbsp;program&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(fp,&nbsp;&quot;argc=%d\n&quot;,&nbsp;argc);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;argc;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(fp,&nbsp;&quot;argc[%d]=&lt;%s&gt;\n&quot;,&nbsp;j,&nbsp;argv[j]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Count&nbsp;bytes&nbsp;in&nbsp;standard&nbsp;input&nbsp;(the&nbsp;core&nbsp;dump)&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tot&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((nread&nbsp;=&nbsp;read(STDIN_FILENO,&nbsp;buf,&nbsp;BUF_SIZE))&nbsp;&gt;&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tot&nbsp;+=&nbsp;nread;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(fp,&nbsp;&quot;Total&nbsp;bytes&nbsp;in&nbsp;core&nbsp;dump:&nbsp;%zd\n&quot;,&nbsp;tot);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fclose(fp);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../../GNU_bash/man1/bash.1.html">bash</A></B>(1),&nbsp;<B>coredumpctl</B>(1),&nbsp;<B><A HREF="../../GNU_gdb/man1/gdb.1.html">gdb</A></B>(1),&nbsp;<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2),&nbsp;<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2), <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man5/elf.5.html">elf</A></B>(5), <B><A HREF="../man5/proc.5.html">proc</A></B>(5), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7),
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7), <B>systemd-coredump</B>(8)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">コアダンプファイルの名前</A><DD>
+<DT><A HREF="#lbAE">コアダンプのプログラムへのパイプ</A><DD>
+<DT><A HREF="#lbAF"> /proc/sys/kernel/core_pipe_limit</A><DD>
+<DT><A HREF="#lbAG">どのマッピングをコアダンプに書き込むかを制御する</A><DD>
+<DT><A HREF="#lbAH">Core dumps and systemd</A><DD>
+</DL>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DL>
+<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,210 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of REALPATH</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>REALPATH</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/realpath.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+realpath - 正規化された絶対パス名を返す
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>char *realpath(const char *</B><I>path</I><B>, char *</B><I>resolved_path</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>realpath</B>():
+
+<DL COMPACT><DT><DD>
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以降:&nbsp;*/&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以前:&nbsp;*/&nbsp;_BSD_SOURCE
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>realpath</B>()  は <I>path</I> として与えられたヌル終端された文字列中の すべてのシンボリックリンクを展開し、 <I>/./</I>,
+<I>/../</I> による参照や余分な '/' を解決して、正規化された絶対パス名を生成する。 得られた絶対パス名は、最大で
+<B>PATH_MAX</B> バイトのヌル終端された文字列として、 <I>resolved_path</I> により参照されるバッファーに格納される。
+結果として返るパスの中には、シンボリックリンクや <I>/./</I>, <I>/../</I> といった要素は含まれない。
+<P>
+
+
+
+
+
+
+
+
+<I>resolved_path</I> に NULL が指定されると、 <B>realpath</B>()  は <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+を使って解決したパス名を保持するためのバッファーを 最大で <B>PATH_MAX</B> バイトまで割り当て、このバッファーへのポインターを返す。
+呼び出し元は、 <B><A HREF="../man3/free.3.html">free</A></B>(3)  を使ってこのバッファーを解放すべきである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+エラーがなかった場合、 <B>realpath</B>()  は <I>resolved_path</I> へのポインターを返す。
+<P>
+
+それ以外の場合は NULL が返り、配列 <I>resolved_path</I> の内容は不定となり、 <I>errno</I>
+にエラーの内容を示す値がセットされる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+パスのディレクトリ部分に、読み出し許可または検索許可が与えられていない。
+<DT><B>EINVAL</B><DD>
+
+<I>path</I> が NULL である。 (バージョン 2.3 より前の glibc では、 <I>resolved_path</I> が NULL
+の場合にもこのエラーが返される。)
+<DT><B>EIO</B><DD>
+ファイルシステムを読むときに、I/Oエラーが起こった。
+<DT><B>ELOOP</B><DD>
+パス名の変換にあたり、解決すべきシンボリックリンクの数が多過ぎた。
+<DT><B>ENAMETOOLONG</B><DD>
+パス名の一要素の文字数が <B>NAME_MAX</B> を越えている、またはパス名全体の文字数が <B>PATH_MAX</B> を越えている。
+<DT><B>ENOENT</B><DD>
+指定されたファイルが存在しない。
+<DT><B>ENOMEM</B><DD>
+メモリ不足。
+<DT><B>ENOTDIR</B><DD>
+パスのディレクトリ要素が、ディレクトリでない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>realpath</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+4.4BSD, POSIX.1-2001.
+<P>
+
+POSIX.1-2001 では <I>resolved_path</I> が NULL の場合の動作は実装に依存するとしている。 POSIX.1-2008
+では、このマニュアルページに書かれている動作が規定されている。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+4.4BSD と Solaris では、パス名の長さの上限は (<I>&lt;<A HREF="file:///usr/include/sys/param.h">sys/param.h</A>&gt;</I> の中にある)
+<B>MAXPATHLEN</B> である。SUSv2 では <B>PATH_MAX</B> と <B>NAME_MAX</B> が規定されており、 これらは
+<I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I> で定義されているか、 <B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3)
+関数から得られる。以下のようなソースコードになっていることが多い。
+<P>
+
+
+
+#ifdef PATH_MAX
+<BR>&nbsp;&nbsp;path_max&nbsp;=&nbsp;PATH_MAX;
+#else
+<BR>&nbsp;&nbsp;path_max&nbsp;=&nbsp;pathconf(path,&nbsp;_PC_PATH_MAX);
+<BR>&nbsp;&nbsp;if&nbsp;(path_max&nbsp;&lt;=&nbsp;0)
+<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT> path_max = 4096;<BR>
+#endif
+
+
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(バグの章も参照のこと。)
+<A NAME="lbAJ">&nbsp;</A>
+<H3>GNU による拡張</H3>
+
+呼び出しが <B>EACCES</B> か <B>ENOENT</B> で失敗し <I>resolved_path</I> が NULL
+でない場合、読むことができない、もしくは存在しない <I>path</I> のディレクトリ要素 (prefix) が <I>resolved_path</I>
+で返される。
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+
+
+
+この関数の POSIX.1-2001 版は、設計段階から問題がある。 出力バッファー <I>resolved_path</I>
+の適切なサイズを決定することができないからである。 POSIX.1-2001 ではバッファーサイズとして <B>PATH_MAX</B>
+は十分だとされているが、 <B>PATH_MAX</B> は定義済の定数である必要はなく、 <B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3)
+を使って得られる値であってもよいことになっている。 <B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3)  からバッファーサイズを取得したとしても必ずしも十分ではない。
+なぜなら、POSIX で警告されているように、 <B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3)  の返り値が大き過ぎて適切にメモリーを確保することができない
+かもしれない一方で、 <B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3)  は <B>PATH_MAX</B> に制限がないことを示す -1 を返すかもしれないからである。
+<I>resolved_path&nbsp;==&nbsp;NULL</I> の機能を使うと、この設計上の問題を回避することができる。 この機能は POSIX.1-2001
+では標準化されていないが、 POSIX.1-2008 では標準化されている。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../GNU_coreutils/man1/realpath.1.html">realpath</A></B>(1), <B><A HREF="../man2/readlink.2.html">readlink</A></B>(2), <B><A HREF="../man3/canonicalize_file_name.3.html">canonicalize_file_name</A></B>(3), <B><A HREF="../man3/getcwd.3.html">getcwd</A></B>(3),
+<B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3), <B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">GNU による拡張</A><DD>
+</DL>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

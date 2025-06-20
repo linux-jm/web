@@ -1,0 +1,123 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of BINDRESVPORT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>BINDRESVPORT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/bindresvport.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+bindresvport - ソケットを特権 IP ポートにバインドする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</B>
+
+<B>int bindresvport(int </B><I>sockfd</I><B>, struct sockaddr_in *</B><I>sin</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+<B>bindresvport</B>()  is used to bind the socket referred to by the file
+descriptor <I>sockfd</I> to a privileged anonymous IP port, that is, a port
+number arbitrarily selected from the range 512 to 1023.
+<P>
+
+<B>bindresvport</B>()  によって実行された <B><A HREF="../man2/bind.2.html">bind</A></B>(2)  が成功し、 <I>sin</I> が NULL
+以外の場合、実際に割り当てられたポート番号が <I>sin-&gt;sin_port</I> に入れて返される。
+<P>
+
+<I>sin</I> には NULL を指定することもでき、その場合には <I>sin-&gt;sin_family</I> は暗黙のうちに <B>AF_INET</B>
+とみなされる。 しかし、この場合には、 <B>bindresvport</B>()  は実際に割り当てられたポート番号を返す手段を持たない
+(割り当てられたポート番号は、後で <B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2)  を使って取得できる)。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>bindresvport</B>()  は成功すると 0 を返す。それ以外の場合、-1 を返し、 <I>errno</I> にエラーの原因を示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>bindresvport</B>()  は <B><A HREF="../man2/bind.2.html">bind</A></B>(2)  と同じ原因で失敗する可能性がある。 さらに、以下のエラーが発生することがある:
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+The calling process was not privileged (on Linux: the calling process did
+not have the <B>CAP_NET_BIND_SERVICE</B> capability in the user namespace
+governing its network namespace).
+<DT><B>EADDRINUSE</B><DD>
+全ての特権ポートが使用中である。
+<DT><B>EAFNOSUPPORT</B> (glibc 2.7 以前では <B>EPFNOSUPPORT</B>)<DD>
+<I>sin</I> が NULL 以外で、かつ <I>sin-&gt;sin_family</I> が <B>AF_INET</B> でなかった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>bindresvport</B>()
+</TD><TD>Thread safety</TD><TD>
+
+glibc &gt;= 2.17: MT-Safe
+<BR>
+
+glibc &lt; 2.17: MT-Unsafe
+<BR></TD></TR>
+</TABLE>
+
+<P>
+
+The <B>bindresvport</B>()  function uses a static variable that was not
+protected by a lock before glibc 2.17, rendering the function MT-Unsafe.
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+Not in POSIX.1.  Present on the BSDs, Solaris, and many other systems.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<B>bindresvport</B>()  のいくつかの実装と異なり、glibc の実装では呼び出し元が <I>sin-&gt;sin_port</I>
+で渡した値はどんな値であっても無視される。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2), <B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:27 GMT, December 05, 2022
+</BODY>
+</HTML>

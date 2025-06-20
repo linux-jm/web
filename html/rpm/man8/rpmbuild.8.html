@@ -1,0 +1,431 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RPMBUILD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RPMBUILD</H1>
+Section: Red Hat Linux (8)<BR>Updated: 09 June 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/rpm/release/man8/rpmbuild.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rpmbuils - RPM パッケージのビルド
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<A NAME="lbAD">&nbsp;</A>
+<H3>パッケージのビルド:</H3>
+
+<B>rpmbuild</B> {<B>-ba|-bb|-bp|-bc|-bi|-bl|-bs</B>} [<B>rpmbuild-options</B>] <B></B><I>SPECFILE</I><B></B><I> ...</I>
+<P>
+<B>rpmbuild</B> {<B>-ta|-tb|-tp|-tc|-ti|-tl|-ts</B>} [<B>rpmbuild-options</B>] <B></B><I>TARBALL</I><B></B><I> ...</I>
+<P>
+<B>rpmbuild</B> {<B>--rebuild|--recompile</B>} <B></B><I>SOURCEPKG</I><B></B><I> ...</I>
+<A NAME="lbAE">&nbsp;</A>
+<H3>その他:</H3>
+
+<B>rpmbuild</B> <B>--showrc</B>
+<A NAME="lbAF">&nbsp;</A>
+<H3>rpmbuild のオプション</H3>
+
+<BR>&nbsp;&nbsp;[<B>--buildroot&nbsp;</B><I>DIRECTORY</I><B></B>]&nbsp;[<B>--clean</B>]&nbsp;[<B>--nobuild</B>]
+<BR>&nbsp;&nbsp;[<B>--rmsource</B>]&nbsp;[<B>--rmspec</B>]&nbsp;[<B>--short-circuit</B>]&nbsp;[<B>--sign</B>]
+<BR>&nbsp;&nbsp;[<B>--target&nbsp;</B><I>PLATFORM</I><B></B>]
+<A NAME="lbAG">&nbsp;</A>
+<H2>説明</H2>
+
+<B>rpmbuild</B>
+
+は、バイナリパッケージとソースパッケージの両方のビルド(作成)に利用される。
+<B>パッケージ</B>
+
+はファイルのアーカイブと、アーカイブされたファイルの
+インストール・アンインストールに使われるメタデータから構成される。
+メタデータは補助スクリプト、ファイル属性、
+パッケージの説明に関する情報からなる。
+<B>パッケージ</B>
+
+には 2 種類あり、
+インストールするためのソフトウェアをカプセル化するのに使われるバイナリ
+パッケージと、バイナリパッケージを作成するのに必要なレシピとソースコード
+からなるソースパッケージとがある。
+<P>
+
+次の基本モードからいずれか一つを選択しなければならない:
+<B>パッケージのビルド</B>、<B>tar アーカイブからのパッケージのビルド</B>、
+
+<B>パッケージの再コンパイル</B>、<B>設定の表示</B>。
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>一般的なオプション</H3>
+
+以下のオプションはすべてのモードで使用可能である。
+<DL COMPACT>
+<DT><B>-?</B>, <B>--help</B>
+
+<DD>
+使い方を通常よりも詳しく表示する。
+<DT><B>--version</B><DD>
+使用中の
+<B>rpm</B>
+
+のバージョン番号を 1 行で表示する。
+<DT><B>--quiet</B><DD>
+表示をできるだけ少なくする。
+通常は、エラーメッセージだけが表示される。
+<DT><B>-v</B><DD>
+より多くの情報を表示する。
+通常は、ルーチンの進捗メッセージが表示される。
+<DT><B>-vv</B><DD>
+沢山の汚いデバッグ情報を表示する。
+<DT><B>--rcfile</B><I> FILELIST</I>
+
+<DD>
+<B>rpm</B>
+
+は、コロン(`:')で区切られた
+<I>FILELIST</I>
+
+の各ファイルを設定情報として読み込む。
+読み込みは
+<I>FILELIST</I>
+
+に指定された順番で行われる。
+<I>FILELIST</I>
+
+のデフォルトは
+<I>/usr/lib/rpm/rpmrc</I>:<I>/usr/lib/rpm/redhat/rpmrc</I>:<I>~/.rpmrc</I>
+
+である。
+<DT><B>--pipe</B><I> CMD</I>
+
+<DD>
+<B>rpm</B>
+
+コマンドの出力を
+<I>CMD</I>
+
+へパイプする。
+<DT><B>--dbpath</B><I> DIRECTORY</I>
+
+<DD>
+データベースのパスとして、デフォルトの
+<I>/var/lib/rpm</I>
+
+ではなく
+<I>DIRECTORY</I>
+
+を使う。
+<DT><B>--root</B><I> DIRECTORY</I>
+
+<DD>
+
+
+すべての操作において、
+<I>DIRECTORY</I>
+
+をルートとしたファイルシステムを使う。
+つまり、
+<I>DIRECTORY</I>
+
+内にあるデータベースが依存性のチェックに使用され、
+<I>DIRECTORY</I>
+
+に <A HREF="../../LDP_man-pages/man2/chroot.2.html">chroot</A>(2) した後で、すべてのスクリプト
+(例えば、パッケージインストール時の
+<B>%post</B>
+
+や、パッケージビルド時の
+<B>%prep</B>
+
+など) が実行される。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H3>ビルドオプション</H3>
+
+rpm のビルド・コマンドの一般的な形式は以下の通りである:
+<DL COMPACT><DT><DD>
+<P>
+
+<B>rpmbuild</B>
+
+<B>-b</B><I>STAGE</I><B>|-t</B><I>STAGE</I>
+
+[ <B>rpmbuild-options</B> ]
+
+<I>FILE ...</I>
+
+</DL>
+
+<P>
+
+パッケージのビルドに spec ファイルを使用するのであれば
+<B>-b</B>
+
+を、
+<B>rpmbuild</B>
+
+が spec ファイルを使うために (圧縮されていることもある) tar ファイルの
+内部から使用する spec ファイルを探すのであれば
+<B>-t</B>
+
+を、それぞれ引数に指定する。
+最初の引数の後ろにある、次の文字
+(<I>STAGE</I>)
+
+はビルドとパッケージ化の段階を指定するのに使われ、
+以下のいずれかが指定される
+(訳注: 以下のものは spec ファイル、すなわち -b が指定された場合であり、
+tar ファイルからビルドする場合は -ta, -tb, ... となる)。
+<DL COMPACT>
+<DT><B>-ba</B><DD>
+(%prep, %build, %install を実行した後に)
+バイナリパッケージとソースパッケージをビルドする。
+<DT><B>-bb</B><DD>
+(%prep, %build, %install を実行した後に)
+バイナリパッケージをビルドする。
+<DT><B>-bp</B><DD>
+spec ファイルから &quot;%prep&quot; 段階を実行する。
+通常、ソースを展開しパッチを適用することを意味する。
+<DT><B>-bc</B><DD>
+(%prep を実行した後に)
+spec ファイルから &quot;%build&quot; 段階を実行する。
+一般的には &quot;make&quot; と等価である。
+<DT><B>-bi</B><DD>
+(%prep, %build を実行した後に)
+spec ファイルから &quot;%install&quot; 段階を実行する。
+一般的には &quot;make install&quot; と等価である。
+<DT><B>-bl</B><DD>
+&quot;list check&quot; を実行する。
+spec ファイルの &quot;%files&quot; セクションのマクロが展開され、
+各ファイルが存在するかの検証をするためのチェックが行われる。
+<DT><B>-bs</B><DD>
+ソースパッケージだけをビルドする。
+</DL>
+<P>
+
+さらに、以下のオプションが利用可能である:
+<DL COMPACT>
+<DT><B>--buildroot</B><I> DIRECTORY</I>
+
+<DD>
+パッケージビルド時に BuildRoot タグを
+<I>DIRECTORY</I>
+
+ディレクトリに上書きする。
+<DT><B>--clean</B><DD>
+パッケージが作成された後にビルドツリーを削除する。
+<DT><B>--nobuild</B><DD>
+何のビルドも実行しない。spec ファイルの検査を行う場合に便利である。
+<DT><B>--rmsource</B><DD>
+ビルド後にソースを削除する
+(単独で使用してもよい。例: &quot;<B>rpmbuild --rmsource foo.spec</B>&quot;)。
+<DT><B>--rmspec</B><DD>
+ビルド後に spec ファイルを削除する。
+(単独で使用してもよい。例: &quot;<B>rpmbuild --rmspec foo.spec</B>&quot;)。
+<DT><B>--short-circuit</B><DD>
+指定された段階へ直接すすむ(すなわち、指定された段階までの全ての段階が
+飛ばされる)。
+<B>-bc</B>
+
+と
+<B>-bi</B>
+
+(訳注:
+<B>-tc</B>
+
+と
+<B>-ti</B>も)
+
+でのみ使用できる。
+<DT><B>--sign</B><DD>
+パッケージに GPG 署名を埋め込む。
+この署名は、パッケージの出所と完全性を検証するのに用いることができる。
+設定の詳細については
+<B><A HREF="../man8/rpm.8.html">rpm</A></B>(8)
+
+の「GPG 署名」の節を参照のこと。
+<DT><B>--target</B><I> PLATFORM</I>
+
+<DD>
+パッケージビルド時に
+<I>PLATFORM</I>
+
+を
+<B>arch-vendor-os</B>
+
+と解釈し、それに応じてマクロ
+<B>%_target</B>,
+
+<B>%_target_arch</B>,
+
+<B>%_target_os</B>
+
+を設定する。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>ビルドと再コンパイルのオプション</H3>
+
+rpm を使ってビルドするには、他にも 2 つのやり方がある。
+<DL COMPACT><DT><DD>
+<P>
+
+<B>rpmbuild --rebuild|--recompile</B><I> SOURCEPKG ...</I>
+
+</DL>
+
+<P>
+
+この方法で起動された場合、
+<B>rpmbuild</B>
+
+は指定されたソースパッケージをインストールし、
+準備、コンパイル、インストールを行う。
+さらに、
+<B>--rebuild</B>
+
+の場合、新たなバイナリパッケージをビルドする。ビルドか完了したら
+ビルドディレクトリは
+(<B>--clean</B>
+
+を指定した場合と同様に)削除され、
+パッケージのソースと spec ファイルも削除される。
+<A NAME="lbAK">&nbsp;</A>
+<H3>SHOWRC</H3>
+
+コマンド
+<DL COMPACT><DT><DD>
+<P>
+
+<B>rpmbuild --showrc</B>
+
+</DL>
+
+<P>
+
+は
+<B>rpmbuild</B>
+
+が使う設定ファイル、
+<I>rpmrc</I>
+
+と
+<I>macros</I>
+
+で現在セットされているオプションすべての値を表示する。
+<A NAME="lbAL">&nbsp;</A>
+<H2>ファイル</H2>
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>rpmrc の設定</H3>
+
+<PRE>
+<I>/usr/lib/rpm/rpmrc</I>
+<I>/usr/lib/rpm/redhat/rpmrc</I>
+<I>/etc/rpmrc</I>
+<I>~/.rpmrc</I>
+</PRE>
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>マクロの設定</H3>
+
+<PRE>
+<I>/usr/lib/rpm/macros</I>
+<I>/usr/lib/rpm/redhat/macros</I>
+<I>/etc/rpm/macros</I>
+<I>~/.rpmmacros</I>
+</PRE>
+
+<A NAME="lbAO">&nbsp;</A>
+<H3>データベース</H3>
+
+<PRE>
+<I>/var/lib/rpm/Basenames</I>
+<I>/var/lib/rpm/Conflictname</I>
+<I>/var/lib/rpm/Dirnames</I>
+<I>/var/lib/rpm/Filemd5s</I>
+<I>/var/lib/rpm/Group</I>
+<I>/var/lib/rpm/Installtid</I>
+<I>/var/lib/rpm/Name</I>
+<I>/var/lib/rpm/Packages</I>
+<I>/var/lib/rpm/Providename</I>
+<I>/var/lib/rpm/Provideversion</I>
+<I>/var/lib/rpm/Pubkeys</I>
+<I>/var/lib/rpm/Removed</I>
+<I>/var/lib/rpm/Requirename</I>
+<I>/var/lib/rpm/Requireversion</I>
+<I>/var/lib/rpm/Sha1header</I>
+<I>/var/lib/rpm/Sigmd5</I>
+<I>/var/lib/rpm/Triggername</I>
+</PRE>
+
+<A NAME="lbAP">&nbsp;</A>
+<H3>一時ファイル</H3>
+
+<I>/var/tmp/rpm*</I>
+<A NAME="lbAQ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>popt</B>(3),
+
+<B><A HREF="../man8/rpm2cpio.8.html">rpm2cpio</A></B>(8),
+
+<B>gendiff</B>(1),
+
+<B><A HREF="../man8/rpm.8.html">rpm</A></B>(8),
+
+<PRE>
+
+<B><A HREF="http://www.rpm.org/">http://www.rpm.org/</A></B>
+</PRE>
+
+<A NAME="lbAR">&nbsp;</A>
+<H2>著者</H2>
+
+<PRE>
+Marc Ewing &lt;<A HREF="mailto:marc@redhat.com">marc@redhat.com</A>&gt;
+Jeff Johnson &lt;<A HREF="mailto:jbj@redhat.com">jbj@redhat.com</A>&gt;
+Erik Troan &lt;<A HREF="mailto:ewt@redhat.com">ewt@redhat.com</A>&gt;
+</PRE>
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DL>
+<DT><A HREF="#lbAD">パッケージのビルド:</A><DD>
+<DT><A HREF="#lbAE">その他:</A><DD>
+<DT><A HREF="#lbAF">rpmbuild のオプション</A><DD>
+</DL>
+<DT><A HREF="#lbAG">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAH">一般的なオプション</A><DD>
+<DT><A HREF="#lbAI">ビルドオプション</A><DD>
+<DT><A HREF="#lbAJ">ビルドと再コンパイルのオプション</A><DD>
+<DT><A HREF="#lbAK">SHOWRC</A><DD>
+</DL>
+<DT><A HREF="#lbAL">ファイル</A><DD>
+<DL>
+<DT><A HREF="#lbAM">rpmrc の設定</A><DD>
+<DT><A HREF="#lbAN">マクロの設定</A><DD>
+<DT><A HREF="#lbAO">データベース</A><DD>
+<DT><A HREF="#lbAP">一時ファイル</A><DD>
+</DL>
+<DT><A HREF="#lbAQ">関連項目</A><DD>
+<DT><A HREF="#lbAR">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,942 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MODULES.CONF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MODULES.CONF</H1>
+Section: File Formats (5)<BR>Updated: 07 December 1999<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/modutils/release/man5/modules.conf.5">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+modules.conf - カーネルモジュールのロードに対する設定ファイル
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>このマニュアルについて</H2>
+
+このマニュアルは、Linux Kernel 2.4 の時代に使われていた modutils
+パッケージの設定ファイル <B>modules.conf</B>
+の説明で、古いものです。現在ではたいていの場合、kmod 
+パッケージのユーティリティがモジュールの管理に使われており、
+設定ファイルのマニュアルも <B>modprobe.d</B> と <B>depmod.d</B> 
+の二つに別れています。(2022/12/02, Linux JM Project)
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8)
+
+(および
+<B><A HREF="../man8/depmod.8.html">depmod</A></B>(8))
+
+の動作は、設定ファイル
+<B>/etc/modules.conf</B>
+
+によって変更できる (このファイルは無くてもよい)。
+<P>
+
+設定ファイルは行単位で解釈される。
+<BR>
+
+全ての空行と、'#' 文字以降の行末までは無視される。
+<BR>
+
+行末が '\' になっている行は次の行に継続する。
+<BR>
+
+残りは指定行 (directive) であり、
+すべて以下のフォーマットのいずれかに従う:
+<P>
+<PRE>
+  [add] above module module_list
+  alias alias_name result
+  [add] below module module_list
+  define VARIABLE WORD
+  depfile=A_PATH
+  else
+  elseif EXPRESSION
+  endif
+  if EXPRESSION
+  include PATH_TO_CONFIG_FILE
+  insmod_opt=GENERIC_OPTIONS_TO_INSMOD
+  install module command ...
+  keep
+  [add] options module MODULE_SPECIFIC_OPTIONS
+  path=A_PATH
+  path[TAG]=A_PATH
+  generic_stringfile=A_PATH
+  pcimapfile=A_PATH
+  isapnpmapfile=A_PATH
+  usbmapfile=A_PATH
+  parportmapfile=A_PATH
+  ieee1394mapfile=A_PATH
+  pnpbiosmapfile=A_PATH
+  [add] probe name module_list
+  [add] probeall name module_list
+  prune filename
+  post-install module command ...
+  post-remove module command ...
+  pre-install module command ...
+  pre-remove module command ...
+  remove module command ...
+  persistdir directory_name
+</PRE>
+
+<P>
+
+各指定行に与える引数の解釈では、シェルのメタキャラクタが有効になる。
+すなわち、ワイルドカードやコマンドのバッククォートといった、
+シェルでの技が利用できる。
+<P>
+<PRE>
+  path[misc]=/lib/modules/1.1.5?/local
+  path[net]=/lib/modules/`uname -r`/net
+</PRE>
+
+<P>
+<B>危険:</B>
+
+ユーザーが指定した入力にシェル展開を適用するのは
+大きなセキュリティ上のリスクがある。
+modutils は信頼できるデータに対してのみシェルコマンドのメタ展開を行う。
+基本的にこれは設定ファイルのデータのみを展開することを意味する。
+modutils では、ユーザーは modprobe を (自分自身の設定ファイルを指定して)
+root 権限で実行することはできない、と仮定している。
+ユーザーからの入力を指定して modutils を root 権限で起動するプログラム
+(カーネルを含む) は、正確に一つだけのユーザー入力パラメータを渡し、
+かつセーフモードに設定しないと、ローカルで root を奪取される危険がある。
+セーフモードの詳細については
+<I>modprobe</I>
+
+を参照のこと。
+<P>
+
+各指定は複数回繰り返してもよい。
+指定によっては、前に
+<I>add</I>
+
+を置くこともできる。これがないと、指定した module_list が以前の
+module_list を置き換えるが、
+これがあると module_list が以前の module_list に<B>追加される</B>。
+<A NAME="lbAE">&nbsp;</A>
+<H2>記法 (SEMANTICS)</H2>
+
+<B>A_PATH</B>
+
+はターゲットへの完全なパス名である。
+<I>`uname -r`</I>
+
+や
+<I>`kernelversion`.</I>
+
+といったシェルのメタキャラクタを
+<B>A_PATH</B>
+
+に用いてもよい。
+<BR>
+
+これらの 2 つのコマンドは、
+(<B>modprobe</B> や <B>depmod</B>
+
+のような) ユーティリティの内部でも、
+現在のカーネルのリリースとバージョン (それぞれ 2.2.3 や 2.2 など)
+を表すものとして認識されている。
+<P>
+
+<B>WORD</B>
+
+は空白文字以外からなるシーケンスである。
+
+もし ' や &quot; や ` が文字列にあると、
+対応する ', &quot;, ` にマッチするまでの全ての文字 (空白文字も)
+がその文字列に含まれることになる。
+全ての
+<B>WORD</B>
+
+は、その後メタキャラクタのルールにしたがって展開される。
+
+展開した結果が二つ以上のワードになった場合は、
+結果のうち最初のワードだけが用いられる。
+<P>
+
+EXPRESSION は以下のいずれかである。
+<DL COMPACT>
+<DT><I>WORD compare_op WORD</I>
+
+<DD>
+compare_op は ==, !=, &lt;, &lt;=, &gt;=, &gt; のいずれかである。
+両 WORD が文字列として比較される。
+<DT><I>-n WORD compare_op WORD</I>
+
+<DD>
+compare_op は ==, !=, &lt;, &lt;=, &gt;=, &gt; のいずれかである。
+両 WORD が数値として比較される。
+<DT><I>WORD</I>
+
+<DD>
+WORD の展開に失敗するか、
+展開した結果が &quot;0&quot; (zero), &quot;false&quot;, &quot;&quot; (empty)
+のいずれかであれば、展開結果の値は FALSE となる。
+それ以外の場合は展開結果の値は TRUE となる。
+<DT><I>-f FILENAME</I>
+
+<DD>
+FILENAME が存在するかどうかのテスト。
+<DT><I>-k</I>
+
+<DD>
+&quot;autoclean&quot; が有効になっているかどうか (すなわちカーネルから呼ばれたかどうか)
+のテスト。
+<DT><I>! EXPRESSION</I>
+
+<DD>
+式の否定も式である。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>文法 (SYNTAX)</H2>
+
+以下に有効な指定について説明する。
+<DL COMPACT>
+<DT><I>define VARIABLE WORD</I>
+
+<DD>
+<I>putenv(VARIABLE=WORD)</I>
+
+を実行する。この指定は変数の作成・変更のいずれも行える。
+変数は環境に作られるので、
+現在のセッションで実行される全てのコマンドから利用できる。
+<DT><I>depfile=A_PATH</I>
+
+<DD>
+依存関係ファイルへのパス。
+これは
+<B>depmod</B>
+
+によって作成され、
+<B>modprobe</B>
+
+によってモジュールとその依存モジュールを探すために利用される。
+通常はデフォルトの値を用いるべきである。以下を参照のこと。
+<DT><I>if EXPRESSION</I>
+
+<DD>
+式
+<I>EXPRESSION</I>
+
+が
+<B>TRUE</B>
+
+と解釈されたら、
+<I>else</I>, <I>elseif</I>, <I>endif</I>
+
+のいずれかにマッチするまでの全ての指定行が実行される。
+<B>FALSE</B>
+
+と解釈されたら、それらの指定行は無視される。
+<I>if</I>
+
+行は、内部の最大値である 20 までネストできる。
+<BR>
+
+注意:
+<B>path</B>
+
+指定行を条件式内部で処理することは避けて欲しい。
+<B>modprobe</B>
+
+には「賢い頭脳」が組み込まれているので、
+<B>path</B>
+
+指定行の条件処理は、単に混乱を生むだけである。ほんとです。
+<DT><I>else</I>
+
+<DD>
+これより前での
+<I>if</I> または <I>elseif</I>
+
+指定行での式の評価が
+<B>FALSE</B>
+
+であり、
+<I>else</I>
+
+があれば、ここまでの指定行は無視され、
+これ以降
+<I>endif</I>
+
+までの指定行が処理される。
+<DT><I>elseif EXPRESSION</I>
+
+<DD>
+これより前に置かれた
+<I>if</I> または <I>elseif</I>
+
+での式評価の結果が
+<B>FALSE</B>
+
+で、ここでの式評価の結果が
+<B>TRUE</B>
+
+であれば、次に
+<I>elseif</I>, <I>else</I>, <I>endif</I>
+
+のいずれかが現れるまでの指定行が処理される。
+<DT><I>endif</I>
+
+<DD>
+これは設定ファイルにおける条件処理を制御する
+<I>if</I>, <I>elseif</I>, <I>else</I>
+
+のチェインを終了させる。
+<P>
+<PRE>
+  if EXPRESSION
+      any config lines
+  elseif EXPRESSION
+      any config lines
+  else
+      any config lines
+  endif
+</PRE>
+
+<P>
+<I>else</I> と <I>elseif</I>
+
+は無くてもよい。
+<DT><I>include PATH_TO_CONFIG_FILE</I>
+
+<DD>
+別々のプラットフォームや設定を一つの設定ファイルで扱うのは、
+非常に複雑になる場合がある。
+<I>if</I>
+
+の条件によって
+<I>include</I>
+
+指定行を用いれば、この取り扱いは簡単になる。
+<DT><I>insmod_opt=GENERIC_OPTIONS_TO_INSMOD</I>
+
+<DD>
+insmod に (他では指定できないような) 特殊なオプションが必要な場合は、
+このオプションで起動の度にそれらを追加することが可能である。
+特殊な状況を除いて、
+通常は insmod の標準的なデフォルトのオプションを変更する必要はない。
+<DT><I>keep</I>
+
+<DD>
+このワードが
+<B>path</B>
+
+の記述を含む行の<B>前に</B>置かれた場合は、
+デフォルトのパスのセットは保存され、それに追加される。
+これがない場合の通常の振舞いでは、
+パスのセットが設定ファイルで<B>置き換え</B>られる。
+<DT><I>path=A_PATH</I>
+
+<DD>
+<DT><I>path[TAG]=A_PATH</I>
+
+<DD>
+<B>A_PATH</B>
+
+引数はモジュールを探すディレクトリの追加分を指定する。
+<B>path</B>
+
+指定行は、オプションのタグをとることができる。
+これはそのモジュールの目的に関する情報を多少なりとも示し、
+また
+<B>modprobe</B>
+
+の動作をいくらか自動化する。
+この &quot;path&quot; キーワードに追加されるタグは角括弧 [] で括られる。
+タグがない場合は、 &quot;misc&quot; タグが指定されたかのように動作する。
+<BR>
+
+非常に有用なタグとして、
+<B>boot</B>
+
+がある。これはブート時にロードしなければならないモジュールを
+保有しているすべてのディレクトリをマークするために利用できる。
+<BR>
+
+なお
+<B>keep</B>
+
+指定行を使えば、
+<B>path</B>
+
+指定行によるデフォルトのパスの置き換えを防ぐことができる。
+<DT><I>generic_stringfile=A_PATH</I>
+
+<DD>
+これは generic_string ファイルへのパスである。このファイルは
+<B>depmod</B>
+
+によって作成され、モジュールからの文字列情報が必要な
+インストールスクリプトが利用する。
+通常はデフォルトの値を用いるべきである。以下を参照のこと。
+<DT><I>pcimapfile=A_PATH</I>
+
+<DD>
+これは pcimap ファイルへのパスである。このファイルは
+<B>depmod</B>
+
+によって作成され、インストールスクリプトが
+pci デバイスをサポートするモジュールを検索する際に用いられる。
+通常はデフォルトの値を用いるべきである。以下を参照のこと。
+<DT><I>isapnpmapfile=A_PATH</I>
+
+<DD>
+これは isapnpmap ファイルへのパスである。このファイルは
+<B>depmod</B>
+
+によって作成され、インストールスクリプトが
+ISA PNP デバイスをサポートするモジュールを検索する際に用いられる。
+通常はデフォルトの値を用いるべきである。以下を参照のこと。
+<DT><I>usbmapfile=A_PATH</I>
+
+<DD>
+これは usbmap ファイルへのパスである。このファイルは
+<B>depmod</B>
+
+によって作成され、インストールスクリプトが
+USB デバイスをサポートするモジュールを検索する際に用いられる。
+通常はデフォルトの値を用いるべきである。以下を参照のこと。
+<DT><I>parportmapfile=A_PATH</I>
+
+<DD>
+これは parportmap ファイルへのパスである。このファイルは
+<B>depmod</B>
+
+によって作成され、インストールスクリプトが
+parport デバイスをサポートするモジュールを検索する際に用いられる。
+通常はデフォルトの値を用いるべきである。以下を参照のこと。
+<DT><I>ieee1394mapfile=A_PATH</I>
+
+<DD>
+これは ieee1394map ファイルへのパスである。このファイルは
+<B>depmod</B>
+
+によって作成され、インストールスクリプトが
+ieee1394 デバイスをサポートするモジュールを検索する際に用いられる。
+通常はデフォルトの値を用いるべきである。以下を参照のこと。
+<DT><I>pnpbiosmapfile=A_PATH</I>
+
+<DD>
+これは pnpbiosmap ファイルへのパスである。このファイルは
+<B>depmod</B>
+
+によって作成され、インストールスクリプトが
+pnpbios デバイスをサポートするモジュールを検索する際に用いられる。
+通常はデフォルトの値を用いるべきである。以下を参照のこと。
+<DT><I>alias alias_name result</I>
+
+<DD>
+&quot;alias&quot; 指定行はモジュールに別名をつけるために用いる。
+/etc/modules.conf に
+<P>
+<PRE>
+  alias iso9660 isofs
+</PRE>
+
+<P>
+のような行があれば、実際にはそのようなモジュールがなくても
+<B>modprobe iso9660</B>
+
+のように書くことができるようになる。
+<BR>
+
+なお
+<P>
+<PRE>
+  alias some_module off
+</PRE>
+
+<P>
+という行は、modprobe にそのモジュールのロード要求を無視させる。
+また
+<P>
+<PRE>
+  alias some_module null
+</PRE>
+
+<P>
+というエイリアスは、some_module への要求を常に成功させるが、
+しかし実際にはそのモジュールはインストールされない。
+これは
+<I>above</I>
+
+や
+<I>below</I>
+
+指定行で作成されるスタックのベースとして利用できる。
+<DT><DD>
+<I>alias</I>
+
+指定のレベルは深くなっても良い
+(訳注: alias の alias の alias... としてかまわない)。
+全てのエイリアスは、
+実際に物理的に存在しているモジュールを探すべく、再帰的に展開される。
+エイリアスの実際の深さの限界は、おおよそ 1000 程度になっている。
+これは以下のようなループを検知するためである。
+<P>
+<PRE>
+  alias a b
+  alias b a
+</PRE>
+
+<P>
+<I>alias</I>
+
+マッピングの最終的な結果がいずれのモジュールにもマッチしなければ、
+modprobe はその結果に probe と probeall をマップする。
+これらも成功しなければ、そのモジュールは見付からなかったことになる。
+したがって以下のような指定は気が利いていると言える (devfs より)。
+
+<P>
+<PRE>
+  alias           /dev/sg*        /dev/sg
+  probeall        /dev/sg         scsi-hosts sg
+</PRE>
+
+<P>
+
+モジュール A が実際に存在する場合にも、モジュール A をモジュール B への
+エイリアスとしてマップすることはできる。
+しかしこれは誤解の元であるので<B>推奨できない</B>。
+歴史的な理由から、カーネルのサウンドシステムには
+sound.o というモジュールがある。しかしサウンドの開発者たちも、
+sound をユーザサウンドカード用モジュールへのエイリアスとしたい、
+すなわち &quot;alias&nbsp;sound&nbsp;sb&quot; としたいことがあるかもしれない。
+この要求をサポートし、
+なおかつ「オプションをエイリアスに与えることが可能」
+という定められた動作を維持するために、
+modprobe はモジュール名のエイリアス展開を、
+その名前が modules.dep に見付かった場合には行わない
+(見付からなければ展開する)。
+これはエイリアスと実際のモジュールのあり得る全ての組み合わせに対して
+期待された動作をするとは限らないので、
+実際に存在するモジュールと同じ名前へのエイリアスは避けるべきなのである。
+<DT><I>[add] probe name module_list</I>
+
+<DD>
+<DT><I>[add] probeall name module_list</I>
+
+<DD>
+これらの指定行は
+<I>name</I>
+
+が
+<B>modprobe</B>
+
+のコマンドラインで要求されたモジュール名である場合に限って利用できる。
+効果としては、
+<I>name</I>
+
+への要求があると、 module_list にあるモジュールが、
+指定の順序で試される。二つの指定行の違いは、
+<I>probe</I>
+
+はモジュールの挿入が一度成功すればそこで試行を終了するのに対して、
+<I>probeall</I>
+
+はリストの最後まで続ける点にある。
+終了ステータスは、いずれかのモジュールのインストールに
+成功したかどうかを反映する。
+<I>add</I>
+
+が前に付加されると、新しいリストを前のリストに置き換えるのではなく追加する。
+<DT><I>prune filename</I>
+
+<DD>
+インストールされているカーネルに対するモジュールディレクトリのトップには、
+モジュールではないファイルがおかれている。
+これらには modules.dep,
+modules.generic_string, modules.pcimap, modules.isapnpmap,
+modules.usbmap, modules.parportmap, modules.ieee1394map,
+modules.pnpbiosmap のほか、
+カーネルソースツリーへのビルド用 symlink など、インストールプロセスが
+ビルドツリーから保存しておきたいと考えたファイルが含まれる。
+これらに対して
+<B>depmod</B>
+
+が &quot;not an ELF file&quot; という警告を発するのをやめさせるには、
+これらのモジュールでないファイルが prune リストに入っていなければならない。
+<B>depmod</B>
+
+は組み込みの prune リストを持っており、これにはいかなるカーネルビルドに
+おいても存在するファイルが含まれているので、削除することはできない。
+自分のファイルをこのモジュールディレクトリのトップに追加したら、
+各
+<I>filename</I>
+
+に対して
+<I>prune</I>
+
+宣言を加えると良い。
+<B>注意</B>: prune リストは
+<I>path</I>
+
+のトップディレクトリをスキャンするとき、
+かつそのディレクトリが標準的なサブディレクトリ名リスト以下、
+高々一つのサブディレクトリしか含まない場合にしか
+(すなわちカーネルのインストールでビルドされた
+トップディレクトリのように見える場合にしか) 参照されない。
+
+<I>prune</I>
+
+リストは
+<I>path</I>
+
+のサブディレクトリには効力を持たない。
+<DT><I>[add] options [-k] module [MODULE_SPECIFIC_OPTIONS]</I>
+
+<DD>
+エイリアスされた名前も含め、すべてのモジュール名はそれぞれ固有の
+<I>options</I>
+
+指定行を持つことができる。
+エイリアスに対して指定されたオプションは、
+より「基本的な」名前に対して指定されたオプションよりも高い優先度を持つ。
+このルールは
+<I>options</I>
+
+指定行の衝突を解決する際に利用される。
+コマンドラインで指定されたオプションは、最も高い優先度を持つ。
+モジュール名の前に
+<I>-k</I>
+
+があると、たとえ
+<B>modprobe</B>
+
+が autoclean オプション
+<I>-k</I>
+
+で実行されていた場合でも、モジュールは autoclean されなくなる。
+<I>add</I>
+
+が前に付加されると、新しいリストを前のリストに置き換えるのではなく追加する。
+<I>alias</I>
+
+の結果が実際のモジュールでなければ、その
+<I>alias</I>
+
+のチェーンによって構成された
+<I>options</I>
+
+は、probe[all] を呼ぶ前に捨てられる。
+<I>MODULE_SPECIFIC_OPTIONS</I>
+
+のどれかにシェルにとって特別な文字 (スペース・コンマ・括弧)
+が含まれている場合には、そのオプションは '&quot;...&quot;'
+で括らなければならない。 '' は
+modules.conf の内部でオプションを区切り、 &quot;&quot; は
+オプションがシェルに渡されるときにそれを区切る。以下に例を示す。
+<P>
+<PRE>
+  abc='&quot;def,ghi jkl (xyz)&quot;'
+</PRE>
+
+<P>
+<DT><I>[add] above module module_list</I>
+
+<DD>
+この指定行は、あるモジュールのモジュールスタックの上に
+他のモジュールセットを &quot;pull in&quot; するのに利用できる。
+結果は
+<B><A HREF="../man8/lsmod.8.html">lsmod</A></B>(8)
+
+コマンドの出力で見ることができる。
+<I>above</I>
+
+指定行は依存関係が
+<B>modules.dep</B>
+
+ファイルには記述できないほど複雑なような状況下で有用である。
+これは
+<I>post-install</I>
+
+および
+<I>pre-remove</I>
+
+指定行の最適化された場合であるとみなすことができる。
+モジュールのインストールに失敗しても、
+<B>modprobe</B>
+
+の終了ステータスには影響しないことに注意。
+<I>add</I>
+
+が前に付加されると、新しいリストを前のリストに置き換えるのではなく追加する。
+<DT><I>[add] below module module_list</I>
+
+<DD>
+この指定行は、あるモジュールのモジュールスタックの下に
+他のモジュールセットを &quot;push&quot; するのに利用できる。
+結果は
+<B><A HREF="../man8/lsmod.8.html">lsmod</A></B>(8)
+
+コマンドの出力で見ることができる。
+<I>below</I>
+
+指定行は依存関係が
+<B>modules.dep</B>
+
+ファイルには記述できないほど複雑なような状況下で有用である。
+これは
+<I>pre-install</I>
+
+および
+<I>post-remove</I>
+
+指定行の最適化された場合であるとみなすことができる。
+モジュールのインストールに失敗しても、
+<B>modprobe</B>
+
+の終了ステータスには影響しないことに注意。
+<I>add</I>
+
+が前に付加されると、新しいリストを前のリストに置き換えるのではなく追加する。
+</DL>
+<P>
+
+以下の指定行はモジュールのロード・アンロードの際に
+特定のコマンドを実行したい場合に利用できる (指定しなくてもよい)。
+エイリアスされたモジュール名に対してもこれらの指定は可能で、
+エイリアス展開後のモジュール名に対する指定が他にあれば、
+それらとともに適切な順序で実行される。
+<DL COMPACT>
+<DT><I>pre-install module command</I>
+
+<DD>
+指定したモジュールをインストールする前に
+<I>command</I>
+
+を実行する。
+<I>below</I>
+
+指定行も参照のこと。
+<DT><I>install module command</I>
+
+<DD>
+指定したモジュールをインストールする際に、デフォルトの
+<B>insmod</B>
+
+ではなく
+<I>command</I>
+
+を実行する。
+<DT><I>post-install module command</I>
+
+<DD>
+指定したモジュールをインストールした後に
+<I>command</I>
+
+を実行する。
+<I>above</I>
+
+指定行も参照のこと。
+<DT><I>pre-remove module command</I>
+
+<DD>
+指定したモジュールを削除する前に
+<I>command</I>
+
+を実行する。
+<I>above</I>
+
+指定行も参照のこと。
+<DT><I>remove module command</I>
+
+<DD>
+指定したモジュールを削除する際に、デフォルト (組み込み) の
+<B>rmmod</B>
+
+ではなく
+<I>command</I>
+
+を実行する。
+<DT><I>post-remove module command</I>
+
+<DD>
+指定したモジュールを削除した後に
+<I>command</I>
+
+を実行する。
+<I>below</I>
+
+指定行も参照のこと。
+<DT><I>persistdir</I>=directory_name<I></I>
+
+<DD>
+<B>rmmod</B>
+
+が永続モジュールパラメータを含むモジュールを削除する時、
+(おそらく) 修正されたパラメータを
+<I>directory_name</I>
+
+の下に保存する。
+<B>modprobe</B>
+
+が永続モジュールパラメータを含むモジュールをロードする時、
+以前の値を
+<I>directory_name</I>
+
+の下から探す。
+<I>persistdir</I>
+
+はモジュールがロードされた時に読み込み可能で、
+モジュールがアンロードされた時に書き込み可能でなければならない。
+デフォルト値は /var/lib/modules/persist である。
+多くの Linux ディストリビューションはファイルシステムをマウントする前に
+モジュールをロードするが、これは永続データに関する問題を引き起こすかもしれない。
+/var が別のパーティションにあって、モジュールがロードされてからマウントされる場合、
+<B>insmod</B>
+
+は永続データを読み込めない。
+/var が別のパーティションにある場合には、二つの選択肢がある。
+<DT><DD>
+1)
+<I>persistdir</I>
+
+にルートパーティションのディレクトリ、
+例えば /lib/modules/persist を指定する。
+これは
+<B>rmmod</B>
+
+が実行されるときにルートパーティションが書き込み可能であることを仮定している。
+<DT><DD>
+2)&nbsp;ファイルシステム関係のモジュールを全て最初にロードし、
+/var パーティションをマウントし、それから残りのモジュールをロードする。
+これはファイルシステムに永続データがないことを仮定している。
+</DL>
+<P>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>デフォルトの設定</H2>
+
+設定ファイル '/etc/modules.conf' がない場合や、
+あるいは指定行の上書き変更がない場合には、
+以下のデフォルトが用いられる。
+<P>
+<PRE>
+  depfile=/lib/modules/`uname -r`/modules.dep
+  generic_stringfile=/lib/modules/`uname -r`/modules.generic_string
+  pcimapfile=/lib/modules/`uname -r`/modules.pcimap
+  isapnpmapfile=/lib/modules/`uname -r`/modules.isapnpmap
+  usbmapfile=/lib/modules/`uname -r`/modules.usbmap
+  parportmapfile=/lib/modules/`uname -r`/modules.parportmap
+  ieee1394mapfile=/lib/modules/`uname -r`/modules.ieee1394map
+  pnpbiosmapfile=/lib/modules/`uname -r`/modules.pnpbiosmap
+
+  path[boot]=/lib/modules/boot
+  path[toplevel]=/lib/modules/`uname -r`
+  path[toplevel]=/lib/modules/`kernelversion`
+  path[toplevel]=/lib/modules/default
+  path[toplevel]=/lib/modules
+
+  persistdir=/var/lib/modules/persist
+</PRE>
+
+<P>
+<I>alias</I>
+
+と
+<I>options</I>
+
+指定行に対しても一連のデフォルト設定がある。
+このセットは継続的に拡張されているので、ここにはリストしない。
+(現在の) デフォルトのセットは、
+<B>/etc/modules.conf</B>
+
+ファイルがないときに
+<B>modprobe -c</B>
+
+コマンドを実行すれば閲覧できる。
+<P>
+
+全ての
+<I>options</I>
+
+指定行は、以下のようにモジュールに必要なオプションを指定する。
+<P>
+<PRE>
+  modprobe de620 bnc=1
+</PRE>
+
+<P>
+これらのオプションは
+<B>/etc/modules.conf</B>
+
+ファイルに与えられているオプションと、
+<B>modprobe</B>
+
+のコマンドラインによって上書きされる。
+<P>
+
+エイリアスされたモジュールにも
+<I>options</I>
+
+指定行は (されていないモジュールと) 同じように使うことができる。
+これは例えばダミーのモジュールに便利である。
+<P>
+<PRE>
+  alias dummy0 dummy
+  options dummy0 -o dummy0
+</PRE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>別の設定ファイル</H2>
+
+歴史的な理由から、もし /etc/modules.conf が存在しないと、
+modutils は代わりに /etc/conf.modules を読む。
+しかしこの古い名前の利用は推奨できない。
+/etc/modules.conf に置き換えるべきである。
+このバージョンの modutils では、
+/etc/conf.modules があると警告メッセージを発する。
+以降のバージョンではエラーメッセージを出して
+モジュールのロードを行わないことになるだろう。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/depmod.8.html">depmod</A></B>(8),
+
+<B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8),
+
+<B><A HREF="../man8/insmod.8.html">insmod</A></B>(8)
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>著者</H2>
+
+<PRE>
+Bjorn Ekwall &lt;<A HREF="mailto:bj0rn@blox.se">bj0rn@blox.se</A>&gt;
+Keith Owens &lt;<A HREF="mailto:kaos@ocs.com.au">kaos@ocs.com.au</A>&gt;
+</PRE>
+
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">このマニュアルについて</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">記法 (SEMANTICS)</A><DD>
+<DT><A HREF="#lbAF">文法 (SYNTAX)</A><DD>
+<DT><A HREF="#lbAG">デフォルトの設定</A><DD>
+<DT><A HREF="#lbAH">別の設定ファイル</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:40 GMT, December 05, 2022
+</BODY>
+</HTML>

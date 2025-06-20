@@ -1,0 +1,353 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FANOTIFY_MARK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FANOTIFY_MARK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/fanotify_mark.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fanotify_mark - ファイルシステムオブジェクトへの fanotify マークの追加、削除、変更
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/fanotify.h">sys/fanotify.h</A>&gt;</B>
+
+<B>int fanotify_mark(int </B><I>fanotify_fd</I><B>, unsigned int </B><I>flags</I><B>,</B>
+<B>                  uint64_t </B><I>mask</I><B>, int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+fanotify API の概要については <B><A HREF="../man7/fanotify.7.html">fanotify</A></B>(7) を参照。
+<P>
+
+<B>fanotify_mark</B>() はファイルシステムオブジェクトに対する fanotify マークの追加、削除、変更を行う。
+呼び出し元はマークを付けるファイルシステムオブジェクトに対する読み出し許可を持っていなければならない。
+<P>
+
+<I>fanotify_fd</I> 引数は <B><A HREF="../man2/fanotify_init.2.html">fanotify_init</A></B>(2) で返されたファイルディスクリプターである。
+<P>
+
+<I>flags</I> は実行する操作内容を示すビットマスクである。 以下の値のいずれか一つだけを指定しなければならない。
+<DL COMPACT>
+<DT><B>FAN_MARK_ADD</B><DD>
+<I>mask</I> のイベントを mark マスク (もしくは ignore マスク) に追加する。 <I>mask</I> は空であってはいけない。
+空の場合はエラー <B>EINVAL</B> が発生する。
+<DT><B>FAN_MARK_REMOVE</B><DD>
+引数 <I>mask</I> のイベントを mark マスク (もしくは ignore マスク) から削除する。 <I>mask</I> は空であってはいけない。
+空の場合はエラー <B>EINVAL</B>が発生する。
+<DT><B>FAN_MARK_FLUSH</B><DD>
+Remove either all marks for filesystems, all marks for mounts, or all marks
+for directories and files from the fanotify group.  If <I>flags</I> contains
+<B>FAN_MARK_MOUNT</B>, all marks for mounts are removed from the group.  If
+<I>flags</I> contains <B>FAN_MARK_FILESYSTEM</B>, all marks for filesystems are
+removed from the group.  Otherwise, all marks for directories and files are
+removed.  No flag other than and at most one of the flags <B>FAN_MARK_MOUNT</B>
+or <B>FAN_MARK_FILESYSTEM</B> can be used in conjunction with
+<B>FAN_MARK_FLUSH</B>.  <I>mask</I> is ignored.
+</DL>
+<P>
+
+上記のどの値も指定されなかった場合、 または 2 つ以上の値が指定された場合、 呼び出しはエラー <B>EINVAL</B> で失敗する。
+<P>
+
+これに加えて、 <I>flags</I> に以下の値を 0 個以上ビット単位の論理和 (OR) で指定できる。
+<DL COMPACT>
+<DT><B>FAN_MARK_DONT_FOLLOW</B><DD>
+<I>pathname</I> がシンボリックリンクの場合、 リンクが参照するファイルではなく、 リンク自身にマークを付ける (デフォルトでは
+<B>fanotify_mark</B>() は <I>pathname</I> がシンボリックリンクの場合シンボリックリンクの展開を行う)。
+<DT><B>FAN_MARK_ONLYDIR</B><DD>
+マークが付けられたファイルシステムオブジェクトがディレクトリでない場合、 エラー <B>ENOTDIR</B> が発生する。
+<DT><B>FAN_MARK_MOUNT</B><DD>
+Mark the mount point specified by <I>pathname</I>.  If <I>pathname</I> is not itself
+a mount point, the mount point containing <I>pathname</I> will be marked.  All
+directories, subdirectories, and the contained files of the mount point will
+be monitored.  The events which require that filesystem objects are
+identified by file handles, such as <B>FAN_CREATE</B>, <B>FAN_ATTRIB</B>,
+<B>FAN_MOVE</B>, and <B>FAN_DELETE_SELF</B>, cannot be provided as a <I>mask</I> when
+<I>flags</I> contains <B>FAN_MARK_MOUNT</B>.  Attempting to do so will result in the
+error <B>EINVAL</B> being returned.
+<DT><B>FAN_MARK_FILESYSTEM</B> (Linux 4.20 以降)<DD>
+
+Mark the filesystem specified by <I>pathname</I>.  The filesystem containing
+<I>pathname</I> will be marked.  All the contained files and directories of the
+filesystem from any mount point will be monitored.
+<DT><B>FAN_MARK_IGNORED_MASK</B><DD>
+<I>mask</I> のイベントの ignore マスクへの追加、もしくは削除を行う。
+<DT><B>FAN_MARK_IGNORED_SURV_MODIFY</B><DD>
+ignore マスクは変更イベントが発生しても残り続ける。 このフラグがセットされていない場合、
+無視するファイルやディレクトリに対して変更イベントが発生した際に ignore マスクはクリアされる。
+</DL>
+<P>
+
+<I>mask</I> はどのイベントに対して通知を受けるか (もしくはどのイベントを無視するか) を定義する。  以下の値から構成されるビットマスクである。
+<DL COMPACT>
+<DT><B>FAN_ACCESS</B><DD>
+ファイルやディレクトリへのアクセス (読み出し) があった際にイベントを作成する (「バグ」も参照)。
+<DT><B>FAN_MODIFY</B><DD>
+ファイルが変更された (書き込み) 際にイベントを作成する。
+<DT><B>FAN_CLOSE_WRITE</B><DD>
+書き込み可能ファイルがクローズされた際にイベントを作成する。
+<DT><B>FAN_CLOSE_NOWRITE</B><DD>
+読み出し専用のファイルやディレクトリがクローズされた際にイベントを作成する。
+<DT><B>FAN_OPEN</B><DD>
+ファイルやディレクトリがオープンされた際にイベントを作成する。
+<DT><B>FAN_OPEN_EXEC</B> (Linux 5.0 以降)<DD>
+
+Create an event when a file is opened with the intent to be executed.  See
+NOTES for additional details.
+<DT><B>FAN_ATTRIB</B> (Linux 5.1 以降)<DD>
+
+Create an event when the metadata for a file or directory has changed.  An
+fanotify group that identifies filesystem objects by file handles is
+required.
+<DT><B>FAN_CREATE</B> (Linux 5.1 以降)<DD>
+
+Create an event when a file or directory has been created in a marked parent
+directory.  An fanotify group that identifies filesystem objects by file
+handles is required.
+<DT><B>FAN_DELETE</B> (Linux 5.1 以降)<DD>
+
+Create an event when a file or directory has been deleted in a marked parent
+directory.  An fanotify group that identifies filesystem objects by file
+handles is required.
+<DT><B>FAN_DELETE_SELF</B> (Linux 5.1 以降)<DD>
+
+Create an event when a marked file or directory itself is deleted.  An
+fanotify group that identifies filesystem objects by file handles is
+required.
+<DT><B>FAN_MOVED_FROM</B> (Linux 5.1 以降)<DD>
+
+Create an event when a file or directory has been moved from a marked parent
+directory.  An fanotify group that identifies filesystem objects by file
+handles is required.
+<DT><B>FAN_MOVED_TO</B> (Linux 5.1 以降)<DD>
+
+Create an event when a file or directory has been moved to a marked parent
+directory.  An fanotify group that identifies filesystem objects by file
+handles is required.
+<DT><B>FAN_MOVE_SELF</B> (Linux 5.1 以降)<DD>
+
+Create an event when a marked file or directory itself has been moved.  An
+fanotify group that identifies filesystem objects by file handles is
+required.
+<DT><B>FAN_OPEN_PERM</B><DD>
+ファイルやディレクトリをオープンするアクセス許可が要求された際にイベントを作成する。 fanotify ファイルディスクリプターが
+<B>FAN_CLASS_PRE_CONTENT</B> か <B>FAN_CLASS_CONTENT</B> を指定されて作成されている必要がある。
+<DT><B>FAN_OPEN_EXEC_PERM</B> (since Linux 5.0)<DD>
+
+Create an event when a permission to open a file for execution is
+requested.  An fanotify file descriptor created with
+<B>FAN_CLASS_PRE_CONTENT</B> or <B>FAN_CLASS_CONTENT</B> is required.  See NOTES for
+additional details.
+<DT><B>FAN_ACCESS_PERM</B><DD>
+ファイルやディレクトリを読み出すアクセス許可が要求された際にイベントを作成する。 fanotify ファイルディスクリプターが
+<B>FAN_CLASS_PRE_CONTENT</B> か <B>FAN_CLASS_CONTENT</B> を指定されて作成されている必要がある。
+<DT><B>FAN_ONDIR</B><DD>
+Create events for directories---for example, when <B><A HREF="../man3/opendir.3.html">opendir</A></B>(3),
+<B><A HREF="../man3/readdir.3.html">readdir</A></B>(3)  (but see BUGS), and <B><A HREF="../man3/closedir.3.html">closedir</A></B>(3)  are called.  Without this
+flag, events are created only for files.  In the context of directory entry
+events, such as <B>FAN_CREATE</B>, <B>FAN_DELETE</B>, <B>FAN_MOVED_FROM</B>, and
+<B>FAN_MOVED_TO</B>, specifying the flag <B>FAN_ONDIR</B> is required in order to
+create events when subdirectory entries are modified (i.e., <B><A HREF="../man2/mkdir.2.html">mkdir</A></B>(2)/
+<B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2)).
+<DT><B>FAN_EVENT_ON_CHILD</B><DD>
+Events for the immediate children of marked directories shall be created.
+The flag has no effect when marking mounts and filesystems.  Note that
+events are not generated for children of the subdirectories of marked
+directories.  More specifically, the directory entry modification events
+<B>FAN_CREATE</B>, <B>FAN_DELETE</B>, <B>FAN_MOVED_FROM</B>, and <B>FAN_MOVED_TO</B> are not
+generated for any entry modifications performed inside subdirectories of
+marked directories.  Note that the events <B>FAN_DELETE_SELF</B> and
+<B>FAN_MOVE_SELF</B> are not generated for children of marked directories.  To
+monitor complete directory trees it is necessary to mark the relevant mount
+or filesystem.
+</DL>
+<P>
+
+The following composed values are defined:
+<DL COMPACT>
+<DT><B>FAN_CLOSE</B><DD>
+ファイルがクローズされた (<B>FAN_CLOSE_WRITE</B>|<B>FAN_CLOSE_NOWRITE</B>)。
+<DT><B>FAN_MOVE</B><DD>
+A file or directory has been moved (<B>FAN_MOVED_FROM</B>|<B>FAN_MOVED_TO</B>).
+</DL>
+<P>
+
+マークを付けるファイルシステムオブジェクトは、 ファイルディスクリプター <I>dirfd</I> と <I>pathname</I>
+で指定されたパス名から決定される。
+<DL COMPACT>
+<DT>*<DD>
+<I>pathname</I> が NULL の場合、 <I>dirfd</I> でマークを付けるファイルシステムオブジェクトが定義される。
+<DT>*<DD>
+<I>pathname</I> が NULL で、 <I>dirfd</I> が特別な値 <B>AT_FDCWD</B> の場合、
+カレントワーキングディレクトリがマークされる。
+<DT>*<DD>
+<I>pathname</I> が絶対パスの場合、 そのパス名によりマークを付けるファイルシステムオブジェクトが定義され、 <I>dirfd</I> は無視される。
+<DT>*<DD>
+<I>pathname</I> が相対パスで、 <I>dirfd</I> が <B>AT_FDCWD</B> でない場合、 マークを付けるファイルシステムオブジェクトは
+<I>dirfd</I> が参照するディレクトリに対する相対パス <I>pathname</I> を解釈して決定される。
+<DT>*<DD>
+<I>pathname</I> が相対パスで、 <I>dirfd</I> が <B>AT_FDCWD</B> の場合、
+マークを付けるファイルシステムオブジェクトはカレントワーキングディレクトリに対する相対パス <I>pathname</I> を解釈して決定される。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると <B>fanotify_mark</B>() は 0 を返す。 エラーの場合、 -1 を返し、 <I>errno</I> にエラーの原因を示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+無効なファイルディスクリプターが <I>fanotify_fd</I> で渡された。
+<DT><B>EINVAL</B><DD>
+無効な値が <I>flags</I> か <I>mask</I> に指定されたか、 <I>fanotify_fd</I> が fanotify
+ファイルディスクリプターでなかった。
+<DT><B>EINVAL</B><DD>
+The fanotify file descriptor was opened with <B>FAN_CLASS_NOTIF</B> or the
+fanotify group identifies filesystem objects by file handles and mask
+contains a flag for permission events (<B>FAN_OPEN_PERM</B> or
+<B>FAN_ACCESS_PERM</B>).
+<DT><B>ENODEV</B><DD>
+The filesystem object indicated by <I>pathname</I> is not associated with a
+filesystem that supports <I>fsid</I> (e.g., <B>tmpfs</B>(5)).  This error can be
+returned only with an fanotify group that identifies filesystem objects by
+file handles.
+<DT><B>ENOENT</B><DD>
+<I>dirfd</I> と <I>pathname</I> で指定されたファイルシステムオブジェクトが存在しない。
+このエラーはマークされていないオブジェクトからマークを削除しようとした場合にも発生する。
+<DT><B>ENOMEM</B><DD>
+必要なメモリーを割り当てできなかった。
+<DT><B>ENOSPC</B><DD>
+マークの数が 8192 の上限を超過し、 <B><A HREF="../man2/fanotify_init.2.html">fanotify_init</A></B>(2) で fanotify ファイルディスクリプターが作成された際に
+<B>FAN_UNLIMITED_MARKS</B> フラグが指定されていなかった。
+<DT><B>ENOSYS</B><DD>
+このカーネルでは <B>fanotify_mark</B>() が実装されていない。 fanotify API が利用できるのは、 カーネルで
+<B>CONFIG_FANOTIFY</B> が有効になっている場合だけである。
+<DT><B>ENOTDIR</B><DD>
+<I>flags</I> に <B>FAN_MARK_ONLYDIR</B> が含まれているが、 <I>dirfd</I> と <I>pathname</I>
+がディレクトリを指定していない。
+<DT><B>EOPNOTSUPP</B><DD>
+The object indicated by <I>pathname</I> is associated with a filesystem that
+does not support the encoding of file handles.  This error can be returned
+only with an fanotify group that identifies filesystem objects by file
+handles.
+<DT><B>EXDEV</B><DD>
+The filesystem object indicated by <I>pathname</I> resides within a filesystem
+subvolume (e.g., <B>btrfs</B>(5))  which uses a different <I>fsid</I> than its root
+superblock.  This error can be returned only with an fanotify group that
+identifies filesystem objects by file handles.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>fanotify_mark</B>() は Linux カーネルのバージョン 2.6.36 で導入され、 バージョン 2.6.37 で有効になった。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 独自である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>FAN_OPEN_EXEC と FAN_OPEN_EXEC_PERM</H3>
+
+When using either <B>FAN_OPEN_EXEC</B> or <B>FAN_OPEN_EXEC_PERM</B> within the
+<I>mask</I>, events of these types will be returned only when the direct
+execution of a program occurs.  More specifically, this means that events of
+these types will be generated for files that are opened using <B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+<B><A HREF="../man2/execveat.2.html">execveat</A></B>(2), or <B><A HREF="../man2/uselib.2.html">uselib</A></B>(2).  Events of these types will not be raised
+in the situation where an interpreter is passed (or reads) a file for
+interpretation.
+<P>
+
+Additionally, if a mark has also been placed on the Linux dynamic linker, a
+user should also expect to receive an event for it when an ELF object has
+been successfully opened using <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  or <B><A HREF="../man2/execveat.2.html">execveat</A></B>(2).
+<P>
+
+For example, if the following ELF binary were to be invoked and a
+<B>FAN_OPEN_EXEC</B> mark has been placed on /:
+<P>
+
+
+
+$ /bin/echo foo
+
+
+<P>
+
+The listening application in this case would receive <B>FAN_OPEN_EXEC</B> events
+for both the ELF binary and interpreter, respectively:
+<P>
+
+
+
+/bin/echo
+/lib64/ld-linux-x86-64.so.2
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+バージョン 3.16 より前の Linux カーネルでは以下のバグが存在した。
+<DL COMPACT>
+<DT>*<DD>
+
+<I>flags</I> に <B>FAN_MARK_FLUSH</B> が指定されている場合、 たとえそのオブジェクトが使用されない場合であっても、
+<I>dirfd</I> と <I>pathname</I> には有効なファイルシステムオブジェクトを指定しなければならない。
+<DT>*<DD>
+
+<B><A HREF="../man2/readdir.2.html">readdir</A></B>(2) は <B>FAN_ACCESS</B> イベントを生成しない。
+<DT>*<DD>
+
+<B>fanotify_mark</B>() が <B>FAN_MARK_FLUSH</B> 付きで呼び出された場合、 <I>flags</I>
+の値が無効かはチェックされない。
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/fanotify_init.2.html">fanotify_init</A></B>(2), <B><A HREF="../man7/fanotify.7.html">fanotify</A></B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">FAN_OPEN_EXEC と FAN_OPEN_EXEC_PERM</A><DD>
+</DL>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,131 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ADD_KEY</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ADD_KEY</H1>
+Section: Linux Key Management Calls (2)<BR>Updated: 2010-02-25<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/add_key.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+add_key - カーネルの鍵管理機能に鍵を追加する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/keyutils.h">keyutils.h</A>&gt;</B>
+
+<B>key_serial_t add_key(const char *</B><I>type</I><B>, const char *</B><I>description</I><B>,</B>
+<B>                     const void *</B><I>payload</I><B>, size_t </B><I>plen</I><B>,</B>
+<B>                     key_serial_t </B><I>keyring</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>add_key</B>() は、 指定した <I>type</I> と <I>description</I> を持つ鍵の作成、更新を行うようにカーネルに指示し、 長さ
+<I>plen</I> の <I>payload</I> で鍵を生成し、 指定された <I>keyring</I> にその鍵を追加し、 鍵リングのシリアル番号を返す。
+<P>
+
+鍵タイプによっては、 フォーマットが違っていたり、その他にも無効なものがあると、 指定したデータが拒否される場合もある。
+<P>
+
+対象の <I>keyring</I> に指定された <I>type</I> と <I>description</I> に合致する鍵がすでに含まれる場合、
+鍵タイプがサポートしていれば、 新しい鍵が作成されるのではなく、 その鍵が更新される。 鍵タイプがサポートしていない場合、 新しい鍵が作成され、
+鍵リングの現在の鍵のリンクはこの鍵で置き換えられる。
+<P>
+
+対象の <I>keyring</I> のシリアル番号には、 呼び出し元が書き込み許可を持つ有効な鍵リングのシリアル番号か、 以下の特別な鍵リング ID
+を指定する。
+<DL COMPACT>
+<DT><B>KEY_SPEC_THREAD_KEYRING</B><DD>
+この値は呼び出し元スレッド固有の鍵リングを指定する。
+<DT><B>KEY_SPEC_PROCESS_KEYRING</B><DD>
+この値は呼び出し元プロセス固有の鍵リングを指定する。
+<DT><B>KEY_SPEC_SESSION_KEYRING</B><DD>
+この値は呼び出し元セッション固有の鍵リングを指定する。
+<DT><B>KEY_SPEC_USER_KEYRING</B><DD>
+この値は呼び出し元の UID 固有の鍵リングを指定する。
+<DT><B>KEY_SPEC_USER_SESSION_KEYRING</B><DD>
+この値は呼び出し元の UID のセッションの鍵リングを指定する。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>鍵タイプ</H2>
+
+コアの鍵管理コードには様々な鍵タイプがあり、 この関数でこれらを指定することができる。
+<DL COMPACT>
+<DT><B>``user''</B><DD>
+ユーザー定義の鍵タイプの鍵には、 任意のデータの blob を入れることができ、 <I>description</I> には任意の有効な文字列を指定できるが、
+鍵が対象とするサービスを表す文字列とコロンをプレフィックスに指定するのが推奨される方法である (例えば ``<B>afs:mykey</B>'')。
+このタイプの鍵には <I>payload</I> に空文字列つまり NULL を指定する。
+<DT><B>``keyring''</B><DD>
+鍵リングは、 任意のタイプの他の鍵の列へのリンクを保持できる特別な鍵タイプである。 このインターフェースを使って鍵リングを作成する場合、
+<I>payload</I> には NULL を、 <I>plen</I> には 0 を指定しなければならない。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると <B>add_key</B>() は、作成または更新した鍵のシリアル番号を返す。 エラーの場合、値 -1 が返され <I>errno</I>
+にエラーを示す値が設定される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>ENOKEY</B><DD>
+鍵リングが存在しない。
+<DT><B>EKEYEXPIRED</B><DD>
+鍵リングが期限切れである。
+<DT><B>EKEYREVOKED</B><DD>
+鍵リングが廃止されている。
+<DT><B>EINVAL</B><DD>
+ペイロードデータが無効である。
+<DT><B>ENOMEM</B><DD>
+鍵を作成するのに十分なメモリーがない。
+<DT><B>EDQUOT</B><DD>
+この鍵を作成するか、鍵を鍵リングに追加すると、 このユーザーの鍵リングのクォータを超過してしまう。
+<DT><B>EACCES</B><DD>
+そのユーザーは指定された鍵リングを変更できない。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>LINKING</H2>
+
+これは Linux のシステムコールだが、 <I>libc</I> には存在せず、 代わりに <I>libkeyutils</I> に存在する。 リンクする際には、
+リンカーに <B>-lkeyutils</B> を指定する必要がある。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>keyctl</B>(1), <B>keyctl</B>(2), <B>request_key</B>(2)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">鍵タイプ</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">LINKING</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:26 GMT, December 05, 2022
+</BODY>
+</HTML>

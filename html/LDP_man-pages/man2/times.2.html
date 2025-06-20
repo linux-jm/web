@@ -1,0 +1,170 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TIMES</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TIMES</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated:  2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/times.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+times - プロセス時間を取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/times.h">sys/times.h</A>&gt;</B>
+<P>
+
+<B>clock_t times(struct tms *</B><I>buf</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>times</B>()  は現在のプロセス時間を <I>buf</I> が指している <B>struct tms</B> に格納する。 <I>struct tms</I> は
+<I>&lt;<A HREF="file:///usr/include/sys/times.h">sys/times.h</A>&gt;</I> で以下のように定義されている:
+<P>
+
+
+
+struct tms  {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;clock_t&nbsp;tms_utime;&nbsp;&nbsp;/*&nbsp;user&nbsp;time&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;clock_t&nbsp;tms_stime;&nbsp;&nbsp;/*&nbsp;system&nbsp;time&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;clock_t&nbsp;tms_cutime;&nbsp;/*&nbsp;user&nbsp;time&nbsp;of&nbsp;children&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;clock_t&nbsp;tms_cstime;&nbsp;/*&nbsp;system&nbsp;time&nbsp;of&nbsp;children&nbsp;*/
+};
+
+
+<P>
+
+The <I>tms_utime</I> field contains the CPU time spent executing instructions of
+the calling process.  The <I>tms_stime</I> field contains the CPU time spent
+executing inside the kernel while performing tasks on behalf of the calling
+process.
+<P>
+
+<I>tms_cutime</I> フィールドは、 終了を待っている全ての子プロセスの <I>tms_utime</I> と <I>tms_cutime</I> の合計である。
+<I>tms_cstime</I> フィールドは、 終了を待っている全ての子プロセスの <I>tms_stime</I> と <I>tms_cstime</I> の合計である。
+<P>
+
+終了する子(及びその子孫)プロセスの時間は <B><A HREF="../man2/wait.2.html">wait</A></B>(2)  や <B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)  がプロセス ID を返した瞬間に加算される。
+つまり、子がまだ終了を待っていない状態では 孫プロセスの時間は決して現れない。
+<P>
+
+全ての時間はクロック数で返される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>times</B>()  は過去のある時点から経過したクロック数 (clock tick) を返す。 この返り値は <I>clock_t</I>
+型が取り得る範囲からオーバーフローするかもしれない。 エラーの場合、<I>(clock_t)&nbsp;-1</I> が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>tms</I> がプロセスのアドレス空間の外を指している。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+<BR>&nbsp;POSIX.1-2001,&nbsp;POSIX.1-2008,&nbsp;SVr4,&nbsp;4.3BSD.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+一秒あたりのクロック数は以下で得ることができる。
+<P>
+
+
+
+<BR>&nbsp;sysconf(_SC_CLK_TCK);
+
+
+<P>
+
+POSIX.1-1996 では、<B>CLK_TCK</B> シンボル (<I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I> で定義されている)
+は古いものであると記述されている。 今ではこれは古いものである。
+<P>
+
+
+
+
+Linux 2.6.9 より前のバージョンでは、 <B>SIGCHLD</B> を <B>SIG_IGN</B> に設定すると 終了した子プロセスの回数は 自動的に
+<I>tms_cstime</I> と <I>tms_cutime</I> フィールドに含まれる。 しかし、POSIX.1-2001 では、この動作は呼び出し元が
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)  関数群で子プロセスを待った場合にのみ起きるべきだとしている。 標準とは異なるこの動作は Linux 2.6.9
+以降で修正されている。
+<P>
+
+Linux では、 <I>buf</I> 引数に NULL を指定することができ、その場合は <B>times</B>()  は単に関数の結果を返す。
+しかし、POSIX はこの振る舞いは規定されておらず、 その他のほとんどの UNIX 実装は <I>buf</I> の値として非 NULL の値を要求する。
+<P>
+
+<B><A HREF="../man3/clock.3.html">clock</A></B>(3)  も <I>clock_t</I> 型の値を返すが、この値は <B>times</B>()  で使用されるクロック tick 数ではなく、
+<B>CLOCKS_PER_SEC</B> が単位である点に注意すること。
+<P>
+
+
+
+
+Linux では、 <B>times</B>()  の返り値を計算する起点となる「過去の任意の時点」は、カーネルのバージョン により異なる。 Linux 2.4
+以前では、この時点はシステムが起動した瞬間である。 Linux 2.6 以降では、この時点はシステム起動時刻の <I>(2^32/HZ) - 300</I>
+秒前である。 このようにカーネルバージョン (や UNIX の実装) により異なることと、 返り値が <I>clock_t</I>
+の範囲をオーバーフローする可能性があるという事実を考慮すると、 移植性が必要なアプリケーションではこの値を使うのは避けるのが賢明であろう。
+経過時間を測りたい場合には、代わりに <B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2)  を使用すること。
+<A NAME="lbAI">&nbsp;</A>
+<H3>歴史</H3>
+
+SVr1-3 では <I>long</I> を返し、構造体のメンバに <I>time_t</I> 型を使っていたが、紀元からの秒数ではなくクロック数を格納していた。
+V7 では構造体のメンバに <I>long</I> 型を使っていた。まだ <I>time_t</I> 型がなかったからである。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+
+
+
+いくつかのアーキテクチャー (特に i386) における Linux のシステムコールの慣習の
+制限により、Linux 2.6 では起動直後は (41秒と) タイムウィンドウが小さく、
+<B>times</B>() がエラーが起こったことを示す -1 を間違って返すことがある。 返り値
+が <I>clock_t</I> が格納可能な最大値を超過した際にも同じ問題が起こり得る。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/time.1.html">time</A></B>(1), <B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2), <B><A HREF="../man2/wait.2.html">wait</A></B>(2), <B><A HREF="../man3/clock.3.html">clock</A></B>(3), <B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3),
+<B><A HREF="../man7/time.7.html">time</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">歴史</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

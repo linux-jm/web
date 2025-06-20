@@ -1,0 +1,205 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PPPOE-RELAY</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PPPOE-RELAY</H1>
+Section: Maintenance Commands (8)<BR>Updated: 26 January 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/rp-pppoe/release/man8/pppoe-relay.8">roff page</A><HR>
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pppoe-relay - ユーザー空間 PPPoE リレーエージェント
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>pppoe-relay </B>[<I>options</I>]
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pppoe-relay</B> は Linux で使われる
+PPPoE (Point-to-Point Protocol over Ethernet) の
+ユーザー空間リレーエージェントである。
+<B>pppoe-relay</B> はクライアント <B>pppoe</B> と
+サーバー <B>pppoe-server</B> と連携して動作する。
+<B>pppoe-relay</B> の動作についての詳細は、
+このマニュアルで後にでてくる「動作」のセクションを参照すること。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-S </B><I>interface</I>
+
+<DD>
+イーサーネットインターフェース <I>interface</I> を
+<B>pppoe-relay</B> が管理するインターフェースのリストに追加する。
+PPPoE サーバーだけが、このインターフェースに接続できる。
+<P>
+<DT><B>-C </B><I>interface</I>
+
+<DD>
+イーサーネットインターフェース <I>interface</I> を
+<B>pppoe-relay</B> が管理するインターフェースのリストに追加する。
+PPPoE クライアントだけが、このインターフェースに接続できる。
+<P>
+<DT><B>-B </B><I>interface</I>
+
+<DD>
+イーサーネットインターフェース <I>interface</I> を
+<B>pppoe-relay</B> が管理するインターフェースのリストに追加する。
+PPPoE クライアントとサーバーの両方が、このインターフェースに接続できる。
+<P>
+<DT><B>-n </B><I>num</I>
+
+<DD>
+最大 <I>num</I> 個の PPPoE セッションを許可する。
+指定されない場合のデフォルトは 5000 である。
+<I>num</I> は 1 〜 65534 の範囲である。
+<P>
+<DT><B>-i </B><I>timeout</I>
+
+<DD>
+セッションのアイドルタイムアウトを指定する。
+セッションの接続先と接続元の両方が <I>timeout</I> 秒以上
+アイドルになっていた場合、そのセッションを終了する。
+<I>timeout</I> を 0 に指定すると、
+アイドルによりセッションが終了されることはない。
+<P>
+アイドルセッションの満了をチェックするルーチンは、
+最も頻繁に実行されたとしても 30 秒に 1 回であるので、
+最も短いタイムアウトの値もこれに近い。
+<I>timeout</I> のデフォルトの値は 600 秒 (10 分) である。
+<P>
+<DT><B>-F</B>
+
+<DD>
+<B>-F</B> オプションを指定すると、<B>pppoe-relay</B> は
+バックグラウンドに fork <I>されず</I>、
+フォアグラウンドに残ったままになる。
+<P>
+<DT><B>-h</B>
+
+<DD>
+<B>-h</B> オプションを指定すると、
+使用法についての簡単なメッセージを表示して終了する。
+<P>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>動作</H2>
+
+<P>
+<B>pppoe-relay</B> は、<B>-B</B> または <B>-C</B> オプションで指定された
+全てのインターフェースに入ってくる PPPoE PADI フレームを待ち受ける。
+PADI フレームが入ってくると、
+<B>pppoe-relay</B> は Relay-Session-ID タグを追加し、
+<B>-B</B> または <B>-S</B> オプションで指定された
+全てのインターフェースに PADI をブロードキャストする。
+(ただし PADI フレームが入ってきたインターフェースは除く)。
+<P>
+受信した全ての PADO フレームは、
+(送られてきた PADI フレームに有効な Relay-Session-ID タグがあると仮定して)
+PADI を送ってきたクライアントにリレーして戻される。
+同様に、クライアントからの PADR フレームは、
+マッチしたアクセス集信装置にリレーして戻される。
+<P>
+PADS フレームを受信すると、<B>pppoe-relay</B> は
+接続元と接続先の MAC アドレスとセッション ID を
+ハッシュテーブルに入れる。
+アクセス集信装置が監視するセッション ID は、
+クライアントが監視するセッション ID と異なるかもしれない。
+<B>pppoe-relay</B> はセッション ID が重複しないように
+セッションの番号をふり直さなければならない。
+接続元または接続先がセッションフレームを送信すると、
+<B>pppoe-relay</B> はハッシュテーブルにあるセッションエントリを参照し、
+適切な接続相手にフレームを受け渡す。
+<P>
+PADT フレームを受信すると、<B>pppoe-relay</B> は
+接続相手に PADT フレームを受け渡し、
+ハッシュテーブルからセッションエントリを削除する。
+<P>
+クライアントやサーバーがクラッシュした場合 (またはフレームが失われた場合)、
+PADT フレームは送信されず、<B>pppoe-relay</B> のハッシュテーブルは
+失効したセッションで一杯になってしまう。
+そのため、セッションを掃除するルーチンが定期的に実行され、
+ハッシュテーブルから古くなったセッションを削除する。
+<I>timeout</I> 秒間データが流れていない場合、
+そのセッションは「古くなった」とされる。
+タイムアウトによりセッションが削除される場合、
+セッションが kill されたことを知らせるために、
+接続元と接続先に PADT フレームが送られる。
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>起動方法の例</H2>
+
+<P>
+<PRE>
+pppoe-relay -C eth0 -S eth1
+</PRE>
+
+<P>
+上記の例では、eth0 ネットワーク上の PPPoE クライアントと
+eth1 ネットワーク上の PPPoE サーバーの間でフレームが受け渡される。
+<P>
+<PRE>
+pppoe-relay -B eth0 -B eth1
+</PRE>
+
+<P>
+これは透過的なリレーの例である -- 
+eth0, eth1 ネットワークとクライアント・サーバーの
+どの組み合わせでもフレームが受け渡される。
+<P>
+<PRE>
+pppoe-relay -S eth0 -C eth1 -C eth2 -C eth3
+</PRE>
+
+<P>
+この例では、eth0 ネットワーク上のサーバーと
+eth1, eth2, eth3 ネットワーク上のクライアントの間で
+フレームが受け渡される。
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>著者</H2>
+
+<B>pppoe-relay</B> は David F. Skoll &lt;<A HREF="mailto:dfs@roaringpenguin.com">dfs@roaringpenguin.com</A>&gt; によって
+作成された。
+<P>
+<B>pppoe</B> のホームページは
+<I><A HREF="http://www.roaringpenguin.com/pppoe/">http://www.roaringpenguin.com/pppoe/</A></I> である。
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man8/adsl-start.8.html">adsl-start</A>(8), <A HREF="../man8/adsl-stop.8.html">adsl-stop</A>(8), <A HREF="../man8/adsl-connect.8.html">adsl-connect</A>(8), <A HREF="../../ppp/man8/pppd.8.html">pppd</A>(8), <A HREF="../man5/pppoe.conf.5.html">pppoe.conf</A>(5),
+<A HREF="../man8/pppoe.8.html">pppoe</A>(8), <A HREF="../man8/adsl-setup.8.html">adsl-setup</A>(8), <A HREF="../man8/adsl-status.8.html">adsl-status</A>(8), <A HREF="../man8/pppoe-sniff.8.html">pppoe-sniff</A>(8), <A HREF="../man8/pppoe-server.8.html">pppoe-server</A>(8)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">動作</A><DD>
+<DT><A HREF="#lbAG">起動方法の例</A><DD>
+<DT><A HREF="#lbAH">著者</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

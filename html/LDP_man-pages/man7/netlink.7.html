@@ -1,0 +1,467 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of NETLINK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>NETLINK</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/netlink.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+netlink - カーネルとユーザー空間の通信 (AF_NETLINK)
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/asm/types.h">asm/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/linux/netlink.h">linux/netlink.h</A>&gt;</B>
+
+<B>netlink_socket = socket(AF_NETLINK, </B><I>socket_type</I><B>, </B><I>netlink_family</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+netlink はカーネルモジュールとユーザー空間のプロセス間で 情報をやりとりするために用いられる。 netlink は、ユーザープロセスに対しては
+標準的なソケットベースのインターフェースを、 カーネルモジュールにはカーネルの内部 API を提供する。 カーネル内部のインターフェースについてはこの
+man ページでは記述しない。 また、netlink キャラクターデバイスを用いた obsolete な netlink
+インターフェースもあるが、これもこの文書では解説しない。 これは過去互換性のためだけに用意されている。
+<P>
+
+netlink はデータグラム指向のサービスである。 <I>socket_type</I> には <B>SOCK_RAW</B> と <B>SOCK_DGRAM</B>
+の両方とも指定可能である。 しかし netlink プロトコルはデータグラムと raw ソケットの区別をしない。
+<P>
+
+<I>netlink_family</I> は、通信するカーネルモジュールや netlink グループの選択に用いる。 現在割り当てられている netlink
+ファミリーは以下の通り。
+<DL COMPACT>
+<DT><B>NETLINK_ROUTE</B><DD>
+ルーティングとリンクの更新を受信する。 (IPv4 と IPv6 両方の) ルーティングテーブル・ IP アドレス・リンクパラメーター・近傍設定
+(neighbor setup)・ キューイングルール (queueing dicipline)・トラフィッククラス・
+パケットのクラス分類の修正に用いることができるだろう (<B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)  を見よ)。
+<DT><B>NETLINK_W1</B> (Linux 2.6.13 から 2.16.17 まで)<DD>
+単線 (1-wire) のサブシステムからのメッセージ。
+<DT><B>NETLINK_USERSOCK</B><DD>
+ユーザーモードソケットプロトコルのために予約されている。
+<DT><B>NETLINK_FIREWALL</B> (Linux 3.4 以前)<DD>
+
+Transport IPv4 packets from netfilter to user space.  Used by <I>ip_queue</I>
+kernel module.  After a long period of being declared obsolete (in favor of
+the more advanced <I>nfnetlink_queue</I> feature), <B>NETLINK_FIREWALL</B> was
+removed in Linux 3.5.
+<DT><B>NETLINK_SOCK_DIAG</B> (Linux 3.3 以降)<DD>
+
+Query information about sockets of various protocol families from the kernel
+(see <B>sock_diag</B>(7)).
+<DT><B>NETLINK_INET_DIAG</B> (Linux 2.6.14 以降)<DD>
+An obsolete synonym for <B>NETLINK_SOCK_DIAG</B>.
+<DT><B>NETLINK_NFLOG</B> (Linux 3.16 以前)<DD>
+Netfilter/iptables ULOG.
+<DT><B>NETLINK_XFRM</B><DD>
+
+IPsec.
+<DT><B>NETLINK_SELINUX</B> (Linux 2.6.4 以降)<DD>
+SELinux のイベント通知。
+<DT><B>NETLINK_ISCSI</B> (Linux 2.6.15 以降)<DD>
+
+Open-iSCSI.
+<DT><B>NETLINK_AUDIT</B> (Linux 2.6.6 以降)<DD>
+
+監査 (audit) を行う。
+<DT><B>NETLINK_FIB_LOOKUP</B> (Linux 2.6.13 以降)<DD>
+
+ユーザー空間から FIB ルックアップにアクセスする。
+<DT><B>NETLINK_CONNECTOR</B> (Linux 2.6.14 以降)<DD>
+
+カーネルコネクタ。より詳しい情報は Linux カーネルソースの <I>Documentation/driver-api/connector.rst</I>
+(カーネル 5.2 以前では <I>/Documentation/connector/connector.*</I>) を参照すること。
+<DT><B>NETLINK_NETFILTER</B> (Linux 2.6.14 以降)<DD>
+
+netfilter サブシステム。
+<DT><B>NETLINK_SCSITRANSPORT</B> (Linux 2.6.19 以降)<DD>
+
+
+SCSI Transports.
+<DT><B>NETLINK_RDMA</B> (Linux 3.0 以降)<DD>
+
+
+Infiniband RDMA.
+<DT><B>NETLINK_IP6_FW</B> (Linux 3.4 以前)<DD>
+IPv6 パケットを netfilter からユーザー空間へ転送する。 <I>ip6_queue</I> カーネルモジュールで使用される。
+<DT><B>NETLINK_DNRTMSG</B><DD>
+DECnet ルーティングメッセージ。
+<DT><B>NETLINK_KOBJECT_UEVENT</B> (Linux 2.6.10 以降)<DD>
+
+ユーザー空間へのカーネルメッセージ
+<DT><B>NETLINK_GENERIC</B> (Linux 2.6.15 以降)<DD>
+netlink を簡単に使用するための一般的な netlink ファミリー。
+<DT><B>NETLINK_CRYPTO</B> (Linux 3.2 以降)<DD>
+
+
+カーネル暗号 API で登録された暗号に関する情報を要求したり、 カーネル暗号 API の設定を行ったりするための netlink インターフェース。
+</DL>
+<P>
+
+netlink メッセージはバイトストリームからなり、 一つ以上の <I>nlmsghdr</I> ヘッダーと、それに対応するペイロード (payload)
+が含まれる。 バイトストリームには、標準の <B>NLMSG_*</B> マクロによってのみアクセスすべきである。 より詳しい情報は <B><A HREF="../man3/netlink.3.html">netlink</A></B>(3)
+を見よ。
+<P>
+
+マルチパートメッセージ (一つ以上の <I>nlmsghdr</I> ヘッダーと、それに対応するペイロードが 一つバイトストリームに含まれる) においては、
+先頭のヘッダー・後続のヘッダーには <B>NLM_F_MULTI</B> フラグがセットされる。ただし最後のヘッダーだけは例外で、 <B>NLMSG_DONE</B>
+タイプとなる。
+<P>
+
+それぞれの <B>nlmsghdr</B> の後にはペイロードが続く。
+<P>
+
+
+
+struct nlmsghdr {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;nlmsg_len;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ヘッダーを含むメッセージの長さ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u16&nbsp;nlmsg_type;&nbsp;&nbsp;&nbsp;/*&nbsp;メッセージの内容のタイプ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u16&nbsp;nlmsg_flags;&nbsp;&nbsp;/*&nbsp;追加フラグ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;nlmsg_seq;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;シーケンス番号&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;nlmsg_pid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;送信者のポート&nbsp;ID&nbsp;*/
+};
+
+
+<P>
+
+<I>nlmsg_type</I> は標準のメッセージタイプのどれか一つである: <B>NLMSG_NOOP</B> メッセージは無視される。
+<B>NLMSG_ERROR</B> メッセージはエラーを示し、ペイロードには <I>nlmsgerr</I> 構造体が入る。 <B>NLMSG_DONE</B>
+メッセージはマルチパートメッセージの終了を伝える。
+<P>
+
+
+
+struct nlmsgerr {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;error;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;負または&nbsp;0&nbsp;の&nbsp;errno&nbsp;は応答を表す&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;nlmsghdr&nbsp;msg;&nbsp;&nbsp;/*&nbsp;エラーを起こしたメッセージのヘッダー&nbsp;*/
+};
+
+
+<P>
+
+ある netlink ファミリーで指定できるメッセージタイプは、 通常もっと多い。これらに関しては適切な man ページを見てほしい。 たとえば
+<B>NETLINK_ROUTE</B> に関しては <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)  に書いてある。
+<TABLE>
+<TR VALIGN=top><TD COLSPAN=2><I>nlmsg_flags</I> の標準フラグビット<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_REQUEST</B></TD><TD>要求メッセージ全てでセットされなければならない。<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_MULTI</B></TD><TD>
+このメッセージはマルチパートメッセージの一部である。
+マルチパートメッセージは <B>NLMSG_DONE</B> で終端する。
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_ACK</B></TD><TD>成功した場合の応答を要求する。<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_ECHO</B></TD><TD>この要求をエコーする。<BR></TD></TR>
+</TABLE>
+
+
+<TABLE>
+<TR VALIGN=top><TD COLSPAN=2>GET 要求における追加フラグビット<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_ROOT</B></TD><TD>単一のエントリーではなくテーブル全体を返す。<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_MATCH</B></TD><TD>
+メッセージの内容で渡された基準 (criteria) にマッチする全てのエントリーを返す。
+まだ実装されていない。
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_ATOMIC</B></TD><TD>テーブルのアトミックなスナップショットを返す。<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_DUMP</B></TD><TD>
+便利なマクロ。
+<BR>
+
+(NLM_F_ROOT|NLM_F_MATCH) と等価.
+<BR></TD></TR>
+</TABLE>
+
+
+<P>
+
+<B>NLM_F_ATOMIC</B> を使う場合は、 <B>CAP_NET_ADMIN</B> 権限を持つか実効ユーザー ID が 0
+でなければならない点に注意すること。
+<TABLE>
+<TR VALIGN=top><TD COLSPAN=2>NEW 要求における追加フラグビット<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_REPLACE</B></TD><TD>現存のオブジェクトを置換する。<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_EXCL</B></TD><TD>すでにオブジェクトがあったら置換しない。<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_CREATE</B></TD><TD>まだオブジェクトがなければ作成する。<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_APPEND</B></TD><TD>オブジェクトリストの最後に追加する。<BR></TD></TR>
+</TABLE>
+
+<P>
+
+<I>nlmsg_seq</I> と <I>nlmsg_pid</I> はメッセージの追跡に使用される。 <I>nlmsg_pid</I> はメッセージの送信元を表す。
+メッセージが netlink ソケットで送信されている場合、 <I>nlmsg_pid</I> とプロセスの PID は 1:1
+の関係ではない点に注意すること。 より詳しい情報は、 「<B>アドレスのフォーマット</B>」 のセクションを参照すること。
+<P>
+
+
+<I>nlmsg_seq</I> と <I>nlmsg_pid</I> は netlink のコアには見えない (opaque)。
+<P>
+
+netlink は信頼性の高いプロトコルではない。 netlink はメッセージを行き先に届けるために最善を尽くすが、
+メモリーが足りなかったりエラーが起こったりすると メッセージを取りこぼすこともある。 信頼性の高い転送を行いたいときは、
+送信者は受信者に応答を要求することもできる。 これには <B>NLM_F_ACK</B> フラグをセットする。 応答は <B>NLMSG_ERROR</B>
+パケットのエラーフィールドを 0 にしたものになる。 アプリケーションは自分自身のメッセージを受けたときには、 応答を生成しなければならない。
+カーネルは失敗したパケットに対して、 <B>NLMSG_ERROR</B> メッセージを送ろうとする。 ユーザープロセスはこの慣習にも従う必要がある。
+<P>
+
+しかし、どのような場合でもカーネルからユーザーへの 信頼性の高い転送は不可能である。 ソケットバッファーが満杯の場合、カーネルは netlink
+メッセージを送信できない。 メッセージは取りこぼされて、カーネルとユーザー空間プロセスは、 カーネルの状態についての同じビューを持つことができなくなる。
+これが起こったこと (<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)  によって <B>ENOBUFS</B> エラーが返される) を検知して再び同期させるのは、
+アプリケーションの責任である。
+<A NAME="lbAE">&nbsp;</A>
+<H3>アドレスのフォーマット</H3>
+
+<I>sockaddr_nl</I> 構造体はユーザー空間やカーネル空間で netlink クライアントを記述する。 <I>sockaddr_nl</I>
+はユニキャスト (単一の接続先にだけ送られる) にもできるし、 netlink マルチキャストグループ (<I>nl_groups</I> が 0 でない場合)
+にも送ることができる。
+<P>
+
+
+
+struct sockaddr_nl {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa_family_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nl_family;&nbsp;&nbsp;/*&nbsp;AF_NETLINK&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;&nbsp;nl_pad;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;0&nbsp;である&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nl_pid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ポート&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nl_groups;&nbsp;&nbsp;/*&nbsp;マルチキャストグループマスク&nbsp;*/
+};
+
+
+<P>
+
+<I>nl_pid</I> は netlink ソケットのユニキャストアドレスである。 行き先がカーネルの場合は、常に 0 である。
+ユーザー空間プロセスの場合、通常は <I>nl_pid</I> は行き先のソケットを所有しているプロセスの PID である。 ただし、 <I>nl_pid</I>
+はプロセスではなく netlink ソケットを同定する。 プロセスが複数の netlink ソケットを所有する場合、 <I>nl_pid</I>
+は最大でも一つのソケットのプロセス ID としか等しくならない。 <I>nl_pid</I> を netlink ソケットに割り当てる方法は 2 つある。
+アプリケーションが <B><A HREF="../man2/bind.2.html">bind</A></B>(2)  を呼ぶ前に <I>nl_pid</I> を設定する場合、 <I>nl_pid</I>
+が一意であることを確認するのはアプリケーションの責任となる。 アプリケーションが <I>nl_pid</I> を 0
+に設定した場合、カーネルがこの値を割り当てる。 カーネルはプロセスが最初にオープンした netlink ソケットに対してプロセス ID を割り当て、
+それ以降にプロセスが作成した全ての netlink ソケットにも一意な <I>nl_pid</I> を割り当てる。
+<P>
+
+
+<I>nl_groups</I> はビットマスクで、すべてのビットが netlink グループ番号を表す。
+それぞれの netlink ファミリーは 32 のマルチキャストグループのセットを持つ。
+それぞれの netlink ファミリーは 32 のマルチキャストグループの セットを持つ。
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2) がソケットに対して呼ばれると、 <I>sockaddr_nl</I> の <I>nl_groups</I>
+フィールドには listen したいグループのビットマスクがセットされる。
+デフォルトの値は 0 で、マルチキャストを一切受信しない。
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2) や <B><A HREF="../man2/connect.2.html">connect</A></B>(2) によって、あるソケットからメッセージを
+マルチキャストしたいときは、 <I>nl_groups</I> に送信したいグループのビットマスク
+をセットすればよい。
+netlink マルチキャストグループに送信したり、これを listen したりできるのは、
+実効ユーザー ID が 0 のプロセスか、 <B>CAP_NET_ADMIN</B> 権限を持つプロセスのみである。
+Linux 2.6.13 以降では、メッセージを複数のグループへのブロードキャストすることはできない。
+マルチキャストグループ向けメッセージを受信した場合、これ対する応答は
+送り主の PID とマルチキャストグループとに送り返すべきである。
+さらに、Linux のカーネルサブシステムによっては、
+他のユーザーもメッセージの送受信ができる場合がある。
+Linux 3.0 の時点では、
+<B>NETLINK_KOBJECT_UEVENT</B>, <B>NETLINK_GENERIC</B>, <B>NETLINK_ROUTE</B>,
+<B>NETLINK_SELINUX</B> グループでは他のユーザーがメッセージを受信することができる。
+他のユーザーがメッセージを送信できるグループは存在しない。
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>ソケットオプション</H3>
+
+To set or get a netlink socket option, call <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  to read or
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  to write the option with the option level argument set to
+<B>SOL_NETLINK</B>.  Unless otherwise noted, <I>optval</I> is a pointer to an
+<I>int</I>.
+<DL COMPACT>
+<DT><B>NETLINK_PKTINFO</B> (Linux 2.6.14 以降)<DD>
+
+
+Enable <B>nl_pktinfo</B> control messages for received packets to get the
+extended destination group number.
+<DT><B>NETLINK_ADD_MEMBERSHIP</B>,&nbsp;<B>NETLINK_DROP_MEMBERSHIP</B> (Linux 2.6.14 以降)<DD>
+
+
+Join/leave a group specified by <I>optval</I>.
+<DT><B>NETLINK_LIST_MEMBERSHIPS</B> (Linux 4.2 以降)<DD>
+
+
+Retrieve all groups a socket is a member of.  <I>optval</I> is a pointer to
+<B>__u32</B> and <I>optlen</I> is the size of the array.  The array is filled with
+the full membership set of the socket, and the required array size is
+returned in <I>optlen</I>.
+<DT><B>NETLINK_BROADCAST_ERROR</B> (Linux 2.6.30 以降)<DD>
+
+
+When not set, <B>netlink_broadcast()</B> only reports <B>ESRCH</B> errors and
+silently ignore <B>ENOBUFS</B> errors.
+<DT><B>NETLINK_NO_ENOBUFS</B> (Linux 2.6.30 以降)<DD>
+
+
+This flag can be used by unicast and broadcast listeners to avoid receiving
+<B>ENOBUFS</B> errors.
+<DT><B>NETLINK_LISTEN_ALL_NSID</B> (Linux 4.2 以降)<DD>
+
+
+When set, this socket will receive netlink notifications from all network
+namespaces that have an <I>nsid</I> assigned into the network namespace where
+the socket has been opened.  The <I>nsid</I> is sent to user space via an
+ancillary data.
+<DT><B>NETLINK_CAP_ACK</B> (Linux 4.2 以降)<DD>
+
+
+The kernel may fail to allocate the necessary room for the acknowledgment
+message back to user space.  This option trims off the payload of the
+original netlink message.  The netlink message header is still included, so
+the user can guess from the sequence number which message triggered the
+acknowledgment.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+netlink へのソケットインターフェースは Linux 2.2 で初めて登場した。
+<P>
+
+Linux 2.0 は、もっと原始的なデバイスベースの netlink インターフェースを サポートしていた (これも互換性のために今でも使用できる)。
+古いインターフェースに関してはここでは記述しない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+低レベルのカーネルインターフェースより、 <I>libnetlink</I> または <I>libnl</I> を通して netlink
+を利用するほうが良いことが多い。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+この man ページは完成していない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下の例では、 <B>RTMGRP_LINK</B> (ネットワークインターフェースの create/delete/up/down イベント) と
+<B>RTMGRP_IPV4_IFADDR</B> (IPv4 アドレスの add/delete イベント) マルチキャストグループを listen する
+<B>NETLINK_ROUTE</B> netlink を作成している。
+<P>
+
+
+
+struct sockaddr_nl sa;
+<P>
+memset(&amp;sa, 0, sizeof(sa));
+sa.nl_family = AF_NETLINK;
+sa.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR;
+<P>
+fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+bind(fd, (struct sockaddr *) &amp;sa, sizeof(sa));
+
+
+<P>
+
+次の例では、netlink メッセージをカーネル (pid 0) に送る方法を示している。 応答を追跡する際の信頼性を高めるために、アプリケーションが
+メッセージのシーケンス番号を正しく処理しなければならない点に注意すること。
+<P>
+
+
+
+struct nlmsghdr *nh;    /* 送信する nlmsghdr とペイロード */
+struct sockaddr_nl sa;
+struct iovec iov = { nh, nh-&gt;nlmsg_len };
+struct msghdr msg;
+<P>
+msg = { &amp;sa, sizeof(sa), &amp;iov, 1, NULL, 0, 0 };
+memset(&amp;sa, 0, sizeof(sa));
+sa.nl_family = AF_NETLINK;
+nh-&gt;nlmsg_pid = 0;
+nh-&gt;nlmsg_seq = ++sequence_number;
+/* NLM_F_ACK を設定することで、カーネルに応答を要求する */
+nh-&gt;nlmsg_flags |= NLM_F_ACK;
+<P>
+sendmsg(fd, &amp;msg, 0);
+
+
+<P>
+
+最後は、netlink メッセージの読み込みの例である。
+<P>
+
+
+
+int len;
+/* 8192 to avoid message truncation on platforms with
+<BR>&nbsp;&nbsp;&nbsp;page&nbsp;size&nbsp;&gt;&nbsp;4096&nbsp;*/
+struct nlmsghdr buf[8192/sizeof(struct nlmsghdr)];
+struct iovec iov = { buf, sizeof(buf) };
+struct sockaddr_nl sa;
+struct msghdr msg;
+struct nlmsghdr *nh;
+<P>
+msg = { &amp;sa, sizeof(sa), &amp;iov, 1, NULL, 0, 0 };
+len = recvmsg(fd, &amp;msg, 0);
+<P>
+for (nh = (struct nlmsghdr *) buf; NLMSG_OK (nh, len);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nh&nbsp;=&nbsp;NLMSG_NEXT&nbsp;(nh,&nbsp;len))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;マルチパートメッセージの終わり&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nh-&gt;nlmsg_type&nbsp;==&nbsp;NLMSG_DONE)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nh-&gt;nlmsg_type&nbsp;==&nbsp;NLMSG_ERROR)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;何らかのエラー処理を行う&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;...
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ペイロードの解析を続ける&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;...
+}
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3), <B><A HREF="../man3/netlink.3.html">netlink</A></B>(3), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7),
+<B>sock_diag</B>(7)
+<P>
+
+
+libnetlink に関する情報
+
+<P>
+
+
+libnl に関する情報
+
+<P>
+
+RFC 3549 &quot;Linux Netlink as an IP Services Protocol&quot;
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">アドレスのフォーマット</A><DD>
+<DT><A HREF="#lbAF">ソケットオプション</A><DD>
+</DL>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

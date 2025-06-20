@@ -1,0 +1,165 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of svnserve</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>svnserve</H1>
+Section: Maintenance Commands (8)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/subversion/release/man8/svnserve.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+svnserve - 'svn' リポジトリアクセス方式に対応するサーバー
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<DL COMPACT>
+<DT><B>svnserve</B> [<I>options</I>]<DD>
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>svnserve</B> は、 ネットワークプロトコル svn を使って、 Subversion リポジトリへのアクセスを行います。
+これはスタンドアロンのサーバープロセスとして実行可能であり、 また inetd を使って実行することも可能です。 <B>svnserve</B>
+を実行する際には、 操作モードを選んでおく必要があります。 以下に示すオプションが用いられます。
+<P>
+
+<DL COMPACT>
+<DT><B>-d</B>, <B>--daemon</B><DD>
+<B>svnserve</B> をデーモンモードで起動します。 <B>svnserve</B> がバックグラウンドで実行されて、 svn ポート (デフォルトで
+3690) 上から TCP/IP 接続を受け付け、 また提供します。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>--listen-port</B>=<I>port</I><DD>
+デーモンモードでの実行時に、 <B>svnserve</B> が待ち受ける <I>port</I> を指定します。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>--listen-host</B>=<I>host</I><DD>
+<I>host</I> によって指定されるインターフェースから <B>svnserve</B> が待ち受けるようにします。 指定にあたっては、 ホスト名または IP
+アドレスを用います。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>--foreground</B><DD>
+<B>-d</B> とともに用いることで、 <B>svnserve</B> をフォアグラウンド実行のままとします。
+このオプションは主にデバッグ目的で利用することができます。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>-i</B>, <B>--inetd</B><DD>
+<B>svnserve</B> が stdin/stdout ファイルディスクリプターを用いるようにします。 inetd
+からデーモン実行する場合に適しています。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>-h</B>, <B>--help</B><DD>
+使用方法の概要を示して終了します。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>--version</B><DD>
+<B>svnserve</B> のバージョンを表示します。 また特定の <B>svnserve</B>
+がサポートするリポジトリのファイルシステムバックエンドを表示します。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>-r</B> <I>root</I>, <B>--root</B>=<I>root</I><DD>
+<B>svnserve</B> が提供するリポジトリの仮想ルートを設定します。 クライアントから指定される URL 内のパス名は、
+このルートからの相対パスとして解釈されます。 このルート以外をアクセスすることはできません。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>-R</B> <B>--read-only</B><DD>
+この <B>svnserve</B> インスタンスを通じて行われる書き込み操作を、 強制的にすべて禁止します。 これは、
+アクセスポリシーを定めた設定を上書きします。 このオプションは、 通常のリポジトリアクセスポリシーには用いないでください。 それを行うのは、
+リポジトリ設定ファイル <B>conf/svnserve.conf</B> です。 このオプションは、 特定の方法によって起動した <B>svnserve</B>
+に対しての限定的なアクセス時に用いてください。 たとえば書き込みアクセスを <B>svnserve</B> デーモン経由ではなく、 SSH
+経由で行うような場合です。 あるいは、 読み込みアクセスにのみ利用する限定的な SSH 鍵を生成して利用するような場合です。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>-t</B>, <B>--tunnel</B><DD>
+トンネルモード (tonnel mode) により <B>svnserve</B> を実行します。 これは inetd モードによる動作に似ています
+(stdin/stdout を通じて一接続を提供します)。 ただしその際の接続は、 現在の uid によるユーザー名を使い、
+あらかじめ事前承認されたものとして動作する点が異なります。 トンネルエージェントを介して動作しているクライアントにより、 本フラグが選択されます。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>--tunnel-user</B>=<I>username</I><DD>
+<B>--tunnel</B> とともに組み合わせて、 事前承認されたユーザー名を、 指定された <I>username</I> によって上書きします。 これは ssh
+の authorized_key ファイルにある &quot;command&quot; ディレクティブと合わせて用いると便利です。 複数のコミットユーザーが、
+単一のシステムアカウントを利用するようなことが可能になります。 この場合、 ssh の認証は別々のものとなります。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>-T</B>, <B>--threads</B><DD>
+デーモンモードでの実行時に、 <B>svnserve</B> が各接続に対してプロセスを実行するのではなく、 スレッドを実行するようにします。
+<B>svnserve</B> プロセスは、 起動直後にバックグラウンド実行されて起動し続けます。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>--config-file</B>=<I>filename</I><DD>
+これが指定されると、 <B>svnserve</B> は起動時に一度だけ <I>filename</I> の内容を読み込み、 <B>svnserve</B>
+設定としてキャッシュします。 パスワードと認証の設定は <I>filename</I> から参照されますが、 各接続ごとにロードされます。
+このオプションが指定された場合、 <B>svnserve</B> はリポジトリごとの <B>conf/svnserve.conf</B> ファイルは読み込みません。
+<B><A HREF="../man5/svnserve.conf.5.html">svnserve.conf</A></B>(5) ファイルにおける本オプションの書式については、 その man ページを参照してください。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>--pid-file</B>=<I>filename</I><DD>
+これを指定した場合、 <B>svnserve</B> はプロセス ID を <I>filename</I> に書き出します。
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>-X</B>, <B>--listen-once</B><DD>
+<B>svnserve</B> が svn ポートからのアクセスを 1 度だけ行い、 それに対する返信を行って終了します。
+このオプションは主にデバッグ目的で利用することができます。
+</DL>
+<P>
+
+<B>--config-file</B> オプションがコマンドラインから指定されなかった場合には、 クライアントから URL
+送信によってリポジトリが選択された際に、 <B>svnserve</B> はリポジトリ内の <B>conf/svnserve.conf</B>
+というファイルを読み込みます。 このファイルは、 利用する認証データベースや認可ポリシーなど、 リポジトリ固有の設定を定めるものです。
+<B><A HREF="../man5/svnserve.conf.5.html">svnserve.conf</A></B>(5) のファイルフォーマットの詳細は、 その man ページを参照してください。
+<A NAME="lbAE">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man5/svnserve.conf.5.html">svnserve.conf</A></B>(5)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:46 GMT, December 05, 2022
+</BODY>
+</HTML>

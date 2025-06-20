@@ -1,0 +1,519 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of EXPORTS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>EXPORTS</H1>
+Section: File Formats (5)<BR>Updated: 11 August 1997<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/nfs-server/release/man5/exports.5">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+exports - エクスポート (export) される NFS ファイルシステム
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/etc/exports</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>/etc/exports</I>
+
+ファイルはファイルシステムのアクセスコントロールリストで、
+どのファイルシステムを NFS クライアントにエクスポート (export) してよいか、
+という情報を与える。
+これは NFS mount デーモン
+<B><A HREF="../man8/mountd.8.html">mountd</A></B>(8)
+
+ならびに
+NFS file server デーモン
+<B><A HREF="../man8/nfsd.8.html">nfsd</A></B>(8)
+
+の双方で用いられる。
+<P>
+
+このファイルの書式は SunOS の
+<I>exports</I>
+
+ファイルとほぼ同じである。ただし指定できるオプションが
+いくつか追加されている。
+それぞれの行には、マウントポイントと、
+そのポイントのファイルシステムをマウントできる
+マシンやネットグループのリストが書かれている。
+マウントパラメータのリストを括弧でくくったものを、
+それぞれのマシンの名前の後に置くこともできる。
+空行は無視され、# 以降行末まではコメントとみなされる。
+行末にバックスラッシュをおけば、エントリは次の行に継続できる。
+<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>マシン名のフォーマット</H3>
+
+NFS クライアントはいろいろな方法で指定できる。
+<DL COMPACT>
+<DT>single host<DD>
+これはもっとも普通のフォーマットである。ホストの指定には、
+レゾルバが認識できる省略形、FQDN、IP アドレスのどれを用いてもよい。
+<DT>netgroups<DD>
+NIS のネットグループを
+<I>@group</I>
+
+のように与えることができる。ネットグループのすべてのメンバーのうち、
+ホストの部分だけが取り出され、アクセスリストに追加される。
+ホストの部分が空だったり、単一のダッシュ (-) だったものは無視される。
+<DT>ワイルドカード<DD>
+マシン名の指定には、ワイルドカード文字として
+<I>*</I> と <I>?</I> を用いることができる。
+これらを使うと <I>exports</I> ファイルをコンパクトにできる。
+例えば <I>*.cs.foo.edu</I> はドメイン <I>cs.foo.edu</I> にある
+すべてのホストにマッチする。
+ただし、これらのワイルドカード文字はドメイン名のドット (.) にはマッチしない。
+したがって上記のパターンは、ドメイン内の
+<I>a.b.cs.foo.edu</I> のようなホストにはマッチしない。
+<DT>IP networks<DD>
+ディレクトリを IP の (サブ) ネットワークに存在するすべてのホストに
+同時にエクスポートすることもできる。
+これには IP アドレスとネットマスクのペアを
+<I>address/netmask</I>
+
+のように指定すればよい。
+<DT><B>=public</B>
+
+<DD>
+これは特殊な意味を持つ「ホスト名」で、その前に与えられたディレクトリ
+が public root ディレクトリであることを示す
+(WebNFS と public root ハンドルの詳細に関しては
+<B><A HREF="../man8/nfsd.8.html">nfsd</A></B>(8)
+
+の WebNFS のセクションを参照のこと)。
+この書式を用いる際には、
+<B>=public</B>
+
+がその行での唯一のホスト名エントリでなければならない。
+またエクスポートオプションを指定してはならない。
+この指定によって、
+ディレクトリが実際にエクスポートされるわけでは<B>ない</B>ことに注意すること。
+エクスポートオプションは、これとは別のエントリで指定する必要がある。
+</DL>
+<P>
+
+public root パスは
+<I>nfsd</I>
+
+を
+<B>--public-root</B>
+
+オプションを指定して起動することによっても指定できる。
+public root の複数指定は無視される。
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>一般的なオプション</H3>
+
+<I>mountd</I> と <I>nfsd</I>
+
+は以下のエクスポートオプションを受け付ける。
+<DL COMPACT>
+<DT><I>secure</I>
+
+<DD>
+このオプションを指定すると、IPPORT_RESERVED (1024) より小さな
+internet ポートから発したリクエストしか受けつけない。
+このオプションはデフォルトで有効になっている。
+無効にするには
+<I>insecure</I>
+
+と指定する。
+<DT><I>rw</I>
+
+<DD>
+クライアントによるファイルとディレクトリの変更を許可する。
+デフォルトでは、クライアントは読み込みのリクエストだけに制限されている。
+(これは
+<I>ro</I>
+
+オプションで明示した場合も同じ)。
+<DT><I>noaccess</I>
+
+<DD>
+このオプションを付けたクライアントは、
+そのディレクトリ以下のすべてのファイルに対してアクセスできなくなる。
+あるディレクトリ階層をクライアントにエクスポートするとき、
+特定のサブディレクトリを除きたい場合などに便利である。
+noaccess フラグが付いたディレクトリのクライアントからの見え方は、
+非常に制限されたものとなる。
+ディレクトリ属性と、`.' および `..' の閲覧だけが許される。
+readdir に対して返されるエントリもこの 2 つだけになる。
+<DT><I>link_relative</I>
+
+<DD>
+絶対パス形式のシンボリックリンクを相対パス形式のリンクに変換する
+(絶対パス形式とは、リンクの内容が &quot;/&quot; で始まるものである)。
+変換は次のように行われる。
+まずリンクが置かれているディレクトリの、サーバのルートからの
+深さを取得する。そしてその数だけ '../' を絶対リンクの前に付加する。
+マウントポイントのルートからの位置が異なる場合、
+この変換には微妙な (おそらく障害の原因となる)
+あいまいさが含まれる可能性がある。
+<DT><I>link_absolute</I>
+
+<DD>
+全てのシンボリックリンクをそのままにする。これがデフォルトである。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>ユーザ ID のマッピング</H3>
+
+<P>
+
+サーバマシン上のファイルに対する
+<I>nfsd</I>
+
+によるアクセスコントロールは、
+それぞれの NFS RPC request の際に与えられる uid と gid に基づいている。
+ユーザは通常、サーバ上にある自分のファイルには、
+それが普通のファイルシステム上にあるのと同様に
+アクセス可能であることを期待している。
+これにはクライアントとサーバ上で用いられる
+uid と gid がそれぞれ同じである必要があるが、
+これは常に真であるとは限らず、望ましいとも限らない。
+<P>
+
+クライアントマシンの root が NFS サーバのファイルにアクセスするとき、
+サーバの root として扱われてしまうのは、ほとんどの場合は望ましくない。
+このため uid 0 は普通は別の id (anonymous や
+<I>nobody</I>
+
+uid) にマッピングされる。
+この動作は  `root squashing' と呼ばれるが、これがデフォルトである。
+<I>no_root_squash </I>
+
+を使えばオフにできる。
+<P>
+
+デフォルトでは、
+<I>nfsd</I>
+
+は起動時に password ファイル中の
+<I>nobody</I>
+
+ユーザを参照して、
+anonymous の uid と gid を得ようとする。
+もしそれが見つからない場合には、
+uid と gid として -2 (つまり 65534) を用いる。
+これらの数値は 
+<I>anonuid</I> と <I>anongid</I>
+
+オプションによって変更できる。
+<P>
+
+これに加え、
+<I>nfsd</I>
+
+によって nobody に割り当てるべき適当な uid と gid とを指定することもできる。
+最後に、
+<I>all_squash</I>
+
+オプションを指定すれば、
+全ての user request を anonymous uid に割り当てることもできる。
+<P>
+
+マシンごとに uid が異なるような場合への導入を容易にするため、
+<I>nfsd</I>
+
+ではサーバの uid をクライアントの uid に (あるいはその逆に) 
+動的にマッピングする手法をいくつか提供している。
+静的なマッピングファイル、NIS ベースのマッピング、
+<I>ugidd</I>
+
+ベースのマッピング、である。
+<P>
+
+<I>ugidd</I>
+
+ベースのマッピングは
+<I>map_daemon</I>
+
+オプションを指定して UGID RPC プロトコルを使えば可能となる。
+このプロトコルを動かすにはクライアントで
+<I><A HREF="../man8/ugidd.8.html">ugidd</A></I>(8)
+
+mapping デーモンを動作させる必要がある。
+これは 3 つある方法の中で、セキュリティ的には最悪である。
+なぜなら
+<I>ugidd</I>
+
+を動作させると、誰でもクライアントに問い合わせて、
+有効なユーザ名のリストを入手できてしまうからである。
+<I>ugidd</I>
+
+へのアクセスを特定のホストのみに制限して、身を守ることもできる。
+これには許可するホストのリストを
+<I>hosts.allow</I>
+
+または
+<I>hosts.deny</I>
+
+ファイルに記述すればよい。サービス名は
+<I>ugidd</I>
+
+である。これらのファイルの文法については、
+<I><A HREF="../../tcp_wrappers/man5/hosts_access.5.html">hosts_access</A></I>(5)
+
+を参照してほしい。
+<P>
+
+静的なマッピングは
+<I>map_static</I>
+
+オプションによって動作させることができる。
+このオプションは、マッピングを記述したファイルの名前を引数にとる。
+NIS ベースのマッピングは、クライアントの NIS サーバに問い合わせて、
+サーバーホストでのユーザ名およびグループ名から
+クライアントでのユーザ名およびグループ名への、
+マッピング情報を入手する。
+<P>
+
+以下にマッピングオプションの完全なリストをあげる:
+<DL COMPACT>
+<DT><I>root_squash</I>
+
+<DD>
+uid/gid が 0 のリクエストを annonymous uid/gid にマッピングする。
+このオプションは、root 以外の uid には適用されない。
+他にも注意すべき uid は存在する (例えば
+<I>bin </I>
+
+など) ので、注意する必要がある。
+<DT><I>no_root_squash</I>
+
+<DD>
+root squashing を無効にする。
+このオプションは主にディスクレスクライアントにとって便利である。
+<DT><I>squash_uids</I> and <I>squash_gids</I>
+
+<DD>
+このオプションは、annonymous にマッピングされる
+uid や gid のリストを明示するためのものである。
+id のリストとしては以下のような指定が有効である:
+<DT><DD>
+<I>squash_uids=0-15,20,25-50</I>
+
+<DT><DD>
+通常の squash リストはもっとずっと簡単なものになるだろうが。
+<DT><I>all_squash</I>
+
+<DD>
+全ての uid とgid を anonymous にマッピングする。
+これは NFS エクスポートされた公開 FTP ディレクトリや、
+news のスプールディレクトリ等に便利である。
+これと逆のオプションは
+<I>no_all_squash</I>
+
+であり、こちらがデフォルトになっている。
+<DT><I>map_daemon</I>
+
+<DD>
+このオプションは 動的な uid/gid のマッピングを有効にする。
+NFS request 中のそれぞれの uid はサーバ上の対応する uid に変換され、
+NFS reply 中の uid はそれぞれ逆に変換される。
+このオプションを用いるには、クライアントホストで
+<B><A HREF="../man8/rpc.ugidd.8.html">rpc.ugidd</A></B>(8)
+
+が動作していることが必要である。
+デフォルトでは、全ての uid を変えない
+<I>map_identity </I>
+
+となっている。
+普通の squash オプションは、
+動的なマッピングか否かを気にすることなく適用できる。
+<DT><I>map_static</I>
+
+<DD>
+このオプションを指定すると静的なマッピングが可能となる。
+uid/gid マッピングが記述されたファイル名を以下のように指定する。
+<DT><DD>
+<I>map_static=/etc/nfs/foobar.map</I>
+
+<DT><DD>
+ファイルのフォーマットは以下のようなものである。
+<DT><DD>
+<PRE>
+
+# Mapping for client foobar:
+#    remote     local
+uid  0-99       -       # squash these
+uid  100-500    1000    # map 100-500 to 1000-1400
+gid  0-49       -       # squash these
+gid  50-100     700     # map 50-100 to 700-750
+</PRE>
+
+<DT><I>map_nis</I>
+
+<DD>
+このオプションを指定すると NIS ベースの uid/gid マッピングが可能となる。
+例えば、サーバが uid 123 の指定を受けると、
+サーバはまずその uid に対応するローカルのログイン名を調べる。
+次に NFS クライアントの NIS サーバに接続して、
+そのログイン名に対応する uid を取得する。
+<DT><DD>
+これを行うには、NFS サーバがクライアントの NIS ドメインを
+知っていなければならない。
+このドメインは
+<I>map_nis</I>
+
+オプションの引数として以下のように指定する。
+<DT><DD>
+<I>map_nis=foo.com</I>
+
+<DT><DD>
+ただここに NIS ドメインを記述するだけでは、通常は充分ではない。
+<I>nfsd</I>
+
+が NIS サーバにコンタクトできるようにするには、
+他の作業が必要となるだろう。
+利用しているディストリビューションが NYS ライブラリを使っている場合は、
+クライアントのドメインのサーバを
+<I>/etc/yp.conf</I>
+
+に一つ以上指定する必要があるだろう。
+他の NIS ライブラリを用いている場合には、
+<I>yp.conf</I>
+
+によって設定できるような、特殊な
+<I><A HREF="../../0MultiFileIdx/man8/ypbind.8.html">ypbind</A></I>(8)
+
+を入手する必要があるかもしれない。
+<DT><I>anonuid</I> および <I>anongid</I>
+
+<DD>
+これらのオプションは anonymous アカウントの uid と gid を明示的にセットする。
+これは、全てのリクエストが一人のユーザからになるような
+PC/NFS clients にとって主に有効である。
+例えば、以下の「例」のセクションでの
+<I>/home/joe</I>
+
+というエクスポートエントリを見てほしい。
+この例では、(joe からのものであると思われる) 全てのリクエストが
+uid 150 にマッピングされる。
+<DT><DD>
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>例</H2>
+
+<P>
+
+<PRE>
+
+# sample /etc/exports file
+/               master(rw) trusty(rw,no_root_squash)
+/projects       proj*.local.domain(rw)
+/usr            *.local.domain(ro) @trusted(rw)
+/home/joe       pc001(rw,all_squash,anonuid=150,anongid=100)
+/pub            (ro,insecure,all_squash)
+/pub/private    (noaccess)
+</PRE>
+
+<P>
+
+1 行目は、master と trusty に対して、
+すべてのファイルシステムのマウント許可を出している。
+書き込みの許可に加え、さらに trusty に対しては、
+すべての uid squashing も無効にしている。
+2 行目と 3 行目は、ホスト名へのワイルドカードの利用と、
+ネットグループ (@trusted' のエントリ) の例である。
+4 行目は、上で述べた PC/NFS クライアント用エントリの例である。
+5 行目は、公開 FTP ディレクトリを世界中の全てのホストにエクスポートしている。
+すべてのリクエストは nobody アカウントで実行される。
+またこのエントリ中の
+<I>insecure </I>
+
+オプションによって、NFS 用 port を使わないように実装された NFS
+クライアントからのアクセスも許可している。
+最後の行では、private ディレクトリへのアクセスをすべての
+クライアントに対して拒否するようにしている。
+<A NAME="lbAI">&nbsp;</A>
+<H2>警告</H2>
+
+他の NFS Server の実装と違い、
+この
+<B>nfsd</B>
+
+では、例えば
+<I>/usr</I> と <I>/usr/X11R6</I>
+
+のように、あるディレクトリとそのサブディレクトリとの両方を
+同じホストにエクスポートすることができる。
+この場合、特定の度合がもっとも高いエントリのマウントオプションが適用される。
+例えばクライアントホスト上のユーザが
+<I>/usr/X11R6</I>
+
+のファイルにアクセスする場合は、
+<I>/usr/X11R6 </I>
+
+のエントリであたえられた マウントオプションが適用される。
+このルールは、エントリのホスト指定が
+ワイルドカードやネットグループのときにも適用される。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>ファイル</H2>
+
+/etc/exports
+<A NAME="lbAK">&nbsp;</A>
+<H2>返り値</H2>
+
+<B><A HREF="../man8/nfsd.8.html">nfsd</A></B>(8)
+
+か
+<B><A HREF="../man8/mountd.8.html">mountd</A></B>(8)
+
+が起動していれば、
+ファイルの解釈中のエラーは常に
+<B><A HREF="../../sysklogd/man8/syslogd.8.html">syslogd</A></B>(8)
+
+を用いて報告される。
+DAEMON からの NOTICE レベルとなる。
+そのとき、未知のホスト全てが報告される。
+しかし起動時には
+<B><A HREF="../../bind/man8/named.8.html">named</A></B>(8)
+
+が全てのホストを知らない場合もありうる。
+したがってホストが見つかるたびに、それらは
+<B><A HREF="../../sysklogd/man8/syslogd.8.html">syslogd</A></B>(8)
+
+に、同じパラメータで報告される。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目 </H2>
+
+<A HREF="../man8/mountd.8.html">mountd</A>(8), <A HREF="../man8/nfsd.8.html">nfsd</A>(8)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">マシン名のフォーマット</A><DD>
+<DT><A HREF="#lbAF">一般的なオプション</A><DD>
+<DT><A HREF="#lbAG">ユーザ ID のマッピング</A><DD>
+</DL>
+<DT><A HREF="#lbAH">例</A><DD>
+<DT><A HREF="#lbAI">警告</A><DD>
+<DT><A HREF="#lbAJ">ファイル</A><DD>
+<DT><A HREF="#lbAK">返り値</A><DD>
+<DT><A HREF="#lbAL">関連項目 </A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:41 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,172 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETREUID</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SETREUID</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/setreuid.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+setreuid, setregid - 実 (real) と実効 (effective) ユーザー (グループ) ID を設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>int setreuid(uid_t </B><I>ruid</I><B>, uid_t </B><I>euid</I><B>);</B>
+<BR>
+
+<B>int setregid(gid_t </B><I>rgid</I><B>, gid_t </B><I>egid</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>setreuid</B>(), <B>setregid</B>():
+<DL COMPACT><DT><DD>
+
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Since&nbsp;glibc&nbsp;2.19:&nbsp;*/&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Glibc&nbsp;versions&nbsp;&lt;=&nbsp;2.19:&nbsp;*/&nbsp;_BSD_SOURCE
+
+</DL>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>setreuid</B>()  は呼び出し元のプロセスの実 (real) ユーザー ID と 実効 (effective) ユーザー ID を設定する。
+<P>
+
+実ユーザー ID や実効ユーザー ID に -1 を与えた場合、 システムはその ID を変更しない。
+<P>
+
+非特権プロセスは実効ユーザー ID を実ユーザー ID または実効ユーザー ID または 保存 set-user-ID にしか設定できない。
+<P>
+
+非特権ユーザーは、実ユーザー ID を実ユーザー ID または 実効ユーザー ID にしか設定できない。
+<P>
+
+実ユーザーID が設定されたり (<I>ruid</I> が -1 ではない)、実効ユーザーID が前の実ユーザーID と 異った値に設定された場合、保存
+set-user-ID には新しい実効ユーザーID の値が設定される。
+<P>
+
+これと全く同様に、 <B>setregid</B>()  は呼び出し元のプロセスの実グループ ID と実効グループ ID を設定し、
+上記の説明で「ユーザー」を「グループ」に読み替えたことが成り立つ。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<P>
+
+<I>注意</I>: 呼び出し元が UID 0 であっても <B>setreuid</B>() が失敗する場合がある。 <B>setreuid</B>()
+からのリターンが失敗かどうかの確認を省略することは重大なセキュリティ上のエラーとなる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+この呼び出しで呼び出し元の実 UID が変更されるはずだったが (つまり、 <I>ruid</I> が呼び出し元の実 UID と一致していない)、
+必要なカーネルのデータ構造体の割り当てで一時的な失敗があった。
+<DT><B>EAGAIN</B><DD>
+<I>ruid</I> は呼び出し元の実 UID と一致しておらず、 この呼び出しで実ユーザー ID <I>ruid</I> に属するプロセス数が呼び出し元の
+<B>RLIMIT_NPROC</B> リソース上限を超過するところであった。 Linux 3.1 以降では、このエラーはもはや発生することはない
+(しかし、堅牢性が求められるアプリケーションではこのエラーを確認すべきである)。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2) の <B>EAGAIN</B> の説明を参照。
+<DT><B>EINVAL</B><DD>
+対象のユーザー ID やグループ ID のうち 1 つ以上がこのユーザー名前空間で有効ではない。
+<DT><B>EPERM</B><DD>
+The calling process is not privileged (on Linux, does not have the necessary
+capability in its user namespace: <B>CAP_SETUID</B> in the case of
+<B>setreuid</B>(), or <B>CAP_SETGID</B> in the case of <B>setregid</B>())  and a change
+other than (i)  swapping the effective user (group) ID with the real user
+(group) ID, or (ii) setting one to the value of the other or (iii) setting
+the effective user (group) ID to the value of the saved set-user-ID (saved
+set-group-ID) was specified.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, 4.3BSD (<B>setreuid</B>()  と <B>setregid</B>()  関数コールは
+4.2BSD で初めて登場した)。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+実効ユーザー (グループ) ID を保存ユーザー (グループ) ID に 設定することが、Linux 1.1.37 (1.1.38) から可能になった。
+<P>
+
+POSIX.1 では、 Linux が非特権プロセスに対して認めている ID の変更の全パターンを規定しているわけではない。 <B>setreuid</B>()
+では、実効ユーザー ID を実ユーザー ID もしくは保存 set-user-ID と 同じ値にすることができるが、 非特権プロセスが実ユーザー ID
+を実ユーザー ID、実効ユーザー ID、 保存 set-user-ID のどの値にも設定できるかは規定されていない。 <B>setregid</B>()
+では、実グループ ID を保存 set-group-ID と同じ値に変更でき、 実効グループ ID を実グループ ID や保存 set-group-ID
+と同じ値に変更できる。 どのような ID の変更が認められているかの正確な詳細は 実装ごとに異なる。
+<P>
+
+POSIX.1 では、これらのシステムコールが保存 set-user-ID や 保存 set-group-ID に与える影響については規定していない。
+<P>
+
+
+元々の Linux の <B>setreuid</B>() と <B>setregid</B>() システムコールは
+16 ビットのグループ ID だけに対応していた。
+その後、Linux 2.4 で、32 ビットの ID に対応した
+<B>setreuid32</B>() と <B>setregid32</B>() が追加された。
+glibc の <B>setreuid</B>() と <B>setregid</B>() のラッパー関数は
+カーネルバージョンによるこの違いを吸収している。
+<A NAME="lbAI">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+At the kernel level, user IDs and group IDs are a per-thread attribute.
+However, POSIX requires that all threads in a process share the same
+credentials.  The NPTL threading implementation handles the POSIX
+requirements by providing wrapper functions for the various system calls
+that change process UIDs and GIDs.  These wrapper functions (including those
+for <B>setreuid</B>()  and <B>setregid</B>())  employ a signal-based technique to
+ensure that when one thread changes credentials, all of the other threads in
+the process also change their credentials.  For details, see <B>nptl</B>(7).
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/getgid.2.html">getgid</A></B>(2), <B><A HREF="../man2/getuid.2.html">getuid</A></B>(2), <B><A HREF="../man2/seteuid.2.html">seteuid</A></B>(2), <B><A HREF="../man2/setgid.2.html">setgid</A></B>(2), <B><A HREF="../man2/setresuid.2.html">setresuid</A></B>(2),
+<B><A HREF="../man2/setuid.2.html">setuid</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7), <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

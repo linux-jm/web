@@ -1,0 +1,416 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of EPOLL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>EPOLL</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/epoll.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+epoll - I/O イベント通知機能
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/epoll.h">sys/epoll.h</A>&gt;</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>epoll</B> API は <B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+と同様の処理を行う、つまり、複数のファイルディスクリプタを監視し、その中のいずれかが入出力可能な状態であるかを確認する。 <B>epoll</B> API
+は、エッジトリガーインターフェースとレベルトリガーインターフェースのいずれとしても使用することができ、監視するファイルディスクリプターの数が多い場合にも使用できる。
+<P>
+
+The central concept of the <B>epoll</B> API is the <B>epoll</B> <I>instance</I>, an
+in-kernel data structure which, from a user-space perspective, can be
+considered as a container for two lists:
+<DL COMPACT>
+<DT>&bull;<DD>
+The <I>interest</I> list (sometimes also called the <B>epoll</B> set): the set of
+file descriptors that the process has registered an interest in monitoring.
+<DT>&bull;<DD>
+The <I>ready</I> list: the set of file descriptors that are &quot;ready&quot; for I/O.
+The ready list is a subset of (or, more precisely, a set of references to)
+the file descriptors in the interest list.  The ready list is dynamically
+populated by the kernel as a result of I/O activity on those file
+descriptors.
+</DL>
+<P>
+
+The following system calls are provided to create and manage an <B>epoll</B>
+instance:
+<DL COMPACT>
+<DT>&bull;<DD>
+<B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2) は新規の <B>epoll</B> インスタンスを作成し、そのインスタンスを参照する
+ファイルディスクリプターを返す。(もっと新しい <B><A HREF="../man2/epoll_create1.2.html">epoll_create1</A></B>(2) では、
+<B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2) の機能が拡張されている)。
+<DT>&bull;<DD>
+Interest in particular file descriptors is then registered via
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2), which adds items to the interest list of the <B>epoll</B>
+instance.
+<DT>&bull;<DD>
+
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  waits for I/O events, blocking the calling thread if no
+events are currently available.  (This system call can be thought of as
+fetching items from the ready list of the <B>epoll</B> instance.)
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>レベルトリガーとエッジトリガー</H3>
+
+<B>epoll</B> イベント配送 (distribution) インターフェースは、 エッジトリガー (ET) としてもレベルトリガー (LT)
+としても動作させることができる。 二つの配送機構の違いは、次のように説明できる。 このようなシナリオが起こったとしよう:
+<DL COMPACT>
+<DT>1.<DD>
+パイプの読み込み側を表すファイルディスクリプター (<I>rfd</I>)  が <B>epoll</B> インスタンスに登録される。
+<DT>2.<DD>
+パイプへ書き込むプログラムが 2&nbsp;kB のデータをパイプの書き込み側へ書き込む。
+<DT>3.<DD>
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  を呼び出すと、読み込み可能 (ready) なファイルディスクリプターとして <I>rfd</I> が返る。
+<DT>4.<DD>
+パイプから読み出すプログラムが、1&nbsp;kB のデータを <I>rfd</I> から読み出す。
+<DT>5.<DD>
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  の呼び出しが行われる。
+</DL>
+<P>
+
+<I>rfd</I> ファイルディスクリプターが <B>EPOLLET</B> フラグ (エッジトリガー) を使って <B>epoll</B> に追加されていると、
+利用可能なデータがファイル入力バッファーにまだ存在するにもかかわらず ステップ <B>5</B> の <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+の呼び出しでハングする可能性がある。 その一方で、リモートの接続先 (peer) は既に送られたデータに 基づいて応答を期待しているかもしれない。
+このようなことが起こる理由は、エッジトリガーイベント配送では、 モニタしているファイルでイベントが起ったときにのみイベントが 配送されるためである。
+したがって、ステップ <B>5</B> では、呼び出し側は結果的に 入力バッファー内にすで存在するデータを待つことになるかもしれない。 上記の例では、 <B>2</B>
+で行われた書き込みによって <I>rfd</I> に関するイベントが生成され、 <B>3</B> でイベントが消費 (consume) される。 <B>4</B>
+で行われる読み込み操作では、全部のバッファーデータを消費しないので、 ステップ <B>5</B> で行われる <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  の呼び出しが
+無期限に停止 (block) するかもしれない。
+<P>
+
+<B>EPOLLET</B> フラグを採用するアプリケーションでは、 インターフェースはブロックしない (nonblocking) ファイルディスクリプターを
+使うべきである。 これは、ブロックされる読み込みや書き込みによって、 複数のファイルディスクリプターを扱うタスクが 停止してしまうのを避けるためである。
+<B>epoll</B> をエッジトリガー (<B>EPOLLET</B>)  インターフェースとして使うために提案される方法は以下の通りである。
+<DL COMPACT>
+<DT>a)<DD>
+ブロックしないファイルディスクリプターと共に使う。
+<DT>b)<DD>
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  または <B><A HREF="../man2/write.2.html">write</A></B>(2)  が <B>EAGAIN</B> を返した後でのみ、イベントを待つ。
+</DL>
+<P>
+
+一方、レベルトリガーインターフェースとして使う場合
+<BR>&nbsp;(こちらがデフォルトである、
+<B>EPOLLET</B> が指定されなかった場合)、
+<B>epoll</B> は単に高速な <B><A HREF="../man2/poll.2.html">poll</A></B>(2) であり、使い方が同じなので、
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2) が使われているところではどこでも使用することができる。
+<P>
+
+エッジトリガーを使った場合でも、複数のデータを受信すると複数の <B>epoll</B> イベントが生成されるので、 呼び出し側には
+<B>EPOLLONESHOT</B> フラグを指定するオプションがある。 このフラグは <B>epoll</B> に対して、 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+によるイベントを受信した後で、関連するファイルディスクリプターを無効にさせる。 <B>EPOLLONESHOT</B> フラグが指定された場合、
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)  に <B>EPOLL_CTL_MOD</B> を指定してファイルディスクリプターを再度使用できるようにするのは、
+呼び出し側の責任である。
+<P>
+
+
+If multiple threads (or processes, if child processes have inherited the
+<B>epoll</B> file descriptor across <B><A HREF="../man2/fork.2.html">fork</A></B>(2))  are blocked in <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+waiting on the same epoll file descriptor and a file descriptor in the
+interest list that is marked for edge-triggered (<B>EPOLLET</B>)  notification
+becomes ready, just one of the threads (or processes) is awoken from
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).  This provides a useful optimization for avoiding
+&quot;thundering herd&quot; wake-ups in some scenarios.
+<A NAME="lbAF">&nbsp;</A>
+<H3>autosleep との関係</H3>
+
+システムが <I>/sys/power/autosleep</I> 経由で <B>autosleep</B> モードになっていて、
+デバイスをスリープ状態から起こすイベントが発生した場合、 デバイスドライバーはデバイスを起こしておくのはそのイベントがキューに入るまでだけである。
+イベントが処理されるまでデバイスを起こしたままにしておくには、 <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2) <B>EPOLLWAKEUP</B> フラグを使う必要がある。
+<P>
+
+<B>EPOLLWAKEUP</B> フラグが <I>struct epoll_event</I> の <B>events</B> フィールドでセットされた場合、
+イベントがキューに入った瞬間から、<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2) がそのイベントを返し次の <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+の呼び出しが行われるまでの間、システムは起きたままの状態になる。
+イベントが上記の時間の範囲を超えてシステムを起きたままの状態にしておく必要がある場合は、 2 番目の <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+の呼び出しの前に別の <I>wake_lock</I> を取る必要がある。
+<A NAME="lbAG">&nbsp;</A>
+<H3>/proc インターフェース</H3>
+
+
+
+
+
+
+epoll が消費するカーネルメモリーの量を制限するために、 以下のインターフェースを使用することができる。
+<DL COMPACT>
+<DT><I>/proc/sys/fs/epoll/max_user_watches</I> (Linux 2.6.28 以降)<DD>
+
+このファイルは、あるユーザーがシステム上の全ての epoll インスタンスに 登録できるファイルディスクリプターの総数の上限を規定する。
+この上限は実ユーザー ID 単位である。 登録されたファイルディスクリプター 1 つが消費するメモリー量は、 32 ビットカーネルでおよそ 90
+バイト、 64 ビットカーネルでおよそ 160 バイトである。 現在のところ、 <I>max_user_watches</I>
+のデフォルト値は、利用可能なメモリー下限の 1/25 (4%) であり、 登録で消費されるメモリー量 (バイト単位) で割った値となる。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>おすすめな使用例</H3>
+
+レベルトリガーインターフェースとして使用するときの <B>epoll</B> の使い方は <B><A HREF="../man2/poll.2.html">poll</A></B>(2)  と同じである。
+しかしエッジトリガーとして使う場合は、 アプリケーションのイベントループでストール (stall) しないように、
+使い方をより明確にしておく必要がある。 この例では、リスナはブロックしないソケットであり、 <B><A HREF="../man2/listen.2.html">listen</A></B>(2)  が呼ばれている。 関数
+<I>do_use_fd()</I> は、 <B><A HREF="../man2/read.2.html">read</A></B>(2)  または <B><A HREF="../man2/write.2.html">write</A></B>(2)  によって <B>EAGAIN</B>
+が返されるまでは、新しい準備済みのファイルディスクリプターを使う。 イベント駆動ステートマシンアプリケーションは、 <B>EAGAIN</B>
+を受信した後、カレントの状態を記録しておくべきである。 これにより、次の <I>do_use_fd()</I> 呼び出しのときに、以前に停止したところから
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  または <B><A HREF="../man2/write.2.html">write</A></B>(2)  を継続することができる。
+<P>
+
+
+
+#define MAX_EVENTS 10
+struct epoll_event ev, events[MAX_EVENTS];
+int listen_sock, conn_sock, nfds, epollfd;
+<P>
+/* Code to set up listening socket, 'listen_sock',
+<BR>&nbsp;&nbsp;&nbsp;(socket(),&nbsp;bind(),&nbsp;listen())&nbsp;omitted&nbsp;*/
+<P>
+epollfd = epoll_create1(0);
+if (epollfd == -1) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;epoll_create1&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+}
+<P>
+ev.events = EPOLLIN;
+ev.data.fd = listen_sock;
+if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_sock, &amp;ev) == -1) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;epoll_ctl:&nbsp;listen_sock&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+}
+<P>
+for (;;) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nfds&nbsp;=&nbsp;epoll_wait(epollfd,&nbsp;events,&nbsp;MAX_EVENTS,&nbsp;-1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nfds&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;epoll_wait&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(n&nbsp;=&nbsp;0;&nbsp;n&nbsp;&lt;&nbsp;nfds;&nbsp;++n)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(events[n].data.fd&nbsp;==&nbsp;listen_sock)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;conn_sock&nbsp;=&nbsp;accept(listen_sock,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;addr,&nbsp;&amp;addrlen);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(conn_sock&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;accept&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setnonblocking(conn_sock);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ev.events&nbsp;=&nbsp;EPOLLIN&nbsp;|&nbsp;EPOLLET;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ev.data.fd&nbsp;=&nbsp;conn_sock;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(epoll_ctl(epollfd,&nbsp;EPOLL_CTL_ADD,&nbsp;conn_sock,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;ev)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;epoll_ctl:&nbsp;conn_sock&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do_use_fd(events[n].data.fd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+
+
+<P>
+
+エッジトリガーインターフェースとして使う場合、性能上の理由により、 一度 (<B>EPOLLIN</B>|<B>EPOLLOUT</B>)  を指定してから
+(<B>EPOLL_CTL_ADD</B> で) ファイルディスクリプターを <B>epoll</B> インターフェースに追加することができる。 これにより、
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)  に <B>EPOLL_CTL_MOD</B> を指定して呼び出すことで <B>EPOLLIN</B> と <B>EPOLLOUT</B>
+の連続的な切り替えが避けられる。
+<A NAME="lbAI">&nbsp;</A>
+<H3>質問と解答</H3>
+
+<DL COMPACT>
+<DT>0.<DD>
+What is the key used to distinguish the file descriptors registered in an
+interest list?
+<DT><DD>
+キーはファイルディスクリプター番号とオープンファイル記述 (open file description) の組である (オープンファイル記述は
+&quot;open file handle&quot; とも 呼ばれ、オープンされたファイルのカーネルの内部表現である)。
+<DT>1.<DD>
+1 つの <B>epoll</B> インスタンスに同じファイルディスクリプターを 2 回登録するとどうなるか？
+<DT><DD>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+たぶん <B>EEXIST</B> を受け取るだろう。 しかしながら、同じ <B>epoll</B>
+インスタンスに対して複製されたファイルディスクリプターを追加することは可能である (<B><A HREF="../man2/dup.2.html">dup</A></B>(2), <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2), <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+<B>F_DUPFD</B> など)。 複製したファイルディスクリプターを異なる <I>events</I> マスクで登録すれば、イベントをフィルタリングするのに
+この機能は有用な手法である。
+<DT>2.<DD>
+2 つの <B>epoll</B> インスタンスが同じファイルディスクリプターを待ち受けることは可能か？ もし可能であれば、イベントは両方の <B>epoll</B>
+ファイルディスクリプターに報告されるか？
+<DT><DD>
+イベントは両方に報告される。 しかしながら、これを正しく扱うには注意深くプログラミングする必要が あるかもしれない。
+<DT>3.<DD>
+<B>epoll</B> ファイルディスクリプター自身は poll/epoll/select が可能か？
+<DT><DD>
+可能である。 <B>epoll</B> ファイルディスクリプターに処理待ちのイベントがある場合は、 読み出し可能だと通知されることだろう。
+<DT>4.<DD>
+<B>epoll</B> ファイルディスクリプターを自身のファイルディスクリプター集合に 入れようとするとどうなるか？
+<DT><DD>
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)  の呼び出しは (<B>EINVAL</B> で) 失敗する。 ただし <B>epoll</B> ファイルディスクリプターを他の
+<B>epoll</B> ファイルディスクリプター集合の内部に追加することは可能である。
+<DT>5.<DD>
+<B>epoll</B> ファイルディスクリプターを UNIX ドメインソケットで他のプロセスに送ることは可能か？
+<DT><DD>
+Yes, but it does not make sense to do this, since the receiving process
+would not have copies of the file descriptors in the interest list.
+<DT>6.<DD>
+Will closing a file descriptor cause it to be removed from all <B>epoll</B>
+interest lists?
+<DT><DD>
+Yes, but be aware of the following point.  A file descriptor is a reference
+to an open file description (see <B><A HREF="../man2/open.2.html">open</A></B>(2)).  Whenever a file descriptor is
+duplicated via <B><A HREF="../man2/dup.2.html">dup</A></B>(2), <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2), <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  <B>F_DUPFD</B>, or
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2), a new file descriptor referring to the same open file
+description is created.  An open file description continues to exist until
+all file descriptors referring to it have been closed.
+<DT><DD>
+A file descriptor is removed from an interest list only after all the file
+descriptors referring to the underlying open file description have been
+closed.  This means that even after a file descriptor that is part of an
+interest list has been closed, events may be reported for that file
+descriptor if other file descriptors referring to the same underlying file
+description remain open.  To prevent this happening, the file descriptor
+must be explicitly removed from the interest list (using <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+<B>EPOLL_CTL_DEL</B>)  before it is duplicated.  Alternatively, the application
+must ensure that all file descriptors are closed (which may be difficult if
+file descriptors were duplicated behind the scenes by library functions that
+used <B><A HREF="../man2/dup.2.html">dup</A></B>(2)  or <B><A HREF="../man2/fork.2.html">fork</A></B>(2)).
+<DT>7.<DD>
+2 つ以上のイベントが <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  コールの間に発生した場合、それらはまとめて報告されるか、 それとも別々に報告されるか？
+<DT><DD>
+まとめて報告されるだろう。
+<DT>8.<DD>
+ファイルディスクリプターに対する操作は、 既に集められているがまだ報告されていないイベントに影響するか？
+<DT><DD>
+既存のファイルディスクリプターに対して 2 つの操作を行うことができる。 この場合、削除には意味がない。 変更すると、使用可能な I/O
+が再び読み込まれる。
+<DT>9.<DD>
+<B>EPOLLET</B> フラグ (エッジトリガー動作) を使っている場合、 <B>EAGAIN</B> を受け取るまで、
+継続してファイルディスクリプターを読み書きする必要があるか？
+<DT><DD>
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  からイベントを受け取ることは、 そのファイルディスクリプターが要求された I/O 操作に対して準備済みである、
+ということをユーザーに示すものである。 次の (ブロックしない) read/write で <B>EAGAIN</B>
+を受け取るまではファイルディスクリプターは準備済みであると 考えなければならない。 そのファイルディスクリプターをいつどのように使うかは、
+全くユーザーに任されてる。
+<DT><DD>
+パケット指向やトークン指向のファイル (例えば、データグラムソケット、 canonical モードの端末) では、 読み込み用 / 書き込み用の I/O
+空間の末尾を検知する唯一の方法は <B>EAGAIN</B> になるまで read/write を行うことである。
+<DT><DD>
+ストリーム指向のファイル (例えば、パイプ、FIFO、ストリームソケット) では、 読み込み用 / 書き込み用の I/O 空間が使い尽くされた状態は、
+対象となるファイルディスクリプターから読み込んだデータ量または 書き込んだデータ量をチェックすることでも検知できる。
+例えば、ある特定の量のデータを読み込むために <B><A HREF="../man2/read.2.html">read</A></B>(2)  を呼んだときに、 <B><A HREF="../man2/read.2.html">read</A></B>(2)
+が返したバイト数がそれより少なかった場合、 そのファイルディスクリプターの読み込み用 I/O 空間が 使い尽くされたことが分かる。
+<B><A HREF="../man2/write.2.html">write</A></B>(2)  を使って書き込みをするときも、同じことが言える (監視しているファイルディスクリプターが常にストリーム指向のファイルを
+参照していることを保証できない場合には、後者の手法の使用を避けること)。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>ありがちな落とし穴と回避方法</H3>
+
+<DL COMPACT>
+<DT><B>o 飢餓 (starvation) (エッジトリガー)</B><DD>
+</DL>
+<P>
+
+大きな I/O 空間がある場合、 その I/O 空間のデータを全て処理 (drain) しようとすると、
+他のファイルが処理されず、飢餓を発生させることがある (この問題は <B>epoll</B> に固有のものではない)。
+<P>
+
+この問題の解決法は、準備済み状態のリストを管理して、 関連する data 構造体の中でファイルディスクリプターが 利用可能であるとマークすることである。
+それによって、利用可能なすべてのファイルの中で どのファイルを処理する必要があるかを憶えることができ、 しかも順番に処理 (round robin)
+することができる。 既に利用可能であるファイルディスクリプターに対して それ以後に受け取るイベントを無視することもできる。
+<DL COMPACT>
+<DT><B>o イベントキャッシュを使っている場合</B><DD>
+</DL>
+<P>
+
+イベントキャッシュを使っている場合、 または <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  から返された全てのファイルディスクリプターを格納している場合、
+クローズされたことを動的にマークする (つまり前のイベントの処理によってマークされる) 方法を提供すべきである。 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+から 100 個のイベントを受け取り、 イベント #47 ではある条件でイベント #13 が閉じられると仮定する。 イベント #13
+の構造体を削除しファイルディスクリプターを <B><A HREF="../man2/close.2.html">close</A></B>(2)  すると、イベントキャッシュはそのファイルディスクリプターを待つイベントが
+存在するといって、混乱が起きる。
+<P>
+
+この問題を解決する 1 つの方法は、イベント 47 の処理をしている間に、 ファイルディスクリプター 13 を削除して <B><A HREF="../man2/close.2.html">close</A></B>(2)
+するために <B>epoll_ctl</B>(<B>EPOLL_CTL_DEL</B>)  を呼び出し、関連付けられた data 構造体を削除済みとマークして、
+クリーンアップリストにリンクすることである。 バッチ処理の中でファイルディスクリプター 13 についての 他のイベントを見つけた場合、
+そのファイルディスクリプターが以前に削除されたものであると分かるので、 混乱は起きない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+<B>epoll</B> API は Linux カーネル 2.5.44 に導入された。 glibc でのサポートはバージョン 2.3.2 で追加された。
+<A NAME="lbAL">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>epoll</B> API は Linux 固有である。 他のシステムでも同様の機構が提供されている場合がある。 例えば、FreeBSD の
+<I>kqueue</I> や Solaris の <I>/dev/poll</I> などである。
+<A NAME="lbAM">&nbsp;</A>
+<H2>注意</H2>
+
+The set of file descriptors that is being monitored via an epoll file
+descriptor can be viewed via the entry for the epoll file descriptor in the
+process's <I>/proc/[pid]/fdinfo</I> directory.  See <B><A HREF="../man5/proc.5.html">proc</A></B>(5)  for further
+details.
+<P>
+
+The <B><A HREF="../man2/kcmp.2.html">kcmp</A></B>(2)  <B>KCMP_EPOLL_TFD</B> operation can be used to test whether a
+file descriptor is present in an epoll instance.
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2), <B><A HREF="../man2/epoll_create1.2.html">epoll_create1</A></B>(2), <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2), <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2),
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2)
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">レベルトリガーとエッジトリガー</A><DD>
+<DT><A HREF="#lbAF">autosleep との関係</A><DD>
+<DT><A HREF="#lbAG">/proc インターフェース</A><DD>
+<DT><A HREF="#lbAH">おすすめな使用例</A><DD>
+<DT><A HREF="#lbAI">質問と解答</A><DD>
+<DT><A HREF="#lbAJ">ありがちな落とし穴と回避方法</A><DD>
+</DL>
+<DT><A HREF="#lbAK">バージョン</A><DD>
+<DT><A HREF="#lbAL">準拠</A><DD>
+<DT><A HREF="#lbAM">注意</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

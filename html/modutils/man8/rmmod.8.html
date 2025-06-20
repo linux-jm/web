@@ -1,0 +1,202 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RMMOD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RMMOD</H1>
+Section: Linux Module Support (8)<BR>Updated: February 6, 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/modutils/release/man8/rmmod.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rmmod - ローダブルモジュールをアンロードする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+
+<B>rmmod</B>
+
+[ -aehrsvV ] module ...
+<A NAME="lbAD">&nbsp;</A>
+<H2>このマニュアルについて</H2>
+
+このマニュアルは、Linux Kernel 2.4 の時代に使われていた modutils
+パッケージの <B>rmmod</B> の説明で、古いものです。現在ではたいていの場合、kmod
+パッケージの <B>rmmod</B> が使われています。(2022/12/02, Linux JM Project)
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+<B>rmmod</B>
+
+は、実行中のカーネルからローダブルモジュールをアンロードする。
+<P>
+
+<B>rmmod</B>
+
+はカーネルからモジュールのセットをアンロードしようとする。アンロードに
+は制限があり、そのモジュールは使用中であってはならず、また他のモジュール
+から参照中であってもならない。
+<P>
+
+コマンドラインで複数のモジュールが指示されている場合、モジュールは
+指示された順に削除される。
+これにより、スタックしているモジュールのアンロードも行うことが出来る。
+<P>
+
+オプション '<B>-r</B>' を与えると、モジュールを再帰的に削除しようとする。
+つまり、スタックのトップにいるモジュールがコマンドラインで指定されると、
+このモジュールが用いている全てのモジュールを (可能ならば) 削除する。
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-a</B>, <B>--all</B>
+
+<DD>
+自動削除を行う: 使っていないモジュールに「削除予定」のタグをつけ、
+既にタグのついているモジュールを削除する。
+前回の自動削除以降も未使用のままであったモジュールは
+タグがついたままである。
+この 2 パスの手法により、一瞬使われなくなっただけの
+モジュールが削除されるのを防ぐ。
+<DT><B>-e</B>, <B>--persist</B>
+
+<DD>
+指定されたモジュールの永続データ(persistent data)を保存する。モジュールのアンロードは行わない。
+モジュール名が指定されなかった場合は全てのモジュールの永続データが保存される。
+データの保存は、カーネルと modutils の両方が永続データに対応しており、
+かつ <I>/proc/ksyms</I> に
+<BR>
+
+__insmod_<I>modulename</I>_P<I>persistent_filename</I>
+<BR>
+
+エントリがある場合にのみ行われる。
+<DT><B>-h</B>, <B>--help</B>
+
+<DD>
+オプションの一覧を表示して直ちに終了する。
+<DT><B>-r</B>, <B>--stacks</B>
+
+<DD>
+モジュールのスタックを削除する。
+<DT><B>-s</B>, <B>--syslog</B>
+
+<DD>
+全ての出力を端末ではなく <B><A HREF="../../LDP_man-pages/man3/syslog.3.html">syslog</A></B>(3) に対して行う。
+<DT><B>-v</B>, <B>--verbose</B>
+
+<DD>
+詳細に表示する。
+<DT><B>-V</B>, <B>--version</B>
+
+<DD>
+<B>modutils</B> のバージョンを表示する。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>永続データ</H2>
+
+モジュールに永続データ(
+<I><A HREF="../man8/insmod.8.html">insmod</A></I>(8)
+
+と
+<I><A HREF="../man5/modules.conf.5.html">modules.conf</A></I>(5)
+
+参照)がある場合、モジュールをアンロードした時に __insmod _P エントリの
+ファイル名のファイルに永続データを保存する。
+また、任意の時点で rmmod&nbsp;-e を実行することによってモジュールを
+アンロードすることなく永続データを保存することも出来る。
+<P>
+<P>
+
+永続データがファイルに書き込まれるとき、先頭に以下のような
+自動生成コメント行が付く。
+<BR>
+
+#% <I>kernel_version timestamp</I>
+<BR>
+
+自動生成コメント行は'#%'で始まる。
+全ての自動生成コメント行は読み込み時に削除されるが、
+その他のコメントは保存される。
+データがファイルに保存されるとき、既に存在するコメントの順番と位置は保存される。
+新しい値はファイルの最後に追加される。
+モジュールにない値がファイルに合った場合、それらの値は保存されるが
+「この値は使用されていない」旨の自動生成コメントによる警告がその前につく。
+これにより、永続データを失ったり、警告メッセージを受け取ったりすることなく
+カーネルを切り替えることが出来る。
+<P>
+
+<B>注意:</B>
+
+行の空白以外の最初の文字が'#'である場合にのみコメントとして扱われる。
+空行以外で、'#'で始まっていない行はモジュールオプションとして
+扱われる(一行毎に一つ)。
+オプション行は先頭のスペースを取り除き、
+残りは全て insmod にオプションとして渡される。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/insmod.8.html">insmod</A></B>(8), <B><A HREF="../man8/lsmod.8.html">lsmod</A></B>(8), <B><A HREF="../man8/ksyms.8.html">ksyms</A></B>(8), <B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8).
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>rmmod</B> [<B>-V</B>&nbsp;|&nbsp;<B>--version</B>] はバージョン情報を
+表示して直ちに終了するべきである。
+しかしながら、現在はバージョン情報を表示した後、
+何もオプションが指定されなかったかのように振舞う。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>履歴</H2>
+
+モジュール対応を誰が最初に考えたのかは不明である。
+<BR>
+
+Linux 用の最初のバージョンは Bas Laarhoven &lt;<A HREF="mailto:bas@vimec.nl">bas@vimec.nl</A>&gt; が作成した。
+<BR>
+
+バージョン 0.99.14 は Jon Tombs &lt;<A HREF="mailto:jon@gtex02.us.es">jon@gtex02.us.es</A>&gt; が作成した。
+<BR>
+
+Bjorn Ekwall &lt;<A HREF="mailto:bj0rn@blox.se">bj0rn@blox.se</A>&gt; が拡張を行った。
+<BR>
+
+バージョン 2.1.17 への更新は Richard Henderson &lt;<A HREF="mailto:rth@tamu.edu">rth@tamu.edu</A>&gt; が行った。
+<BR>
+
+バージョン 2.2.2 への更新は Bjorn Ekwall &lt;<A HREF="mailto:bj0rn@blox.se">bj0rn@blox.se</A>&gt; が行った。
+<BR>
+
+modutils 2.3.20 への更新は Keith Owens &lt;<A HREF="mailto:kaos@ocs.com.au">kaos@ocs.com.au</A>&gt; が行った。
+<BR>
+
+2.3.22 からの永続データは Keith Owens &lt;<A HREF="mailto:kaos@ocs.com.au">kaos@ocs.com.au</A>&gt; が行った。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">このマニュアルについて</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">永続データ</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">履歴</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:40 GMT, December 05, 2022
+</BODY>
+</HTML>

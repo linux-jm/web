@@ -1,0 +1,282 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SHUTDOWN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SHUTDOWN</H1>
+Section: Linux System Administrator's Manual (8)<BR>Updated: Juli 31, 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/SysVinit/release/man8/shutdown.8">roff page</A><HR>
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+shutdown - システムを終了させる
+
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/sbin/shutdown</B>
+
+[<B>-t</B>
+
+<I>sec</I>]
+
+[<B>-arkhncfF</B>]
+
+<I>time</I>
+
+[<I>warning-message</I>]
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>shutdown</B> はシステムを安全に終了させる。
+ログインしている全てのユーザにはシステムが終了する旨が通知され、
+新たな <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1) プロセスは生成されなくなる。
+<B>shutdown</B> はシステムを直ちに終了させることも、
+また指定した時間の経過後に終了させることもできる。
+実行中の全てのプロセスには、
+まず <FONT SIZE="-2">SIGTERM</FONT> シグナルが送信され、
+システムの終了が通知される。
+これによって、
+<B>vi</B>(1) のようなプログラムが現在編集中のファイルを保存するための、
+またメールやニュースを扱うプログラムが正常に終了するための余裕が与えられる。
+<B>shutdown</B> は、<B>init</B> プロセスにシグナルを送り、
+ランレベルの変更を依頼することによって、システムを終了させる。
+ランレベル <B>0</B> はシステムを停止するために、
+ランレベル <B>6</B> はシステムをリブートするために用いられる。
+ランレベル <B>1</B> はシステムの管理業務が行なえる状態
+(シングルユーザモード) にするために用いられる。
+<B>shutdown</B> に <I>-h</I> と <I>-r</I>
+いずれのオプションも与えられなかった場合は、
+デフォルトでランレベル <B>1</B> になる。
+システムの停止やリブートの際にどのような動作がなされるかは、
+<I>/etc/inittab</I> ファイルのエントリのうち、
+それぞれのランレベルに対応するものを参照すること。
+
+
+
+<DL COMPACT>
+<DT><B>-a</B><DD>
+<B>/etc/shutdown.allow</B> を使う。
+
+
+<DT><B>-t</B> <I>sec</I><DD>
+他のランレベルに移行する際、
+警告シグナルを送ってから kill シグナルを送るまでに
+<I>sec</I> 秒間待つよう <B><A HREF="../man8/init.8.html">init</A></B>(8) に伝える。
+
+
+<DT><B>-k</B><DD>
+実際にはシャットダウンを行なわない。
+ログイン中のユーザ全員へのメッセージ送付のみを行なう。
+
+
+<DT><B>-r</B><DD>
+シャットダウン後リブートする。
+
+
+<DT><B>-h</B><DD>
+シャットダウン後システムを停止する。
+
+
+<DT><B>-n</B><DD>
+[使うべきでない] <B><A HREF="../man8/init.8.html">init</A></B>(8) にシャットダウンを依頼するのではなく、
+自力でシャットダウンを行う。
+このオプションの使用はなるべく避けること。
+望んだ結果が得られるとは限らない。
+
+
+<DT><B>-f</B><DD>
+リブート時に fsck を行なわない。
+
+
+<DT><B>-F</B><DD>
+リブート時に必ず fsck を行なう。
+
+
+<DT><B>-c</B><DD>
+現在実行中のシャットダウンをキャンセルする。
+当然ながら、このオプションと同時に <B>time</B> を指定することはできない。
+しかし、コマンドラインから説明用のメッセージを入力し、
+ログイン中の全てのユーザに送る事はできる。
+
+
+<DT><I>time</I><DD>
+いつシャットダウンするか。
+
+
+<DT><I>warning-message</I><DD>
+ユーザ全員に送られるメッセージ。
+
+</DL>
+<P>
+
+<I>time</I> 引数は様々な書式で指定できる。
+まず、<I>hh:mm</I> という書式で時刻を与える方法がある。
+ここで <I>hh</I> は時 (数字 1 つか 2 つ)、
+<I>mm</I> は分 (数字二つ) である。
+二つめは <B>+</B><I>m</I> という書式で、
+<I>m</I> 分待機した後にシャットダウンするよう指示する方法である。
+<B>now</B> は <B>+0</B> のエイリアスである。
+<P>
+
+遅延指定付きで起動されると、shutdown は
+<I>/etc/nologin</I>
+
+ファイルを作成し、
+<I><A HREF="../../shadow/man1/login.1.html">login</A>(1)</I> のようなプログラムが
+新たなユーザログインを許可しないようにする。
+shutdown は、init にシグナルを送る前に停止した場合
+(キャンセルされたか、なにか問題があった場合)、このファイルを削除する。
+init にランレベルを変更するよう伝える前にも、
+shutdown はこのファイルを削除する。
+<P>
+
+<B>-f</B> オプションは `reboot fast' を表す。
+このオプションは <I>/fastboot</I> というアドバイス的なファイルを作るだけだが、
+このファイルはシステムの再起動時にチェックされる。
+ブート rc ファイルは、このファイルが存在すると、
+システムが適切な方法でシャットダウンされたので
+<I>fsck(1)</I> を起動する必要がないと判断する。
+その後には、
+ブートプロセスは <I>/fastboot</I> ファイルを削除しなければならない。
+<P>
+
+<B>-F</B> オプションは `force fsck' を表す。
+このオプションは <I>/forcefsck</I> というアドバイス的なファイルを作るだけだが、
+このファイルはシステムの再起動時にチェックされる。
+ブート rc ファイルは、このファイルが存在すると、
+<I>fsck(1)</I> を特に `force' オプション付きで起動し、
+適切にアンマウントされたファイルシステムもチェックさせる。
+その後には、
+ブートプロセスは <I>/forcefsck</I> ファイルを削除しなければならない。
+<P>
+
+<B>-n</B> オプションを用いると、
+<B>shutdown</B> は <B>init</B> を呼び出さず、
+全てのプロセスを自分自身で kill する。
+つづいて <B>shutdown</B> は quota と accounting を停止し、
+スワップを停め、全てのファイルシステムを unmount する。
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>アクセス制御</H2>
+
+<I>/etc/inittab</I> 中に適切なエントリを作成しておけば、
+特殊なキーシーケンス <B>CTRL-ALT-DEL</B> が押された場合に
+<B><A HREF="../man8/init.8.html">init</A></B>(8) が <B>shutdown</B> を起動するようにできる。
+こうしておくと、
+コンソールのキーボードに接触できる人なら、
+誰でもシステムをシャットダウンできてしまう。
+これを避けるため、
+<B>shutdown</B> には、
+起動を許可されたユーザが仮想コンソールのいずれかから
+ログインしているかどうかチェックする機能がある。
+<B>shutdown</B> が <B>-a</B> 引数つきで起動されると
+(/etc/inittab の shutdown エントリに追加しておく)、
+<B>shutdown</B> は <I>/etc/shutdown.allow</I>
+ファイルが存在するかどうかを調べ、
+そこに記されたログイン名を仮想コンソールからログインしている人のリスト
+(<I>/var/run/utmp</I> から取得する) と比較し、
+許可されたユーザのうちの誰か<B>または root</B>
+がログインしている場合のみシャットダウンを続行する。
+そうでない場合は
+<P>
+<PRE>
+<B>shutdown: no authorized users logged in</B>
+</PRE>
+
+<P>
+というメッセージを物理システムコンソールに出力する。
+<I>/etc/shutdown.allow</I> ファイルには、一行にユーザを一人記入する。
+空行やコメント行 (行頭に <B>#</B> を付ける) があっても良い。
+現在はユーザを 32 人までしか記入しておけないという制限がある。
+<P>
+
+<I>/etc/shutdown.allow</I> が存在しない場合は、
+<B>-a</B> 引数は無視される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<PRE>
+/fastboot
+/etc/inittab
+/etc/init.d/halt
+/etc/init.d/reboot
+/etc/shutdown.allow
+</PRE>
+
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+多くのユーザが <I>time</I> 引数を忘れ、
+<B>shutdown</B> の出すエラーメッセージに悩んでいる。
+<I>time</I> 引数は必ず指定しなければならない。
+あらゆるシャットダウンのうちの 90 パーセントまでは、
+<I>time</I> 引数は <B>now</B> でいいだろう。
+<P>
+
+init はコンソールモードでのみ CTRL-ALT-DEL をキャッチし、
+シャットダウンを開始する。システムで X Window System が動作していると、
+X サーバがすべてのキーストロークを処理する。
+X11 の環境によっては CTRL-ALT-DEL をキャッチすることも可能になっているが、
+実際にこのイベントによって何が行われるかはその環境に依存する。
+<P>
+
+シャットダウンは setuid で動作するようには設計されなかった。
+/etc/shutdown.allow は誰が shutdown を実行したかを調べるためのものではなく、
+誰が現在コンソール (のどれか) にログインしているかをチェックするための
+ものに過ぎない。
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>著者</H2>
+
+Miquel van Smoorenburg, <A HREF="mailto:miquels@cistron.nl">miquels@cistron.nl</A>
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../e2fsprogs/man8/fsck.8.html">fsck</A></B>(8),
+
+<B><A HREF="../man8/init.8.html">init</A></B>(8),
+
+<B><A HREF="../man8/halt.8.html">halt</A></B>(8),
+
+<B><A HREF="../man8/poweroff.8.html">poweroff</A></B>(8),
+
+<B><A HREF="../man8/reboot.8.html">reboot</A></B>(8)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">アクセス制御</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DT><A HREF="#lbAH">著者</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

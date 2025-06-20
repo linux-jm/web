@@ -1,0 +1,237 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 22.1 chcon: ファイルの SELinux コンテキストを変更する</title>
+
+<meta name="description" content="GNU Coreutils: 22.1 chcon: ファイルの SELinux コンテキストを変更する">
+<meta name="keywords" content="GNU Coreutils: 22.1 chcon: ファイルの SELinux コンテキストを変更する">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="chcon-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_165.html#SELinux-context" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_167.html#runcon-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_165.html#SELinux-context" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_165.html#SELinux-context" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_168.html#Modified-command-invocation" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="chcon_003a-huairuno-SELinux-kontekisutowoBian-Geng-suru"></a>
+<h2 class="section">22.1 <code>chcon</code>: ファイルの SELinux コンテキストを変更する</h2>
+
+<a name="index-chcon"></a>
+<a name="index-changing-security-context"></a>
+<a name="index-change-SELinux-context"></a>
+
+<p><code>chcon</code> は、指定されたファイルの SELinux セキュリティ・コンテキストを変更する。
+</p>
+<p>書式:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">chcon [<var>option</var>]&hellip; <var>context</var> <var>file</var>&hellip;
+chcon [<var>option</var>]&hellip; [-u <var>user</var>] [-r <var>role</var>] [-l <var>range</var>] [-t <var>type</var>] <var>file</var>&hellip;
+chcon [<var>option</var>]&hellip; --reference=<var>rfile</var> <var>file</var>&hellip;
+</pre></td></tr></table>
+
+<p>各 <var>file</var> の SELinux セキュリティ・コンテキストを <var>context</var> に変更する。
+&lsquo;<samp>--reference</samp>&rsquo; オプションを使用した場合は、
+各 <var>file</var> のセキュリティ・コンテキストを <var>rfile</var> のそれに変更する。
+</p>
+<p>このプログラムでは以下のオプションが使用できる。参照: <a href="coreutils-ja_2.html#Common-options">共通オプション</a>.
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>--dereference</samp>&rsquo;</dt>
+<dd><a name="index-_002d_002ddereference-6"></a>
+<p>シンボリックリンクそのものではなく、リンクが指しているものを操作の対象にする。
+これがデフォルトである。
+</p>
+</dd>
+<dt> &lsquo;<samp>-h</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--no-dereference</samp>&rsquo;</dt>
+<dd><a name="index-_002dh-11"></a>
+<a name="index-_002d_002dno_002ddereference-6"></a>
+<a name="index-no-dereference"></a>
+<p>参照先のファイルではなく、シンボリックリンクそのものを操作の対象にする。
+</p>
+</dd>
+<dt> &lsquo;<samp>--reference=<var>rfile</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dreference-6"></a>
+<a name="index-reference-file"></a>
+<p><var>context</var> の値を直接指定する代わりに、<var>rfile</var> のセキュリティ・コンテキストを使用する。
+</p>
+</dd>
+<dt> &lsquo;<samp>-R</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--recursive</samp>&rsquo;</dt>
+<dd><a name="index-_002dR-9"></a>
+<a name="index-_002d_002drecursive-6"></a>
+<p>ファイルやディレクトリに対して再帰的に動作する。
+</p>
+</dd>
+<dt> &lsquo;<samp>--preserve-root</samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dpreserve_002droot-4"></a>
+<p>&lsquo;<samp>--recursive</samp>&rsquo; オプションと一緒に使ったとき、ルートディレクトリ (&lsquo;<tt>/</tt>&rsquo;)
+に対して再帰的に動作することを拒否する。 See section <a href="coreutils-ja_13.html#Treating-_002f-specially">&lsquo;<tt>/</tt>&rsquo; (ルート) を特別扱いする</a>.
+</p>
+</dd>
+<dt> &lsquo;<samp>--no-preserve-root</samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dno_002dpreserve_002droot-4"></a>
+<p>&lsquo;<samp>--recursive</samp>&rsquo; オプションと一緒に使ったとき、ルートディレクトリ (&lsquo;<tt>/</tt>&rsquo;)
+を特別扱いしない。こちらがデフォルトの動作である。 See section <a href="coreutils-ja_13.html#Treating-_002f-specially">&lsquo;<tt>/</tt>&rsquo; (ルート) を特別扱いする</a>.
+</p>
+</dd>
+<dt> &lsquo;<samp>-H</samp>&rsquo;</dt>
+<dd><a name="index-_002dH-8"></a>
+<a name="index-symbolic-link-to-directory_002c-traverse-if-on-the-command-line-3"></a>
+<p>&lsquo;<samp>--recursive</samp>&rsquo; (&lsquo;<samp>-R</samp>&rsquo;) オプションが指定されている場合に、
+コマンドラインで指定された引数がディレクトリへのシンボリックリンクならば、それをたどる。 See section <a href="coreutils-ja_12.html#Traversing-symlinks">シンボリックリンクをたどる</a>.
+</p>
+</dd>
+<dt> &lsquo;<samp>-L</samp>&rsquo;</dt>
+<dd><a name="index-_002dL-12"></a>
+<a name="index-symbolic-link-to-directory_002c-traverse-each-that-is-encountered-3"></a>
+<p>ディレクトリ階層を再帰的にたどっている際に、
+ディレクトリへのシンボリックリンクに出会ったら、必ずそれをたどる。 See section <a href="coreutils-ja_12.html#Traversing-symlinks">シンボリックリンクをたどる</a>.
+</p>
+</dd>
+<dt> &lsquo;<samp>-P</samp>&rsquo;</dt>
+<dd><a name="index-_002dP-10"></a>
+<a name="index-symbolic-link-to-directory_002c-never-traverse-3"></a>
+<p>シンボリックリンクを一切たどらない。これが、&lsquo;<samp>-H</samp>&rsquo;, &lsquo;<samp>-L</samp>&rsquo;, &lsquo;<samp>-P</samp>&rsquo;
+のどれも指定されていないときの、デフォルトである。 See section <a href="coreutils-ja_12.html#Traversing-symlinks">シンボリックリンクをたどる</a>.
+</p>
+</dd>
+<dt> &lsquo;<samp>-v</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--verbose</samp>&rsquo;</dt>
+<dd><a name="index-_002dv-20"></a>
+<a name="index-_002d_002dverbose-15"></a>
+<a name="index-diagnostic"></a>
+<p>処理したすべてのファイルについてメッセージを表示する。
+</p>
+</dd>
+<dt> &lsquo;<samp>-u <var>user</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--user=<var>user</var></samp>&rsquo;</dt>
+<dd><a name="index-_002du-14"></a>
+<a name="index-_002d_002duser-1"></a>
+<p>操作対象のセキュリティ・コンテキストのユーザを <var>user</var> にする。
+</p>
+</dd>
+<dt> &lsquo;<samp>-r <var>role</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--role=<var>role</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dr-17"></a>
+<a name="index-_002d_002drole"></a>
+<p>操作対象のセキュリティ・コンテキストのロールを <var>role</var> にする。
+</p>
+</dd>
+<dt> &lsquo;<samp>-t <var>type</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--type=<var>type</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dt-20"></a>
+<a name="index-_002d_002dtype-1"></a>
+<p>操作対象のセキュリティ・コンテキストのタイプを <var>type</var> にする。
+</p>
+</dd>
+<dt> &lsquo;<samp>-l <var>range</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--range=<var>range</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dl-11"></a>
+<a name="index-_002d_002drange"></a>
+<p>操作対象のセキュリティ・コンテキストのセキュリティ・レベルの範囲を <var>range</var> にする。
+</p>
+</dd>
+</dl>
+
+<p>終了ステータス 0 は成功を示し、0 以外の値は失敗を示す。
+</p>
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_165.html#SELinux-context" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_167.html#runcon-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_165.html#SELinux-context" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_165.html#SELinux-context" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_168.html#Modified-command-invocation" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

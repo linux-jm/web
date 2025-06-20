@@ -1,0 +1,289 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RESOLVER</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>RESOLVER</H1>
+Section: File Formats (5)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/bind/contrib/man5/resolver.5">roff page</A><HR>
+<BR>BSD mandoc<BR>
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+
+
+<B>resolver</B>
+
+ - リゾルバ設定ファイル
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>resolv.conf</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>解説</H2>
+
+<A HREF="../../LDP_man-pages/man3/resolver.3.html">resolver</A>(3)
+
+
+はインターネットドメインネームシステムへのアクセスを提供する
+C ライブラリのルーチン群です。
+リゾルバ設定ファイルは、はじめてリゾルバルーチンがプロセスによって呼び出
+されたときに読み込まれる情報を含んでいます。
+ファイルは人に可読なように設計されており、様々な種類のリゾルバ情報を
+提供する、値を伴うキーワードのリストを含んでいます。
+<P>
+
+普通に構成されたシステムでは、このファイルは必要ではありません。
+問い合わせされる唯一のネームサーバはローカルマシン上にあり、ホスト名
+からドメイン名が決定され、ドメインの検索パスがそのドメイン名から作成
+されます。
+<P>
+
+様々な設定オプションは以下の通りです。
+<DL COMPACT>
+<P>
+
+<DT><B>nameserver</B>
+
+
+<DD>
+リゾルバが問い合わせをするネームサーバのインターネットアドレス
+(ドット表記)です。
+キーワード毎に 1 つづつ、計
+<B>MAXNS</B>
+
+(現状では 3)台までのネームサーバが記述できます。
+複数のサーバが記述されている場合、リゾルバライブラリは記述された順に
+問い合わせを出します。
+<B>nameserver</B>
+
+エントリが記述されていない場合、デフォルトではローカルマシン上のネーム
+サーバを使用します
+(ここで使われるアルゴリズムは以下のようになります。まず、あるネーム
+サーバに問い合わせを試みます。この問い合わせがタイムアウトになれば、
+次のネームサーバに問い合わせを試み、これをネームサーバがなくなるまで
+続けます。応答がない場合、この一連の問い合わせの試みをリトライ最大回
+数に達するまで繰り返します)。
+<DT><B>domain</B>
+
+
+<DD>
+ローカルドメイン名。
+そのドメイン内での名前の問い合わせのほとんどが、ローカルドメインにおける
+短い名前を使用することができます。
+<B>domain</B>
+
+エントリが記述されていない場合、
+gethostname(3)
+
+
+で得たローカルホスト名からドメインを決定します。
+ドメイン部は最初の `.' 以降の全てとなります。
+ホスト名がドメイン部を含んでいない場合、最終的にはルートドメインが使用されます。
+<DT><B>search</B>
+
+
+<DD>
+ホスト名調査のための検索リスト。
+通常、検索リストはローカルドメイン名から決定されます。
+デフォルトでは、ローカルドメイン名のみを含みます。
+検索リストは、
+<B>search</B>
+
+キーワードの後にスペースまたはタブで区切られたドメイン検索パス名を羅列することで
+変更できます。
+ほとんどのリゾルバの問い合わせは、検索パスの各構成要素を一致するエントリが
+見つかるまでまで順に試します。
+記述されたドメインのサーバがローカルではない場合、この処理は低速で多くの
+ネットワークトラフィックを発生させる可能性があることと、それらのいずれかの
+ドメインに関して、使用可能なサーバが 1 つも存在しない場合には問い合わせが
+タイムアウトすることに注意する必要があります。
+<P>
+
+現在のところ、検索リストは 6 ドメイン、計 256 文字に制限されます。
+<DT><B>sortlist</B>
+
+
+<DD>
+sortlist を用いて gethostbyname により返されるアドレスをソートできます。
+sortlist は IP アドレスとネットマスクの組で指定されます。
+ネットマスクはオプションであり、
+デフォルトのネットマスクはネットに対する自然なネットマスク (natural netmask)
+です。
+IP アドレスとオプションのネットマスクの組はスラッシュで区切ります。
+10 組まで指定可能です。
+<P>
+
+例 sortlist 130.155.160.0/255.255.240.0 130.155.0.0
+<DT><B>options</B>
+
+
+<DD>
+options によりリゾルバの内部変数を修正できます。
+文法は
+<P>
+
+<B>options</B> <I>option</I> <I>...</I>
+<P>
+
+であり、
+<B>option</B>
+
+は以下のいずれかです:
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>debug</B>
+
+
+<DD>
+_res.options の
+<B>RES_DEBUG</B>
+
+を設定します。
+<DT><B>ndots:n</B>
+
+
+<DD>
+<I>最初の絶対問い合わせ</I>
+
+が行われる前に、
+Fn res_query
+
+(
+<A HREF="../../LDP_man-pages/man3/resolver.3.html">resolver</A>(3)
+
+
+参照) に与えられる名前に含まれるべきドット数の閾値を設定します。
+<I>n</I>
+
+のデフォルトは
+``1''
+
+です。これは、名前中にドットがあれば、
+<I>search list</I>
+
+要素が追加される前に、
+その名前がまず絶対名として試されることを意味します。
+<DT><B>no_tld_query</B>
+
+
+<DD>
+リゾルバにトップレベルのドメイン名、すなわちドットを持たない名前を
+解決しないようにさせます。
+このオプションを使用しても、リゾルバが与えられた名前を使用して標準の
+<B>domain</B>
+
+と
+<B>search</B>
+
+のルールに従うことを防ぐことはできません。
+</DL>
+<P>
+
+<P>
+
+options は
+<B>RES_OPTIONS</B>
+
+環境変数を使用して、空白またはタブ区切りのリストとして指定できます。
+</DL>
+<P>
+
+<P>
+
+<B>domain</B>
+
+と
+<B>search</B>
+
+キーワードは排他的です。
+これらのキーワードが 1 つ以上記述されている場合、
+最後のキーワードが有効になります。
+<P>
+
+キーワードと値は同一行に存在する必要があり、キーワード
+(例えば
+<B>nameserver</B>
+
+ 
+は行の先頭にある必要があります。
+値はキーワードに続いて空白で区切って記述します。
+<A NAME="lbAE">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+<DL COMPACT>
+<P>
+
+<DT><B>/etc/resolv.conf
+
+</B>
+<DD>
+<B>resolv.conf</B>
+
+は
+/etc
+
+に存在します。
+</DL>
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../../LDP_man-pages/man3/gethostbyname.3.html">gethostbyname</A>(3),
+
+
+<A HREF="../../LDP_man-pages/man3/resolver.3.html">resolver</A>(3),
+
+
+<A HREF="../man7/hostname.7.html">hostname</A>(7),
+
+
+<A HREF="../man8/named.8.html">named</A>(8)
+
+
+<DL COMPACT><DT><DD>
+<I>&quot;Name Server Operations Guide for BIND&quot;</I>
+</DL>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>歴史</H2>
+
+<B>resolv.conf</B>
+
+ファイルフォーマットは
+BSD 4.3
+から登場しました。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">解説</A><DD>
+<DT><A HREF="#lbAE">関連ファイル</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">歴史</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

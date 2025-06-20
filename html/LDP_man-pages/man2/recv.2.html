@@ -1,0 +1,386 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RECV</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RECV</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/recv.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+recv, recvfrom, recvmsg - ソケットからメッセージを受け取る
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<B>ssize_t recv(int </B><I>sockfd</I><B>, void *</B><I>buf</I><B>, size_t </B><I>len</I><B>, int </B><I>flags</I><B>);</B>
+
+<B>ssize_t recvfrom(int </B><I>sockfd</I><B>, void *</B><I>buf</I><B>, size_t </B><I>len</I><B>, int </B><I>flags</I><B>,</B>
+<B>                 struct sockaddr *</B><I>src_addr</I><B>, socklen_t *</B><I>addrlen</I><B>);</B>
+
+<B>ssize_t recvmsg(int </B><I>sockfd</I><B>, struct msghdr *</B><I>msg</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>recv</B>(), <B>recvfrom</B>(), <B>recvmsg</B>() コールは、 ソケットからメッセージを受け取るのに使用される。
+これらはコネクションレス型のソケットにも接続指向 (connection-oriened) 型のソケットにも使用できる。 このページでは、まずこれら 3
+つのシステムコールすべてに共通の機能について説明し、 システムコール間の違いについて説明する。
+<P>
+
+The only difference between <B>recv</B>()  and <B><A HREF="../man2/read.2.html">read</A></B>(2)  is the presence of
+<I>flags</I>.  With a zero <I>flags</I> argument, <B>recv</B>()  is generally equivalent
+to <B><A HREF="../man2/read.2.html">read</A></B>(2)  (but see NOTES).  Also, the following call
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;recv(sockfd,&nbsp;buf,&nbsp;len,&nbsp;flags);
+<P>
+
+は以下と等価である。
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;recvfrom(sockfd,&nbsp;buf,&nbsp;len,&nbsp;flags,&nbsp;NULL,&nbsp;NULL);
+<P>
+
+これらの三つのシステムコールはいずれも、成功した場合にはメッセージの長さを返す。 メッセージが長過ぎて指定されたバッファーに入り切らなかった場合には、
+メッセージを受信したソケットの種類によっては余分のバイトが捨てられる かもしれない。
+<P>
+
+ソケットに受け取るメッセージが存在しなかった場合、 受信用のコールはメッセージが到着するまで待つ。 ただし、ソケットが非停止 (nonblocking)
+に設定されていた場合 (<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  を参照) は -1 を返し、外部変数 <I>errno</I> に <B>EAGAIN</B> か
+<B>EWOULDBLOCK</B> を設定する。 これらの受信用のコールは、受信したデータのサイズが要求したサイズに
+達するまで待つのではなく、何らかのデータを受信すると復帰する (受信されるデータの最大サイズは要求したサイズである)。
+<P>
+
+アプリケーションは <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+を使って、ソケットにさらにデータが到着しているかを判定することができる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>フラグ引数</H3>
+
+<I>flags</I> 引数には、以下の値を 1つ以上、ビット単位の論理和 を取ったものを指定する:
+<DL COMPACT>
+<DT><B>MSG_CMSG_CLOEXEC</B> (<B>recvmsg</B>() のみ; Linux 2.6.23)<DD>
+(<B><A HREF="../man7/unix.7.html">unix</A></B>(7)  で説明されている)  <B>SCM_RIGHTS</B> 操作を使って UNIX ドメインのファイルディスクリプター経由で受信した
+ファイルディスクリプターについて close-on-exec フラグをセットする。 このフラグは、 <B><A HREF="../man2/open.2.html">open</A></B>(2)  の <B>O_CLOEXEC</B>
+フラグと同じ理由で有用である。
+<DT><B>MSG_DONTWAIT</B> (Linux 2.2 以降)<DD>
+Enables nonblocking operation; if the operation would block, the call fails
+with the error <B>EAGAIN</B> or <B>EWOULDBLOCK</B>.  This provides similar behavior
+to setting the <B>O_NONBLOCK</B> flag (via the <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  <B>F_SETFL</B>
+operation), but differs in that <B>MSG_DONTWAIT</B> is a per-call option,
+whereas <B>O_NONBLOCK</B> is a setting on the open file description (see
+<B><A HREF="../man2/open.2.html">open</A></B>(2)), which will affect all threads in the calling process and as
+well as other processes that hold file descriptors referring to the same
+open file description.
+<DT><B>MSG_ERRQUEUE</B> (Linux 2.2 以降)<DD>
+このフラグを指定すると、 キューに入れられたエラーをソケットのエラーキューから取りだせるようになる。 このエラーは補助メッセージに組み込まれて渡され、
+この補助メッセージの種別はプロトコルに依存する (IPv4 の場合は <B>IP_RECVERR</B>)。
+ユーザーは十分なサイズのバッファーを用意しなければならない。 補助メッセージに関するより詳細な情報は <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)  および <B><A HREF="../man7/ip.7.html">ip</A></B>(7)
+を参照のこと。 エラーの原因となったオリジナルパケットのペイロードは、 <I>msg_iovec</I> 経由で通常のデータとして渡される。
+エラーを起こしたデータグラムのオリジナルの宛先アドレスは、 <I>msg_name</I> 経由で参照できる。
+<DT><DD>
+このエラーは <I>sock_extended_err</I> 構造体で提供される:
+<DT><DD>
+
+
+#define SO_EE_ORIGIN_NONE    0
+#define SO_EE_ORIGIN_LOCAL   1
+#define SO_EE_ORIGIN_ICMP    2
+#define SO_EE_ORIGIN_ICMP6   3
+<P>
+struct sock_extended_err
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;ee_errno;&nbsp;&nbsp;&nbsp;/*&nbsp;Error&nbsp;number&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint8_t&nbsp;&nbsp;ee_origin;&nbsp;&nbsp;/*&nbsp;Where&nbsp;the&nbsp;error&nbsp;originated&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint8_t&nbsp;&nbsp;ee_type;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Type&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint8_t&nbsp;&nbsp;ee_code;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Code&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint8_t&nbsp;&nbsp;ee_pad;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Padding&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;ee_info;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Additional&nbsp;information&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;ee_data;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Other&nbsp;data&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;More&nbsp;data&nbsp;may&nbsp;follow&nbsp;*/
+};
+<P>
+struct sockaddr *SO_EE_OFFENDER(struct sock_extended_err *);
+
+
+<DT><DD>
+<I>ee_errno</I> にはキューに入れられたエラーの <I>errno</I> が入っている。 <I>ee_origin</I>
+にはエラーが発生した場所のオリジンコード (origin code) が入っている。 他のフィールドはプロトコル依存である。
+<B>SO_EE_OFFENDER</B> マクロは、この補助的なメッセージを引数に取って、
+エラーの発生したネットワークオブジェクトのアドレスへのポインターを返す。 アドレスが不明の場合には、 <I>sockaddr</I> の
+<I>sa_family</I> メンバーが <B>AF_UNSPEC</B> になっている。 <I>sockaddr</I> の他のフィールドは不定である。
+エラーの発生したパケットのペイロードは通常のデータとして渡される。
+<DT><DD>
+ローカルなエラーの場合はアドレスは渡されない (これは <I>cmsghdr</I> の <I>cmsg_len</I> メンバーでチェックできる)。受信エラーの場合は
+<B>MSG_ERRQUIE</B> フラグが <I>msghdr</I>
+にセットされる。エラーが渡された後には、キューに入っている次のエラーに基いて、処理待ちのソケットエラーが再生成され、次のソケット操作の際に渡される。
+<DT><B>MSG_OOB</B><DD>
+このフラグは、通常のデータストリームでは受信できない 帯域外 (out-of-band) データの受信を要求する。 プロトコルによっては、
+通常のデータキューの先頭に速達データを置くものがあるが、 そのようなプロトコルではこのフラグは使用できない。
+<DT><B>MSG_PEEK</B><DD>
+このフラグを指定すると、 受信キューの最初のデータを返すとき、キューからデータを削除しない。
+したがって、この後でもう一度受信コールを呼び出すと、同じデータが返ることになる。
+<DT><B>MSG_TRUNC</B> (Linux 2.2 以降)<DD>
+
+raw ソケット (<B>AF_PACKET</B>)、 Internet datagram ソケット (Linux 2.4.27/2.6.8 以降)、
+netlink (Linux 2.6.22 以降) ソケット、 UNIX datagram ソケット (Linux 3.4 以降)
+の場合、パケットやデータグラムの長さが渡したバッファーよりも長かった場合にも、 パケットやデータグラムの実際の長さを返す。
+<DT><DD>
+Internet ストリームソケットでの利用については <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)  を参照。
+<DT><B>MSG_WAITALL</B> (Linux 2.2 以降)<DD>
+
+This flag requests that the operation block until the full request is
+satisfied.  However, the call may still return less data than requested if a
+signal is caught, an error or disconnect occurs, or the next data to be
+received is of a different type than that returned.  This flag has no effect
+for datagram sockets.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>recvfrom()</H3>
+
+<B>recvfrom</B>() は受信したメッセージをバッファー <I>buf</I> に格納する。 呼び出し元はバッファーサイズを <I>len</I>
+で指定しなければならない。
+<P>
+
+
+
+
+
+
+
+
+
+<I>src_addr</I> が NULL 以外で、下層のプロトコルからメッセージの送信元アドレスが分かる場合、 この送信元アドレスが <I>src_addr</I>
+が指すバッファーに格納される。 この場合、 <I>addrlen</I> は入出力両用の引数となる。 呼び出し前に、呼び出し元は <I>src_addr</I>
+に割り当てたバッファーの大きさで初期化しておくべきである。 返ってくる時には、 <I>addrlen</I>
+は送信元アドレスの実際の大きさに変更される。渡されたバッファーが小さ過ぎる場合には、返されるアドレスの末尾は 切り詰められる。この場合には、
+<I>addrlen</I> では、呼び出し時に渡された値よりも大きな値が返される。
+<P>
+
+
+呼び出し元が送信元アドレスを必要としない場合は、 <I>src_addr</I> と <I>addrlen</I> には NULL を指定すべきである。
+<A NAME="lbAG">&nbsp;</A>
+<H3>recv()</H3>
+
+<B>recv</B>()  コールは通常 <I>接続済みの (connected)</I> ソケットに対してのみ使用される (<B><A HREF="../man2/connect.2.html">connect</A></B>(2)
+参照)。次の呼び出しと等価である。
+<P>
+
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;recvfrom(fd,&nbsp;buf,&nbsp;len,&nbsp;flags,&nbsp;NULL,&nbsp;0);
+<A NAME="lbAH">&nbsp;</A>
+<H3>recvmsg()</H3>
+
+<B>recvmsg</B>()  コールは、直接渡す引数の数を減らすために <I>msghdr</I> 構造体を使用する。この構造体は
+<I>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</I> で以下のように定義されている:
+<P>
+
+
+
+struct iovec {                    /* Scatter/gather array items */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;*iov_base;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Starting&nbsp;address&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;iov_len;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;bytes&nbsp;to&nbsp;transfer&nbsp;*/
+};
+<P>
+struct msghdr {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*msg_name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;追加のアドレス&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;socklen_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_namelen;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;アドレスのサイズ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;iovec&nbsp;*msg_iov;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;scatter/gather&nbsp;配列&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_iovlen;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;msg_iov&nbsp;の要素数&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*msg_control;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;補助データ&nbsp;(後述)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_controllen;&nbsp;/*&nbsp;補助データバッファー長&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg_flags;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;受信メッセージのフラグ&nbsp;*/
+};
+
+
+<P>
+
+フィールド <I>msg_name</I> は、 ソケットが接続されていない場合に送信元アドレスを返すのに使用されるバッファーを指す。
+このバッファーは呼び出し元が確保する。 呼び出し元は呼び出し前に <I>msg_namelen</I> にこのバッファーの大きさを設定しなければならない。
+呼び出しが成功した場合、呼び出しから返って来た際には <I>msg_namelen</I> には返されるアドレスの長さが入っている。
+アプリケーションが送信元アドレスを知る必要がない場合には、 <I>msg_name</I> に NULL を指定することができる。
+<P>
+
+<I>msg_iov</I> と <I>msg_iovlen</I> フィールドは scatter-gather 用の場所を指定する。 <B><A HREF="../man2/readv.2.html">readv</A></B>(2)
+に説明がある。
+<P>
+
+<I>msg_control</I> フィールドは <I>msg_controllen</I> の長さを持ち、他のプロトコル制御メッセージや
+種々の補助データのためのバッファーへのポインターである。 <B>recvmsg</B>()  を呼ぶ際には、 <I>msg_controllen</I> に
+<I>msg_control</I> のバッファーの長さを入れておく必要がある。 コールが成功して返った場合、制御メッセージ列の長さが入っている。
+<P>
+
+メッセージの形式は以下の通り:
+<P>
+
+
+
+struct cmsghdr {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;cmsg_len;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Data&nbsp;byte&nbsp;count,&nbsp;including&nbsp;header
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(type&nbsp;is&nbsp;socklen_t&nbsp;in&nbsp;POSIX)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;cmsg_level;&nbsp;&nbsp;/*&nbsp;Originating&nbsp;protocol&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;cmsg_type;&nbsp;&nbsp;&nbsp;/*&nbsp;Protocol-specific&nbsp;type&nbsp;*/
+/* followed by
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;cmsg_data[];&nbsp;*/
+};
+
+
+<P>
+
+補助データは、 <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)  に定義されたマクロ経由でのみアクセスすべきである。
+<P>
+
+As an example, Linux uses this ancillary data mechanism to pass extended
+errors, IP options, or file descriptors over UNIX domain sockets.  For
+further information on the use of ancillary data in various socket domains,
+see <B><A HREF="../man7/unix.7.html">unix</A></B>(7)  and <B><A HREF="../man7/ip.7.html">ip</A></B>(7).
+<P>
+
+<I>msghdr</I> の <I>msg_flags</I> フィールドは <B>recvmsg</B>()
+からのリターン時に設定される。ここにはいくつかのフラグが入る。
+<DL COMPACT>
+<DT><B>MSG_EOR</B><DD>
+これはレコードの終り (end-of-record) を示し、 返されたデータが完全なレコードであることを示す (一般的には
+<B>SOCK_SEQPACKET</B> 型のソケットで使用される)。
+<DT><B>MSG_TRUNC</B><DD>
+データグラムが与えられたバッファーより大きかったために、 データグラムのはみ出した部分が捨てられたことを示す。
+<DT><B>MSG_CTRUNC</B><DD>
+補助データのためのバッファーが不足したために、 制御データの一部が捨てられたことを示す。
+<DT><B>MSG_OOB</B><DD>
+速達データや帯域外データを受信したことを示す。
+<DT><B>MSG_ERRQUEUE</B><DD>
+データは受信しなかったが ソケットのエラーキューから拡張エラーを受信したことを示す。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>返り値</H2>
+
+これらのコールは受信したバイト数を返す。 エラーの場合は -1 を返し、 <I>errno</I> にエラーを示す値を設定する。
+<P>
+
+ストリームソケットの接続相手が正しくシャットダウンを実行した場合は、
+返り値は 0 (昔ながらの &quot;end-of-file&quot; の戻り値) となる。
+<P>
+
+いくつかのドメインのデータグラムソケット (UNIX ドメインやインターネットドメインなど) では、長さ 0 のデータグラムが送信できる。
+このようなデータグラムを受信した場合、 返り値は 0 となる。
+<P>
+
+ストリームソケットに対する受信要求バイト数が 0 だった場合も、 値 0 が返される。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>エラー</H2>
+
+これらはソケット層で発生する一般的なエラーである。 他のエラーが下層のプロトコルモジュールで生成され、 返されるかもしれない。
+それらのマニュアルを参照すること。
+<DL COMPACT>
+<DT><B>EAGAIN</B> または <B>EWOULDBLOCK</B><DD>
+
+ソケットが非停止 (nonblocking) に設定されていて 受信操作が停止するような状況になったか、 受信に時間切れ (timeout)
+が設定されていて データを受信する前に時間切れになった。 POSIX.1 は、この場合にどちらのエラーを返すことも認めており、 これら 2
+つの定数が同じ値を持つことも求めていない。 したがって、移植性が必要なアプリケーションでは、両方の可能性を 確認すべきである。
+<DT><B>EBADF</B><DD>
+引数 <I>sockfd</I> が不正なファイルディスクリプターである。
+<DT><B>ECONNREFUSED</B><DD>
+リモートのホストでネットワーク接続が拒否された (よくある理由としては、要求したサービスが起動されていないなどがある)。
+<DT><B>EFAULT</B><DD>
+受信バッファーへのポインターがプロセスのアドレス空間外を指している。
+<DT><B>EINTR</B><DD>
+データを受信する前に、シグナルが配送されて割り込まれた。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EINVAL</B><DD>
+
+不正な引数が渡された。
+<DT><B>ENOMEM</B><DD>
+<B>recvmsg</B>()  のためのメモリーが確保できなかった。
+<DT><B>ENOTCONN</B><DD>
+ソケットに接続指向プロトコルが割り当てられており、 まだ接続されていない (<B><A HREF="../man2/connect.2.html">connect</A></B>(2)  と <B><A HREF="../man2/accept.2.html">accept</A></B>(2)
+を参照のこと)。
+<DT><B>ENOTSOCK</B><DD>
+ファイルディスクリプター <I>sockfd</I> がソケットを参照していない。
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, 4.4BSD (これらのインターフェースは 4.2BSD で初めて実装された)
+<P>
+
+POSIX.1 では、 <B>MSG_OOB</B>, <B>MSG_PEEK</B>, <B>MSG_WAITALL</B> フラグだけが記載されている。
+<A NAME="lbAL">&nbsp;</A>
+<H2>注意</H2>
+
+If a zero-length datagram is pending, <B><A HREF="../man2/read.2.html">read</A></B>(2)  and <B>recv</B>()  with a
+<I>flags</I> argument of zero provide different behavior.  In this circumstance,
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  has no effect (the datagram remains pending), while <B>recv</B>()
+consumes the pending datagram.
+<P>
+
+<I>socklen_t</I> 型は POSIX で発案された。 <B><A HREF="../man2/accept.2.html">accept</A></B>(2) も参照。
+<P>
+
+
+
+
+
+
+
+
+According to POSIX.1, the <I>msg_controllen</I> field of the <I>msghdr</I> structure
+should be typed as <I>socklen_t</I>, and the <I>msg_iovlen</I> field should be typed
+as <I>int</I>, but glibc currently types both as <I>size_t</I>.
+<P>
+
+<B><A HREF="../man2/recvmmsg.2.html">recvmmsg</A></B>(2)  には、一度の呼び出しでの複数のデータグラムに使用できる Linux 固有の システムコールに関する情報が書かれている。
+<A NAME="lbAM">&nbsp;</A>
+<H2>例</H2>
+
+<B>recvfrom</B>()  の利用例が <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)  に記載されている。
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2), <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2), <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/recvmmsg.2.html">recvmmsg</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2),
+<B><A HREF="../man2/shutdown.2.html">shutdown</A></B>(2), <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3), <B><A HREF="../man3/sockatmark.3.html">sockatmark</A></B>(3), <B><A HREF="../man7/ip.7.html">ip</A></B>(7),
+<B><A HREF="../man7/ipv6.7.html">ipv6</A></B>(7), <B><A HREF="../man7/socket.7.html">socket</A></B>(7), <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7), <B><A HREF="../man7/udp.7.html">udp</A></B>(7), <B><A HREF="../man7/unix.7.html">unix</A></B>(7)
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">フラグ引数</A><DD>
+<DT><A HREF="#lbAF">recvfrom()</A><DD>
+<DT><A HREF="#lbAG">recv()</A><DD>
+<DT><A HREF="#lbAH">recvmsg()</A><DD>
+</DL>
+<DT><A HREF="#lbAI">返り値</A><DD>
+<DT><A HREF="#lbAJ">エラー</A><DD>
+<DT><A HREF="#lbAK">準拠</A><DD>
+<DT><A HREF="#lbAL">注意</A><DD>
+<DT><A HREF="#lbAM">例</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

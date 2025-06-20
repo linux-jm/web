@@ -1,0 +1,145 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of OPENPTY</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>OPENPTY</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/openpty.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+openpty, login_tty, forkpty - 端末ユーティリティ関数
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/pty.h">pty.h</A>&gt;</B>
+
+<B>int openpty(int *</B><I>amaster</I><B>, int *</B><I>aslave</I><B>, char *</B><I>name</I><B>,</B>
+<B>            const struct termios *</B><I>termp</I><B>,</B>
+<B>            const struct winsize *</B><I>winp</I><B>);</B>
+
+<B>pid_t forkpty(int *</B><I>amaster</I><B>, char *</B><I>name</I><B>,</B>
+<B>              const struct termios *</B><I>termp</I><B>,</B>
+<B>              const struct winsize *</B><I>winp</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;</B>
+
+<B>int login_tty(int </B><I>fd</I><B>);</B>
+
+<I>-lutil</I> でリンクする。
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>openpty</B>()  関数は、使用可能な疑似端末 (pseudoterminal) を見つけて、 マスタとスレーブのファイルディスクリプターを
+<I>amaster</I> と <I>aslave</I> に入れて返す。 <I>name</I> が NULL でない場合、スレーブのファイル名が <I>name</I>
+に返される。 <I>termp</I> が NULL でない場合、スレーブの端末パラメーターは <I>termp</I> の値に設定される。 <I>winp</I> が
+NULL でない場合、スレーブのウインドウサイズは <I>winp</I> に設定される。
+<P>
+
+<B>login_tty</B>()  関数は、ファイルディスクリプター <I>fd</I> で参照される端末にログインする準備をする (<I>fd</I>
+は実際の端末デバイスでも、 <B>openpty</B>()  で返される疑似端末のスレーブでもよい)。 具体的には、新しいセッションを作成し、 <I>fd</I>
+を呼び出し元のプロセスの制御端末とし、 呼び出し元の標準入力・標準出力・標準エラーのストリームを <I>fd</I> に設定した後、 <I>fd</I>
+をクローズする。
+<P>
+
+<B>forkpty</B>() 関数は <B>openpty</B>(), <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B>login_tty</B>()
+を組み合わせ、疑似端末を操作する新しいプロセスを生成する。疑似端末のマスタ側を参照するファイルディスクリプターは <I>amaster</I> で返される。
+<I>name</I> が NULL でない場合には、スレーブのファイル名を返すのに <I>name</I> が指すバッファーが使用される。 <I>termp</I> と
+<I>winp</I> 引数は、NULL でなければ、 疑似端末のスレーブ側の端末属性とウインドウサイズを決定する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>openpty</B>(), <B>login_tty</B>(), <B>forkpty</B>()  の呼び出しが成功しなかった場合、 -1 が返されて、
+<I>errno</I> はエラーを示す値に設定される。 成功した場合、 <B>openpty</B>(), <B>login_tty</B>()  および<BR>
+<B>forkpty</B>()  の子プロセスは 0 を返し、 <B>forkpty</B>()  の親プロセスは子プロセスのプロセス ID を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+以下の場合に <B>openpty</B>()  は失敗する:
+<DL COMPACT>
+<DT><B>ENOENT</B><DD>
+使用可能な端末がない。
+</DL>
+<P>
+
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) が <I>fd</I> を呼び出し元のプロセスの制御端末に設定するのに失敗した場合、 <B>login_tty</B>() は失敗する。
+<P>
+
+<B>openpty</B>() と <B><A HREF="../man2/fork.2.html">fork</A></B>(2) のどちらかが失敗した場合、 <B>forkpty</B>()  は失敗する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>forkpty</B>(),
+<B>openpty</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>login_tty</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:ttyname<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+これらは BSD の関数であり、 glibc2 に存在する。 POSIX での標準化はされていない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+glibc 2.8 で、 <B>openpty</B>()  と <B>forkpty</B>()  の構造体へのポインターの引数に <B>const</B>
+修飾子が追加された。
+<P>
+
+2.0.92 より前のバージョンの glibc では、 <B>openpty</B>()  は BSD 疑似端末ペアのファイルディスクリプターを返す。
+2.0.92 以降の glibc では、 <B>openpty</B>()  はまず Unix 98 疑似端末ペアをオープンしようとし、それに失敗した場合に
+BSD 疑似端末ペアのオープンへと移行する。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+誰も <I>name</I> に対してどのくらい大きさを予約しておけばいいか分からない。 したがって、NULL でない <I>name</I> を引数として
+<B>openpty</B>()  や <B>forkpty</B>()  を呼び出すのは安全であるとは言えない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man3/ttyname.3.html">ttyname</A></B>(3), <B><A HREF="../man7/pty.7.html">pty</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

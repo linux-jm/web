@@ -1,0 +1,246 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LIBTOOLIZE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LIBTOOLIZE</H1>
+Section: User Commands  (1)<BR>Updated: June 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/gnumaniak/release/man1/libtoolize.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<B>libtoolize</B> - Makefile に libtool の機能を付加する。
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>libtoolize</B>
+
+[<B>-cfn</B>]
+
+[<B>--automake</B>]
+
+[<B>--copy</B>]
+
+[<B>--debug</B>]
+
+[<B>--dry-run</B>]
+
+[<B>--force</B>]
+
+[<B>--ltdl</B>]
+
+[<B>--ltdl-tar</B>]
+
+<P>
+<B>libtoolize</B> [<B>--help</B>] [<B>--version</B>]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>libtoolize</B>
+
+は Makefile に <B><A HREF="../man1/libtool.1.html">libtool</A></B>(1) の機能を
+付加するための標準的な方法を提供する。
+<P>
+もし <B>autoconf</B> や <B>automake</B> を使っているならば、
+`<B>configure.in</B>' ファイルに <B>AM_PROG_LIBTOOL</B> の呼び出しを
+追加すべきである。
+このマクロを使うと `<B>configure</B>' スクリプトと <B>ltconfig</B> を
+シームレスに統合できる。
+<P>
+<B>aclocal</B> プログラムは <B>configure</B> スクリプトに
+<B>AM_PROG_LIBTOOL</B> 機能を自動的に付加する。
+あなたの <B>libtool.m4</B> のコピーを <B>acinclude.m4</B> に
+インクルードしておくことを推奨する。
+なぜなら、あなたのマクロのバージョンと <B>acinclude.m4</B> の
+バージョンが合わない場合にユーザーが <B>aclocal.m4</B> や <B>configure</B> を 
+リビルドすると、互換性のないマクロのために終了しないかもしれないからである。
+<P>
+マクロでは `<B>Makefile.in</B>' において Makefile の変数
+<B>top_builddir</B> を定義する必要がある。
+<B>automake</B> はこれを自動で行うが、
+<B>autoconf</B> ユーザーは、この変数をビルドディレクトリのトップへの相対パスで
+(`../..' といったように) 設定すべきである。
+<DL COMPACT>
+<DT><B>AM_PROG_LIBTOOL</B>
+
+<DD>
+ライブラリパッケージの名前によって、
+共有/静的のどちらのライブラリをビルドするかをユーザーが指定できるように、
+<B>--enable-shared</B>[<B>=</B><I>PACKAGE</I><B>,...</B>] をサポートする。
+パッケージ名が `default' の場合、環境変数 <B>PACKAGE</B> にその名前がない
+すべてのパッケージがマッチする。
+<P>
+デフォルトではこのマクロは、もし可能であれば、
+共有ライブラリの使用を有効にする。
+さらに静的ライブラリが共有ライブラリと衝突しなければ、
+静的ライブラリの使用も有効にする。
+<B>AM_DISABLE_SHARED</B> または <B>AM_DISABLE_STATIC</B> マクロを
+呼び出すことにより、このデフォルトを変更することができる。
+<P>
+<PRE>
+# ビルドプロセスが非常に長くなるので、
+# ベータテストの間は共有ライブラリを無効にする。
+AC_DISABLE_SHARED
+AM_PROG_LIBTOOL
+</PRE>
+
+<P>
+マクロは環境変数 <B>LIBTOOL_DEPS</B> も設定する。
+この変数は libtool スクリプトが古くなったときに
+自動的に更新するために使われる。
+そのためには、<B>configure.in</B> に以下を加え、
+<P>
+<DL COMPACT><DT><DD>
+<DL COMPACT><DT><DD>
+<PRE>
+AC_SUBST(LIBTOOL_DEPS)
+</PRE>
+
+</DL>
+
+<P>
+さらに <B>Makefile.in</B> または <B>Makefile.am</B> に以下を加えること。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
+libtool: $(LIBTOOL_DEPS)
+        $(SHELL) ./config.status --recheck
+</PRE>
+
+</DL>
+
+</DL>
+
+<P>
+<DT><B>AC_DISABLE_FAST_INSTALL</B>
+
+<DD>
+デフォルトの動作を <B>AM_PROG_LIBTOOL</B> でなく
+すべての最適化を無効にするよう変更し、インストールを高速化する。
+ユーザーは <B>--enable-shared</B> と同じように、
+<B>--enable-fast-install[=</B><I>PACKAGE</I><B>,...</B>] を指定することで
+このマクロを上書きすることができる。
+<DT><B>AC_DISABLE_SHARED</B>
+
+<DD>
+<B>AM_PROG_LIBTOOL</B> に対するデフォルトの動作を
+共有ライブラリを無効とするように変更する。
+ユーザーは <B>--enable-shared</B> を指定することにより、
+このデフォルトの動作を更に変更することができる。
+<DT><B>AC_DISABLE_STATIC</B>
+
+<DD>
+<B>AM_PROG_LIBTOOL</B> に対するデフォルトの動作を
+静的ライブラリを無効とするように変更する。
+ユーザーは <B>--enable-static</B> を指定することにより、
+このデフォルトの動作を更に変更することができる。
+<DT><B>AC_LIBTOOL_DLOPEN</B>
+
+<DD>
+パッケージが <B>-dlopen</B> または <B>-dlpreopen</B> を
+使用するためには、このマクロを使用すること。
+このマクロは <B>AMPROG_LIBTOOL</B> より前に呼ばれなければならず、
+ダイナミックロード機能のチェックを有効にする。
+さもなければ、libtool はプラットホームがダイナミックロードを
+サポートしていないと仮定する。
+<DT><B>AC_LIBTOOL_WIN32_DLL</B>
+
+<DD>
+パッケージが win32 プラットホーム上でクリーンな dll をビルドするように
+移植された場合には、このマクロを使用すること。
+このマクロは <B>AMPROG_LIBTOOL</B> より前に呼ばれなければならず、
+リンクモードで <B>-no-undefined が libtool に渡されなければならない</B>。
+<P>
+これは通常、ライブラリデータアイテムが `__declspec(dllexport)' で
+エクスポートされ、`__declspec(dllimport)' インポートされることを意味している。
+このマクロが使用されないと、libtool はパッケージライブラリは
+dll クリーンでないと仮定して、win32 ホスト上で静的ライブラリしか作らなくなる。
+</DL>
+<P>
+
+Makefile.am の例は <B><A HREF="../man1/libtool.1.html">libtool</A></B>(1) を参照すること。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-c, --copy</B>
+
+<DD>
+シンボリックリンクを作らず、
+libtool データディレクトリからファイルをコピーする。
+<DT><B>-f, --force</B>
+
+<DD>
+既存の <B>libtool</B> ファイルを置き換える。
+デフォルトでは <B>libtoolize</B> は既存のファイルを上書きしない。
+<DT><B>-n, --dry-run</B>
+
+<DD>
+ファイルの作成・修正・削除をせず、<B>libtoolize</B> によって
+どのようなコマンドが実行されるかを表示する。
+<DT><B>--automake</B>
+
+<DD>
+静かに動作させるとともに、
+Automake の libtool 機能が使用されることを仮定する。
+<B>AM_PROG_LIBTOOL</B> が `<B>configure.in</B>' にある場合、
+パッケージに libtool ファイルを追加するために
+Automake により `libtoolize --automake' が使用される。
+<DT><B>--debug</B>
+
+<DD>
+シェルスクリプトのトレースモードを有効にし、標準出力に書き出す。
+<DT><B>--ltdl</B>
+
+<DD>
+パッケージのサブディレクトリに libltdl をインストールする。
+<DT><B>--ltdl-tar</B>
+
+<DD>
+パッケージに libtdl.tar.gz を追加する。
+<DT><B>--help</B>
+
+<DD>
+使用法のメッセージを標準出力に表示し、正常終了する。
+<DT><B>--version</B>
+
+<DD>
+バージョン情報を標準出力に表示し、正常終了する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../man1/libtool.1.html">libtool</A></B>(1),&nbsp;<B>ltconfig</B>(1)
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+プログラムのバグについては &lt;<A HREF="mailto:bug-libtool@gnu.org">bug-libtool@gnu.org</A>&gt; へ報告してください。
+<BR>
+
+man ページは Ragnar Hojland Espinosa &lt;<A HREF="mailto:ragnar@ragnar-hojland.com">ragnar@ragnar-hojland.com</A>&gt; が作成しました。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

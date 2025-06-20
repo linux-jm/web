@@ -1,0 +1,223 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of WRITE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>WRITE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-10-10<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/write.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+write - ファイルディスクリプター (file descriptor) に書き込む
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>ssize_t write(int </B><I>fd</I><B>, const void *</B><I>buf</I><B>, size_t </B><I>count</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>write</B>()  は、 <I>buf</I> から始まるバッファーから、ファイルディスクリプター <I>fd</I> が参照するファイルへ、最大 <I>count</I>
+バイトを書き込む。
+<P>
+
+書き込まれるバイト数は <I>count</I> よりも小さくなることがある。 例えば、書き込み対象の物理メディアに十分な領域がない場合、 リソース上限
+<B>RLIMIT_FSIZE</B> に達した場合 (<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)  参照)、 <I>count</I> バイト未満の書き込みが行われた後で
+呼び出しがシグナルハンドラーにより割り込まれた場合、 などである。 (<B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)  も参照のこと。)
+<P>
+
+seek 可能なファイル (つまり <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)  が適用できるファイル、例えば通常のファイル) では、
+書き込みはファイルオフセットから行われ、 ファイルオフセットは実際に書き込みが行われたバイト数分 加算される。ファイルが <B>O_APPEND</B> で
+<B><A HREF="../man2/open.2.html">open</A></B>(2)  された場合、ファイルオフセットは書き込み前に ファイルの末尾に設定される。
+ファイルオフセットの調整と書き込み操作はアトミックな処理として 実行される。
+<P>
+
+POSIX は <B>write</B>()  が行なわれた後に実行した <B><A HREF="../man2/read.2.html">read</A></B>(2)  が 新しいデータを返すことを要求している。
+全てのファイルシステムが POSIX 準拠ではない点に注意すること。
+<P>
+
+According to POSIX.1, if <I>count</I> is greater than <B>SSIZE_MAX</B>, the result
+is implementation-defined; see NOTES for the upper limit on Linux.
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、書き込まれたバイト数が返される。エラーの場合、 -1 が返り、 <I>errno</I> にエラーの原因を示す値が設定される。
+<P>
+
+Note that a successful <B>write</B>()  may transfer fewer than <I>count</I> bytes.
+Such partial writes can occur for various reasons; for example, because
+there was insufficient space on the disk device to write all of the
+requested bytes, or because a blocked <B>write</B>()  to a socket, pipe, or
+similar was interrupted by a signal handler after it had transferred some,
+but before it had transferred all of the requested bytes.  In the event of a
+partial write, the caller can make another <B>write</B>()  call to transfer the
+remaining bytes.  The subsequent call will either transfer further bytes or
+may result in an error (e.g., if the disk is now full).
+<P>
+
+<I>count</I> が 0 で、 <I>fd</I> が通常のファイル (regular file) を参照している場合、 <B>write</B>()
+は後述のエラーのいずれかを検出した場合、失敗を返すことがある。 エラーが検出されなかった場合、もしくはエラー検出が実行されなかった場合、 0
+が返され、他に何の影響も与えない。 <I>count</I> が 0 で、 <I>fd</I> が通常のファイル以外のファイルを参照している場合、
+その結果は規定されていない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+ファイルディスクリプター <I>fd</I> がソケット以外のファイルを参照していて、 非停止 (nonblocking) モード
+(<B>O_NONBLOCK</B>)  に設定されており、書き込みを行うと停止する状況にある。 <B>O_NONBLOCK</B> フラグの詳細は
+<B><A HREF="../man2/open.2.html">open</A></B>(2) を参照。
+<DT><B>EAGAIN</B> または <B>EWOULDBLOCK</B><DD>
+
+ファイルディスクリプター <I>fd</I> がソケットを参照していて、非停止 (nonblocking) モード (<B>O_NONBLOCK</B>)
+に設定されており、書き込みを行うと停止する状況にある。 POSIX.1-2001 は、この場合にどちらのエラーを返すことも認めており、 これら 2
+つの定数が同じ値を持つことも求めていない。 したがって、移植性が必要なアプリケーションでは、両方の可能性を 確認すべきである。
+<DT><B>EBADF</B><DD>
+<I>fd</I> が有効なファイルディスクリプターでないか書き込みのためにオープン (open) されていない。
+<DT><B>EDESTADDRREQ</B><DD>
+<I>fd</I> が、 <B><A HREF="../man2/connect.2.html">connect</A></B>(2)  を使って通信相手のアドレスが設定されていないデータグラムソケットを 参照している。
+<DT><B>EDQUOT</B><DD>
+<I>fd</I> が参照するファイルを含むファイルシステムのディスクブロックのユーザークォータの上限に達している。
+<DT><B>EFAULT</B><DD>
+<I>buf</I> がアクセス可能なアドレス空間の外にある。
+<DT><B>EFBIG</B><DD>
+実装定義の最大ファイルサイズまたはプロセスのファイルサイズ制限を 超えてファイルに書き込もうとした。
+または許可されたオフセット値の限界を超えた先の位置に 書き込もうとした。
+<DT><B>EINTR</B><DD>
+何のデータも書かない間にシグナルにより割り込まれた (interrupt)。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EINVAL</B><DD>
+<I>fd</I> が書き込みが不適切なオブジェクトを参照している。 もしくは、ファイルが <B>O_DIRECT</B> フラグを指定してオープンされているが、
+<I>buf</I> に指定されたアドレス、 <I>count</I> に指定された値、 ファイルオフセットのいずれかのアラインメントが不適切である。
+<DT><B>EIO</B><DD>
+
+A low-level I/O error occurred while modifying the inode.  This error may
+relate to the write-back of data written by an earlier <B>write</B>(), which may
+have been issued to a different file descriptor on the same file.  Since
+Linux 4.13, errors from write-back come with a promise that they <I>may</I> be
+reported by subsequent.  <B>write</B>()  requests, and <I>will</I> be reported by a
+subsequent <B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)  (whether or not they were also reported by
+<B>write</B>()).  An alternate cause of <B>EIO</B> on networked filesystems is when
+an advisory lock had been taken out on the file descriptor and this lock has
+been lost.  See the <I>Lost locks</I> section of <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  for further
+details.
+<DT><B>ENOSPC</B><DD>
+<I>fd</I> によって参照されるファイルを含むデバイス (device) に十分な空きがない。
+<DT><B>EPERM</B><DD>
+操作が file seal により禁止されている。 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  参照。
+<DT><B>EPIPE</B><DD>
+<I>fd</I> がパイプ (pipe) かソケット (socket) に接続されており、 その反対側 (読み込み側) がクローズ (close)
+されている。 これが発生した場合には、書き込みを行なうプロセスは <B>SIGPIPE</B> シグナル (signal)も受ける。
+(したがって、プログラムがこのシグナルを捕獲 (catch)、停止 (block)、無視 (ignore)  した場合のみ、write
+の返り値を参照できる。)
+</DL>
+<P>
+
+<I>fd</I> に接続されたオブジェクトによっては、他のエラーが起こるかもしれない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+SVr4, 4.3BSD, POSIX.1-2001.
+<P>
+
+SVr4 では write が割り込まれると、データが書き込まれる直前ではなく、 その時点で <B>EINTR</B> が返る。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+The types <I>size_t</I> and <I>ssize_t</I> are, respectively, unsigned and signed
+integer data types specified by POSIX.1.
+<P>
+
+A successful return from <B>write</B>()  does not make any guarantee that data
+has been committed to disk.  On some filesystems, including NFS, it does not
+even guarantee that space has successfully been reserved for the data.  In
+this case, some errors might be delayed until a future <B>write</B>(),
+<B><A HREF="../man2/fsync.2.html">fsync</A></B>(2), or even <B><A HREF="../man2/close.2.html">close</A></B>(2).  The only way to be sure is to call
+<B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)  after you are done writing all your data.
+<P>
+
+<B>write</B>()  が 1 バイトも書き込まないうちにシグナルハンドラーにより割り込まれた場合、 <B>write</B>()  はエラー <B>EINTR</B>
+で失敗する。 1バイトでも書き込んだ後で割り込まれた場合には、 <B>write</B>()  は成功し、書き込んだバイト数を返す。
+<P>
+
+
+On Linux, <B>write</B>()  (and similar system calls) will transfer at most
+0x7ffff000 (2,147,479,552) bytes, returning the number of bytes actually
+transferred.  (This is true on both 32-bit and 64-bit systems.)
+<P>
+
+An error return value while performing <B>write</B>()  using direct I/O does not
+mean the entire write has failed. Partial data may be written and the data
+at the file offset on which the <B>write</B>()  was attempted should be
+considered inconsistent.
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+POSIX.1-2008/SUSv4 セクション XSI 2.9.7 (&quot;Thread Interactions with Regular File
+Operations&quot;) によると、
+<P>
+
+<DL COMPACT><DT><DD>
+以下のすべての関数では、 通常ファイルもしくはシンボリックリンクに対する操作では POSIX.1-2008
+で規定された効果が互いにアトミックに行われなければならない: ...
+</DL>
+
+<P>
+
+
+
+
+
+
+
+
+
+
+
+この後に書かれている API の中に <B>write</B>() と <B><A HREF="../man2/writev.2.html">writev</A></B>(2) である。 スレッド（やプロセス)
+間でアトミックに適用することが求められる効果の一つとして、 ファイルオフセットの更新がある。 しかしながら、 バージョン 3.14 より前の Linux
+では、 この限りではない。 オープンファイル記述 (open file description) を共有する 2 つのプロセスが同時に
+<B>write</B>() (や <B><A HREF="../man2/writev.2.html">writev</A></B>(2)) を実行した場合、 この I/O 操作ではファイルオフセットの更新に関してはアトミックではなく、
+2 つのプロセスから出力されるデータブロックが (間違って) 重なる可能性がある。 この問題は Linux 3.14 で修正された。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/close.2.html">close</A></B>(2), <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2), <B><A HREF="../man2/fsync.2.html">fsync</A></B>(2), <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2), <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2), <B><A HREF="../man2/open.2.html">open</A></B>(2),
+<B><A HREF="../man2/pwrite.2.html">pwrite</A></B>(2), <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/writev.2.html">writev</A></B>(2), <B><A HREF="../man3/fwrite.3.html">fwrite</A></B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

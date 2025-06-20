@@ -1,0 +1,516 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 14.2 du: ファイルのディスク使用量を概算する</title>
+
+<meta name="description" content="GNU Coreutils: 14.2 du: ファイルのディスク使用量を概算する">
+<meta name="keywords" content="GNU Coreutils: 14.2 du: ファイルのディスク使用量を概算する">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="du-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_99.html#df-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_101.html#stat-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_98.html#Disk-usage" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_98.html#Disk-usage" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_104.html#Printing-text" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="du_003a-huairunodeisukuShi-Yong-Liang-woGai-Suan-suru"></a>
+<h2 class="section">14.2 <code>du</code>: ファイルのディスク使用量を概算する</h2>
+
+<a name="index-du"></a>
+<a name="index-file-space-usage"></a>
+<a name="index-disk-usage-for-files"></a>
+
+<p><code>du</code> は、指定した一連のファイルのディスク使用量を報告する。
+引数がディレクトリの場合は、サブディレクトリごとのディスク使用量も報告する。
+</p>
+<p>書式:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">du [<var>option</var>]&hellip; [<var>file</var>]&hellip;
+</pre></td></tr></table>
+
+<p>引数を指定しないと、<code>du</code> は、カレントディレクトリのディスク使用量を報告する。
+通常、ディスク使用量は 1024 バイトを 1 単位として表示するが、
+この動作は変更することができる (see section <a href="coreutils-ja_5.html#Block-size">ブロックサイズ</a>)。
+なお、小数点以下は、切り上げて整数にする。
+</p>
+<p>2 個以上のハードリンクが同一のファイルを指している場合は、そのうちの
+1 個のみが計算の対象になる。引数 <var>file</var> の順番によって、どのリンクが計算の対象になるかが変わってくるので、
+引数の順番を変更すると、<code>du</code> が出力する数値や項目が変化するかもしれない。
+</p>
+<p>このプログラムでは以下のオプションが使用できる。参照: <a href="coreutils-ja_2.html#Common-options">共通オプション</a>.
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>-0</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--null</samp>&rsquo;</dt>
+<dd><a name="index-_002d0"></a>
+<a name="index-_002d_002dnull"></a>
+<a name="index-output-NUL_002dbyte_002dterminated-lines-1"></a>
+<p>各行の末尾に改行ではなく、ゼロバイト (ASCII NUL)
+を出力する。このオプションを使用すると、出力するデータの途中に改行が現れる場合でも、
+他のプログラムがその出力を解析できるようになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-a</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--all</samp>&rsquo;</dt>
+<dd><a name="index-_002da-9"></a>
+<a name="index-_002d_002dall-3"></a>
+<p>ディレクトリだけでなく、すべてのファイルについて使用量を表示する。
+</p>
+</dd>
+<dt> &lsquo;<samp>--apparent-size</samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dapparent_002dsize"></a>
+<p>ディスクの使用量ではなく、見かけのサイズを表示する。
+ファイルの見かけのサイズとは、通常ファイルに対して <code>wc -c</code>、
+あるいは、もっと普通に <code>ls -l --block-size=1</code> や <code>stat --format=%s</code>
+を実行したときに返されるバイト数である。
+たとえば、&lsquo;<samp>zoo</samp>&rsquo; という単語を改行を付けずに書き込んだファイルなら、
+当然ながら、見かけのサイズは 3 になる。
+だが、そうした小さなファイルも、そのファイルが存在するファイルシステムのタイプと設定次第で、
+0 から 16 KiB、あるいは、それ以上のディスクスペースを占有するかもしれないのだ。
+もっとも、穴空きファイル (sparse file) の場合は事情が別である。たとえば、
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">dd bs=1 seek=2GiB if=/dev/null of=big
+</pre></td></tr></table>
+
+<p>上記のコマンドで作成した穴空きファイルは、見かけのサイズこそ 2 GiB
+だが、最近のほとんどのシステムでは、実際に使用するディスクスペースは、
+ほとんど 0 である。
+</p>
+</dd>
+<dt> &lsquo;<samp>-B <var>size</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--block-size=<var>size</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dB-2"></a>
+<a name="index-_002d_002dblock_002dsize-2"></a>
+<a name="index-file-sizes"></a>
+<p><var>size</var> によって単位の大きさを変更してから、サイズを表示する (see section <a href="coreutils-ja_5.html#Block-size">ブロックサイズ</a>)。
+たとえば、&lsquo;<samp>-BG</samp>&rsquo; と指定すれば、1,073,741,824 バイトを 1 単位として、サイズを表示する。
+</p>
+</dd>
+<dt> &lsquo;<samp>-b</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--bytes</samp>&rsquo;</dt>
+<dd><a name="index-_002db-18"></a>
+<a name="index-_002d_002dbytes-6"></a>
+<p><code>--apparent-size --block-size=1</code> と同じ。
+</p>
+</dd>
+<dt> &lsquo;<samp>-c</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--total</samp>&rsquo;</dt>
+<dd><a name="index-_002dc-18"></a>
+<a name="index-_002d_002dtotal-1"></a>
+<a name="index-grand-total-of-disk-space"></a>
+<p>すべての引数を処理した後で、全引数からなる総計を表示する。
+このオプションを使用すれば、指定したファイルやディレクトリについてディスク使用量の合計を知ることができる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-D</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--dereference-args</samp>&rsquo;</dt>
+<dd><a name="index-_002dD-3"></a>
+<a name="index-_002d_002ddereference_002dargs"></a>
+<p>コマンドラインで引数に指定されたシンボリックリンクの参照を行う。
+コマンドライン引数以外のシンボリックリンクには影響がない。
+このオプションは、&lsquo;<tt>/usr/tmp</tt>&rsquo; のような、
+シンボリックリンクであることが多いディレクトリのディスク使用量を調べるときに、重宝である。
+</p>
+</dd>
+<dt> &lsquo;<samp>-d <var>depth</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--max-depth=<var>depth</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dd-depth"></a>
+<a name="index-_002d_002dmax_002ddepth_003ddepth"></a>
+<a name="index-limiting-output-of-du"></a>
+<p>ディレクトリ階層の基点 (訳注: 要するに、コマンドラインで指定されたディレクトリ)
+から最大 <var>DEPTH</var> 段階下がったところまでにある各ディレクトリについて、
+ディスク使用量の合計を表示する (&lsquo;<samp>--all</samp>&rsquo;
+オプションが付いているときは、ファイルについても表示する)。
+基点自体は段階 0 なので、<code>du --max-depth=0</code> は <code>du -s</code>
+と同じことになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>--files0-from=<var>file</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dfiles0_002dfrom_003dfile-2"></a>
+<p>コマンドラインで名前を指定されたファイルの処理を行わない。その代わりに、
+ファイル <var>file</var> に名前が書き込まれているファイルの処理を行う。
+なお、<var>file</var> 中に書かれている各ファイル名は、ゼロバイト (ASCII NUL)
+で終端されていなければならない。このオプションは、ファイル名のリストが長すぎて、
+コマンドライン長の上限を超過してしまいそうなときに、
+便利である。そうした場合、<code>du</code> を
+<code>xargs</code> 経由で実行するのは、望ましくない。
+なぜなら、<code>xargs</code> はファイルのリストをいくつかの部分に分割して
+<code>du</code> に渡すので、<code>du</code> はリスト全体の&nbsp;&lsquo;<samp>--total</samp>&rsquo; (&lsquo;<samp>-c</samp>&rsquo;) オプションを使用した結果ではなく、
+部分リストごとの&nbsp;&lsquo;<samp>--total</samp>&rsquo; (&lsquo;<samp>-c</samp>&rsquo;) オプションを使用した結果を表示してしまうからである。
+ASCII NUL で終端されたファイル名のリストを得る方法の一つは、
+GNU <code>find</code> に &lsquo;<samp>-print0</samp>&rsquo; を付けて使うことである。
+<var>file</var> に &lsquo;<samp>-</samp>&rsquo; を指定すれば、
+ASCII NUL で終端されたファイル名を標準入力から読み込むことができる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-H</samp>&rsquo;</dt>
+<dd><a name="index-_002dH-6"></a>
+<p>&lsquo;<samp>--dereference-args</samp>&rsquo; (&lsquo;<samp>-D</samp>&rsquo;) と同じである。
+</p>
+</dd>
+<dt> &lsquo;<samp>-h</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--human-readable</samp>&rsquo;</dt>
+<dd><a name="index-_002dh-9"></a>
+<a name="index-_002d_002dhuman_002dreadable-3"></a>
+<a name="index-human_002dreadable-output-3"></a>
+<p>各サイズの後ろに、メビバイトなら &lsquo;<samp>M</samp>&rsquo; といった、大きさを示す文字を付ける。
+1000 ではなく、1024 の累乗が使われるので、&lsquo;<samp>M</samp>&rsquo; は 1,048,576
+バイトを表している。このオプションは、&lsquo;<samp>--block-size=human-readable</samp>&rsquo;
+と同じである。1000 の累乗が使いたければ、&quot;&lsquo;<samp>--si</samp>&rsquo; オプションを使用すればよい。
+</p>
+</dd>
+<dt> &lsquo;<samp>--inodes</samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dinodes-1"></a>
+<a name="index-inode-usage_002c-dereferencing-in-du"></a>
+<p>ブロックの使用状態ではなく、inode の使用状態をリストする。
+このオプションが役に立つのは、多くのファイルを収納しているために、
+ファイルシステムの inode スペースを大量に消費しているディレクトリを探すときである
+(<code>df</code> の &lsquo;<samp>--inodes</samp>&rsquo; オプションも参照すること)。
+このオプションは、&lsquo;<samp>-a</samp>&rsquo;, &lsquo;<samp>-c</samp>&rsquo;, &lsquo;<samp>-h</samp>&rsquo;, &lsquo;<samp>-l</samp>&rsquo;,
+&lsquo;<samp>-s</samp>&rsquo;, &lsquo;<samp>-S</samp>&rsquo;, &lsquo;<samp>-t</samp>&rsquo;, &lsquo;<samp>-x</samp>&rsquo;
+といったオプションと組み合わせて使ってもよい。
+しかし、ブロックサイズ関係の他のオプション、たとえば、&lsquo;<samp>-b</samp>&rsquo;, &lsquo;<samp>-m</samp>&rsquo;,
+&lsquo;<samp>--apparent-size</samp>&rsquo; などを渡しても、無視される。
+</p>
+</dd>
+<dt> &lsquo;<samp>-k</samp>&rsquo;</dt>
+<dd><a name="index-_002dk-5"></a>
+<a name="index-kibibytes-for-file-sizes"></a>
+<p>デフォルトのブロックサイズがどうなっていようと、1 ブロック 1024
+バイトでサイズを表示する (see section <a href="coreutils-ja_5.html#Block-size">ブロックサイズ</a>)。このオプションは
+&lsquo;<samp>--block-size=1K</samp>&rsquo; に等しい。
+</p>
+</dd>
+<dt> &lsquo;<samp>-L</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--dereference</samp>&rsquo;</dt>
+<dd><a name="index-_002dL-7"></a>
+<a name="index-_002d_002ddereference-4"></a>
+<a name="index-symbolic-links_002c-dereferencing-in-du"></a>
+<p>シンボリックリンクの参照を行う (リンク自体のディスク使用量ではなく、
+リンクが指しているファイルやディレクトリの使用量を表示する)。
+</p>
+</dd>
+<dt> &lsquo;<samp>-l</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--count-links</samp>&rsquo;</dt>
+<dd><a name="index-_002dl-9"></a>
+<a name="index-_002d_002dcount_002dlinks"></a>
+<a name="index-hard-links_002c-counting-in-du"></a>
+<p>すべてのファイルを計算に入れる。
+すなわち、(ハードリンクとして) 前に現れたことがあっても、計算に入れる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-m</samp>&rsquo;</dt>
+<dd><a name="index-_002dm-10"></a>
+<a name="index-mebibytes-for-file-sizes"></a>
+<p>デフォルトのブロックサイズを変更し、1 ブロック 1,048,576
+バイトのブロック数でサイズを表示する (see section <a href="coreutils-ja_5.html#Block-size">ブロックサイズ</a>)。
+このオプションは、&lsquo;<samp>--block-size=1M</samp>&rsquo; と同じである。
+</p>
+</dd>
+<dt> &lsquo;<samp>-P</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--no-dereference</samp>&rsquo;</dt>
+<dd><a name="index-_002dP-6"></a>
+<a name="index-_002d_002dno_002ddereference-5"></a>
+<a name="index-symbolic-links_002c-dereferencing-in-du-1"></a>
+<p><code>du</code> が出会った各シンボリックリンクについて、シンボリック自体の使用ディスクスペースを計算する。
+</p>
+</dd>
+<dt> &lsquo;<samp>-S</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--separate-dirs</samp>&rsquo;</dt>
+<dd><a name="index-_002dS-10"></a>
+<a name="index-_002d_002dseparate_002ddirs"></a>
+<p>通常、(&lsquo;<samp>--summarize</samp>&rsquo; オプションを使用しない場合の)
+<code>du</code> の出力において、<var>d</var> というディレクトリ名の隣に表示されるサイズは、
+<var>d</var> 以下にあるすべてのエントリのサイズの合計に、
+<var>d</var> 自体のサイズを加えたものである。それに対して、&lsquo;<samp>--separate-dirs</samp>&rsquo;
+オプションを指定すると、<var>d</var> というディレクトリ名に対して報告されるサイズは、
+いかなるサブディレクトリのサイズも含まないものになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>--si</samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dsi-3"></a>
+<a name="index-SI-output-3"></a>
+<p>各サイズにの後ろに、メガバイトなら &lsquo;<samp>M</samp>&rsquo; といった、SI 形式の略号を付ける。
+1024 ではなく、1000 の累乗が使用されるので、&lsquo;<samp>M</samp>&rsquo; は
+1,000,000 バイトを表している。このオプションは、&lsquo;<samp>--block-size=si</samp>&rsquo;
+と同じことである。1024 の累乗が使いたければ、&lsquo;<samp>-h</samp>&rsquo; や
+&lsquo;<samp>--human-readable</samp>&rsquo; を使用すればよい。
+</p>
+</dd>
+<dt> &lsquo;<samp>-s</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--summarize</samp>&rsquo;</dt>
+<dd><a name="index-_002ds-19"></a>
+<a name="index-_002d_002dsummarize"></a>
+<p>各引数についてその合計ディスク使用量のみを表示する (訳注: すなわち、
+引数がディレクトリの場合、そのサブディレクトリごとの情報まで表示しない)。
+</p>
+</dd>
+<dt> &lsquo;<samp>-t <var>size</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--threshold=<var>size</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dt-15"></a>
+<a name="index-_002d_002dthreshold"></a>
+<p>指定された <var>size</var> を目安にして、表示する対象を取捨する。<var>size</var> は、
+通常モードではディスク使用量を指し (see section <a href="coreutils-ja_5.html#Block-size">ブロックサイズ</a>)、&lsquo;<samp>--inodes</samp>&rsquo;
+オプションと組み合わせた場合は inode 使用数を指す。
+(訳注: ディスク使用量の目安として使う場合、<var>size</var> の単位は、デフォルトではバイトである。
+もちろん、K, M, G などの接尾辞を付けることもできる。)
+</p>
+<p><var>size</var> が正の数ならば、<code>du</code> はサイズがそれ以上である対象のみを表示する。
+</p>
+<p><var>size</var> が負の数ならば、<code>du</code> はサイズがそれ以下である対象のみを表示する。
+</p>
+<p>GNU の <code>find</code> を使えば、特定のサイズのファイルを見つけることができる。
+それに対して、<code>du</code> の &lsquo;<samp>--threshold</samp>&rsquo; を使うと、
+ディレクトリも指定サイズに基づいて篩い分けることができるのである。
+</p>
+<p>&lsquo;<samp>--threshold</samp>&rsquo; オプションは、&lsquo;<samp>--apparent-size</samp>&rsquo;
+オプションと組み合わせることができるのに留意していただきたい。
+その場合は、見かけのサイズに基づいて表示対象を絞り込むことになる。
+</p>
+<p>&lsquo;<samp>--threshold</samp>&rsquo; オプションは、&lsquo;<samp>--inodes</samp>&rsquo; オプションと組み合わせることもできる。
+その場合は、inode 数に基づいて表示対象を絞り込むことになる。
+</p>
+<p>200 メガバイト以上のサイズを持つディレクトリを捜すには、
+&lsquo;<samp>--threshold</samp>&rsquo; オプションを次のように使えばよいだろう。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">du --threshold=200MB
+</pre></td></tr></table>
+
+<p>見かけのサイズが 500 バイト以下のディレクトリやファイルを捜すには
+(&lsquo;<samp>-a</samp>&rsquo; を使っていることに注意)、&lsquo;<samp>--threshold</samp>&rsquo; を次のように使えばよい。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">du -a -t -500 --apparent-size
+</pre></td></tr></table>
+
+<p>ルートファイルシステム上にあるディレクトリで、20000 以上の inode
+を使用しているものを、/ 以下のディレクトリ階層で捜すには、
+&lsquo;<samp>--threshold</samp>&rsquo; を次のように使えばよい。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">du --inodes -x --threshold=20000 /
+</pre></td></tr></table>
+
+
+</dd>
+<dt> &lsquo;<samp>--time</samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dtime-4"></a>
+<a name="index-last-modified-dates_002c-displaying-in-du"></a>
+<p>ディレクトリやそのサブディレクトリに存在するファイルについて表示する際に、
+その最終更新日時 (modification time) も表示する。
+</p>
+<p>(訳注: 一つ留意していただきたいことがある。ディレクトリのタイムスタンプについては、
+そのディレクトリ以下にあるファイルのうち (そのディレクトリ直下のファイルとはかぎらない)、
+最終更新日時がもっとも新しいファイルのタイムスタンプと同一のものが表示される。
+すなわち、ディレクトリのタイムスタンプは、&lsquo;<samp>ls -l</samp>&rsquo; で表示されるものとは違うことがあるわけだ。
+このオプションや、そのバリエーションである次の二つのオプションは、
+あるディレクトリ以下を最後に使用したのはいつかを知るのに便利である。)
+</p>
+</dd>
+<dt> &lsquo;<samp>--time=ctime</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--time=status</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--time=use</samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dtime-5"></a>
+<a name="index-ctime_002c-show-the-most-recent"></a>
+<a name="index-status-time_002c-show-the-most-recent"></a>
+<a name="index-use-time_002c-show-the-most-recent"></a>
+<p>ディレクトリ以下にあるファイルについて表示する際に、最終更新日時ではなく、
+最終ステータス変更日時 (inode 中の &lsquo;<samp>ctime</samp>&rsquo;) を表示する。
+</p>
+<p>(訳注: 原文でもこの三つのオプションを等価なものとして並べているが、
+訳者としては、&lsquo;<samp>--time=use</samp>&rsquo; と等価なのは、&lsquo;<samp>--time=ctime</samp>&rsquo; ではなく、
+&lsquo;<samp>--time=atime</samp>&rsquo; ではないかと思う。ご自分で確かめていただきたい。)
+</p>
+</dd>
+<dt> &lsquo;<samp>--time=atime</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--time=access</samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dtime-6"></a>
+<a name="index-atime_002c-show-the-most-recent"></a>
+<a name="index-access-time_002c-show-the-most-recent"></a>
+<p>ディレクトリ以下にあるファイルについて表示する際に、最終更新日時ではなく、
+最終アクセス日時 (inode 中の &lsquo;<samp>atime</samp>&rsquo;) を表示する。
+</p>
+</dd>
+<dt> &lsquo;<samp>--time-style=<var>style</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dtime_002dstyle-1"></a>
+<a name="index-time-style-1"></a>
+<p>タイムスタンプを <var>style</var> 形式で表示する。このオプションは、&lsquo;<samp>--time</samp>&rsquo;
+オプションと併せて指定したときにのみ効果がある。<var>style</var> は以下の一つでなければならない。
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>+<var>format</var></samp>&rsquo;</dt>
+<dd><a name="index-LC_005fTIME-5"></a>
+<p><var>format</var> を使って、タイムスタンプを表示する。その場合、<var>format</var>
+は、<code>date</code> コマンドの書式引数と同じように解釈される (see section <a href="coreutils-ja_151.html#date-invocation"><code>date</code>: システムの日付や時刻を表示、設定する</a>)。
+たとえば、&lsquo;<samp>--time-style=&quot;+%Y-%m-%d %H:%M:%S&quot;</samp>&rsquo; と指定すると、
+<code>du</code> の表示するタイムスタンプは、
+&lsquo;<samp>2002-03-30 23:45:56</samp>&rsquo; のようになる。<code>date</code> の場合と同様、
+<var>format</var> の解釈は、<code>LC_TIME</code> ロケール・カテゴリの影響を受ける。
+</p>
+</dd>
+<dt> &lsquo;<samp>full-iso</samp>&rsquo;</dt>
+<dd><p>タイムスタンプを省略なしで表示する。
+すなわち、ISO 8601 の日付、時刻、タイムゾーンという構成要素を
+nanosecond (10 億分の 1 秒) の精度で使用するわけだ。
+一例を挙げると、&lsquo;<samp>2002-03-30 23:45:56.477817180 -0700</samp>&rsquo;
+といった表示になる。この形式は、&lsquo;<samp>+%Y-%m-%d %H:%M:%S.%N %z</samp>&rsquo; と同じである。
+</p>
+</dd>
+<dt> &lsquo;<samp>long-iso</samp>&rsquo;</dt>
+<dd><p>ISO 8601 の日付と時刻の構成要素を分の単位まで表示する。たとえば、
+&lsquo;<samp>2002-03-30 23:45</samp>&rsquo;。このタイムスタンプは、&lsquo;<samp>full-iso</samp>&rsquo; タイム
+スタンプより短く、日常作業にはたいてい十分である。この形式は
+&lsquo;<samp>+%Y-%m-%d %H:%M</samp>&rsquo; と同じである。
+</p>
+</dd>
+<dt> &lsquo;<samp>iso</samp>&rsquo;</dt>
+<dd><p>タイムスタンプに ISO 8601 書式の日付を表示する。たとえば、
+&lsquo;<samp>2002-03-30</samp>&rsquo; といった具合である。この形式は、&lsquo;<samp>+%Y-%m-%d</samp>&rsquo; と同じである。
+</p></dd>
+</dl>
+
+<a name="index-TIME_005fSTYLE-1"></a>
+<p>&lsquo;<samp>--time-style</samp>&rsquo; オプションのデフォルト値は、
+環境変数 <code>TIME_STYLE</code> を使って指定することができる。
+<code>TIME_STYLE</code> が設定されていない場合、デフォルトの形式は &lsquo;<samp>long-iso</samp>&rsquo; である。
+<code>ls</code> と共通の <code>TIME_STYLE</code> を使えるようにするため、
+&lsquo;<samp>+</samp>&rsquo; で始まる <code>TIME_STYLE</code> の値が、改行を含んでいる場合は、
+改行以後の文字は無視されることになる。
+また、<code>TIME_STYLE</code> の値が &lsquo;<samp>posix-</samp>&rsquo; で始まる場合、&lsquo;<samp>posix-</samp>&rsquo; は無視される。
+さらに、<code>TIME_STYLE</code> の値が &lsquo;<samp>locale</samp>&rsquo; の場合、<code>TIME_STYLE</code> は無視される。
+</p>
+</dd>
+<dt> &lsquo;<samp>-X <var>file</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--exclude-from=<var>file</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dX-file"></a>
+<a name="index-_002d_002dexclude_002dfrom_003dfile"></a>
+<a name="index-excluding-files-from-du"></a>
+<p>&lsquo;<samp>--exclude</samp>&rsquo; に似ているが、除外するパターンを <var>file</var> から 1 行につき
+1 パターン読み込む点が違う。<var>file</var> が &lsquo;<samp>-</samp>&rsquo; なら、パターンを標準入力から読み込む。
+</p>
+</dd>
+<dt> &lsquo;<samp>--exclude=<var>pattern</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dexclude_003dpattern"></a>
+<a name="index-excluding-files-from-du-1"></a>
+<p>再帰的な処理を行っているとき、<var>pattern</var> にマッチするサブディレクトリやファイルをスキップする。
+たとえば、<code>du --exclude='*.o'</code> と指定すると、名前が &lsquo;<samp>.o</samp>&rsquo;
+で終わるファイルを除外することになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-x</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--one-file-system</samp>&rsquo;</dt>
+<dd><a name="index-_002dx-5"></a>
+<a name="index-_002d_002done_002dfile_002dsystem-2"></a>
+<a name="index-one-file-system_002c-restricting-du-to"></a>
+<p>処理される引数が存在するファイルシステムとは別のファイルシステムにあるディレクトリをスキップする。
+</p>
+</dd>
+</dl>
+
+<a name="index-NFS-mounts-from-BSD-to-HP_002dUX-1"></a>
+<p>BSD システムでは、HP-UX システムから NFS マウントしているファイルについて、
+<code>du</code> は正確な値の半分のサイズを報告する。逆に、HP-UX システムでは、
+BSD システムから NFS マウントしているファイルについて、<code>du</code>
+は正確な値の 2 倍のサイズを報告する。これは HP-UX にある欠陥のせいであり、
+HP-UX の <code>du</code> プログラムも、そのとばっちりを受けているのである。
+</p>
+<p>終了ステータス 0 は成功を示し、0 以外の値は失敗を示す。
+</p>
+
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_99.html#df-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_101.html#stat-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_98.html#Disk-usage" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_98.html#Disk-usage" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_104.html#Printing-text" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

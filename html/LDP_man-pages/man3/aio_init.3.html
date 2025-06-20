@@ -1,0 +1,119 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of AIO_INIT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>AIO_INIT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/aio_init.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+aio_init - 非同期 I/O の初期化
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>         /* See <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) */
+<B>#include &lt;<A HREF="file:///usr/include/aio.h">aio.h</A>&gt;</B>
+
+<B>void aio_init(const struct aioinit *</B><I>init</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>-lrt</I> でリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+GNU 固有の <B>aio_init</B>() 関数を使うと、呼び出し側が glibc の POSIX AIO 実装に
+対して調整 (チューニング) のヒントを与えることができる。この関数は使用しなく
+てもよいが、この関数が効果を持つには、POSIX AIO API の他の関数を利用する前に
+呼び出さなければならない。
+<P>
+
+チューニングの情報は、引数 <I>init</I> が指すバッファーで与える。
+このバッファーは以下の形式の構造体である。
+<P>
+
+
+
+struct aioinit {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;aio_threads;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Maximum&nbsp;number&nbsp;of&nbsp;threads&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;aio_num;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;expected&nbsp;simultaneous
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;requests&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;aio_locks;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Not&nbsp;used&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;aio_usedba;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Not&nbsp;used&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;aio_debug;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Not&nbsp;used&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;aio_numusers;&nbsp;&nbsp;&nbsp;/*&nbsp;Not&nbsp;used&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;aio_idle_time;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;seconds&nbsp;before&nbsp;idle&nbsp;thread
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;terminates&nbsp;(since&nbsp;glibc&nbsp;2.2)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;aio_reserved;
+};
+
+
+<P>
+
+<I>aioinit</I> 構造体のフィールドのうち以下が使用される。
+<DL COMPACT>
+<DT><I>aio_threads</I><DD>
+このフィールドは、AIO の実装が使用できるワーカースレッド数の最大値を指定する。
+完了していない I/O 操作の数がこの上限を超えた場合、超過した操作は
+空いたワーカースレッドができるまでキューに入る。
+このフィールドに 1 未満の値を指定した場合には、値 1 が使用される。
+デフォルト値は 20 である。
+<DT><I>aio_num</I><DD>
+
+
+このフィールドは、呼び出し側がキューに入れる予定の
+同時 I/O リクエスト数の最大値を指定する。
+このフィールドに 32 未満の値が指定された場合、値は 32 に切り上げられる。
+デフォルト値は 64 である。
+<DT><I>aio_idle_time</I><DD>
+このフィールドは、あるワーカースレッドが、前のリクエストの処理を完了してから、
+次のリクエストをどのくらい時間待つかを秒単位で指定する。
+指定した時間を経過しても次のリクエストがなければ、
+そのワーカースレッドは終了される。デフォルト値は 1 秒である。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>バージョン</H2>
+
+The <B>aio_init</B>() 関数は glibc 2.1 以降で利用できる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>準拠</H2>
+
+この関数は GNU による拡張である。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man7/aio.7.html">aio</A></B>(7)
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">バージョン</A><DD>
+<DT><A HREF="#lbAF">準拠</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:26 GMT, December 05, 2022
+</BODY>
+</HTML>

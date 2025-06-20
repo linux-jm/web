@@ -1,0 +1,240 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of AUTOMOUNT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>AUTOMOUNT</H1>
+Section: Maintenance Commands (8)<BR>Updated: 14 Jan 2000<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/autofs/release/man8/automount.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+automount - autofs のマウントポイントを設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>automount</B> [<I>options</I>] <I>mount-point</I> <I>map-type</I>[,<I>format</I>] <I>map</I> [<I>map-options</I>]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>automount</B> プログラムは
+autofs (Linux 組み込みのオートマウントシステム) の
+マウントポイントを設定するために使われる。
+<B>automount</B> はベースとなる <I>mount-point</I> と <I>map</I> を引き数に取り、
+ベースである <I>mount-point</I> 以下のファイルシステムがアクセスされるときに、
+これらの引き数を (他の <I>options</I> と組み合わせて) 使って
+自動的にマウントする。
+ファイルシステムはアクセスを一定期間受けないと、
+自動的にアンマウントされる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><I>-p, --pid-file</I>
+
+<DD>
+デーモンのプロセス ID (pid) を指定されたファイルに書き出す。
+<DT><I>-t, --timeout</I>
+
+<DD>
+ディレクトリがアンマウントされるまでの最小タイムアウトを秒単位で設定する。
+デフォルトは 5 秒である。
+タイムアウトを 0 に設定すると、アンマウントは全く行われない。
+<DT><I>-v, --verbose</I>
+
+<DD>
+一般的な状態と進捗メッセージの表示を有効にする。
+<DT><I>-d, --debug</I>
+
+<DD>
+デバッグメッセージとともに、
+一般的な状態と進捗メッセージの表示を有効にする。
+<DT><I>-g, --ghost</I>
+
+<DD>
+automount のディレクトリは表示されるが、
+アクセスされるまではマウントしないように要求する。
+ワイルドカードマップはゴースト化できない。
+<DT><I>-V, --version</I>
+
+<DD>
+バージョン番号を表示して、終了する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>引き数</H2>
+
+<B>automount</B> は少なくとも 3 つの引き数を取る。
+必須の引き数には <I>mount-point</I>, <I>map-type</I>, <I>map</I> が含まれる。
+必須の引き数と必須ではない引き数の両方を以下で説明する。
+<DL COMPACT>
+<DT><B>mount-point</B><DD>
+autofs でマウントされるファイルシステムが置かれるベースの位置。
+これは (<B>mkdir -p</B> により) 作成されて、
+<B>automount</B> が終了する時に (<B>rmdir -p</B> により) 削除される
+ディレクトリの名前である。
+<DT><B>map-type</B><DD>
+<B>automount</B> の呼び出しに使われるマップのタイプ。
+有効なマップのタイプは以下の通り:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>file</B>
+
+<DD>
+マップは通常のテキストファイルである。
+<DT><B>program</B>
+
+<DD>
+マップは実行可能プログラムである。
+このプログラムはコマンドラインからキーが渡され、
+成功した場合は標準出力にエントリが返される。
+<DT><B>yp</B>
+
+<DD>
+マップは NIS (YP) データベースである。
+<DT><B>nisplus</B>
+
+<DD>
+マップは NIS+ データベースである。
+<DT><B>hesiod</B>
+
+<DD>
+マップは hesiod データベースであり、
+<B>filsys</B>
+
+エントリがマップとして使われる。
+<DT><B>ldap</B>
+
+<DD>
+マップ名は <B>[//servername/]basedn</B> という形式である。
+オプションの <B>servername</B> はクエリを行う LDAP サーバの名前である。
+<B>basedn</B> は DN であり、その DN 以下でサブツリーの検索が行なわれる。
+automountMap オブジェクトクラスと nisMap (RFC 2307) オブジェクトクラスの
+2 つの LDAP スキーマがサポートされている。
+</DL>
+<P>
+
+automountMap スキーマにおけるエントリは、
+指定されたサブツリーにある <B>automount</B> オブジェクトである。
+ここで <B>cn</B> 属性はキーであり (ワイルドカードキーは &quot;/&quot;)、
+<B>automountInformation</B> 属性は
+オートマウントシステムで使用される情報を保持する。
+このモジュールで使用されるスキーマのドキュメントは
+<I><A HREF="http://docs.sun.com/source/806-4251-10/mapping.htm">http://docs.sun.com/source/806-4251-10/mapping.htm</A></I> から
+オンラインで入手できる。
+<P>
+
+RFC 2307 スキーマエントリは <B>nisObject</B> オブジェクトである。
+<B>cn</B> 属性はキーとして使用され、
+<B>nisMapEntry</B> はオートマウントシステムで使用される情報を保持する。
+</DL>
+
+<DT><B>format</B><DD>
+マップデータのフォーマット。
+現在のところ認識されるフォーマットは、
+<B>sun</B> と <B>hesiod</B> のみである。
+<B>sun</B> は Sun オートマウントシステムの
+マップフォーマットのサブセットであり、
+<B>hesiod</B> は hesiod filesys エントリである。
+フォーマットが指定されない場合、
+<B>hesiod</B> 以外の全てのマップタイプのデフォルトは <B>sun</B> である。
+<DT><B>map</B><DD>
+使用されるマップファイルの位置。
+マップタイプが <B>file</B> または <B>program</B> の場合は、
+UNIX の絶対パス名である。
+マップタイプが <B>yp</B>, <B>nisplus</B>, <B>hesiod</B> の場合は、
+データベースの名前である。
+<DT><B>options</B><DD>
+先頭にダッシュ (-) がない残りのコマンドライン引き数は、
+<B>mount</B> のオプション (<I>-o</I>) として扱われる。
+先頭にダッシュが付いた引き数はマップのオプションとして扱われる。
+<P>
+<B>sun</B> フォーマットは以下のオプションをサポートする:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>-Dvariable=value</I>
+
+<DD>
+マップ置換において <I>variable</I> を <I>value</I> で置き換える。
+<DT><I>-strict</I>
+
+<DD>
+ファイルシステムをマウントするときのエラーを致命的なものとして扱う。
+これは複数のファイルシステムがマウントされる
+(`multimounts') の時に重要である。
+このオプションが指定された場合、
+ファイルシステムが 1 つでもマウントできない場合は、
+全てのファイルシステムがマウントされない。
+</DL>
+</DL>
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+<B>automount</B> デーモンがシグナル USR1 をキャッチすると、
+autofs マウントされているファイルシステムのうち
+現在使用されていないもの全てをアンマウントし、
+動作し続ける (強制的な期限切れ)。
+シグナル TERM または USR2 をキャッチした場合、
+autofs マウントされているファイルシステムのうち
+現在使用されていないもの全てをアンマウントし、
+全てのファイルシステムがアンマウントされた場合には終了する。
+使用中 (busy) のファイルシステムはアンマウントされない。
+このデーモンは HUP シグナルにも応答する。
+HUP シグナルは、ゴースト化が実装されているマップ
+(現在のところは FILE と NIS マップ) に対しては、更新の引金となる。
+<P>
+
+デーモンに終了シグナルが送られた時に autofs ディレクトリ自身が使用中の場合、
+デーモンは autofs ファイルシステムをアンマウントせずに終了する。
+ファイルシステムは動作停止 (機能していない) 状態のままにされ、
+使用されなくなったときにアンマウントされる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man5/autofs.5.html">autofs</A></B>(5),
+
+<B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8).
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+望ましい機能が非常に不足している (<B>TODO</B> ファイルを参照)。
+<P>
+ドキュメントの修正したい箇所がそのままにされている。
+<P>
+その他のバグは詳細な説明と共に
+&lt;<A HREF="mailto:autofs@linux.kernel.org">autofs@linux.kernel.org</A>&gt; へ報告してほしい。
+メーリングリストへの参加方法とアーカイブについては、
+<A HREF="http://linux.kernel.org/mailman/listinfo/autofs">http://linux.kernel.org/mailman/listinfo/autofs</A> を見てほしい。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>著者</H2>
+
+H. Peter Anvin &lt;<A HREF="mailto:hpa@transmeta.com">hpa@transmeta.com</A>&gt;
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">引き数</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

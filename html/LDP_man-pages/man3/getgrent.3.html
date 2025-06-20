@@ -1,0 +1,203 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETGRENT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETGRENT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getgrent.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getgrent, setgrent, endgrent - グループファイルエントリーの取得
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</B>
+
+<B>struct group *getgrent(void);</B>
+
+<B>void setgrent(void);</B>
+
+<B>void endgrent(void);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+
+<B>setgrent</B>():
+<DL COMPACT><DT><DD>
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以降:&nbsp;*/&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以前:&nbsp;*/&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
+</DL>
+
+<P>
+
+<B>getgrent</B>(), <B>endgrent</B>():
+<DL COMPACT><DT><DD>
+
+glibc 2.22 以降:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500&nbsp;||
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>
+
+
+Glibc 2.21 and earlier
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.12&nbsp;以降:&nbsp;*/&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以前:&nbsp;*/&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getgrent</B>()  関数は、グループデータベースから取得したエントリーを 要素毎に分解し、各要素を格納した構造体へのポインターを返す
+(グループデータベースの例: ローカルのグループファイル <I>/etc/group</I>, NIS, LDAP)。 <B>getgrent</B>()
+は、最初に呼び出された時は最初のエントリーを返し、 それ以降は呼び出される毎に次のエントリーを返す。
+<P>
+
+<B>setgrent</B>()  関数を使うと、もう一度読み込めるように、 グループデータベースの先頭に戻る。
+<P>
+
+<B>endgrent</B>()  関数は、全ての処理が終わった後にグループ データベースをクローズする。
+<P>
+
+<I>group</I> 構造体は <I>&lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</I> で以下のように定義されている:
+<P>
+
+
+
+struct group {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*gr_name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループ名&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*gr_passwd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループのパスワード&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;&nbsp;&nbsp;gr_gid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループ&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;**gr_mem;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループのメンバ名へのポインター
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;の配列&nbsp;(配列はヌルで終端する)&nbsp;*/
+};
+
+
+<P>
+
+この構造体のフィールドの詳細は <B><A HREF="../man5/group.5.html">group</A></B>(5)  を参照のこと。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>getgrent</B>()  関数は <I>group</I> 構造体へのポインターを返す。 これ以上エントリーが無いか、エラーが発生した場合は NULL
+を返す。
+<P>
+
+エラーが発生すると、 <I>errno</I> が適切に設定される。 この関数の呼び出し後に <I>errno</I> をチェックしたい場合は、呼び出し前に
+<I>errno</I> を 0 に設定しておかないといけない。
+<P>
+
+返り値は静的な領域を指しており、その後の <B>getgrent</B>(), <B><A HREF="../man3/getgrgid.3.html">getgrgid</A></B>(3), <B><A HREF="../man3/getgrnam.3.html">getgrnam</A></B>(3)
+の呼び出しで上書きされるかもしれない。 (返されたポインターを <B><A HREF="../man3/free.3.html">free</A></B>(3)  に渡さないこと。)
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+サービスが一時的に利用できなかったこと。あとでもう一度試してほしい。 NSS バックエンドの場合、glibc
+では、バックエンドとの通信中に一時的なエラーが発生したことを示す。 このエラーは直るかもしれないので、あとでもう一度試すよう提案している。
+<DT><B>EINTR</B><DD>
+シグナルが捕捉された。<B><A HREF="../man7/signal.7.html">signal</A></B>(7) 参照。
+<DT><B>EIO</B><DD>
+I/O エラー。
+<DT><B>EMFILE</B><DD>
+オープンされたファイルディスクリプター数がプロセス毎の上限に達している。
+<DT><B>ENFILE</B><DD>
+オープンされたファイルの総数がシステム全体の上限に達している。
+<DT><B>ENOENT</B><DD>
+必要な入力ファイルが見つからなかった。 NSS バックエンドの場合、glibc では、このエラーはバックエンドが正しく設定されていないことを示す。
+<DT><B>ENOMEM</B><DD>
+
+<I>group</I> 構造体を割り当てるためのメモリーが不十分。
+<DT><B>ERANGE</B><DD>
+与えられたバッファー空間が不十分である。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/etc/group</I><DD>
+ローカルのグループデータベースファイル
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getgrent</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:grent
+<BR>
+
+race:grentbuf locale
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>setgrent</B>(),
+<B>endgrent</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:grent locale<BR></TD></TR>
+</TABLE>
+
+<P>
+
+In the above table, <I>grent</I> in <I>race:grent</I> signifies that if any of the
+functions <B>setgrent</B>(), <B>getgrent</B>(), or <B>endgrent</B>()  are used in
+parallel in different threads of a program, then data races could occur.
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/fgetgrent.3.html">fgetgrent</A></B>(3), <B><A HREF="../man3/getgrent_r.3.html">getgrent_r</A></B>(3), <B><A HREF="../man3/getgrgid.3.html">getgrgid</A></B>(3), <B><A HREF="../man3/getgrnam.3.html">getgrnam</A></B>(3)
+<B><A HREF="../man3/getgrouplist.3.html">getgrouplist</A></B>(3), <B><A HREF="../man3/putgrent.3.html">putgrent</A></B>(3), <B><A HREF="../man5/group.5.html">group</A></B>(5)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

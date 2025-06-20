@@ -1,0 +1,213 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SIGVEC</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SIGVEC</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/sigvec.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sigvec, sigblock, sigsetmask, siggetmask, sigmask - BSD 版シグナル API
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+<P>
+
+<B>int sigvec(int </B><I>sig</I><B>, const struct sigvec *</B><I>vec</I><B>, struct sigvec
+*</B><I>ovec</I><B>);</B>
+<P>
+
+<B>int sigmask(int </B><I>signum</I><B>);</B>
+<P>
+
+<B>int sigblock(int </B><I>mask</I><B>);</B>
+<P>
+
+<B>int sigsetmask(int </B><I>mask</I><B>);</B>
+<P>
+
+<B>int siggetmask(void);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+All functions shown above:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.19:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.19&nbsp;and&nbsp;earlier:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらの関数は、昔ながらの BSD 版シグナル API を使用しているプログラム に対して互換性のあるインターフェースを glibc
+で提供するものである。 この API は過去のものであり、新しいアプリケーションでは POSIX シグナル API (<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  など) を使用すべきである。
+<P>
+
+関数 <B>sigvec</B>()  は、(POSIX の <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)  と同様に) シグナル <I>sig</I> の動作の設定・取得を行う。
+<I>vec</I> は、NULL 以外の場合、 <I>sig</I> の新しい動作を定義した <I>sigvec</I> 構造体へのポインターである。 <I>ovec</I>
+は、NULL 以外の場合、 <I>sig</I> の変更前の動作を返すために使用される <I>sigvec</I> 構造体へのポインターである。 <I>sig</I>
+の動作を変更せずに現在の動作を取得するためには、 <I>vec</I> に NULL を指定し、 <I>ovec</I> に NULL
+でないポインターを指定すればよい。
+<P>
+
+シグナル <B>SIGKILL</B> と <B>SIGSTOP</B> に対する動作は変更できない。
+<P>
+
+<I>sigvec</I> 構造体は以下の通りである:
+<P>
+
+
+
+struct sigvec {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;(*sv_handler)(int);&nbsp;/*&nbsp;Signal&nbsp;disposition&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;sv_mask;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Signals&nbsp;to&nbsp;be&nbsp;blocked&nbsp;in&nbsp;handler&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;sv_flags;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Flags&nbsp;*/
+};
+
+
+<P>
+
+<I>sv_handler</I> フィールドはシグナルの動作を指定するもので、 シグナルハンドラー関数のアドレスか、 <B>SIG_DFL</B> と
+<B>SIG_IGN</B> のいずれかを指定できる。 <B>SIG_DFL</B> はシグナルに適用されるデフォルトの動作を意味し、 <B>SIG_IGN</B>
+はシグナルを無視することを意味する。
+<P>
+
+<I>sv_handler</I> にシグナルハンドラーのアドレスを指定した場合、 <I>sv_mask</I>
+はハンドラーが実行中にブロックされるべきシグナルのマスクを指定する。 また、ハンドラーを起動したシグナル自身はブロックされる。 <B>SIGKILL</B> か
+<B>SIGSTOP</B> をブロックしようとした場合には、黙って無視される。
+<P>
+
+<I>sv_handler</I> にシグナルハンドラーのアドレスを指定した場合、 <I>sv_flags</I>
+フィールドはハンドラーが呼ばれた際の挙動を制御するフラグを指定する。 このフィールドには、0 か、以下のフラグを 1個以上指定できる:
+<DL COMPACT>
+<DT><B>SV_INTERRUPT</B><DD>
+シグナルハンドラーが停止中のシステムコールを中断した場合、 ハンドラーから復帰しても、システムコールは再開されず、 エラー <B>EINTR</B>
+で失敗する。 このフラグを指定しなかった場合、システムコールは デフォルトで再開される。
+<DT><B>SV_RESETHAND</B><DD>
+シグナルハンドラーを呼び出す前にシグナルの動作を デフォルトにリセットする。 このフラグを指定しなかった場合、もう一度 <B>sigvec</B>()
+を呼び出して明示的に削除されるか、プロセスが <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  を実行するまで、ハンドラーは設定されたままとなる。
+<DT><B>SV_ONSTACK</B><DD>
+代替シグナルスタック上でシグナルハンドラーを実行する (歴史的に、BSD では代替シグナルスタックは廃止された関数 <B>sigstack</B>()
+を使って設定する。POSIX では、代わりに <B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2)  を使用する)。
+</DL>
+<P>
+
+マクロ <B>sigmask</B>()  は <I>signum</I> に対する「シグナルマスク」を構成して返す。 例えば、以下のようなコードを使うと、
+<B>sigvec</B>()  に渡す <I>vec.sv_mask</I> を初期化できる。
+<P>
+
+
+
+vec.sv_mask = sigmask(SIGQUIT) | sigmask(SIGABRT);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Block&nbsp;SIGQUIT&nbsp;and&nbsp;SIGABRT&nbsp;during
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handler&nbsp;execution&nbsp;*/
+
+
+<P>
+
+<B>sigblock</B>()  関数は、 <I>mask</I> にあるシグナルをプロセスのシグナルマスクに追加し (POSIX の
+<I>sigprocmask(SIG_BLOCK)</I> と同様)、変更前のプロセスのシグナルマスクを返す。 <B>SIGKILL</B> や <B>SIGSTOP</B>
+をブロックしようとした場合には、黙って無視される。
+<P>
+
+<B>sigsetmask</B>()  関数はプロセスのシグナルマスクを <I>mask</I> で指定された値に設定し (POSIX の
+<I>sigprocmask(SIG_SETMASK)</I> と同様)、変更前のプロセスのシグナルマスクを返す。
+<P>
+
+<B>siggetmask</B>()  関数はプロセスの現在のシグナルマスクを返す。この関数は <I>sigblock(0)</I> と等価である。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>sigvec</B>()  関数は成功すると 0 を返す。エラーの場合、-1 を返し、 <I>errno</I> にエラーを示す値をセットする。
+<P>
+
+<B>sigblock</B>()  と <B>sigsetmask</B>()  は変更前のシグナルマスクを返す。
+<P>
+
+<B>sigmask</B>() マクロは <I>signum</I> のシグナルマスクを返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)  と <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  の「エラー」の節を参照。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+バージョン 2.21 以降では、 GNU C ライブラリはもはや <B>sigvec</B>() 関数を ABI の一部として公開しなくなった。
+(後方互換性を保証するために、glibc のシンボルのバージョン付け機構により、
+古いバージョンのライブラリとリンクされたバイナリに対してはこのインターフェースが引き続き公開されている。)
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>sigvec</B>(),
+<B>sigmask</B>(),
+<B>sigblock</B>(),
+<B>sigsetmask</B>(),
+<B>siggetmask</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+これらの関数のうち <B>siggetmask</B>()  以外の全ては 4.3BSD にあった。 <B>siggetmask</B>()  の出自ははっきりしない。
+これらの関数は廃止予定であり、新しいプログラムでは使用しないこと。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+4.3BSD では、信頼性のあるシグナル処理機構を提供する (<I>vec.sv_mask</I> を 0 で <B>sigvec</B>()
+を呼び出したときと同様)。 System V が提供する処理機構は信頼性のないものである。 POSIX.1 では、 <B>signal</B>()
+のこの点は規定しないままとなっている。 さらなる詳細については <B><A HREF="../man2/signal.2.html">signal</A></B>(2)  を参照。
+<P>
+
+BSD と System V のどちらのシステムでも シグナルを待つために、 <B><A HREF="../man3/sigpause.3.html">sigpause</A></B>(3)  という名前の関数が提供されているが、
+この関数の引数は両方のシステムで異なる。 詳細は <B><A HREF="../man3/sigpause.3.html">sigpause</A></B>(3)  を参照。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2), <B><A HREF="../man2/pause.2.html">pause</A></B>(2), <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man2/signal.2.html">signal</A></B>(2), <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2),
+<B><A HREF="../man3/raise.3.html">raise</A></B>(3), <B><A HREF="../man3/sigpause.3.html">sigpause</A></B>(3), <B><A HREF="../man3/sigset.3.html">sigset</A></B>(3), <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

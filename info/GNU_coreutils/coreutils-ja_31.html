@@ -1,0 +1,401 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 5.3 split: ファイルを分割する。</title>
+
+<meta name="description" content="GNU Coreutils: 5.3 split: ファイルを分割する。">
+<meta name="keywords" content="GNU Coreutils: 5.3 split: ファイルを分割する。">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="split-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_30.html#tail-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_32.html#csplit-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_28.html#Output-of-parts-of-files" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_28.html#Output-of-parts-of-files" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_33.html#Summarizing-files" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="split_003a-huairuwoFen-Ge-suru_002e-"></a>
+<h2 class="section">5.3 <code>split</code>: ファイルを分割する。</h2>
+
+<a name="index-split"></a>
+<a name="index-splitting-a-file-into-pieces"></a>
+<a name="index-pieces_002c-splitting-a-file-into"></a>
+
+<p><code>split</code> は、入力ファイル <var>input</var> を分割して複数の出力ファイルを作成する。
+各出力ファイルには、<var>input</var> の断片が、連続した形で、
+あるいは 1 行づつ順番に分配された形で含まれることになる (訳注: 前者は単純な分割であり、
+後者は後述の「ラウンド・ロビン方式」である。&lsquo;<samp>-n</samp>&rsquo; オプションを参照)。
+<var>input</var> が指定されていない場合や、&lsquo;<samp>-</samp>&rsquo; である場合には、標準入力から読み込む。
+</p>
+<p>書式:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">split [<var>option</var>] [<var>input</var> [<var>prefix</var>]]
+</pre></td></tr></table>
+
+<p>デフォルトでは、<code>split</code> は <var>input</var> を 1000 行づつ各出力ファイルに書き込む
+(最後の断片については、何行であれ残っている行を書き込む)。
+</p>
+<a name="index-output-file-name-prefix"></a>
+<p>出力ファイルの名前は、上記書式の <var>prefix</var> (デフォルトでは &lsquo;<samp>x</samp>&rsquo;)
+に複数の文字 (デフォルトでは、&lsquo;<samp>aa</samp>&rsquo;, &lsquo;<samp>ab</samp>&rsquo;, &hellip;)
+を続けたものであり、各出力ファイルをファイル名による伝統的なソート順で結合すると、
+元の入力ファイルが再構成されるようになっている
+(ただし、&lsquo;<samp>-nr/<var>n</var></samp>&rsquo; オプションを指定した場合は除く)。
+デフォルトでは、split はまず、作成するファイルに 2 文字からなる接尾辞
+(訳注: suffix、すなわち上記の &lsquo;<samp>aa</samp>&rsquo;, &lsquo;<samp>ab</samp>&rsquo; など) を生成して付け、
+その接尾辞の 1 番目の文字がアルファベットの最後に達した時点で、接尾辞を
+2 文字づつ増やして行く (&lsquo;<samp>yz</samp>&rsquo; の次は &lsquo;<samp>zaaa</samp>&rsquo;, &lsquo;<samp>zaab</samp>&rsquo;, &hellip; という具合)。
+こうした命名法を使えば、出力ファイルがいくつあっても対応できるし、また
+&lsquo;<samp>--additional-suffix</samp>&rsquo; オプションを付けたときでも、
+出力ファイルが上で述べたような順に並ぶことになるわけだ。
+&lsquo;<samp>-a</samp>&rsquo; オプションが指定されている場合に、出力ファイルの名前が種切れになってしまうと、
+<code>split</code> はエラーメッセージを出すが、作成した出力ファイルを消去することはない。
+</p>
+<p>このプログラムでは以下のオプションが使用できる。参照: <a href="coreutils-ja_2.html#Common-options">共通オプション</a>.
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>-l <var>lines</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--lines=<var>lines</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dl-3"></a>
+<a name="index-_002d_002dlines-2"></a>
+<p><var>input</var> から <var>lines</var> 行づつ各出力ファイルに書き込む。
+&lsquo;<samp>--separator</samp>&rsquo; オプションが指定されている場合は、<var>lines</var>
+はレコード数の指定になる。
+</p>
+<p>互換性を考慮して、<code>split</code> は &lsquo;<samp>-<var>lines</var></samp>&rsquo;
+という古いオプションの書式もサポートしている。新規にスクリプトを書くなら、
+&lsquo;<samp>-l <var>lines</var></samp>&rsquo; の方を使うべきである。
+</p>
+</dd>
+<dt> &lsquo;<samp>-b <var>size</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--bytes=<var>size</var></samp>&rsquo;</dt>
+<dd><a name="index-_002db-6"></a>
+<a name="index-_002d_002dbytes-3"></a>
+<p><var>input</var> から <var>size</var> バイトづつ各出力ファイルに書き込む。
+<var>size</var> は、整数であり、
+以下に挙げるような何倍かを示す接尾辞を後ろに付けることもできる。接尾辞だけ指定してもよい
+(訳注: その場合は、1 が前にあるものと見なされる)。
+</p><table><tr><td>&nbsp;</td><td><pre class="example">&lsquo;<samp>b</samp>&rsquo;  =&gt;            512 (&quot;blocks&quot;)
+&lsquo;<samp>KB</samp>&rsquo; =&gt;           1000 (KiloBytes)
+&lsquo;<samp>K</samp>&rsquo;  =&gt;           1024 (KibiBytes)
+&lsquo;<samp>MB</samp>&rsquo; =&gt;      1000*1000 (MegaBytes)
+&lsquo;<samp>M</samp>&rsquo;  =&gt;      1024*1024 (MebiBytes)
+&lsquo;<samp>GB</samp>&rsquo; =&gt; 1000*1000*1000 (GigaBytes)
+&lsquo;<samp>G</samp>&rsquo;  =&gt; 1024*1024*1024 (GibiBytes)
+</pre></td></tr></table>
+<p>&lsquo;<samp>T</samp>&rsquo;, &lsquo;<samp>P</samp>&rsquo;, &lsquo;<samp>E</samp>&rsquo;, &lsquo;<samp>Z</samp>&rsquo;, &lsquo;<samp>Y</samp>&rsquo; についても同様。
+</p>
+</dd>
+<dt> &lsquo;<samp>-C <var>size</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--line-bytes=<var>size</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dC"></a>
+<a name="index-_002d_002dline_002dbytes"></a>
+<p>各出力ファイルに、ファイルサイズが <var>size</var> バイトを超過しない範囲で、
+<var>input</var> の完全な行をできるだけ多く書き込む。
+一つの行やレコードの長さが <var>size</var> バイトを越える場合は、複数のファイルに分割される。
+<var>size</var> の書式は、&lsquo;<samp>--bytes</samp>&rsquo; オプションの場合と同じである。
+&lsquo;<samp>--separator</samp>&rsquo; オプションが指定されている場合は、
+できるだけ多くの行ではなく、できるだけ多くのレコードを書き込むことになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>--filter=<var>command</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dfilter"></a>
+<p>このオプションを使用すると、各出力は、そのままファイルに書き出されるのではなく、
+パイプを通して一つづつ、指定されたシェルコマンド <var>command</var>
+に引き渡される。<var>command</var> 中では、環境変数 $FILE を使用するべきであり、
+この変数には、シェルコマンドを実行するごとに、異なる出力ファイル名が代入される。
+たとえば、1TiB の圧縮ファイルがあるとしよう。伸長したら、サイズが大きすぎて、
+ディスクに納まり切らない。しかし、それを分割して、もっと扱いやすいサイズの、
+それぞれ圧縮したファイルを作らねばならない。そうした課題を解決するには、
+次のようなコマンドを実行すればよいだろう。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">xz -dc BIG.xz | split -b200G --filter='xz &gt; $FILE.xz' - big-
+</pre></td></tr></table>
+
+<p>圧縮率が 10:1 だとすると、上のコマンドは 20GiB のファイルを
+50 個ほど生成することになるだろう。ファイルの名前は、&lsquo;<tt>big-aa.xz</tt>&rsquo;,
+&lsquo;<tt>big-ab.xz</tt>&rsquo;, &lsquo;<tt>big-ac.xz</tt>&rsquo; などになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-n <var>chunks</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--number=<var>chunks</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dn-5"></a>
+<a name="index-_002d_002dnumber-1"></a>
+
+<p><var>input</var> を <var>chunks</var> 個の出力ファイルに分割する。
+<var>chunks</var> の位置には以下のものが指定できる。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example"><var>n</var>      <var>input</var> の現在のサイズに基づいて <var>n</var> 個のファイルを生成する。
+<var>k</var>/<var>n</var>    <var>n</var> 個中の <var>k</var> 番目のみを標準出力へ出力する。
+l/<var>n</var>    <var>n</var> 個のファイルを生成する。行やレコードの途中で分割しない。
+l/<var>k</var>/<var>n</var>  同上。ただし、<var>n</var> 個中の <var>k</var> 番目のみを標準出力に出力する。
+r/<var>n</var>    &lsquo;<samp>l</samp>&rsquo; に似ている。ただし、分配はラウンド・ロビン方式で行う。
+       (訳注： トランプの親がカードを 1 枚づつ子に配るように、
+               入力から 1 行 (1 レコード) づつ各出力ファイルに
+               分配して行く。)
+r/<var>k</var>/<var>n</var>  同上。ただし、<var>n</var> 個中の <var>k</var> 番目のみを標準出力に出力する。
+</pre></td></tr></table>
+
+<p><var>input</var> を  <var>n</var> 個の「部分 (chunk)」に分けたときに出た余りのバイトは、
+最後の「部分」に割り振られる。最初に行われる分割のための計算の後で追加されるバイトがあっても、
+それは捨て去られる (&lsquo;<samp>r</samp>&rsquo; モードを使用している場合を除く)。
+</p>
+<p><var>input</var> の行数が <var>n</var> 行に足りなかったり、<var>input</var> が短縮された場合でも、
+<var>n</var> 個のファイルすべてが作成される。
+</p>
+<p>&lsquo;<samp>l</samp>&rsquo; モードについて言うと、「部分」の大きさは、「<var>input</var> サイズ / <var>n</var>」前後になる。
+<var>input</var> は、まず <var>n</var> 個の同一サイズの区画 (partition) に分割され、
+余りがあれば、それは最後の区画に割り当てられる。
+ある行の先頭が、ある区画の内側にある場合、その行は行末まで、その区画に対応するファイルに書き込まれる。
+行やレコードは、たとえ後続する区画にまではみ出していても分割されないので、
+書き出されるファイルは、区画のサイズより大きくなることもあれば、小さくなることもある。
+行やレコードが後続する区画をすっぽり覆ってしまうほど長い場合には、空っぽのファイルができることさえある。
+</p>
+<p>&lsquo;<samp>r</samp>&rsquo; モードでは、<var>input</var> のサイズは問題にならない。だから、入力は、
+たとえば、パイプからであっても構わない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-a <var>length</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--suffix-length=<var>length</var></samp>&rsquo;</dt>
+<dd><a name="index-_002da-2"></a>
+<a name="index-_002d_002dsuffix_002dlength"></a>
+<p>使用する接尾辞の長さを <var>length</var> 文字にする。<var>length</var> に
+0 を指定すると、&lsquo;<samp>-a</samp>&rsquo; オプションを (すでに指定していた場合でも)
+全く指定しなかったのと同じことになり、従って、デフォルトの動作が有効になる。
+すなわち、接尾辞は、2 文字から始まり、&lsquo;<samp>-n</samp>&rsquo; や
+&lsquo;<samp>--numeric-suffixes=<var>from</var></samp>&rsquo; オプションが指定されていないかぎり、
+必要になるごとに、2 文字づつ自動的に増えて行く。
+</p>
+</dd>
+<dt> &lsquo;<samp>-d</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--numeric-suffixes[=<var>from</var>]</samp>&rsquo;</dt>
+<dd><a name="index-_002dd-4"></a>
+<a name="index-_002d_002dnumeric_002dsuffixes"></a>
+<p>接尾辞にアルファベットの小文字ではなく、数字を使用する。
+数字の接尾辞は、 <var>from</var> が指定されていれば <var>from</var> から、
+指定されていなければ 0 から数を数えて行く。
+</p>
+<p><var>from</var> を指定できるのは、長い形式のオプションを使ったときだけである。
+<var>from</var> を指定すると、<code>split</code> を一回だけ実行する場合に最初の接尾辞を決めたり、
+それぞれ別々にスプリットする入力に対して相互の接尾辞間をどれくらい離すかを決めたりすることができるが、
+上で述べた接尾辞の長さを自動的に増やしていく機能は無効になる。
+そこで、ユーザとしては、&lsquo;<samp>99</samp>&rsquo; を越える数字を接尾辞として使えるようにするため、
+&lsquo;<samp>-a</samp>&rsquo; オプションも併せて指定したくなるかもしれない。
+なお、&lsquo;<samp>--number</samp>&rsquo; オプションが指定され、しかも、生成されるファイルの数より
+<var>from</var> が小さい場合は、一回かぎりの実行と見なされ、接尾辞に最小限必要な長さが、自動的に割り出される。
+</p>
+<p>(訳注: 上記の「なお」以下で言っているのは、&lsquo;<samp>split -d -n100 some.data</samp>&rsquo;
+などとすると、x00 から x99 までのファイルが作られるが、&lsquo;<samp>split --numeric-suffixes=1 -n100
+some.data</samp>&rsquo;
+なら、x001 から x100 まで、3 桁の接尾辞を持つファイルが作られるということらしい。
+しかし、coreutils 8.26 では、&lsquo;<samp>split -d -n200 some.data</samp>&rsquo;
+や &lsquo;<samp>split --numeric-suffixes=10 -n100 some.data</samp>&rsquo; は、
+&quot;output file suffixes exhausted&quot; というエラーになる。
+そして、&lsquo;<samp>split -d -n201 some.data</samp>&rsquo; や &lsquo;<samp>split --numeric-suffixes=10
+-n101 some.data</samp>&rsquo;
+なら、実行に成功するのである。よくわからない仕様だと思う。&lsquo;<samp>--suffix-length</samp>&rsquo;
+を使って、自分で接尾辞の長さを決めた方が、間違いがない。)
+</p>
+</dd>
+<dt> &lsquo;<samp>--additional-suffix=<var>suffix</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dadditional_002dsuffix"></a>
+<p>出力ファイル名の末尾に <var>suffix</var> をさらに追加する。
+<var>suffix</var> 中にスラッシュが含まれていてはならない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-e</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--elide-empty-files</samp>&rsquo;</dt>
+<dd><a name="index-_002de-2"></a>
+<a name="index-_002d_002delide_002dempty_002dfiles"></a>
+<p>サイズ 0 の出力ファイルができないようにする。そうしたものが生成されることがあるのは、
+&lsquo;<samp>--number</samp>&rsquo; を使ったときである。入力ファイルが (短縮されたりして)
+指定された数の出力ファイルを作るには分量が足りない場合や、
+1 行が長すぎて、後続する「部分」をすっぽり飲み込んでしまっている場合などがそれに当たる。
+このオプションが指定されているときでも、出力ファイルの連続番号が、
+順番に増えていくことに変わりはない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-t <var>separator</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--separator=<var>separator</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dt-4"></a>
+<a name="index-_002d_002dseparator-2"></a>
+<a name="index-line-separator-character"></a>
+<a name="index-record-separator-character"></a>
+<p>レコード・セパレータとしてデフォルトの改行文字 (ASCII LF) の代わりに、
+文字 <var>separator</var> を使用する。ASCII NUL をセパレータに指定するには、
+二文字からなる文字列 &lsquo;<samp>\0</samp>&rsquo; を使用すればよい。&lsquo;<samp>split -t '\0'</samp>&rsquo; のようにだ。
+</p>
+</dd>
+<dt> &lsquo;<samp>-u</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--unbuffered</samp>&rsquo;</dt>
+<dd><a name="index-_002du-2"></a>
+<a name="index-_002d_002dunbuffered"></a>
+<p>&lsquo;<samp>--number r/&hellip;</samp>&rsquo; モードにおいて入力を即座に出力する。
+このモードは、作業にかなり時間がかかるのだ。
+</p>
+</dd>
+<dt> &lsquo;<samp>--verbose</samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dverbose-2"></a>
+<p>各出力ファイルをオープンする直前に、診断メッセージを表示する。
+</p>
+</dd>
+</dl>
+
+<p>終了ステータス 0 は成功を示し、0 以外の値は失敗を示す。
+</p>
+<p>&lsquo;<samp>--number</samp>&rsquo; (&lsquo;<samp>-n</samp>&rsquo;) の動作を理解していただくために、
+用例をいくつか挙げてみる。
+</p>
+<p>デフォルトでは、1 行が 2 行以上に分割されることがあるのに、注目していただきたい。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ seq -w 6 10 &gt; k; split -n3 k; head xa?
+==&gt; xaa &lt;==
+06
+07
+==&gt; xab &lt;==
+
+08
+0
+==&gt; xac &lt;==
+9
+10
+</pre></td></tr></table>
+
+<p>&quot;l/&quot; 修飾子を使用して、行の途中で分割しないようにする。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ seq -w 6 10 &gt; k; split -nl/3 k; head xa?
+==&gt; xaa &lt;==
+06
+07
+
+==&gt; xab &lt;==
+08
+09
+
+==&gt; xac &lt;==
+10
+</pre></td></tr></table>
+
+<p>&quot;r/&quot; 修飾子を使用して、ラウンド・ロビン方式で分配する。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ seq -w 6 10 &gt; k; split -nr/3 k; head xa?
+==&gt; xaa &lt;==
+06
+09
+
+==&gt; xab &lt;==
+07
+10
+
+==&gt; xac &lt;==
+08
+</pre></td></tr></table>
+
+<p>K 番目の「部分」だけ取り出すこともできる。次の例は、33 の「部分」に分け、
+そのうちの  7 番目だけを取り出して、表示している。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ seq 100 &gt; k; split -nl/7/33 k
+20
+21
+22
+</pre></td></tr></table>
+
+
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_30.html#tail-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_32.html#csplit-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_28.html#Output-of-parts-of-files" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_28.html#Output-of-parts-of-files" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_33.html#Summarizing-files" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

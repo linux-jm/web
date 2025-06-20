@@ -1,0 +1,235 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CARDMGR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>CARDMGR</H1>
+Section: Maintenance Commands (8)<BR>Updated: 2000/11/19 00:06:18<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/pcmcia-cs/release/man8/cardmgr.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+cardmgr - PCMCIA デバイスマネージャー
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>cardmgr</B>
+
+[<B>-V</B>]
+
+[<B>-q</B>]
+
+[<B>-d</B>]
+
+[<B>-o</B>]
+
+[<B>-f</B>]
+
+[<B>-v</B>]
+
+[<B>-c&nbsp;</B><I>configpath</I>]
+[<B>-m&nbsp;</B><I>modpath</I>]
+[<B>-p&nbsp;</B><I>pidfile</I>]
+[<B>-s&nbsp;</B><I>stabfile</I>]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>cardmgr</B>
+
+は PCMCIA ソケットの状態を監視し、カードの挿入やイジェクトを検知する。
+カードが挿入されると、
+<B>cardmgr</B>
+
+は既知のカードのデータベースからそのカードを探す。
+カードが認識できれば、適切なデバイスドライバをロードして
+そのカードにバインドする。
+カードがイジェクトされると、
+そのカード用のドライバを終了し、可能ならばアンロードする。
+PCMCIA カードの設定データベースに記述しておけば、
+特定のカードが挿入されたり抜かれたりした場合に、
+<B>cardmgr</B>
+
+に任意のコマンドを実行させることもできる。
+<P>
+
+カードの挿入/イジェクト・デバイスドライバのロード/アンロード・
+ロード時/アンロード時に実行したコマンドなどは、
+システムのログファイルに記録される。
+警告やエラーメッセージも記録される。
+現在挿入されているカードとデバイスに関する情報は
+<I>/var/run/stab  または  /var/lib/pcmcia/stab</I>
+
+に記録される。
+<P>
+
+通常カードが識別されると、
+<B>cardmgr</B>
+
+はコンソールに beep 音を発生させる。
+カードが正しく設定された時にも beep 音がする。
+低音の beep 音は識別か設定のどちらかのプロセスが
+うまく行かなかったことを意味する。
+カードを抜いた時も一度 beep 音がする。
+<P>
+
+<B>cardmgr</B>
+
+が
+<B>SIGHUP</B>
+
+シグナルを受けると、全てのソケットをいったん閉じ、
+設定ファイルを再度読みこみ、ソケットをあらためて初期化する。
+<B>SIGTERM</B>
+
+シグナルを受けると、使用中でない全てのソケットを閉じて終了する。
+しかし使用中のソケットのドライバはロードされたまま残る。
+<P>
+
+<B>PCMCIA_OPTS</B>
+
+環境変数が設定されていると、メインのカード設定ファイルを読んだ後に
+その内容がパースされる。
+<P>
+
+<B>cardmgr</B>
+
+は起動時に、
+<I>/tmp</I>
+
+がファイルシステムに存在し、
+スペシャルデバイスファイルの生成が可能であることを必要とする
+(すなわち &quot;nodev&quot; を付けずにマウントした実際の linux ファイルシステム)。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-V</B>
+
+<DD>
+バージョン情報を表示して終了する。
+<DT><B>-q</B>
+
+<DD>
+沈黙モード。カードが挿入されても beep 音を発生しない。
+<DT><B>-v</B>
+
+<DD>
+詳細表示モード。通常の動作時により詳しい情報メッセージを生成する。
+<DT><B>-d</B>
+
+<DD>
+ドライバモジュールのロード時に、モジュールの依存関係を追跡する。
+<B>insmod</B>
+
+の代わりに
+<B>modprobe</B>
+
+の方を使うようにする。通常
+<B>cardmgr</B>
+
+は、
+<B>insmod</B>
+
+の試行が失敗したときに限って
+<B>modprobe</B>
+
+を利用しようとする。
+<DT><B>-f</B>
+
+<DD>
+フォアグラウンド動作。既に存在しているあらゆるカードの設定が終わるまでは
+fork → デーモン化しない。
+<DT><B>-o</B>
+
+<DD>
+1 パス動作。現存のカードを設定して終了する。
+このフラグを設定すると、
+<B>cardmgr</B>
+
+はフォアグラウンドのみで動作する。
+<DT><B>-c </B><I>configpath</I>
+
+<DD>
+カードの設定データベースと設定用スプリプトを、
+<I>/etc/pcmcia</I>
+
+ではなく指定したディレクトリから探す。
+<DT><B>-m </B><I>modpath</I>
+
+<DD>
+モジュールを、
+<I>/lib/modules/`uname`/</I>
+
+ディレクトリではなく指定したディレクトリから探す。
+<DT><B>-p </B><I>pidfile</I>
+
+<DD>
+cardmgr の PID を、
+<I>/var/run/cardmgr.pid</I>
+
+ではなく指定したファイルに書き出す。
+<DT><B>-s </B><I>stabfile</I>
+
+<DD>
+現在のソケットの状況を、
+<I>/var/lib/pcmicia/stab</I>
+
+ではなく指定したファイルに書き出す。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+
+
+
+<DL COMPACT>
+<DT>/etc/pcmcia/config<DD>
+カードの設定データベース
+<DT>/etc/pcmcia/config.opts<DD>
+PCMCIA デバイスに対するローカルなリソース設定
+<DT>/var/run/cardmgr.pid<DD>
+現在起動している cardmgr の PID
+<DT>/var/lib/pcmcia/stab<DD>
+それぞれのソケットに挿入されているカードとデバイスに関する情報
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>著者</H2>
+
+David Hinds - <A HREF="mailto:dhinds@pcmcia.sourceforge.org">dhinds@pcmcia.sourceforge.org</A>
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man5/pcmcia.5.html">pcmcia</A></B>(5),
+
+<B><A HREF="../man5/stab.5.html">stab</A></B>(5),
+
+<B><A HREF="../man8/cardctl.8.html">cardctl</A></B>(8),
+
+<B><A HREF="../man1/cardinfo.1.html">cardinfo</A></B>(1)
+
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">著者</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:43 GMT, December 05, 2022
+</BODY>
+</HTML>

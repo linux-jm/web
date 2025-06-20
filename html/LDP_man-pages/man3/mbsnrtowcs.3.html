@@ -1,0 +1,148 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MBSNRTOWCS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MBSNRTOWCS</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/mbsnrtowcs.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mbsnrtowcs - マルチバイト文字列をワイド文字列に変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/wchar.h">wchar.h</A>&gt;</B>
+
+<B>size_t mbsnrtowcs(wchar_t *</B><I>dest</I><B>, const char **</B><I>src</I><B>,</B>
+<B>                  size_t </B><I>nms</I><B>, size_t </B><I>len</I><B>, mbstate_t *</B><I>ps</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>mbsnrtowcs</B>():
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>glibc 2.10 以降:<DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>glibc 2.10 より前:<DD>
+_GNU_SOURCE
+</DL>
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>mbsnrtowcs</B>() 関数は <B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3) 関数に似ているが、変換するバイト数が <I>*src</I> から始まる最大
+<I>nms</I> バイトに制限されている点が異なっている。
+<P>
+
+<I>dest</I> が NULL でなければ <B>mbsnrtowcs</B>()  関数は <I>*src</I> からのマルチバイト文字列の最大 <I>nms</I> までを
+<I>dest</I> からのワイド文字列に変換する。 最大 <I>len</I> 文字のワイド文字が <I>dest</I> に書き込まれる。 同時にシフト状態 <I>*ps</I>
+を更新する。 変換は <I>mbrtowc(dest, *src, n, ps)</I>
+を、この呼び出しが成功する限り、繰り返し実行したのと実質的に同様である。 ここでの <I>n</I> は正の数であり、繰り返しごとに <I>dest</I> が 1
+増加させられ、 <I>*src</I> が消費したバイト数だけ増加させられる。変換は以下の三つの いずれかの条件で停止する:
+<DL COMPACT>
+<DT>1.<DD>
+不正なマルチバイト列に遭遇した。この場合には <I>*src</I> は不正な マルチバイト列を指すようにして、 <I>(size_t)&nbsp;-1</I>
+を返し、<I>errno</I> に <B>EILSEQ</B> を設定する。
+<DT>2.<DD>
+<I>nms</I> 制限によって強制的に停止するか、<I>len</I> 文字の L'\0' 以外の ワイド文字を <I>dest</I>
+に格納した場合。この場合は <I>*src</I> は 次に変換されるマルチバイト列を指すようにして、<I>dest</I> に書き込まれた ワイド文字の数を返す。
+<DT>3.<DD>
+マルチバイト文字列が終端のヌルワイド文字 ('\0')  まで含めて完全に変換された場合。 (この時、副作用として <I>*ps</I>
+が初期状態に戻される。)  この場合は <I>*src</I> には NULL が設定され、 <I>dest</I> に書き込まれた文字数 (終端の
+ヌルワイド文字は含まれない) を返す。
+</DL>
+<P>
+
+According to POSIX.1, if the input buffer ends with an incomplete character,
+it is unspecified whether conversion stops at the end of the previous
+character (if any), or at the end of the input buffer.  The glibc
+implementation adopts the former behavior.
+<P>
+
+<I>dest</I> が NULL の場合、<I>len</I> は無視され、上記と同様の変換が
+行われるが、変換されたワイド文字はメモリーに書き込まれず、変換先の上限 が存在しない。
+<P>
+
+上記のどちらの場合でも、<I>ps</I> が NULL ならば、 代りに <B>mbsnrtowcs</B>() 関数のみが使用する静的で名前のない状態が使用される。
+<P>
+
+プログラマーは <I>dest</I> に最低でも <I>len</I> ワイド文字を書き込むこ とができる空間があることを保証しなければならない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>mbsnrtowcs</B>()  関数はワイド文字列に変換完了したワイド文字の数を返す。
+終端のナルワイド文字は含まない。不正なマルチバイト列に遭遇した場合には <I>(size_t)&nbsp;-1</I> を返し、<I>errno</I> に <B>EILSEQ</B>
+を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>mbsnrtowcs</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:mbsnrtowcs/!ps<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2008.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>mbsnrtowcs</B>()  の動作は現在のロケールの <B>LC_CTYPE</B> カテゴリーに依存している。
+<P>
+
+<I>ps</I> に NULL を渡した際の動作はマルチスレッドセーフでない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/iconv.3.html">iconv</A></B>(3), <B><A HREF="../man3/mbrtowc.3.html">mbrtowc</A></B>(3), <B><A HREF="../man3/mbsinit.3.html">mbsinit</A></B>(3), <B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

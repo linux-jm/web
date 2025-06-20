@@ -1,0 +1,256 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TFMTODIT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>TFMTODIT</H1>
+Section: User Commands  (1)<BR>Updated: 6 August 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_groff/contrib/man1/tfmtodit.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+tfmtodit - groff -Tdvi で用いるフォントファイルを作成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+
+
+
+
+<BR>
+
+<B>tfmtodit</B>
+
+
+
+[&nbsp;<B>-sv</B><I></I>&nbsp;]
+
+
+
+
+
+[&nbsp;<B>-g</B><I>gf_file</I>&nbsp;]
+
+
+
+
+
+[&nbsp;<B>-k</B><I>skewchar</I>&nbsp;]
+
+
+
+
+<I>tfm_file</I>
+
+<I>map_file</I>
+
+<I>font</I>
+
+<BR>
+
+
+<P>
+
+コマンドラインオプションとパラメータの間に、空白を置くことが可能です。
+<A NAME="lbAD">&nbsp;</A>
+<H2>解説</H2>
+
+<B>tfmtodit</B>
+
+は、
+<B>groff -Tdvi</B>
+
+で用いるフォントファイルを作成します。
+<I>tfm_file</I>
+
+は、フォント作成に用いる TeX のフォントメトリックファイル名です。
+<I>map_file</I>
+
+は groff での文字名を記述したファイルです。
+このファイルの各行は、下記のフォーマットから成ります。
+<DL COMPACT>
+<DT><DD>
+<I>n c1 c2 </I>...
+
+</DL>
+<P>
+
+<I>n</I>
+
+はフォント中の十進数で表した文字の位置、
+<I>c1</I>,
+
+<I>c2</I>,...
+
+はその文字の groff 上の名前です。
+tfm ファイルに存在しても groff 上では名前を持たない文字は、
+groff フォントファイルに名前のない文字として出力されます。
+<I>font</I>
+
+は、出力する groff フォントファイル名です。
+<P>
+
+特殊なフォント (カレントフォントの中に文字が見つからない場合に
+検索されるフォント) に対しては
+<B>-s</B>
+
+オプションを指定する必要があります。
+特殊なフォントは DESC ファイルの
+<B>fonts</B>
+
+コマンドで列挙します。特殊なフォント以外は列挙する必要はありません。
+<B>troff</B>
+
+がそのフォントを最初に使用したときに自動的にマウントできるからです。
+<P>
+
+数式を適切に処理するために、groff は tfm には含まれない
+フォントメトリック情報を必要とします。
+TeX は数式用のイタリックフォントを使用しますが、groff では、
+通常のイタリックフォントを数式にも使用するからです。
+groff が必要とする情報は、Metafont の Computer Modern fonts に
+おける
+<B>math_fit</B>
+
+マクロの 2 つの引数によって与えることができます。
+Metafont は通常、テキストフォント (
+<B>math_fitting</B>
+
+が false) の処理中、これらの引数を無視します。
+<B>cm.base</B>
+
+を作成するときに以下の定義を
+<B>cmbase</B>
+
+のあとにロードすることによって、
+テキストフォントのフォントメトリック情報を
+gf ファイル中に出力するように Metafont に指示できます。
+<DL COMPACT>
+<DT><DD>
+<PRE>
+<B>def ignore_math_fit(expr left_adjustment,right_adjustment) =
+    special &quot;adjustment&quot;;
+    numspecial left_adjustment*16/designsize;
+    numspecial right_adjustment*16/designsize;
+    enddef;
+</B></PRE>
+
+
+</DL>
+<P>
+
+この変更された
+<B>cm.base</B>
+
+を使って作成された gf ファイルは
+<B>-g</B>
+
+オプションで指定します。
+<B>-g</B>
+
+オプションは、
+<I>math_fitting</I>
+
+が true に設定されたフォントに対しては使用してはいけません。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-v</B>
+
+<DD>
+バージョン番号を表示します。
+<DT><B>-s</B>
+
+<DD>
+特殊なフォントであることを指定します。フォントファイルに
+<B>special</B>
+
+コマンドを追加します。
+<DT><B>-k</B><I>n</I>
+
+<DD>
+フォント中の skewchar (斜めになった文字) の位置を指定します。
+<I>n</I>
+
+は整数で、10 進数か、
+<B>0</B>
+
+で始まる 8 進数か
+<B>0x</B>
+
+で始まる 16 進数で指定します。本オプションで指定された文字が
+カーニング処理の 2 文字目にきた場合、
+カーニングを行わないようになります。
+<DT><B>-g</B><I>gf_file</I>
+
+<DD>
+Metafont で生成された gf ファイル
+<I>gf_file</I>
+
+を指定します。
+この gf ファイルは special コマンドと numspecial コマンドを含み、
+追加のフォントメトリック情報を与えます。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+
+u+2n<DL COMPACT>
+<DT>
+<DD>
+
+
+<B>/usr/share/groff_font/devdvi/DESC</B>
+
+デバイス記述ファイル
+<DT><B>/usr/share/groff_font/devdvi/</B><I>F</I>
+
+<DD>
+フォント
+<I>F</I>
+
+のためのフォント記述ファイル
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/groff.1.html">groff</A></B>(1),
+
+<B><A HREF="../man1/grodvi.1.html">grodvi</A></B>(1),
+
+<B><A HREF="../man5/groff_font.5.html">groff_font</A></B>(5)
+
+
+
+
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">解説</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">関連ファイル</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:24 GMT, December 05, 2022
+</BODY>
+</HTML>

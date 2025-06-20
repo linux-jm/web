@@ -1,0 +1,250 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MADVISE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MADVISE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/madvise.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+madvise - メモリー利用に関するアドバイスを与える
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+<P>
+<B>int madvise(void *</B><I>addr</I><B>, size_t </B><I>length</I><B>, int </B><I>advice</I><B>);</B>
+<P>
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+<B>madvise</B>(): _BSD_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>madvise</B>()  システムコールは、アドレス <I>addr</I> からはじまる <I>length</I>
+バイトのメモリーブロックのページング入出力をどう扱えば良いか、 カーネルにアドバイスする。 これを用いると、 アプリケーションからカーネルに、
+マップされたメモリーや共有メモリーをどのように扱ってほしいか伝えることができ、 カーネルはそれに応じて先読みやキャッシュなどの適切な手法を選択できる。
+このコールはアプリケーションの動作そのものには影響しない (<B>MADV_DONTNEED</B> の場合は別) が、 性能には影響しうる。
+なおこのアドバイスを受け入れるかどうかはカーネルに任される。
+<P>
+
+アドバイスは引き数 <I>advice</I> によって与える。以下のいずれかを指定できる。
+<DL COMPACT>
+<DT><B>MADV_NORMAL</B><DD>
+特別な扱いは行わない。これがデフォルトである。
+<DT><B>MADV_RANDOM</B><DD>
+ページ参照はランダムな順序で行われそうだ。 (したがって、先読みはあまり効果がなさそうだ。)
+<DT><B>MADV_SEQUENTIAL</B><DD>
+ページ参照はシーケンシャルな順序で行われそうだ。 (したがって与えた範囲のページは積極的に先読みしておくと良いだろう。
+またアクセスが終わったら速やかに解放して良い。)
+<DT><B>MADV_WILLNEED</B><DD>
+近い将来にアクセスされそうだ。 (したがってこれらのページを今のうちに先読みしておくといいだろう。)
+<DT><B>MADV_DONTNEED</B><DD>
+しばらくアクセスはなさそうだ。 (現時点でアプリケーションは与えた範囲の処理を終えている。 したがってカーネルはこれに関連するリソースを解放して良い。)
+これ以降この範囲のページへのアクセスがあると、 成功はするが、メモリーの内容をマップ元のファイルからロードし直すことになる (<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+を見よ) か、 または元ファイルがないマップページでは アクセスがあったときに 0 埋めが行われることになる。
+<DT><B>MADV_REMOVE</B> (Linux 2.6.16 以降)<DD>
+
+
+
+
+
+指定された範囲のページと関連するバッキングストアを解放する。 現在のところ、 shmfs/tmpfs だけがこれに対応している。
+他のファイルシステムでは <B>ENOSYS</B> が返される。
+<DT><B>MADV_DONTFORK</B> (Linux 2.6.16 以降)<DD>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  が行われた後、指定された範囲のページを子プロセスが利用できないようにする。 この機能は、書き込み時コピー
+(copy-on-write) 方式で、 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  の後で親プロセスがページに書き込みを行った場合に
+ページの物理位置が変化しないようにするのに有効である (ページの再配置はハードウェアがそのページに DMA 転送を行うような場合に
+問題を起こすことがある)。
+<DT><B>MADV_DOFORK</B> (Linux 2.6.16 以降)<DD>
+<B>MADV_DONTFORK</B> の影響を取り消し、デフォルトの動作に戻す。 つまり、 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+の前後でマッピングは継承されるようになる。
+<DT><B>MADV_HWPOISON</B> (Linux 2.6.32 以降)<DD>
+ページに毒入れを行い、ハードウェアメモリーの破損のようにそのページを取り扱う。 この操作は特権 (<B>CAP_SYS_ADMIN</B> を持った)
+プロセスだけが利用できる。 この操作の結果、呼び出したプロセスは <B>SIGBUS</B> を受け取り、そのページはアンマップされる。
+この機能はメモリーのエラー処理コードをテストするためのものである。 カーネルで <B>CONFIG_MEMORY_FAILURE</B>
+が有効になっている場合にのみ利用可能である。
+<DT><B>MADV_SOFT_OFFLINE</B> (Linux 2.6.33 以降)<DD>
+<I>addr</I> と <I>length</I> で指定された範囲のページをソフトオフラインにする。 指定された範囲の各ページのメモリーの内容は保持され
+(すなわち、次にアクセスされた際に、同じ内容が見えるが、新しい物理ページフレームになる)、 元のフレームはオフラインになる (すなわち、
+そのフレームは使用される、通常のメモリー管理からは取り除かれる)。 <B>MADV_SOFT_OFFLINE</B> 操作の影響は呼び出したプロセスには見えない
+(つまり呼び出したプロセスの動作は変化しない)。 この機能はメモリーのエラー処理コードをテストすることを目的に作られた。 カーネルで
+<B>CONFIG_MEMORY_FAILURE</B> が有効になっている場合にのみ利用可能である。
+<DT><B>MADV_MERGEABLE</B> (Linux 2.6.32 以降)<DD>
+Kernel Samepage Merging (KSM; カーネルによる同じページの統合) を <I>addr</I> と <I>length</I>
+で指定された領域に対して有効にする。 カーネルは、 統合可能の印がついたユーザーメモリーの領域を定期的にスキャンし、内容が全く同じページを探す。
+内容が全く同じページがあれば、それらのページは書き込み保護 (write-protected) がかかった一つのページで置き換えられる
+(プロセスが後でページの内容を更新しようとした際には自動的にページのコピーが行われる)。 KSM はプライベートな無名ページ (anonymous
+pages) だけを統合する (<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2) 参照)。 KSM 機能は、 同じデータのインスタンスを大量に生成するアプリケーション (KVM
+などの仮想化システム) での利用を想定している。 この機能はプロセッシング能力を大量に消費する場合があり、注意して使用すること。 詳細は Linux
+カーネルソースファイル <I>Documentation/vm/ksm.txt</I> を参照。 <B>MADV_MERGEABLE</B> と
+<B>MADV_UNMERGEABLE</B> は、 カーネルで <B>CONFIG_KSM</B> オプションを有効になっている場合にのみ利用できる。
+<DT><B>MADV_UNMERGEABLE</B> (Linux 2.6.32 以降)<DD>
+指定されたアドレス範囲に関して、それ以前に行われた <B>MADV_MERGEABLE</B> 操作の効果を取り消す。 KSM は、  <I>addr</I> と
+<I>length</I> で指定されたアドレス範囲の統合済みのすべてのページの統合解除を行う。
+<DT><B>MADV_HUGEPAGE</B> (Linux 2.6.38 以降)<DD>
+
+
+Transparent Huge Pages (THP) を <I>addr</I> と <I>length</I> で指定された領域に対して有効にする。
+現在のところ、Transparent Huge Pages はプライベートな無名ページ (anonymous pages) についてのみ機能する。
+カーネルは定期的にヒュージページ (huge page) 候補の印がついたページをスキャンし、ヒュージページと置き換える。
+また、カーネルはその領域がヒュージページのサイズに合っている場合、ヒュージページを直接割り当てる (<B>posix_memalign</B>(2) 参照)。
+この機能は、大きなデータマッピングを使用し、一度にそのメモリーの大きな範囲にアクセスするようなアプリケーション (例えば QEMU
+のような仮想化システム) で使うことを主に想定されている。 この機能は非常に簡単にメモリーを浪費してしまう (例えば、1 バイトしかアクセスしない
+2MB のマッピングが、 4KB ページではなく 2MB の実際のメモリーを使ってしまう)。 詳細は Linux カーネルソースファイル
+<I>Documentation/vm/transhuge.txt</I> を参照。 <B>MADV_HUGEPAGE</B> と <B>MADV_NOHUGEPAGE</B>
+は、 カーネルで <B>CONFIG_TRANSPARENT_HUGEPAGE</B> オプションを有効になっている場合にのみ利用できる。
+<DT><B>MADV_NOHUGEPAGE</B> (Linux 2.6.38 以降)<DD>
+<I>addr</I> と <I>length</I> で指定されたアドレス範囲のメモリーがヒュージページに組み込まれないようにする。
+<DT><B>MADV_DONTDUMP</B> (Linux 3.4 以降)<DD>
+コアダンプから <I>addr</I> と <I>length</I> で指定された範囲のページを除外する。 これは、
+コアダンプに含めても役に立たないことが分かっている大きなメモリー領域があるアプリケーションで有用である。 <B>MADV_DONTDUMP</B> の効果は
+<I>/proc/PID/coredump_filter</I> ファイル経由で設定されたビットマスクよりも優先される (<B><A HREF="../man5/core.5.html">core</A></B>(5) 参照)。
+<DT><B>MADV_DODUMP</B> (Linux 3.4 以降)<DD>
+以前の <B>MADV_DONTDUMP</B> の効果を取り消す。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>madvise</B>()  は成功すると 0 を返す。 エラーが起こると -1 を返し、 <I>errno</I> を適切な値に設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+何らかのカーネルリソースが一時的に利用できなかった。
+<DT><B>EBADF</B><DD>
+指定したマップは存在するが、ファイルではないところをマップしている。
+<DT><B>EINVAL</B><DD>
+このエラーは以下の理由で発生する。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+
+
+<I>len</I> が負の値である。
+<DT>*<DD>
+<I>addr</I> がページ境界ではない。
+<DT>*<DD>
+<I>advice</I> が有効な値でない。
+<DT>*<DD>
+アプリケーションがロックされたページや共有ページを (<B>MADV_DONTNEED</B> で) 解放
+しようとしている。
+<DT>*<DD>
+<I>advice</I> に <B>MADV_MERGEABLE</B> か <B>MADV_UNMERGEABLE</B> が指定されたが、 カーネルの設定が
+<B>CONFIG_KSM</B> が有効になっていなかった。
+</DL>
+</DL>
+
+<DT><B>EIO</B><DD>
+(<B>MADV_WILLNEED</B> の場合) この範囲のページングを行うと、 プロセスの RSS (resident set size)
+の最大値を越えてしまう。
+<DT><B>ENOMEM</B><DD>
+(<B>MADV_WILLNEED</B> の場合) メモリーが足りず、ページングに失敗した。
+<DT><B>ENOMEM</B><DD>
+指定した範囲のアドレスが、現在マップされていない。 あるいはプロセスのアドレス空間の内部にない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+Linux 3.18 以降では、このシステムコールのサポートは任意となり、利用できるかはカーネルが <B>CONFIG_ADVISE_SYSCALLS</B>
+オプションを有効にしてコンパイルされているかに依存する。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+
+POSIX.1b.  POSIX.1-2001 では、 <B>posix_madvise</B>(3)  を <B>POSIX_MADV_NORMAL</B>,
+<B>POSIX_MADV_RANDOM</B> などの定数とともに記述していた (それぞれの振る舞いはここで述べたものに近い)。 ファイルアクセスに対しても
+<B><A HREF="../man2/posix_fadvise.2.html">posix_fadvise</A></B>(2)  という類似の関数が存在する。
+<P>
+<B>MADV_REMOVE</B>, <B>MADV_DONTFORK</B>, <B>MADV_DOFORK</B>, <B>MADV_HWPOISON</B>,
+<B>MADV_MERGEABLE</B>, <B>MADV_UNMERGEABLE</B> は Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Linux での注意</H3>
+
+<P>
+
+現在の Linux の実装 (2.4.0) では、 このシステムコールをアドバイスというよりは命令と見ている。
+したがってこのアドバイスに対して通常行われる動作が不可能な場合は、 エラーを返すことがある (上記の エラー の記述を参照)。
+この振舞いは標準とは異なる。
+<P>
+
+
+
+
+
+Linux の実装では <I>addr</I> のアドレスはページ境界の値でなければならない。また <I>length</I> は 0 であっても構わない。 また
+Linux 版の <B>madvise</B>()  では、指定されたアドレス範囲にマップされていない部分があると、
+これらを無視して残りの部分にアドバイスを適用する (しかしシステムコールに対してはちゃんと <B>ENOMEM</B> を返す)。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2), <B><A HREF="../man2/mincore.2.html">mincore</A></B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2), <B><A HREF="../man2/msync.2.html">msync</A></B>(2),
+<B><A HREF="../man2/munmap.2.html">munmap</A></B>(2), <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2), <B><A HREF="../man5/core.5.html">core</A></B>(5)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">Linux での注意</A><DD>
+</DL>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,178 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STRFMON</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>STRFMON</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/strfmon.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+strfmon, strfmon_l - convert monetary value to a string
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/monetary.h">monetary.h</A>&gt;</B>
+
+<B>ssize_t strfmon(char *</B><I>s</I><B>, size_t </B><I>max</I><B>, const char *</B><I>format</I><B>, ...);</B>
+
+<B>ssize_t strfmon_l(char *</B><I>s</I><B>, size_t </B><I>max</I><B>, locale_t </B><I>locale</I><B>,</B>
+<B>                  const char *</B><I>format</I><B>, ...);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+The <B>strfmon</B>()  function formats the specified monetary amount according
+to the current locale and format specification <I>format</I> and places the
+result in the character array <I>s</I> of size <I>max</I>.
+<P>
+
+The <B>strfmon_l</B>()  function performs the same task, but uses the locale
+specified by <I>locale</I>.  The behavior of <B>strfmon_l</B>()  is undefined if
+<I>locale</I> is the special locale object <B>LC_GLOBAL_LOCALE</B> (see
+<B><A HREF="../man3/duplocale.3.html">duplocale</A></B>(3))  or is not a valid locale object handle.
+<P>
+
+<I>format</I> 中の通常の文字は、変換されずにそのまま <I>s</I> にコピーされる。変換指定は '%' 文字で始まる。
+この直後には、以下のフラグを 0 個以上続けることができる。
+<DL COMPACT>
+<DT><B>=</B><I>f</I><DD>
+1 バイト文字 <I>f</I> を数値埋め文字 (numeric fill character) にする (左精度と共に用いる。以下を参照)。
+指定されないと、スペース文字が用いられる。
+<DT><B>^</B><DD>
+現在のロケールで定義されているであろうグループ化文字 (grouping character)
+を一切使わない。デフォルトではグループ化は有効になっている。
+<DT><B>(</B> または <B>+</B><DD>
+( フラグは、負の数値を括弧で括ることを意味する。 + フラグは符号をデフォルトのように取り扱うことを意味する
+(すなわち数値の前にロケールの符号マークが置かれる。 例えば正ならなにもなく、負なら '-' を置く、など)。
+<DT><B>!</B><DD>
+通貨シンボルを省略する。
+<DT><B>-</B><DD>
+すべてのフィールドを左詰めにする。デフォルトは右詰め。
+</DL>
+<P>
+
+次の位置には、フィールドの幅を指定できる。 10 進の数値文字列で、フィールドの最小幅をバイト単位で指定する。 デフォルトは 0。
+結果がこの幅よりも狭くなった場合には、 不足分がスペースで埋められる (左詰めフラグが指定されていなければ左側が埋められる)。
+<P>
+
+次の位置には、&quot;#&quot; に 10 進数値文字列を続けた形式で、 左精度 (left precision) を指定できる。 通貨の基数点 (radix)
+より左側の数値の桁数がこの指定より小さい場合は、 数値埋め文字で左側が埋められる。 このフィールド幅の指定では、グループ化文字はカウントされない。
+<P>
+
+次の位置には、&quot;.&quot; に 10 進数値文字列を続けた形式で、 右精度 (right precision) を指定できる。
+整形される数値は、整形前にこの桁数に丸められる。 デフォルトではカレントロケールの <I>frac_digits</I> と
+<I>int_frac_digits</I> の指定を用いる。 右精度が 0 の場合は、基数点文字 (radix character) は印字されない
+(ここでの基数点文字は <B>LC_MONETARY</B> で定義されており、 <B>LC_NUMERIC</B> の指定とは異なっていてもよい)。
+<P>
+
+最後に、変換指定は変換文字 (conversion character)  で終了しなければならない。 変換文字には以下の 3 つがある。
+<DL COMPACT>
+<DT><B>%</B><DD>
+(この場合は指定全体が &quot;%%&quot; でなければならない。)  結果の文字列に '%' 文字を書きこむ。
+<DT><B>i</B><DD>
+<I>double</I> 型の引数ひとつが、 ロケールの国際通貨フォーマット (international currency format)
+を用いて変換される。
+<DT><B>n</B><DD>
+<I>double</I> 型の引数ひとつが、 ロケールの国内通貨フォーマット (national currency format)  を用いて変換される。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>strfmon</B>()  関数は、結果の文字列が終端のヌルバイトを含めて配列 <I>s</I> に収まった場合には、 <I>s</I>
+に書きこまれた文字数を返す。ヌルバイトは文字数に入らない。 それ以外の場合には、 <I>errno</I> に <B>E2BIG</B> を設定して -1 を返す。
+この場合の配列の内容は未定義である。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>strfmon</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>strfmon_l</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAH">&nbsp;</A>
+<H2>例</H2>
+
+次のような関数コール
+<P>
+
+
+
+strfmon(buf, sizeof(buf), &quot;[%^=*#6n] [%=*#6i]&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1234.567,&nbsp;1234.567);
+
+
+<P>
+
+は、オランダのロケールでは以下のような出力になる。
+<P>
+
+
+
+[€ **1234,57] [EUR **1 234,57]
+
+
+<P>
+
+in the <I>nl_NL</I> locale.  The <I>de_DE</I>, <I>de_CH</I>, <I>en_AU</I>, and <I>en_GB</I>
+locales yield
+<P>
+
+
+
+[ **1234,57 €] [ **1.234,57 EUR]
+[ Fr. **1234.57] [ CHF **1'234.57]
+[ $**1234.57] [ AUD**1,234.57]
+[ £**1234.57] [ GBP**1,234.57]
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/duplocale.3.html">duplocale</A></B>(3), <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3), <B><A HREF="../man3/sprintf.3.html">sprintf</A></B>(3), <B><A HREF="../man7/locale.7.html">locale</A></B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">例</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

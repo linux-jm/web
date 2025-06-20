@@ -1,0 +1,542 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of VDSO</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>VDSO</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2019-08-02<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/vdso.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+vdso - 仮想 ELF 動的共有オブジェクトの概要
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/auxv.h">sys/auxv.h</A>&gt;</B>
+<P>
+
+<B>void *vdso = (uintptr_t) getauxval(AT_SYSINFO_EHDR);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+&quot;vDSO&quot; (virtual dynamic shared object; 仮想動的共有オブジェクト) は、
+カーネルが自動的にすべてのユーザー空間アプリケーションのアドレス空間にマッピングを行う小さな共有ライブラリである。 vDSO はほとんどの場合 C
+ライブラリから呼び出されるため、 アプリケーションは通常これらの詳細を自分では気にする必要はない。 このように、 標準関数と C
+ライブラリを使って通常の方法でコードを作成することで、 vDSO 経由で利用可能な機能が活用されることになる。
+<P>
+
+いったいなぜ vDSO は存在しているのか？ カーネルが提供するシステムコールのいくつかは、
+ユーザー空間のコードがこれらのシステムコールを頻繁に呼び出すことになり、 このような呼び出しが全体の性能を支配するようになる場合がある。 これは、
+呼び出しの頻度と、 ユーザー空間から抜けてカーネルに入ることによるコンテキストスイッチのオーバーヘッドの両方に起因する。
+<P>
+
+この文書の残りの部分は、 一般の開発者向けというではなく、 好奇心がある人と C ライブラリの開発者向けの内容となっている。 もしあなたが C
+ライブラリではなく自分のアプリケーションで vDSO を呼びだそうとしているのであれば、 ほとんどの場合間違ったことをしていることだろう。
+<A NAME="lbAE">&nbsp;</A>
+<H3>Example background</H3>
+
+システムコールの呼び出しは遅くなる場合がある。 x86 32 ビットシステムでは、
+システムコールを呼び出したいことをカーネルに教えるためにソフトウェア割り込み (<I>int $0x80</I>) を使うことができる。
+しかしながら、この割り込みはコストがかかる処理である。 割り込みがあると、
+カーネルとプロセッサーのマイクロコードの両方のすべての割り込み処理パスが実行される。 新しいプロセッサーには、
+システムコール呼び出しを起動するための高速な (だが、後方互換性がある) 命令が用意されている。 C
+ライブラリが実行時にこの機能が利用できるかを確認するのではなく、 C ライブラリは vDSO でカーネルが提供する関数を使うことができる。
+<P>
+
+用語が紛らわしい点には注意が必要である。 x86 システムでは、 システムコールを呼び出す推奨される方法を判定するのに使用される vDSO 関数は
+&quot;__kernel_vsyscall&quot; という名前だが、 x86=64 では、 &quot;vsyscall&quot; という用語は、
+カーネルに時刻はいつかや呼び出し元はどの CPU 上にいるかを問い合わせるための廃止予定の方法も参照している。
+<P>
+
+頻繁に使用されるシステムコールの一つが <B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2) である。 このシステムコールは、
+ユーザー空間アプリケーションから直接呼び出されることも、 C ライブラリから間接的に呼び出されることもある。 タイムスタンプが必要な場面、
+タイミングループを行う場面、 ポーリングを行う場面を考えてほしい。 これらはいずれも現在時刻が何かを直ちに知りたいのが普通である。
+また、この情報は秘密ではなく、 (ルートでも非特権ユーザーでも) 任意の特権モードの多くのアプリケーションが同じ情報を取得できる。 したがって、
+カーネルはこの質問に応えるのに必要な情報をプロセスがアクセスできるメモリー上に配置する。 これにより、 <B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2)
+はシステムコールから通常の関数コールになり、 少ないメモリーアクセスになる。
+<A NAME="lbAF">&nbsp;</A>
+<H3>vDSO を見つける</H3>
+
+vDSO のベースアドレスは、 (存在する場合には) カーネルから各プログラムに初期補助ベクトル (<B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3) 参照) の
+<B>AT_SYSINFO_EHDR</B> タグ経由で渡される。
+<P>
+
+vDSO がユーザーのメモリーマップの何か特定の場所にマッピングされると仮定してはならない。 通常新しいプロセスイメージが作成されるたびに
+(<B><A HREF="../man2/execve.2.html">execve</A></B>(2) 実行時点) 、 実行時にベースアドレスのランダム化が行われる。 これは &quot;return-to-libc&quot; 攻撃
+を防ぐためにセキュリティ上の理由から行われる。
+<P>
+
+アーキテクチャーによっては <B>AT_SYSINFO</B> タグもある。 このタグは vsyscall エントリーポイントの場所を知るためだけのものであり、
+しばしば省略されるか (利用できない場合は) 0 にセットされる。 このタグは最初の vDSO の実装で使用されていたものであり
+(下記の「歴史」を参照)、 このタグを利用するのは避けるべきである。
+<A NAME="lbAG">&nbsp;</A>
+<H3>ファイルフォーマット</H3>
+
+vDSO は完全な形式の ELF イメージなので、 vDSO に対してシンボルの検索を行うことができる。 このため、
+新しいカーネルリリースで新しいシンボルを追加することができ、 C
+ライブラリが別のバージョンのカーネル上で動作する際に実行時に利用可能な機能を検出することができる。 多くの場合、 C
+ライブラリは最初の呼び出し時に検出を行い、 それ以降の呼び出しで利用できるようにその結果をキャッシュする。
+<P>
+
+すべてのシンボルは (GNU のバージョンフォーマットを使って) バージョンが付けられている。 これにより、
+カーネルは後方互換性を持たせつつ関数のシグネチャーを更新することができる。 つまり、 関数が受け取る引数や返り値が変更されることがあるということである。
+したがって、 vDSO のシンボルを検索する際には、 自分が期待する ABI に一致するバージョンをしなければならない。
+<P>
+
+通常は vDSO はすべてのシンボルに &quot;__vdso_&quot; か &quot;__kernel_&quot;
+というプレフィックスを付けるという慣習に従った名前付けを行っており、 他の標準のシンボルから区別することができる。 例えば、
+&quot;gettimeofday&quot; 関数は &quot;&quot;__vdso_gettimeofday&quot; という名前になっている。
+<P>
+
+これらの関数を呼び出す場合は標準の C の呼び出しの慣習にしたがっておけばよい。 特殊なレジスターやスタックの動作に気を使う必要はない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>ソース</H3>
+
+カーネルをコンパイルする際に、 vDSO コードはコンパイルされリンクが行われる。 通常はアーキテクチャー固有のディレクトリに vDSO
+コードが生成される。
+<P>
+
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;find&nbsp;arch/$ARCH/&nbsp;-name&nbsp;'*vdso*.so*'&nbsp;-o&nbsp;-name&nbsp;'*gate*.so*'
+<A NAME="lbAJ">&nbsp;</A>
+<H3>vDSO 名</H3>
+
+vDSO の名前はアーキテクチャーにより異なる。 この名前は glibc の <B><A HREF="../man1/ldd.1.html">ldd</A></B>(1) の出力などに現れる。
+名前はコードで必要となることはなく、 名前をハードコードしないこと。
+
+<TABLE>
+<TR VALIGN=top><TD>ユーザー ABI</TD><TD>vDSO 名<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>aarch64</TD><TD>linux-vdso.so.1<BR></TD></TR>
+<TR VALIGN=top><TD>arm</TD><TD>linux-vdso.so.1<BR></TD></TR>
+<TR VALIGN=top><TD>ia64</TD><TD>linux-gate.so.1<BR></TD></TR>
+<TR VALIGN=top><TD>mips</TD><TD>linux-vdso.so.1<BR></TD></TR>
+<TR VALIGN=top><TD>ppc/32</TD><TD>linux-vdso32.so.1<BR></TD></TR>
+<TR VALIGN=top><TD>ppc/64</TD><TD>linux-vdso64.so.1<BR></TD></TR>
+<TR VALIGN=top><TD>riscv</TD><TD>linux-vdso.so.1<BR></TD></TR>
+<TR VALIGN=top><TD>s390</TD><TD>linux-vdso32.so.1<BR></TD></TR>
+<TR VALIGN=top><TD>s390x</TD><TD>linux-vdso64.so.1<BR></TD></TR>
+<TR VALIGN=top><TD>sh</TD><TD>linux-gate.so.1<BR></TD></TR>
+<TR VALIGN=top><TD>i386</TD><TD>linux-gate.so.1<BR></TD></TR>
+<TR VALIGN=top><TD>x86-64</TD><TD>linux-vdso.so.1<BR></TD></TR>
+<TR VALIGN=top><TD>x86/x32</TD><TD>linux-vdso.so.1<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>strace(1), seccomp(2), and the vDSO</H3>
+
+When tracing systems calls with <B>strace</B>(1), symbols (system calls) that
+are exported by the vDSO will <I>not</I> appear in the trace output.  Those
+system calls will likewise not be visible to <B>seccomp</B>(2)  filters.
+<A NAME="lbAL">&nbsp;</A>
+<H2>アーキテクチャー固有の注意</H2>
+
+以下のサブ章では vDSO のアーキテクチャー固有の注意について説明する。
+<P>
+
+使用される vDSO は、 カーネルの ABI ではなく、 ユーザー空間コードの ABI に基づくことに注意すること。 したがって、 例えば、 i386
+32 ビットの ELF ライブラリ上で実行する場合、 i386 32 ビットカーネル上で実行されているか x86-64 64
+ビットカーネル上で実行されているかに関わらず同じ vDSO が得られる。 したがって、 以下のどの節が関係するかを判断する際にはユーザー空間 ABI
+の名前を使用する必要がある。
+<A NAME="lbAM">&nbsp;</A>
+<H3>ARM 関数</H3>
+
+
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__vdso_gettimeofday</TD><TD>LINUX_2.6 (Linux 4.1 以降で公開)<BR></TD></TR>
+<TR VALIGN=top><TD>__vdso_clock_gettime</TD><TD>LINUX_2.6 (Linux 4.1 以降で公開)<BR></TD></TR>
+</TABLE>
+
+
+<P>
+
+
+
+Additionally, the ARM port has a code page full of utility functions.  Since
+it's just a raw page of code, there is no ELF information for doing symbol
+lookups or versioning.  It does provide support for different versions
+though.
+<P>
+
+For information on this code page, it's best to refer to the kernel
+documentation as it's extremely detailed and covers everything you need to
+know: <I>Documentation/arm/kernel_user_helpers.txt</I>.
+<A NAME="lbAN">&nbsp;</A>
+<H3>aarch64 関数</H3>
+
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__kernel_rt_sigreturn</TD><TD>LINUX_2.6.39<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_gettimeofday</TD><TD>LINUX_2.6.39<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_gettime</TD><TD>LINUX_2.6.39<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_getres</TD><TD>LINUX_2.6.39<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAO">&nbsp;</A>
+<H3>bfin (Blackfin) functions (port removed in Linux 4.17)</H3>
+
+
+
+As this CPU lacks a memory management unit (MMU), it doesn't set up a vDSO
+in the normal sense.  Instead, it maps at boot time a few raw functions into
+a fixed location in memory.  User-space applications then call directly into
+that region.  There is no provision for backward compatibility beyond
+sniffing raw opcodes, but as this is an embedded CPU, it can get away with
+things---some of the object formats it runs aren't even ELF based (they're
+bFLT/FLAT).
+<P>
+
+For information on this code page, it's best to refer to the public
+documentation:
+<BR>
+
+<A HREF="http://docs.blackfin.uclinux.org/doku.php?id=linux-kernel:fixed-code">http://docs.blackfin.uclinux.org/doku.php?id=linux-kernel:fixed-code</A>
+<A NAME="lbAP">&nbsp;</A>
+<H3>mips 関数</H3>
+
+
+<P>
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__kernel_gettimeofday</TD><TD>LINUX_2.6 (Linux 4.4 以降で公開)<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_gettime</TD><TD>LINUX_2.6 (Linux 4.4 以降で公開)<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAQ">&nbsp;</A>
+<H3>ia64 (Itanium) 関数</H3>
+
+
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__kernel_sigtramp</TD><TD>LINUX_2.5<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_syscall_via_break</TD><TD>LINUX_2.5<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_syscall_via_epc</TD><TD>LINUX_2.5<BR></TD></TR>
+</TABLE>
+
+
+<P>
+
+The Itanium port is somewhat tricky.  In addition to the vDSO above, it also
+has &quot;light-weight system calls&quot; (also known as &quot;fast syscalls&quot; or &quot;fsys&quot;).
+You can invoke these via the <I>__kernel_syscall_via_epc</I> vDSO helper.  The
+system calls listed here have the same semantics as if you called them
+directly via <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2), so refer to the relevant documentation for
+each.  The table below lists the functions available via this mechanism.
+
+<TABLE>
+<TR VALIGN=top><TD>関数<BR></TD></TR>
+<TR VALIGN=top><TD><HR></TD></TR>
+<TR VALIGN=top><TD>clock_gettime<BR></TD></TR>
+<TR VALIGN=top><TD>getcpu<BR></TD></TR>
+<TR VALIGN=top><TD>getpid<BR></TD></TR>
+<TR VALIGN=top><TD>getppid<BR></TD></TR>
+<TR VALIGN=top><TD>gettimeofday<BR></TD></TR>
+<TR VALIGN=top><TD>set_tid_address<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAR">&nbsp;</A>
+<H3>parisc (hppa) 関数</H3>
+
+
+
+The parisc port has a code page with utility functions called a gateway
+page.  Rather than use the normal ELF auxiliary vector approach, it passes
+the address of the page to the process via the SR2 register.  The
+permissions on the page are such that merely executing those addresses
+automatically executes with kernel privileges and not in user space.  This
+is done to match the way HP-UX works.
+<P>
+
+Since it's just a raw page of code, there is no ELF information for doing
+symbol lookups or versioning.  Simply call into the appropriate offset via
+the branch instruction, for example:
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ble&nbsp;&lt;offset&gt;(%sr2,&nbsp;%r0)
+
+<TABLE>
+<TR VALIGN=top><TD>オフセット</TD><TD>関数<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>00b0</TD><TD>lws_entry (CAS operations)<BR></TD></TR>
+<TR VALIGN=top><TD>00e0</TD><TD>set_thread_pointer (used by glibc)<BR></TD></TR>
+<TR VALIGN=top><TD>0100</TD><TD>linux_gateway_entry (syscall)<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAS">&nbsp;</A>
+<H3>ppc/32 関数</H3>
+
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。 <I>*</I> のマークが付いた関数は、カーネルが PowerPC64 (64 ビット)
+カーネルの場合にだけ利用可能である。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_getres</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_gettime</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_datapage_offset</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_get_syscall_map</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_get_tbfreq</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_getcpu <I>*</I></TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_gettimeofday</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_sigtramp_rt32</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_sigtramp32</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_sync_dicache</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_sync_dicache_p5</TD><TD>LINUX_2.6.15<BR></TD></TR>
+</TABLE>
+
+
+<P>
+
+The <B>CLOCK_REALTIME_COARSE</B> and <B>CLOCK_MONOTONIC_COARSE</B> clocks are <I>not</I>
+supported by the <I>__kernel_clock_getres</I> and <I>__kernel_clock_gettime</I>
+interfaces; the kernel falls back to the real system call.
+<A NAME="lbAT">&nbsp;</A>
+<H3>ppc/64 関数</H3>
+
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_getres</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_gettime</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_datapage_offset</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_get_syscall_map</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_get_tbfreq</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_getcpu</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_gettimeofday</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_sigtramp_rt64</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_sync_dicache</TD><TD>LINUX_2.6.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_sync_dicache_p5</TD><TD>LINUX_2.6.15<BR></TD></TR>
+</TABLE>
+
+
+<P>
+
+The <B>CLOCK_REALTIME_COARSE</B> and <B>CLOCK_MONOTONIC_COARSE</B> clocks are <I>not</I>
+supported by the <I>__kernel_clock_getres</I> and <I>__kernel_clock_gettime</I>
+interfaces; the kernel falls back to the real system call.
+<A NAME="lbAU">&nbsp;</A>
+<H3>riscv 関数</H3>
+
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__kernel_rt_sigreturn</TD><TD>LINUX_4.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_gettimeofday</TD><TD>LINUX_4.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_gettime</TD><TD>LINUX_4.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_getres</TD><TD>LINUX_4.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_getcpu</TD><TD>LINUX_4.15<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_flush_icache</TD><TD>LINUX_4.15<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAV">&nbsp;</A>
+<H3>s390 関数</H3>
+
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_getres</TD><TD>LINUX_2.6.29<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_gettime</TD><TD>LINUX_2.6.29<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_gettimeofday</TD><TD>LINUX_2.6.29<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAW">&nbsp;</A>
+<H3>s390x 関数</H3>
+
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_getres</TD><TD>LINUX_2.6.29<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_clock_gettime</TD><TD>LINUX_2.6.29<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_gettimeofday</TD><TD>LINUX_2.6.29<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAX">&nbsp;</A>
+<H3>sh (SuperH) 関数</H3>
+
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__kernel_rt_sigreturn</TD><TD>LINUX_2.6<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_sigreturn</TD><TD>LINUX_2.6<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_vsyscall</TD><TD>LINUX_2.6<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAY">&nbsp;</A>
+<H3>i386 関数</H3>
+
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__kernel_sigreturn</TD><TD>LINUX_2.5<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_rt_sigreturn</TD><TD>LINUX_2.5<BR></TD></TR>
+<TR VALIGN=top><TD>__kernel_vsyscall</TD><TD>LINUX_2.5<BR></TD></TR>
+<TR VALIGN=top><TD>__vdso_clock_gettime</TD><TD>LINUX_2.6 (Linux 3.15 以降で公開)<BR></TD></TR>
+<TR VALIGN=top><TD>__vdso_gettimeofday</TD><TD>LINUX_2.6 (Linux 3.15 以降で公開)<BR></TD></TR>
+<TR VALIGN=top><TD>__vdso_time</TD><TD>LINUX_2.6 (Linux 3.15 以降で公開)<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAZ">&nbsp;</A>
+<H3>x86-64 関数</H3>
+
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。 これらのシンボルはすべて &quot;__vdso_&quot; のプレフィックスなしでも利用できるが、
+これらは無視し、 以下の名前だけを使うこと。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__vdso_clock_gettime</TD><TD>LINUX_2.6<BR></TD></TR>
+<TR VALIGN=top><TD>__vdso_getcpu</TD><TD>LINUX_2.6<BR></TD></TR>
+<TR VALIGN=top><TD>__vdso_gettimeofday</TD><TD>LINUX_2.6<BR></TD></TR>
+<TR VALIGN=top><TD>__vdso_time</TD><TD>LINUX_2.6<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbBA">&nbsp;</A>
+<H3>x86/x32 関数</H3>
+
+
+以下のテーブルは vDSO で公開されるシンボルの一覧である。
+
+<TABLE>
+<TR VALIGN=top><TD>シンボル</TD><TD>バージョン<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>__vdso_clock_gettime</TD><TD>LINUX_2.6<BR></TD></TR>
+<TR VALIGN=top><TD>__vdso_getcpu</TD><TD>LINUX_2.6<BR></TD></TR>
+<TR VALIGN=top><TD>__vdso_gettimeofday</TD><TD>LINUX_2.6<BR></TD></TR>
+<TR VALIGN=top><TD>__vdso_time</TD><TD>LINUX_2.6<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbBB">&nbsp;</A>
+<H3>歴史</H3>
+
+vDSO は元々は一つの関数 vsyscall であった。 古いカーネルでは、 プロセスのメモリーマップに &quot;vdso&quot;
+ではなくこの名前が見えるかもしれない。 時間が経つに連れて、 この仕組みはより多くの機能をユーザー空間に渡す有効な方法であると認識されるようになり、
+現在の形の vDSO という形に見直しが行われた。
+<A NAME="lbBC">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/syscalls.2.html">syscalls</A></B>(2), <B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3), <B><A HREF="../man5/proc.5.html">proc</A></B>(5)
+<P>
+
+Linux のソースコードツリーのドキュメント、例、ソースコード:
+<P>
+
+
+
+Documentation/ABI/stable/vdso
+Documentation/ia64/fsys.txt
+Documentation/vDSO/* (vDSO の使用例がある)
+<P>
+find arch/ -iname '*vdso*' -o -iname '*gate*'
+
+
+<A NAME="lbBD">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Example background</A><DD>
+<DT><A HREF="#lbAF">vDSO を見つける</A><DD>
+<DT><A HREF="#lbAG">ファイルフォーマット</A><DD>
+</DL>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">ソース</A><DD>
+<DT><A HREF="#lbAJ">vDSO 名</A><DD>
+<DT><A HREF="#lbAK">strace(1), seccomp(2), and the vDSO</A><DD>
+</DL>
+<DT><A HREF="#lbAL">アーキテクチャー固有の注意</A><DD>
+<DL>
+<DT><A HREF="#lbAM">ARM 関数</A><DD>
+<DT><A HREF="#lbAN">aarch64 関数</A><DD>
+<DT><A HREF="#lbAO">bfin (Blackfin) functions (port removed in Linux 4.17)</A><DD>
+<DT><A HREF="#lbAP">mips 関数</A><DD>
+<DT><A HREF="#lbAQ">ia64 (Itanium) 関数</A><DD>
+<DT><A HREF="#lbAR">parisc (hppa) 関数</A><DD>
+<DT><A HREF="#lbAS">ppc/32 関数</A><DD>
+<DT><A HREF="#lbAT">ppc/64 関数</A><DD>
+<DT><A HREF="#lbAU">riscv 関数</A><DD>
+<DT><A HREF="#lbAV">s390 関数</A><DD>
+<DT><A HREF="#lbAW">s390x 関数</A><DD>
+<DT><A HREF="#lbAX">sh (SuperH) 関数</A><DD>
+<DT><A HREF="#lbAY">i386 関数</A><DD>
+<DT><A HREF="#lbAZ">x86-64 関数</A><DD>
+<DT><A HREF="#lbBA">x86/x32 関数</A><DD>
+<DT><A HREF="#lbBB">歴史</A><DD>
+</DL>
+<DT><A HREF="#lbBC">関連項目</A><DD>
+<DT><A HREF="#lbBD">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

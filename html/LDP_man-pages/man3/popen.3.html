@@ -1,0 +1,177 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of POPEN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>POPEN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/popen.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+popen, pclose - プロセスとの入力/出力用のパイプストリーム
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<B>FILE *popen(const char *</B><I>command</I><B>, const char *</B><I>type</I><B>);</B>
+
+<B>int pclose(FILE *</B><I>stream</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+
+<P>
+
+<B>popen</B>(), <B>pclose</B>():
+<DL COMPACT><DT><DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;2
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以前:&nbsp;*/&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>popen</B>()  関数は、プロセスをオープンする。具体的には、 パイプを生成し、フォークを行い、シェルを起動する。
+定義から分かるように、パイプは一方向なので、 <I>type</I> 引数には読み込みか書き込みのどちらか一方だけを指定できる (両方は指定できない)。
+生成されるストリームは、この指定に対応して、読み取り専用または 書き込み専用のいずれかとなる。
+<P>
+
+<I>command</I> 引数は、シェルのコマンドラインを含むヌル終端された文字列へのポインターである。 このコマンドは <B>-c</B> フラグを用いて
+<I>/bin/sh</I> に渡される。 コマンドの解釈は (もし必要ならば) シェルによって行われる。
+<P>
+
+<I>type</I> 引数は、ヌル終端された文字列へのポインターで、 読み込みを示す文字 'r' か、書き込みを示す文字 'w' の
+どちらか一方を指定しなければならない。 glibc 2.9 以降では、この引数に文字 'e' を追加で指定できる。 文字 'e'
+を指定すると、 対応するファイルディスクリプターにおいて、 close-on-exec フラグ (<B>FD_CLOEXEC</B>)  がセットされる。
+これが役に立つ理由については、 <B><A HREF="../man2/open.2.html">open</A></B>(2)  の <B>O_CLOEXEC</B> フラグの説明を参照のこと。
+<P>
+
+<B>popen</B>()  からの返り値は、通常の標準 I/O ストリームと同じであるが、 <B><A HREF="../man3/fclose.3.html">fclose</A></B>(3)  ではなく <B>pclose</B>()
+で閉じなくてはならないことだけが異なる。 このストリームへ書き込んだ結果はコマンドの標準入力に書き込まれる。 そして、コマンドの標準出力は、
+コマンドそのものが置き換わってしまわない限り、 <B>popen</B>()  を呼んだプロセスの標準出力と同じことになる。 逆に、
+ストリームからの読み込みは、 そのコマンドの標準出力を読み込むことになる。 そして、そのコマンドの標準入力は <B>popen</B>()
+を呼んだプロセスの標準入力と同一である。
+<P>
+
+デフォルトでは、 <B>popen</B>() の出力ストリームは block buffered であることに注意すること。
+<P>
+
+<B>pclose</B>()  関数は、(パイプに) 関連づけられたプロセスが終了するのを待ち、 <B><A HREF="../man2/wait4.2.html">wait4</A></B>(2)
+によって返されたコマンドの終了状態を返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>popen</B>(): on success, returns a pointer to an open stream that can be used
+to read or write to the pipe; if the <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  or <B><A HREF="../man2/pipe.2.html">pipe</A></B>(2)  calls fail,
+or if the function cannot allocate memory, NULL is returned.
+<P>
+
+
+
+
+
+
+
+<B>pclose</B>(): on success, returns the exit status of the command; if
+<B><A HREF="../man2/wait4.2.html">wait4</A></B>(2)  returns an error, or some other error is detected, -1 is
+returned.
+<P>
+
+Both functions set <I>errno</I> to an appropriate value in the case of an error.
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>popen</B>()  関数は、メモリーアロケーションに失敗しても <I>errno</I> をセットしない。 <B>popen</B>()  が中で呼び出す
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  や <B><A HREF="../man2/pipe.2.html">pipe</A></B>(2)  が失敗した場合には、 <I>errno</I> が適切にセットされる。 引数 <I>type</I>
+が無効であり、この状態が検知された場合には、 <I>errno</I> が <B>EINVAL</B> にセットされる。
+<P>
+
+<B>pclose</B>()  が、子プロセスの状態を取得できなかった場合、 <I>errno</I> が <B>ECHILD</B> にセットされる。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>popen</B>(),
+<B>pclose</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<P>
+
+<I>type</I> に指定できる 'e' は Linux での拡張である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<B>Note</B>: carefully read Caveats in <B><A HREF="../man3/system.3.html">system</A></B>(3).
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+読み込みのために開かれたコマンドの標準入力は <B>popen</B>(), を呼んだプロセスと一緒に、その読み取り位置を共有する。
+そのため、もとのプロセスがバッファーリングされた読み取りを終了したら、 そのコマンドの入力位置は予想されたものには なっていないかもしれない。
+同様に、書き込みのために開かれたコマンドからの出力は、 もとのプロセスの出力と混ざり合うことになるかもしれない。 後者は <B>popen</B>()  の前に
+<B><A HREF="../man3/fflush.3.html">fflush</A></B>(3)  を呼び出すことによって回避可能である。
+<P>
+
+
+
+
+
+
+
+シェルの実行の失敗は、 シェルがコマンドの実行に失敗したことや、 コマンドがすぐに終了してしまったことと、区別がつかない。 唯一のヒントは終了状態が
+127 になることである。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>sh</B>(1), <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man2/pipe.2.html">pipe</A></B>(2), <B><A HREF="../man2/wait4.2.html">wait4</A></B>(2), <B><A HREF="../man3/fclose.3.html">fclose</A></B>(3), <B><A HREF="../man3/fflush.3.html">fflush</A></B>(3),
+<B><A HREF="../man3/fopen.3.html">fopen</A></B>(3), <B><A HREF="../man3/stdio.3.html">stdio</A></B>(3), <B><A HREF="../man3/system.3.html">system</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

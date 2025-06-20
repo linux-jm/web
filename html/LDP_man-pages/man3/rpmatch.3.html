@@ -1,0 +1,152 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RPMATCH</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RPMATCH</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/rpmatch.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rpmatch - 質問への応答が肯定か否定かを判定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>int rpmatch(const char *</B><I>response</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>rpmatch</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.19:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.19&nbsp;and&nbsp;earlier:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_SVID_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>rpmatch</B>()  は yes/no の質問に対するユーザーからの応答を処理する。 国際化 (I18N) に対応している。
+<P>
+
+<I>response</I> にはユーザーからの応答を格納したヌル終端文字列が入っている必要がある。 たいていは、 <B><A HREF="../man3/fgets.3.html">fgets</A></B>(3)  や
+<B><A HREF="../man3/getline.3.html">getline</A></B>(3)  で取り込んだものであろう。
+<P>
+
+プログラムが <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3)  を呼び出して環境変数の変更を有効にした場合、 環境変数 <B>LANG</B>, <B>LC_MESSAGES</B>,
+<B>LC_ALL</B> が ユーザーの言語設定として考慮される。
+<P>
+
+ロケールに関わらず、<B>^[Yy]</B> にマッチする応答は常に肯定だと解釈され、 <B>^[Nn]</B> にマッチする応答は常に否定だと解釈される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<I>response</I> を検査した後、 <B>rpmatch</B>()  は否定的な応答 (&quot;no&quot;) と認識した場合は 0 を返し、 肯定的な応答
+(&quot;yes&quot;) と認識した場合は 1 を返す。 <I>response</I> の値を解釈できなかった場合は -1 を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+返り値 -1 が返った場合、入力が不正であったか、他の何らかのエラーが あったことを意味する。返り値が 0 以外かどうかを確認するだけでは
+十分ではない。
+<P>
+
+<B>rpmatch</B>()  は、 <B><A HREF="../man3/regcomp.3.html">regcomp</A></B>(3)  や <B><A HREF="../man3/regexec.3.html">regexec</A></B>(3)  が失敗する理由のどれかで失敗することがある。
+エラーの原因を <I>errno</I> や他の何かで知ることはできないが、 <I>errno</I> は正規表現エンジンの失敗の原因を示している (但し、このケースと
+<I>response</I> の値を認識できずに失敗した場合を区別することはできない)。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>rpmatch</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+
+<B>rpmatch</B>()  はどの標準でも必須となっていないが、 Linux 以外にも利用できるシステムもいくつかは存在する。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>rpmatch</B>()  の実装は <I>response</I> の最初の 1 文字だけを見ているようである。その結果、 &quot;nyes&quot; は 0 を返し、
+&quot;ynever; not in a million years&quot; は 1 を返すことになる。 入力文字列をもっと厳密に解釈した方がよいだろう。 例えば、
+(<B><A HREF="../man7/regex.7.html">regex</A></B>(7)  で説明されている拡張正規表現を使って)  <B>^([yY]|yes|YES)$</B> や
+<B>^([nN]|no|NO)$</B> で解釈するなど。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは、コマンドライン引数で 指定された文字列を <B>rpmatch</B>()  に渡した場合の結果を表示する。
+<P>
+
+
+#define _SVID_SOURCE
+#include &lt;<A HREF="file:///usr/include/locale.h">locale.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2&nbsp;||&nbsp;strcmp(argv[1],&nbsp;&quot;--help&quot;)&nbsp;==&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s&nbsp;response\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;setlocale(LC_ALL,&nbsp;&quot;&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;rpmatch()&nbsp;returns:&nbsp;%d\n&quot;,&nbsp;rpmatch(argv[1]));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/fgets.3.html">fgets</A></B>(3), <B><A HREF="../man3/getline.3.html">getline</A></B>(3), <B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3), <B><A HREF="../man3/regcomp.3.html">regcomp</A></B>(3),
+<B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

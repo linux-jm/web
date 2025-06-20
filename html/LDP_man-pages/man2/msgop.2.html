@@ -1,0 +1,470 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MSGOP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MSGOP</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/msgop.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+msgrcv, msgsnd - System V メッセージキュー操作
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/msg.h">sys/msg.h</A>&gt;</B>
+
+<B>int msgsnd(int </B><I>msqid</I><B>, const void *</B><I>msgp</I><B>, size_t </B><I>msgsz</I><B>, int </B><I>msgflg</I><B>);</B>
+
+<B>ssize_t msgrcv(int </B><I>msqid</I><B>, void *</B><I>msgp</I><B>, size_t </B><I>msgsz</I><B>, long </B><I>msgtyp</I><B>,</B>
+<B>               int </B><I>msgflg</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+システムコール <B>msgsnd</B>() と <B>msgrcv</B>() は、 System&nbsp;V
+メッセージキューへのメッセージの送信と、メッセージの受信に使用される。呼び出し元プロセスは、
+メッセージを送信するためにはメッセージキューに対する書き込み許可を、 メッセージを受信するためには読み出し許可を持っていなければならない。
+<P>
+
+呼び出し元プロセスは以下に示す構造体を用意し、この構造体への ポインターを <I>msgp</I> 引数として渡す。
+<P>
+
+
+
+struct msgbuf {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;mtype;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;message&nbsp;type,&nbsp;must&nbsp;be&nbsp;&gt;&nbsp;0&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;mtext[1];&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;message&nbsp;data&nbsp;*/
+};
+
+
+<P>
+
+<I>mtext</I> フィールドは配列 (または他の構造体) で、その大きさは 非負の整数である <I>msgsz</I> で指定される。 長さ 0 のメッセージ
+(つまり <I>mtext</I> フィールドがないメッセージ) も認められている。 <B>mtype</B> フィールドは厳密に正の整数でなければならない。
+この値は、メッセージを受信するプロセスでメッセージを選択するために 使用される (下記の <B>msgrcv</B>()  の説明を参照のこと)。
+<A NAME="lbAE">&nbsp;</A>
+<H3>msgsnd()</H3>
+
+<B>msgsnd</B>()  システムコールは <I>msgp</I> 引数で指定されたメッセージのコピーを <I>msqid</I>
+で指定された識別子を持つメッセージキューへ追加する。
+<P>
+
+キューに十分な空き容量がある場合、 <B>msgsnd</B>()  は直ちに成功する。 キューの容量は、メッセージキューのデータ構造体の
+<I>msg_qbytes</I> フィールドで制御される。 キュー作成時にこのフィールドは <B>MSGMNB</B> に初期化されるが、この制限は
+<B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2)  を使って変更できる。 次のいずれかの条件が成立する場合に、メッセージキューは一杯と判断される。
+<DL COMPACT>
+<DT>&bull;<DD>
+新しいメッセージをそのキューに追加すると、 そのキューの全バイト数がキューの最大サイズ (<I>msg_qbytes</I> フィールド)
+を超過してしまう場合。
+<DT>&bull;<DD>
+そのキューにもう一つメッセージを追加すると、 そのキューが全メッセージ数がキューの最大サイズ (<I>msg_qbytes</I> フィールド)
+を超過してしまう場合。 このチェックは、無限個の長さ 0 のメッセージをそのキューに追加するのを防ぐために必要である。 長さ 0
+のメッセージはデータを含まないが、 (ロックされた) カーネルメモリーを消費するからである。
+</DL>
+<P>
+
+そのキューに十分な領域がない場合、 デフォルトの動作では、 必要な領域ができるまで <B>msgsnd</B>() は停止 (block) する。
+<I>msgflg</I> に <B>IPC_NOWAIT</B> が指定された場合、 <B>msgsnd</B>() はエラー <B>EAGAIN</B> で失敗する。
+<P>
+
+停止している <B>msgsnd</B>()  は以下の場合にも失敗する。
+<DL COMPACT>
+<DT>&bull;<DD>
+キューが削除された。 この場合、 <I>errno</I> は <B>EIDRM</B> に設定される。
+<DT>&bull;<DD>
+シグナルが捕捉された。 この場合、 <I>errno</I> は <B>EINTR</B> に設定される。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。 (<B>msgsnd</B>()
+は、たとえシグナルハンドラーの設定時に <B>SA_RESTART</B> を指定していたとしても、シグナルハンドラーによって割り込まれた後で
+自動的に再スタートすることは決してない。)
+</DL>
+<P>
+
+正常に終了した場合、メッセージキューのデータ構造体は以下のように 更新される:
+<DL COMPACT>
+<DT>&bull;<DD>
+<I>msg_lspid</I> には呼び出し元プロセスのプロセス ID が設定される。
+<DT>&bull;<DD>
+<I>msg_qnum</I> は 1 増加する。
+<DT>&bull;<DD>
+<I>msg_stime</I> には現在時刻が設定される。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>msgrcv()</H3>
+
+<B>msgrcv</B>()  システムコールは <I>msqid</I> で指定されたキューからメッセージを削除し、 <I>msgp</I>
+で指定されたバッファーにそのメッセージを格納する。
+<P>
+
+<I>msgsz</I> 引数には <I>msgp</I> 引数で指定された構造体の <I>mtext</I> メンバーの最大のバイト数を指定する。
+メッセージのテキストの長さが <I>msgsz</I> より大きい場合の動作は、 <I>msgflg</I> に <B>MSG_NOERROR</B>
+が指定されているかどうかで決まる。 <B>MSG_NOERROR</B> が指定されていれば、メッセージのテキストは切り詰められる
+(切り捨てられた部分は失われる)。 <B>MSG_NOERROR</B> が指定されていなければ、メッセージはキューから削除されず、 システムコールは -1
+を返して失敗し、 <I>errno</I> に <B>E2BIG</B> が設定される。
+<P>
+
+<B>MSG_COPY</B> が <I>msgflg</I> に指定されていない場合 (下記参照)、 <I>msgtyp</I> 引数には要求するメッセージの型を指定する。
+型は以下のように指定する:
+<DL COMPACT>
+<DT>&bull;<DD>
+<I>msgtyp</I> が 0 ならば、キューの最初にあるメッセージが読み込まれる。
+<DT>&bull;<DD>
+<I>msgtyp</I> が 0 より大きい場合、 <I>msgflg</I> に <B>MSG_EXCEPT</B> が指定されていなければ、 <I>msgtyp</I>
+型のキューの最初のメッセージが読み込まれる。 <B>MSG_EXCEPT</B> が指定された場合は、 <I>msgtyp</I>
+型以外のキューの最初のメッセージが読み込まれる。
+<DT>&bull;<DD>
+<I>msgtyp</I> が 0 より小さければ、 <I>msgtyp</I> の絶対値以下で最も小さい型を持つキューの最初のメッセージが読み込まれる。
+</DL>
+<P>
+
+<I>msgflg</I> 引数には、以下のフラグを任意の数だけ (0個も可)、これらの OR で指定する:
+<DL COMPACT>
+<DT><B>IPC_NOWAIT</B><DD>
+キューに要求された型のメッセージがない場合には直ちに返る。 システムコールは失敗し、 <I>errno</I> には <B>ENOMSG</B> が設定される。
+<DT><B>MSG_COPY</B> (Linux 3.8 以降)<DD>
+
+キューの中で <I>msgtyp</I> で指定した位置にあるメッセージのコピーを、キューを変更せずに (非破壊的に) 取り出す (メッセージの位置は 0
+から順番に番号が割り当てられる)。
+<DT><DD>
+このフラグは <B>IPC_NOWAIT</B> と組み合わせて指定しなければならない。 その結果、指定した位置にメッセージがなかった場合、呼び出しはエラー
+<B>ENOMSG</B> ですぐに失敗する。 <B>MSG_COPY</B> と <B>MSG_EXCEPT</B> は <I>msgtyp</I>
+の意味を相容れない方法で使用するため、この二つのフラグの両方を <I>msgtyp</I> に指定することはできない。
+<DT><DD>
+<B>MSG_COPY</B> フラグは、 カーネルのチェックポイント復元 (checkpoint-restore) 機能の実装のために追加された。
+このフラグはカーネルが <B>CONFIG_CHECKPOINT_RESTORE</B> オプションを有効にして作成された場合にのみ利用できる。
+<DT><B>MSG_EXCEPT</B><DD>
+0 より大きな <I>msgtyp</I> と一緒に使用して、 <I>msgtyp</I> 以外のキューの最初のメッセージを読み込む。
+<DT><B>MSG_NOERROR</B><DD>
+<I>msgsz</I> バイトよりも長かった場合はメッセージのテキストを切り詰める。
+</DL>
+<P>
+
+要求された型のメッセージが存在せず、 <I>msgflg</I> に <B>IPC_NOWAIT</B> が指定されていなかった場合、呼び出し元プロセスは
+以下のいずれかの状況になるまで停止 (block) される:
+<DL COMPACT>
+<DT>&bull;<DD>
+要求している型のメッセージがキューへ入れられた。
+<DT>&bull;<DD>
+メッセージキューがシステムから削除された。 この場合、システムコールは失敗し、 <I>errno</I> に <B>EIDRM</B> が設定される。
+<DT>&bull;<DD>
+呼び出し元プロセスがシグナルを捕獲した。 この場合、システムコールは失敗し、 <I>errno</I> に <B>EINTR</B> が設定される。
+(<B>msgrcv</B>()  は、たとえシグナルハンドラーの設定時に <B>SA_RESTART</B>
+を指定していたとしても、シグナルハンドラーによって割り込まれた後で 自動的に再スタートすることは決してない。)
+</DL>
+<P>
+
+正常に終了した場合、メッセージキューのデータ構造体は以下のように 更新される:
+<DL COMPACT>
+<DT><DD>
+<I>msg_lrpid</I> には呼び出し元プロセスのプロセス ID が設定される。
+<DT><DD>
+<I>msg_qnum</I> は 1 減算される。
+<DT><DD>
+<I>msg_rtime</I> には現在の時刻が設定される。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+失敗した場合は、どちらの関数も -1 を返し、エラーを <I>errno</I> に表示する。成功した場合、 <B>msgsnd</B>()  は 0 を返し、
+<B>msgrcv</B>()  は <I>mtext</I> 配列に実際にコピーしたバイト数を返す。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>msgsnd</B>()  が失敗した場合、 <B>errno</B> に以下の値のいずれかが設定される:
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+The calling process does not have write permission on the message queue, and
+does not have the <B>CAP_IPC_OWNER</B> capability in the user namespace that
+governs its IPC namespace.
+<DT><B>EAGAIN</B><DD>
+<I>msg_qbytes</I> がキューの制限を超えていたため、メッセージを送ることができず、かつ <I>msgflg</I> に <B>IPC_NOWAIT</B>
+が指定されていた。
+<DT><B>EFAULT</B><DD>
+<I>msgp</I> が指しているアドレスがアクセス可能でない。
+<DT><B>EIDRM</B><DD>
+メッセージキューが削除された。
+<DT><B>EINTR</B><DD>
+メッセージキューが要求した条件を満たすまで停止している時に、 プロセスがシグナルを捕獲した。
+<DT><B>EINVAL</B><DD>
+<I>msqid</I> が不適切な値であるか、 <I>mtype</I> が正の値でないか、 <I>msgsz</I> が不適切な値 (0 以下か、システムで決まる値
+<B>MSGMAX</B> よりも大きい値) である。
+<DT><B>ENOMEM</B><DD>
+<I>msgp</I> が指すメッセージのコピーを作成するのに十分なメモリーがシステムに存在しない。
+</DL>
+<P>
+
+<B>msgrcv</B>()  が失敗した場合には <I>errno</I> に以下の値のいずれかが設定される:
+<DL COMPACT>
+<DT><B>E2BIG</B><DD>
+メッセージのテキストの長さが <I>msgsz</I> よりも大きく、 <I>msgflg</I> に <B>MSG_NOERROR</B> が設定されていなかった。
+<DT><B>EACCES</B><DD>
+The calling process does not have read permission on the message queue, and
+does not have the <B>CAP_IPC_OWNER</B> capability in the user namespace that
+governs its IPC namespace.
+<DT><B>EFAULT</B><DD>
+<I>msgp</I> が指しているアドレスがアクセス可能でない。
+<DT><B>EIDRM</B><DD>
+メッセージを受信するためにプロセスが停止している間に、 メッセージキューが削除された。
+<DT><B>EINTR</B><DD>
+メッセージを受けるためにプロセスが停止している間に、 プロセスがシグナルを捕獲した。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EINVAL</B><DD>
+<I>msgid</I> が不正か、 <I>msgsz</I> が 0 より小さい。
+<DT><B>EINVAL</B> (Linux 3.14 以降)<DD>
+<I>msgflg</I> に <B>MSG_COPY</B> が指定されたが、 <B>IPC_NOWAIT</B> が指定されていない。
+<DT><B>EINVAL</B> (Linux 3.14 以降)<DD>
+<I>msgflg</I> に <B>MSG_COPY</B> と <B>MSG_EXCEPT</B> の両方が指定された。
+<DT><B>ENOMSG</B><DD>
+<I>msgflg</I> に <B>IPC_NOWAIT</B> が設定されており、 メッセージキューに要求された型のメッセージが存在しなかった。
+<DT><B>ENOMSG</B><DD>
+<B>IPC_NOWAIT</B> と <B>MSG_COPY</B> が <I>msgflg</I> に指定されたが、 キューには <I>msgtyp</I>
+未満のメッセージしか入っていなかった。
+<DT><B>ENOSYS</B> (Linux 3.8 以降)<DD>
+<I>msgflg</I> に <I>MSG_COPY</I> と <B>IPC_NOWAIT</B> の両方が指定されたが、カーネルが
+<B>CONFIG_CHECKPOINT_RESTORE</B> なしで作成されている。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4.
+<P>
+
+
+フラグ <B>MSG_EXCEPT</B> と <B>MSG_COPY</B> は Linux 固有である。 これらの定義を得るには、機能検査マクロ
+<B>_GNU_SOURCE</B> を定義する。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+Linux や POSIX の全てのバージョンでは、 <I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I> と <I>&lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</I>
+のインクルードは必要ない。しかしながら、いくつかの古い実装ではこれらのヘッダーファイルのインクルードが必要であり、 SVID
+でもこれらのインクルードをするように記載されている。このような古いシステムへの移植性を意図したアプリケーションではこれらのファイルをインクルードする必要があるかもしれない。
+<P>
+
+<I>msgp</I> 引数は、 glibc 2.0 と 2.1 では <I>struct msgbuf&nbsp;*</I> と宣言されている。glibc 2.2 以降では、
+SUSv2 と SUSv3 の要求通り、<I>void&nbsp;*</I> と宣言されている。
+<P>
+
+以下は <B>msgsnd</B> システムコールに影響するシステム制限である:
+<DL COMPACT>
+<DT><B>MSGMAX</B><DD>
+Maximum size of a message text, in bytes (default value: 8192 bytes).  On
+Linux, this limit can be read and modified via <I>/proc/sys/kernel/msgmax</I>.
+<DT><B>MSGMNB</B><DD>
+Maximum number of bytes that can be held in a message queue (default value:
+16384 bytes).  On Linux, this limit can be read and modified via
+<I>/proc/sys/kernel/msgmnb</I>.  A privileged process (Linux: a process with the
+<B>CAP_SYS_RESOURCE</B> capability)  can increase the size of a message queue
+beyond <B>MSGMNB</B> using the <B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2)  <B>IPC_SET</B> operation.
+</DL>
+<P>
+
+現在の実装では、システム全体のメッセージヘッダーの上限数 (<B>MSGTQL</B>)  と、システム全体のメッセージプールの最大バイト数
+(<B>MSGPOOL</B>)  に関して実装依存の制限はない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+Linux 3.13 以前では、 <B>msgrcv</B>() の呼び出しで <B>MSG_COPY</B> フラグは指定されたが <B>IPC_NOWAIT</B>
+は指定されず、かつメッセージキューに <I>msgtyp</I> 未満のメッセージしかない場合に、 <B>msgrcv</B>()
+の呼び出しはキューに次のメッセージが書き込まれるまで停止していた。 新しいメッセージが書き込まれた時点で、 そのメッセージが指定された位置
+<I>msgtyp</I> かどうかに<I>関わらず</I>、 <B>msgrcv</B>() の呼び出しは新たに書き込まれたメッセージのコピーを返していた。 このバグは
+Linux ３．１４で修正された。
+<P>
+
+
+
+<I>msg_copy</I> に <B>MSG_COPY</B> と <B>MSG_EXCEPT</B> の両方を指定するのは、論理的なエラーである
+(なぜならこれらのフラグは <I>msgtyp</I> を別の意味で解釈するからである)。 Linux 3.13 以前では、<B>msgrcv</B>()
+がこのエラーを検出しなかった。 このバグは Linux 3.14 で修正された。
+<A NAME="lbAL">&nbsp;</A>
+<H2>例</H2>
+
+The program below demonstrates the use of <B>msgsnd</B>()  and <B>msgrcv</B>().
+<P>
+
+The example program is first run with the <B>-s</B> option to send a message and
+then run again with the <B>-r</B> option to receive a message.
+<P>
+
+The following shell session shows a sample run of the program:
+<P>
+
+
+
+$<B> ./a.out -s</B>
+sent: a message at Wed Mar  4 16:25:45 2015
+<P>
+$<B> ./a.out -r</B>
+message received: a message at Wed Mar  4 16:25:45 2015
+
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/msg.h">sys/msg.h</A>&gt;
+<P>
+struct msgbuf {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;mtype;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;mtext[80];
+};
+<P>
+static void
+usage(char *prog_name, char *msg)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(msg&nbsp;!=&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fputs(msg,&nbsp;stderr);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;[options]\n&quot;,&nbsp;prog_name);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Options&nbsp;are:\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;-s&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;send&nbsp;message&nbsp;using&nbsp;msgsnd()\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;-r&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;read&nbsp;message&nbsp;using&nbsp;msgrcv()\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;-t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;type&nbsp;(default&nbsp;is&nbsp;1)\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;-k&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;queue&nbsp;key&nbsp;(default&nbsp;is&nbsp;1234)\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+}
+<P>
+static void
+send_msg(int qid, int msgtype)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;msgbuf&nbsp;msg;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;t;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg.mtype&nbsp;=&nbsp;msgtype;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;time(&amp;t);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;snprintf(msg.mtext,&nbsp;sizeof(msg.mtext),&nbsp;&quot;a&nbsp;message&nbsp;at&nbsp;%s&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctime(&amp;t));
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(msgsnd(qid,&nbsp;&amp;msg,&nbsp;sizeof(msg.mtext),
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IPC_NOWAIT)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;msgsnd&nbsp;error&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;sent:&nbsp;%s\n&quot;,&nbsp;msg.mtext);
+}
+<P>
+static void
+get_msg(int qid, int msgtype)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;msgbuf&nbsp;msg;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(msgrcv(qid,&nbsp;&amp;msg,&nbsp;sizeof(msg.mtext),&nbsp;msgtype,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MSG_NOERROR&nbsp;|&nbsp;IPC_NOWAIT)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errno&nbsp;!=&nbsp;ENOMSG)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;msgrcv&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;No&nbsp;message&nbsp;available&nbsp;for&nbsp;msgrcv()\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;message&nbsp;received:&nbsp;%s\n&quot;,&nbsp;msg.mtext);
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;qid,&nbsp;opt;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;mode&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;1&nbsp;=&nbsp;send,&nbsp;2&nbsp;=&nbsp;receive&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;msgtype&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;msgkey&nbsp;=&nbsp;1234;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((opt&nbsp;=&nbsp;getopt(argc,&nbsp;argv,&nbsp;&quot;srt:k:&quot;))&nbsp;!=&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(opt)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'s':
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'r':
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode&nbsp;=&nbsp;2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'t':
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgtype&nbsp;=&nbsp;atoi(optarg);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(msgtype&nbsp;&lt;=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;usage(argv[0],&nbsp;&quot;-t&nbsp;option&nbsp;must&nbsp;be&nbsp;greater&nbsp;than&nbsp;0\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'k':
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgkey&nbsp;=&nbsp;atoi(optarg);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;usage(argv[0],&nbsp;&quot;Unrecognized&nbsp;option\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mode&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;usage(argv[0],&nbsp;&quot;must&nbsp;use&nbsp;either&nbsp;-s&nbsp;or&nbsp;-r&nbsp;option\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;qid&nbsp;=&nbsp;msgget(msgkey,&nbsp;IPC_CREAT&nbsp;|&nbsp;0666);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(qid&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;msgget&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mode&nbsp;==&nbsp;2)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;get_msg(qid,&nbsp;msgtype);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;send_msg(qid,&nbsp;msgtype);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2), <B><A HREF="../man2/msgget.2.html">msgget</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7),
+<B>sysvipc</B>(7)
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">msgsnd()</A><DD>
+<DT><A HREF="#lbAF">msgrcv()</A><DD>
+</DL>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">例</A><DD>
+<DL>
+<DT><A HREF="#lbAM">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

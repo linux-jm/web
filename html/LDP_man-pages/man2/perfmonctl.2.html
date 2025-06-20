@@ -1,0 +1,205 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PERFMONCTL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PERFMONCTL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/perfmonctl.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+perfmonctl - IA-64 の PMU (性能監視ユニット) のインターフェース
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/syscall.h">syscall.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/perfmon.h">perfmon.h</A>&gt;</B>
+
+<B>long perfmonctl(int </B><I>fd</I><B>, int </B><I>cmd</I><B>, void *</B><I>arg</I><B>, int </B><I>narg</I><B>);</B>
+</PRE>
+
+<I>注</I>: このシステムコールには glibc のラッパー関数は存在しない。「注意」の節を参照。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+IA-64 固有の <B>perfmonctl</B>() システムコールは PMU (性能監視ユニット; performance monitoring
+unit) へのインターフェースを提供する。 PMU は PMD (performance monitoring data) レジスターと PMC
+(performance monitoring control) レジスターで構成され、 ハードウェアの統計を収集する。
+<P>
+
+<B>perfmonctl</B>() は、 操作 <I>cmd</I> を <I>arg</I> で指定された入力引数で行う。 引数の数は <I>narg</I> で規定される。
+<I>fd</I> 引数は操作対象の perfmon コンテキストを指定する。
+<P>
+
+<I>cmd</I> に指定できる値は以下のとおりである。
+<DL COMPACT>
+<DT><B>PFM_CREATE_CONTEXT</B><DD>
+<PRE>
+<B>perfmonctl(int </B><I>fd</I><B>, PFM_CREATE_CONTEXT, pfarg_context_t *</B><I>ctxt</I><B>, 1);</B>
+</PRE>
+
+コンテキストを用意する。
+<DT><DD>
+<I>fd</I> 引数は無視される。 新しい perfmon コンテキストを <I>ctxt</I> で指定した内容で作成し、 そのファイルディスクリプターを
+<I>ctxt-&gt;ctx_fd</I> で返す。
+<DT><DD>
+ファイルディスクリプターはそれ以降の <B>perfmonctl</B>() の呼び出しで使用したり、 <B><A HREF="../man2/read.2.html">read</A></B>(2) を使ってイベント通知
+(<I>pfm_msg_t</I> 型) を読み出したりするのに使用できる。 このファイルディスクリプターは <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2),
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7) で状態監視 (ポーリング) することができる。
+<DT><DD>
+コンテキストを破棄するには、 そのファイルディスクリプターに対して <B><A HREF="../man2/close.2.html">close</A></B>(2) を呼び出す。
+<DT><B>PFM_WRITE_PMCS</B><DD>
+
+<PRE>
+<B>perfmonctl(int </B><I>fd</I><B>, PFM_WRITE_PMCS, pfarg_reg_t *</B><I>pmcs</I><B>, n);</B>
+</PRE>
+
+PMC レジスターを設定する。
+<DT><B>PFM_WRITE_PMDS</B><DD>
+<PRE>
+<B>perfmonctl(int </B><I>fd</I><B>, PFM_WRITE_PMDS, pfarg_reg_t *</B><I>pmds</I><B>, n);</B>
+</PRE>
+
+
+PMD レジスターを設定する。
+<DT><B>PFM_READ_PMDS</B><DD>
+
+<PRE>
+<B>perfmonctl(int </B><I>fd</I><B>, PFM_READ_PMDS, pfarg_reg_t *</B><I>pmds</I><B>, n);</B>
+</PRE>
+
+PMD レジスターを読み出す。
+<DT><B>PFM_START</B><DD>
+
+<PRE>
+<B>perfmonctl(int </B><I>fd</I><B>, PFM_START, NULL, 0);</B>
+</PRE>
+
+監視を開始する。
+<DT><B>PFM_STOP</B><DD>
+
+<PRE>
+<B>perfmonctl(int </B><I>fd</I><B>, PFM_STOP, NULL, 0);</B>
+</PRE>
+
+監視を停止する。
+<DT><B>PFM_LOAD_CONTEXT</B><DD>
+
+<PRE>
+<B>perfmonctl(int </B><I>fd</I><B>, PFM_LOAD_CONTEXT, pfarg_load_t *</B><I>largs</I><B>, 1);</B>
+</PRE>
+
+指定したコンテキストをスレッドに接続する。
+<DT><B>PFM_UNLOAD_CONTEXT</B><DD>
+
+<PRE>
+<B>perfmonctl(int </B><I>fd</I><B>, PFM_UNLOAD_CONTEXT, NULL, 0);</B>
+</PRE>
+
+指定したコンテキストをスレッドが切り離す。
+<DT><B>PFM_RESTART</B><DD>
+
+<PRE>
+<B>perfmonctl(int </B><I>fd</I><B>, PFM_RESTART, NULL, 0);</B>
+</PRE>
+
+オーバーフロー通知を受信した後、 監視を再開する。
+<DT><B>PFM_GET_FEATURES</B><DD>
+
+<PRE>
+<B>perfmonctl(int </B><I>fd</I><B>, PFM_GET_FEATURES, pfarg_features_t *</B><I>arg</I><B>, 1);</B>
+</PRE>
+
+<DT><B>PFM_DEBUG</B><DD>
+
+<PRE>
+<B>perfmonctl(int </B><I>fd</I><B>, PFM_DEBUG, </B><I>val</I><B>, 0);</B>
+</PRE>
+
+<I>val</I> が 0 以外の場合、デバッグモードを有効にする。 そうでない場合、 無効にする。
+<DT><B>PFM_GET_PMC_RESET_VAL</B><DD>
+
+<PRE>
+<B>perfmonctl(int </B><I>fd</I><B>, PFM_GET_PMC_RESET_VAL, pfarg_reg_t *</B><I>req</I><B>, n);</B>
+</PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PMC レジスターをデフォルト値にリセットする。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>perfmonctl</B>() は操作が成功すると 0 を返す。 エラーの場合、 -1 が返り、 <I>errno</I> にエラーの原因を示す値が設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>perfmonctl</B>() は Linux 2.4 以降で利用可能である。
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>perfmonctl</B>() は Linux 固有で、 IA-64 アーキテクチャーでのみ利用できる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+glibc はこのシステムコールに対するラッパー関数を提供していない。 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)  を使って呼び出すこと。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../GNU_binutils/man1/gprof.1.html">gprof</A></B>(1)
+<P>
+
+perfmon2 インターフェース仕様
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">バージョン</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

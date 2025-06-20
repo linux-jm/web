@@ -1,0 +1,188 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SUAUTH</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SUAUTH</H1>
+Section: File Formats (5)<BR>Updated: Feb 14, 1996<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/shadow/release/man5/suauth.5">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+suauth - su を詳細に制御するためのファイル
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/etc/suauth</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>/etc/suauth</I>
+
+ファイルは、
+su コマンドが実行されるたびに参照される。
+このファイルを用いると、
+以下の情報に基づいて su コマンドの動作を変更できる。
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+1) su で成り代わろうとしているユーザ
+</PRE>
+
+2) su コマンドを実行しているユーザ
+(もしくはそのユーザが属するグループのいずれか)
+</DL>
+
+<P>
+
+このファイルは次の様な書式をしている。
+# で始まる行はコメントとして扱われ、無視される。
+<P>
+
+<DL COMPACT><DT><DD>
+to-id:from-id:ACTION
+</DL>
+
+<P>
+
+ここで to-id は、
+<B>ALL</B>
+
+という単語、
+コンマで区切られたユーザ名のリスト、
+<B>ALL EXCEPT</B>
+
+という単語以降に置かれた &quot;,&quot; 区切りのユーザ名リスト、
+のいずれかである。
+<P>
+
+from-id は to-id と同じ書式であり、更に
+<B>GROUP</B>
+
+という単語も使用できる。
+<B>ALL EXCEPT GROUP</B>
+
+という使い方も同様に利用できる。
+<B>GROUP</B>
+
+の後には一つ以上のグループ名を &quot;,&quot; で区切って記す。
+そのグループを主グループ id として持つだけではだめで、
+<B>/etc/<A HREF="../../LDP_man-pages/man5/group.5.html">group</A></B>(5)
+
+のエントリにユーザ名が記されていなければならない。
+<P>
+
+ACTION には、以下のオプションのいずれか一つを指定できる。
+<DL COMPACT>
+<DT><B>DENY</B>
+
+<DD>
+パスワードを聞く前に su 動作を中止する。
+<DT><B>NOPASS</B>
+
+<DD>
+自動的に su は成功し、パスワードは尋ねない。
+<DT><B>OWNPASS</B>
+
+<DD>
+su が成功するためには、
+ユーザが自分のパスワードを入力しなくてはならない。
+パスワードを入力するように要求される。
+</DL>
+<P>
+
+コロンによって区切られた別々のフィールドが三つある点に注意すること。
+コロンの前後に空白があってはならない。
+ファイルは一行毎に順番に吟味され、
+最初にマッチした規則が用いられ、
+ファイルの残りはそれ以上捜査されない。
+これによって、
+システム管理者は望む限りの微調整を行うことが可能となる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>例</H2>
+
+<P>
+
+<PRE>
+# /etc/suauthファイルの例
+#
+# 二人の特権ユーザが、自分のパスワードを
+# 用いて root に su できる。
+#
+root:chris,birddog:OWNPASS
+# 
+# 他のユーザは wheel グループに属していない限り
+# root に su できない。これは BSD と同じ動作である。
+#
+root:ALL EXCEPT GROUP wheel:DENY
+#
+# おそらく terry と birddog は同じ人間が
+# 所有するアカウントである。
+# パスワード無しで互いに他方に su できる。
+#
+terry:birddog:NOPASS
+birddog:terry:NOPASS
+#
+</PRE>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+/etc/suauth
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+多くのバグが潜んでいる可能性がある。
+とりわけ、ファイルパーザは書式エラーに寛大ではなく、
+(行の始め及び終わり以外に) 無駄な空白があってはならないし、
+特定のトークンが別々のものを区切るようになっている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>返り値</H2>
+
+ファイルをパースする際のエラーは
+<B><A HREF="../../sysklogd/man8/syslogd.8.html">syslogd</A></B>(8)
+
+を通して、AUTH ファシリティの ERR レベルで通知される。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/su.1.html">su</A></B>(1)
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>著者</H2>
+
+<PRE>
+Chris Evans (<A HREF="mailto:lady0110@sable.ox.ac.uk">lady0110@sable.ox.ac.uk</A>)
+Lady Margaret Hall
+Oxford University
+England
+
+</PRE>
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">例</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">返り値</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:46 GMT, December 05, 2022
+</BODY>
+</HTML>

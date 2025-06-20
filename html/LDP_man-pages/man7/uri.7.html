@@ -1,0 +1,608 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of URI</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>URI</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated:  2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/uri.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+uri, url, urn - uniform resource identifier (URI) (URL と URN も含めて)
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<DL COMPACT>
+<DT><DD>URI = [ absoluteURI | relativeURI ] [ &quot;#&quot; fragment ]
+<DT><DD>absoluteURI = scheme &quot;:&quot; ( hierarchical_part | opaque_part )
+<DT><DD>relativeURI = ( net_path | absolute_path | relative_path ) [ &quot;?&quot; query ]
+<DT><DD>scheme = &quot;http&quot; | &quot;ftp&quot; | &quot;gopher&quot; | &quot;mailto&quot; | &quot;news&quot; | &quot;telnet&quot; |
+         &quot;file&quot; | &quot;man&quot; | &quot;info&quot; | &quot;whatis&quot; | &quot;ldap&quot; | &quot;wais&quot; | ...
+<DT><DD>hierarchical_part = ( net_path | absolute_path ) [ &quot;?&quot; query ]
+<DT><DD>net_path = &quot;//&quot; authority [ absolute_path ]
+<DT><DD>absolute_path = &quot;/&quot;  path_segments
+<DT><DD>relative_path = relative_segment [ absolute_path ]
+</PRE>
+
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+Uniform Resource Identifier (URI)  は抽象的・物理的なリソース (web ページなど)
+を識別するための短い文字列である。 Uniform Resource Locator (URL) は URI の一種で、
+リソースの名前などの属性でではなく、 そのリソースに対応するアクセスメカニズムを通してリソースを指定する (つまりネットワーク上の「場所
+(location)」を指定する)。 Uniform Resource Name (URN) は URI の一種で、
+これは対象のリソースが廃棄されたり利用できなくなった場合にも、 グローバルに他と重なることなく永続しなければならない。
+<P>
+
+URI は、 web ブラウザなどのツールで ハイパーテキストリンクのリンク先を指定する時の標準的な方法である。 文字列
+&quot;<A HREF="http://www.kernel.org">http://www.kernel.org</A>&quot; は URL である (従って URI でもある)。多くの人々は、 URL という言葉をほぼ URI の
+同義語として使っている (しかし技術的には URL は URI のサブセットである)。
+<P>
+
+URI は絶対的にも相対的にも指定できる。 絶対的な指定は、リソースをコンテクストに依存しないかたちで参照する。
+相対的な指定は、リソースを現在のコンテクストからの差異によって記述する。 相対パス参照では、 &quot;.&quot; および &quot;..&quot; だけのパス部分 (path
+segment)  は特別な意味を持ち、 それぞれ「現在の階層レベル」および「現在の階層の一つ上のレベル」 として扱われる (UNIX
+風のシステムと同様)。 コロン文字を含むパス部分は相対 URI パスの先頭に用いることはできない (つまり &quot;this:that&quot;
+はダメ)。スキーム名と区別できないからである。 このような場合には ./ を前置すること (つまり &quot;./this:that&quot; とする)。 MS-DOS
+の子孫 (Microsoft Windows など) は、 デバイス名のコロンを URI では垂直バー (&quot;|&quot;) に置き換える。 したがって &quot;C:&quot;
+は &quot;C|&quot; となる。
+<P>
+
+フラグメント指定子 (fragment identifier) は、(もし含まれていれば)  リソース中の名前付けされた特定の部分 (フラグメント)
+を参照する。 '#' 指定子以降の文字列がフラグメントを指定する。 '#' で始まる URI
+は現在のリソース中のフラグメントを参照する。
+<A NAME="lbAE">&nbsp;</A>
+<H3>使い方</H3>
+
+URI のスキームには色々な種類があり、 それぞれ固有のルールや意味が追加されている。 しかしできるだけ統一したものにしようという努力もなされている。
+例えば、多くの URL スキームは「機関 (authority)」に対して以下の書式 (ここでは <I>ip_server</I> と呼ぶことにする)
+を許している (角括弧内部は省略可能)。
+<DL COMPACT>
+<DT>
+<I>ip_server = </I>[<I>user</I> [ : <I>password</I> ] @ ] <I>host</I> [ : <I>port</I>]
+</DL>
+<P>
+
+このフォーマットには、ユーザー名、ユーザー名+パスワードを指定できる。 ポート番号を追加することも可能である。 <I>host</I>
+はホストコンピュータの名前で、 DNS で定義される名前か IP アドレス (ピリオドで区切られた数字) で指定する。したがって URI
+&lt;<A HREF="http://fred:fredpassword@example.com:8080/">http://fred:fredpassword@example.com:8080/</A>&gt; は、ホスト example.com に
+<DD>fred として (パスワードを使って)  ポート 8080 を使ってログインする。 パスワードは可能なら URI には含めないほうが良いだろう。
+パスワードを直書きすると様々なセキュリティ上のリスクが生じるからである。 URL にユーザー名だけを与え、パスワードを与えない場合は、
+リモートサーバはパスワードを要求してくる。 URL を解釈したプログラムが、ユーザーにこの入力を促すことになろう。
+<P>
+
+以下に、 UNIX 風のシステムで非常に良く用いられており、 多くのツールが理解するスキームを示す。 URI
+を使うツールの多くでは、内部スキームや特殊なスキームも 使えることが多い。そのようなスキームに関してはツールのドキュメントを見ること。
+<P>
+
+<B>http - Web (HTTP) サーバ</B>
+<P>
+
+http://<I>ip_server</I>/<I>path</I>
+<BR>
+
+http://<I>ip_server</I>/<I>path</I>?<I>query</I>
+<P>
+
+これは web (HTTP) サーバにアクセスするための URL である。 デフォルトのポートは 80。パスがディレクトリを参照しているときは、
+返される情報は web サーバが選択する。通常は、 &quot;index.html&quot; や &quot;index.htm&quot; のようなファイルがあれば、その内容が返される。
+なければ、カレントディレクトリのリストが (適切なリンクとともに) 生成されて 返される。例としては &lt;<A HREF="http://lwn.net">http://lwn.net</A>&gt;
+など。
+<P>
+
+問い合わせ (query) を、古い &quot;isindex&quot; フォーマットによって送ることもできる。 このフォーマットは単語またはフレーズからなり、等号
+(=) は含まない。 より長い &quot;GET&quot; フォーマットでも問い合わせは行える。 このフォーマットには、一つ以上の問い合わせエントリーが
+<I>key</I>=<I>value</I> という形式で含まれる。それぞれのエントリーはアンパサンド (&amp;) で区切られる。 <I>key</I>
+は複数個指定することもできる。しかしそれに意味があるかどうかは web サーバとアプリケーションプログラムが決める。 HTML/XML/SGML と
+GET 問い合わせ形式の間には、不幸な関係がある。 一つ以上のキーの含まれる URI が SGML/XML 文書 (HTML もそう)
+に埋めこまれる際には、アンパサンド (&amp;) は &amp;amp; と書かなければならない。 全ての問い合わせがこの形式を使うわけではない。
+フォームが長くなると URI に入れるには長すぎるから、 別の通信メカニズム (POST と呼ばれる) が用いられる。 POST では URI
+にはデータは含まれない。 より詳しい情報は、
+
+
+にある Common
+Gateway Interface の仕様書を見よ。
+<P>
+
+<B>ftp - ファイル転送プロトコル (FTP)</B>
+<P>
+
+ftp://<I>ip_server</I>/<I>path</I>
+<P>
+
+これはファイル転送プロトコル (FTP) を通してファイルにアクセスするための URL である。デフォルトの (制御用) ポートは 21 である。
+ユーザー名がない場合には、ユーザー名 anonymous が与えられる。 そしてその場合には、クライアントの多くは要求した人の
+インターネットメールアドレスをパスワードとして与える。 例としては
+&lt;<A HREF="ftp://ftp.is.co.za/rfc/rfc1808.txt">ftp://ftp.is.co.za/rfc/rfc1808.txt</A>&gt; など。
+<P>
+
+<B>gofer - Gofer サーバ</B>
+<P>
+
+gopher://<I>ip_server</I>/<I>gophertype selector</I>
+<BR>
+
+gopher://<I>ip_server</I>/<I>gophertype selector</I>%09<I>search</I>
+<BR>
+
+gopher://<I>ip_server</I>/<I>gophertype selector</I>%09<I>search</I>%09<I>gopher+_string</I>
+<BR>
+
+<P>
+
+デフォルトの gopher ポートは 70 である。 <I>gophertype</I> は 1 文字からなるフィールドで、 URL が参照している
+Gopher のリソースタイプを示す。 パス全体が空であってもよく、その場合は区切りの &quot;/&quot; も省略できる。 このとき gophertype
+のデフォルトは &quot;1&quot; になる。
+<P>
+
+<I>selector</I> は Gopher セレクタ文字列である。Gopher プロトコルでは、 Gopher セレクタ文字列はオクテット文字からなり、
+16進数の 09 (US-ASCII の HT または tab)、 0A (US-ASCII の LF 文字)、 0D (US-ASCII の CR
+文字) 以外ならどんなオクテットも指定できる。
+<P>
+
+<B>mailto - 電子メールアドレス</B>
+<P>
+
+mailto:<I>email-address</I>
+<P>
+
+これは電子メールアドレスで、通常 <I>name</I>@<I>hostname</I> という形式をとる。電子メールアドレスの正しいフォーマットに関する
+より詳しい情報は <B><A HREF="../man7/mailaddr.7.html">mailaddr</A></B>(7)  を見よ。 % 文字はすべて %25 と書き直さなければならないことに注意。 例としては
+&lt;mailto:<A HREF="mailto:dwheeler@dwheeler.com">dwheeler@dwheeler.com</A>&gt; など。
+<P>
+
+<B>news - ニュースグループ、ニュースメッセージ</B>
+<P>
+
+news:<I>newsgroup-name</I>
+<BR>
+
+news:<I>message-id</I>
+<P>
+
+<I>newsgroup-name</I> はピリオドで区切られた階層的な名前である。例えば &quot;comp.infosystems.<A HREF="http://www.misc">www.misc</A>&quot; など。
+&lt;newsgroup-name&gt; が &quot;*&quot; (つまり &lt;news:*&gt;) の場合には、
+「参照できる全てのニュースグループ」の意味になる。 例としては &lt;news:comp.lang.ada&gt; など。
+<P>
+
+<I>message-id</I> は
+
+IETF RFC&nbsp;1036,
+
+の Message-ID から、囲みの &quot;&lt;&quot; と &quot;&gt;&quot; を取ったものに対応する。 Message-ID は
+<I>unique</I>@<I>full_domain_name</I> という形式をとる。メッセージ ID には &quot;@&quot; 文字が含まれるので、
+ニュースグループの名前と区別できるだろう。
+<P>
+
+<B>telnet - telnet ログイン</B>
+<P>
+
+telnet://<I>ip_server</I>/
+<P>
+
+Telnet URL スキームは対話的なテキストサービスに Telnet プロトコルを 通してアクセスするために用いられる。最後の &quot;/&quot;
+文字は省略してよい。 例としては &lt;<A HREF="telnet://melvyl.ucop.edu/">telnet://melvyl.ucop.edu/</A>&gt; など。
+<P>
+
+<B>file - 通常のファイル</B>
+<P>
+
+file://<I>ip_server</I>/<I>path_segments</I>
+<BR>
+
+file:<I>path_segments</I>
+<P>
+
+これはローカルに直接アクセスできるファイルを示す。 特殊なケースとして、 <I>ip_server</I> には &quot;localhost&quot;
+という文字列を用いたり、空文字にしてもよい。 これは「URI が解釈されたマシン」とみなされる。 path
+がディレクトリの場合は、ビューアはディレクトリの内容を リンクを張ったかたちで表示するとよいだろう。
+しかし現在は、まだ全てのビューアがこの動作をするわけではない。 KDE は生成ファイル (generated file) を URL
+&lt;file:/cgi-bin&gt; の形式でサポートしている。 与えられたファイルが見付からなかった場合は、
+ファイル名をグロブによって展開すると良いかもしれない (<B><A HREF="../man7/glob.7.html">glob</A></B>(7)  および <B><A HREF="../man3/glob.3.html">glob</A></B>(3)  を見よ)。
+<P>
+
+二つめの書式 (例えば &lt;file:/etc/passwd&gt;) もローカルファイルを参照する
+正しいフォーマットである。しかし古い標準ではこの書式を許していなかったので、 これを URI として認識しないプログラムも存在する。
+より汎用的な文法は、サーバ名に空文字を用いるもの、 つまり &lt;<A HREF="file:///etc/passwd">file:///etc/passwd</A>&gt; のようなものである。
+この形式も指す内容は同じであり、パターンマッチやより古いプログラムでも URI として認識されやすい。
+もし意図するところが「現在の場所からスタート」なら、 スキームは一切用いるべきではない。 &lt;../test.txt&gt;
+のような、スキームに依存しない相対リンクを用いること。 このスキームの例としては &lt;<A HREF="file:///etc/passwd">file:///etc/passwd</A>&gt; など。
+<P>
+
+<B>man - man ページ文書</B>
+<P>
+
+man:<I>command-name</I>
+<BR>
+
+man:<I>command-name</I>(<I>section</I>)
+<P>
+
+これはローカルのオンラインマニュアル (man) リファレスページを参照する。 command-name には括弧とセクション番号を追加してもよい。
+セクション番号の意味について詳しく知りたい場合は <B><A HREF="../man7/man.7.html">man</A></B>(7)  をみよ。この URI スキームは UNIX 風のシステム (Linux など)
+に特有のものであり、現在はまだ IETF による登録はされていない。 例としては &lt;man:ls(1)&gt; など。
+<P>
+
+<B>info - info ページ文書</B>
+<P>
+
+info:<I>virtual-filename</I>
+<BR>
+
+info:<I>virtual-filename</I>#<I>nodename</I>
+<BR>
+
+info:(<I>virtual-filename</I>)
+<BR>
+
+info:(<I>virtual-filename</I>)<I>nodename</I>
+<P>
+
+このスキームは、オンラインの info リファレンスページ (texinfo ファイルから生成される) を参照する。 info ページは GNU
+ツールなどのプログラムで用いられている文書フォーマットである。 この URI スキームは UNIX 風のシステム (Linux など)
+に特有のものであり、現在はまだ IETF による登録はされていない。 この文書の執筆時において、 GNOME と KDE はそれぞれ異なる文法の URI
+を用いており、お互い相手の文法を受け入れない。 最初の 2 つの書式は GNOME の書式である。ノード名 (nodename)
+のスペースはすべてアンダースコアに変換される。 3 つめと 4 つめは KDE の書式である。ノード名のスペースは そのままスペースで書かれる (URI
+の標準では禁止されているのだが)。 将来は多くのツールがこれらの書式すべてを理解するようになり、
+ノード名のアンダースコア、スペースを両方とも理解できるように なることを期待したい。 GNOME でも KDE でも、
+ノード名が省略された場合は、ノード名として &quot;Top&quot; が用いられる。 GNOME 書式の例としては &lt;info:gcc&gt; や
+&lt;info:gcc#G++_and_GCC&gt; など、 KDE 書式の例としては &lt;info:(gcc)&gt; や
+&lt;info:(gcc)G++ and GCC&gt; など。
+<P>
+
+<B>whatis - 文書検索</B>
+<P>
+
+whatis:<I>string</I>
+<P>
+
+このスキームは、コマンドに関する短い (1 行の) 説明を集めた データベースを検索し、 string を含む文字列をリストして返す。
+単語が完全にマッチした結果だけが返される。 <B><A HREF="../../0MultiFileIdx/man1/whatis.1.html">whatis</A></B>(1)  を見よ。 この URI スキームは UNIX 風のシステム (Linux など)
+に特有のものであり、現在はまだ IETF による登録はされていない。
+<P>
+
+<B>ghelp - GNOME ヘルプ文書</B>
+<P>
+
+ghelp:<I>name-of-application</I>
+<P>
+
+与えられた application に対応する GNOME help をロードする。 この書式を用いた文書はまだあまり多くない。
+<P>
+
+<B>ldap - 軽量ディレクトリアクセスプロトコル</B>
+<P>
+
+ldap://<I>hostport</I>
+<BR>
+
+ldap://<I>hostport</I>/
+<BR>
+
+ldap://<I>hostport</I>/<I>dn</I>
+<BR>
+
+ldap://<I>hostport</I>/<I>dn</I>?<I>attributes</I>
+<BR>
+
+ldap://<I>hostport</I>/<I>dn</I>?<I>attributes</I>?<I>scope</I>
+<BR>
+
+ldap://<I>hostport</I>/<I>dn</I>?<I>attributes</I>?<I>scope</I>?<I>filter</I>
+<BR>
+
+ldap://<I>hostport</I>/<I>dn</I>?<I>attributes</I>?<I>scope</I>?<I>filter</I>?<I>extensions</I>
+<P>
+
+このスキームは Lightweight Directory Access Protocol (LDAP) へのクエリーをサポートする。 LDAP は、
+複数のサーバに分散した、 階層化された情報 (人々や計算資源など) に問い合わせるための プロトコルである。 LDAP の URL
+スキームに関するより詳しい情報は
+
+RFC&nbsp;2255
+
+を参照のこと。 この URL の構成要素の詳細は以下の通り。
+<DL COMPACT>
+<DT>hostport<DD>
+クエリーを行う LDAP サーバ。ホスト名を書く。続けてコロンとポート番号を 追加することもできる。 LDAP のデフォルトのポートは TCP ポート
+389 である。 省略されると、どの LDAP サーバを用いるかはクライアントが決定する。
+<DT>dn<DD>
+LDAP の Distintuished Name (識別名)。 LDAP 検索の base オブジェクトを指定するものである (
+
+RFC&nbsp;2253
+
+のセクション 3 を参照)。
+<DT>attributes<DD>
+コンマ区切りの、返される属性 (attribute) のリスト。 RFC&nbsp;2251 の section 4.1.5
+を見よ。省略されると全ての属性が返される。
+<DT>scope<DD>
+検索のスコープを指定する。 &quot;base&quot; (base オブジェクト検索), &quot;one&quot; (1 レベル検索), &quot;sub&quot; (サブツリー検索)
+のいずれかを指定する。 省略すると &quot;base&quot; が仮定される。
+<DT>filter<DD>
+検索フィルタ (返されるエントリーのサブセット) を指定する。 省略されると、全てのエントリーが返される。
+
+RFC&nbsp;2254
+
+のセクション 4 を参照。
+<DT>extensions<DD>
+コンマで区切られた type=value ペアのリスト。 ここで =value の部分は、それを要求しないオプションに対しては 省略できる。
+'!' が前置された extension は critical (サポートしていなければならない) であり、 そうでなければ
+critical ではない (省略できる)。
+</DL>
+<P>
+
+LDAP のクエリーは、例とともに説明するのが最も簡単である。 次の例は、 ldap.itd.umich.edu に、 U.S. にある
+University of Michigan の情報を尋ねる例である。
+<P>
+
+<PRE>
+<A HREF="ldap://ldap.itd.umich.edu/o=University%20of%20Michigan,c=US">ldap://ldap.itd.umich.edu/o=University%20of%20Michigan,c=US</A>
+</PRE>
+
+<P>
+
+郵便用の住所属性だけを取得する場合は、 次のようにリクエストする:
+<P>
+
+<PRE>
+<A HREF="ldap://ldap.itd.umich.edu/o=University%20of%20Michigan,c=US?postalAddress">ldap://ldap.itd.umich.edu/o=University%20of%20Michigan,c=US?postalAddress</A>
+</PRE>
+
+<P>
+
+host.com のポート 6666 に、 University of Michigan にいる common name (cn) が &quot;Babs
+Jenson&quot; の人の情報を尋ねる場合は、 次のようにリクエストする:
+<P>
+
+<PRE>
+<A HREF="ldap://host.com:6666/o=University%20of%20Michigan,c=US??sub?(cn=Babs%20Jensen)">ldap://host.com:6666/o=University%20of%20Michigan,c=US??sub?(cn=Babs%20Jensen)</A>
+</PRE>
+
+<P>
+
+<B>wais - 広域情報サービス</B>
+<P>
+
+wais://<I>hostport</I>/<I>database</I>
+<BR>
+
+wais://<I>hostport</I>/<I>database</I>?<I>search</I>
+<BR>
+
+wais://<I>hostport</I>/<I>database</I>/<I>wtype</I>/<I>wpath</I>
+<P>
+
+このスキームは WAIS のデータベース、検索、文書を指定する (WAIS に関する詳しい情報は
+
+IETF RFC&nbsp;1625
+
+を参照)。
+hostport は、ホスト名にコロンとポート番号を付加したものである (コロン + ポート番号は省略可。デフォルトのポート番号は 210 である)。
+<P>
+
+最初の書式は WAIS のデータベースに対する検索の指定である。 二つめの書式は特定の WAIS データベース <I>database</I>
+に対する検索の指定である。 三つめの書式は WAIS データベースにある特定の文書を取出す指定である。 <I>wtype</I> は WAIS
+のオブジェクト形式指定であり、 <I>wpath</I> は WAIS document-id である。
+<P>
+
+<B>その他のスキーム</B>
+<P>
+
+他にも多くの URI スキームが存在する。 URI を受付けるほとんどのツールは、内部 URI のセットをサポートする (例えば Mozilla
+は内部情報用の about: というスキームを受付けるし、 GNOME ヘルプブラウザはいろいろな出発点用に toc: というスキームを持っている)。
+定義されたスキームはたくさんあるが、現時点で広く用いられてはいない (例えば prospero とか)。 nntp: スキームは news:
+スキームが好んで用いられるようになったので 使わないほうが良い。 URN は urn: スキームによって、階層的な名前空間 (例えば
+urn:ietf:... は IETF 文書を示す)  としてサポートされるべきであるが、現時点では URN はあまり用いられていない。
+全てのツールが全てのスキームをサポートしているわけではない。
+<A NAME="lbAF">&nbsp;</A>
+<H3>文字エンコード</H3>
+
+<P>
+
+URI では、色々な状況下で入力できるように、文字の種類を制限している。
+<P>
+
+以下の文字は予約されている。すなわち、これらの文字は URI に登場することがあるが、それらの利用法 (解釈のされ方) は
+予約された目的に制限されている (衝突するデータは URI にする前にエスケープしなければならない)。
+<DL COMPACT>
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;;&nbsp;/&nbsp;?&nbsp;:&nbsp;@&nbsp;&amp;&nbsp;=&nbsp;+&nbsp;$&nbsp;,
+</DL>
+<P>
+
+未予約文字 (unreserved character) は URI に使ってよい。 これには英字の大文字と小文字、10 進の数字、および
+以下の句読文字、記号が含まれる
+<DL COMPACT>
+<DT><DD>
+<BR>&nbsp;&nbsp;-&nbsp;_&nbsp;.&nbsp;!&nbsp;~&nbsp;*&nbsp;'&nbsp;(&nbsp;)
+</DL>
+<P>
+
+他の文字はすべてエスケープしなければならない。 エスケープされたオクテットは 3 文字からなる: 先頭にパーセント文字
+&quot;%&quot;、それに続けてオクテットコードを表す 2 文字の 16 進数字である (16 進数の英字は大文字小文字どちらでも良い)。 例えば空白文字は
+&quot;%20&quot; のようにエスケープしなければならず、 タブ文字は &quot;%09&quot;、 &quot;&amp;&quot; は &quot;%26&quot; となる。 パーセント文字 &quot;%&quot;
+は常にエスケープを示す予約された目的に用いられるので、 &quot;%&quot; 自身を表すには &quot;%25&quot; とエスケープしなければならない。
+クエリーのテキストでは、スペース文字をプラス記号 (+) でエスケープすることも 一般に良く行われる。この慣例は関連 RFC
+で実際に定義されているわけではない (代わりに %20 を推奨している) が、クエリーテキストを受付ける
+ツールは、この書式への対応を用意しておくべきであろう。 URI は、常に「エスケープされた」かたちで表示される。
+<P>
+
+未予約文字もエスケープすることができ、これによって URI の意味するところが変わるわけではない。 しかしURI
+にその非エスケープ文字が現れることが許されないような 特殊な場合を除いて、これは避けるべきである。 例えば、 HTTP URL の path において
+&quot;%7e&quot; が &quot;~&quot; の代わりに用いられることがあるが、 この二つは HTTP URL としては等価である。
+<P>
+
+US ASCII キャラクターセット以外の文字を URI として扱う場合、 HTML 4.1 規格 (section B.2) 及び IETF RFC&nbsp;2718 (section 2.2.5) は 以下の手法を用いるよう推奨している。
+<DL COMPACT>
+<DT>1.<DD>
+キャラクター列を UTF-8 (IETF RFC&nbsp;2279, <B><A HREF="../man7/utf-8.7.html">utf-8</A></B>(7)  参照) に変換し、
+<DT>2.<DD>
+URI エスケープ機構を用いる。 つまり、安全でないオクテットを %HH でエンコードする。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>URI を書くには</H3>
+
+URI を書く時には、ダブルクォートの内部に書く (例: &quot;<A HREF="http://www.kernel.org">http://www.kernel.org</A>&quot;) か、 angle ブラケットで囲む (例:
+&lt;<A HREF="http://lwn.net">http://lwn.net</A>&gt;) か、 一行に URI だけを書くかする。 ダブルクォートを使う人に警告: <B>絶対に</B>句読点
+(文末のピリオドやリスト区切りのコンマ) を URI の内部に移動してはならない。 代わりに angle ブラケットを使うか、
+外にある文字をクォーテーションマークの内部に 決して含めないような引用方式に切替えること。 後者の方式は &quot;Hart's Rules&quot; や
+&quot;Oxford Dictionary for Writers and Editors&quot; によれば 「新しい (new) 引用方式」あるいは「論理的
+(logical) な引用方式」 と呼ばれており、 イギリス人や世界中のハッカー達はこちらの慣習を好んでいる (より詳しい情報は Hacker
+Writing Style の Jargon File のセクション
+
+
+を見よ)。 古い文書では、 &quot;URL:&quot; という文字列を URI の直前に挿入することを
+勧めているものもあるが、しかしこの形式はまったく流行しなかった。
+<P>
+
+URI の書式は曖昧さを排除するように設計されている。 しかし URI が広まるにつれ、昔ながらのメディア (TV、ラジオ、新聞、 看板などなど) は
+URI 参照を省略したかたち、すなわち 機関部とパス部だけでリソースを指定することが多くなっている (例:
+&lt;<A HREF="http://www.w3.org">www.w3.org</A>/Addressing&gt;)。 このような参照はマシンというよりは人間向けのもので、
+コンテキストベースの推測によって URI の補完が可能であることを あてにしているのである (例えば &quot;www&quot; ではじまるホスト名なら
+&quot;http://&quot; がつくだろうし、 &quot;ftp&quot; ではじまるホスト名なら &quot;ftp://&quot; がつくだろう)。
+多くのクライアントの実装では、この種の参照を推測によって解決する。 このような推測は時代とともに変わりうる。
+特に新しいスキームが導入されるとそうである。 URI の省略形では相対 URL パスの区別が付けられないので、 省略形 URI 参照は相対 URI
+の利用できるところでは使えない。 つまり定義済みのベース (ダイアログボックスなど)  がない場合に限って利用できる。
+文書内部でのハイパーテキストリンクには省略形 URI を使ってはならない。 上述の標準フォーマットを使うこと。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<P>
+
+
+(IETF RFC&nbsp;2396)
+
+
+(HTML 4.0)
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+Linux システムで URI を受付けるツール (例えば web ブラウザなど) は、 上にあげた全てのスキームを (直接または間接に)
+扱えるべきである。 man: や info: も含めて、である。 スキームの処理に他のプログラムを実行するのは良いことだし、
+実はすすんでそうすべきである。
+<P>
+
+技術的には、フラグメントは URI の一部ではない。
+<P>
+
+URI (URL も含む) をデータフォーマットに埋めこむ方法に関する情報は、 そのフォーマットのドキュメントを見よ。 HTML は &lt;A
+HREF=&quot;<I>uri</I>&quot;&gt;<I>text</I>&lt;/A&gt; を用いる。 texinfo は @uref{<I>uri</I>}
+という書式を用いる。 man と mdoc は、最近追加された UR マクロを使う。 あるいは URI をそのままテキストに埋めこむ (ビューアが
+:// を URI の一部と解釈できなければならない)。
+<P>
+
+デスクトップ環境である GNOME と KDE は、 それぞれ受付ける URI が (特にそれぞれのヘルプブラウザにおいて)  異なっている。 man
+ページをリストするには、 GNOME では &lt;toc:man&gt; を用い、 KDE では &lt;man:(index)&gt;
+を用いる。 また info ページをリストするには、 GNOME では &lt;toc:info&gt; を用い、 KDE では
+&lt;info:(dir)&gt; を用いる (本 man ページの著者は KDE のアプローチのほうが好みである。
+しかしより標準的な書式の方が更に良いが)。 一般に KDE は生成ファイル (generated file) のプレフィックスとして
+&lt;file:/cgi-bin/&gt; を用いる。 KDE は HTML の文書を
+&lt;file:/cgi-bin/helpindex&gt; 経由でアクセスするのが好みなようである。 GNOME は文書の保管・検索に
+ghelp スキームを用いる方法を取っているようだ。 どちらのブラウザも、現時点では file: によるディレクトリ参照を扱えない。
+したがってディレクトリ全体をブラウズ可能な URI で参照することが難しい。 先に述べたように、これら二つの環境では info: スキームの
+扱いが異なっている (おそらく最も重要な差異であろう)。 GNOME と KDE が共通 URI フォーマットに収斂することが望ましい。 この man
+ページが、将来はその収斂した結果を記述できることを望む。 この作業への助力を喚起したい。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>セキュリティ</H3>
+
+<P>
+
+URI そのものはセキュリティの脅威を引き起こすものではない。 ある時点ではリソースの場所を与えていた URL が、
+ずっとそうでありつづけるという保証は一般にはない。 またある URL が、将来には別のリソースを示さないとも限らない。
+このような保証は、その名前空間とリソースとを管理している個人に 帰するものに過ぎない。
+<P>
+
+無害に見える操作 (リソースに関連づけられたエンティティの取得など)  によって、実際にはリモートにダメージを与える動作を引き起こすような URL
+を記述することも場合によっては可能である。 危険な URL の典型的なものは、そのネットワークプロトコルに
+予約されているポート番号とは異なるポートを指定しているものである。 URL の内容には命令が含まれていて、 そのプロトコルにしたがって解釈されたとき、
+予期されない動作を引起こすのである。 例をあげると、 gopher の URL によって、意図しないメッセージや なりすましメッセージなどが SMTP
+サーバ経由で送信されるようなことがあった。
+<P>
+
+そのプロトコルのデフォルト以外のポート番号を指定している URL を用いるときには注意すべきである。 特にその番号が予約空間の内部にある場合には。
+<P>
+
+URI に、そのプロトコルに対するデリミタがエスケープされたかたちで入っている 場合も注意が必要である (例えば telnet プロトコルに対する CR
+文字や LF 文字など)。 なぜならこれらは転送前にエスケープが外されないからである。
+これはプロトコルに反しており、予期しない、おそらくは害になるような リモート動作を引起こす結果となりかねない。
+<P>
+
+秘密にしておくべきパスワードを含んだ URI を使うのが 賢くないのは明らかである。特に、パスワードを URI の &quot;userinfo&quot;
+の部分に使うのは絶対に避けるべきである。 ただしその &quot;password&quot; のパラメーターを意図的に公開したい場合は別であるが。
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+<P>
+
+文書は様々な場所に置かれうる。したがって現時点では、 任意のフォーマットで書かれた一般のオンライン文書に対する良い URI スキームが 存在しない。
+&lt;<A HREF="file:///usr/doc/ZZZ">file:///usr/doc/ZZZ</A>&gt; 形式の参照は使えない。なぜなら
+ディストリビューションやローカルへのインストールの際の条件によって、 ファイルは異なるディレクトリに置かれることがあるからである (/usr/doc か
+/usr/local/doc か /usr/share かその他の場所か、などなど)。 また、ディレクトリ ZZZ
+は通常バージョンが変わると異なったものになる (ファイル名のグロブによってある程度克服できるだろうが)。 最後にもう一つ、文書をインターネットから
+(ローカルのファイルシステムに ファイルをロードするのではなく) 動的にロードする人々は、 なかなか file: スキームを使ってくれない。
+将来には新たな URI スキーム (例えば &quot;userdoc:&quot; のような) が追加され、 より詳しい文書へのクロスリファレンスが、
+その文書の正確な場所をプログラムが知らなくても可能になるかもしれない。 あるいは、ファイルシステム規格の将来の版で
+ファイルの場所の指定をより厳密にして、 file: スキームによる文書の位置指定が可能になるかもしれない。
+<P>
+
+プログラムやファイルフォーマットの多くでは、 URI を使ったリンクを取り込んだり実装したりする方法がない。
+<P>
+
+
+
+プログラムの多くは、これらの URI フォーマットをすべては扱えない。 ユーザーの環境 (テキストかグラフィックか、
+デスクトップ環境、ローカルユーザーの好み、 現在実行されているツール) などを自動的に検知して、 任意の URI をロードし、その URI
+に適したツールを起動するような 標準的な仕組みがあるといいのだろうが。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>lynx</B>(1), <B><A HREF="../../man/man1/man2html.1.html">man2html</A></B>(1), <B><A HREF="../man7/mailaddr.7.html">mailaddr</A></B>(7), <B><A HREF="../man7/utf-8.7.html">utf-8</A></B>(7)
+<P>
+
+
+IETF RFC&nbsp;2255
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">使い方</A><DD>
+<DT><A HREF="#lbAF">文字エンコード</A><DD>
+<DT><A HREF="#lbAG">URI を書くには</A><DD>
+</DL>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">セキュリティ</A><DD>
+</DL>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

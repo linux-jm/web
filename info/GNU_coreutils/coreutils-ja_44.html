@@ -1,0 +1,314 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 7.3 uniq: ファイルから重複を省く</title>
+
+<meta name="description" content="GNU Coreutils: 7.3 uniq: ファイルから重複を省く">
+<meta name="keywords" content="GNU Coreutils: 7.3 uniq: ファイルから重複を省く">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="uniq-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_43.html#shuf-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_45.html#comm-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_41.html#Operating-on-sorted-files" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_41.html#Operating-on-sorted-files" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_54.html#Operating-on-fields" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="uniq_003a-huairukaraZhong-Fu-woSheng-ku"></a>
+<h2 class="section">7.3 <code>uniq</code>: ファイルから重複を省く</h2>
+
+<a name="index-uniq"></a>
+<a name="index-uniquify-files"></a>
+
+<p><code>uniq</code> は、指定された <var>input</var> ファイルにある行を、重複を省いて書き出す。
+ファイルが指定されていない場合や、<var>input</var> として
+&lsquo;<samp>-</samp>&rsquo; が指定されている場合は、標準入力を対象とする。
+</p>
+<p>書式:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">uniq [<var>option</var>]&hellip; [<var>input</var> [<var>output</var>]]
+</pre></td></tr></table>
+
+<p>デフォルトでは、<code>uniq</code> は入力された行を表示するとき、
+隣接する同一行があれば、出力に重複する行が現れないように、最初の行だけを残して、
+残りの行を捨ててしまう。また、オプションによっては、重複しない行を捨てることや、
+すべての隣接する同一行を捨てることもできる。
+</p>
+<p>入力はソートされている必要はないが、重複する入力行が検出されるのは、
+それが隣接しているときだけである。もし、隣接していない重複行も捨てたいのなら、
+<code>sort -u</code> を使うとよいだろう。 See section <a href="coreutils-ja_42.html#sort-invocation"><code>sort</code>: テキストファイルを並べ替える</a>.
+</p>
+<a name="index-LC_005fCOLLATE-1"></a>
+<p>比較には <code>LC_COLLATE</code> ロケール・カテゴリが指定しているルールを使用する。
+</p>
+<p><var>output</var> ファイルが指定されていない場合、<code>uniq</code> は標準出力に書き出す。
+</p>
+<p>このプログラムでは以下のオプションが使用できる。参照: <a href="coreutils-ja_2.html#Common-options">共通オプション</a>.
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>-f <var>n</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--skip-fields=<var>n</var></samp>&rsquo;</dt>
+<dd><a name="index-_002df-6"></a>
+<a name="index-_002d_002dskip_002dfields"></a>
+<p>重複の検査を行う前に、各行のフィールドを <var>n</var> 個スキップする。その行に
+<var>n</var> 個より少ないフィールドしかない場合は、比較に空の文字列を使用する。
+フィールドとは、少なくとも 1 個以上のスペースやタブで間を区切られた、スペースやタブを含まない文字の連続である。
+</p>
+<p>互換性のために、<code>uniq</code> は &lsquo;<samp>-<var>n</var></samp>&rsquo; という旧来のオプション書式をサポートしている。
+新しいスクリプトでは、&lsquo;<samp>-f <var>n</var></samp>&rsquo; の方を使うべきである。
+</p>
+</dd>
+<dt> &lsquo;<samp>-s <var>n</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--skip-chars=<var>n</var></samp>&rsquo;</dt>
+<dd><a name="index-_002ds-11"></a>
+<a name="index-_002d_002dskip_002dchars"></a>
+<p>重複の検査を行う前に、<var>n</var> 文字スキップする。
+その行に <var>n</var> 個より少ない文字しかない場合は、比較に空の文字列を使用する。
+フィールドをスキップするオプションと、文字をスキップするオプションの両方を使っている場合は、
+フィールドのスキップが先に行われる。
+</p>
+<a name="index-_005fPOSIX2_005fVERSION-3"></a>
+<p>POSIX 1003.1-2001 に準拠していないシステムでは、<code>uniq</code> が
+&lsquo;<samp>+<var>n</var></samp>&rsquo; という旧来のオプションの書式をサポートしている。
+この旧来の書式は、環境変数 <code>_POSIX2_VERSION</code> を使えば、コントロールできるが (see section <a href="coreutils-ja_15.html#Standards-conformance">規格への準拠</a>)、
+移植を考慮したスクリプトでは、この環境変数に動作が依存するコマンドの使用は、避けた方がよい。
+たとえば、&lsquo;<samp>uniq +10</samp>&rsquo; ではなく、&lsquo;<samp>uniq ./+10</samp>&rsquo; や &lsquo;<samp>uniq -s 10</samp>&rsquo;
+を使うべきだ。前者では、&lsquo;<samp>+10</samp>&rsquo; が、オプションかファイル名か、まぎらわしいからである。
+</p>
+</dd>
+<dt> &lsquo;<samp>-c</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--count</samp>&rsquo;</dt>
+<dd><a name="index-_002dc-9"></a>
+<a name="index-_002d_002dcount"></a>
+<p>各行に出現回数を付けて表示する。
+</p>
+</dd>
+<dt> &lsquo;<samp>-i</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--ignore-case</samp>&rsquo;</dt>
+<dd><a name="index-_002di-6"></a>
+<a name="index-_002d_002dignore_002dcase-1"></a>
+<p>行を比較するとき、アルファベットの大文字小文字を区別しない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-d</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--repeated</samp>&rsquo;</dt>
+<dd><a name="index-_002dd-6"></a>
+<a name="index-_002d_002drepeated"></a>
+<a name="index-repeated-lines_002c-outputting"></a>
+<p>重複していない行を除去する。このオプションを単独で使った場合、<code>uniq</code>
+は、連続する同一行のうち、最初の 1 行だけを表示し、それ以外の何も表示しない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-D</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--all-repeated[=<var>delimit-method</var>]</samp>&rsquo;</dt>
+<dd><a name="index-_002dD"></a>
+<a name="index-_002d_002dall_002drepeated"></a>
+<a name="index-all-repeated-lines_002c-outputting"></a>
+<p>入力行のうち、連続する同一行の二行目以降を除去せず、重複していない行だけを除去する。
+このオプションが役に立つのは、主として、大文字小文字を無視するとか、
+選択したフィールドのみを比較するとかいった、他のオプションと組み合わせて使うときである。
+長い書式のオプションで使用できる <var>delimit-method</var> は、
+省略可能であり、指定した場合は、重複行のグループ間の区切り方を指示することになる。
+<var>delimit-method</var> は、以下の一つでなければならない。
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>none</samp>&rsquo;</dt>
+<dd><p>重複行のグループ間に、区切りの印を置かない。&lsquo;<samp>--all-repeated</samp>&rsquo;
+(&lsquo;<samp>-D</samp>&rsquo;) とのみ指定するのと同じことである。
+</p>
+</dd>
+<dt> &lsquo;<samp>prepend</samp>&rsquo;</dt>
+<dd><p>重複行の各グループの前に改行を出力する。
+&lsquo;<samp>--zero-terminated</samp>&rsquo; (&lsquo;<samp>-z</samp>&rsquo;) を指定している場合は、
+区切りの印として改行の代わりに、ゼロバイト (ASCII NUL) を使用する。
+</p>
+</dd>
+<dt> &lsquo;<samp>separate</samp>&rsquo;</dt>
+<dd><p>重複行のグループ間を 1 個の改行で分離する。これは、&lsquo;<samp>prepend</samp>&rsquo;
+を使うのとほぼ同じだが、最初のグループの前に区切りの印を挿入しないのが異なっている。
+それ故、ユーザが出力を直接見る場合に、より適しているかもしれない。&lsquo;<samp>--zero-terminated</samp>&rsquo; (&lsquo;<samp>-z</samp>&rsquo;) を指定している場合は、
+区切りの印として改行の代わりに、ゼロバイト (ASCII NUL) を使用する。
+</p></dd>
+</dl>
+
+<p>注意していただきたいが、グループ同士を改行で分離しているとき、
+入力ストリームに複数の空行があると、出力がまぎらわしいものになる。
+これを避けるには、入力を &lsquo;<samp>tr -s '\n'</samp>&rsquo; でフィルタリングして、
+複数の空行をなくせばよい。
+</p>
+<p>このオプションは、GNU による拡張である。
+</p>
+</dd>
+<dt> &lsquo;<samp>--group[=<var>delimit-method</var>]</samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dgroup"></a>
+<a name="index-all-lines_002c-grouping"></a>
+<p>すべての行を出力し、他と区別される各グループの間に区切りを入れる。
+&lsquo;<samp>--zero-terminated</samp>&rsquo; (&lsquo;<samp>-z</samp>&rsquo;) を指定している場合は、
+区切りの印として改行の代わりに、ゼロバイト (ASCII NUL) を使用する。 <var>delimit-method</var>
+は省略可能であり、指定した場合は、グループ間の区切り方を指示することになる。
+<var>delimit-method</var> は、以下の一つでなければならない。
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>separate</samp>&rsquo;</dt>
+<dd><p>他と区別されるグループを 1 個の区切りの印で分離する。
+これが、何も指定されていないときの、デフォルトの区切り方であり、
+出力をユーザに直接見せる場合に適している。
+</p>
+</dd>
+<dt> &lsquo;<samp>prepend</samp>&rsquo;</dt>
+<dd><p>他と区別される各グループの前に区切りの印を出力する。
+</p>
+</dd>
+<dt> &lsquo;<samp>append</samp>&rsquo;</dt>
+<dd><p>他と区別される各グループの後ろに区切りの印を出力する。
+</p>
+</dd>
+<dt> &lsquo;<samp>both</samp>&rsquo;</dt>
+<dd><p>他と区別される各グループの前後に区切りの印を出力する。
+</p></dd>
+</dl>
+
+<p>注意していただきたいが、グループ同士を改行で分離しているとき、
+入力ストリームに複数の空行があると、出力がまぎらわしいものになる。
+これを避けるには、入力を &lsquo;<samp>tr -s '\n'</samp>&rsquo; でフィルタリングして、
+複数の空行をなくせばよい。
+</p>
+<p>このオプションは、GNU による拡張である。
+</p>
+</dd>
+<dt> &lsquo;<samp>-u</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--unique</samp>&rsquo;</dt>
+<dd><a name="index-_002du-4"></a>
+<a name="index-_002d_002dunique-1"></a>
+<a name="index-unique-lines_002c-outputting"></a>
+<p>重複する入力行のグループを表示するときは (訳注: すなわち、&lsquo;<samp>--all-repeated</samp>&rsquo;
+(&lsquo;<samp>-D</samp>&rsquo;) オプションを使用しているときは)、グループの最後の行を表示しない。
+このオプションを単独で使用する場合は、ユニークな
+(訳注: この場合は、同一行が連続していないという意味) 行だけを表示し、それ以外の何も表示しない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-w <var>n</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--check-chars=<var>n</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dw-8"></a>
+<a name="index-_002d_002dcheck_002dchars"></a>
+<p>各行で (フィールドや文字をスキップする指定があれば、スキップした後で)
+文字を何個まで比較するかを指定する。デフォルトでは、行の残り全部が比較の対象になる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-z</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--zero-terminated</samp>&rsquo;</dt>
+<dd><a name="index-_002dz-5"></a>
+<a name="index-_002d_002dzero_002dterminated-4"></a>
+<a name="index-process-zero_002dterminated-items-4"></a>
+<p>項目の区切りに、改行 (ASCII LF) ではなく、ゼロバイトを使用する。
+すなわち、入力を ASCII NUL で分離された項目として扱い、出力する各項目の末尾に
+ASCII NUL を付加する。このオプションは、&lsquo;<samp>perl -0</samp>&rsquo;,
+&lsquo;<samp>find -print0</samp>&rsquo;, &lsquo;<samp>xargs -0</samp>&rsquo; などと組み合わせて使用すると、
+便利なことがある。そうしたコマンドでも、わがままなファイル名を
+(空白などの特殊文字を含んでいる場合でも) きちんと確実に処理するために、
+同様なことをしているのである。 &lsquo;<samp>-z</samp>&rsquo; オプションを使用した場合、改行文字はフィールド・セパレータ扱いになる。
+</p>
+</dd>
+</dl>
+
+<p>終了ステータス 0 は成功を示し、0 以外の値は失敗を示す。
+</p>
+
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_43.html#shuf-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_45.html#comm-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_41.html#Operating-on-sorted-files" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_41.html#Operating-on-sorted-files" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_54.html#Operating-on-fields" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

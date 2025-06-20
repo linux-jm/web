@@ -1,0 +1,286 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FENV</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FENV</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/fenv.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+feclearexcept, fegetexceptflag, feraiseexcept, fesetexceptflag,
+fetestexcept, fegetenv, fegetround, feholdexcept, fesetround, fesetenv,
+feupdateenv, feenableexcept, fedisableexcept, fegetexcept - 浮動小数点の丸めと例外の取り扱い
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/fenv.h">fenv.h</A>&gt;</B>
+
+<B>int feclearexcept(int </B><I>excepts</I><B>);</B>
+<B>int fegetexceptflag(fexcept_t *</B><I>flagp</I><B>, int </B><I>excepts</I><B>);</B>
+<B>int feraiseexcept(int </B><I>excepts</I><B>);</B>
+<B>int fesetexceptflag(const fexcept_t *</B><I>flagp</I><B>, int </B><I>excepts</I><B>);</B>
+<B>int fetestexcept(int </B><I>excepts</I><B>);</B>
+
+<B>int fegetround(void);</B>
+<B>int fesetround(int </B><I>rounding_mode</I><B>);</B>
+
+<B>int fegetenv(fenv_t *</B><I>envp</I><B>);</B>
+<B>int feholdexcept(fenv_t *</B><I>envp</I><B>);</B>
+<B>int fesetenv(const fenv_t *</B><I>envp</I><B>);</B>
+<B>int feupdateenv(const fenv_t *</B><I>envp</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>-lm</I> でリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらの 11 個の関数は C99 で定義されており、 浮動小数点の丸めと例外 (オーバーフロー、ゼロによる除算など)  の取り扱いを規定する。
+<A NAME="lbAE">&nbsp;</A>
+<H3>例外</H3>
+
+<I>divide-by-zero</I> 例外は、有限の数値に対する演算が、 無限大の答えを生成するような場合に起こる。
+<P>
+
+<I>overflow</I> 例外は、結果が浮動小数点数値で表記されなければならないのに、 その絶対値が表現可能な浮動小数点数の (有限の) 最大値よりも
+(ずっと) 大きくなってしまうような場合に起こる。
+<P>
+
+<I>underflow</I> 例外は、結果が浮動小数点数値で表記されなければならないのに、 その絶対値が正の正規化浮動小数点数の最小値よりも
+小さくなってしまう (そして 非正規化数で表現した場合に非常に精度を失ってしまう)  ような場合に起こる。
+<P>
+
+<I>inexact</I> 例外は、丸め後の演算結果が、 無限精度の結果と異なるような場合に起こる。 <I>overflow</I> 例外か <I>underflow</I>
+例外が起きたときには、常にこの例外も起こる。
+<P>
+
+<I>invalid</I> 例外は、演算結果がうまく定義できない結果を生じるような場合に起こる。 例えば 0/0、無限大 - 無限大、sqrt(-1) など。
+<A NAME="lbAF">&nbsp;</A>
+<H3>例外処理</H3>
+
+例外の表し方には 2 つの方法がある。 ひとつは、単一のビットで (例外があったかなかったかを) 表す方法で、
+これらのビットは整数のあるビット位置に対応し、ビットの対応付けは 実装依存である。もう一つは、内部構造体を使って表す方法で、
+この方法の方が例外に関するより多くの情報 (例えば例外が起こったコードのアドレスなど) が含まれる。
+<P>
+
+<B>FE_DIVBYZERO</B>, <B>FE_INEXACT</B>, <B>FE_INVALID</B>, <B>FE_OVERFLOW</B>,
+<B>FE_UNDERFLOW</B> の各マクロは、それぞれ対応する例外の処理を 実装がサポートしている場合に定義される。
+このとき対応するビットをそれぞれ定義することになるので、 例外処理関数の呼び出しを、例えば <B>FE_OVERFLOW</B>|<B>FE_UNDERFLOW</B>
+という整数の引数を用いて行うことができる。 他の例外もサポートされているかもしれない。 <B>FE_ALL_EXCEPT</B>
+マクロは、サポートされている例外に対応するビットが全てセットされている (サポートされている例外全ての論理和である)。
+<P>
+
+<B>feclearexcept</B>()  関数は、引数 <I>excepts</I> のビット列で指定された例外をクリアする
+(処理は実装でサポートされている例外についてのみ行われる)。
+<P>
+
+<B>fegetexceptflag</B>()  関数は、引数 <I>excepts</I> で指定された例外フラグの状態を <I>*flagp</I>
+が指す内部オブジェクトに保存する。
+<P>
+
+<B>feraiseexcept</B>()  関数は、 <I>excepts</I> のビット列で指定された例外のうち、 実装がサポートしているものを発生させる。
+<P>
+
+<B>fesetexceptflag</B>()  関数は、 <I>excepts</I> で指定された例外に対応するフラグの状態を <I>*flagp</I>
+の値に設定する。 <I>*flagp</I> の値は、この関数を呼ぶ前に <B>fegetexceptflag</B>()
+関数を呼び出して取得しておかなければならない (このとき、 <B>fegetexceptflag</B>()  の最後の引数には、
+<B>fesetexceptflag</B>()  に渡す <I>excepts</I> のすべてのビットを含む値を指定すること)。
+<P>
+
+<B>fetestexcept</B>()  関数は、 <I>excepts</I> 引数でセットされているビットのうち、 現在設定されている例外に対応するビットが 1
+になったワードを返す。
+<A NAME="lbAG">&nbsp;</A>
+<H3>丸めモード</H3>
+
+丸めモードは、結果が仮数部だけで正確に表現できない際に、 浮動小数点操作の結果をどのように扱うかを決めるものである。
+さまざまな丸めモードを提供することができる: 最も近い値に丸める (デフォルト)、 (正の無限大に向かって) 大きくなる方向に丸める、
+(負の無限大に向かって) 小さくなる方向に丸める、 0 に向けて丸める、である。
+<P>
+
+<B>FE_TONEAREST</B>, <B>FE_UPWARD</B>, <B>FE_DOWNWARD</B>, <B>FE_TOWARDZERO</B>
+の各マクロは、それぞれ対応する丸めの方向を 実装がサポートしている場合に定義される。
+<P>
+
+<B>fegetround</B>()  関数は現在の丸めモードに対応するマクロを返す。
+<P>
+
+<B>fesetround</B>()  関数は丸めモードを引数に与えられた値にし、 成功したらゼロを返す。
+<P>
+
+C99 と POSIX.1-2008 では <B>FLT_ROUNDS</B> という識別子が規定されており、 <I>&lt;<A HREF="file:///usr/include/float.h">float.h</A>&gt;</I>
+で定義されている。この識別子は 浮動小数点数の加算についての実装定義された丸め動作を表し、 以下のいずれかの値を持つ。
+<DL COMPACT>
+<DT>-1<DD>
+丸めモードは決められていない。
+<DT>0<DD>
+0 に向けて丸める。
+<DT>1<DD>
+最も近い数に丸める。
+<DT>2<DD>
+正の無限大に向けて丸める。
+<DT>3<DD>
+負の無限大に向けて丸める。
+</DL>
+<P>
+
+他の値はマシン依存であり、標準的ではない丸めモードである。
+<P>
+
+<B>FLT_ROUNDS</B> の値には、 <B>fesetround</B>()  で設定された現在の丸めモードが反映されるべきである
+(但し、「バグ」の節を参照)。
+<A NAME="lbAH">&nbsp;</A>
+<H3>浮動小数点関連の環境</H3>
+
+浮動小数点関連の環境の全体は、 制御モードや状態フラグも含め、 <I>fenv_t</I> 型の内部オブジェクト一つで取り扱うことができる。
+デフォルトの環境は、 (<I>const fenv_t&nbsp;*</I> 型の)  <B>FE_DFL_ENV</B> で示されるものである。
+これはプログラムの開始時に構築される環境であり、 ISO C では、丸めモードを最も近い値への丸め (<B>FE_TONEAREST</B>)
+に設定し、すべての例外をクリアし、不停止 (nonstop)  (例外が起きても継続する) モードとするように規定されている。
+<P>
+
+<B>fegetenv</B>()  関数は、現在の浮動小数点環境を、オブジェクト <I>*envp</I> に保存する。
+<P>
+
+<B>feholdexcept</B>()  関数も同じ動作を行い、 さらに可能であれば、全ての例外フラグをクリアし、 nonstop (例外時にも実行を継続)
+モードに設定する。
+<P>
+
+<B>fesetenv</B>()  関数は、浮動小数点環境を、オブジェクト <I>*envp</I> から取り出した値に戻す。
+このオブジェクトは、有効であることが事前に分かっていなければならない。 例えば、 <B>fegetenv</B>()  や <B>feholdexcept</B>()
+を呼び出した結果であるとか、 <B>FE_DFL_ENV</B> に等しいとかでなければならない。 この関数の呼び出しは例外を発生しない。
+<P>
+
+<B>feupdateenv</B>()  関数は、オブジェクト <I>*envp</I> が表現する浮動小数点環境をインストールする。
+ただし、現在発生している例外はクリアされない。 この関数を呼んだ後に立っている例外は、 関数を呼ぶ前の値と <I>*envp</I> の値とのビットごとの OR
+を取ったものになる。 上記と同様に、オブジェクト <I>*envp</I> は、事前に有効であることが分かっていなければならない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>返り値</H2>
+
+
+
+
+これらの関数は、成功の場合 0 を返し、エラーが発生すると 0 以外を返す。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バージョン</H2>
+
+これらの関数は glibc バージョン 2.1 で初めて登場した。
+<A NAME="lbAK">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+
+
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>feclearexcept</B>(),
+<B>fegetexceptflag</B>(),
+<B>feraiseexcept</B>(),
+<B>fesetexceptflag</B>(),
+<B>fetestexcept</B>(),
+<B>fegetround</B>(),
+<B>fesetround</B>(),
+<B>fegetenv</B>(),
+<B>feholdexcept</B>(),
+<B>fesetenv</B>(),
+<B>feupdateenv</B>(),
+<B>feenableexcept</B>(),
+<B>fedisableexcept</B>(),
+<B>fegetexcept</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Safe
+<BR></TD></TR>
+</TABLE>
+
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>準拠</H2>
+
+IEC 60559 (IEC 559:1989), ANSI/IEEE 854, C99, POSIX.1-2001.
+<A NAME="lbAM">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>glibc での注意</H3>
+
+可能な場合には、GNU C Library はマクロ <B>FE_NOMASK_ENV</B>
+を定義する。このマクロはすべての例外でトラップが生じるような環境を表す。 <B>#ifdef</B> を使ってこのマクロをテストできる。これは
+<B>_GNU_SOURCE</B> が定義されている場合に限って定義される。 C99 標準は浮動小数点マスク (例えば特定のフラグでのトラップなど)
+の各ビットの設定方法については定義していない。 バージョン 2.2 以降の glibc は、 <B>feenableexcept</B>()  関数と
+<B>fedisableexcept</B>()  関数をサポートしており、 各々の浮動小数点トラップを設定できるようになっている。 また
+<B>fegetexcept</B>()  によって状態の問い合わせもできるようになっている。
+<P>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/fenv.h">fenv.h</A>&gt;</B>
+
+<B>int feenableexcept(int </B><I>excepts</I><B>);</B>
+<B>int fedisableexcept(int </B><I>excepts</I><B>);</B>
+<B>int fegetexcept(void);</B>
+</PRE>
+
+<P>
+
+<B>feenableexcept</B>()  関数と <B>fedisableexcept</B>()  関数は <I>excepts</I>
+によって表現される各例外のトラップを有効 (無効) にする。 成功した場合は直前に有効になっていた例外のセットを返す。 失敗した場合は -1 を返す。
+<B>fegetexcept</B>()  関数は現在有効になっている例外全てからなるセットを返す。
+<A NAME="lbAO">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+C99 の規定では、 <B>FLT_ROUNDS</B> の値には <B>fesetround</B>()
+で設定された現在の丸めモードが反映されるべきであるとされている。 現在のところ、 このようになっておらず、 <B>FLT_ROUNDS</B> は常に値 1
+となる。
+<A NAME="lbAP">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man7/math_error.7.html">math_error</A></B>(7)
+<A NAME="lbAQ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">例外</A><DD>
+<DT><A HREF="#lbAF">例外処理</A><DD>
+<DT><A HREF="#lbAG">丸めモード</A><DD>
+<DT><A HREF="#lbAH">浮動小数点関連の環境</A><DD>
+</DL>
+<DT><A HREF="#lbAI">返り値</A><DD>
+<DT><A HREF="#lbAJ">バージョン</A><DD>
+<DT><A HREF="#lbAK">属性</A><DD>
+<DT><A HREF="#lbAL">準拠</A><DD>
+<DT><A HREF="#lbAM">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAN">glibc での注意</A><DD>
+</DL>
+<DT><A HREF="#lbAO">バグ</A><DD>
+<DT><A HREF="#lbAP">関連項目</A><DD>
+<DT><A HREF="#lbAQ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

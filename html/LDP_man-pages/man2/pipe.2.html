@@ -1,0 +1,235 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PIPE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PIPE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/pipe.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pipe, pipe2 - パイプを生成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+/* On Alpha, IA-64, MIPS, SuperH, and SPARC/SPARC64; see NOTES */
+<B>struct fd_pair {</B>
+<B>long fd[2];</B>
+<B>};</B>
+<B>struct fd_pair pipe();</B>
+
+/* On all other architectures */
+<B>int pipe(int </B><I>pipefd</I><B>[2]);</B>
+
+<B>#define _GNU_SOURCE</B>             /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>              /* O_* 定数の定義の取得 */
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int pipe2(int </B><I>pipefd</I><B>[2], int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pipe</B>()  はパイプを生成する。 パイプは、プロセス間通信に使用できる単方向のデータチャネルである。 配列 <I>pipefd</I>
+は、パイプの両端を参照する二つのファイルディスクリプターを 返すのに使用される。 <I>pipefd[0]</I> がパイプの読み出し側、
+<I>pipefd[1]</I> がパイプの書き込み側である。 パイプの書き込み側に書き込まれたデータは、
+パイプの読み出し側から読み出されるまでカーネルでバッファーリングされる。 さらなる詳細は <B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)  を参照のこと。
+<P>
+
+<B>pipe2</B>()  は <I>flags</I> が 0 の場合には <B>pipe</B>()  と同じである。 <I>flags</I> に以下の値をビット毎の論理和
+(OR) で指定することで、 異なる動作をさせることができる。
+<DL COMPACT>
+<DT><B>O_CLOEXEC</B><DD>
+新しく生成される二つのファイルディスクリプターの close-on-exec (<B>FD_CLOEXEC</B>)  フラグをセットする。
+このフラグが役に立つ理由については、 <B><A HREF="../man2/open.2.html">open</A></B>(2)  の <B>O_CLOEXEC</B> フラグの説明を参照のこと。
+<DT><B>O_DIRECT</B> (Linux 3.4 以降)<DD>
+
+「パケット」モードで入出力を行うパイプを作成する。 このパイプへの <B><A HREF="../man2/write.2.html">write</A></B>(2) それぞれが別のパケットとして扱われ、 このパイプからの
+<B><A HREF="../man2/read.2.html">read</A></B>(2) では一度に一つパケットが読み出される。 以下の点に注意すること。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+<B>PIPE_BUF</B> バイト (<B><A HREF="../man7/pipe.7.html">pipe</A></B>(7) 参照) より大きいデータを書き込んだ場合、複数のパケットに分割される。
+定数 <B>PIPE_BUF</B> は <I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I> で定義されている。
+<DT>*<DD>
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+で次のパケットよりも小さなバッファーサイズを指定した場合、要求されたバイト数のデータが読み出され、そのパケットの超過分のバイトは破棄される。
+可能性のある最大サイズのパケットを読み出すには、<B>PIPE_BUF</B> のバッファーサイズを指定すれば十分である (上の項目を参照)。
+<DT>*<DD>
+長さ 0 のパケットはサポートされていない。 (バッファーサイズ 0 を指定した <B><A HREF="../man2/read.2.html">read</A></B>(2) は何も行わず 0 を返す)。
+</DL>
+</DL>
+
+<DT><DD>
+このフラグをサポートしていない古いカーネルでは、エラー <B>EINVAL</B> が返る。これによりカーネルがサポートしていないことが分かる。
+<DT><DD>
+
+
+Since Linux 4.5, it is possible to change the <B>O_DIRECT</B> setting of a pipe
+file descriptor using <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2).
+<DT><B>O_NONBLOCK</B><DD>
+Set the <B>O_NONBLOCK</B> file status flag on the open file descriptions
+referred to by the new file descriptors.  Using this flag saves extra calls
+to <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  to achieve the same result.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+On success, zero is returned.  On error, -1 is returned, <I>errno</I> is set
+appropriately, and <I>pipefd</I> is left unchanged.
+<P>
+
+
+On Linux (and other systems), <B>pipe</B>()  does not modify <I>pipefd</I> on
+failure.  A requirement standardizing this behavior was added in
+POSIX.1-2008 TC2.  The Linux-specific <B>pipe2</B>()  system call likewise does
+not modify <I>pipefd</I> on failure.
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>pipefd</I> が無効な値である。
+<DT><B>EINVAL</B><DD>
+(<B>pipe2</B>())  <I>flags</I> に無効な値が入っている。
+<DT><B>EMFILE</B><DD>
+The per-process limit on the number of open file descriptors has been
+reached.
+<DT><B>ENFILE</B><DD>
+オープンされているファイルの総数がシステム全体の制限に達している。
+<DT><B>ENFILE</B><DD>
+The user hard limit on memory that can be allocated for pipes has been
+reached and the caller is not privileged; see <B><A HREF="../man7/pipe.7.html">pipe</A></B>(7).
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>pipe2</B>()  はバージョン 2.6.27 で Linux に追加された。 glibc によるサポートはバージョン 2.9 以降で利用できる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<BR>&nbsp;<B>pipe</B>():&nbsp;POSIX.1-2001,&nbsp;POSIX.1-2008.
+<P>
+
+<B>pipe2</B>()  は Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+The System V ABI on some architectures allows the use of more than one
+register for returning multiple values; several architectures (namely,
+Alpha, IA-64, MIPS, SuperH, and SPARC/SPARC64)  (ab)use this feature in
+order to implement the <B>pipe</B>()  system call in a functional manner: the
+call doesn't take any arguments and returns a pair of file descriptors as
+the return value on success.  The glibc <B>pipe</B>()  wrapper function
+transparently deals with this.  See <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)  for information regarding
+registers used for storing second file descriptor.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+
+以下のプログラムではパイプを生成し、その後 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  で子プロセスを生成する。
+子プロセスは同じパイプを参照するファイルディスクリプター集合のコピーを 継承する。 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  の後、各プロセスはパイプ
+(<B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)  を参照) に必要がなくなったファイルディスクリプターをクローズする。 親プロセスはプログラムのコマンドライン引数に含まれる
+文字列をパイプへ書き込み、 子プロセスはこの文字列をパイプから 1 バイトずつ読み込んで標準出力にエコーする。
+<A NAME="lbAK">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;pipefd[2];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;cpid;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;string&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pipe(pipefd)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;pipe&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cpid&nbsp;=&nbsp;fork();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cpid&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fork&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cpid&nbsp;==&nbsp;0)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;子プロセスがパイプから読み込む&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(pipefd[1]);&nbsp;&nbsp;/*&nbsp;使用しない&nbsp;write&nbsp;側はクローズする&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(read(pipefd[0],&nbsp;&amp;buf,&nbsp;1)&nbsp;&gt;&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write(STDOUT_FILENO,&nbsp;&amp;buf,&nbsp;1);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write(STDOUT_FILENO,&nbsp;&quot;\n&quot;,&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(pipefd[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_exit(EXIT_SUCCESS);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;親プロセスは&nbsp;argv[1]&nbsp;をパイプへ書き込む&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(pipefd[0]);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;使用しない&nbsp;read&nbsp;側はクローズする&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write(pipefd[1],&nbsp;argv[1],&nbsp;strlen(argv[1]));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(pipefd[1]);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;読み込み側が&nbsp;EOF&nbsp;に出会う&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wait(NULL);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;子プロセスを待つ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../man2/fork.2.html">fork</A></B>(2),&nbsp;<B><A HREF="../man2/read.2.html">read</A></B>(2),&nbsp;<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2),&nbsp;<B><A HREF="../man2/splice.2.html">splice</A></B>(2),&nbsp;<B><A HREF="../man2/tee.2.html">tee</A></B>(2),
+<B><A HREF="../man2/vmsplice.2.html">vmsplice</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man3/popen.3.html">popen</A></B>(3), <B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DL>
+<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

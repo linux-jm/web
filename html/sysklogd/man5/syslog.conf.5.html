@@ -1,0 +1,576 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SYSLOG.CONF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SYSLOG.CONF</H1>
+Section: Linux System Administration (5)<BR>Updated: 1 January 1998<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/sysklogd/release/man5/syslog.conf.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+syslog.conf - <A HREF="../man8/syslogd.8.html">syslogd</A>(8) の設定ファイル
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<I>syslog.conf</I>
+
+は UNIX ライクなシステムでそのシステムメッセージを記録する
+<B><A HREF="../man8/syslogd.8.html">syslogd</A></B>(8)
+
+のための設定ファイルである。このファイルは記録のルールを規定する。固有の
+機能については 
+<B><A HREF="../man8/sysklogd.8.html">sysklogd</A></B>(8)
+
+の man ページを参照すること。
+<P>
+ルールは
+<I>selector</I>
+
+フィールドと
+<I>action </I>
+
+フィールドの二つのフィールドで構成する。これらの二つのフィールドは
+一つ以上の空白文字か TAB 文字で区切られる。selector フィールドは指定さ
+れた action を適用する facility と priority のパターンを規定する。
+<P>
+シャープ記号(``#'')で始まる行と空行は無視する。
+<P>
+このバージョンの
+<B>syslogd</B>
+
+は拡張された文法を認識することができる。
+行の末尾にバックスラッシュ(``\'')を置くことによって、
+ひとつのルールを複数行に分けることができる。
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>SELECTORS</H2>
+
+selector フィールドはさらにピリオド(``.'')で区切られる
+<I>facility</I>
+
+と
+<I>priority</I>
+
+の二つの部分で構成する。
+どちらの部分も文字の大文字小文字は区別しない。また、数字を用いることも
+可能であるが、これは使用しない方がよい。使用した時には警告がなされる。
+facility と priority については
+<B><A HREF="../../LDP_man-pages/man3/syslog.3.html">syslog</A></B>(3)
+
+に記述されている。以下に記述する各種の名前は
+<I>/usr/include/syslog.h</I>
+
+における
+<B>LOG_</B>-values
+
+の同じ名前のものに対応する。
+<P>
+<I>facility</I>
+
+は次のキーワードのいずれかである:
+<B>auth</B>、 <B>authpriv</B>、 <B>cron</B>、 <B>daemon</B>、 <B>kern</B>、 <B>lpr</B>、 
+
+<B>mail</B>、 <B>mark</B>、 <B>news</B>、 <B>security</B> (<B>auth</B> と同じ)、 
+
+<B>syslog</B>、 <B>user</B>、 <B>uucp</B>、 <B>local0</B>から<B>local7</B>。
+
+このうち
+<B>security</B>
+
+は今後は利用するべきでなく、また、
+<B>mark</B>
+
+は内部利用のためのものなので、アプリケーションレベルで用いるべきではない。
+ただし利用できないわけではない。
+<I>facility</I>
+
+はメッセージを生成するサブシステムを規定する、すなわち(例えば)全てのメ
+イルプログラムは syslog を用いてログを記録する場合は mail facility
+<B></B>(<B>LOG_MAIL</B>)
+
+を用いる。
+<P>
+<I>priority</I>
+
+は以下のキーワードのいずれかである(昇順):
+<B>debug</B>, <B>info</B>, <B>notice</B>, <B>warning</B>, <B>warn</B> (
+
+<B>warning</B> と同じ), <B>err</B>, <B>error</B> (<B>err</B> と同じ), <B>crit</B>, 
+
+<B>alert</B>, <B>emerg</B>, <B>panic</B> (<B>emerg</B>と同じ).
+
+このうちキーワード
+<B>error</B>、<B>warn</B>、<B>panic</B>
+
+については、同等のものがあるので今後は利用するべきでない。
+<I>priority </I>
+
+はメッセージの重要性を定義する。
+<P>
+オリジナルの BSD システムの syslogd の動作は、指示された priority とそれ
+よりも順位の高い全てのメッセージが与えられた action に沿って記録される、
+というものである。この
+<B><A HREF="../man8/syslogd.8.html">syslogd</A></B>(8)
+
+もそれと同じ動作であるが、いくつかの拡張機能も有する。
+<P>
+上述の名前に加え、
+<B><A HREF="../man8/syslogd.8.html">syslogd</A></B>(8)
+
+は以下の拡張についても理解する:
+アスタリスク(``*'')は、
+それが用いられている場所 (すなわちピリオドの前か後ろか) に応じて、
+全ての facility かまたは全ての priority を表わす。
+キーワード
+<B>none</B>
+
+は、それが与えられた facility についてはどの priority も
+指定しないことを意味する (つまり除外される)。
+<P>
+コンマ(``,'')を用いて、同じ priority を示す一文のなかに複数の facility 
+を指定することが可能である。facility の個数に制限はない。ただしこのよ
+うな記述が可能なのは facility についてのみで、 priority についてのその
+ような記述は無視するので注意すること。
+<P>
+セミコロン(``;'')を区切りに用いて複数の selector について同一の
+<I>action </I>
+
+を指定することができる。
+<I>selector</I>
+
+フィールドの selector は先行するものを上書きしてしまうことに注意するこ
+と。この動作を用いて特定の priority を除外することも可能である。
+<P>
+この
+<B><A HREF="../man8/syslogd.8.html">syslogd</A></B>(8)
+
+はオリジナルの BSD のソースを拡張する構文を持っていて、より直観的な利
+用を可能にしている。イコール記号(``='')を priority に接頭すると、その 
+priority のもののみを記録するようにすることができる。エクスクラメーショ
+ンマーク(``!'')を接頭するとその priority とそれよりも高い priority の
+もののすべてを無視させることができる(イコール記号とエクスクラメーショ
+ンマークの両方を同時に指定することは可能である)。この拡張の両方を同時
+に用いる場合、イコール記号の前にエクスクラメーションマークを置くことで
+その priority のみ無視する。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>ACTIONS</H2>
+
+ルールの action フィールドには ``logfile'' を指示する。``logfile'' は
+実存するファイルでなくてもかまわない。
+<B><A HREF="../man8/syslogd.8.html">syslogd</A></B>(8)
+
+は以下の動作を用意している。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H3>通常のファイル</H3>
+
+メッセージはそのファイルに記録される。ファイル名は ``/'' で始まるフル
+パスで指定すること。
+<P>
+マイナス記号 ``-'' を接頭すると、記録の際のファイルシステムバッファの
+フラッシュ動作を抑制する。これを用いると、書き込み動作の直後にシステム
+に障害が発生した場合、情報を失なう可能性があることに注意すること。しか
+しながらこの機能は特に騒々しくロギングするプログラムを動作させる際のい
+くらかの性能改善には役に立つ。
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H3>名前付きパイプ</H3>
+
+この
+<B><A HREF="../man8/syslogd.8.html">syslogd</A></B>(8)
+
+は名前付きパイプ(FIFO)への出力機能を備えている。
+ファイル名の先頭にパイプ記号 (``|'') を書くと、
+メッセージの出力先をその名前の FIFO にできる。
+これはデバッグ作業に役立つ。FIFO は
+<B><A HREF="../man8/syslogd.8.html">syslogd</A></B>(8)
+
+のスタートに先立ち、
+<B><A HREF="../../0MultiFileIdx/man1/mkfifo.1.html">mkfifo</A></B>(1)
+
+コマンドにより生成される必要があることに注意すること。
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H3>ターミナルとコンソール</H3>
+
+ファイルとして tty を指示した場合は、tty 用の処理がなされる。
+<I>/dev/console</I>
+
+も同じ。
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H3>リモートコンピュータ</H3>
+
+この
+<B><A HREF="../man8/syslogd.8.html">syslogd</A></B>(8)
+
+は完全なリモートロギング機能も提供する。すなわちメッセージを
+<B><A HREF="../man8/syslogd.8.html">syslogd</A></B>(8)
+
+の動作するリモートのホストに送信することができ、またリモートのホストか
+らのメッセージを受信することもできる。リモートのホストはメッセージをそ
+れ以上他のホストへ転送することはせず、その機械にローカルに記録するはずだ。
+他のホストへメッセージを送信するにはアットマーク(``@'')をそのホスト名
+に接頭する。
+<P>
+この機能を用いると、他の全てのコンピュータにリモートに記録させることで、
+すべての syslog メッセージを一台のホストで制御することができる。これは
+管理上の困難を解消する。
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>ユーザ名のリスト</H3>
+
+通常、特に重要なメッセージはそのコンピュータの ``root'' にも宛てられる
+ものである。login しているときにメッセージを受けとるべきユーザのリスト
+を指示することができる。コンマ(``,'')で区切って複数のユーザを指定する
+こともできる。メイルで送ろうと思ってはいけない。それでは手遅れになって
+しまうかもしれない。
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H3>ログインしている誰でも</H3>
+
+システムになにか具合が悪いことが発生することを通知するために、緊急のメッ
+セージはしばしばその時オンラインになっている全てのユーザに通知される。
+この
+<I><A HREF="../../0MultiFileIdx/man1/wall.1.html">wall</A></I>(1)<I>的機能</I>
+
+を利用するためにはアスタリスク(``*'')を用いる。
+<P>
+<A NAME="lbAL">&nbsp;</A>
+<H2>例</H2>
+
+ここに実在する site の実際の設定例の一部を用いたいくつかの設定例を挙げ
+る。うまくいけば、たぶん、これで設定上の疑問はすべて解消できると思うが、
+なにかあったら筆者( Joey )宛てに連絡いただきたい。
+<P>
+<DL COMPACT>
+<DT><DD>
+<PRE>
+# 危機的状況を /var/adm/critical に保存する。
+#
+*.=crit;kern.none            /var/adm/critical
+</PRE>
+
+</DL>
+<P>
+
+priority が
+<B>crit </B>
+
+の、カーネルメッセージを除くすべてのメッセージをファイル
+<I>/var/adm/critical </I>
+
+に保存する。
+<P>
+<DL COMPACT>
+<DT><DD>
+<PRE>
+# カーネルメッセージは /var/adm/kernel に
+# 保存し、さらに critical 以上の重要度の
+# メッセージは他のホストへ配信しコンソー
+# ルにも表示する。
+#
+kern.*                       /var/adm/kernel
+kern.crit                    @finlandia
+kern.crit                    /dev/console
+kern.info;kern.!err          /var/adm/kernel-info
+</PRE>
+
+</DL>
+<P>
+
+<P>
+一番目のルールにより、facility が kern のメッセージはファイル
+<I>/var/adm/kernel</I>
+
+に記録される。
+<P>
+二番目の文により、 priority が
+<B>crit </B>
+
+かそれよりも高い全てのメッセージはリモートのホスト finlandia へ送信さ
+れる。これは、ホストの障害が生じて保存されたメッセージを読みだすことが
+できなくなるような回復不能エラーがディスク装置に発生した際に有効である。
+リモートのホストに残されたメッセージで障害の原因調査に取り掛ることもで
+きる。
+<P>
+三番目のルールはそのコンピュータで作業している誰かがそのメッセージを得
+ることができるように、実際のコンソールに表示する。
+<P>
+四行目は、syslogd にpriorityが
+<B>info</B> から <B>warning</B>
+
+のカーネルメッセージをファイル
+<I>/var/adm/kernel-info</I>
+
+に保存するよう指示する。
+<I>err</I>
+
+よりも高い priority を持つものは除外される。
+<P>
+<DL COMPACT>
+<DT><DD>
+<PRE>
+# tcp wrapper は mail.info でロギングする、
+# すべての接続を tty12 に表示する。
+# 
+mail.=info                   /dev/tty12
+</PRE>
+
+</DL>
+<P>
+
+この例は
+<B>mail.info</B> (ソースコード上では <B>LOG_MAIL</B> | <B>LOG_INFO</B>)
+
+を用いる全てのメッセージを
+第 12 コンソール
+<I>/dev/tty12</I>
+
+に表示する。例えば tcpwrapper
+<B><A HREF="../../tcp_wrappers/man8/tcpd.8.html">tcpd</A></B>(8)
+
+はこの設定を既定値として用いている。
+<P>
+<DL COMPACT>
+<DT><DD>
+<PRE>
+# メイル関係は一つのファイルへ保存する。
+# 
+mail.*;mail.!=info           /var/adm/mail
+</PRE>
+
+</DL>
+<P>
+
+このパターンは facility が
+<B>mail </B>
+
+の全てのメッセージから priority が
+<B>info</B>
+
+であるものを除くことを示す。これらのメッセージはファイル
+<I>/var/adm/mail</I>
+
+に記録する。
+<P>
+<DL COMPACT>
+<DT><DD>
+<PRE>
+# mail.info と news.info を /var/adm/info ヘ記録する。
+# 
+mail,news.=info              /var/adm/info
+</PRE>
+
+</DL>
+<P>
+
+この例は
+<B>mail.info</B> と <B>news.info</B>
+
+の両方の全てのメッセージを抜き出し、ファイル
+<I>/var/adm/info</I>
+
+に保存する。
+<P>
+<DL COMPACT>
+<DT><DD>
+<PRE>
+# info と notice は /var/log/messages へ記録する。
+#
+*.=info;*.=notice;\
+        mail.none  /var/log/messages
+</PRE>
+
+</DL>
+<P>
+
+この例は
+<B>syslogd</B>
+
+に
+<BR>&nbsp;facility&nbsp;が
+<B>mail</B>
+
+であるのものを除く他の
+全て
+<B>info</B> と <B>notice</B>
+
+の両方の priority の全てのメッセージをファイル
+<I>/var/log/messages</I>
+
+に保存するよう指示する。
+<P>
+<DL COMPACT>
+<DT><DD>
+<PRE>
+# info メッセージは /var/log/messages へ記録する。
+#
+*.=info;\
+        mail,news.none       /var/log/messages
+</PRE>
+
+</DL>
+<P>
+
+この指示により
+<B>syslogd </B>
+
+は priority 
+<B>info</B>
+
+の全てのメッセージをファイル
+<I>/var/log/messages </I>
+
+に記録する。ただし facility が
+<B>mail</B> と <B>news</B>
+
+の両方のメッセージは保存しない。
+<P>
+<DL COMPACT>
+<DT><DD>
+<PRE>
+# 緊急メッセージを wall で表示する。
+#
+*.=emerg                     *
+</PRE>
+
+</DL>
+<P>
+
+このルールは
+<B>syslogd</B>
+
+に全ての緊急のメッセージをその時ログインしている全てのユーザに伝えるよ
+う指示する。これが wall action である。
+<P>
+<DL COMPACT>
+<DT><DD>
+<PRE>
+# priority が alert のメッセージは管理担当へ
+# 送る。
+*.alert                      root,joey
+</PRE>
+
+</DL>
+<P>
+
+このルールは priority が
+<B>alert</B>
+
+かそれよりも高い全てのメッセージを操作者、すなわちユーザ名 ``root'' と 
+``joey'' がログインしていればその端末に表示する。
+<P>
+<DL COMPACT>
+<DT><DD>
+<PRE>
+*.*                          @finlandia
+</PRE>
+
+</DL>
+<P>
+
+このルールは全てのメッセージを finlandia と呼ばれるリモートのホストに
+転送する。これは特に一群のコンピュータの全ての syslog メッセージを一台
+のコンピュータに保存するのに役に立つ。
+<P>
+<A NAME="lbAM">&nbsp;</A>
+<H2>設定ファイル文法の相違点</H2>
+
+<B>syslogd</B>
+
+の設定は オリジナルの BSD ソースによるものとは少し異なる文法を使用する。
+元々は、指示された priority とそれよりも高い priority の全てのメッセージが
+ログファイルに記録されていた。この
+<B>syslogd</B>
+
+には、より柔軟で直観的にわかりやすい設定が可能となるように修飾子 ``=''、
+``!''、``-''が追加されている。
+<P>
+オリジナルの BSD の syslogd では selector フィールドと action 
+フィールドの区切りの文字として空白文字を利用することはできない(TAB 文
+字でなければならない)。
+<P>
+<A NAME="lbAN">&nbsp;</A>
+<H2>ファイル</H2>
+
+
+<DL COMPACT>
+<DT><I>/etc/syslog.conf</I>
+
+<DD>
+<B>syslogd</B>
+
+の設定ファイル
+<P>
+</DL>
+<A NAME="lbAO">&nbsp;</A>
+<H2>バグ</H2>
+
+複数の selector を指示するとしばしば直観的でなくなる。例えば、
+``mail.crit,*.err'' は facility が ``mail'' のメッセージのうち ``crit'' より
+高い priority 、ではなくて``err'' よりも高い priority を指示していることに
+なる。
+<P>
+<A NAME="lbAP">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/sysklogd.8.html">sysklogd</A></B>(8),
+
+<B><A HREF="../man8/klogd.8.html">klogd</A></B>(8),
+
+<B><A HREF="../../util-linux/man1/logger.1.html">logger</A></B>(1),
+
+<B><A HREF="../../LDP_man-pages/man2/syslog.2.html">syslog</A></B>(2),
+
+<B><A HREF="../../LDP_man-pages/man3/syslog.3.html">syslog</A></B>(3)
+
+<P>
+<A NAME="lbAQ">&nbsp;</A>
+<H2>著者</H2>
+
+<B>syslogd</B>
+
+は Greg Wettstein (<A HREF="mailto:greg@wind.enjellic.com">greg@wind.enjellic.com</A>) が BSD のソースコードから Linux 
+で動作するように移植し、Matin Schulze (<A HREF="mailto:joey@linux.de">joey@linux.de</A>) がいくつかのバグ
+フィックスと新しい機能の追加をした。
+<P>
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">SELECTORS</A><DD>
+<DT><A HREF="#lbAE">ACTIONS</A><DD>
+<DL>
+<DT><A HREF="#lbAF">通常のファイル</A><DD>
+<DT><A HREF="#lbAG">名前付きパイプ</A><DD>
+<DT><A HREF="#lbAH">ターミナルとコンソール</A><DD>
+<DT><A HREF="#lbAI">リモートコンピュータ</A><DD>
+<DT><A HREF="#lbAJ">ユーザ名のリスト</A><DD>
+<DT><A HREF="#lbAK">ログインしている誰でも</A><DD>
+</DL>
+<DT><A HREF="#lbAL">例</A><DD>
+<DT><A HREF="#lbAM">設定ファイル文法の相違点</A><DD>
+<DT><A HREF="#lbAN">ファイル</A><DD>
+<DT><A HREF="#lbAO">バグ</A><DD>
+<DT><A HREF="#lbAP">関連項目</A><DD>
+<DT><A HREF="#lbAQ">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:46 GMT, December 05, 2022
+</BODY>
+</HTML>

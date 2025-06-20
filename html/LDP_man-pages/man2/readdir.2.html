@@ -1,0 +1,124 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of READDIR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>READDIR</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/readdir.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+readdir - ディレクトリエントリーを読み込む
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+
+<B>int readdir(unsigned int </B><I>fd</I><B>, struct old_linux_dirent *</B><I>dirp</I><B>,</B>
+<B>            unsigned int </B><I>count</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>注</I>: このシステムコールには glibc のラッパー関数は存在しない。「注意」の節を参照。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これはあなたの関心を引くような関数ではないだろう。 POSIX 準拠の C ライブラリインターフェースについては <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3)
+を参照のこと。このページでは、生のカーネルのシステムコールインターフェースについて記載しているが、このインターフェースは <B><A HREF="../man2/getdents.2.html">getdents</A></B>(2)
+によって置き換えられた。
+<P>
+
+<B>readdir</B>()  は、ファイルディスクリプター <I>fd</I> が参照しているディレクトリから <I>old_linux_dirent</I>
+構造体をひとつ読み込み、 <I>dirp</I> で指されたバッファーに格納する。 <I>count</I> 引数は無視される。最大で 1 個の
+<I>old_linux_dirent</I> 構造体が読み出される。
+<P>
+
+<I>old_linux_dirent</I> 構造体は (Linux カーネルのファイル <B>fs/readdir.c</B> で内部用として)
+以下のように宣言される:
+<P>
+
+
+
+struct old_linux_dirent {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;d_ino;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;inode&nbsp;番号&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;d_offset;&nbsp;&nbsp;/*&nbsp;この&nbsp;<I>old_linux_dirent</I>&nbsp;へのオフセット&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;d_namlen;&nbsp;/*&nbsp;この&nbsp;<I>d_name</I>&nbsp;の長さ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;d_name[1];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;(NULL&nbsp;終端された)&nbsp;ファイル名&nbsp;*/
+}
+
+
+<P>
+
+<I>d_ino</I> は inode 番号である。 <I>d_offset</I> はディレクトリの最初からこの <I>old_linux_dirent</I>
+までの距離である。 <I>d_reclen</I> は <I>d_name</I> の大きさで、終端のヌルバイト ('\0') を含まない。
+<I>d_name</I> はヌルで終端されたファイル名である。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は、1 が返される。 ディレクトリの最後では 0 が返される。 エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+ファイルディスクリプター <I>fd</I> が不正である。
+<DT><B>EFAULT</B><DD>
+引数が呼び出し元プロセスのアドレス空間外を指している。
+<DT><B>EINVAL</B><DD>
+結果用のバッファーが小さすぎる。
+<DT><B>ENOENT</B><DD>
+そのようなディレクトリは存在しない。
+<DT><B>ENOTDIR</B><DD>
+ファイルディスクリプターがディレクトリを参照していない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 固有である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+glibc はこのシステムコールに対するラッパー関数を提供していない。 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)  を使って呼び出すこと。
+<I>old_linux_dirent</I> 構造体を自分自身で定義する必要がある。しかし、たいていはこのシステムコールではなく <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3)
+を使うべき場面のことが多い。
+<P>
+
+このシステムコールは x86-64 では存在しない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/getdents.2.html">getdents</A></B>(2), <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

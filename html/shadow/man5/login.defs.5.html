@@ -1,0 +1,236 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LOGIN.DEFS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LOGIN.DEFS</H1>
+Section: File Formats (5)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/shadow/release/man5/login.defs.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+/etc/login.defs - shadow パスワード機能の設定
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<I>/etc/login.defs</I>
+
+ファイルは shadow ログイン機能に対するサイト固有の設定を定義する。
+このファイルは必ず存在しなければならない。
+このファイルが無くてもシステム運用は可能であるが、
+おそらく望まない結果となるだろう。
+<P>
+
+このファイルは読み取り可能なテキストファイルで、
+ファイル中の一行につき一つの設定パラメータを設定している。
+各行では、設定パラメータの名前とその値が空白で区切られて示される。
+空行とコメント行は無視される。
+コメント行は `#' 記号で始まる。
+記号`#'はその行での空白以外の最初の文字でなければならない。
+<P>
+
+パラメータ値は四つの型を取ることができる。
+文字列・ブール型・数値・倍精度数値、である。
+文字列には全ての印字可能文字を使える。
+ブール型パラメータの値は ``yes'' か ``no'' のいずれかでなければならない。
+値の指定されていないブール型パラメータや、
+``yes'', ``no'' 以外が指定されたブール型パラメータの値は ``no''とされる。
+(単精度および倍精度) 数値は、
+10 進数、
+(数値の前に ``0'' を付けた) 8 進数、
+(数値の前に ``0x'' を付けた) 16 進数のいずれかで指定する。
+単精度・倍精度数値パラメータの最大値は計算機に依存する。
+<P>
+
+以下に示すような設定項目がある:
+
+<DL COMPACT>
+<DT>CHFN_AUTH (ブール値)<DD>
+もし
+<I>yes</I>
+
+なら、
+<B>chfn</B>, <B>chsh</B>
+
+両プログラムは、スーパーユーザが起動したのでない限り
+何らかの変更を行なう前にパスワードを尋ねる。
+
+<DT>CHFN_RESTRICT (文字列)<DD>
+このパラメータは
+<I>passwd</I>
+
+ファイルの
+<I>gecos</I>
+
+フィールドのうち、
+一般ユーザが
+<B>chfn</B>
+
+を使って変更できるフィールドを指定する。
+指定する文字列は
+<I>f</I>,
+
+<I>r</I>,
+
+<I>w</I>,
+
+<I>h</I>
+
+各文字の任意の組み合わせで、それぞれフルネーム、部屋番号、
+職場電話番号、自宅電話番号を意味する。
+指定されなかった場合は、スーパーユーザだけが全ての項目を変更できる。
+最も制限をきつくしたい場合は、
+chfn を SUID ではインストールしなければよい。
+
+<DT>CREATE_HOME (ブール値)<DD>
+useradd が、デフォルトでユーザのホームディレクトリを
+作成するかどうかを定義する。
+このオプションは useradd のコマンドラインの -m フラグと OR される。
+
+<DT>GID_MAX (数値)<DD>
+<DT>GID_MIN (数値)<DD>
+<B>useradd</B>
+
+プログラムおよび
+<B>groupadd</B>
+
+プログラムがグループ ID を選択する時の範囲。
+
+<DT>MAIL_DIR (文字列)<DD>
+メールスプールディレクトリ。
+あるユーザアカウントが修正・削除された際に、
+そのユーザのメールボックスに対する作業のために必要となる。
+指定されないと、コンパイル時のデフォルト値が用いられる。
+
+<DT>PASS_MAX_DAYS (数値)<DD>
+一つのパスワードを使える最長日数。
+パスワードがこの日数よりも古い場合は、変更するよう強制される。
+指定されていない場合は -1 となる (この制限機能を無効にする)。
+<DT>PASS_MIN_DAYS (数値)<DD>
+パスワードを変更してから次に変更できるようになるまでの最短日数。
+この日数が経たないうちにパスワードを変更しようとしても拒否される。
+指定されていない場合は -1 となる (この制限機能を無効にする)。
+<DT>PASS_WARN_AGE (数値)<DD>
+パスワードの有効期限が来る前に警告を発する期間の日数。
+ゼロにしておくと、期限切れの当日にのみ警告を行い、
+負の数を指定した場合は一切警告を行わない。
+指定されていない場合は警告を行わない。
+</DL>
+<P>
+
+PASS_MAX_DAYS, PASS_MIN_DAYS, PASS_WARN_AGE
+はアカウントを作るときにだけ利用される。
+これらの設定を変更しても、既存のアカウントには影響しない。
+
+<DL COMPACT>
+<DT>UID_MAX (数値)<DD>
+<DT>UID_MIN (数値)<DD>
+<B>useradd</B>
+
+プログラムがユーザ ID を選択する時の範囲。
+
+<DT>UMASK (数値)<DD>
+許可属性マスクをこの値に初期化する。
+指定されていない場合は、許可属性マスクは 077 に初期化される。
+
+<DT>USERDEL_CMD (文字列)<DD>
+定義されていると、ユーザを削除するときにこのコマンドが実行される。
+削除されるユーザ (最初の引き数に渡される) の at/cron/print
+ジョブなどを削除するコマンドにしておくとよい。
+
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>参照表</H2>
+
+以下の参照表は、
+shadow パスワード機能のどのプログラムが
+どのパラメータを使用するかを示したものである。
+
+<DL COMPACT>
+<DT>chfn<DD>
+CHFN_AUTH CHFN_RESTRICT
+<DT>chsh<DD>
+CHFN_AUTH
+<DT>groupadd<DD>
+GID_MAX GID_MIN
+<DT>newusers<DD>
+PASS_MAX_DAYS PASS_MIN_DAYS PASS_WARN_AGE
+UMASK
+<DT>pwconv<DD>
+PASS_MAX_DAYS PASS_MIN_DAYS PASS_WARN_AGE
+<DT>useradd<DD>
+CREATE_HOME
+GID_MAX GID_MIN
+PASS_MAX_DAYS PASS_MIN_DAYS PASS_WARN_AGE
+UID_MAX UID_MIN
+UMASK
+<DT>userdel<DD>
+MAIL_DIR
+USERDEL_CMD
+<DT>usermod<DD>
+MAIL_DIR
+
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>バグ</H2>
+
+shadow パスワード機能によって提供されてきた機能の大部分は、
+現在は PAM によって処理されている。
+したがって、
+<B><A HREF="../man1/login.1.html">login</A></B>(1),
+
+<B><A HREF="../man1/passwd.1.html">passwd</A></B>(1),
+
+<B><A HREF="../man1/su.1.html">su</A></B>(1)
+
+などのプログラムは、もはや
+<I>/etc/login.defs</I>
+
+を用いない。
+対応する PAM の設定ファイルを調べるようにしてほしい。
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/login.1.html">login</A></B>(1),
+
+<B><A HREF="../man1/passwd.1.html">passwd</A></B>(1),
+
+<B><A HREF="../man1/su.1.html">su</A></B>(1),
+
+<B><A HREF="../man5/passwd.5.html">passwd</A></B>(5),
+
+<B><A HREF="../man5/shadow.5.html">shadow</A></B>(5),
+
+<B>pam</B>(8)
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>著者</H2>
+
+Julianne Frances Haugh (<A HREF="mailto:jockgrrl@ix.netcom.com">jockgrrl@ix.netcom.com</A>)
+<BR>
+
+Chip Rosenthal (<A HREF="mailto:chip@unicom.com">chip@unicom.com</A>)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">参照表</A><DD>
+<DT><A HREF="#lbAE">バグ</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

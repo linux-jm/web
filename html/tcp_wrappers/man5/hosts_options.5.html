@@ -1,0 +1,269 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of HOSTS_OPTIONS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>HOSTS_OPTIONS</H1>
+Section: File Formats (5)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/tcp_wrappers/release/man5/hosts_options.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+hosts_options - ホストアクセスコントロールの拡張書式
+<A NAME="lbAC">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+この文書は、<A HREF="../man5/hosts_access.5.html">hosts_access</A>(5) で説明する文法のオプショナルな拡張に
+ついて解説するものである。この拡張は、プログラムをコンパイルした
+際に利用の可否が決まる。例えば、Makefile を編集し、コンパイル時
+に PROCESS_OPTIONS を有効にした場合である。
+<P>
+
+拡張書式はこのような形式である:
+<P>
+<BR>
+&nbsp;&nbsp;&nbsp;
+daemon_list : client_list : option : option ...
+<P>
+
+最初のふたつのフィールドについては、<A HREF="../man5/hosts_access.5.html">hosts_access</A>(5) のマニュアル
+で解説されている。ルールの残りの部分は、0 個以上のオプションの列
+である。オプションの中では、すべての &quot;:&quot; という文字はバックスラッ
+シュによって保護される必要がある。
+<P>
+
+オプションは &quot;keyword&quot; または &quot;keyword value&quot; の形式をとる。オプ
+ション群は記述された順に解釈される。いくつかのオプションは 
+%&lt;letter&gt; による置き換えを仮定している。初期のバージョンとの互換
+性のために、&quot;=&quot; を keyword と value(値) の間におく事も許されてい
+る。
+<A NAME="lbAD">&nbsp;</A>
+<H2>LOGGING (ログの記録)</H2>
+
+<DL COMPACT>
+<DT>severity mail.info<DD>
+<DT>severity notice<DD>
+イベントをログに記録する severity(&quot;激しさ&quot;) のレベルを変更する。
+Facility names (供される利便の項目、たとえば mail) は任意であり、
+古い syslog の実装ではサポートされていない。severity オプション
+は、指示されたイベントを強調するか、あるいは無視するために有意で
+ある。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>ACCESS CONTROL (アクセスの可否)</H2>
+
+<DL COMPACT>
+<DT>allow<DD>
+<DT>deny<DD>
+サービスの可否。これらのオプションは、ルールの最後に記述しなけれ
+ばならない。
+</DL>
+<P>
+
+<I>allow</I> と <I>deny</I> は、すべてのアクセスコントロールのルー
+ルを、ただひとつのファイル、たとえば<I>hosts.allow</I> に納める事
+を可能にしている。
+<P>
+明示されたホストだけにアクセスを許可するには:
+<P>
+
+<BR>
+&nbsp;&nbsp;&nbsp;
+ALL: .friendly.domain: ALLOW
+<BR>
+&nbsp;&nbsp;&nbsp;
+ALL: ALL: DENY
+<P>
+トラブルメイカーとなる、いくつかのホストを除いて、すべてのホスト
+からのアクセスを許可するには:
+<P>
+
+<BR>
+&nbsp;&nbsp;&nbsp;
+ALL: .bad.domain: DENY
+<BR>
+&nbsp;&nbsp;&nbsp;
+ALL: ALL: ALLOW
+<P>
+ドメイン名のパターンの最初にはドットがついている事に注目されたい。
+<A NAME="lbAF">&nbsp;</A>
+<H2>RUNNING OTHER COMMANDS (外部コマンドの実行)</H2>
+
+<DL COMPACT>
+<DT>spawn shell_command<DD>
+<A HREF="../man5/hosts_access.5.html">hosts_access</A>(5) のマニュアルで解説される %&lt;letter&gt; の置き換えが
+実行されたのちに、子プロセスで、指定のシェルコマンドを実行する。
+コマンドは標準入力、標準出力、そして標準エラー出力を null デバイ
+スに繋げた状態で実行される。したがって、これによってクライアント
+ホストとの会話が混乱するようなことはない。例えば:
+<P>
+<PRE>
+<BR>
+&nbsp;&nbsp;&nbsp;spawn (/some/where/safe_finger -l @%h | /usr/ucb/mail root) &amp;
+</PRE>
+
+<P>
+これは、%h を リモートホストの名前またはアドレスに置き換えたのち
+に、バックグラウンドの子プロセスで、シェルコマンド
+&quot;safe_finger -l @%h | mail root&quot; を実行する。
+<P>
+この例では、(リモートの) finger サーバーから送られてくるデータに
+よって、ダメージがもたらされる可能性を抑えるため、標準の 
+&quot;finger&quot; コマンドに代わって &quot;safe_finger&quot; コマンドを利用している。
+この &quot;safe_finger&quot; コマンドは、daemon wrapper package に含まれて
+いる。これは、標準の finger の露払いとして、リモートホストから送
+られるデータをフィルタリングする。
+<DT>twist shell_command<DD>
+<A HREF="../man5/hosts_access.5.html">hosts_access</A>(5) のマニュアルで解説される %&lt;letter&gt; の置き換えが
+実行されたのちに、現在のプロセスを、要求されたシェルコマンドで置
+き換える。標準入力、標準出力そして標準エラー出力は、クライアント
+のプロセスに接続される。このオプションはルールの最後に記述する必
+要がある。
+<P>
+実際の ftp デーモンに代わって、メッセージを変更してクライアント
+に返すには:
+<P>
+<PRE>
+<BR>
+&nbsp;&nbsp;&nbsp;in.ftpd : ... : twist /bin/echo 421 Some bounce message
+</PRE>
+
+<P>
+クライアントプロセスと会話する別の方法として、後述する 
+<I>banners</I> オプションを参照されたい。
+<P>
+/some/other/in.telnetd を、コマンドラインの引数やプロセスの環境
+変数によって汚染されることなく実行するには:
+<P>
+<PRE>
+<BR>
+&nbsp;&nbsp;&nbsp;in.telnetd : ... : twist PATH=/some/other; exec in.telnetd
+</PRE>
+
+<P>
+警告: UDP サービスにおいては、standard I/O の利用、またはクライ
+アントプロセスとの交信のための <A HREF="../../LDP_man-pages/man2/read.2.html">read</A>(2)/<A HREF="../../LDP_man-pages/man2/write.2.html">write</A>(2) ルーチンと、
+command を混同しないように; UCP は、また別の基本的な I/O を必要
+とする。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NETWORK OPTIONS (ネットワークに関するオプション)</H2>
+
+<DL COMPACT>
+<DT>keepalive<DD>
+定期的にサーバーはクライアントにメッセージを送るようになる。もし、
+クライアントからの応答がない場合、接続は切断されたものと見なされ
+る。この keepalive オプションは、ユーザーがサーバーに継っている
+間に、マシンの電源を切った時に有用である。keepalive オプションは 
+datagram (UDP) services には役に立たない。
+<DT>linger number_of_seconds<DD>
+サーバーのプロセスが接続を切断したのち、カーネルが未配送データの
+再送を試みる時間を指示する。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>USERNAME LOOKUP (ユーザー名の問い合わせ)</H2>
+
+<DL COMPACT>
+<DT>rfc931 [ timeout_in_seconds ]<DD>
+RFC 931 (TAP, IDENT, RFC 1413) にしたがう形で、クライアントユー
+ザー名を問い合わせる。サービスが TCP 以外の転送方法に基づいてい
+る場合は、このオプションは黙って無視される。この方法はクライアン
+トのシステムが RFC 931 と互換性のあるデーモン (IDENT など) を走
+らせていることが条件で、non-UNIX のクライアントからの接続に対し
+ては、著しく遅くなるだろう。timeout までの秒数は任意である。
+timeout が指示されない場合、コンパイル時に決められた初期値が使わ
+れる。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>MISCELLANEOUS (その他の事項)</H2>
+
+<DL COMPACT>
+<DT>banners /some/directory<DD>
+`/some/directory' の中で、デーモンプロセスの名前と一致するファイ
+ル (たとえば、telnet サービスなら in.tenletd)を探し、その内容を
+クライアントに対してコピーする。改行文字は、CR(carriage-return)
+改行文字に置き換えられ、%&lt;letter&gt; は展開される (<A HREF="../man5/hosts_access.5.html">hosts_access</A>(5) 
+のマニュアルを参照)。
+<P>
+tcp wrapper の配布ソースには、手際よく banner を保守するための、
+サンプルの makefile (Banners.Makefile) が含まれている。
+<P>
+警告: banners は connection-oriented (TCP) network (コネクション
+に指向の高いサービス)でのみ利用する事ができる。
+<DT>nice [ number ]<DD>
+プロセスの nice 値を変更する(初期値は 10)。他のプロセスに、より
+多くの CPU 資源を割り当てるには、正の値を指示する。
+<DT>setenv name value<DD>
+(name, value) のペアをプロセスの環境変数に設定する。value は 
+%&lt;letter&gt; への展開があるものと仮定され、ホワイトスペースの利用は
+自制する必要があるだろう(ただし、前後の空白は切り捨てられる)。
+<P>
+警告: 多くのネットワークデーモンは login または shell プロセスを
+再起動する前に、その環境変数をリセットする。
+<DT>umask 022<DD>
+シェルのビルトインコマンド umask と似た機能。022 の umask は、
+group と world による書き込み禁止措置によって、ファイルの作成を
+予防する。umask の引数は 8 進数でなければならない。
+<DT>user nobody<DD>
+<DT>user nobody.kmem<DD>
+ユーザー &quot;nobody&quot; (またはユーザー &quot;nobody&quot;, グループ &quot;kmem&quot;)は、
+特別な扱いとみなす。最初の形式は、root 権限で全てのサービスを実
+行するような inetdの実装で有用である。二番目の形式は、グループの
+権限のみが必要なサービスのために有用である。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>DIAGNOSTICS</H2>
+
+アクセスコントロールルールに文法エラーが発見された場合、エラーは 
+syslog デーモンへ報告される。余計なオプションは無視され、サービ
+スは拒否される。
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<A HREF="../man5/hosts_access.5.html">hosts_access</A>(5), 基本的なアクセスコントロール書式
+<A NAME="lbAL">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+
+<PRE>
+Wietse Venema (<A HREF="mailto:wietse@wzv.win.tue.nl">wietse@wzv.win.tue.nl</A>)
+Department of Mathematics and Computing Science
+Eindhoven University of Technology
+Den Dolech 2, P.O. Box 513, 
+5600 MB Eindhoven, The Netherlands
+</PRE><A NAME="lbAM">&nbsp;</A>
+<H2>翻訳者</H2>
+
+
+<PRE>
+FUKUSHIMA Osamu/福島於修 &lt;<A HREF="mailto:fuku@amorph.rim.or.jp">fuku@amorph.rim.or.jp</A>&gt;
+
+</PRE>
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAD">LOGGING (ログの記録)</A><DD>
+<DT><A HREF="#lbAE">ACCESS CONTROL (アクセスの可否)</A><DD>
+<DT><A HREF="#lbAF">RUNNING OTHER COMMANDS (外部コマンドの実行)</A><DD>
+<DT><A HREF="#lbAG">NETWORK OPTIONS (ネットワークに関するオプション)</A><DD>
+<DT><A HREF="#lbAH">USERNAME LOOKUP (ユーザー名の問い合わせ)</A><DD>
+<DT><A HREF="#lbAI">MISCELLANEOUS (その他の事項)</A><DD>
+<DT><A HREF="#lbAJ">DIAGNOSTICS</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAL">AUTHOR</A><DD>
+<DT><A HREF="#lbAM">翻訳者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:46 GMT, December 05, 2022
+</BODY>
+</HTML>

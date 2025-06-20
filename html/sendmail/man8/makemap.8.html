@@ -1,0 +1,236 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MAKEMAP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>MAKEMAP</H1>
+Section: Maintenance Commands (8)<BR>Updated: November 16, 1992<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/sendmail/contrib/man8/makemap.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+<B>makemap</B>
+
+- sendmail 用のデータベースマップを作成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>makemap</B>
+
+[<B>-C</B>
+
+<I>file</I>]
+
+[<B>-N</B>]
+
+[<B>-c</B>
+
+<I>cachesize</I>]
+
+[<B>-d</B>]
+
+[<B>-e</B>]
+
+[<B>-f</B>]
+
+[<B>-l</B>]
+
+[<B>-o</B>]
+
+[<B>-r</B>]
+
+[<B>-s</B>]
+
+[<B>-u</B>]
+
+[<B>-v</B>]
+
+<I>maptype mapnam</I>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>解説</H2>
+
+<B>makemap</B>
+
+は、
+<A HREF="../man8/sendmail.8.html">sendmail</A>(8)
+がキー付きマップを検索する際に用いるデータベースマップを作成します。
+これは標準入力から読み込みを行い、指定された
+<I>mapname</I>
+
+に出力を行います。
+<P>
+
+コンパイル方法に依存しますが、
+<B>makemap</B>
+
+は最大 3 種類のデータベースフォーマットを扱います。
+扱うフォーマットは
+<I>maptype</I>
+
+で指定します。
+<I>maptype</I>
+
+には、以下のようなものがあります。
+<P>
+
+<DL COMPACT>
+<DT>dbm<DD>
+DBM
+フォーマットマップ。
+ndbm(3)
+ライブラリが必要です。
+<DT>btree<DD>
+B-Treeフォーマットマップ。
+新しい Berkeley DB
+ライブラリが必要です。
+<DT>hash<DD>
+ハッシュフォーマットマップ。
+同じく
+Berkeley DB
+ライブラリが必要です。
+</DL>
+<P>
+
+すべてのフォーマットで、
+<B>makemap</B>
+
+は標準入力から空白文字で区切られた 2 つの単語を読み込みます。
+最初の単語はデータベースキーで、2番目の単語がその値です。
+値が
+``%<I>n</I>''
+(n は数字) という文字列を含んでいると、sendmail がパラメータ置換を行います。
+``%'' という文字を含めるには、``%%'' とする必要があります。
+空行や ``#'' から始まる行は無視されます。
+<P>
+
+<I>TrustedUser</I>
+
+オプションが sendmail の設定ファイル中で設定されており、
+<B>makemap</B>
+
+が root に起動された場合、生成されたファイルは指定された
+<I>TrustedUser</I>
+
+の所有となります。
+<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>フラグ</H3>
+
+<DL COMPACT>
+<DT><B>-C</B>
+
+<DD>
+TrustedUser オプションを見付けるために、
+指定した
+<B>sendmail</B>
+
+設定ファイルを使用します。
+<DT><B>-N</B>
+
+<DD>
+文字列の終端記号として、ヌル文字もマップに含めます。
+これは、sendmail.cf の ``K'' 行における -N フラグと一致していなければ
+なりません。
+<DT><B>-c</B>
+
+<DD>
+指定したハッシュと B-Tree キャッシュサイズを使用します。
+<DT><B>-d</B>
+
+<DD>
+マップ中に重複するキーが存在することを許します。
+B-Treeフォーマットマップでのみ可能です。
+2 つの同じキーが読まれた場合、両方ともマップに挿入されます。
+<DT><B>-e</B>
+
+<DD>
+空の値を許します (右側の値)。
+<DT><B>-f</B>
+
+<DD>
+通常、キーのなかのすべての大文字は、
+すべて小文字として記録されますが、
+このフラグを指定することによってこの動作を行わないように指定できます。
+これは、sendmail.cf 中の
+<B>K</B>
+
+行における
+-f フラグと一致していなければなりません。
+<DT><B>-l</B>
+
+<DD>
+サポートされているマップタイプを列挙します。
+<DT><B>-o</B>
+
+<DD>
+すでにあるファイルに追加が行われます。
+すでに存在するファイルを引数として指定することができます。
+<DT><B>-r</B>
+
+<DD>
+すでに存在しているキーを置き換えます。
+通常はすでに入力したキーをさらに繰り返して入力しても、
+<B>makemap</B>
+
+は警告を出力し、データベースには取り込みません。
+<DT><B>-s</B>
+
+<DD>
+生成されるマップの安全チェックを無視します。
+これには、
+だれでも書き込めるディレクトリへのハードリンクおよびシンボリックのチェックも
+含まれます。
+<DT><B>-u</B>
+
+<DD>
+データベースの内容を、標準出力へダンプ (アンマップ) します。
+<DT><B>-v</B>
+
+<DD>
+処理の内容を詳細に表示します。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man8/sendmail.8.html">sendmail</A>(8)
+<A NAME="lbAG">&nbsp;</A>
+<H2>歴史</H2>
+
+<B>makemap</B>
+
+コマンドは
+4.4BSD
+から登場しました。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">解説</A><DD>
+<DL>
+<DT><A HREF="#lbAE">フラグ</A><DD>
+</DL>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">歴史</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

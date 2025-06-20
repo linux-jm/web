@@ -1,0 +1,460 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RTNETLINK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RTNETLINK</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/rtnetlink.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rtnetlink - Linux IPv4 ルーティングソケット
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/asm/types.h">asm/types.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/netlink.h">linux/netlink.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/rtnetlink.h">linux/rtnetlink.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<P>
+
+<B>rtnetlink_socket = socket(AF_NETLINK, int </B><I>socket_type</I><B>,
+NETLINK_ROUTE);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+<B>rtnetlink</B> はカーネルのルーティングテーブルを読んだり変更したり するためのものである。これはカーネルが内部のサブシステムと
+通信するためにも用いられているが、それはここでは記述しない。 この man ページではユーザー空間のプログラムとの通信に関してのみ述べる。
+ネットワーク経路・IP アドレス・リンクパラメーター・ 近傍設定 (neighbor setup)・キューイングルール (queueing
+dicipline)・ トラフィッククラス・パケットのクラス分類などが、すべて <B>NETLINK_ROUTE</B> ソケットを通して制御できる。
+<B>rtnetlink</B> は netlink メッセージをベースにしている。詳細は <B><A HREF="../man7/netlink.7.html">netlink</A></B>(7)  を見ること。
+<A NAME="lbAE">&nbsp;</A>
+<H3>ルーティング属性</H3>
+
+rtnetlink メッセージには、初期ヘッダーの後に付加的な属性を 持つものがある。
+<P>
+
+
+
+struct rtattr {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;rta_len;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Length&nbsp;of&nbsp;option&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;rta_type;&nbsp;&nbsp;&nbsp;/*&nbsp;Type&nbsp;of&nbsp;option&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Data&nbsp;follows&nbsp;*/
+};
+
+
+<P>
+
+これらの属性の操作は、 RTA_* マクロか libnetlink のみを使って行うべきである。 <B><A HREF="../man3/rtnetlink.3.html">rtnetlink</A></B>(3)  を見よ。
+<A NAME="lbAF">&nbsp;</A>
+<H3>メッセージ</H3>
+
+rtnetlink は (標準的な netlink メッセージに加えて)  以下のメッセージタイプから構成される。
+<DL COMPACT>
+<DT><B>RTM_NEWLINK</B>, <B>RTM_DELLINK</B>, <B>RTM_GETLINK</B><DD>
+指定したネットワークインターフェースの情報を、生成・削除・取得する。 これらのメッセージは <I>ifinfomsg</I> 構造体と、それに続いていくつかの
+<I>rtattr</I> 構造体を伴う。
+<DT><DD>
+
+struct ifinfomsg {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;ifi_family;&nbsp;/*&nbsp;AF_UNSPEC&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;ifi_type;&nbsp;&nbsp;&nbsp;/*&nbsp;Device&nbsp;type&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ifi_index;&nbsp;&nbsp;/*&nbsp;Interface&nbsp;index&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;&nbsp;ifi_flags;&nbsp;&nbsp;/*&nbsp;Device&nbsp;flags&nbsp;&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;&nbsp;ifi_change;&nbsp;/*&nbsp;change&nbsp;mask&nbsp;*/
+};
+
+<DT><DD>
+
+<I>ifi_flags</I> はデバイスのフラグである。 <B><A HREF="../man7/netdevice.7.html">netdevice</A></B>(7) を参照。 <I>ifi_index</I>
+は他と重ならないインターフェースの index である (Linux 3.7 以降では、 <B>RTMGRP_LINK</B> メッセージで 0
+以外の値を指定することができ、そのため指定した <I>ifindex</I> でリンクを作成できる)。 <I>ifi_change</I>
+は将来の利用のために予約されており、常に 0xFFFFFFFF にセットすべきである。
+<TABLE>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=3>ルーティング属性<BR></TD></TR>
+<TR VALIGN=top><TD><B>rta_type</B></TD><TD>値の型</TD><TD>説明<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=3><HR></TD></TR>
+<TR VALIGN=top><TD><B>IFLA_UNSPEC</B></TD><TD>-</TD><TD>指定されていない<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFLA_ADDRESS</B></TD><TD>hardware address</TD><TD>インターフェース L2 アドレス<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFLA_BROADCAST</B></TD><TD>hardware address</TD><TD>L2 ブロードキャストアドレス<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFLA_IFNAME</B></TD><TD>asciiz string</TD><TD>デバイス名<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFLA_MTU</B></TD><TD>unsigned int</TD><TD>デバイスの MTU<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFLA_LINK</B></TD><TD>int</TD><TD>リンクタイプ<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFLA_QDISC</B></TD><TD>asciiz string</TD><TD>キューイングのルール<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFLA_STATS</B></TD><TD>
+下記参照
+</TD><TD>インターフェースの統計<BR></TD></TR>
+</TABLE>
+
+<DT><DD>
+<B>IFLA_STATS</B> の値の型は <I>struct rtnl_link_stats</I> (Linux 2.4 以前では <I>struct
+net_device_stats</I>) である。
+<DT><B>RTM_NEWADDR</B>, <B>RTM_DELADDR</B>, <B>RTM_GETADDR</B><DD>
+インターフェースの IP アドレスの情報を追加・削除・取得する。 Linux 2.2 では、一つのインターフェースに複数の IP アドレスを
+保持させることができ、これは 2.0 の別名デバイスの概念を置き換える。 Linux 2.2 では、これらのメッセージは IPv4 と IPv6
+の両方のアドレスをサポートしている。 これらは <I>ifaddrmsg</I> 構造体を伴う。そのあとに <I>rtattr</I>
+ルーティング属性が続くこともある。
+<DT><DD>
+
+struct ifaddrmsg {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;ifa_family;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Address&nbsp;type&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;ifa_prefixlen;&nbsp;/*&nbsp;Prefixlength&nbsp;of&nbsp;address&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;ifa_flags;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Address&nbsp;flags&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;ifa_scope;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Address&nbsp;scope&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;ifa_index;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Interface&nbsp;index&nbsp;*/
+};
+
+<DT><DD>
+<I>ifa_family</I> はアドレスファミリーのタイプである (現在は <B>AF_INET</B> または <B>AF_INET6</B>)。
+<I>ifa_prefixlen</I> はアドレスのアドレスマスクの長さである (IPv4 のように、 そのファミリーで定義されている場合)。
+<I>ifa_scope</I> はアドレスのスコープである。 <I>ifa_index</I> はアドレスが関連づけられているインターフェースの index である。
+<I>ifa_flags</I> はフラグワードで、 二つめのアドレス (古い別名インターフェース) の場合は <B>IFA_F_SECONDARY</B>
+に、永続的なアドレスの場合は <B>IFA_F_PERMANENT</B> に適用される。ユーザーによってセットされるフラグと、 undocumented
+なフラグがある。
+<TABLE>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=3>属性<BR></TD></TR>
+<TR VALIGN=top><TD><B>rta_type</B></TD><TD>値の型</TD><TD>説明<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=3><HR></TD></TR>
+<TR VALIGN=top><TD><B>IFA_UNSPEC</B></TD><TD>-</TD><TD>指定されていない<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFA_ADDRESS</B></TD><TD>raw protocol address</TD><TD>インターフェースアドレス<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFA_LOCAL</B></TD><TD>raw protocol address</TD><TD>ローカルアドレス<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFA_LABEL</B></TD><TD>asciiz string</TD><TD>インターフェースの名前<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFA_BROADCAST</B></TD><TD>raw protocol address</TD><TD>ブロードキャストアドレス<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFA_ANYCAST</B></TD><TD>raw protocol address</TD><TD>anycast アドレス<BR></TD></TR>
+<TR VALIGN=top><TD><B>IFA_CACHEINFO</B></TD><TD>struct ifa_cacheinfo</TD><TD>アドレス情報<BR></TD></TR>
+</TABLE>
+
+
+<DT><B>RTM_NEWROUTE</B>, <B>RTM_DELROUTE</B>, <B>RTM_GETROUTE</B><DD>
+ネットワーク経路の情報を生成・削除・取得する。 これらのメッセージは <I>rtmsg</I> 構造体を伴う。そのあとにいくつかの <I>rtattr</I>
+構造体を続けることもできる。 <B>RTM_GETROUTE</B> で <I>rtm_dst_len</I> と <I>rtm_src_len</I> に 0
+をセットすると、 指定されたルーティングテーブルの全てのエントリーを所得する。 <I>rtm_table</I> と <I>rtm_protocol</I>
+以外の他のフィールドに 0 を入れると、ワイルドカードを意味する。
+<DT><DD>
+
+struct rtmsg {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;rtm_family;&nbsp;&nbsp;&nbsp;/*&nbsp;Address&nbsp;family&nbsp;of&nbsp;route&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;rtm_dst_len;&nbsp;&nbsp;/*&nbsp;Length&nbsp;of&nbsp;destination&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;rtm_src_len;&nbsp;&nbsp;/*&nbsp;Length&nbsp;of&nbsp;source&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;rtm_tos;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;TOS&nbsp;filter&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;rtm_table;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Routing&nbsp;table&nbsp;ID;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;see&nbsp;RTA_TABLE&nbsp;below&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;rtm_protocol;&nbsp;/*&nbsp;Routing&nbsp;protocol;&nbsp;see&nbsp;below&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;rtm_scope;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;See&nbsp;below&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;rtm_type;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;See&nbsp;below&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;rtm_flags;
+};
+
+<TABLE>
+<TR VALIGN=top><TD><B>rtm_type</B></TD><TD>経路のタイプ<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD><B>RTN_UNSPEC</B></TD><TD>未知の経路<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTN_UNICAST</B></TD><TD>ゲートウェイまたはダイレクトな経路<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTN_LOCAL</B></TD><TD>ローカルインターフェースの経路<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTN_BROADCAST</B></TD><TD>
+ローカルなブロードキャスト経路 (ブロードキャストとして送信される)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTN_ANYCAST</B></TD><TD>
+ローカルなブロードキャスト経路 (ユニキャストとして送信される)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTN_MULTICAST</B></TD><TD>マルチキャスト経路<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTN_BLACKHOLE</B></TD><TD>パケットを捨てる経路<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTN_UNREACHABLE</B></TD><TD>到達できない行き先<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTN_PROHIBIT</B></TD><TD>パケットを拒否する経路<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTN_THROW</B></TD><TD>経路探索を別のテーブルで継続<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTN_NAT</B></TD><TD>ネットワークアドレスの変換ルール<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTN_XRESOLVE</B></TD><TD>
+外部レゾルバを参照 (実装されていない)
+<BR></TD></TR>
+</TABLE>
+
+<TABLE>
+<TR VALIGN=top><TD><B>rtm_protocol</B></TD><TD>経路の情報源<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD><B>RTPROT_UNSPEC</B></TD><TD>不明<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTPROT_REDIRECT</B></TD><TD>
+ICMP リダイレクトによる (現在は用いられない)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTPROT_KERNEL</B></TD><TD>カーネルによる<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTPROT_BOOT</B></TD><TD>ブート時<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTPROT_STATIC</B></TD><TD>管理者による<BR></TD></TR>
+</TABLE>
+
+<P>
+<B>RTPROT_STATIC</B> よりも大きな値はカーネルによって解釈されない。これは 単なるユーザーへの情報である。これらは経路情報の情報源を
+タグ付けしたり、複数のルーティングデーモンからの情報を 区別するために用いることができる。 既に割り当てられているルーティングデーモンの識別子については
+<I>&lt;<A HREF="file:///usr/include/linux/rtnetlink.h">linux/rtnetlink.h</A>&gt;</I> を見よ。
+<DT><DD>
+<I>rtm_scope</I> は行き先への距離である。
+<TABLE>
+<TR VALIGN=top><TD><B>RT_SCOPE_UNIVERSE</B></TD><TD>グローバルな経路<BR></TD></TR>
+<TR VALIGN=top><TD><B>RT_SCOPE_SITE</B></TD><TD>
+ローカルな自律システムにおける内部経路
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>RT_SCOPE_LINK</B></TD><TD>このリンク上の経路<BR></TD></TR>
+<TR VALIGN=top><TD><B>RT_SCOPE_HOST</B></TD><TD>ローカルホスト上の経路<BR></TD></TR>
+<TR VALIGN=top><TD><B>RT_SCOPE_NOWHERE</B></TD><TD>行き先が存在しない<BR></TD></TR>
+</TABLE>
+
+<P>
+ユーザーは <B>RT_SCOPE_UNIVERSE</B> と <B>RT_SCOPE_SITE</B> の間の値を用いることができる。
+<DT><DD>
+<I>rtm_flags</I> は以下の意味を持つ:
+<TABLE>
+<TR VALIGN=top><TD><B>RTM_F_NOTIFY</B></TD><TD>
+経路が変更されると、 rtnetlink を通してユーザーに通知が行く。
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTM_F_CLONED</B></TD><TD>経路は他の経路によって複製された。<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTM_F_EQUALIZE</B></TD><TD>マルチパスイコライザ (まだ実装されていない)<BR></TD></TR>
+</TABLE>
+
+<P>
+<I>rtm_table</I> ではルーティングテーブルを指定する。
+<TABLE>
+<TR VALIGN=top><TD><B>RT_TABLE_UNSPEC</B></TD><TD>指定されていないルーティングテーブル<BR></TD></TR>
+<TR VALIGN=top><TD><B>RT_TABLE_DEFAULT</B></TD><TD>デフォルトのテーブル<BR></TD></TR>
+<TR VALIGN=top><TD><B>RT_TABLE_MAIN</B></TD><TD>メインのテーブル<BR></TD></TR>
+<TR VALIGN=top><TD><B>RT_TABLE_LOCAL</B></TD><TD>ローカルテーブル<BR></TD></TR>
+</TABLE>
+
+<P>
+
+ユーザーは <B>RT_TABLE_UNSPEC</B> と <B>RT_TABLE_DEFAULT</B>.  の間の任意の値を用いることができる。
+
+<TABLE>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=3>属性<BR></TD></TR>
+<TR VALIGN=top><TD><B>rta_type&nbsp;&nbsp;</B></TD><TD>値の型&nbsp;&nbsp;</TD><TD>説明<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=3><HR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_UNSPEC&nbsp;&nbsp;</B></TD><TD>-&nbsp;&nbsp;</TD><TD>無視される<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_DST&nbsp;&nbsp;</B></TD><TD>protocol address&nbsp;&nbsp;</TD><TD>経路の行き先アドレス<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_SRC&nbsp;&nbsp;</B></TD><TD>protocol address&nbsp;&nbsp;</TD><TD>経路の発信元アドレス<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_IIF&nbsp;&nbsp;</B></TD><TD>int&nbsp;&nbsp;</TD><TD>入力インターフェースの index<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_OIF&nbsp;&nbsp;</B></TD><TD>int&nbsp;&nbsp;</TD><TD>出力インターフェースの index<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_GATEWAY&nbsp;&nbsp;</B></TD><TD>protocol address&nbsp;&nbsp;</TD><TD>経路のゲートウェイ<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_PRIORITY&nbsp;&nbsp;</B></TD><TD>int&nbsp;&nbsp;</TD><TD>経路の優先度<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_PREFSRC&nbsp;&nbsp;</B></TD><TD>protocol address&nbsp;&nbsp;</TD><TD>Preferred source address<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_METRICS&nbsp;&nbsp;</B></TD><TD>int&nbsp;&nbsp;</TD><TD>経路のメトリック<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_MULTIPATH&nbsp;&nbsp;</B></TD><TD>&nbsp;&nbsp;</TD><TD>
+Multipath nexthop data
+br
+(see below).
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_PROTOINFO&nbsp;&nbsp;</B></TD><TD>&nbsp;&nbsp;</TD><TD>No longer used<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_FLOW&nbsp;&nbsp;</B></TD><TD>int&nbsp;&nbsp;</TD><TD>Route realm<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_CACHEINFO&nbsp;&nbsp;</B></TD><TD>struct rta_cacheinfo&nbsp;&nbsp;</TD><TD>(linux/rtnetlink.h 参照)<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_SESSION&nbsp;&nbsp;</B></TD><TD>&nbsp;&nbsp;</TD><TD>No longer used<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_MP_ALGO&nbsp;&nbsp;</B></TD><TD>&nbsp;&nbsp;</TD><TD>No longer used<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_TABLE&nbsp;&nbsp;</B></TD><TD>int&nbsp;&nbsp;</TD><TD>
+Routing table ID; if set,
+<BR>
+
+rtm_table is ignored
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_MARK&nbsp;&nbsp;</B></TD><TD>int&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_MFC_STATS&nbsp;&nbsp;</B></TD><TD>struct rta_mfc_stats&nbsp;&nbsp;</TD><TD>(linux/rtnetlink.h 参照)<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_VIA&nbsp;&nbsp;</B></TD><TD>struct rtvia&nbsp;&nbsp;</TD><TD>
+Gateway in different AF
+(see below)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_NEWDST&nbsp;&nbsp;</B></TD><TD>protocol address&nbsp;&nbsp;</TD><TD>
+パケットの経路の行き先アドレスを変更する
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_PREF&nbsp;&nbsp;</B></TD><TD>char&nbsp;&nbsp;</TD><TD>
+RFC4191 IPv6 router
+preference (see below)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_ENCAP_TYPE&nbsp;&nbsp;</B></TD><TD>short&nbsp;&nbsp;</TD><TD>
+Encapsulation type for
+<BR>
+
+lwtunnels (下記参照)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_ENCAP&nbsp;&nbsp;</B></TD><TD>&nbsp;&nbsp;</TD><TD>Defined by RTA_ENCAP_TYPE<BR></TD></TR>
+<TR VALIGN=top><TD><B>RTA_EXPIRES&nbsp;&nbsp;</B></TD><TD>int&nbsp;&nbsp;</TD><TD>
+Expire time for IPv6
+routes (in seconds)
+<BR></TD></TR>
+</TABLE>
+
+<DT><DD>
+<B>RTA_MULTIPATH</B> contains several packed instances of <I>struct rtnexthop</I>
+together with nested RTAs (<B>RTA_GATEWAY</B>):
+<DT><DD>
+
+
+struct rtnexthop {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;rtnh_len;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Length&nbsp;of&nbsp;struct&nbsp;+&nbsp;length
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;RTAs&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;rtnh_flags;&nbsp;&nbsp;&nbsp;/*&nbsp;Flags&nbsp;(see
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;linux/rtnetlink.h)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;rtnh_hops;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Nexthop&nbsp;priority&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rtnh_ifindex;&nbsp;/*&nbsp;Interface&nbsp;index&nbsp;for&nbsp;this
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nexthop&nbsp;*/
+}
+
+
+<DT><DD>
+There exist a bunch of <B>RTNH_*</B> macros similar to <B>RTA_*</B> and <B>NLHDR_*</B>
+macros useful to handle these structures.
+<DT><DD>
+
+
+struct rtvia {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;rtvia_family;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;rtvia_addr[0];
+};
+
+
+<DT><DD>
+<I>rtvia_addr</I> is the address, <I>rtvia_family</I> is its family type.
+<DT><DD>
+<B>RTA_PREF</B> may contain values <B>ICMPV6_ROUTER_PREF_LOW</B>,
+<B>ICMPV6_ROUTER_PREF_MEDIUM</B>, and <B>ICMPV6_ROUTER_PREF_HIGH</B> defined incw
+<I>&lt;<A HREF="file:///usr/include/linux/icmpv6.h">linux/icmpv6.h</A>&gt;</I>.
+<DT><DD>
+<B>RTA_ENCAP_TYPE</B> may contain values <B>LWTUNNEL_ENCAP_MPLS</B>,
+<B>LWTUNNEL_ENCAP_IP</B>, <B>LWTUNNEL_ENCAP_ILA</B>, or <B>LWTUNNEL_ENCAP_IP6</B>
+defined in <I>&lt;<A HREF="file:///usr/include/linux/lwtunnel.h">linux/lwtunnel.h</A>&gt;</I>.
+<DT><DD>
+<B>(これらの値を埋めること!)</B>
+<DT><B>RTM_NEWNEIGH</B>, <B>RTM_DELNEIGH</B>, <B>RTM_GETNEIGH</B><DD>
+近傍テーブル (neighbor table) のエントリー (例えば ARP エントリー) の情報を追加・削除・取得する。 このメッセージは
+<I>ndmsg</I> 構造体を伴う。
+<DT><DD>
+
+struct ndmsg {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;ndm_family;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ndm_ifindex;&nbsp;&nbsp;/*&nbsp;Interface&nbsp;index&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u16&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ndm_state;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;State&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u8&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ndm_flags;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Flags&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u8&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ndm_type;
+};
+<P>
+struct nda_cacheinfo {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ndm_confirmed;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ndm_used;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ndm_updated;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ndm_refcnt;
+};
+
+<DT><DD>
+<I>ndm_state</I> は以下の状態のビットマスクである:
+<TABLE>
+<TR VALIGN=top><TD><B>NUD_INCOMPLETE</B></TD><TD>現在レゾルブ中のキャッシュエントリー<BR></TD></TR>
+<TR VALIGN=top><TD><B>NUD_REACHABLE</B></TD><TD>動作確認済みのキャッシュエントリー<BR></TD></TR>
+<TR VALIGN=top><TD><B>NUD_STALE</B></TD><TD>期限切れのキャッシュエントリー<BR></TD></TR>
+<TR VALIGN=top><TD><B>NUD_DELAY</B></TD><TD>タイマー待ちのキャッシュエントリー<BR></TD></TR>
+<TR VALIGN=top><TD><B>NUD_PROBE</B></TD><TD>再確認中のキャッシュエントリー<BR></TD></TR>
+<TR VALIGN=top><TD><B>NUD_FAILED</B></TD><TD>不正なキャッシュエントリー<BR></TD></TR>
+<TR VALIGN=top><TD><B>NUD_NOARP</B></TD><TD>行き先キャッシュのないデバイス<BR></TD></TR>
+<TR VALIGN=top><TD><B>NUD_PERMANENT</B></TD><TD>静的なエントリー<BR></TD></TR>
+</TABLE>
+
+<P>
+有効な <I>ndm_flags</I> は以下の通り:
+<TABLE>
+<TR VALIGN=top><TD><B>NTF_PROXY</B></TD><TD>プロクシ arp エントリー<BR></TD></TR>
+<TR VALIGN=top><TD><B>NTF_ROUTER</B></TD><TD>IPv6 ルータ<BR></TD></TR>
+</TABLE>
+
+<P>
+
+
+<I>rtattr</I> 構造体は、 <I>rta_type</I> フィールドに応じてそれぞれ以下の意味を持つ:
+<TABLE>
+<TR VALIGN=top><TD><B>NDA_UNSPEC</B></TD><TD>未知のタイプ<BR></TD></TR>
+<TR VALIGN=top><TD><B>NDA_DST</B></TD><TD>近傍キャッシュネットワーク層の行き先アドレス<BR></TD></TR>
+<TR VALIGN=top><TD><B>NDA_LLADDR</B></TD><TD>近傍キャッシュリンク層のアドレス<BR></TD></TR>
+<TR VALIGN=top><TD><B>NDA_CACHEINFO</B></TD><TD>キャッシュの統計<BR></TD></TR>
+</TABLE>
+
+<P>
+<I>rta_type</I> フィールドが <B>NDA_CACHEINFO</B> の場合には、 <I>struct nda_cacheinfo</I> ヘッダーが続く。
+<DT><B>RTM_NEWRULE</B>, <B>RTM_DELRULE</B>, <B>RTM_GETRULE</B><DD>
+ルーティングルールを追加・削除・取得する。 <I>struct rtmsg</I> を伴う。
+<DT><B>RTM_NEWQDISC</B>, <B>RTM_DELQDISC</B>, <B>RTM_GETQDISC</B><DD>
+キューイングルールを追加・削除・取得する。 このメッセージは <I>struct tcmsg</I> を伴い、またそのあとに属性がいくつか続くこともある。
+<DT><DD>
+
+struct tcmsg {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;tcm_family;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tcm_ifindex;&nbsp;&nbsp;&nbsp;/*&nbsp;interface&nbsp;index&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tcm_handle;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Qdisc&nbsp;handle&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tcm_parent;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Parent&nbsp;qdisc&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tcm_info;
+};
+
+<TABLE>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=3>属性<BR></TD></TR>
+<TR VALIGN=top><TD><B>rta_type&nbsp;&nbsp;</B></TD><TD>値の型&nbsp;&nbsp;</TD><TD>説明<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=3><HR></TD></TR>
+<TR VALIGN=top><TD><B>TCA_UNSPEC&nbsp;&nbsp;</B></TD><TD>-&nbsp;&nbsp;</TD><TD>指定されていない<BR></TD></TR>
+<TR VALIGN=top><TD><B>TCA_KIND&nbsp;&nbsp;</B></TD><TD>asciiz string&nbsp;&nbsp;</TD><TD>キューイングルールの名前<BR></TD></TR>
+<TR VALIGN=top><TD><B>TCA_OPTIONS&nbsp;&nbsp;</B></TD><TD>byte sequence&nbsp;&nbsp;</TD><TD>Qdisc 特有のオプションが続く<BR></TD></TR>
+<TR VALIGN=top><TD><B>TCA_STATS&nbsp;&nbsp;</B></TD><TD>struct tc_stats&nbsp;&nbsp;</TD><TD>Qdisc の統計<BR></TD></TR>
+<TR VALIGN=top><TD><B>TCA_XSTATS&nbsp;&nbsp;</B></TD><TD>qdisc-specific&nbsp;&nbsp;</TD><TD>モジュール特有の統計<BR></TD></TR>
+<TR VALIGN=top><TD><B>TCA_RATE&nbsp;&nbsp;</B></TD><TD>struct tc_estimator&nbsp;&nbsp;</TD><TD>レート制限<BR></TD></TR>
+</TABLE>
+
+<P>
+さらに、 qdisc モジュール特有の様々な属性を指定できる。 詳細な情報は適切なインクルードファイルを見よ。
+<DT><B>RTM_NEWTCLASS</B>, <B>RTM_DELTCLASS</B>, <B>RTM_GETTCLASS</B><DD>
+トラフィッククラスを追加・削除・取得する。 これらのメッセージは、上述の <I>struct tcmsg</I> を伴う。
+<DT><B>RTM_NEWTFILTER</B>, <B>RTM_DELTFILTER</B>, <B>RTM_GETTFILTER</B><DD>
+トラフィックフィルターの情報を追加・削除・取得する。 これらのメッセージは、上述の <I>struct tcmsg</I> を伴う。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>rtnetlink</B> は Linux 2.2 の新機能である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+このマニュアルは完全ではない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3), <B><A HREF="../man3/rtnetlink.3.html">rtnetlink</A></B>(3), <B><A HREF="../man7/ip.7.html">ip</A></B>(7), <B><A HREF="../man7/netlink.7.html">netlink</A></B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">ルーティング属性</A><DD>
+<DT><A HREF="#lbAF">メッセージ</A><DD>
+</DL>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

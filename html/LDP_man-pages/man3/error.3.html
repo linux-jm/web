@@ -1,0 +1,134 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ERROR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ERROR</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/error.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+error, error_at_line, error_message_count, error_one_per_line,
+error_print_progname - glibc のエラー書き出し関数
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/error.h">error.h</A>&gt;</B>
+
+<B>void error(int </B><I>status</I><B>, int </B><I>errnum</I><B>, const char *</B><I>format</I><B>, ...);</B>
+
+<B>void error_at_line(int </B><I>status</I><B>, int </B><I>errnum</I><B>, const char *</B><I>filename</I><B>,</B>
+<B>                   unsigned int </B><I>linenum</I><B>, const char *</B><I>format</I><B>, ...);</B>
+
+<B>extern unsigned int </B><I>error_message_count</I><B>;</B>
+
+<B>extern int </B><I>error_one_per_line</I><B>;</B>
+
+<B>extern void (*</B><I>error_print_progname</I><B>) (void);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>error</B>()  は汎用的なエラー出力関数である。 この関数は標準出力 (<I>stdout</I>) をフラッシュしてから、情報を標準エラー出力
+(<I>stderr</I>) に出力する。 出力される情報は、プログラム名、コロン、スペース、 <B><A HREF="../man3/printf.3.html">printf</A></B>(3) 形式の フォーマット文字列
+<I>format</I> で指定されたメッセージである。 <I>errnum</I> が 0 以外の場合、 2 つ目のコロンとスペースの後に
+<I>strerror(errnum)</I> で指定された文字列も出力される。 <I>format</I> で必要な引数は、引数リストの <I>format</I>
+の後ろに続けて指定する必要がある。出力は改行文字で終端される。
+<P>
+
+<B>error</B>() で出力されるプログラム名は、大域変数 <B><A HREF="../man3/program_invocation_name.3.html">program_invocation_name</A></B>(3) の値である。
+<I>program_invocation_name</I> の初期値は <I>main</I>() の <I>argv[0]</I>
+の値と等しい。この変数の値は変更可能であり、変更すると <B>error</B>() の出力が変わる。
+<P>
+
+<I>status</I> が 0 以外の場合、 <B>error</B>() は <B><A HREF="../man3/exit.3.html">exit</A></B>(3)
+を呼び出して、指定された終了ステータスでプログラムを終了させる。
+<P>
+
+<B>error_at_line</B>() 関数は、引数 <I>filename</I> と <I>linenum</I> が追加されている以外は <B>error</B>()
+と同じである。 生成される出力は <B>error</B>() と同様だが、プログラム名の後に コロン、 <I>filename</I> の値、コロン、
+<I>linenum</I> の値が出力される点が異なる。
+<P>
+プリプロセッサの値 <B>__LINE__</B> と <B>__FILE__</B> は、 <B>error_at_line</B>()
+を呼び出すときに役に立つが、その他のプリプロセッサの値も使うことができる。例えば、これらの引数で入力ファイルにおける位置を参照することもできる。
+<P>
+
+大域変数 <I>error_one_per_line</I> が 0 以外に設定されている場合、 <I>filename</I> と <I>linenum</I>
+の値が両方とも等しい一連の <B>error_at_line</B>() の呼び出しは、 1 つの (最初の) メッセージの出力にまとめられる。
+<P>
+
+大域変数 <I>error_message_count</I> は、 <B>error</B>() と <B>error_at_line</B>()
+で出力されたメッセージの数を表す。
+<P>
+
+大域変数 <I>error_print_progname</I> に 関数のアドレスが割り当てられている場合 (つまり NULL ではない場合)、
+メッセージの前にプログラム名とコロンを書き出すのではなく、この関数を呼び出す。この関数は、適切な文字列を標準エラー出力 (<I>stderr</I>)
+に書き出さなければならない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>error</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>error_at_line</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe&nbsp;race: error_at_line/error_one_per_line locale
+<BR></TD></TR>
+</TABLE>
+
+
+<P>
+
+内部変数 <I>error_one_per_line</I> に (同期の仕組みなしで) アクセスが行われる (ただし、この変数は一度使用された <I>int</I>
+なので、十分安全であろう)。 <I>error_one_per_line</I> が 0
+以外に設定されている場合、最後に表示したファイル名と行番号を保持するのに使用される (ユーザーに公開されない)
+内部静的変数にアクセスが行われ、同期なしで変更される。この変更は、アトミックではなく、キャンセルが無効化される前にも発生する。そのため、これら 2
+つの変数のうち 1 つだけが変更された後でも割り込まれることがある。それ以外は、 <B>error_at_line</B>() は <B>error</B>
+とほぼ同じである。
+<A NAME="lbAF">&nbsp;</A>
+<H2>準拠</H2>
+
+これらの関数と変数は GNU による拡張であり、 移植性を考えたプログラムでは使用すべきではない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/err.3.html">err</A></B>(3), <B><A HREF="../man3/errno.3.html">errno</A></B>(3), <B><A HREF="../man3/exit.3.html">exit</A></B>(3), <B><A HREF="../man3/perror.3.html">perror</A></B>(3),
+<B><A HREF="../man3/program_invocation_name.3.html">program_invocation_name</A></B>(3), <B><A HREF="../man3/strerror.3.html">strerror</A></B>(3)
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">属性</A><DD>
+<DT><A HREF="#lbAF">準拠</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

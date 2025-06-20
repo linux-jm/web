@@ -1,0 +1,408 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of INSMOD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>INSMOD</H1>
+Section: Linux Module Support (8)<BR>Updated: October 2, 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/modutils/release/man8/insmod.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+insmod - ローダブルカーネルモジュールをインストールする
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>insmod</B>
+
+[-fhkLmnpqrsSvVxXyY] [-e&nbsp;persist_name] [-o&nbsp;module_name]
+[-O&nbsp;blob_name] [-P&nbsp;prefix] module [&nbsp;symbol=value&nbsp;...&nbsp;]
+<A NAME="lbAD">&nbsp;</A>
+<H2>このマニュアルについて</H2>
+
+このマニュアルは、Linux Kernel 2.4 の時代に使われていた modutils
+パッケージの <B>insmod</B> の説明で、古いものです。現在ではたいていの場合、kmod
+パッケージの <B>insmod</B> が使われています。(2022/12/02, Linux JM Project)
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+<B>insmod</B>
+
+は実行中のカーネルにローダブルモジュールをインストールする。
+<P>
+
+<B>insmod</B>
+
+は実行中のカーネルにモジュールをリンクし、
+カーネルがエクスポートしているシンボルテーブルにある
+全てのシンボルを解決しようとする。
+<P>
+
+ディレクトリや拡張子なしでモジュールファイル名を与えると、
+<B>insmod</B>
+
+は標準のデフォルトディレクトリ(複数)からモジュールを探す。環境変数
+MODPATH を使って、このデフォルト値を上書きすることができる。
+/etc/modules.conf のようなモジュール設定ファイルがあれば、
+こちらの内容が MODPATH での指定を上書きする。
+<P>
+
+環境変数 MODULECONF によって、 /etc/modules.conf
+(あるいは /etc/conf.modules (使わないほうが良い))
+以外の設定ファイルを指定することもできる。
+この環境変数は、上記の指定すべてより優先される。
+<A NAME="lbAF">&nbsp;</A>
+<H3>オプション</H3>
+
+<DL COMPACT>
+<DT><I>-f --force</I>
+
+<DD>
+実行中のカーネルのバージョンと、
+モジュールに組み込まれているカーネルの対象バージョンが異なっても、
+モジュールのロードを試みる。
+これはカーネルバージョンチェックだけを無効にし、
+シンボル名チェックには何の影響も与えない。
+モジュールのシンボル名がカーネルのものと一致しない場合、
+<I>insmod</I>
+
+に強制的にモジュールをロードさせる方法はない。
+<DT><I>-h --help</I>
+
+<DD>
+ヘルプ文章を表示する。
+<DT><I>-k --autoclean</I>
+
+<DD>
+モジュールの auto-clean フラグを設定する。このフラグは
+<B><A HREF="../man8/kerneld.8.html">kerneld</A></B>(8) が使用し、
+一定期間(普通は 1 分)使われなかったモジュールを削除する。
+<DT><I>-L --lock</I>
+
+<DD>
+同じモジュールを同時にロードすることを防ぐために、<B><A HREF="../../LDP_man-pages/man2/flock.2.html">flock</A></B>(2) を用いる。
+<DT><I>-m --map</I>
+
+<DD>
+ロード時のメモリマップを標準出力に出力する。これにより、
+カーネルパニックの際のモジュールのデバッグが容易になる。
+より詳細なデバッグを可能にする。
+デフォルトでは ksymoops シンボルを定義する。
+このオプションは -X/-x オプションとは独立である。
+<P>
+ksymoops シンボルは、各ローダブルモジュールごとに、
+約 260 バイトを余分に必要とする。カーネル空間がキツキツで、
+ksyms を最小にしたいような場合を除き、
+デフォルトのままにして詳しい Oops デバッグを有効にするほうが良い。
+<DT><I>-o </I>module_name<I> --name</I>=module_name<I></I>
+
+<DD>
+モジュールに明示的に名前をつける。
+通常はロードするオブジェクトファイルの
+basename に基づいた名前が用いられる。
+<DT><I>-O </I>blob_name<I> --blob</I>=blob_name<I></I>
+
+<DD>
+バイナリオブジェクトを
+<I>blob_name</I>
+
+のファイル名で保存する。
+このファイルは カーネルにロードされ、セクション操作と再配置が行われた後の
+状態を正確に表しているバイナリ blob (ELF ヘッダなし)である。
+オブジェクトのマッピング情報を得るためには
+<I>-m</I>
+
+オプションが推奨される。
+<DT><I>-P </I>prefix<I> --prefix</I>=prefix<I></I>
+
+<DD>
+このオプションは SMP カーネルや bigmem カーネル向けの、
+バージョン付きモジュールを使うときに利用できる。
+これらのモジュールには、シンボル名に余分な prefix がつくからである。
+カーネルがシンボルバージョンつきでビルドされると、
+insmod は自動的に prefix を &quot;get_module_symbol&quot; か &quot;inter_module_get&quot; の定義から取得する
+(モジュールをサポートする全てのカーネルにはこのどちらかが存在しなければならない)。
+カーネルがシンボルバージョンを持たず、
+しかしモジュールがシンボルバージョン付きでビルドされた場合は、
+ユーザーは -P を指定する必要がある。
+<DT><I>-e </I>persist_name<I> --persist</I>=persist_name<I></I>
+
+<DD>
+モジュールの永続データを保存するファイル名を指定する。
+これはモジュールがロードされた時に読み込まれ、
+モジュールの実体がアンロードされた時に書き込まれる。
+モジュールに永続データがない場合はこのオプションは暗黙に無視される。
+永続データは
+<I>insmod</I>
+
+にこのオプションが指定された場合にのみ読み込まれる。
+デフォルトでは
+<I>insmod</I>
+
+は永続データを処理しない。
+省略記法として
+<I>-e</I>
+
+&quot;&quot; (空文字列) が指定されると、
+<I>insmod</I>
+
+は
+<I>persistdir</I>
+
+の値(
+<B><A HREF="../man5/modules.conf.5.html">modules.conf</A></B>(5)
+
+参照)の後ろに、モジュールのファイル名から末尾の '.gz', '.o' and '.mod' を
+取ったもの(そのモジュールが見つかったモジュール検索パスからの相対パス)が
+指定されたものと解釈する。
+<I>persistdir</I>=
+
+(つまり persistdir に 空フィールド)が指定されていると、
+省略記法は暗黙に無視される。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>モジュールのパラメータ</H3>
+
+一部のモジュールではロード時にパラメータを指定して、
+動作を変えることができる。
+このようなパラメータは I/O ポートや IRQ 番号であることが多い。
+これらの数値はマシンごとに異なり、
+しかもハードウェアから求めることができないからである。
+<P>
+
+2.0 系列のカーネル用に構築したモジュールでは、
+全ての整数と文字ポインタシンボルはパラメータとして扱われ、
+従ってその内容は変更されうる。
+2.1 系列のカーネルからは、特定の値だけが変更されるように、
+シンボルにはパラメータかどうかの印が明示的に付けられる。
+また、ロード時に与えられた値をチェックするために、
+追加の型情報が与えられる。
+<P>
+
+整数の場合には、全ての値は 10 進値、8 進値, 16 進値で
+C 言語と同じように指定できる (17, 021, 0x11 等)。
+配列の要素は、値をコンマで区切って並べることにより指定する。
+値を省略することにより、要素を飛ばすことができる。
+<P>
+
+2.0 系列のモジュールでは、数字で始まらない値は文字列と解釈される。2.1
+以降では、値を文字列と解釈するかどうかはパラメータの型情報によって判断する。
+値が二重引用符(<I>&quot;</I>)で始まる場合は、
+エスケープシーケンスも含めて全て C 言語と同じように文字列として解釈される。
+シェルのプロンプトで使う場合にはクォート自体もシェルが解釈するため、
+保護しなければならない点に注意すること。
+<A NAME="lbAH">&nbsp;</A>
+<H3>GPL ライセンスのモジュールとシンボル</H3>
+
+カーネル 2.4.10 からモジュールはライセンス文を含むことになり、
+MODULE_LICENSE() によって定義されることになった。
+いくつかの文字列は GPL 互換であると認識される。
+それ以外のライセンス文字列だったり、そもそもライセンスがない場合は、
+そのモジュールはプロプラエタリなものとして扱われる。
+GPL 互換とされるライセンス文字列については
+include/linux/module.h を参照すること。
+<P>
+
+カーネルが
+<I>/proc/sys/kernel/tainted flag</I>
+
+をサポートする場合は、
+<I>insmod</I>
+
+は GPL ライセンスを持たないモジュールのロード時に、
+tainted (汚染) フラグを '1' と OR する。
+カーネルが tainting をサポートしていると、
+ライセンスのないモジュールがロードされる際には警告が発せられる。
+警告は GPL 互換でない MODULE_LICENSE() を持つモジュールに対しては
+(tainting をサポートしていない古いカーネルでも)、
+常に警告が発せられる。
+これによって、新しいモジュールが古いカーネルで利用されるときも、
+警告は最小限になる。
+<P>
+
+<I>insmod&nbsp;-f</I>
+
+(強制) モードでは、tainting をサポートするカーネルなら
+tainted フラグが '2' と OR され、常に警告が発せられる。
+<P>
+
+カーネル開発者の中には、彼らのコードがエクスポートするシンボルは、
+GPL 互換なライセンスのモジュールからしか利用できないようにしたい、
+と考えている人たちがいる。これらのシンボルは
+EXPOET_SYMBOL の代わりに EXPORT_SYMBOL_GPL でエクスポートされる。
+カーネルや、別のモジュールによってエクスポートされた
+GPL オンリーのシンボルは、GPL 互換なライセンスのモジュールからしか見えない。
+これらのシンボルには、
+/proc/ksyms において 'GPLONLY_' というプレフィックスが付く。
+<I>insmod</I>
+
+は GPL ライセンスのモジュールをロードするときは、
+シンボルの 'GPLONLY_' プレフィックスを無視し、
+通常のシンボル名の部分だけを参照する。
+GPL オンリーのシンボルは
+GPL 互換なライセンスを持たないモジュールに対しては利用可能とならない。
+ライセンスを全く持たないモジュールに対しても同様である。
+<A NAME="lbAI">&nbsp;</A>
+<H3>KSYMOOPS 支援</H3>
+
+モジュール利用時のカーネル Oops のデバッグを支援するため、
+insmod はデフォルトではいくつかのシンボルを ksyms に追加する
+(<B>-Y</B>
+
+オプションの説明を見よ)。
+これらのシンボルの名前は
+<B>__insmod_</B><I>modulename</I><B>_</B>
+
+で始まる。
+<I>modulename</I>
+
+はシンボルを他と重ならないようにするために必要である。
+同じオブジェクトを、別のモジュール名で複数回ロードするのは許されている。
+現在定義されているシンボルは
+<P>
+<PRE>
+__insmod_<I>modulename</I>_O<I>objectfile</I>_M<I>mtime</I>_V<I>version</I>
+</PRE>
+
+<P>
+<I>objectfile</I>
+
+は、オブジェクトのロード元のファイルの名前である。
+これによって
+ksymoops がコードを正しいオブジェクトにマッチさせることが可能となる。
+<I>mtime</I>
+
+はそのファイルの最終修正タイムスタンプを 16 進で表したものである。
+stat に失敗すると 0 になる。
+<I>version</I>
+
+はモジュールのコンパイル時に指定されたカーネルのバージョンで、
+バージョンが取得できなければ -1 となる。
+
+シンボル _O はモジュールヘッダと同じスタートアドレスになる。
+<P>
+<PRE>
+__insmod_<I>modulename</I>_S<I>sectionname</I>_L<I>length</I>
+</PRE>
+
+<P>
+このシンボルは指定された ELF セクションの先頭に現れる。
+現在は .text, .rodata, .data, .bss である。
+これが現れるのは、セクションの長さが 0 以上の場合だけである。
+<I>sectionname</I>
+
+は ELF セクションの名前、
+<I>length</I>
+
+は各セクションの長さの 10 進表記である。
+これらのシンボルにより、 ksymoops はシンボルが使えない場合でも
+アドレスをセクションにマップできるようになる。
+<P>
+<PRE>
+__insmod_<I>modulename</I>_P<I>persistent_filename</I>
+</PRE>
+
+<P>
+モジュールが永続データとしてマークされたパラメータを持ち、
+永続データを保存するファイル名が有効な場合 (上述の
+<I>-e</I>
+
+参照) にのみ、insmod によって作成される。
+<P>
+
+モジュールにおけるカーネル Oops のデバッグにおける別の問題として、
+/proc/ksyms と /proc/modules の内容が Oops とログファイル処理の間で
+変わってしまう可能性がある。
+この問題の処理を助けるため、
+/var/log/ksymoops があると、insmod と rmmod は自動的に
+/proc/ksyms と /proc/modules を /var/log/ksymoops
+に `date&nbsp;+%Y%m%d%H%M%S` の prefix を付けてコピーする。
+システム管理者は ksymoops に対して、
+Oops のデバッグ時にどのスナップショットファイルを利用するか伝えることができる。
+この自動コピーを無効にするスイッチは存在しない。
+これを望まない場合は、 /var/log/ksymoops を作ってはならない。
+このディレクトリを置くときには、所有者は root とし、
+モードは 644 または 600 にして、
+以下のスクリプトを一日一回程度実行すると良い。
+このスクリプトは insmod_ksymoops_clean としてインストールされる。
+<P>
+
+<PRE>
+  #!/bin/sh
+  # Delete saved ksyms and modules not accessed in 2 days
+  if [ -d /var/log/ksymoops ]
+  then
+          set -e
+          # Make sure there is always at least one version
+          d=`date +%Y%m%d%H%M%S`
+          cp -a /proc/ksyms /var/log/ksymoops/${d}.ksyms
+          cp -a /proc/modules /var/log/ksymoops/${d}.modules
+          find /var/log/ksymoops -type f -atime +2 -exec rm {} \;
+  fi
+</PRE>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/rmmod.8.html">rmmod</A></B>(8), <B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8), <B><A HREF="../man8/depmod.8.html">depmod</A></B>(8), <B><A HREF="../man8/lsmod.8.html">lsmod</A></B>(8),
+<B><A HREF="../man8/ksyms.8.html">ksyms</A></B>(8), <B>modules</B>(2), <B><A HREF="../man8/genksyms.8.html">genksyms</A></B>(8), <B><A HREF="../man8/kerneld.8.html">kerneld</A></B>(8),
+<B>ksymoops</B>(kernel).
+<A NAME="lbAK">&nbsp;</A>
+<H2>履歴</H2>
+
+モジュール対応を誰が最初に考えたのかは不明である。
+<BR>
+
+Linux 用の最初のバージョンは Bas Laarhoven &lt;<A HREF="mailto:bas@vimec.nl">bas@vimec.nl</A>&gt; が作成した。
+<BR>
+
+バージョン 0.99.14 は Jon Tombs &lt;<A HREF="mailto:jon@gtex02.us.es">jon@gtex02.us.es</A>&gt; が作成した。
+<BR>
+
+Bjorn Ekwall &lt;<A HREF="mailto:bj0rn@blox.se">bj0rn@blox.se</A>&gt; が拡張を行った。
+<BR>
+
+元々の ELF 対応は Eric Youngdale &lt;<A HREF="mailto:eric@aib.com">eric@aib.com</A>&gt; の助力によるものである。
+<BR>
+
+バージョン 2.1.17 への更新は Richard Henderson &lt;<A HREF="mailto:rth@tamu.edu">rth@tamu.edu</A>&gt; が行った。
+<BR>
+
+modutil-2.2.* での拡張は 1999 年 3 月に Bjorn Ekwall &lt;<A HREF="mailto:bj0rn@blox.se">bj0rn@blox.se</A>&gt; が行った。
+<BR>
+
+ksymoops の補助は 1999 年 5 月に Keith Owens &lt;<A HREF="mailto:kaos@ocs.com.au">kaos@ocs.com.au</A>&gt; が行った。
+<BR>
+
+メンテナ: Keith Owens &lt;<A HREF="mailto:kaos@ocs.com.au">kaos@ocs.com.au</A>&gt;.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">このマニュアルについて</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">モジュールのパラメータ</A><DD>
+<DT><A HREF="#lbAH">GPL ライセンスのモジュールとシンボル</A><DD>
+<DT><A HREF="#lbAI">KSYMOOPS 支援</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">履歴</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

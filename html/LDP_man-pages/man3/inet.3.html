@@ -1,0 +1,263 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of INET</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>INET</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/inet.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+inet_aton, inet_addr, inet_network, inet_ntoa, inet_makeaddr, inet_lnaof,
+inet_netof - インターネットアドレス操作ルーチン
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;</B>
+
+<B>int inet_aton(const char *</B><I>cp</I><B>, struct in_addr *</B><I>inp</I><B>);</B>
+
+<B>in_addr_t inet_addr(const char *</B><I>cp</I><B>);</B>
+
+<B>in_addr_t inet_network(const char *</B><I>cp</I><B>);</B>
+
+<B>char *inet_ntoa(struct in_addr </B><I>in</I><B>);</B>
+
+<B>struct in_addr inet_makeaddr(in_addr_t </B><I>net</I><B>, in_addr_t </B><I>host</I><B>);</B>
+
+<B>in_addr_t inet_lnaof(struct in_addr </B><I>in</I><B>);</B>
+
+<B>in_addr_t inet_netof(struct in_addr </B><I>in</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>inet_aton</B>(), <B>inet_ntoa</B>():
+<PRE>
+    Since glibc 2.19:
+        _DEFAULT_SOURCE
+    In glibc up to and including 2.19:
+        _BSD_SOURCE || _BSD_SOURCE
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>inet_aton</B>()  は、インターネットホストのアドレス <I>cp</I> を、 IPv4 の数値とドットによる表記から
+(ネットワークバイトオーダの) バイナリ値へ 変換し、変換結果を <I>inp</I> が指している構造体に格納する。 アドレスが有効な場合 0
+以外を返し、そうでない場合は 0 を返す。 <I>cp</I> で渡すアドレスとして、以下の形式を用いることができる。
+<DL COMPACT>
+<DT><I>a.b.c.d</I><DD>
+4 つの数字のそれぞれはアドレスの各バイトを示す。 これらのバイトは左から右の順序でバイナリアドレスに割り当てられる。
+<DT><I>a.b.c</I><DD>
+<I>a</I> と <I>b</I> はバイナリアドレスの最初の 2 バイトを示す。 <I>c</I> は 16 ビット値と解釈され、バイナリアドレスの右側の 2
+バイトを表す。 この表記は、(過去のものとなった) クラス B ネットワークアドレスを 指定するのに適している。
+<DT><I>a.b</I><DD>
+<I>a</I> はバイナリアドレスの最初のバイトを示す。 <I>b</I> は 24 ビット値と解釈され、バイナリアドレスの右側の 3 バイトを表す。
+この表記は、(過去のものとなった) クラス A ネットワークアドレスを 指定するのに適している。
+<DT><I>a</I><DD>
+値 <I>a</I> は 32 ビット値と解釈され、バイトの再配置は行われず、 そのままバイナリアドレスとして格納される。
+</DL>
+<P>
+
+上記の全ての形式で、ドット区切りのアドレスの各要素は、10 進数、 8 進数 (先頭に <I>0</I> を付ける)、 16 進数 (先頭に <I>0X</I>
+を付ける) で指定できる。 これらの形式のアドレスをまとめて <I>IPv4 の数値とドットによる表記 (IPv4 numbers-and-dots
+notation)</I> と呼ぶ。 また、10 進数 4 つだけを使った形式を <I>IPv4 のドット区切りの 10 進数表記 (IPv4
+dotted-decimal notation)</I> と呼ぶ (<I>IPv4 のドット区切り 4 分割表記 (IPv4 dotted-decimal
+notation)</I> と呼ぶこともある)。
+<P>
+
+<B>inet_aton</B>() は渡された文字列が正常に解釈できた場合 1 を返し、 文字列が不正な場合 0 を返す (エラーの場合に <B>errno</B>
+はセット<I>されない</I>)。
+<P>
+
+<B>inet_addr</B>()  関数は、インターネットホストのアドレス <I>cp</I> を、 IPv4
+の数値とドットによる表記からネットワークバイトオーダでの バイナリ値へ変換して返す。 入力が不正な場合、 <B>INADDR_NONE</B> (普通は -1)
+を返す。 -1 は有効なアドレス (255.255.255.255) なので、この関数を使うと 問題になるかもしれない。
+この関数を使うのは避け、代わりに <B>inet_aton</B>(), <B><A HREF="../man3/inet_pton.3.html">inet_pton</A></B>(3), <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
+を使うのがよい。 これらの関数の方が、エラーの通知がよりきれいな方法で行われる。
+<P>
+
+<B>inet_network</B>()  関数は、 IPv4 の数値とドットによる表記の文字列 <I>cp</I> を、 インターネットアドレスとしての使用に適した
+ホストバイトオーダの数値に変換する。 成功すると、変換されたアドレスを返す。 入力が不正な場合は -1 を返す。
+<P>
+
+<B>inet_ntoa</B>()  関数は、ネットワークバイトオーダで渡されたインターネットホストアドレス <I>in</I> を、 IPv4 のドット区切りの
+10 進数表記の文字列に変換する。 文字列は静的に割当てられたバッファーに格納されて返されるので、
+この後でこの関数を再度呼び出すと文字列は上書きされる。
+<P>
+
+<B>inet_lnaof</B>()  関数は、インターネットアドレス <I>in</I> のローカルネットワーク部分を返す。 この返り値はホストバイトオーダである。
+<P>
+
+<B>inet_netof</B>()  関数は、インターネットアドレス <I>in</I> のネットワーク部分を返す。 この返り値はホストバイトオーダである。
+<P>
+
+<B>inet_makeaddr</B>()  関数は <B>inet_netof</B>()  と <B>inet_lnaof</B>()  の逆の機能を持つ。
+ネットワーク番号 <I>net</I> と、ローカルアドレス <I>host</I> を 組み合わせて生成した、インターネットホストアドレスを
+ネットワークバイトオーダで返す。 <I>host</I>, <I>net</I> はともにホストバイトオーダである。
+<P>
+
+<B>inet_ntoa</B>(), <B>inet_makeaddr</B>(), <B>inet_lnaof</B>(), <B>inet_netof</B>()
+で使用する構造体 <I>in_addr</I> は <I>&lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</I> で次のように定義されている:
+<P>
+
+
+
+typedef uint32_t in_addr_t;
+<P>
+struct in_addr {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;in_addr_t&nbsp;s_addr;
+};
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明は <B>attributes</B>(7) を参照のこと。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>inet_aton</B>(),
+<B>inet_addr</B>(),
+<BR>
+
+<B>inet_network</B>(),
+<B>inet_ntoa</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>inet_makeaddr</B>(),
+<B>inet_lnaof</B>(),
+<BR>
+
+<B>inet_netof</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>inet_addr</B>(), <B>inet_ntoa</B>(): POSIX.1-2001, POSIX.1-2008, 4.3BSD.
+<P>
+
+<B>inet_aton</B>()  is not specified in POSIX.1, but is available on most
+systems.
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+x86 アーキテクチャーではホストバイトオーダは Least Significant Byte (LSB) first (リトルエンディアン) だが、
+インターネットで使われるネットワークバイトオーダは Most Significant Byte (MSB) first (ビッグエンディアン)
+である点に注意すること。
+<P>
+
+<B>inet_lnaof</B>(), <B>inet_netof</B>(), <B>inet_makeaddr</B>()  は過去の名残であり、渡されたアドレスが
+<I>クラスフルネットワークアドレス (classful network addresses)</I> であると仮定して処理を行う。
+クラスフルネットワークアドレスでは、以下にあるように、 IPv4 ネットワークアドレスをバイト境界でネットワーク部とホスト部に分割する。
+<DL COMPACT>
+<DT>Class A<DD>
+(ネットワークバイトオーダの) アドレスの最上位ビットが 0 の場合、 このアドレス種別となる。このアドレス種別では、
+最上位バイトがネットワークアドレスを表し、 残りの 3 バイトがホストアドレスを表す。
+<DT>Class B<DD>
+(ネットワークバイトオーダの) アドレスの上位側 2 ビットがバイナリ値で 10 の場合、このアドレス種別となる。このアドレス種別では、 上位 2
+バイトがネットワークアドレスを表し、 残りの 2 バイトがホストアドレスを表す。
+<DT>Class C<DD>
+(ネットワークバイトオーダの) アドレスの上位側 3 ビットがバイナリ値で 110 の場合、このアドレス種別となる。このアドレス種別では、 上位 3
+バイトがネットワークアドレスを表し、 残りの 1 バイトがホストアドレスを表す。
+</DL>
+<P>
+
+クラスフルネットワークアドレスは現在では廃止され、 クラスレスドメイン間ルーチン (CIDR) に取って代わられた。 CIDR
+では、アドレスを任意のビット境界 (バイト境界ではない) で ネットワーク部とホスト部に分割する。
+<A NAME="lbAH">&nbsp;</A>
+<H2>例</H2>
+
+以下は <B>inet_aton</B>()  と <B>inet_ntoa</B>()  の使用例である。このように実行する。
+<P>
+
+
+
+$<B> ./a.out 226.000.000.037</B>      # Last byte is in octal
+226.0.0.31
+$<B> ./a.out 0x7f.1         </B>      # First byte is in hex
+127.0.0.1
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#define _BSD_SOURCE
+#include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;in_addr&nbsp;addr;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s&nbsp;&lt;dotted-address&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(inet_aton(argv[1],&nbsp;&amp;addr)&nbsp;==&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Invalid&nbsp;address\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s\n&quot;,&nbsp;inet_ntoa(addr));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/byteorder.3.html">byteorder</A></B>(3), <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3), <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3), <B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3),
+<B><A HREF="../man3/getnetent.3.html">getnetent</A></B>(3), <B><A HREF="../man3/inet_net_pton.3.html">inet_net_pton</A></B>(3), <B><A HREF="../man3/inet_ntop.3.html">inet_ntop</A></B>(3), <B><A HREF="../man3/inet_pton.3.html">inet_pton</A></B>(3),
+<B><A HREF="../man5/hosts.5.html">hosts</A></B>(5), <B><A HREF="../man5/networks.5.html">networks</A></B>(5)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">属性</A><DD>
+<DT><A HREF="#lbAF">準拠</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DT><A HREF="#lbAH">例</A><DD>
+<DL>
+<DT><A HREF="#lbAI">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

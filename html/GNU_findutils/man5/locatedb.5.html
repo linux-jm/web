@@ -1,0 +1,185 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LOCATEDB</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LOCATEDB</H1>
+Section: File Formats (5)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_findutils/release/man5/locatedb.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+locatedb - 前置圧縮されたファイル名データベース
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+このマニュアルページは GNU 版 <B>locate</B>
+で用いるファイル名データベースのフォーマットについて記述したものです。ファイル名データベースには、最後に更新された時点において、特定のディレクトリツリー下に存在していたファイルのリストが含まれています。
+<P>
+
+複数のデータベースを共存させることもできます。環境変数やコマンドラインオプションを指定すれば、ユーザーは <B>locate</B>
+に検索させるデータベースを選択することができます。詳しくは <B><A HREF="../man1/locate.1.html">locate</A></B>(1)
+を参照してください。システム管理者はデフォルトで用いられるデータベースの名前や、データベースの更新頻度、またデータベースに入れるディレクトリなどを選択することができます。通常ファイル名データベースの更新は
+<B>updatedb</B> プログラムを定期的に実行させることによって行ないます(夜間が良いでしょう)。詳細は <B><A HREF="../man1/updatedb.1.html">updatedb</A></B>(1)
+を参照してください。
+<A NAME="lbAD">&nbsp;</A>
+<H2>GNU LOCATE02 データベースフォーマット</H2>
+
+これは <B>updatedb</B> により生成されるデフォルトのデータベースフォーマットです。<B>updatedb</B> は <B>frcode</B>
+というプログラムを呼び出してファイル名のリストを前置圧縮 (front compression) します。これによってデータベースのサイズは 1/4
+から 1/5 になります。前置圧縮 (インクリメンタルエンコーディングとも呼ばれる) は以下のような動作をします。
+<P>
+
+データベースのエントリは整列されたリストからなってます
+(ユーザーの利便性のため、大文字小文字は区別していません)。従って、各々のエントリは直前のエントリと最初の数文字が一致していることが多くなります。それぞれのデータベースエントリには、まずオフセット差分カウントという
+1
+バイトのデータが入っています。これは現在のエントリと直前のエントリの共有部分の文字数から、直前のエントリとそのもうひとつ前のエントリの共有文字数を引いたものです
+(従ってこの数値は負になることもあります)。カウントの後には共有部分の文字列以降の残りが ASCII
+文字列で与えられます。これはヌル文字で終端するとみなされます。
+<P>
+
+もしオフセット差分カウントがバイトデータで与えられる範囲 (&plusmn;127) を越えた場合は、バイトデータ 0x80 がカウントに代入され、2
+バイトのワードデータがその後に続きます。このワードデータでは高位バイトが先に来ます
+(ネットワークバイトオーダー)。このカウントは負になることもあります（符号ビットは2バイトの最初の方にあります）。
+<P>
+
+すべてのデータベースは、ファイルエントリの最初に `LOCATE02' というダミーのエントリを持ちます。これは <B>locate</B>
+によってチェックされ、このデータベースが正しいフォーマットであることを確認するために用いられます。実際の検索においてはこのエントリは無視されます。
+<P>
+
+複数のデータベースを連結することはできません。最初の (ダミー)
+エントリを結合するデータベースから取り去れば良さそうですが、これは正しくはありません。なぜなら後に続くデータベースの最初のエントリにおけるオフセット差分カウントは正しい値を取り得ないからです。
+<P>
+
+将来的に locate データベース内のデータは、特定順での並び替えができなくなるかもしれません。並び替えを必要とする場合は、<B>locate</B>
+の出力に対してパイプにより <B>sort -f</B> を処理してください。
+<A NAME="lbAE">&nbsp;</A>
+<H2>slocate データベースフォーマット</H2>
+
+<B>slocate</B> プログラムが利用するデータベースフォーマットは <B>locate</B>
+が利用するものと似ていますが、全く同じではありません。データベースの最初のバイトは <I>security</I> <I>level</I> (セキュリティレベル)
+を指定しています。このセキュリティレベルが 0 のときは <B>slocate</B>
+が読み込みを行い、データベース内にのみある情報に基づいて、ファイル名の検索と表示を行います。一方、セキュリティレベルが 1
+のとき、実行ユーザのデータベースアクセスが不能である場合、<B>slocate</B> はエントリ出力を省略する。データベースの 2 番目のバイトはゼロです。3
+番目のバイト以降にデータベースエントリが続きます。データベースエントリの先頭に、差分カウントやダミーエントリが置かれることはありません。その代わりに最初の項目に対する差分カウントは、ゼロとして取り扱われます。
+<P>
+
+2 番目のエントリがデータベースに存在していたとすると、データは GNU LOCATE02 フォーマットと同様のものとして解釈されます。
+<A NAME="lbAF">&nbsp;</A>
+<H2>古い locate データベースフォーマット</H2>
+
+Unix 版 <B>locate</B> および <B>find</B> や、以前の GNU
+版で用いられていた古いデータベースフォーマットも存在しています。この古い形式のデータベースを作成する場合には、<B>updatedb</B> は
+<B>bigram</B> と <B>code</B>
+というプログラムを呼び出します。古いフォーマットが上に述べた記述と異なる点を以下に示します。それぞれのエントリがオフセット差分カウントのバイトデータで始まりヌル文字で終わる代わりに、0
+から 28 までのバイトデータが -14 から 14
+までのオフセット差分カウントとして用いられ、これがエントリ区切りを兼ねることになります。この範囲外の長いオフセット差分カウントを示すデータには、0x80
+ではなく 0x1e (30) が使われます。長いカウントを保有するデータにはホストのバイトオーダが用いられ
+(これはネットワークバイトオーダと等しいとは限りません)、またホストの integer のワードサイズ (4 バイトのことが多い)
+が用いられます。またここにストアされるデータは実際の値から 14 を引いた値になります。データベースの各エントリには終端バイトが無く、30
+以下の値を持つバイトデータが次のエントリの始まりであると認識されます。
+<P>
+
+さらに古いデータベース形式では、ダミーエントリの代わりに先頭に 256 バイトのテーブルがあり、ファイルリストでもっとも頻繁に用いられている
+bigram が並べてあります。bigram
+とは隣接した二つのバイトデータをインデックス付けしたものです。データベースに現われるバイトデータのうち、最高位ビットがセットされているものは (残りの
+7 ビットをインデックスとして) bigram テーブルのデータと置換されます。この bigram
+とオフセット差分カウントを用いることで、データベースの大きさは新しいフォーマットより 20-25% 小さくなっています。しかし 8
+ビットクリーンでないという欠点を併せ持ちます。ファイル名に含まれるバイトデータのうち、スペシャルコードに属するものは、データベース中ではすべてクエスチョンマークで置き換えられます。これは任意の一文字を表わすシェルのワイルドカードなので、実際のファイル名に現われることはありません。
+<A NAME="lbAG">&nbsp;</A>
+<H2>例</H2>
+
+<PRE>
+
+<B>frcode</B> への入力が以下のようなものとします:
+/usr/src
+/usr/src/cmd/aardvark.c
+/usr/src/cmd/armadillo.c
+/usr/tmp/zoo
+
+直前のエントリとの最長一致部分の長さは:
+0 /usr/src
+8 /cmd/aardvark.c
+14 rmadillo.c
+5 tmp/zoo
+
+</PRE>
+
+<B>frcode</B> からの出力は、最後のヌル文字を改行に代え、カウントバイトを数字に代えると以下のようなものになります:
+<PRE>
+0 LOCATE02
+0 /usr/src
+8 /cmd/aardvark.c
+6 rmadillo.c
+-9 tmp/zoo
+
+(6 = 14 - 8 または -9 = 5 - 14)
+</PRE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ報告</H2>
+
+GNU findutils オンラインヘルプ:
+&lt;<A HREF="https://www.gnu.org/software/findutils/#get-help">https://www.gnu.org/software/findutils/#get-help</A>&gt;
+<BR>
+
+翻訳に関するバグ報告: &lt;<A HREF="https://translationproject.org/team/">https://translationproject.org/team/</A>&gt;
+<P>
+
+その他の問題について GNU Savannah バグトラッカー経由での報告:
+<DL COMPACT><DT><DD>
+&lt;<A HREF="https://savannah.gnu.org/bugs/?group=findutils">https://savannah.gnu.org/bugs/?group=findutils</A>&gt;
+</DL>
+
+GNU findutils パッケージのメーリングリスト <I>bug-findutils</I> において議論されている全般的なトピック:
+<DL COMPACT><DT><DD>
+&lt;<A HREF="https://lists.gnu.org/mailman/listinfo/bug-findutils">https://lists.gnu.org/mailman/listinfo/bug-findutils</A>&gt;
+</DL>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>著作権</H2>
+
+Copyright &#169; 1994-2022 Free Software Foundation, Inc.  License GPLv3+: GNU
+GPL version 3 or later &lt;<A HREF="https://gnu.org/licenses/gpl.html">https://gnu.org/licenses/gpl.html</A>&gt;.
+<BR>
+
+This is free software: you are free to change and redistribute it.  There is
+NO WARRANTY, to the extent permitted by law.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/find.1.html">find</A></B>(1), <B><A HREF="../man1/locate.1.html">locate</A></B>(1), <B><A HREF="../man1/xargs.1.html">xargs</A></B>(1), <B><A HREF="../man5/locatedb.5.html">locatedb</A></B>(5)
+<P>
+
+充実したドキュメントは &lt;<A HREF="https://www.gnu.org/software/findutils/locatedb">https://www.gnu.org/software/findutils/locatedb</A>&gt;
+を参照してください。
+<BR>
+
+またローカルにおいては <B>info locatedb</B> により参照できます。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">GNU LOCATE02 データベースフォーマット</A><DD>
+<DT><A HREF="#lbAE">slocate データベースフォーマット</A><DD>
+<DT><A HREF="#lbAF">古い locate データベースフォーマット</A><DD>
+<DT><A HREF="#lbAG">例</A><DD>
+<DT><A HREF="#lbAH">バグ報告</A><DD>
+<DT><A HREF="#lbAI">著作権</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:23 GMT, December 05, 2022
+</BODY>
+</HTML>

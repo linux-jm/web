@@ -1,0 +1,1210 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SUDOERS.LDAP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SUDOERS.LDAP</H1>
+Section: File Formats Manual (5)<BR>Updated: June 15, 2016<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/sudo/release/man5/sudoers.ldap.5">roff page</A><HR>
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<B>sudoers.ldap</B> - LDAP を使用した sudoers ポリシーの設定
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<B>sudoers</B> セキュリティポリシーは <I>sudoers</I> ファイルによって設定するのが標準だが、
+LDAP を通して設定することもできる。この方法は、大規模な分散環境で
+sudoers セキュリティポリシーの設定を同期させたい場合に、
+とりわけ便利かもしれない。
+<P>
+
+sudoers セキュリティポリシーの設定に LDAP を使用すると、有利な点がいくつかある。
+<DL COMPACT>
+<DT><B>&bull;</B><DD>
+<B>sudo</B> はもはや sudoers セキュリティポリシーの設定をまるまる全部読み込む必要がない。
+LDAP を使用する場合は、<B>sudo</B> の実行ごとに、たった二、三回
+LDAP に問い合わせを行うだけですむ。
+そのため、LDAP 環境は実行速度が非常に早く、たいへん使い勝手がよい。
+<DT><B>&bull;</B><DD>
+sudoers セキュリティポリシーの設定にタイプミスがあっても、
+もうそのために <B>sudo</B> が終了してしまうことがない。
+LDAP のデータは、sudo 用のスキーマに従っていなければ、
+サーバーにロードできない。結果として、
+正しいシンタクスが保証されることになる。
+ユーザ名やホスト名をタイプミスすることなら相変わらずあるだろうが、
+そのために <B>sudo</B> が動かなくなることはない。
+<DT><B>&bull;</B><DD>
+エントリごとにオプションを指定して、
+グローバルなデフォルト・オプションを上書きすることができる。
+<I>/etc/sudoers</I> はグローバルなデフォルト・オプションと、ユーザ、ホスト、
+コマンド、変身対象に結びついた限定されたオプションしかサポートしていない。
+また、<I>/etc/sudoers</I> の書式は複雑で、ユーザには理解しにくいかもしれない。
+オプションをエントリ内で直接指定する方が、ずっと自然である。
+<DT><B>&bull;</B><DD>
+<B>visudo</B> プログラムはもう必要がない。<B>visudo</B> の役割は、
+<I>/etc/sudoers</I> ファイルのロッキングとシンタクス・チェックである。
+LDAP のデータ更新はアトミック操作なので
+(訳注: それ故、データは更新されていないか、
+すでに更新されたかのどちらかであって、中間状態がないので)、
+ロッキングはもはや必要ではない。シンタクスは、
+データが LDAP にインサートされるときチェックされるから、
+シンタクス・チェック用の特別なツールも不要になっている。
+</DL>
+<P>
+
+LDAP による設定と <I>sudoers</I> ファイルによる設定との、もう一つの大きな違いは、
+LDAP では <B>sudo</B> 専用のエイリアスがサポートされていないことである。
+<P>
+
+たいていの場合、<B>sudo</B> 専用のエイリアスは実のところ必要がない。
+User_Aliases や Runas_Aliases の代わりに、
+Unix のグループ、non-Unix グループ (<I>group_plugin</I> を介して)、
+ユーザのネットグループが使用できる。
+また、Host_Aliases の代わりには、ホストのネットグループが使える。
+LDAP には グループやネットグループも格納できるので、
+<B>sudo</B> 専用のエイリアスがどうしても必要というわけではないのだ。
+<P>
+
+Cmnd_Aliases もまったく必要がない。
+一つの sudoRole エントリに複数のユーザを登録できるからだ。
+複数のユーザが参照する Cmnd_Alias を定義する代わりに、
+複数のコマンドを含む sudoRole エントリを一つ作成して、
+そこに複数のユーザを割り当てればよい。
+<DL COMPACT>
+<DT>[<B>訳注</B>]:<DD>
+原文の著者は、sudoers セキュリティポリシーの設定の単位となる 
+objectClass 属性が sudoRole の LDAP エントリのうち、
+<I>/etc/sudoers</I> の各ユーザ設定に相当するものを「a sudoRole」と呼んでいる。
+「sudoRole エントリ」という訳語を当てた。
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H3>LDAP の SUDOers コンテナ</H3>
+
+LDAP では、sudoers セキュリティポリシーの設定は
+ou=SUDOers コンテナの下に配置されている。
+<DL COMPACT>
+<DT>[<B>訳注</B>]:<DD>
+ここで言うコンテナ (容器、入れもの) とは、データを格納するためではなく、
+データを含む下位のエントリをまとめておくために存在する上位エントリのことである。
+たとえば、OpenLDAP 用の ou=SUDOers コンテナなら、
+その設定ファイルの記述はこんなふうになる (sudo 同梱の README.LDAP から引用)。
+<PRE>
+
+<DL COMPACT><DT><DD>dn: ou=SUDOers,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: SUDOers
+</DL>
+</PRE>
+
+</DL>
+<P>
+
+<P>
+
+sudo はまず最初に SUDOers コンテナ配下に cn=defaults のエントリを捜す。
+見つかった場合は、複数回指定可能な sudoOption 属性が、<I>/etc/sudoers</I>
+のグローバルな Defaults 行と同じやり方で解析される。以下の例では、
+環境変数 SSH_AUTH_SOCK がすべてのユーザの環境に保存されることになる。
+<PRE>
+
+<DL COMPACT><DT><DD>dn: cn=defaults,ou=SUDOers,dc=example,dc=com
+objectClass: top
+objectClass: sudoRole
+cn: defaults
+description: Default sudoOption's go here
+sudoOption: env_keep+=SSH_AUTH_SOCK
+</DL>
+</PRE>
+
+<P>
+
+LDAP において <I>/etc/sudoers</I> の個々の「ユーザ設定」に相当するのは、
+sudoRole エントリである。それは以下の属性からなっている。
+<DL COMPACT>
+<DT><B>sudoUser</B><DD>
+次のうちのいづれか。ユーザ名、ユーザ ID (接頭辞 '#' が付く)、
+Unix グループ名またはグループ ID (それぞれ接頭辞 '%' と
+'%#' が付く)、ユーザのネットグループ (接頭辞 '+' が付く)、
+non-Unix グループ名またはグループ ID (それぞれ接頭辞 '%:' と '%:#' が付く)。
+なお、ユーザのネットグループについては、
+ネットグループの成員中のユーザとドメインの要素のみを使って、マッチングが行われる。
+ホストの要素はマッチングに使用されない。
+non-Unix グループが使用できるのは、グローバルな <I>defaults</I> sudoRole
+オブジェクトで適切な <I>group_plugin</I> が指定されているときだけである。
+<DT><B>sudoHost</B><DD>
+次のうちのいづれか。ホスト名、IP アドレス、ネットワークアドレス、
+ホストのネットグループ (接頭辞 '+' が付く)。
+ALL という特別な値はいかなるホストにもマッチする。
+なお、ホストのネットグループについては、
+ネットグループの成員中のホスト (完全修飾名とそうでないもののどちらでも)
+とドメインの要素のみを使って、マッチングが行われる。
+ユーザの要素はマッチングに使用されない。
+<DT><B>sudoCommand</B><DD>
+絶対パスで指定した Unix のコマンド名。コマンドライン引数を付けてもよく、
+glob 文字 (ワイルドカードとも言う) を含んでいてもよい。
+コマンドに感嘆符 '!' を接頭辞として付けると、
+ユーザにそのコマンドの実行を禁じることになる。
+<P>
+コマンド名として組み込みコマンドの &quot;sudoedit&quot; を使用すれば、
+ユーザが <B>sudo</B> を <B>-e</B> オプション付きで (あるいは、<B>sudoedit</B> の名前で)
+実行するのを許可することになる。普通のコマンドの場合と同じように、
+コマンドライン引数まで指定してもよい。&quot;sudoedit&quot; は
+<B>sudo</B> 本体に組み込まれたコマンドなので、これをコマンド名に指定するときは、
+頭にパスをつけてはいけないことに注意していただきたい。
+<P>
+ALL という特別な値は、いかなるコマンドにもマッチする。
+<P>
+コマンド名の前に SHA-2 ダイジェストが付いていると、実行が許可されるのは、
+ダイジェストがマッチしたときだけになる。これは、<B>sudo</B> を実行するユーザが、
+対象となるコマンドやその親ディレクトリに書き込み権限を持っているような場合に、
+役に立つだろう。ダイジェストのフォーマットとしては、sha224, sha256,
+sha384, sha512 がサポートされている。ダイジェスト名の後ろにはコロン
+(':') を置いて、その後に実際のダイジェストを続けなければならない。
+ダイジェストは、16 進数でも base64 形式でもよい。
+たとえば、sudoCommand に対して以下の値を指定すると、
+<PRE>
+
+<DL COMPACT><DT><DD>sha224:0GomF8mNN3wlDt1HD9XldjJ3SNgpFdbjO1+NsQ /bin/ls
+</DL>
+</PRE>
+
+<DL COMPACT><DT><DD>
+<P>
+ユーザが <I>/bin/ls</I> を実行できるのは、<I>/bin/ls</I> の sha224
+ダイジェストが指定した値とマッチしたときだけになる。
+コマンドのダイジェストをサポートしているのは、バージョン 1.8.7 以上だけである。
+</DL>
+
+<DT><B>sudoOption</B><DD>
+働きは、前述のグローバルオプションと同じだが、それが属している
+sudoRole エントリに対してのみ効果がある。
+<DT><B>sudoRunAsUser</B><DD>
+変身対象となるユーザ名か uid (接頭辞 '#' が付く) を指定する。
+変身対象ユーザをリストに含む Unix グループ名 (接頭辞 '%' が付く) や、
+ユーザのネットグループ (接頭辞 '+' が付く) も使える。
+特別な値 ALL は、いかなるユーザにもマッチする。
+<P>
+属性 sudoRunAsUser は、バージョン 1.7.0 以上の <B>sudo</B> でなければ、
+利用できない。それ以前のバージョンの <B>sudo</B> では、
+代わりに属性 sudoRunAs を使用している。
+<DT><B>sudoRunAsGroup</B><DD>
+変身対象となる Unix グループ名か gid (接頭辞 '#' が付く)。
+特別な値 ALL はいかなるグループにもマッチする。
+<P>
+属性 sudoRunAsGroup は、バージョン 1.7.0 以上の <B>sudo</B> でなければ、
+利用できない。
+<DT><B>sudoNotBefore</B><DD>
+yyyymmddHHMMSSZ 形式のタイムスタンプ。
+この属性を含む sudoRole エントリがいつから有効になるかという、
+スタート日時を指定するのに使用する。
+複数の sudoNotBefore が存在する場合は、一番早い日時が採用される。
+タイムスタンプは協定世界時 (UTC) によるものでなければならず、
+ローカル・タイムゾーンによるものではないことに注意していただきたい。
+分や秒の部分は省略できるが、LDAP サーバによっては (RFC の規定に反して)
+分や秒の指定を必須にしていることもある。
+<P>
+属性 sudoNotBefore は、バージョン 1.7.5 以上の <B>sudo</B> でなければ、
+利用できない。また、<I>/etc/ldap.conf</I> の <B>SUDOERS_TIMED</B>
+オプションで明示的に有効にする必要がある。
+<DT><B>sudoNotAfter</B><DD>
+yyyymmddHHMMSSZ 形式のタイムスタンプ。
+この属性を含む sudoRole エントリがもはや有効ではなくなる、
+失効日時を示している。複数の sudoNotAfter が存在する場合は、
+一番最後の日時が採用される。
+タイムスタンプは協定世界時 (UTC) によるものでなければならず、
+ローカル・タイムゾーンによるものではないことに注意していただきたい。
+分や秒の部分は省略できるが、LDAP サーバによっては (RFC の規定に反して)
+分や秒の指定を必須にしていることもある。
+<P>
+属性  sudoNotAfter は、バージョン 1.7.5 以上の <B>sudo</B> でなければ、
+利用できない。また、<I>/etc/ldap.conf</I> の <B>SUDOERS_TIMED</B>
+オプションで明示的に有効にする必要がある。
+<DT><B>sudoOrder</B><DD>
+LDAP から取り出される sudoRole エントリには、固有の順番というものがない。
+そこで、整数の値を取る sudoOrder 属性を使用して (浮動小数点値をサポートする
+LDAP サーバでは、浮動小数点値も使える)、マッチするエントリの順番付けを行う。
+そうすることで、LDAP による sudoers 設定のエントリが、
+エントリの順番が結果に影響を及ぼす sudoers ファイルの動作を、
+より忠実に真似られるようになるわけだ。
+sudoOrder 属性を使用すると、複数のエントリがマッチする場合には、
+一番大きな sudoOrder 属性を持つエントリが選ばれることになる。この動作は、
+sudoers ファイルの「最後にマッチしたものが選ばれる」動作に相当するわけである。
+sudoOrder 属性が指定されていない場合は、値が 0 であると見なされる。
+<P>
+属性 sudoOrder は、バージョン 1.7.5 以上の <B>sudo</B> でなければ、
+利用できない。
+</DL>
+<P>
+
+上記の各属性は単一の値を持つべきだが、同じタイプの属性が複数回現れても構わない。
+sudoRole エントリは、sudoUser、sudoHost、sudoCommand を、
+少なくともそれぞれ一個は含んでいなければならない。
+<P>
+
+次の例では、wheel グループのユーザに
+<B>sudo</B> 経由でいかなるホストでも任意のコマンドの実行を許可している。
+<PRE>
+
+<DL COMPACT><DT><DD>dn: cn=%wheel,ou=SUDOers,dc=example,dc=com
+objectClass: top
+objectClass: sudoRole
+cn: %wheel
+sudoUser: %wheel
+sudoHost: ALL
+sudoCommand: ALL
+</DL>
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>LDAP を使って sudoers セキュリティポリシーの設定を照合するときの詳細</H3>
+
+LDAP を使って、あるユーザに関する sudoers セキュリティポリシーを照合するとき、
+LDAP の問い合わせは <B>sudo</B> の実行ごとにたった二回か三回行われるだけである。
+一回目の問い合わせは、グローバル・オプションを解析するために行われる。
+二回目の問い合わせは、<B>sudo</B> を実行するユーザのユーザ名や、
+所属グループに対応するエントリを見つけるためだ
+(特別なタグ ALL が何にでもマッチするのは、この場合も同様である)。
+ユーザ名やグループに対応するエントリが得られなかった場合は、
+三回目の問い合わせが行われ、ユーザのネットグループや
+non-Unix グループを含んでいるすべてのエントリーを取得して、
+問題のユーザがそのどれかに属していないかをチェックする。
+<P>
+
+<I>/etc/ldap.conf</I> の設定オプション <B>SUDOERS_TIMED</B> を有功にして、
+エントリの日時制限を使えるようにしている場合は、
+LDAP の問い合わせにサブフィルターによる選別が伴うことになる。
+そのサブフィルターが、日時制限が存在するエントリについては、
+その制限を満たしているエントリのみに、情報の検索を限定するのである。
+<P>
+
+<B>NETGROUP_BASE</B> 設定オプションが使用されている場合は
+(下記の 「ldap.conf の設定」を参照)、
+ユーザがどことどこのネットグループに所属しているかを調べるための問い合わせが、
+sudoers セキュリティポリシー設定の問い合わせの前に行われる。
+そうすることで、セキュリティポリシー設定の問い合わせに使う文字列に、
+ネットグループを Unix グループと同じように使うことが可能になるのだ。
+上で述べた三回目の問い合わせは、
+グループ・プロバイダー・プラグインも同時に設定されていないかぎり、行われない。
+ネットグループについての <B>sudo</B> による LDAP の問い合わせは、
+実際には次のように行われる。
+<DL COMPACT>
+<DT>1.<DD>
+nisNetgroupTriple (ユーザ、ホスト、NIS ドメインを含む) を持ったすべての
+nisNetgroup レコードと照合を行う。この問い合わせでは、
+nisNetgroupTriple エントリーのホスト名が長い形式でも短い形式でも、
+あるいは、タプルにホスト名が指定されていなくても、マッチすることになる。
+問い合わせに NIS ドメインがセットされている場合にマッチするのは、
+そのドメインを含むか、あるいは、ドメインの指定がないエントリだけである。
+NIS ドメインがセットされていない場合は、ワイルドカードが使用され、
+どんなドメイン名にもマッチすることになるが、
+LDAP サーバの中には、使用している NIS スキーマが、
+nisNetgroupTriple に対するワイルドカードをサポートしていないものがあることに留意していただきたい。
+<DT>2.<DD>
+問い合わせを繰り返して行い、すでにマッチしたレコードを指す
+memberNisNetgroup エントリが、入れ子のように使われている
+nisNetgroup レコードがあれば、そうしたものを見つけ出す。
+</DL>
+<P>
+
+多数のネットグループを持つサイトでは、<B>NETGROUP_BASE</B> を使用すると、
+<B>sudo</B> の実行速度を大幅に向上させることができる。
+<A NAME="lbAF">&nbsp;</A>
+<H3>LDAP を使う場合と使わない場合の sudoers セキュリティポリシー設定の相違点</H3>
+
+LDAP を使用した場合は、sudoers セキュリティポリシー設定の処理方法に
+<I>/etc/sudoers</I> の場合とは微妙な違いがいくつかある。たぶん最大の違いは、
+RFC に書いてあるとおり、LDAP の順序づけは不定なので、
+属性やエントリが何らかの決まった順序で返されることを期待できないことだろう。
+<P>
+
+それでも、個々のエントリに割り振られる順番については、sudoOrder
+によってコントロールすることができる。
+だが、ある特定のエントリ内での属性の順番については、
+それを確定する方法は存在しないのだ。
+もっとも、あるエントリーにコマンドに関して相反するルールがある場合は、
+否定する方が優先される。いわゆるパラノイア的動作である
+(それが一番すっきりしたマッチだとはかぎらないが)。
+<P>
+
+例を挙げてみよう。
+<PRE>
+
+<DL COMPACT><DT><DD># /etc/sudoers の場合:
+# shell 以外のすべてのコマンドを許可する
+johnny  ALL=(root) ALL,!/bin/sh
+# 次の設定は、ALL が最後にマッチするので、常にすべての
+# コマンドを許可することになる
+puddles ALL=(root) !/bin/sh,ALL
+
+# 上記の johnny に相当する LDAP のエントリ:
+# shell 以外のすべてのコマンドを許可する
+dn: cn=role1,ou=Sudoers,dc=my-domain,dc=com
+objectClass: sudoRole
+objectClass: top
+cn: role1
+sudoUser: johnny
+sudoHost: ALL
+sudoCommand: ALL
+sudoCommand: !/bin/sh
+
+# 上記の puddles に相当する LDAP のエントリ:
+# ALL が最後に指定されているが、LDAP のコードでは、
+# よりパラノイア的な方を、指定された設定と見なすようになって
+# いるため、これもまた role1 と同じように動作することに
+# 注意していただきたい
+dn: cn=role2,ou=Sudoers,dc=my-domain,dc=com
+objectClass: sudoRole
+objectClass: top
+cn: role2
+sudoUser: puddles
+sudoHost: ALL
+sudoCommand: !/bin/sh
+sudoCommand: ALL
+</DL>
+</PRE>
+
+<P>
+
+もう一つの相違は、Host、User、Runas についての否定は、
+現在のところ無視されるということだ。
+たとえば、以下に挙げるような属性は期待どおりに動作しない。
+<PRE>
+
+<DL COMPACT><DT><DD># joe 以外の全員とマッチしないどころか、
+# 誰にもマッチしない
+sudoUser: !joe
+
+# joe 以外の全員とマッチしないどころか、
+# joe を含む全員にマッチしてしまう
+sudoUser: ALL
+sudoUser: !joe
+
+# web01 以外のすべてとマッチしないどころか、
+# web01 を含むすべてのホストにマッチしてしまう
+sudoHost: ALL
+sudoHost: !web01
+</DL>
+</PRE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>sudo 用のスキーマ</H3>
+
+<B>sudo</B> の LDAP サポートを利用するためには、お使いの LDAP サーバに
+<B>sudo</B> 用のスキーマをインストールしなければならない。
+そして、sudoUser 属性の索引を必ず作成しておく。
+<P>
+
+たぶん、<B>sudo</B> の配布物中には三種類のスキーマが入っていると思う。
+すなわち OpenLDAP サーバ用 (<I>schema.OpenLDAP</I>)、
+Netscape ディレクトリサーバの流れを汲むサーバ用 (<I>schema.iPlanet</I>)、
+Microsoft Active Directory 用 (<I>schema.ActiveDirectory</I>) のスキーマである。
+<P>
+
+OpenLDAP 用の形式にした <B>sudo</B> のスキーマは、
+「用例」セクションにも記載しておいた。
+<A NAME="lbAH">&nbsp;</A>
+<H3>ldap.conf の設定</H3>
+
+sudo は LDAP に関する設定を知るために <I>/etc/ldap.conf</I> を読み込む。
+通例、このファイルは、
+LDAP に対応しているさまざまなクライアントの間で共有されている。
+それ故、設定の大部分は <B>sudo</B> 専用ではない。
+注意すべきは、<B>sudo</B> は <I>/etc/ldap.conf</I> を独自に解析しており、
+ldap.conf(5) のマニュアルで説明されているものとは
+異なるオプションをサポートしていることがあるということだ。
+<I>ldap.conf</I> のパスは、<A HREF="../man5/sudo.conf.5.html">sudo.conf</A>(5) ファイルでプラグインに対する引き数
+<I>ldap_conf</I> を使用すれば、変更することができる
+(訳注: sudoers ポリシー・プラグインに対して指定できる引き数については、
+<A HREF="../man5/sudoers.5.html">sudoers</A>(5) のマニュアルの「sudoers ポリシー・プラグインを使うための
+sudo.conf の設定」セクションに説明がある)。
+<P>
+
+もうひとつ注意していただきたいのは、
+OpenLDAP ライブラリを使っているシステムでは、
+<I>/etc/openldap/ldap.conf</I> やユーザの <I>.ldaprc</I>
+ファイルで指定しているデフォルト値が使用されないことである。
+<P>
+
+すなわち、<I>/etc/ldap.conf</I> に明示的に記載され、かつ <B>sudo</B>
+でサポートされているオプションのみが使用される。
+設定オプションを以下に大文字で列挙するが、
+解析されるときは大文字小文字は区別されない。
+<P>
+
+パウンド記号 ('#') を使用すれば、
+以下はコメントであると示すことができる。すなわち、
+コメントの印と、それに続くいかなるテキストも、行末に至るまで、
+無視されることになる。長い行は、行末にバックスラッシュ ('\')
+を置けば、継続することができる。
+行頭の空白 (white space)は、継続記号を使用している場合でも、
+行頭から取り除かれることに注意していただきたい。
+<DL COMPACT>
+<DT><B>BIND_TIMELIMIT</B> <I>seconds</I><DD>
+<B>BIND_TIMELIMIT</B> パラメータでは、
+LDAP サーバに接続しようとするときの待ち時間を秒数で指定する。
+<B>URI</B> や <B>HOST</B> が複数指定されている場合は、その時間だけ待ってから、
+リスト中の次のサーバに接続を試みることになる。
+<DT><B>BINDDN</B> <I>DN</I><DD>
+<B>BINDDN</B> パラメータでは、誰の名前で LDAP の操作を行うかを、
+識別名 (DN) を使って指定する。これが指定されていない場合、
+LDAP の操作は anonymous の名前で実行される。LDAP サーバは、
+たいていデフォルトで anonymous によるアクセスを許可しているものである。
+<DT><B>BINDPW</B> <I>secret</I><DD>
+<B>BINDPW</B> パラメータでは、LDAP の操作を行うときに使用するパスワードを指定する。
+通常、このパラメータは、<B>BINDDN</B> パラメータと組み合わせて使用する。
+<I>secret</I> は、プレーンテキストのパスワードでもよく、
+&quot;base64:&quot; という接頭辞付きの、base64 でエンコードした文字列でもよい。
+たとえば、次のようなものだ。
+<PRE>
+
+<DL COMPACT><DT><DD>BINDPW base64:dGVzdA==
+</DL>
+</PRE>
+
+<DL COMPACT><DT><DD>
+<P>
+プレーンテキストのパスワードを使用する場合、
+パスワードは引用符を付けない単なる文字列にするべきだ。
+プレーンテキストのパスワード中には、コメント文字 ('#')
+があってはならない。また、バックスラッシュ ('\')
+による特殊文字のエスケープはサポートされていない。
+</DL>
+
+<DT><B>DEREF</B> <I>never/searching/finding/always</I><DD>
+検索を行うときに、alias の参照展開をどうするかを指定する。
+このオプションについての詳しい説明は、ldap.conf(5) のマニュアルにある。
+<DT><B>HOST</B> <I>name[:port] ...</I><DD>
+<B>URI</B> パラメータ (下記参照) が指定されていない場合は、
+<B>HOST</B> パラメータで指定する空白 (white space)
+で区切ったリストが、接続する LDAP サーバになる。
+各ホストにはコロン (':') に続けて、ポート番号を書いてもよい。
+<B>HOST</B> パラメータは非推奨であり、<B>URI</B> で指定する方が望ましい。
+このパラメータがあるのは、後方互換のためである。
+<DT><B>KRB5_CCNAME</B> <I>file name</I><DD>
+リモート・サーバに対して認証をするときに使用する Kerberos 5
+資格証明キャッシュのパス。このオプションは、SASL 認証 (下記参照)
+を使用するときしか意味を持たない。
+<DT><B>LDAP_VERSION</B> <I>number</I><DD>
+サーバに接続するときに使用する LDAP プロトコルのバージョン。
+デフォルトの値は、プロトコルバージョン 3 である。
+<DT><B>NETGROUP_BASE</B> <I>base</I><DD>
+LDAP でネットグループの問い合わせを行うときに使用するベース DN を指定する。
+ドメインが example.com ならば、たいてい ou=netgroup,dc=example,dc=com
+という形になる。<B>NETGROUP_BASE</B> を複数回指定してもよい。
+その場合は、指定された順番で問い合わせが行われることになる。
+<P>
+このオプションを使用すると、
+LDAP 経由で直接ユーザのネットグループを問い合わせることができる。
+そうする方が、sudoRole オブジェクトのうちで
+'+' という接頭辞を持つ sudoUser を含んでいるものをすべて取得するよりも、
+たいていの場合動作が高速になる。LDAP サーバによっては、
+nisNetgroup オブジェクトをその nisNetgroupTriple メンバによって検索できるようにするためには、
+使用している NIS スキーマに変更を加える必要があるものも存在する。
+OpenLDAP の <B>slapd</B> の場合は、
+nisNetgroupTriple アトリビュートに以下の変更を加えなければならない。
+<PRE>
+
+<DL COMPACT><DT><DD>attributetype ( 1.3.6.1.1.1.1.14 NAME 'nisNetgroupTriple'
+    DESC 'Netgroup triple'
+    EQUALITY caseIgnoreIA5Match
+    SUBSTR caseIgnoreIA5SubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+</DL>
+</PRE>
+
+<DT><B>NETGROUP_SEARCH_FILTER</B> <I>ldap_filter</I><DD>
+<B>sudo</B> が LDAP でネットグループの問い合わせを行うとき、
+どんな情報を返すかを限定する LDAP のフィルター。通常 <I>ldap_filter</I> は、
+attribute=value とか (&amp;(attribute=value)(attribute2=value2))
+という形を取る。デフォルトの検索フィルターは、
+objectClass=nisNetgroupである。<I>ldap_filter</I> の指定を省略すると、
+検索フィルターが全く使われないことになる。このオプションは、
+LDAP で直接ネットグループの問い合わせを行うときしか効果を持たない。
+<DT><B>NETWORK_TIMEOUT</B> <I>seconds</I><DD>
+<B>BIND_TIMELIMIT</B> の別名。OpenLDAP との互換のためにある。
+<DT><B>PORT</B> <I>port_number</I><DD>
+<B>URI</B> パラメータが指定されず、<B>HOST</B>
+パラメータでもポートが指定されていないときは、<B>PORT</B> パラメータが
+LDAP サーバに接続するときのデフォルトのポートを示すことになる。
+<B>PORT</B> パラメータが使用されていない場合、デフォルトのポートは
+LDAP では 389 番、LDAP over TLS (SSL) では 636 番である。
+<B>PORT</B> パラメータは非推奨であり、<B>URI</B> で指定する方が望ましい。
+このパラメータは後方互換のためにのみ存在している。
+<DT><B>ROOTBINDDN</B> <I>DN</I><DD>
+<B>ROOTBINDDN</B> パラメータでは、
+sudoers セキュリティポリシー設定の問い合わせのような、
+特権的な LDAP 操作をするとき、誰の名前で行うかを識別名 (DN)
+を使って指定する。その名前に対応するパスワードは、
+<A HREF="../man5/sudo.conf.5.html">sudo.conf</A>(5) の中でプラグインに対する引き数 <I>ldap_secret</I>
+によってパスを指定されたファイルに書き込んでおくべきだ。
+このパスのデフォルトは <I>/etc/ldap.secret</I> である
+(訳注: <B>sudoers</B> プラグインに対する引き数 <I>ldap_secret</I>
+については、<A HREF="../man5/sudoers.5.html">sudoers</A>(5) のマニュアルに記述がある)。
+このパラメータが設定されていない場合は、
+<B>BINDDN</B> で指定した名前があるならば、それが使用される。
+<DT><B>ROOTUSE_SASL</B> <I>on/true/yes/off/false/no</I><DD>
+<B>ROOTUSE_SASL</B> を有効にすると、
+<B>sudo</B> のような特権的なプロセスから LDAP サーバに接続するときに
+SASL 認証が可能になる。
+<DT><B>SASL_AUTH_ID</B> <I>identity</I><DD>
+LDAP サーバに接続するときに使用する SASL ユーザ名。
+デフォルトでは、<B>sudo</B> は anonymous 接続を使用する。
+このオプションは、SASL 認証を使用するときしか意味を持たない。
+<DT><B>SASL_SECPROPS</B> <I>none/properties</I><DD>
+SASL セキュリティ・プロパティを指定する。プロパティなしならば、
+<I>none</I> である。詳細については、
+SASL プログラマーズ・マニュアルを参照すること。
+このオプションは、SASL 認証を使用するときしか意味を持たない。
+<DT><B>SSL</B> <I>on/true/yes/off/false/no</I><DD>
+<B>SSL</B> パラメータが on, true, yes になっていると、
+LDAP サーバと通信する際に、常に TLS (SSL) の暗号化を使用することになる。
+普通、そのためには、636 番ポート (ldaps) でサーバに接続していなければならない。
+<DT><B>SSL</B> <I>start_tls</I><DD>
+<B>SSL</B> パラメータを start_tls  に設定すると、LDAP サーバへの接続を平文で開始し、
+バインド操作のために認証情報を送信する直前に、TLS の暗号化を始めることになる。
+これには、暗号化された通信のために専用のポートを必要としないという長所がある。
+このパラメータをサポートしているのは、
+OpenLDAP サーバや Tivoli ディレクトリ・サーバのような
+start_tls 拡張に対応している LDAP サーバのみである。
+<DT><B>SUDOERS_BASE</B> <I>base</I><DD>
+<B>sudo</B> が LDAP の問い合わせを行うときに使用するベース DN を指定する。
+ドメインが example.com ならば、普通 ou=SUDOers,dc=example,dc=com
+という形になる。<B>SUDOERS_BASE</B> を複数回指定してもよい。
+その場合は、指定された順番で問い合わせが行われることになる。
+<DT><B>SUDOERS_DEBUG</B> <I>debug_level</I><DD>
+<B>sudo</B> が LDAP の問い合わせをするときのデバッグレベルを決める。
+デバック情報の出力先は標準エラーである。値を 1 にすると、
+多からず少なからずほどほどのデバック情報が表示される。
+値を 2 にすると、マッチの結果そのものも出力される。
+実用環境では、このパラメータを設定するべきではない。
+ユーザが余計な情報に混乱しかねないからだ。
+<P>
+<B>SUDOERS_DEBUG</B> パラメータは非推奨であり、
+将来のリリースでは廃止されることになる。今では同じ情報が、
+<B>sudo</B> のデバッグ用フレームワークを通してログに記録されるようになっている。
+<I>debug_level</I> の値に 1 や 2 を指定する代わりに、サブシステムとして
+&quot;ldap&quot; を使用し、重大度 (priority) にそれぞれ <I>diag</I> や <I>info</I>
+を指定すればよいのだ。
+<B>sudo</B> のデバッグを設定する方法について詳細を知りたければ、
+<A HREF="../man5/sudo.conf.5.html">sudo.conf</A>(5) のマニュアルをご覧になるとよい
+(訳注: <A HREF="../man5/sudoers.5.html">sudoers</A>(5) のマニュアルの「デバッギング」セクションも参照)。
+<DT><B>SUDOERS_SEARCH_FILTER</B> <I>ldap_filter</I><DD>
+<B>sudo</B> が LDAP の問い合わせを行うとき、
+どんな情報を返すかを限定する LDAP のフィルター。通常 <I>ldap_filter</I> は、
+attribute=value とか (&amp;(attribute=value)(attribute2=value2))
+という形を取る。デフォルトの検索フィルターは、objectClass=sudoRole である。
+<I>ldap_filter</I> の指定を省略すると、検索フィルターが全く使われないことになる。
+<DT><B>SUDOERS_TIMED</B> <I>on/true/yes/off/false/no</I><DD>
+属性 sudoNotBefore や sudoNotAfter を評価するか、しないかを指定する。
+この二つの属性によって日時制限のある sudoers
+セキュリティポリシー設定のエントリを実現している。
+<DT><B>TIMELIMIT</B> <I>seconds</I><DD>
+<B>TIMELIMIT</B> パラメータでは、
+LDAP の問い合わせに対して応答が返ってくるまでの待ち時間を秒数で指定する。
+<DT><B>TIMEOUT</B> <I>seconds</I><DD>
+<B>TIMEOUT</B> パラメータでは、
+様々な LDAP API から応答が返ってくるまでの待ち時間を秒数で指定する。
+<DT><B>TLS_CACERT</B> <I>file name</I><DD>
+<B>TLS_CACERTFILE</B> の別名。OpenLDAP との互換のためにある。
+<DT><B>TLS_CACERTFILE</B> <I>file name</I><DD>
+認証局の証明書を一つにまとめたファイルのパス。たとえば、
+<I>/etc/ssl/ca-bundle.pem</I> といったファイルであり、
+正当なものだとクライアントが認識している、
+すべての認証局の証明書がそこに入っている。
+このオプションをサポートしているのは、OpenLDAP ライブラリだけである。
+Netscape 由来の LDAP ライブラリは、認証局とクライアント、
+両方の証明書に対して、同一の証明書データベースを使用する
+(<B>TLS_CERT</B> を参照)。
+<DT><B>TLS_CACERTDIR</B> <I>directory</I><DD>
+<B>TLS_CACERTFILE</B> に似ているが、ファイルではなく、たとえば
+<I>/etc/ssl/certs</I> といったディレクトリであり、
+認証局の証明書が 1 認証局 1 ファイルの形でそこに入っている。
+<B>TLS_CACERTDIR</B> で指定したディレクトリは、<B>TLS_CACERTFILE</B>
+の後でチェックされる。このオプションをサポートしているのは、
+OpenLDAP ライブラリだけである。
+<DT><B>TLS_CERT</B> <I>file name</I><DD>
+クライアントの証明書が入っているファイルのパス。この証明書は、
+LDAP サーバに対するクライアントの認証に使用できる。
+証明書のタイプは、利用する LDAP ライブラリによって異なっている。
+</DL>
+<P>
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>OpenLDAP:<DD>
+tls_cert /etc/ssl/client_cert.pem
+
+<DT>Netscape 由来:<DD>
+tls_cert /var/ldap/cert7.db
+<DT>Tivoli ディレクトリ・サーバ:<DD>
+使用しない。<B>TLS_KEY</B> で指定するキー・データベースに、
+キーと証明書の両方が入っている。
+<P>
+Netscape 由来のライブラリを使う場合は、
+このファイルに認証局の証明書も入れることができる。
+
+</DL>
+<P>
+
+</DL>
+
+
+<DL COMPACT>
+<DT><B>TLS_CHECKPEER</B> <I>on/true/yes/off/false/no</I><DD>
+<B>TLS_CHECKPEER</B> が有効になっていると、
+LDAP サーバの TLS 証明書が正当かどうかチェックが行われる。
+LDAP サーバの証明書が正当であることを確認できない場合
+(たいていは、署名している認証局が未知 (unknown) であることが理由だ)、
+<B>sudo</B> はそのサーバに接続することができない。
+<B>TLS_CHECKPEER</B> が無効になっている場合は、チェックが行われない。
+このチェックをやらないことにすると、サーバーの身元の正真性を確認できないので、
+中間者攻撃の可能性が生じることに気をつけていただきたい。
+可能ならば、認証局の証明書は、その正当性のチェックができるように、
+手元のマシンにインストールしておくべきである。このオプションは、
+Tivoli ディレクトリ・サーバの LDAP ライブラリではサポートされていない。
+<DT><B>TLS_KEY</B> <I>file name</I><DD>
+<B>TLS_CERT</B> で指定した証明書に対応する、秘密鍵が入っているファイルのパス。
+この秘密鍵はパスワードでプロテクトされていてはならない。
+鍵のタイプは利用する LDAP ライブラリによって異なっている。
+</DL>
+<P>
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>OpenLDAP:<DD>
+tls_key /etc/ssl/client_key.pem
+
+<DT>Netscape 由来:<DD>
+tls_key /var/ldap/key3.db
+<DT>Tivoli ディレクトリ・サーバ:<DD>
+tls_key /usr/ldap/ldapkey.kdb
+
+</DL>
+<P>
+
+Tivoli LDAP ライブラリを使用する場合は、
+このファイルに認証局やクライアントの証明書も入れることができる。
+また、暗号化することもできる。
+</DL>
+
+
+<DL COMPACT>
+<DT><B>TLS_CIPHERS</B> <I>cipher list</I><DD>
+<B>TLS_CIPHERS</B> パラメータを使用すると、
+管理者が TLS (SSL) 接続に使用可能な暗号アルゴリズムを限定することができる。
+有効な暗号のリストについては、
+OpenLDAP や Tivoli ディレクトリ・サーバのマニュアルを参照していただきたい。
+Netscape 由来のライブラリは、このオプションをサポートしていない。
+<DT><B>TLS_KEYPW</B> <I>secret</I><DD>
+<B>TLS_KEYPW</B> では、
+Tivoli ディレクトリ・サーバの LDAP ライブラリを使っているクライアントで、
+キー・データベースを復号するのに使用するパスワードを指定する。
+<I>secret</I> は、プレーンテキストのパスワードでもよく、
+&quot;base64:&quot; という接頭辞付きの、base64 でエンコードした文字列でもよい。
+たとえば、次のようなものだ。
+<PRE>
+
+<DL COMPACT><DT><DD>TLS_KEYPW base64:dGVzdA==
+</DL>
+</PRE>
+
+<DL COMPACT><DT><DD>
+<P>
+プレーンテキストのパスワードを使用する場合、
+パスワードは引用符を付けない単なる文字列にするべきだ。
+プレーンテキストのパスワード中には、コメント文字 ('#')
+があってはならない。また、バックスラッシュ ('\')
+による特殊文字のエスケープはサポートされていない。
+このオプションを使用するのならば、
+<I>/etc/ldap.conf</I> を誰にでも読める状態にしてはいけない。
+さもないと、パスワードを公開してしまうことになる。
+パスワードの公開を避ける別の方法としては、
+<I>stash file</I> を使用することも可能だ。そうすれば、
+パスワードを暗号化した形で格納することができる (下記参照)。
+<P>
+<B>TLS_KEYPW</B> が指定されていない場合、
+<I>stash file</I> が存在すれば、それを使用することになる。<I>stash file</I> は、
+<B>TLS_KEY</B> で指定されるファイルと同じパスを持たなければならないが、
+拡張子には .kdb の代わりに、.sth を使わなければならない。
+たとえば、ldapkey.sth といった具合だ。
+Tivoli ディレクトリ・サーバ出荷時のデフォルトの ldapkey.kdb は、
+ssl_password というパスワードを使って暗号化されている。
+<I>gsk8capicmd</I> というユーティリティを使用すれば、
+キー・データベースの管理と、<I>stash file</I> の作成を行うことができる。
+このオプションをサポートしているのは、Tivoli LDAP ライブラリだけである。
+</DL>
+
+<DT><B>TLS_RANDFILE</B> <I>file name</I><DD>
+<B>TLS_RANDFILE</B> では、random デバイスを持っていないシステムのために
+エントロピー・ソースのパスを指定する。
+これは通例、<I>prngd</I> や <I>egd</I> と組み合わせて使用するものだ。
+このオプションをサポートしているのは、OpenLDAP ライブラリだけである。
+<DT><B>URI</B> <I>ldap[s]://[hostname[:port]] ...</I><DD>
+接続する一個以上の LDAP サーバ の URI を、空白 (white space)
+で区切ったリストの形で指定する。プロトコルは <I>ldap</I> と <I>ldaps</I>
+のどちらでもよい。後者は TLS (SSL) 暗号化に対応しているサーバの場合である。
+ポートを指定しないときのデフォルトは、
+ldap:// では 389 番ポート、ldaps:// では 636 番ポートである。
+<I>hostname</I> を一つも指定しないと、
+<B>sudo</B> は <I>localhost</I> に接続することになる。<B>URI</B> の行が二行以上ある場合は、
+<B>URI</B> の行に複数のエントリがあるときと同様に処理される。
+OpenSSL ライブラリを使用しているシステムのみが、
+ldap:// と ldaps:// 両方の URI を混ぜて使うことに対応している。
+たいていの商用 Unix では Netscape 由来のライブラリや
+Tivoli LDAP ライブラリが使用されているが、
+そうしたライブラリはどちらか一方に対応することしかできない。
+<DT><B>USE_SASL</B> <I>on/true/yes/off/false/no</I><DD>
+LDAP サーバが SASL 認証をサポートしているとき、
+<B>USE_SASL</B> を有効にする。
+<DT><B>ROOTSASL_AUTH_ID</B> <I>identity</I><DD>
+<B>ROOTUSE_SASL</B> が有効なとき使用する SASL ユーザ名。
+</DL>
+<P>
+
+「用例」セクションにある <I>ldap.conf</I> のくだりも参照していただきたい。
+<A NAME="lbAI">&nbsp;</A>
+<H3>nsswitch.conf の設定</H3>
+
+ビルド時に無効にしないかぎり、<B>sudo</B> はネームサービス・スイッチ・ファイル
+<I>/etc/nsswitch.conf</I> を調べて、
+sudoers セキュリティポリシーの設定を参照する順番を決める。
+すなわち、<I>/etc/nsswitch.conf</I> で sudoers: という文字列に始まる行を探し、
+その行によって参照順を決定するのである。
+気をつけていただきたいのは、<B>sudo</B> は参照中、
+マッチする項目に一度出会ったからと言って、そこで参照を終わりにしないことだ。
+後でマッチしたものが前にマッチしたものよりも優先されるのである。
+以下の参照元が有効である。
+<P>
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>files<DD>
+<I>/etc/sudoers</I> から sudoers セキュリティポリシーの設定を読み込む
+<DT>ldap<DD>
+LDAP から sudoers セキュリティポリシーの設定を読み込む
+</DL>
+</DL>
+
+
+<P>
+
+なお、[NOTFOUND=return] の記述があると、
+先行する参照元にユーザが見つからなかった場合、参照を中断することになる。
+<P>
+
+最初に LDAP を参照し、その後で (もし存在するならば)
+ローカルマシン上の <I>sudoers</I> ファイルを調べるには、次のように指定する。
+<PRE>
+
+<DL COMPACT><DT><DD>sudoers: ldap files
+</DL>
+</PRE>
+
+<P>
+
+ローカルマシン上の <I>sudoers</I> ファイルをまったく無視するには、
+次のようにする。
+<PRE>
+
+<DL COMPACT><DT><DD>sudoers: ldap
+</DL>
+</PRE>
+
+<P>
+
+<I>/etc/nsswitch.conf</I> ファイルが存在しなかったり、存在しても sudoers
+の行がなかったりした場合は、次のデフォルト設定が使用される。
+<PRE>
+
+<DL COMPACT><DT><DD>sudoers: files
+</DL>
+</PRE>
+
+<P>
+
+使用しているオペーレーティング・システムが nsswitch.conf
+ファイルを使用しない場合でも、<B>sudo</B> は、AIX のシステム以外では
+(次のセクションを参照)、<I>/etc/nsswitch.conf</I>
+をサポートしていることに注意していただきたい。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>netsvc.conf の設定</H3>
+
+AIX システムでは、<I>/etc/nsswitch.conf</I> ではなく、
+<I>/etc/netsvc.conf</I> ファイルを調べに行く。<B>sudo</B> としては、
+<I>netsvc.conf</I> を <I>nsswitch.conf</I> のバリエーションとして扱うだけだ。
+それ故、上のセクションの記述のうち、ファイルの書式に関係のないものは、
+ここでも当てはまることになる。
+<P>
+
+最初に LDAP を参照し、その後で (もし存在するならば)
+ローカルマシン上の <I>sudoers</I> ファイルを調べるには、次のように指定する。
+<PRE>
+
+<DL COMPACT><DT><DD>sudoers = ldap, files
+</DL>
+</PRE>
+
+<P>
+
+ローカルマシン上の <I>sudoers</I> ファイルをまったく無視するには、
+次のようにする。
+<PRE>
+
+<DL COMPACT><DT><DD>sudoers = ldap
+</DL>
+</PRE>
+
+<P>
+
+LDAP を正式の参照元と見なし、LDAP にユーザが見つからなかったときのみ、
+ローカルの <I>sudoers</I> ファイルを使用する。
+<PRE>
+
+<DL COMPACT><DT><DD>sudoers = ldap = auth, files
+</DL>
+</PRE>
+
+<P>
+
+注意していただきたいが、上記の例において、auth 修飾子が影響を及ぼすのは、
+ユーザを検索するときだけである。
+Defaults エントリについては、LDAP と <I>sudoers</I> の両方が参照される。
+<P>
+
+<I>/etc/netsvc.conf</I> ファイルが存在しなかったり、存在しても
+sudoers の行がなかったりした場合は、次のデフォルト設定が使用される。
+<PRE>
+
+<DL COMPACT><DT><DD>sudoers = files
+</DL>
+</PRE>
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>sssd との統合</H3>
+
+<I>System Security Services Daemon</I> (SSSD) を使用しているシステムで、
+<B>sudo</B> が SSSD サポートを有効にしてビルドされている場合は、
+LDAP の <I>sudoers</I> ルールをキャッシュするのに SSSD を使用することができる。
+<I>sudoers</I> の参照先として SSSD を使用するためには、
+<I>/etc/nsswitch.conf</I> の sudoers のエントリで ldap の代わりに
+sssd を使わねばならない。なお、SSSD 用の <B>sudo</B> のバックエンドは、
+<I>/etc/ldap.conf</I> ファイルを使用しないことに気をつけていただきたい。
+SSSD と共に使用するときの <B>sudo</B> の設定についてより詳しい情報をお知りになりたかったら、
+sssd-sudo(5) をご覧になるとよい。
+<A NAME="lbAL">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/etc/ldap.conf</I><DD>
+LDAP の設定ファイル
+<DT><I>/etc/nsswitch.conf</I><DD>
+sudoers セキュリティポリシー設定の参照元の順番を決める
+<DT><I>/etc/netsvc.conf</I><DD>
+AIX で sudoers セキュリティポリシー設定の参照元の順番を決める
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H2>用例</H2>
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>ldap.conf の一例</H3>
+
+<PRE>
+<DL COMPACT><DT><DD># URI または host:port の組み合わせを一つ以上指定する。
+# どちらも指定されていない場合、sudo はデフォルトの localhost と
+# 389 番ポートを使用する。
+#
+#host          ldapserver
+#host          ldapserver1 ldapserver2:390
+#
+# host がポートなしで指定されている場合のポート番号。
+# デフォルトは 389 である。
+#port          389
+#
+# URI による指定は、host と port による指定に優先する。
+uri            <A HREF="ldap://ldapserver">ldap://ldapserver</A>
+#uri            <A HREF="ldaps://secureldapserver">ldaps://secureldapserver</A>
+#uri            <A HREF="ldaps://secureldapserver">ldaps://secureldapserver</A> <A HREF="ldap://ldapserver">ldap://ldapserver</A>
+#
+# LDAP サーバに接続しようとしているときの、秒単位の待ち時間。
+bind_timelimit 30
+#
+# LDAP に問い合わせを行っているときの、秒単位の待ち時間。
+timelimit 30
+#
+# 必ず設定すること。さもないと、sudo は LDAP を無視することになる。
+# 複数回指定してもよい。
+sudoers_base   ou=SUDOers,dc=example,dc=com
+#
+# LDAP で sudoers セキュリティポリシー設定を問い合わせる際の
+# マッチングについて詳細情報を表示する。
+#sudoers_debug 2
+#
+# sudoers セキュリティポリシー設定中で日時制限のあるエントリの
+# サポートを有効にする。
+#sudoers_timed yes
+#
+# LDAP の操作を行う者の認証情報 (設定する、しないは任意)。
+#binddn        &lt;who to search as&gt;
+#bindpw        &lt;password&gt;
+#rootbinddn    &lt;who to search as, uses /etc/ldap.secret for bindpw&gt;
+#
+# LDAP プロトコルのバージョン。デフォルトは 3 である。
+#ldap_version 3
+#
+# LDAP 接続を暗号化したい場合に設定する。
+# 通例、ポートを 636 (ldaps) にすることも必要。
+#ssl on
+#
+# ポート 389 を使用し、バインド操作のために認証情報が
+# 送信される直前に、暗号化セッションに切り替えたい場合に設定する。
+# これをサポートしているのは、OpenLDAP のような start_tls 拡張に
+# 対応している LDAP サーバだけである。
+#ssl start_tls
+#
+# さらに以下の TLS 関連オプションを使うことで SSL/TLS 接続の
+# 細かい調整ができる。
+#
+#tls_checkpeer yes # サーバの SSL 証明書の正当性をチェックする。
+#tls_checkpeer no  # サーバの SSL 証明書の正当性をチェックしない。
+#
+# tls_checkpeer を有効にするときは、 tls_cacertfile か
+# tls_cacertdir のどちらかを指定すること。tls_cacertfile や
+# tls_cacertdir は OpenLDAP の使用時のみ使える。
+#
+#tls_cacertfile /etc/certs/trusted_signers.pem
+#tls_cacertdir  /etc/certs
+#
+# /dev/random がないシステムでは、下記の設定を PRNGD、あるいは
+# EGD.pl と一緒に使用すれば、暗号セッション用の鍵を生成するための
+# 乱数プールの種を供給できる。このオプションが使えるのは、
+# OpenLDAP を使用しているときだけである。
+#
+#tls_randfile /etc/egd-pool
+#
+# 使用する暗号を限定することができる。どの暗号が使えるかに
+# ついては、SSL の文書を参照すること。このオプションが
+# 使えるのは、OpenLDAP を使用しているときだけである。
+#
+#tls_ciphers &lt;cipher-list&gt;
+#
+# sudo は LDAP サーバと交信するときに、クライアントの証明書を
+# 提示することができる。
+# 注意:
+#   * 両方の行を同時に有効にすること。
+#   * キーファイルをパスワードでプロテクトしてはいけない。
+#   * キーファイルが読めるのは root だけにするのを忘れずに。
+#
+# OpenLDAP の場合:
+#tls_cert /etc/certs/client_cert.pem
+#tls_key  /etc/certs/client_key.pem
+#
+# SunONE や iPlanet LDAP (訳注: Netscape 由来) の場合:
+# こちらの場合は、tls_cert や tls_key で指定するのは、証明書や
+# キーファイルの入っているディレクトリでもよく、ファイルそのものの
+# パスでもよい。前者の場合、ディレクトリ中のファイルは、所定の名前
+# (たとえばcert8.db と key4.db) でなければならない。もっとも、
+# ファイルのパスを指定した場合は、バージョン 5.0 の LDAP SDK には
+# バグがあるので、ファイル名によってはうまく動作しないことがある。
+# この理由から、tls_cert や tls_key には、ファイル名ではなく、
+# ディレクトリを指定する方をお薦めする。
+#
+# tls_cert で指定した証明書のデータベースには、認証局の証明書と
+# クライアントの証明書が、どちらか一方だけ入っていてもよく、
+# 両方入っていてもよい。クライアントの証明書が入っている場合は、
+# tls_key も指定するべきである。
+# 後方互換のため、tls_cert のかわりに sslpath を使うこともできる。
+#tls_cert /var/ldap
+#tls_key /var/ldap
+#
+# LDAP に SASL 認証を使用する場合 (OpenSSL)
+# use_sasl yes
+# sasl_auth_id &lt;SASL user name&gt;
+# rootuse_sasl yes
+# rootsasl_auth_id &lt;SASL user name for root access&gt;
+# sasl_secprops none
+# krb5_ccname /etc/.ldapcache
+</DL>
+</PRE>
+
+<A NAME="lbAO">&nbsp;</A>
+<H3>OpenLDAP 用の sudo のスキーマ</H3>
+
+下記のスキーマは OpenLDAP 用の形式になっており、
+<B>sudo</B> のソースやバイナリの配布には <I>schema.OpenLDAP</I>
+として収録されている。その <I>schema.OpenLDAP</I>
+ファイルをスキーマ・ディレクトリ (たとえば <I>/etc/openldap/schema</I>)
+にそのままコピーし、適切な include 行を <I>slapd.conf</I> に追加して、
+<B>slapd</B> をリスタートすればよい。
+<PRE>
+
+<DL COMPACT><DT><DD>attributetype ( 1.3.6.1.4.1.15953.9.1.1
+   NAME 'sudoUser'
+   DESC 'User(s) who may  run sudo'
+   EQUALITY caseExactIA5Match
+   SUBSTR caseExactIA5SubstringsMatch
+   SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+
+attributetype ( 1.3.6.1.4.1.15953.9.1.2
+   NAME 'sudoHost'
+   DESC 'Host(s) who may run sudo'
+   EQUALITY caseExactIA5Match
+   SUBSTR caseExactIA5SubstringsMatch
+   SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+
+attributetype ( 1.3.6.1.4.1.15953.9.1.3
+   NAME 'sudoCommand'
+   DESC 'Command(s) to be executed by sudo'
+   EQUALITY caseExactIA5Match
+   SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+
+attributetype ( 1.3.6.1.4.1.15953.9.1.4
+   NAME 'sudoRunAs'
+   DESC 'User(s) impersonated by sudo'
+   EQUALITY caseExactIA5Match
+   SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+
+attributetype ( 1.3.6.1.4.1.15953.9.1.5
+   NAME 'sudoOption'
+   DESC 'Options(s) followed by sudo'
+   EQUALITY caseExactIA5Match
+   SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+
+attributetype ( 1.3.6.1.4.1.15953.9.1.6
+   NAME 'sudoRunAsUser'
+   DESC 'User(s) impersonated by sudo'
+   EQUALITY caseExactIA5Match
+   SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+
+attributetype ( 1.3.6.1.4.1.15953.9.1.7
+   NAME 'sudoRunAsGroup'
+   DESC 'Group(s) impersonated by sudo'
+   EQUALITY caseExactIA5Match
+   SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+
+attributetype ( 1.3.6.1.4.1.15953.9.1.8
+   NAME 'sudoNotBefore'
+   DESC 'Start of time interval for which the entry is valid'
+   EQUALITY generalizedTimeMatch
+   ORDERING generalizedTimeOrderingMatch
+   SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 )
+
+attributetype ( 1.3.6.1.4.1.15953.9.1.9
+   NAME 'sudoNotAfter'
+   DESC 'End of time interval for which the entry is valid'
+   EQUALITY generalizedTimeMatch
+   ORDERING generalizedTimeOrderingMatch
+   SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 )
+
+attributeTypes ( 1.3.6.1.4.1.15953.9.1.10
+    NAME 'sudoOrder'
+    DESC 'an integer to order the sudoRole entries'
+    EQUALITY integerMatch
+    ORDERING integerOrderingMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )
+
+objectclass ( 1.3.6.1.4.1.15953.9.2.1 NAME 'sudoRole' SUP top STRUCTURAL
+   DESC 'Sudoer Entries'
+   MUST ( cn )
+   MAY ( sudoUser $ sudoHost $ sudoCommand $ sudoRunAs $ sudoRunAsUser $
+         sudoRunAsGroup $ sudoOption $ sudoNotBefore $ sudoNotAfter $
+         sudoOrder $ description )
+   )
+</DL>
+</PRE>
+
+<A NAME="lbAP">&nbsp;</A>
+<H2>関連項目</H2>
+
+ldap.conf(5), sssd-sudo(5), <A HREF="../man5/sudo.conf.5.html">sudo.conf</A>(5), <A HREF="../man5/sudoers.5.html">sudoers</A>(5)
+<A NAME="lbAQ">&nbsp;</A>
+<H2>作者</H2>
+
+多数の人々が長年に渡って <B>sudo</B> の開発に携わってきた。
+当バージョンは主として次の者が書いたコードからできている。
+<P>
+<DL COMPACT><DT><DD>
+Todd C. Miller
+</DL>
+
+<P>
+
+<B>sudo</B> の開発に貢献してくださった方々の詳細なリストについては、
+配布物中の CONTRIBUTORS ファイルをご覧になっていただきたい。
+(<A HREF="https://www.sudo.ws/contributors.html)">https://www.sudo.ws/contributors.html)</A>
+<A NAME="lbAR">&nbsp;</A>
+<H2>警告</H2>
+
+LDAP を使用する sudoers セキュリティポリシーの設定と
+<I>sudoers</I> ファイルによる設定では、設定を解析する仕方に相違があるので、
+注意していただきたい。詳細については、「LDAP を使う場合と使わない場合の
+sudoers セキュリティポリシー設定の相違点」のセクションを参照すること。
+<A NAME="lbAS">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>sudo</B> にバグを発見したと思ったら、<A HREF="https://bugzilla.sudo.ws/">https://bugzilla.sudo.ws/</A>
+にアクセスして、バグレポートを提出していただきたい。
+<A NAME="lbAT">&nbsp;</A>
+<H2>サポート</H2>
+
+ある程度の無料サポートが sudo-users メーリングリストを通して利用できる。
+購読やアーカイブの検索には、次の URL を御覧になるとよい。
+<A HREF="https://www.sudo.ws/mailman/listinfo/sudo-users">https://www.sudo.ws/mailman/listinfo/sudo-users</A>
+<A NAME="lbAU">&nbsp;</A>
+<H2>免責</H2>
+
+<B>sudo</B> は「現状のまま」提供される。 明示的な、あるいは黙示的ないかなる保証も、
+商品性や特定目的への適合性についての黙示的な保証を含め、
+またそれのみに止まらず、これを否認する。詳細な全文については、
+<B>sudo</B> と一緒に配布されている LICENSE ファイルや、
+次の Web ページをご覧いただきたい。
+<A HREF="https://www.sudo.ws/license.html">https://www.sudo.ws/license.html</A>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">LDAP の SUDOers コンテナ</A><DD>
+<DT><A HREF="#lbAE">LDAP を使って sudoers セキュリティポリシーの設定を照合するときの詳細</A><DD>
+<DT><A HREF="#lbAF">LDAP を使う場合と使わない場合の sudoers セキュリティポリシー設定の相違点</A><DD>
+<DT><A HREF="#lbAG">sudo 用のスキーマ</A><DD>
+<DT><A HREF="#lbAH">ldap.conf の設定</A><DD>
+<DT><A HREF="#lbAI">nsswitch.conf の設定</A><DD>
+<DT><A HREF="#lbAJ">netsvc.conf の設定</A><DD>
+<DT><A HREF="#lbAK">sssd との統合</A><DD>
+</DL>
+<DT><A HREF="#lbAL">ファイル</A><DD>
+<DT><A HREF="#lbAM">用例</A><DD>
+<DL>
+<DT><A HREF="#lbAN">ldap.conf の一例</A><DD>
+<DT><A HREF="#lbAO">OpenLDAP 用の sudo のスキーマ</A><DD>
+</DL>
+<DT><A HREF="#lbAP">関連項目</A><DD>
+<DT><A HREF="#lbAQ">作者</A><DD>
+<DT><A HREF="#lbAR">警告</A><DD>
+<DT><A HREF="#lbAS">バグ</A><DD>
+<DT><A HREF="#lbAT">サポート</A><DD>
+<DT><A HREF="#lbAU">免責</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:46 GMT, December 05, 2022
+</BODY>
+</HTML>

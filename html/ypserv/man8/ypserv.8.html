@@ -1,0 +1,159 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of YPSERV</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>YPSERV</H1>
+Section: Reference Manual (8)<BR>Updated: August 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/ypserv/release/man8/ypserv.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ypserv - NIS サーバー
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/usr/sbin/ypserv</B> [ <B>-d</B> [ <B>path</B> ] ] [ <B>-p port</B> ]
+<P>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<A NAME="ixAAB"></A>
+<P>
+
+Network Information Service (NIS) は、 データベースとそれらを扱うプロセスとからなる
+シンプルなネットワーク検索サービスである。 データベースは <B>gdbm</B> 形式のファイルで、 <B>/var/yp</B>
+以下のディレクトリツリーに置かれる。
+<P>
+
+<B>ypserv</B> デーモンは、通常システムのスタートアップの時に起動される。 <B>ypserv</B> は、完全な
+<FONT SIZE="-1">NIS</FONT>
+データーベースを保管する
+<FONT SIZE="-1">NIS</FONT>
+サーバーマシンでのみ実行される。
+<FONT SIZE="-1">NIS</FONT>
+サービスを利用する他のマシンでは、クライアントとして <B>ypbind</B> を動作しさえすればよい。あるいは Linux なら
+<FONT SIZE="-1">NYS</FONT>
+のサポートされた libc を用いてもよい。 <B>ypbind</B> は
+<FONT SIZE="-1">NIS</FONT>
+クライアントプロセスの動作するすべてのマシンで起動しなければならない。 その際 <B>ypserv</B> の動作しているマシンは、
+ネットワークの同じノードでも他のノードでもかまわないが、 必ずネットワークのどこかに存在していなければならない。 スタートアップの時や SIGHUP
+シグナルを受け取った時には、 <B>ypserv</B> は <B>/etc/ypserv.conf</B> ファイルを読み込み、その内容を解釈して利用する。
+<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-d --debug [path]</B><DD>
+サーバーをデバッグモードで起動する。 通常 <B>ypserv</B> は <B><A HREF="../../LDP_man-pages/man3/syslog.3.html">syslog</A></B>(3)  を通してエラーメッセージ (アクセス権の侵害や dbm
+の障害など) のみを 報告する。これに対してデバッグモードでは、 サーバーはバックグラウンドへ待避せず、
+アクセス要求を受けるたびに細かなステータスメッセージを 標準エラー出力に表示する。 <B>path</B> は省略可能なパラメータで、指定すると
+<B>ypserv</B> はこのディレクトリを /var/yp の代わりに利用する。
+<DT><B>-p --port port</B><DD>
+<B>ypserv</B> がバインドするポート番号を指定する。このオプションを用いると、 ルータに NIS ポートへのパケットをフィルタリングさせ、
+インターネットからの NIS サーバーへのアクセスを制限できる。
+<DT><B>-v --version</B><DD>
+バージョン番号を表示する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>セキュリティ</H2>
+
+いったんドメインネームがわかってしまうと、リモートユーザーは誰でも <B>ypserv</B> への RPC を発行して、 NIS
+マップの内容を入手できてしまう。 このような、本来許可されるべきでないトランザクションを防ぐために、 <B>ypserv</B> では
+<B>securenets</B> という機能をサポートしており、指定されたホスト以外からのアクセスを 制限できるようになっている。起動時や SIGHUP
+シグナルを受けた時に、 <B>ypserv</B> は <B>/var/yp/securenets</B> というファイルから securenets
+情報をロードしようと試みる。 このファイルにはネットワークとネットマスクの組を、スペースで 区切ったものが指定されている。``#''
+で始まる行はコメントと みなされる。
+<DL COMPACT>
+<DT>以下に securenets ファイルの簡単な例を示す。<DD>
+<P>
+# allow connections from local host -- necessary
+<BR>
+
+host 127.0.0.1
+<BR>
+
+# same as 255.255.255.255 127.0.0.1
+<BR>
+
+#
+<BR>
+
+# allow connections from any host
+<BR>
+
+# on the 131.234.223.0 network
+<BR>
+
+255.255.255.0 131.234.223.0
+<BR>
+
+# allow connections from any host
+<BR>
+
+# between 131.234.214.0 and 131.234.215.255
+<BR>
+
+255.255.254.0 131.234.214.0
+</DL>
+<P>
+
+<B>ypserv</B> がルールにマッチしなかったアドレスからの要求を受け取ると、 その要求は無視され、警告メッセージがログに記録される。
+<B>/var/yp/securentes</B> ファイルが存在しない場合には、 <B>ypserv</B> はすべてのホストからの接続を許可する。
+<P>
+
+<B>/etc/ypserv.conf</B> に、特殊なマップやホストに対するアクセスルールを指定することもできる。
+しかしこれは必ずしも安全ではなく、クラッカーからのアタックを多少面倒に させるだけにすぎない。 mapname がルールにマッチしないと、
+<B>ypserv</B> はそのマップの YPSECURE キーを見る。キーが存在すれば、 <B>ypserv</B> は特権ポートからの要求以外を許可しない。
+<P>
+セキュリティ上の理由から、 <B>ypserv</B> はマップ更新のために用いられる ypproc_xfr 要求を、以前と同じ
+マスターサーバーからしか受けつけない。つまり、あるマップに対する マスターサーバを変更するには、スレーブサーバーは 再インストールする必要がある。
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+/etc/ypserv.conf /var/yp/securenets
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../net-tools/man1/domainname.1.html">domainname</A></B>(1), <B><A HREF="../../yp-tools/man1/ypcat.1.html">ypcat</A></B>(1), <B><A HREF="../../yp-tools/man1/ypmatch.1.html">ypmatch</A></B>(1), <B><A HREF="../man5/ypserv.conf.5.html">ypserv.conf</A></B>(5),
+<B><A HREF="../man5/netgroup.5.html">netgroup</A></B>(5), <B><A HREF="../man8/makedbm.8.html">makedbm</A></B>(8), <B><A HREF="../man8/revnetgroup.8.html">revnetgroup</A></B>(8), <B><A HREF="../man8/ypinit.8.html">ypinit</A></B>(8),
+<B><A HREF="../../yp-tools/man8/yppoll.8.html">yppoll</A></B>(8), <B><A HREF="../man8/yppush.8.html">yppush</A></B>(8), <B><A HREF="../../yp-tools/man8/ypset.8.html">ypset</A></B>(8), <B>ypwhich</B>(8), <B><A HREF="../man8/ypxfr.8.html">ypxfr</A></B>(8),
+<B><A HREF="../man8/rpc.ypxfrd.8.html">rpc.ypxfrd</A></B>(8)
+<P>
+
+Network Information Service (<FONT SIZE="-1">NIS</FONT>)  は、以前は Sun Yellow Pages
+(<FONT SIZE="-1">YP</FONT>).  と呼ばれていた。 この両者の機能はまったく同じものであり、名前が違うだけである。 Yellow Pages
+という名前は、英国で British Telecommunications plc の登録商標となっており、 許可を得ずに用いることはできない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>作者</H2>
+
+<B>ypserv</B> は Peter Eriksson &lt;<A HREF="mailto:pen@lysator.liu.se">pen@lysator.liu.se</A>&gt; によって書かれた。 Thorsten
+Kukuk &lt;<A HREF="mailto:kukuk@suse.de">kukuk@suse.de</A>&gt; がマスター/スレーブサーバの サポートを追加し、現在のメンテナンスを行っている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">セキュリティ</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">作者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:51 GMT, December 05, 2022
+</BODY>
+</HTML>

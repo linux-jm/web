@@ -1,0 +1,116 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CLOSE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>CLOSE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-12-30<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/close.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+close - ファイルディスクリプターをクローズする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int close(int </B><I>fd</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>close</B>()  は、ファイルディスクリプターをクローズする。 そのディスクリプターは、どのファイルも参照していない状態になり、
+再利用が可能になる。 そのファイルディスクリプターに関連づけられたファイルに かけられたレコードロック (<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  参照)
+のうち、そのプロセスが保有しているものは、 (そのファイルディスクリプターがロック取得に利用されたか どうかによらず) すべて削除される。
+<P>
+
+<I>fd</I> が、対応するオープンファイル記述 (open file description)  (<B><A HREF="../man2/open.2.html">open</A></B>(2)  参照)
+を参照する最後のファイルディスクリプターだった場合、 オープンファイル記述に関連するリソースが解放される。 そのディスクリプターが、 <B>unlink</B>
+を使用して削除 (remove) されたファイルに対する最後の参照だった場合には、 そのファイルは削除 (delete) される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>close</B>()  は成功した場合は 0 を返す。 エラーが発生した場合は -1 を返して、 <I>errno</I> を適切に設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>fd</I> が有効なオープンされたディスクリプターでない。
+<DT><B>EINTR</B><DD>
+<B>close</B>()  コールがシグナルにより中断 (interrupt) された。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EIO</B><DD>
+I/O エラーが発生した。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+
+SVr4, 4.3BSD, POSIX.1-2001.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>close</B>()  の返り値のチェックはよく省略されるが、 これは深刻なプログラミングエラーである。 前の <B><A HREF="../man2/write.2.html">write</A></B>(2)
+処理に関するエラーが最後の <B>close</B>()  のときになって初めて通知される場合がありうる。 ファイルクローズの際に返り値をチェックしないと、
+気付かないうちにデータを失ってしまうかもしれない。 これは特に NFS
+やディスククォータを使用した場合に見られる。返り値は状態確認用にのみ利用すべき点に注意すること。特に、<B>EINTR</B> 後に <B>close</B>()
+を再度行うべきではない。なぜなら、これにより、別のスレッドが再利用したディスクリプターをクローズしてしまう可能性があるからだ。
+<P>
+
+クローズに成功しても、データがディスクに保存されたかどうかは 保証されない (カーネルが書きこみを遅延させることがあるためである)。
+ストリームがクローズされるときにバッファーをフラッシュするかどうかは、 ファイルシステムによって異なる。
+データが物理的に保存されることを保証する必要がある場合には、 <B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)  を使用すること (<B>fsync</B>(3)
+を行った時点で、データの保存はディスクのハードウェアに依存する 問題となる)。
+<P>
+
+
+
+
+
+
+
+
+
+同じプロセス内の他のスレッドのシステムコールが使用している可能性がある間に、 ファイルディスクリプターをクローズするのは、おそらく賢明ではないだろう。
+ファイルディスクリプターは再利用されるかもしれないので、 あいまいな競合条件となることがあり、意図しない副作用の原因となりうる。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2), <B><A HREF="../man2/fsync.2.html">fsync</A></B>(2), <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man2/shutdown.2.html">shutdown</A></B>(2), <B><A HREF="../man2/unlink.2.html">unlink</A></B>(2),
+<B><A HREF="../man3/fclose.3.html">fclose</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:27 GMT, December 05, 2022
+</BODY>
+</HTML>

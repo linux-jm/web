@@ -1,0 +1,570 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of XDR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>XDR</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/xdr.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+xdr - 外部データ表現(XDR)のためのライブラリルーティン
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式と説明</H2>
+
+これらのルーティンは C プログラマーがマシン非依存な形式で 任意のデータ構造体を記述することを可能にする。
+リモートプロシージャーコールのためのデータはこれらのルーティンを 使用して送信される。
+<P>
+
+以下に示すプロトタイプ宣言は <I>&lt;<A HREF="file:///usr/include/rpc/xdr.h">rpc/xdr.h</A>&gt;</I> で行われており、その中では次の型が使用される。
+<P>
+
+<DL COMPACT><DT><DD>
+
+<B>typedef int </B><I>bool_t</I><B>;</B>
+<P>
+
+<B>typedef bool_t (*</B><I>xdrproc_t</I><B>) (XDR *, void *,...);</B>
+
+</DL>
+
+<P>
+
+<I>XDR</I> 型の宣言については、 <I>&lt;<A HREF="file:///usr/include/rpc/xdr.h">rpc/xdr.h</A>&gt;</I> を参照。
+<P>
+
+<PRE>
+<B>bool_t xdr_array(XDR *</B><I>xdrs</I><B>, char **</B><I>arrp</I><B>, unsigned int *</B><I>sizep</I><B>,</B>
+<B>                 unsigned int </B><I>maxsize</I><B>, unsigned int </B><I>elsize</I><B>,</B>
+<B>                 xdrproc_t </B><I>elproc</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+可変長の配列とそれに対応する外部表現とを変換する基本フィルター。 引数 <I>arrp</I> は配列へのポインターのアドレスであり、 <I>sizep</I>
+は配列の要素数のアドレスである。 これらの要素数は <I>maxsize</I> を超えてはならない。 引数 <I>elsize</I> は各配列の要素の
+<I>sizeof</I> であり、 <I>elproc</I> は配列要素を C 形式からその外部表現に変換するための XDR フィルターである。
+このルーティンは成功した場合には 1 を返す。 失敗した場合にはゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_bool(XDR *</B><I>xdrs</I><B>, bool_t *</B><I>bp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+真偽値(C の int)とその外部表現とを変換する基本フィルター。 データをエンコードする時、このフィルターは 1 また 0 の値を生成する。
+このルーティンは成功した場合には 1 を返す。 失敗した場合には 0 を返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_bytes(XDR *</B><I>xdrs</I><B>, char **</B><I>sp</I><B>, unsigned int *</B><I>sizep</I><B>,</B>
+<B>                 unsigned int </B><I>maxsize</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+ある長さのバイト文字列とその外部表現とを変換する基本フィルター。 引数 <I>sp</I> は文字列ポインターのアドレスである。文字列の長さは <I>sizep</I>
+のアドレスに置く。文字列は <I>maxsize</I> より長くてはいけない。 このルーティンは成功した場合には 1 を返す。 失敗した場合には 0 を返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_char(XDR *</B><I>xdrs</I><B>, char *</B><I>cp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+C の文字(char)とその外部表現との間を変換する基本フィルター。 このルーティンは成功した場合には 1 を返す。 失敗した場合には 0 を返す。
+注意: エンコードされたデータは詰め込まれておらず、それぞれ 4 バイトを 占める。文字の配列の場合には <B>xdr_bytes</B>(),
+<B>xdr_opaque</B>(), <B>xdr_string</B>()  などを考慮した方が良い。
+</DL>
+<P>
+
+<PRE>
+<B>void xdr_destroy(XDR *</B><I>xdrs</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロは XDR ストリーム <I>xdrs</I> に関連付けられた破壊ルーティンを呼び出す。
+破壊には通常、ストリームに関連付けられた私的データ構造体の解放が含まれている。 <B>xdr_destroy</B>()  の呼び出しの後に <I>xdrs</I>
+を使用することは未定義である。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_double(XDR *</B><I>xdrs</I><B>, double *</B><I>dp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+C の <I>倍精度数 (double)</I> とその外部表現との変換を行なう基本フィルター。 このルーティンは成功した場合は 1 を返す。 失敗した場合は
+0 を返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_enum(XDR *</B><I>xdrs</I><B>, enum_t *</B><I>ep</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+C の <I>enum</I> (実際には int)とその外部表現との変換を行なう基本フィルター。 このルーティンは成功した場合は 1 を返す。 失敗した場合は
+0 を返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_float(XDR *</B><I>xdrs</I><B>, float *</B><I>fp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+C の <I>浮動小数点数 (float)</I> とその外部表現との変換を行なう基本フィルター。 このルーティンは成功した場合は 1 を返す。 失敗した場合は
+0 を返す。
+</DL>
+<P>
+
+<PRE>
+<B>void xdr_free(xdrproc_t </B><I>proc</I><B>, char *</B><I>objp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+汎用解放(free)ルーティン。最初の引数はオブジェクトを解放するための XDR ルーティンである。二番目の引数はそのオブジェクト自身へのポインター
+である。注意: このルーティンに渡されるポインターは <I>解放されない</I> が、このポインターの指すデータは(再帰的に)  <I>解放される</I>。
+</DL>
+<P>
+
+<PRE>
+<B>unsigned int xdr_getpos(XDR *</B><I>xdrs</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロは XDR ストリーム <I>xdrs</I> に関連付けられた位置取得ルーティンを呼び出す。 このルーティンは XDR
+バイトストリームの位置を指示する符号無し整数を返す。 XDR ストリームの機能としてこの数値で単純な算術作業ができることが
+期待されてるいる。しかしながら XDR ストリームの実体はこれを保証する必要はない。
+</DL>
+<P>
+
+<PRE>
+<B>long *xdr_inline(XDR *</B><I>xdrs</I><B>, int </B><I>len</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロは XDR ストリーム <I>xdrs</I> に関連付けられた内部(inline)ルーティンを呼び出す。
+ルーティンはストリームのバッファーの連続する断片へのポインターを返す。 <I>len</I> は要求するバッファーのバイト長である。 注意: ポインターは
+<I>long&nbsp;*</I> にキャストされる。
+<DT><DD>
+警告: <B>xdr_inline</B>()  はバッファーの連続する断片を割り当てることができなかった場合には NULL (0)を返すかもしれない。
+どの場合もその動作はストリームの実体によって変化するかもしれない。 これは効率化のために存在している。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_int(XDR *</B><I>xdrs</I><B>, int *</B><I>ip</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+C の整数(int)とその外部表現とを変換するための基本フィルター。 このルーティンは成功した場合は 1 を返す。 失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_long(XDR *</B><I>xdrs</I><B>, long *</B><I>lp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+C の <I>long</I> 整数とそのその外部表現とを変換するための基本フィルター。 このルーティンは成功した場合は 1 を返す。
+失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>void xdrmem_create(XDR *</B><I>xdrs</I><B>, char *</B><I>addr</I><B>, unsigned int </B><I>size</I><B>,</B>
+<B>                   enum xdr_op </B><I>op</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンは <I>xdrs</I> によって指されている XDR ストリームオブジェクトを初期化する。 ストリームのデータは <I>addr</I>
+位置にあるメモリーの塊から読み書きされる。 その長さはバイト単位で <I>size</I> 超えてはいけない。 <I>op</I> は XDR
+ストリームの変換方向を決定する (<B>XDR_ENCODE</B>, <B>XDR_DECODE</B>, <B>XDR_FREE</B> のどれか)。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_opaque(XDR *</B><I>xdrs</I><B>, char *</B><I>cp</I><B>, unsigned int </B><I>cnt</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+固定長の不明データとその外部表現との変換を行なう基本フィルター。 引数 <I>cp</I> は不明オブジェクトのアドレスであり <I>cnt</I>
+はそのバイト単位の大きさである。 このルーティンは成功した場合は 1 を返す。 失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_pointer(XDR *</B><I>xdrs</I><B>, char **</B><I>objpp</I><B>,</B>
+<B>                   unsigned int </B><I>objsize</I><B>, xdrproc_t </B><I>xdrobj</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>xdr_reference</B>()  と同様であるが、これがヌルポインターを番号化するのに対して <B>xdr_reference</B>()
+はそうしない点が異なっている。これにより、 <B>xdr_pointer</B>()  は二分木や連結リストのような再帰的なデータ構造体を 表現できる。
+</DL>
+<P>
+
+<PRE>
+<B>void xdrrec_create(XDR *</B><I>xdrs</I><B>, unsigned int </B><I>sendsize</I><B>,</B>
+<B>                   unsigned int </B><I>recvsize</I><B>, char *</B><I>handle</I><B>,</B>
+<B>                   int (*</B><I>readit</I><B>) (char *, char *, int),</B>
+<B>                   int (*</B><I>writeit</I><B>) (char *, char *, int));</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンは <I>xdrs</I> で指された XDR ストリームオブジェクトを初期化する。 ストリームのデータは大きさ <I>sendsize</I>
+のバッファーへ書き込まれる。 <I>sendsize</I> をゼロにすると、システムに適切なデフォルトを使用するように指示する。 ストリームのデータは大きさ
+<I>recvsize</I> のバッファーから読み込まれる。これもゼロを渡すことで適切なデフォルトに 設定することができる。
+ストリームの出力バッファーが一杯の場合は <I>writeit</I> が呼び出される。同様にストリーム入力バッファーが空の場合には <I>readit</I>
+が呼び出される。これらの二つのルーティンの動作はシステムコールの <B><A HREF="../man2/read.2.html">read</A></B>(2)  や <B><A HREF="../man2/write.2.html">write</A></B>(2)
+と似ているが、前者のルーティンは最初の引数として <I>handle</I> が渡される点で異なっている。 注意: XDR ストリームの <I>op</I>
+は呼び出し側で設定しなければならない。
+<DT><DD>
+警告: この API で作成された XDR ストリームから読み出すには、他の XDR API を呼び出す前に、まず最初に
+<B>xdrrec_skiprecord</B>()
+を呼び出す必要がある。この呼び出しは、レコード境界の情報を提供するためにストリームに追加のバイトを挿入する。また、同じ理由で、別の
+<B>xdr*_create</B> API で作成された XDR ストリームとは互換性がない。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdrrec_endofrecord(XDR *</B><I>xdrs</I><B>, int </B><I>sendnow</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンは <B>xdrrec_create</B>()  によって作成されたストリームに対してのみ呼び出すことができる。
+出力バッファーのデータは完全なレコードとして印され、 <I>sendnow</I> がゼロでない場合には出力バッファーは書き出される。
+このルーティンは成功した場合は 1 を返す。失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdrrec_eof(XDR *</B><I>xdrs</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンは <B>xdrrec_create</B>()  によって作成されたストリームに対してのみ呼び出すことができる。
+ストリームの現在のレコードの残りを消費した後に、 ストリームに入力が残っていない場合には 1 を返す。 それ以外の場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdrrec_skiprecord(XDR *</B><I>xdrs</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンは <B>xdrrec_create</B>()  によって作成されたストリームに対してのみ呼び出すことができる。 XDR
+の実装にそのストリームの入力バッファーの現在のレコードの残りを 捨てるように伝える。このルーティンは成功した場合は 1 を返す。
+失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_reference(XDR *</B><I>xdrs</I><B>, char **</B><I>pp</I><B>, unsigned int </B><I>size</I><B>,</B>
+<B>                     xdrproc_t </B><I>proc</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+構造体へのポインター追跡を提供する基本ルーティン。 引数 <I>pp</I> はポインターのアドレスである。 <I>size</I> は <I>*pp</I>
+が指している構造体の <I>sizeof</I> である。 <I>proc</I> はその構造体の C 形式と外部表現との変換を行なう XDR プロシージャーである。
+このルーティンは成功した場合 1 を返す。 失敗した場合はゼロを返す。
+<DT><DD>
+警告: このルーティンはヌルポインターを理解することができない。かわりに <B>xdr_pointer</B>()  を使用すること。
+</DL>
+<P>
+
+<PRE>
+<B>xdr_setpos(XDR *</B><I>xdrs</I><B>, unsigned int </B><I>pos</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロは XDR ストリーム <I>xdrs</I> に関連付けられた位置設定ルーティンを呼び出す。引数 <I>pos</I> は <B>xdr_getpos</B>()
+によって取得される位置数値である。 このルーティンは XDR ストリームの位置の変更ができた場合には 1 を返す。 それ以外の場合は 0 を返す。
+<DT><DD>
+警告: ある種の XDR ストリームの場合は位置の変更を行なうことが困難である。 それでこのルーティンはある種のストリームの場合には成功し、別の種類の
+場合には失敗するかもしれない。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_short(XDR *</B><I>xdrs</I><B>, short *</B><I>sp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+C の <I>short</I> 整数とその外部表現との変換を行なう基本フィルター。 このルーティンは成功すると 1 を返す。 失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>void xdrstdio_create(XDR *</B><I>xdrs</I><B>, FILE *</B><I>file</I><B>, enum xdr_op </B><I>op</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンは <I>xdrs</I> で指された XDR ストリームオブジェクトを初期化する。 XDR ストリームに読み書きれたデータは <I>stdio</I>
+ストリーム <I>file</I> が使用される。 <I>op</I> 引数は XDR ストリームの変換方向を決定する (<B>XDR_ENCODE</B>,
+<B>XDR_DECODE</B>, <B>XDR_FREE</B> のどれか)。
+<DT><DD>
+警告: このような XDR ストリームに関連付けられた破壊ルーティンは <I>file</I> ストリームに対して <B><A HREF="../man3/fflush.3.html">fflush</A></B>(3)  を呼び出すが
+<B><A HREF="../man3/fclose.3.html">fclose</A></B>(3)  を呼び出すことはない。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_string(XDR *</B><I>xdrs</I><B>, char **</B><I>sp</I><B>, unsigned int </B><I>maxsize</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+C の文字列とそれに対応する外部表現とを変換するための基本フィルター。 文字列は <I>maxsize</I> より長くはできない。 注意: <I>sp</I>
+は文字列へのポインターのアドレスである。 このルーティンは成功した場合は 1 を返す。 失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_u_char(XDR *</B><I>xdrs</I><B>, unsigned char *</B><I>ucp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+C の <I>符号無し文字 (unsigned char)</I> とその外部表現とを変換する基本フィルター。 このルーティンは成功した場合は 1 を返す。
+失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_u_int(XDR *</B><I>xdrs</I><B>, unsigned *</B><I>up</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+C の <I>符号無し整数 (unsigned)</I> とその外部表現を変換するための基本フィルター。 このルーティンは成功した場合は 1 を返す。
+失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_u_long(XDR *</B><I>xdrs</I><B>, unsigned long *</B><I>ulp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+C の <I>unsigned long</I> 整数とその外部表現を変換するための基本フィルター。 このルーティンは成功した場合は 1 を返す。
+失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_u_short(XDR *</B><I>xdrs</I><B>, unsigned short *</B><I>usp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+C の <I>unsigned short</I> 整数とその外部表現を変換するための基本フィルター。 このルーティンは成功した場合は 1 を返す。
+失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_union(XDR *</B><I>xdrs</I><B>, int *</B><I>dscmp</I><B>, char *</B><I>unp</I><B>,</B>
+<B>                 struct xdr_discrim *</B><I>choices</I><B>,</B>
+<B>                 xdrproc_t </B><I>defaultarm</I><B>);     /* may equal NULL */</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+分別可能な C の <I>共用体 (union)</I> とその外部形式とを変換する基本フィルター。 最初に <I>dscmp</I>
+として与えられた共用体の分別要素が変換される。 この分別要素は常に <I>enum_t</I> である。 次に <I>unp</I> の位置の共用体が変換される。引数
+<I>choices</I> は <B>xdr_discrim</B>()  構造体の配列へのポインターである。各構造体は [<I>value</I>,<I>proc</I>]
+の順序付きペアを格納している。 もし共用体の分別要素が関連付けられた <I>value</I> と等しい場合には、共用体を変換するために <I>proc</I>
+が呼び出される。 <B>xdr_discrim</B>()  構造体の配列の最後は、値 NULL のルーティン を指定することで示される。 分別要素が
+<I>choices</I> 配列の中に見つからなかった場合、 <I>defaultarm</I> が (NULL でなければ) 呼び出される。 成功した場合は 1
+を返す。失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_vector(XDR *</B><I>xdrs</I><B>, char *</B><I>arrp</I><B>, unsigned int </B><I>size</I><B>,</B>
+<B>                  unsigned int </B><I>elsize</I><B>, xdrproc_t </B><I>elproc</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+固定長の配列とそれらが対応する外部表現とを変換する基本フィルター。 引数 <I>arrp</I> は配列へのポインターのアドレスである。一方で <I>size</I>
+は配列の要素数そのものである。引数 <I>elsize</I> は配列の各要素の <I>sizeof</I> で、 <I>elproc</I> は配列の要素を C
+形式からその外部表現へと変換する XDR フィルターである。 このルーティンは成功した場合 1 を返す。 失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_void(void);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンは常に 1 を返す。 これは何も行なわないが、関数引数が必要な RPC ルーティンに渡すことができる。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_wrapstring(XDR *</B><I>xdrs</I><B>, char **</B><I>sp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>xdr_string(xdrs, sp, </B><FONT SIZE="-1"><B>MAXUN.UNSIGNED</B></FONT><B> );</B> を呼び出す基本ルーティン。 ここで
+<B>MAXUN.UNSIGNED</B> は符号無し整数(unsigned int)の最大値である。 <B>xdr_wrapstring</B>()  は、 RPC
+パッケージは二つの XDR ルーティンの最大値を引数として渡すため便利である。 <B>xdr_string</B>()
+は最も頻繁に利用される基本ルーティンであるが三つを要求する。 成功した場合は 1 を返す、失敗した場合はゼロを返す。
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>xdr_array</B>(),
+<B>xdr_bool</B>(),
+<BR>
+
+<B>xdr_bytes</B>(),
+<B>xdr_char</B>(),
+<BR>
+
+<B>xdr_destroy</B>(),
+<B>xdr_double</B>(),
+<BR>
+
+<B>xdr_enum</B>(),
+<B>xdr_float</B>(),
+<BR>
+
+<B>xdr_free</B>(),
+<B>xdr_getpos</B>(),
+<BR>
+
+<B>xdr_inline</B>(),
+<B>xdr_int</B>(),
+<BR>
+
+<B>xdr_long</B>(),
+<B>xdrmem_create</B>(),
+<BR>
+
+<B>xdr_opaque</B>(),
+<B>xdr_pointer</B>(),
+<BR>
+
+<B>xdrrec_create</B>(),
+<B>xdrrec_eof</B>(),
+<BR>
+
+<B>xdrrec_endofrecord</B>(),
+<BR>
+
+<B>xdrrec_skiprecord</B>(),
+<BR>
+
+<B>xdr_reference</B>(),
+<B>xdr_setpos</B>(),
+<BR>
+
+<B>xdr_short</B>(),
+<B>xdrstdio_create</B>(),
+<BR>
+
+<B>xdr_string</B>(),
+<B>xdr_u_char</B>(),
+<BR>
+
+<B>xdr_u_int</B>(),
+<B>xdr_u_long</B>(),
+<BR>
+
+<B>xdr_u_short</B>(),
+<B>xdr_union</B>(),
+<BR>
+
+<B>xdr_vector</B>(),
+<B>xdr_void</B>(),
+<BR>
+
+<B>xdr_wrapstring</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/rpc.3.html">rpc</A></B>(3)
+<P>
+
+以下のマニュアル:
+<DL COMPACT><DT><DD>
+eXternal Data Representation Standard: Protocol Specification
+<BR>
+
+eXternal Data Representation: Sun Technical Notes
+<BR>
+
+<I>XDR: External Data Representation Standard</I>, RFC&nbsp;1014, Sun Microsystems,
+Inc., USC-ISI.
+</DL>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式と説明</A><DD>
+<DT><A HREF="#lbAD">属性</A><DD>
+<DT><A HREF="#lbAE">関連項目</A><DD>
+<DT><A HREF="#lbAF">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

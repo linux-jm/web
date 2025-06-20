@@ -1,0 +1,122 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of INET_NTOP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>INET_NTOP</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/inet_ntop.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+inet_ntop - IPv4/IPv6 アドレスをバイナリ形式からテキスト形式に変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;</B>
+
+<B>const char *inet_ntop(int </B><I>af</I><B>, const void *</B><I>src</I><B>,</B>
+<B>                      char *</B><I>dst</I><B>, socklen_t </B><I>size</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+この関数は、 <I>af</I> アドレスファミリーのネットワークアドレス構造体 <I>src</I> を文字列に変換する。 変換結果の文字列は、 <I>dst</I>
+が指すバッファーにコピーされる。 <I>dst</I> は NULL でないポインターでなければならない。 呼び出し時に、このバッファーで利用できるバイト数を
+引数 <I>size</I> に指定する。
+<P>
+
+<B>inet_ntop</B>()  は <B><A HREF="../man3/inet_ntoa.3.html">inet_ntoa</A></B>(3)  関数を拡張して複数のアドレスファミリーを扱えるようにしたものである。 今後は
+<B><A HREF="../man3/inet_ntoa.3.html">inet_ntoa</A></B>(3)  は使わず、 <B>inet_ntop</B>()  を使うようにすると良いだろう。
+現在サポートされているアドレスファミリーは以下の通り:
+<DL COMPACT>
+<DT><B>AF_INET</B><DD>
+この場合 <I>src</I> は (ネットワークバイトオーダーの)  <I>struct in_addr</I> へのポインターとみなされ、この構造体の内容が
+ドット区切りの 10 進数形式 &quot;<I>ddd.ddd.ddd.ddd</I>&quot; の IPv4 ネットワークアドレスに変換される。 バッファー <I>dst</I>
+は少なくとも <B>INET_ADDRSTRLEN</B> バイトの長さを持たなければならない。
+<DT><B>AF_INET6</B><DD>
+この場合 <I>src</I> は (ネットワークバイトオーダーの)  <I>struct in6_addr</I> へのポインターとみなされ、この構造体の内容が、
+(このアドレスに対してもっとも適切な)  IPv6 ネットワークアドレスの表示形式に変換される。 バッファー <I>dst</I> は少なくとも
+<B>INET6_ADDRSTRLEN</B> バイトの長さを持たなければならない。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>inet_ntop</B>()  は <I>dst</I> への (NULL でない) ポインターを返す。 エラーがあった場合は NULL を返し、
+<I>errno</I> をエラーを示す値に適切に設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAFNOSUPPORT</B><DD>
+<I>af</I> がサポートされているアドレスファミリーでなかった。
+<DT><B>ENOSPC</B><DD>
+変換されたアドレス文字列の長さが <I>size</I> で指定されたサイズを超過してしまう。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明は <B>attributes</B>(7) を参照のこと。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>inet_ntop</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+
+POSIX.1-2001. POSIX.1-2008, RFC&nbsp;2553 では最後の引数 <I>size</I> のプロトタイプを <I>size_t</I>
+型と定義している。多くのシステムでは RFC&nbsp;2553 にしたがっている。 glibc 2.0 と 2.1 では <I>size_t</I> だが、
+glibc 2.2 以降では <I>socklen_t</I> となっている。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>AF_INET6</B> は IPv4 がマップされた IPv6 アドレスを IPv6 形式に変換してしまう。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man3/inet_pton.3.html">inet_pton</A></B>(3)  を参照。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3), <B><A HREF="../man3/inet.3.html">inet</A></B>(3), <B><A HREF="../man3/inet_pton.3.html">inet_pton</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

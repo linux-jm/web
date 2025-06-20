@@ -1,0 +1,245 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETNS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SETNS</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-01-10<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/setns.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+setns - スレッドに名前空間を関連付けしなおす
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>             /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
+
+<B>int setns(int </B><I>fd</I><B>, int </B><I>nstype</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+名前空間を参照するファイルディスクリプターを指定すると、
+呼び出したスレッドにその名前空間を関連付けしなおす。
+<P>
+<I>fd</I> 引き数は、 <I>/proc/[pid]/ns/</I> ディレクトリ内の名前空間エントリー
+のいずれかを参照するファイルディスクリプターである。
+<I>/proc/[pid]/ns/</I> の詳細は <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7) を参照。
+<I>nstype</I> 引き数で指定された制限の範囲内で、
+呼び出したスレッドに <I>fd</I> に対応する名前空間を関連付けしなおす。
+<P>
+<I>nstype</I> 引き数は、呼び出したスレッドがどのタイプの名前空間を
+関連付けしなおすことができるかを指定する。
+この引き数には以下のいずれかの値を指定できる。
+<DL COMPACT>
+<DT><B>0</B><DD>
+どのタイプの名前空間も関連付けることができる。
+<DT><B>CLONE_NEWIPC</B> (Linux 3.0 以降)<DD>
+<I>fd</I> は IPC 名前空間を参照していなければならない。
+<DT><B>CLONE_NEWNET</B> (Linux 3.0 以降)<DD>
+<I>fd</I> はネットワーク名前空間を参照していなければならない。
+<DT><B>CLONE_NEWNS</B> (Linux 3.8 以降)<DD>
+<I>fd</I> はマウント名前空間を参照していなければならない。
+<DT><B>CLONE_NEWPID</B> (Linux 3.8 以降)<DD>
+<I>fd</I> は子孫の PID 名前空間を参照していなければならない。
+<DT><B>CLONE_NEWUSER</B> (Linux 3.8 以降)<DD>
+<I>fd</I> はユーザー名前空間を参照していなければならない。
+<DT><B>CLONE_NEWUTS</B> (Linux 3.0 以降)<DD>
+<I>fd</I> は UTS 名前空間を参照していなければならない。
+</DL>
+<P>
+
+呼び出し側が <I>fd</I> がどのタイプの名前空間を参照しているかを知っている
+(もしくは気にする必要がない) 場合には、 <I>nstype</I> に 0 を指定すれば十分
+である。呼び出し側が <I>fd</I> がどのタイプの名前空間を参照しているかを
+知っておらず、かつ、特定のタイプの名前空間であることを保証したい場合、
+<I>nstype</I> に 0 以外の値を指定するとよい。 (ファイルディスクリプターが別の
+プロセスによりオープンされ、例えば、UNIX ドメインソケット経由で呼び出し
+側に渡された場合などでは、呼び出し側が <I>fd</I> がどのタイプの名前空間を
+参照しているかを知らない可能性がある。)
+<P>
+<B>CLONE_NEWPID</B> は他の <I>nstype</I> 値の場合と少し違った動作をする。 呼び出し元スレッドを PID 名前空間に関連付けし直すと、
+呼び出し元の子プロセスが作成される PID 名前空間が変更されるだけである。 呼び出し元自身の PID 名前空間は変更されない。 PID
+名前空間を関連付けし直すことができるのは、 <I>fd</I> で指定された PID 名前空間が呼び出し元の PID 名前空間の子孫
+(子プロセス、孫プロセスなど) の場合だけである。 PID 名前空間の詳細は <B><A HREF="../man7/pid_namespaces.7.html">pid_namespaces</A></B>(7) を参照。
+<P>
+
+
+
+プロセスが自分自身をユーザー名前空間に再関連付けするには、 そのプロセスは変更後のユーザー名前空間において <B>CAP_SYS_ADMIN</B>
+ケーパビリティを持っていなければならない。 ユーザー名前空間への参加に成功すると、 そのユーザー ID やグループ ID に関わらず、
+プロセスにはその名前空間におけるすべてのケーパビリティが認められる。 マルチスレッドのプロセスは <B>setns</B>()
+でユーザー名前空間を変更できない。 <B>setns</B>() を使って、呼び出し元が現在のユーザー名前空間に再度入ることは認められていない。 これにより、
+いくつかのケーパビリティを外した呼び出し元が <B>setns</B>() を呼び出すことでそれらのケーパビリティを再度得ることを防ぐことができる。
+セキュリティ上の理由から、 ファイルシステム関連の属性 (共有が <B><A HREF="../man2/clone.2.html">clone</A></B>(2) <B>CLONE_FS</B> フラグで制御される属性)
+を別のプロセスと共有している場合、 プロセスは新しいユーザー名前空間に参加できない。 ユーザー名前空間の詳細は
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7) を参照。
+<P>
+
+プロセスがマルチスレッドの場合、そのプロセスを新しいマウント名前空間に関連付けし直すことは許可されていない。
+マウント名前空間を変更するには、呼び出し元のプロセスが、 自分自身のユーザー名前空間において <B>CAP_SYS_CHROOT</B> と
+<B>CAP_SYS_ADMIN</B> の両方のケーパビリティを持っており、 変更後のマウント名前空間で <B>CAP_SYS_ADMIN</B>
+ケーパビリティを持っていなければならない。 ユーザー名前空間とマウント名前空間の関係の詳細は <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7) を参照。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると <B>setns</B>() は 0 を返す。 失敗すると、 -1 が返され、 <I>errno</I> にエラーを示す値が設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>fd</I> が有効なファイルディスクリプターではない。
+<DT><B>EINVAL</B><DD>
+<I>fd</I> が <I>nstype</I> で指定されたタイプと一致しない名前空間を参照している。
+<DT><B>EINVAL</B><DD>
+スレッドを指定された名前空間に関連付けし直す際に問題が発生した。
+<DT><B>EINVAL</B><DD>
+呼び出し元が先祖 (親や親の親など) の PID 名前空間に参加しようとした。
+<DT><B>EINVAL</B><DD>
+自分がすでにメンバーとなっているユーザー名前空間に参加しようとした。
+<DT><B>EINVAL</B><DD>
+
+呼び出し元が他のプロセスとファイルシステム状態 (特に root ディレクトリ) を共有していて (<B>CLONE_FS</B>)、
+新しいユーザー名前空間に参加しようとした。
+<DT><B>EINVAL</B><DD>
+
+呼び出し元プロセスがマルチスレッドで、新しいユーザー名前空間に参加しようとした。
+<DT><B>ENOMEM</B><DD>
+指定された名前空間に変更するのに必要なメモリーが割り当てられない。
+<DT><B>EPERM</B><DD>
+呼び出し元スレッドはこの操作を行うのに必要なケーパビリティを持っていなかった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>setns</B>() システムコールはカーネル 3.0 で Linux に初めて登場した。
+ライブラリによるサポートは glibc バージョン 2.14 を追加された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>setns</B>() システムコールは Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+新しいスレッドが <B><A HREF="../man2/clone.2.html">clone</A></B>(2) を使って作成された際に共有できる全ての属性を、
+<B>setns</B>() を使って変更できるわけではない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは 2 つ以上の引き数を取る。 最初の引き数には、 既存の <I>/proc/[pid]/ns/</I>
+ディレクトリの名前空間ファイルのパス名を指定する。 残りの引き数は、コマンドとその引き数を指定する。 このプログラムは名前空間ファイルをオープンし、
+<B>setns</B>() を使って名前空間に参加し、 指定されたコマンドをその名前空間内で実行する。
+<P>
+以下のシェルセッションでは、 このプログラム (<I>ns_exec</I> という名前のバイナリとしてコンパイルされている)を、 <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+のマニュアルページの <B>CLONE_NEWUTS</B> のサンプルプログラムと組み合わせて使っている。
+<P>
+まず、 <B><A HREF="../man2/clone.2.html">clone</A></B>(2) のサンプルプログラムをバックグラウンドで実行する。 このプログラムは、 別の UTS 名前空間で子プロセスを作成する。
+子プロセスは自分の名前空間内でホスト名を変更する。 それから、 親プロセスと子プロセスの両方でそれぞれの UTS 名前空間のホスト名を表示し、 2
+つのホスト名が違うことが確認できる。
+<P>
+<PRE>
+$ <B>su</B>                   # 名前空間の操作には特権が必要
+Password:
+# <B>./newuts bizarro &amp;</B>
+[1] 3549
+clone() returned 3550
+uts.nodename in child:  bizarro
+uts.nodename in parent: antero
+# <B>uname -n</B>             # シェルでホスト名を確認
+antero
+</PRE>
+
+<P>
+次に、以下のプログラムを使ってシェルを実行する。
+このシェルの中では、ホスト名が最初のプログラムで作成された子プロセスが設定したホスト名になっていることを確認できる。
+<P>
+<PRE>
+# <B>./ns_exec /proc/3550/ns/uts /bin/bash</B>
+# <B>uname -n</B>             #  ns_exec で起動されたシェル内で実行
+bizarro
+</PRE>
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+<PRE>
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+                        } while (0)
+
+int
+main(int argc, char *argv[])
+{
+    int fd;
+
+    if (argc &lt; 3) {
+        fprintf(stderr, &quot;%s /proc/PID/ns/FILE cmd args...\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    fd = open(argv[1], O_RDONLY);  /* 名前空間のディスクリプターを取得 */
+    if (fd == -1)
+        errExit(&quot;open&quot;);
+
+    if (setns(fd, 0) == -1)        /* 名前空間に参加 */
+        errExit(&quot;setns&quot;);
+
+    execvp(argv[2], &amp;argv[2]);     /* 名前空間内でコマンドを実行 */
+    errExit(&quot;execvp&quot;);
+}
+</PRE>
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2), <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man2/unshare.2.html">unshare</A></B>(2), <B><A HREF="../man2/vfork.2.html">vfork</A></B>(2), <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7),
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DL>
+<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

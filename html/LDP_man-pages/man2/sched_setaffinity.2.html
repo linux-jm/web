@@ -1,0 +1,162 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SCHED_SETAFFINITY</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SCHED_SETAFFINITY</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/sched_setaffinity.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sched_setaffinity, sched_getaffinity - スレッドの CPU affinity マスクを設定・取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>             /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
+
+<B>int sched_setaffinity(pid_t </B><I>pid</I><B>, size_t </B><I>cpusetsize</I><B>,</B>
+<B>                      const cpu_set_t *</B><I>mask</I><B>);</B>
+
+<B>int sched_getaffinity(pid_t </B><I>pid</I><B>, size_t </B><I>cpusetsize</I><B>,</B>
+<B>                      cpu_set_t *</B><I>mask</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+スレッドの CPU affinity (親和度) マスクは、そのスレッドが 実行を許可されている CPU の集合を決定する。
+マルチプロセッサシステムでは、CPU affinity マスクを設定することで 性能上のメリットを得られる可能性がある。 例えば、特定のスレッドを一つの
+CPU に括り付け (すなわち、そのスレッドの affinity マスクを一つの CPU に設定し)、 他の全てのスレッドの affinity
+マスクからその CPU を除外することで、 確実にそのスレッドの実行速度を最大にすることができる。 また、あるスレッドの実行を一つの CPU
+に限定することで、 一つの CPU での実行を停止してから別の CPU で実行を再開するときに発生する キャッシュ無効化 (cache
+invalidation) による性能面の劣化を避けることもできる。
+<P>
+CPU affinity マスクは「CPU の集合」を表す <I>cpu_set_t</I> 構造体で表現され、 <I>cpu_set_t</I> へのポインター
+<I>mask</I> で指定される。 CPU 集合を操作するためのマクロ群については <B><A HREF="../man3/CPU_SET.3.html">CPU_SET</A></B>(3)  で記載されている。
+<P>
+<B>sched_setaffinity</B>()  は、スレッド ID が <I>pid</I> のスレッドの CPU affinity マスクを <I>mask</I>
+で指定された値に設定する。 <I>pid</I> が 0 の場合、呼び出し元スレッドが使われる。 <I>cpusetsize</I> 引き数には <I>mask</I>
+が指すデータの長さ (バイト単位) である。 通常は、この引き数には <I>sizeof(cpu_set_t)</I> を指定すればよい。
+<P>
+<I>pid</I> で指定されたスレッドが <I>mask</I> で指定された CPU のいずれかで現在実行されていない場合、 そのスレッドは <I>mask</I>
+で指定された CPU のいずれかに移動される。
+<P>
+<B>sched_getaffinity</B>()  は、 スレッド ID が <I>pid</I> のスレッドの affinity マスクを <I>mask</I> が指す
+<I>cpu_set_t</I> 構造体に書き込む。 <I>cpusetsize</I> 引き数には <I>mask</I> の (バイト単位の) 大きさを指定する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 <B>sched_setaffinity</B>()  と <B>sched_getaffinity</B>()  は 0 を返す。 エラーの場合は
+-1 を返し、 <I>errno</I> を適切に設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+指定されたメモリー番地が不正である。
+<DT><B>EINVAL</B><DD>
+システム上に現在実際に存在し、かつ &quot;cpuset&quot; 機構が課す制限においてそのスレッドに対して許可されている プロセッサが、 affinity
+ビットマスク <I>mask</I> に含まれていない。 &quot;cpuset&quot; 機構については <B>cpuset</B>(7)  を参照。
+<DT><B>EINVAL</B><DD>
+(<B>sched_getaffinity</B>()  と、カーネル 2.6.9 以前の <B>sched_setaffinity</B>())
+<I>cpusetsize</I> がカーネルで使われている affinity マスクのサイズより小さい。
+<DT><B>EPERM</B><DD>
+(<B>sched_setaffinity</B>())  呼び出し元のスレッドに適切な特権がなかった。 呼び出し元は、実効ユーザー ID が <I>pid</I>
+で識別されるスレッドの実ユーザー ID または実効ユーザー ID と同じであるか、 <B>CAP_SYS_NICE</B> ケーパビリティ
+(capability) を持たなければならない。
+<DT><B>ESRCH</B><DD>
+ID が <I>pid</I> のスレッドが見つからなかった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+CPU affinity システムコールは Linux kernel 2.5.8 で導入された。 これらのシステムコールのラッパー関数は glibc
+2.3 で導入された。 最初は、glibc のインターフェースには <I>unsigned int</I> 型の <I>cpusetsize</I>
+引き数が入っていた。 glibc 2.3.3 では <I>cpusetsize</I> 引き数が削除されたが、glibc 2.3.4 で <I>size_t</I>
+型で復活した。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+これらのシステムコールは Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<B>sched_setaffinity</B>()  を呼び出した後は、スレッドが実際に実行される CPU の集合は、 <I>mask</I>
+引き数で指定された集合と、システム上に実際に存在する CPU の集合の 共通集合 (AND) となる。 &quot;cpuset&quot;
+機構が使用されている場合には、スレッドが動作する CPU 集合 に対してシステムはさらに制限を加えるかもしれない (&quot;cpuset&quot; 機構については
+<B>cpuset</B>(7)  を参照)。 スレッドが動作する実際の CPU 集合に対する制限はカーネルにより 暗黙のうちに適用される。
+<P>
+システムで利用可能な CPU 数を判定する方法はいくつかある。 <I>/proc/cpuinfo</I> の内容を調べる、 <B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3) を使って
+<B>_SC_NPROCESSORS_CONF</B> と <B>_SC_NPROCESSORS_ONLN</B> の値を取得する、
+<I>/sys/devices/system/cpu/</I> の CPU ディレクトリの一覧を調べる、などがある。
+<P>
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7) に Linux のスケジューリング方式についての説明がある。
+<P>
+
+affinity マスクはスレッド単位の属性で、スレッドグループの 各スレッド単位に独立して調整することができる。 <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2)
+コールからの返り値をこのコールの <I>pid</I> 引き数として渡すことができる。 <I>pid</I> に 0 を指定すると呼び出し元のスレッドの属性が設定され、
+<B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)  コールからの返り値を <I>pid</I> に指定するとスレッドグループのメインスレッドの属性が設定される (POSIX スレッド
+API を使用している場合、 <B>sched_setaffinity</B>()  の代わりに <B><A HREF="../man3/pthread_setaffinity_np.3.html">pthread_setaffinity_np</A></B>(3)
+を使用すること)。
+<P>
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  経由で生成された子プロセスは親プロセスの CPU affinity マスクを継承する。 affinity マスクは
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  の前後で保存される。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>C ライブラリとカーネル ABI の違い</H3>
+
+このマニュアルページでは CPU affinity コールの glibc インターフェースを
+説明している。実際のシステムコールインターフェースは少し違っており、 実際の実装では CPU 集合は簡単なビットマスクであるという実状を反映し、
+<I>mask</I> の型が <I>unsigned long&nbsp;*</I> となっている。 成功時には、生の <B>sched_getaffinity</B>()
+システムコール自身は <I>cpumask_t</I> データ型の (バイト単位の) 大きさを返す。 <I>cpumask_t</I> はカーネル内部で CPU
+集合のビットマスクを表現するのに 使われているデータ型である。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B>lscpu</B>(1), <B><A HREF="../../GNU_coreutils/man1/nproc.1.html">nproc</A></B>(1), <B>taskset</B>(1), <B><A HREF="../man2/clone.2.html">clone</A></B>(2), <B><A HREF="../man2/getcpu.2.html">getcpu</A></B>(2),
+<B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2), <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2), <B><A HREF="../man2/nice.2.html">nice</A></B>(2), <B><A HREF="../man2/sched_get_priority_max.2.html">sched_get_priority_max</A></B>(2),
+<B><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></B>(2), <B><A HREF="../man2/sched_getscheduler.2.html">sched_getscheduler</A></B>(2),
+<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2), <B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2), <B><A HREF="../man3/CPU_SET.3.html">CPU_SET</A></B>(3),
+<B><A HREF="../man3/pthread_setaffinity_np.3.html">pthread_setaffinity_np</A></B>(3), <B><A HREF="../man3/sched_getcpu.3.html">sched_getcpu</A></B>(3), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+<B>cpuset</B>(7), <B><A HREF="../man7/sched.7.html">sched</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">C ライブラリとカーネル ABI の違い</A><DD>
+</DL>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

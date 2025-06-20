@@ -1,0 +1,386 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GDB</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GDB</H1>
+Section: GNU Development Tools (1)<BR>Updated: 2022-01-16<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_gdb/release/man1/gdb.1">roff page</A><HR>
+
+
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+gdb - GNU デバッガー
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+
+
+gdb [<B>-help</B>] [<B>-nh</B>] [<B>-nx</B>] [<B>-q</B>]
+[<B>-batch</B>] [<B>-cd=</B><I>dir</I>] [<B>-f</B>]
+[<B>-b</B>&nbsp;<I>bps</I>]
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;[<B>-tty=</B><I>dev</I>]&nbsp;[<B>-s</B>&nbsp;<I>symfile</I>]
+[<B>-e</B>&nbsp;<I>prog</I>] [<B>-se</B>&nbsp;<I>prog</I>]
+[<B>-c</B>&nbsp;<I>core</I>] [<B>-p</B>&nbsp;<I>procID</I>]
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;[<B>-x</B>&nbsp;<I>cmds</I>]&nbsp;[<B>-d</B>&nbsp;<I>dir</I>]
+[<I>prog</I>|<I>prog</I> <I>procID</I>|<I>prog</I> <I>core</I>]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+
+<FONT SIZE="-1">GDB</FONT> をはじめとするデバッガーは、プログラムが実行中またはクラッシュした時に、
+そのプログラムの「内部」で何が行なわれているか/行われていたかを調べるのに使用されます。
+<P>
+
+<FONT SIZE="-1">GDB</FONT> は、4 つの機能 (加えてこれらをサポートする機能) によって 実行中にバグを見つけることを手助けします。
+<DL COMPACT>
+<DT>&bull;<DD>
+プログラムの動作を詳細に指定してプログラムを実行させる。
+<DT>&bull;<DD>
+指定した条件でプログラムを停止させる。
+<DT>&bull;<DD>
+プログラムが止まった時に、何が起こったか調べる。
+<DT>&bull;<DD>
+バグによる副作用を修正し、別のバグを調べるためプログラムの状態を変更する。
+</DL>
+<P>
+
+<FONT SIZE="-1">GDB</FONT> では C, C++, Fortran, Modula-2 で書かれたプログラムのデバッグが行なえます。
+<P>
+
+<FONT SIZE="-1">GDB</FONT> はシェルコマンド <TT>&quot;gdb&quot;</TT> で起動されます。 いったん起動すると、<FONT SIZE="-1">GDB</FONT> コマンド
+<TT>&quot;quit&quot;</TT> を実行して終了するまで、 端末からコマンドを読み続けます。 <FONT SIZE="-1">GDB</FONT>
+のオンラインヘルプは、<FONT SIZE="-1">GDB</FONT> の中から <TT>&quot;help&quot;</TT> コマンドを実行して見ることができます。
+<P>
+
+<TT>&quot;gdb&quot;</TT> は引数やオプション無しで起動できますが、 たいていは 1 つか 2 つの引数をつけて起動します。
+実行プログラムを引数にする場合は以下のようにします。
+<P>
+
+
+
+<PRE>
+ gdb program
+
+</PRE>
+
+
+<P>
+
+また実行プログラムと core ファイルの両方を指定することもできます。
+<P>
+
+
+
+<PRE>
+ gdb program core
+
+</PRE>
+
+
+<P>
+
+もし実行中のプロセスのデバッグを行ないたい場合には、 第 2 引数として core の代わりにプロセス <FONT SIZE="-1">ID</FONT>
+を指定するか、あるいはオプション <TT>&quot;-p&quot;</TT> を用います:
+<P>
+
+
+
+<PRE>
+ gdb program 1234  gdb -p 1234
+
+</PRE>
+
+
+<P>
+
+こうすれば <FONT SIZE="-1">GDB</FONT> をプロセス <TT>1234</TT> にアタッチできます。 <B>-p</B> を用いる場合は、 <I>program</I>
+のファイル名は省略することができます。
+<P>
+
+よく利用される <FONT SIZE="-1">GDB</FONT> コマンドには以下のようなものがあります。
+<DL COMPACT>
+<DT><B>break [</B><I>file</I><B>:]</B><I>function</I><DD>
+
+
+プレークポイントを (<I>file</I> 内の)  <I>function</I> に設定します。
+<DT><B>run [</B><I>arglist</I><B>]</B><DD>
+
+
+プログラムの実行を開始します (もしあれば <I>arglist</I> を引数として)。
+<DT><B>bt</B><DD>
+
+
+バックトレース: プログラムのスタックを表示します。
+<DT><B>print</B> <I>expr</I><DD>
+
+
+式の値を表示します。
+<DT><B>c</B><DD>
+
+
+プログラムの実行を再開します (たとえばブレークポイントで実行を中断した後)。
+<DT><B>next</B><DD>
+
+
+次のプログラム行を実行します (停止状態の後)。 その行内のすべての関数は 1 ステップで実行されます。
+<DT><B>edit [</B><I>file</I><B>:]</B><I>function</I><DD>
+
+
+現在中断している場所のプログラム行をエディターで開きます。
+<DT><B>list [</B><I>file</I><B>:]</B><I>function</I><DD>
+
+
+現在中断している場所の近辺のプログラムソースを表示します。
+<DT><B>step</B><DD>
+
+
+次のプログラム行を実行します (停止状態の後)。 もしその行に関数が含まれていれば、その関数内をステップ実行していきます。
+<DT><B>help [</B><I>name</I><B>]</B><DD>
+
+
+<FONT SIZE="-1">GDB</FONT> コマンド <I>name</I> についての情報や、 <FONT SIZE="-1">GDB</FONT> を使う上での一般的な情報を表示します。
+<DT><B>quit</B><DD>
+
+
+<FONT SIZE="-1">GDB.</FONT> を終了します。
+</DL>
+<P>
+
+<FONT SIZE="-1">GDB</FONT> の詳細については <I>Using </I><FONT SIZE="-1"><I>GDB: A</I></FONT><I> Guide to the </I><FONT SIZE="-1"><I>GNU</I></FONT><I>
+Source-Level Debugger</I>, by Richard M. Stallman and Roland H. Pesch を参照して下さい。
+同じテキストは、 <TT>&quot;info&quot;</TT> プログラム内の <TT>&quot;gdb&quot;</TT> エントリからオンラインで参照できます。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+
+
+オプション以外の引数は、 実行ファイルと core ファイル (またはプロセス <FONT SIZE="-1">ID</FONT>)  を指定します。
+つまりオプションフラグと関連づいていない最初の引数は、 <B>-se</B> オプションで指定するファイルと同じになります。 また、もしも2番目があれば、
+<B>-c</B> オプションで指定するファイルと同じになります。 オプションの多くは、 長い表記法と短い表記法の両方で指定することができますが、
+ここではその両方を示します。 長い表記法は、 どのオプションであるのかが明確であれば、 短く切り詰めても構いません。 (好みにより <B>-</B> の代わりに
+<B>+</B> が使用できますが、ここではよく用いられる表記で記します。)
+<P>
+
+すべてのオプションとコマンドライン引数は、 指定した順番に処理されます。 <B>-x</B> オプションが使用されると、 この順番は変わります。
+<DL COMPACT>
+<DT><B>-help</B><DD>
+
+
+
+<DT><B>-h</B><DD>
+
+
+
+短い説明つきで、 すべてのオプションを表示します。
+<DT><B>-symbols=</B><I>file</I><DD>
+
+
+
+<DT><B>-s</B> <I>file</I><DD>
+
+
+
+シンボルテーブルをファイル <I>file</I> から読みます。
+<DT><B>-write</B><DD>
+
+
+実行ファイルやコアファイルへの書き込みを有効にします。
+<DT><B>-exec=</B><I>file</I><DD>
+
+
+
+<DT><B>-e</B> <I>file</I><DD>
+
+
+
+ファイル <I>file</I> を実行可能ファイルとして利用します。 core dump と連係して pure data を調べるのにも用いられます。
+<DT><B>-se=</B><I>file</I><DD>
+
+
+ ファイル <I>file</I> からシンボルテーブルを読み、 同時にそれを実行可能ファイルとして利用します。
+<DT><B>-core=</B><I>file</I><DD>
+
+
+
+<DT><B>-c</B> <I>file</I><DD>
+
+
+
+ファイル <I>file</I> を core dump として利用します。
+<DT><B>-command=</B><I>file</I><DD>
+
+
+
+<DT><B>-x</B> <I>file</I><DD>
+
+
+
+ファイル <I>file</I> から <FONT SIZE="-1">GDB</FONT> のコマンドを読み込み、実行します。
+<DT><B>-ex</B> <I>command</I><DD>
+
+
+指定された <FONT SIZE="-1">GDB</FONT> <I>command</I> を実行します。
+<DT><B>-directory=</B><I>directory</I><DD>
+
+
+
+<DT><B>-d</B> <I>directory</I><DD>
+
+
+
+ソースファイルを探す検索パスに <I>directory</I> を追加します。
+<DT><B>-nh</B><DD>
+
+
+<I>~/.config/gdb/gdbinit</I>、 <I>~/.gdbinit</I>、 <I>~/.config/gdb/gdbearlyinit</I>、
+<I>~/.gdbearlyinit</I> の各ファイルから、 コマンドを実行しません。
+<DT><B>-nx</B><DD>
+
+
+
+<DT><B>-n</B><DD>
+
+
+
+<I>~/.gdbinit</I> または <I>.gdbearlyinit</I> の初期化ファイルからコマンド実行しません。
+<DT><B>-quiet</B><DD>
+
+
+
+<DT><B>-q</B><DD>
+
+
+
+起動時のメッセージおよび copyright を表示しません。 これらのメッセージはバッチモードでも抑制されます。
+<DT><B>-batch</B><DD>
+
+
+バッチモードで動作します。 <B>-x</B> で指定したファイル (および抑制されていなければ <I>.gdbinit</I> ファイル)
+内の全てのコマンドを処理した後、戻り値として <TT>0</TT> を返して終了します。 コマンドファイル内の <FONT SIZE="-1">GDB</FONT>
+コマンドの実行中にエラーが生じた場合は、 0 以外の値で終了します。
+
+
+<P>
+
+
+バッチモードは <FONT SIZE="-1">GDB</FONT> をフィルタとして実行する場合、 たとえばプログラムをダウンロードして別のコンピュータ上で実行したりする場合
+に便利です。 以下のメッセージ
+
+
+<P>
+
+
+
+
+<PRE>
+ Program exited normally. (プログラムは正常に終了しました。)
+
+</PRE>
+
+
+
+
+<P>
+
+
+は通常、<FONT SIZE="-1">GDB</FONT> の制御端末上で実行されるプログラムが終了するたびに 出力されるものですが、
+バッチモードではこのようなメッセージは出力されません。
+<DT><B>-cd=</B><I>directory</I><DD>
+
+
+カレントディレクトリの代わりに <I>directory</I> を <FONT SIZE="-1">GDB</FONT> の作業用ディレクトリとして実行します。
+<DT><B>-fullname</B><DD>
+
+
+
+<DT><B>-f</B><DD>
+
+
+
+Emacs が <FONT SIZE="-1">GDB</FONT> をサブプロセスとして実行する際に、 このオプションを付加します。 このとき <FONT SIZE="-1">GDB</FONT>
+は、スタックフレームが表示されるたびに (プログラムが中断するたびに)、 完全なファイル名と行番号を標準的な認識しやすい形式で表示します。
+この表示書式は 2 つの <B>&nbsp;32</B> 文字、ファイル名、行番号とコロンで区切られた文字位置、改行の順になっています。 これは Emacs-GDB
+インタフェースプログラムにおいて、 フレームに対応するソースコードを表示するために 2 つの <B>&nbsp;32</B> 文字を使うことになっているからです。
+<DT><B>-b</B> <I>bps</I><DD>
+
+
+リモートデバッグ用に <FONT SIZE="-1">GDB</FONT> が利用するシリアルインタフェースの回線速度を (ボーレートまたはビット/秒で) 設定します。
+<DT><B>-tty=</B><I>device</I><DD>
+
+
+プログラムの標準入出力に <I>device</I> を利用します。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<FONT SIZE="-1">GDB</FONT> の完全なドキュメントは Texinfo マニュアルとしてメンテナンスされています。<TT>&quot;info&quot;</TT> と
+<TT>&quot;gdb&quot;</TT> の両プログラム、および <FONT SIZE="-1">GDB</FONT> の Texinfo
+ドキュメントが適切にインストールされていれば、以下のコマンド
+<P>
+
+
+
+<PRE>
+ info gdb
+
+</PRE>
+
+
+<P>
+
+を実行して完全なマニュアルを参照できます。
+<P>
+
+<I>Using </I><FONT SIZE="-1"><I>GDB: A</I></FONT><I> Guide to the </I><FONT SIZE="-1"><I>GNU</I></FONT><I> Source-Level Debugger</I>,
+Richard M. Stallman and Roland H. Pesch, July 1991.
+<A NAME="lbAG">&nbsp;</A>
+<H2>著作権</H2>
+
+
+
+Copyright (c) 1988-2022 Free Software Foundation, Inc.
+<P>
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the <FONT SIZE="-1">GNU</FONT> Free Documentation License, Version 1.3 or any
+later version published by the Free Software Foundation; with the Invariant
+Sections being ``Free Software'' and ``Free Software Needs Free
+Documentation'', with the Front-Cover Texts being ``A <FONT SIZE="-1">GNU</FONT>
+Manual,'' and with the Back-Cover Texts as in (a) below.
+<P>
+
+(a) <FONT SIZE="-1">FSF</FONT> の裏表紙には、 以下の文章が記述されています: ``You are free to copy and modify
+this <FONT SIZE="-1">GNU</FONT> Manual.  Buying copies from <FONT SIZE="-1">GNU</FONT> Press supports the
+<FONT SIZE="-1">FSF</FONT> in developing <FONT SIZE="-1">GNU</FONT> and promoting software freedom.''
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">著作権</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:24 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,439 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SHM_OPEN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SHM_OPEN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/shm_open.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+shm_open, shm_unlink - POSIX 共有メモリーオブジェクトの作成/オープン/削除を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B> /* mode 定数用 */
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B> /* O_* 定数の定義用 */
+<P>
+
+<B>int shm_open(const char *</B><I>name</I><B>, int </B><I>oflag</I><B>, mode_t </B><I>mode</I><B>);</B>
+<P>
+
+<B>int shm_unlink(const char *</B><I>name</I><B>);</B>
+<P>
+
+<I>-lrt</I> でリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>shm_open</B>()  は、POSIX 共有メモリーオブジェクトを新規に作成/オープンしたり、 すでに存在するオブジェクトをオープンしたりする。
+POSIX 共有メモリーオブジェクトは、実際には、関係のないプロセスが 共有メモリーの同じ領域を <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+するために使用することができる手段である。 <B>shm_unlink</B>()  は、逆の操作、つまり以前に <B>shm_open</B>()
+で作成されたオブジェクトの削除を行う。
+<P>
+
+
+
+
+
+
+
+
+<B>shm_open</B>()  の動作は <B><A HREF="../man2/open.2.html">open</A></B>(2)  とよく似ている。 <I>name</I>
+で作成したりオープンしたりする共有メモリーオブジェクトを指定する。 移植性を持たせるためには、共有メモリーオブジェクトは <I>/somename</I>
+という形式の名前で識別し、 その名前は、最大で <B>NAME_MAX</B> (すなわち 255) 文字のヌル終端された文字列で、
+スラッシュで始まり、スラッシュ以外の文字が 1 文字以上続く形式 にすべきである。
+<P>
+
+<I>oflag</I> はビットマスクで、 <B>O_RDONLY</B> と <B>O_RDWR</B> のいずれか一方と、以下に述べる他のフラグの論理和をとったもの
+を指定する。
+<DL COMPACT>
+<DT><B>O_RDONLY</B><DD>
+読み出しアクセス用にオブジェクトをオープンする。 このフラグを指定してオープンされた共有メモリーオブジェクトは、 読み出し (<B>PROT_READ</B>)
+アクセスでのみ <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  することができる。
+<DT><B>O_RDWR</B><DD>
+読み書きアクセス用にオブジェクトをオープンする。
+<DT><B>O_CREAT</B><DD>
+
+
+存在しない場合、共有メモリーオブジェクトを作成する。 オブジェクトのユーザーとグループの所有権は、 呼び出し元プロセスの対応する実効 ID が使われ、
+オブジェクトの許可ビットは <I>mode</I> の下位 9 ビットに基づいて設定される。ただし、 ファイルモード作成マスク (<B><A HREF="../man2/umask.2.html">umask</A></B>(2)
+参照) に設定されている値は、新規オブジェクトに関してはクリアされる。 <I>mode</I> を定義するために使用できるマクロ定数(群)は
+<B><A HREF="../man2/open.2.html">open</A></B>(2)  に記載されている (これらの定数のシンボル定義は <I>&lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</I>
+のインクルードにより得られる)。
+<DT><DD>
+新規に作成された共有メモリーオブジェクトは長さ 0 で初期化される。 オブジェクトの大きさは <B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2)  を使って設定できる。
+共有メモリーオブジェクトとして新規に確保されたバイトは自動的に 0 に初期化される。
+<DT><B>O_EXCL</B><DD>
+<B>O_CREAT</B> が一緒に指定されており、 <I>name</I> で指定された共有メモリーオブジェクトが既に存在した場合、 エラーを返す。
+オブジェクトの存在確認と、存在しなかった場合のオブジェクト作成は、 必ず一連の操作として実行される (performed atomically)。
+<DT><B>O_TRUNC</B><DD>
+共有メモリーオブジェクトがすでに存在した場合、 そのオブジェクトを 0 バイトに切り詰める。
+</DL>
+<P>
+
+これらのフラグ値の定義は <I>&lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</I> のインクルードにより得られる。
+<P>
+
+成功して完了した場合、 <B>shm_open</B>()  は共有メモリーオブジェクトを参照する新しいファイルディスクリプターを返す。
+このファイルディスクリプターは、そのプロセス内で過去にオープンされていない ファイルディスクリプターの中で最も小さな数になることが保証される。
+<B>FD_CLOEXEC</B> フラグ (<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  を参照) が、このファイルディスクリプターに設定される。
+<P>
+
+通常、これらのファイルディスクリプターは、この後続けて実行される <B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2)  (新規に作成されたオブジェクトの場合のみ) と
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  の呼び出しに使用される。 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  を呼び出した後は、ファイルディスクリプターをクローズしてもよく、
+クローズしてもメモリーマッピングに影響を与えることはない。
+<P>
+
+<B>shm_unlink</B>()  の動作は <B><A HREF="../man2/unlink.2.html">unlink</A></B>(2)  とよく似ている:
+共有メモリーオブジェクト名を削除し、すべてのプロセスが処理対象の オブジェクトをアンマップした時点でオブジェクトの割り当てを解除し、
+対応するメモリー領域の内容を破棄する。 <B>shm_unlink</B>()  が成功した後で、同じ <I>name</I> を持つオブジェクトに対して
+<B>shm_open</B>()  を行うと、 (<B>O_CREAT</B> が指定されていない場合) 失敗する。 (<B>O_CREAT</B>
+が指定されている場合、新しく別のオブジェクトが作成される)。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 <B>shm_open</B>()  はファイルディスクリプター (非負の整数) を返す。 失敗した場合、 <B>shm_open</B>()  は
+-1 を返す。 <B>shm_unlink</B>()  は、成功した場合 0 を、エラーが起こった場合 -1 を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+失敗した場合、エラーの原因を示すため <I>errno</I> が設定される。 <I>errno</I> に設定される値は以下の通りである:
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+共有メモリーオブジェクトを <B>shm_unlink</B>()  する権限がなかった。
+<DT><B>EACCES</B><DD>
+指定された <I>mode</I> で <I>name</I> を <B>shm_open</B>()  する権限がなかった。もしくは、 <B>O_TRUNC</B>
+が指定されたが、呼び出し元にはそのオブジェクトに対する書き込み権限が なかった。
+<DT><B>EEXIST</B><DD>
+<B>O_CREAT</B> と <B>O_EXCL</B> の両方が <B>shm_open</B>()  に指定されたが、 <I>name</I>
+で指定された共有メモリーオブジェクトが既に存在した。
+<DT><B>EINVAL</B><DD>
+<B>shm_open</B>()  に与えられた <I>name</I> 引数が不正であった。
+<DT><B>EMFILE</B><DD>
+オープンされているファイルディスクリプター数のプロセス単位の上限に達した。
+<DT><B>ENAMETOOLONG</B><DD>
+<I>name</I> の長さが <B>PATH_MAX</B> を越えている。
+<DT><B>ENFILE</B><DD>
+システム全体でオープンされているファイルの総数が上限に達した。
+<DT><B>ENOENT</B><DD>
+存在していない <I>name</I> のオブジェクトを <B>shm_open</B>()  しようとしたが、 <B>O_CREAT</B> が指定されていなかった。
+<DT><B>ENOENT</B><DD>
+存在しない <I>name</I> のオブジェクトを <B>shm_unlink</B>()  しようとした。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+これらの関数は glibc 2.2 以降で提供されている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>shm_open</B>(),
+<B>shm_unlink</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<P>
+
+POSIX.1-2001 says that the group ownership of a newly created shared memory
+object is set to either the calling process's effective group ID or &quot;a
+system default group ID&quot;.  POSIX.1-2008 says that the group ownership may be
+set to either the calling process's effective group ID or, if the object is
+visible in the filesystem, the group ID of the parent directory.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+POSIX は <B>O_RDONLY</B> と <B>O_TRUNC</B> が一緒に指定された場合の動作を未定義にしている。Linux では、
+既存の共有メモリーオブジェクトに対する切り詰め (truncate) は成功する。 しかし、他の UNIX システムでも同じであるとは限らない。
+<P>
+
+Linux における POSIX 共有メモリーオブジェクトの実装は専用の <B>tmpfs</B>(5) ファイルシステムを使用する。そのファイルシステムは通常
+<I>/dev/shm</I> にマウントされる。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+The programs below employ POSIX shared memory and POSIX unnamed semaphores
+to exchange a piece of data.  The &quot;bounce&quot; program (which must be run first)
+raises the case of a string that is placed into the shared memory by the
+&quot;send&quot; program.  Once the data has been modified, the &quot;send&quot; program then
+prints the contents of the modified shared memory.  An example execution of
+the two programs is the following:
+<P>
+
+
+
+$ <B>./pshm_ucase_bounce /myshm &amp;</B>
+[1] 270171
+$ <B>./pshm_ucase_send /myshm hello</B>
+HELLO
+
+
+<P>
+
+
+Further detail about these programs is provided below.
+<A NAME="lbAL">&nbsp;</A>
+<H3>プログラムのソース: pshm_ucase.h</H3>
+
+The following header file is included by both programs below.  Its primary
+purpose is to define a structure that will be imposed on the memory object
+that is shared between the two programs.
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/semaphore.h">semaphore.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+<P>
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+#define BUF_SIZE 1024   /* Maximum size for exchanged string */
+<P>
+/* Define a structure that will be imposed on the shared
+<BR>&nbsp;&nbsp;&nbsp;memory&nbsp;object&nbsp;*/
+<P>
+struct shmbuf {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sem_t&nbsp;&nbsp;sem1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;POSIX&nbsp;unnamed&nbsp;semaphore&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sem_t&nbsp;&nbsp;sem2;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;POSIX&nbsp;unnamed&nbsp;semaphore&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;cnt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;bytes&nbsp;used&nbsp;in&nbsp;'buf'&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;buf[BUF_SIZE];&nbsp;&nbsp;&nbsp;/*&nbsp;Data&nbsp;being&nbsp;transferred&nbsp;*/
+};
+
+
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>プログラムのソース: pshm_ucase_bounce.c</H3>
+
+The &quot;bounce&quot; program creates a new shared memory object with the name given
+in its command-line argument and sizes the object to match the size of the
+<I>shmbuf</I> structure defined in the header file.  It then maps the object
+into the process's address space, and initializes two POSIX semaphores
+inside the object to 0.
+<P>
+
+After the &quot;send&quot; program has posted the first of the semaphores, the
+&quot;bounce&quot; program upper cases the data that has been placed in the memory by
+the &quot;send&quot; program and then posts the second semaphore to tell the &quot;send&quot;
+program that it may now access the shared memory.
+<P>
+
+
+
+/* pshm_ucase_bounce.c
+<P>
+<BR>&nbsp;&nbsp;&nbsp;Licensed&nbsp;under&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;v2&nbsp;or&nbsp;later.
+*/
+#include &lt;<A HREF="file:///usr/include/ctype.h">ctype.h</A>&gt;
+#include &quot;pshm_ucase.h&quot;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;/shm-path\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*shmpath&nbsp;=&nbsp;argv[1];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;shared&nbsp;memory&nbsp;object&nbsp;and&nbsp;set&nbsp;its&nbsp;size&nbsp;to&nbsp;the&nbsp;size
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;our&nbsp;structure&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd&nbsp;=&nbsp;shm_open(shmpath,&nbsp;O_CREAT&nbsp;|&nbsp;O_EXCL&nbsp;|&nbsp;O_RDWR,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_IRUSR&nbsp;|&nbsp;S_IWUSR);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shm_open&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ftruncate(fd,&nbsp;sizeof(struct&nbsp;shmbuf))&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;ftruncate&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Map&nbsp;the&nbsp;object&nbsp;into&nbsp;the&nbsp;caller's&nbsp;address&nbsp;space&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;shmbuf&nbsp;*shmp&nbsp;=&nbsp;mmap(NULL,&nbsp;sizeof(*shmp),
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROT_READ&nbsp;|&nbsp;PROT_WRITE,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MAP_SHARED,&nbsp;fd,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(shmp&nbsp;==&nbsp;MAP_FAILED)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;mmap&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Initialize&nbsp;semaphores&nbsp;as&nbsp;process-shared,&nbsp;with&nbsp;value&nbsp;0&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_init(&amp;shmp-&gt;sem1,&nbsp;1,&nbsp;0)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_init-sem1&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_init(&amp;shmp-&gt;sem2,&nbsp;1,&nbsp;0)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_init-sem2&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;'sem1'&nbsp;to&nbsp;be&nbsp;posted&nbsp;by&nbsp;peer&nbsp;before&nbsp;touching
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shared&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_wait(&amp;shmp-&gt;sem1)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_wait&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Convert&nbsp;data&nbsp;in&nbsp;shared&nbsp;memory&nbsp;into&nbsp;upper&nbsp;case&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;shmp-&gt;cnt;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shmp-&gt;buf[j]&nbsp;=&nbsp;toupper((unsigned&nbsp;char)&nbsp;shmp-&gt;buf[j]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Post&nbsp;'sem2'&nbsp;to&nbsp;tell&nbsp;the&nbsp;to&nbsp;tell&nbsp;peer&nbsp;that&nbsp;it&nbsp;can&nbsp;now
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access&nbsp;the&nbsp;modified&nbsp;data&nbsp;in&nbsp;shared&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_post(&amp;shmp-&gt;sem2)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_post&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Unlink&nbsp;the&nbsp;shared&nbsp;memory&nbsp;object.&nbsp;Even&nbsp;if&nbsp;the&nbsp;peer&nbsp;process
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;still&nbsp;using&nbsp;the&nbsp;object,&nbsp;this&nbsp;is&nbsp;okay.&nbsp;The&nbsp;object&nbsp;will
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;removed&nbsp;only&nbsp;after&nbsp;all&nbsp;open&nbsp;references&nbsp;are&nbsp;closed.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;shm_unlink(shmpath);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>プログラムのソース: pshm_ucase_send.c</H3>
+
+The &quot;send&quot; program takes two command-line arguments: the pathname of a
+shared memory object previously created by the &quot;bounce&quot; program and a string
+that is to be copied into that object.
+<P>
+
+The program opens the shared memory object and maps the object into its
+address space.  It then copies the data specified in its second argument
+into the shared memory, and posts the first semaphore, which tells the
+&quot;bounce&quot; program that it can now access that data.  After the &quot;bounce&quot;
+program posts the second semaphore, the &quot;send&quot; program prints the contents
+of the shared memory on standard output.
+<P>
+
+
+
+/* pshm_ucase_send.c
+<P>
+<BR>&nbsp;&nbsp;&nbsp;Licensed&nbsp;under&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;v2&nbsp;or&nbsp;later.
+*/
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &quot;pshm_ucase.h&quot;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;3)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;/shm-path&nbsp;string\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*shmpath&nbsp;=&nbsp;argv[1];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*string&nbsp;=&nbsp;argv[2];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;len&nbsp;=&nbsp;strlen(string);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;&gt;&nbsp;BUF_SIZE)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;String&nbsp;is&nbsp;too&nbsp;long\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Open&nbsp;the&nbsp;existing&nbsp;shared&nbsp;memory&nbsp;object&nbsp;and&nbsp;map&nbsp;it
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;into&nbsp;the&nbsp;caller's&nbsp;address&nbsp;space&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd&nbsp;=&nbsp;shm_open(shmpath,&nbsp;O_RDWR,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shm_open&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;shmbuf&nbsp;*shmp&nbsp;=&nbsp;mmap(NULL,&nbsp;sizeof(*shmp),
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROT_READ&nbsp;|&nbsp;PROT_WRITE,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MAP_SHARED,&nbsp;fd,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(shmp&nbsp;==&nbsp;MAP_FAILED)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;mmap&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Copy&nbsp;data&nbsp;into&nbsp;the&nbsp;shared&nbsp;memory&nbsp;object&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;shmp-&gt;cnt&nbsp;=&nbsp;len;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memcpy(&amp;shmp-&gt;buf,&nbsp;string,&nbsp;len);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Tell&nbsp;peer&nbsp;that&nbsp;it&nbsp;can&nbsp;now&nbsp;access&nbsp;shared&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_post(&amp;shmp-&gt;sem1)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_post&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;until&nbsp;peer&nbsp;says&nbsp;that&nbsp;it&nbsp;has&nbsp;finished&nbsp;accessing
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;shared&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_wait(&amp;shmp-&gt;sem2)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_wait&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Write&nbsp;modified&nbsp;data&nbsp;in&nbsp;shared&nbsp;memory&nbsp;to&nbsp;standard&nbsp;output&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;write(STDOUT_FILENO,&nbsp;&amp;shmp-&gt;buf,&nbsp;len);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;write(STDOUT_FILENO,&nbsp;&quot;\n&quot;,&nbsp;1);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/close.2.html">close</A></B>(2), <B><A HREF="../man2/fchmod.2.html">fchmod</A></B>(2), <B><A HREF="../man2/fchown.2.html">fchown</A></B>(2), <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2), <B><A HREF="../man2/fstat.2.html">fstat</A></B>(2),
+<B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2), <B><A HREF="../man2/memfd_create.2.html">memfd_create</A></B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man2/umask.2.html">umask</A></B>(2),
+<B><A HREF="../man7/shm_overview.7.html">shm_overview</A></B>(7)
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DL>
+<DT><A HREF="#lbAL">プログラムのソース: pshm_ucase.h</A><DD>
+<DT><A HREF="#lbAM">プログラムのソース: pshm_ucase_bounce.c</A><DD>
+<DT><A HREF="#lbAN">プログラムのソース: pshm_ucase_send.c</A><DD>
+</DL>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

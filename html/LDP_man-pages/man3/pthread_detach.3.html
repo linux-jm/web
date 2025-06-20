@@ -1,0 +1,136 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_DETACH</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_DETACH</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/pthread_detach.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_detach - スレッドを切り離す (detach する)
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<B>int pthread_detach(pthread_t </B><I>thread</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>-pthread</I> を付けてコンパイルとリンクを行う。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pthread_detach</B>() 関数は <I>thread</I> で識別されるスレッドに
+detached (切り離された状態) という印を付ける。
+detached 状態のスレッドが終了すると、
+別のスレッドが終了されたスレッドを join しなくても、
+そのスレッドのリソースは自動的に解放されてシステムに戻される。
+<P>
+
+すでに detach 状態のスレッドを detach しようとした場合に
+どのような結果となるかは規定されていない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、<B>pthread_detach</B>() は 0 を返す。
+エラーの場合、エラー番号を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>thread</I> が join 可能なスレッドではない。
+<DT><B>ESRCH</B><DD>
+ID が <I>thread</I> のスレッドが見つからなかった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>pthread_detach</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+いったんスレッドを detached 状態にすると、
+そのスレッドを <B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3) で join したり、
+もう一度 join 可能にしたりすることはできない。
+<P>
+
+<B><A HREF="../man3/pthread_attr_setdetachstate.3.html">pthread_attr_setdetachstate</A></B>(3) を使って
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3) の <I>attr</I> 引数の detached 属性を設定することで、
+新しいスレッドを detached 状態で作成することができる。
+<P>
+
+detached 属性は、スレッドが終了した際のシステムの動作を決めるだけである。
+プロセスが <B><A HREF="../man3/exit.3.html">exit</A></B>(3) を使って終了した場合に、そのスレッドが終了され
+なくなるようなことはない (なお、メインスレッドが return した場合も
+プロセスが <B><A HREF="../man3/exit.3.html">exit</A></B>(3) を使って終了した場合と全く同じである)。
+<P>
+
+Either <B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3)  or <B>pthread_detach</B>()  should be called for each
+thread that an application creates, so that system resources for the thread
+can be released.  (But note that the resources of any threads for which one
+of these actions has not been done will be freed when the process
+terminates.)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下の文は、呼び出したスレッド自身を detach する。
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_detach(pthread_self());
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/pthread_attr_setdetachstate.3.html">pthread_attr_setdetachstate</A></B>(3), <B><A HREF="../man3/pthread_cancel.3.html">pthread_cancel</A></B>(3),
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3), <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3), <B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

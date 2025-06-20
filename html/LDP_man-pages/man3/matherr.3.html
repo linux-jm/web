@@ -1,0 +1,409 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MATHERR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MATHERR</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/matherr.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+matherr - SVID 数学ライブラリの例外処理
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;</B>
+
+<B>int matherr(struct exception *</B><I>exc</I><B>);</B>
+
+<B>extern _LIB_VERSION_TYPE _LIB_VERSION;</B>
+</PRE>
+
+<P>
+
+<I>-lm</I> でリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+<I>Note</I>: the mechanism described in this page is no longer supported by
+glibc.  Before glibc 2.27, it had been marked as obsolete.  Since glibc
+2.27, the mechanism has been removed altogether.  New applications should
+use the techniques described in <B><A HREF="../man7/math_error.7.html">math_error</A></B>(7)  and <B><A HREF="../man3/fenv.3.html">fenv</A></B>(3).  This page
+documents the <B>matherr</B>()  mechanism as an aid for maintaining and porting
+older applications.
+<P>
+
+System V Interface Definition (SVID) では、各種の数学関数は数学的な
+例外を検出した場合に <B>matherr</B>() を呼ばれる関数を起動すべきである、
+と規定されている。この関数は数学関数が返る前に呼び出される。
+<B>matherr</B>() が返った後に、システムは数学関数に戻り、
+それから呼び出し元に返る。
+<P>
+
+<B>matherr</B>() を使用するためには、
+プログラマは (<I>どの</I>ヘッダーファイルをインクルードするよりも前に)
+<B>_SVID_SOURCE</B> 機能検査マクロを定義し、値 <B>_SVID_</B> をグローバル変数
+<B>_LIB_VERSION</B> に代入しなければならない。
+<P>
+
+デフォルト版の <B>matherr</B>() がシステムによって提供されている。
+デフォルト版は何も行わず、0 を返す (このことの重要性については
+下記を参照)。プログラマが <B>matherr</B>() を定義することで、
+デフォルト版を上書きすることができる。
+プログラマが定義した関数は例外が発生した際に起動される。
+この関数は引数 1 個で起動され、その引数は以下に示す
+<I>exception</I> 構造体へのポインターである。
+<P>
+
+
+
+struct exception {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;type;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Exception&nbsp;type&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;*name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Name&nbsp;of&nbsp;function&nbsp;causing&nbsp;exception&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;double&nbsp;arg1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;1st&nbsp;argument&nbsp;to&nbsp;function&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;double&nbsp;arg2;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;2nd&nbsp;argument&nbsp;to&nbsp;function&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;double&nbsp;retval;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Function&nbsp;return&nbsp;value&nbsp;*/
+}
+
+
+<P>
+
+<I>type</I> フィールドは以下の値のいずれかである。
+<DL COMPACT>
+<DT><B>DOMAIN</B><DD>
+領域エラー (domain error) が発生した
+(関数の引数が関数が定義された範囲外であった)。
+返り値は関数によって異なり、 <I>errno</I> には <B>EDOM</B> が設定される。
+<DT><B>SING</B><DD>
+極エラー (pole error) が発生した (関数の結果が無限大である)。
+返り値はほとんどの場合 <B>HUGE</B> (最大の単精度浮動小数点数) となり、
+たいていは符号付きである。
+ほとんどの場合、<I>errno</I> には <B>EDOM</B> が設定される。
+<DT><B>OVERFLOW</B><DD>
+オーバーフローが発生した。
+ほとんどの場合、値 <B>HUGE</B> が返され、
+<I>errno</I> には <B>ERANGE</B> が設定される。
+<DT><B>UNDERFLOW</B><DD>
+アンダーフローが発生した。
+0.0 が返され、 <I>errno</I> に <B>ERANGE</B> が設定される。
+<DT><B>TLOSS</B><DD>
+Total loss of significance が発生した。
+0.0 が返され、 <I>errno</I> に <B>ERANGE</B> が設定される。
+<DT><B>PLOSS</B><DD>
+Partial loss of significance が発生した。
+この値は glibc (や他の多くのシステム) で使用されていない。
+</DL>
+<P>
+
+フィールド <I>arg1</I> と <I>arg2</I> は関数に渡された引数である
+(引数を一つしか取らない関数の場合は <I>arg2</I> は不定となる)。
+<P>
+
+<I>retval</I> フィールドはその数学関数が呼び出し元に返そうとしている返り値
+を示す。プログラマが定義した <B>matherr</B>() でこのフィールドを変更する
+ことで、その数学関数の返り値を変更することができる。
+<P>
+
+<B>matherr</B>() 関数が 0 を返した場合、
+システムは <I>errno</I> を上記の通り設定し、標準エラー出力に
+エラーメッセージを表示することがある (下記参照)。
+<P>
+
+<B>matherr</B>() 関数が 0 以外の値を返した場合、
+システムは <I>errno</I> を設定せず、エラーメッセージの表示も行わない。
+<A NAME="lbAE">&nbsp;</A>
+<H3>matherr() を利用している数学関数</H3>
+
+下記の表は、関数と <B>matherr</B>() が呼び出される状況の一覧である。
+&quot;Type&quot; 列 は <B>matherr</B>() が呼び出される際に <I>exc-&gt;type</I> に
+設定される値を示す。 &quot;Result&quot; 列は <I>exc-&gt;retval</I> に
+設定されるデフォルトの返り値を示す。
+<P>
+
+&quot;Msg?&quot; 列と &quot;errno&quot; 列は <B>matherr</B>() が 0 を返した場合のデフォルトの
+動作を示す。 &quot;Msg?&quot; 列に &quot;y&quot; が入っている場合、システムは標準エラー
+出力にエラーメッセージを表示する。
+<P>
+
+以下の表では、下記の記法と省略形を使用している。
+<P>
+
+<DL COMPACT><DT><DD>
+<TABLE>
+<TR VALIGN=top><TD>x        関数の最初の引数</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>y        関数の二番目の引数</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>fin      引数の値が無限大</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>neg      引数が負の値</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>int      引数が整数値</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>o/f      結果のオーバーフロー</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>u/f      結果のアンダーフロー</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>|x|      x の絶対値</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>X_TLOSS  <I>&lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;</I> で定義される定数</TD><TD><BR></TD></TR>
+</TABLE>
+
+</DL>
+
+
+
+<TABLE>
+<TR VALIGN=top><TD><B>Function</B></TD><TD><B>Type</B></TD><TD><B>Result</B></TD><TD ALIGN=center><B>Msg?</B></TD><TD><B>errno</B><BR></TD></TR>
+<TR VALIGN=top><TD>acos(|x|&gt;1)</TD><TD>DOMAIN</TD><TD>HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>asin(|x|&gt;1)</TD><TD>DOMAIN</TD><TD>HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>atan2(0,0)</TD><TD>DOMAIN</TD><TD>HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>acosh(x&lt;1)</TD><TD>DOMAIN</TD><TD>NAN</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>atanh(|x|&gt;1)</TD><TD>DOMAIN</TD><TD>NAN</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>atanh(|x|==1)</TD><TD>SING</TD><TD>(x&gt;0.0)?</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>HUGE_VAL :</TD><TD ALIGN=center></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>-HUGE_VAL</TD><TD ALIGN=center></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>cosh(fin) o/f</TD><TD>OVERFLOW</TD><TD>HUGE</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>sinh(fin) o/f</TD><TD>OVERFLOW</TD><TD>(x&gt;0.0) ?</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>HUGE : -HUGE</TD><TD ALIGN=center></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>sqrt(x&lt;0)</TD><TD>DOMAIN</TD><TD>0.0</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>hypot(fin,fin) o/f</TD><TD>OVERFLOW</TD><TD>HUGE</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>exp(fin) o/f</TD><TD>OVERFLOW</TD><TD>HUGE</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>exp(fin) u/f</TD><TD>UNDERFLOW</TD><TD>0.0</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>exp2(fin) o/f</TD><TD>OVERFLOW</TD><TD>HUGE</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>exp2(fin) u/f</TD><TD>UNDERFLOW</TD><TD>0.0</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>exp10(fin) o/f</TD><TD>OVERFLOW</TD><TD>HUGE</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>exp10(fin) u/f</TD><TD>UNDERFLOW</TD><TD>0.0</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>j0(|x|&gt;X_TLOSS)</TD><TD>TLOSS</TD><TD>0.0</TD><TD ALIGN=center>y</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>j1(|x|&gt;X_TLOSS)</TD><TD>TLOSS</TD><TD>0.0</TD><TD ALIGN=center>y</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>jn(|x|&gt;X_TLOSS)</TD><TD>TLOSS</TD><TD>0.0</TD><TD ALIGN=center>y</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>y0(x&gt;X_TLOSS)</TD><TD>TLOSS</TD><TD>0.0</TD><TD ALIGN=center>y</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>y1(x&gt;X_TLOSS)</TD><TD>TLOSS</TD><TD>0.0</TD><TD ALIGN=center>y</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>yn(x&gt;X_TLOSS)</TD><TD>TLOSS</TD><TD>0.0</TD><TD ALIGN=center>y</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>y0(0)</TD><TD>DOMAIN</TD><TD>-HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>y0(x&lt;0)</TD><TD>DOMAIN</TD><TD>-HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>y1(0)</TD><TD>DOMAIN</TD><TD>-HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>y1(x&lt;0)</TD><TD>DOMAIN</TD><TD>-HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>yn(n,0)</TD><TD>DOMAIN</TD><TD>-HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>yn(x&lt;0)</TD><TD>DOMAIN</TD><TD>-HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>lgamma(fin) o/f</TD><TD>OVERFLOW</TD><TD>HUGE</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>lgamma(-int) or</TD><TD>SING</TD><TD>HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>&nbsp;&nbsp;lgamma(0)</TD><TD></TD><TD></TD><TD ALIGN=center></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>tgamma(fin) o/f</TD><TD>OVERFLOW</TD><TD>HUGE_VAL</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>tgamma(-int)</TD><TD>SING</TD><TD>NAN</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>tgamma(0)</TD><TD>SING</TD><TD>copysign(</TD><TD ALIGN=center>y</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>HUGE_VAL,x)</TD><TD ALIGN=center></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>log(0)</TD><TD>SING</TD><TD>-HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>log(x&lt;0)</TD><TD>DOMAIN</TD><TD>-HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>log2(0)</TD><TD>SING</TD><TD>-HUGE</TD><TD ALIGN=center>n</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>log2(x&lt;0)</TD><TD>DOMAIN</TD><TD>-HUGE</TD><TD ALIGN=center>n</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>log10(0)</TD><TD>SING</TD><TD>-HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>log10(x&lt;0)</TD><TD>DOMAIN</TD><TD>-HUGE</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>pow(0.0,0.0)</TD><TD>DOMAIN</TD><TD>0.0</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>pow(x,y) o/f</TD><TD>OVERFLOW</TD><TD>HUGE</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>pow(x,y) u/f</TD><TD>UNDERFLOW</TD><TD>0.0</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>pow(NaN,0.0)</TD><TD>DOMAIN</TD><TD>x</TD><TD ALIGN=center>n</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>0**neg</TD><TD>DOMAIN</TD><TD>0.0</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>neg**non-int</TD><TD>DOMAIN</TD><TD>0.0</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>scalb() o/f</TD><TD>OVERFLOW</TD><TD>(x&gt;0.0) ?</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>HUGE_VAL :</TD><TD ALIGN=center></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>-HUGE_VAL</TD><TD ALIGN=center></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>scalb() u/f</TD><TD>UNDERFLOW</TD><TD>copysign(</TD><TD ALIGN=center>n</TD><TD>ERANGE<BR></TD></TR>
+<TR VALIGN=top><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;&nbsp;0.0,x)</TD><TD ALIGN=center></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>fmod(x,0)</TD><TD>DOMAIN</TD><TD>x</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+<TR VALIGN=top><TD>remainder(x,0)</TD><TD>DOMAIN</TD><TD>NAN</TD><TD ALIGN=center>y</TD><TD>EDOM<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>matherr</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>例</H2>
+
+以下のサンプルプログラムは <B><A HREF="../man3/log.3.html">log</A></B>(3) を呼び出した際の
+<B>matherr</B>() の使用法を示したものである。
+最初の引数は <B><A HREF="../man3/log.3.html">log</A></B>(3) に渡す浮動小数点数である。
+省略可能な第二引数を指定した場合、
+<B>_LIB_VERSION</B> に <B>_SVID_</B> が設定され、
+<B>matherr</B>() が呼ばれるようになる。
+このコマンドライン引数で指定した整数は、
+<B>matherr</B>() からの返り値として使用される。
+省略可能な第三引数を指定した場合、 <B>matherr</B>() は
+数学関数の返り値として代わりに引数で指定した値を割り当てる。
+<P>
+
+以下の実行例では、
+<B><A HREF="../man3/log.3.html">log</A></B>(3) に引数 0.0 が渡しているが、
+<B>matherr</B>() は使用しない。
+<P>
+
+
+
+$<B> ./a.out 0.0</B>
+errno: Numerical result out of range
+x=-inf
+
+
+<P>
+
+以下の実行例では、
+<B>matherr</B>() が呼び出され、返り値 0 が返される。
+<P>
+
+
+
+$<B> ./a.out 0.0 0</B>
+matherr SING exception in log() function
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args:&nbsp;&nbsp;&nbsp;0.000000,&nbsp;0.000000
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;retval:&nbsp;-340282346638528859811704183484516925440.000000
+log: SING error
+errno: Numerical argument out of domain
+x=-340282346638528859811704183484516925440.000000
+
+
+<P>
+
+メッセージ &quot;log: SING error&quot; は C ライブラリによって出力されている。
+<P>
+
+次の実行例では、 <B>matherr</B>() が呼び出され、0 以外の返り値が返される。
+<P>
+
+
+
+$<B> ./a.out 0.0 1</B>
+matherr SING exception in log() function
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args:&nbsp;&nbsp;&nbsp;0.000000,&nbsp;0.000000
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;retval:&nbsp;-340282346638528859811704183484516925440.000000
+x=-340282346638528859811704183484516925440.000000
+
+
+<P>
+
+この場合は、C ライブラリはメッセージを出力しておらず、
+<I>errno</I> は設定されていない。
+<P>
+
+次の実行例では、 <B>matherr</B>() が呼び出され、
+数学関数の返り値が変更され、0 以外の返り値が返されている。
+<P>
+
+
+
+$<B> ./a.out 0.0 1 12345.0</B>
+matherr SING exception in log() function
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args:&nbsp;&nbsp;&nbsp;0.000000,&nbsp;0.000000
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;retval:&nbsp;-340282346638528859811704183484516925440.000000
+x=12345.000000
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#define _SVID_SOURCE
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+<P>
+static int matherr_ret = 0;     /* Value that matherr()
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;should&nbsp;return&nbsp;*/
+static int change_retval = 0;   /* Should matherr() change
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function's&nbsp;return&nbsp;value?&nbsp;*/
+static double new_retval;       /* New function return value */
+<P>
+int
+matherr(struct exception *exc)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;matherr&nbsp;%s&nbsp;exception&nbsp;in&nbsp;%s()&nbsp;function\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(exc-&gt;type&nbsp;==&nbsp;DOMAIN)&nbsp;?&nbsp;&nbsp;&nbsp;&nbsp;&quot;DOMAIN&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(exc-&gt;type&nbsp;==&nbsp;OVERFLOW)&nbsp;?&nbsp;&nbsp;&quot;OVERFLOW&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(exc-&gt;type&nbsp;==&nbsp;UNDERFLOW)&nbsp;?&nbsp;&quot;UNDERFLOW&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(exc-&gt;type&nbsp;==&nbsp;SING)&nbsp;?&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;SING&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(exc-&gt;type&nbsp;==&nbsp;TLOSS)&nbsp;?&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;TLOSS&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(exc-&gt;type&nbsp;==&nbsp;PLOSS)&nbsp;?&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;PLOSS&quot;&nbsp;:&nbsp;&quot;???&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exc-&gt;name);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args:&nbsp;&nbsp;&nbsp;%f,&nbsp;%f\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exc-&gt;arg1,&nbsp;exc-&gt;arg2);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;retval:&nbsp;%f\n&quot;,&nbsp;exc-&gt;retval);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(change_retval)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exc-&gt;retval&nbsp;=&nbsp;new_retval;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;matherr_ret;
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;double&nbsp;x;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;argval&gt;&quot;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;[&lt;matherr-ret&gt;&nbsp;[&lt;new-func-retval&gt;]]\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_LIB_VERSION&nbsp;=&nbsp;_SVID_;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;matherr_ret&nbsp;=&nbsp;atoi(argv[2]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;3)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change_retval&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new_retval&nbsp;=&nbsp;atof(argv[3]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;x&nbsp;=&nbsp;log(atof(argv[1]));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errno&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;errno&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;x=%f\n&quot;,&nbsp;x);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/fenv.3.html">fenv</A></B>(3), <B><A HREF="../man7/math_error.7.html">math_error</A></B>(7), <B><A HREF="../man7/standards.7.html">standards</A></B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">matherr() を利用している数学関数</A><DD>
+</DL>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">例</A><DD>
+<DL>
+<DT><A HREF="#lbAH">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

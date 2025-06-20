@@ -1,0 +1,213 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LOGIN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LOGIN</H1>
+Section: User Commands  (1)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/shadow/release/man1/login.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+login - システム上でセッションを開く
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>login</B> [<B>-p</B>] [<I>username</I>] [<I>ENV=VAR</I> ...]
+<BR>
+
+<B>login</B> [<B>-p</B>] [<B>-h </B><I>host</I>] [<B>-f </B><I>username</I>]
+<BR>
+
+<B>login</B> [<B>-p</B>] <B>-r </B><I>host</I>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>login</B>
+
+はシステムに新たにセッションを開くために用いられる。
+通常は、ユーザの端末に表示される
+<I>login:</I>
+
+というプロンプトに応じる事によって自動的に起動される。
+<B>login</B>
+
+はシェル専用のものであり、
+サブプロセスとして起動することはできない。
+通常シェルは
+<B>login</B>
+
+を
+<B>exec login</B> とみなすので、ユーザは現在のシェルから抜けることになる。
+ログインシェル以外から <B>login</B> を起動しようとすると、
+エラーメッセージが表示される。
+<P>
+
+<I>login:</I>プロンプトから起動した際は、
+ユーザ名に続いて環境変数を入力する事もできる。
+それらを入力する場合は <B>NAME=VALUE</B> という書式で行う。
+この方法で全ての変数を設定できるわけではない。
+例えば
+<B>PATH</B>, <B>HOME</B>, <B>SHELL</B>
+などは設定できない。
+さらにログインシェルが <B>/bin/sh</B> の場合は
+<B>IFS</B> も設定もできない。
+<P>
+
+次いで、必要な場合には、ユーザはパスワードを入力するよう促される。
+パスワードを表示してしまわないよう、エコーは行われない。
+数回以上パスワード入力に失敗すると
+<B>login</B> は終了し、通信の接続は切断されてしまう。
+<P>
+
+アカウントに対してパスワードの有効期限が設定されている場合は、
+先に進む前に新しいパスワードの設定を促されることもある。
+セッションを続けるためには古いパスワードと
+新しいパスワードを入力しなくてはならない。
+詳しい情報は <B><A HREF="../man1/passwd.1.html">passwd</A></B>(1) を参照すること。
+<P>
+
+ログインに成功すると、システムメッセージやメールの有無が表示される。
+ログインディレクトリに長さ 0 のファイル <I>.hushlogin</I> を作っておけば、
+システムメッセージファイルである
+<I>/etc/motd</I> の表示を無効にできる。
+メールに関するメッセージは、メールボックスの状態によって
+&quot;<B>You have new mail.</B>&quot;,
+&quot;<B>You have mail.</B>&quot;,
+&quot;<B>No Mail.</B>&quot;
+のいずれかになる。
+<P>
+
+ユーザ ID とグループの ID は
+<I>/etc/passwd</I> ファイル中に記載されている値に従って設定される。
+<B>$HOME</B>, <B>$SHELL</B>, <B>$PATH</B>, <B>$LOGNAME</B>, <B>$MAIL</B>
+の値は、パスワードエントリのそれぞれのフィールドに従って設定される。
+ulimit, umask, nice 値が、
+GECOS フィールドのエントリーによって設定されることもある。
+<P>
+
+インストール時の設定によっては、
+<I>/etc/ttytype</I> の指定に従って、
+環境変数<B>$TERM</B>が tty 接続の端末の型 (terminal type)
+に初期化されることもある。
+<P>
+
+コマンドインタプリタの初期化スクリプトが実行されることもある。
+この機能についての詳しい情報は適当なマニュアルセクションを参照のこと。
+<P>
+
+サブシステムログインでは、
+ログインシェルの最初の文字に &quot;*&quot; を置く。
+渡されたホームディレクトリは、
+ユーザが実際にログインする新しいファイルシステムのルートとして扱われる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-p</B>
+
+<DD>
+環境を保存する。
+<DT><B>-f</B>
+
+<DD>
+ユーザはすでに認証されているものとして、認証動作を行なわない。
+<DT><B>-h</B>
+
+<DD>
+このログインのリモートホストの名前。
+<DT><B>-r</B>
+
+<DD>
+rlogin の自動ログインプロトコルを実行する。
+</DL>
+<P>
+
+<B>-r</B>, <B>-h</B>, <B>-f</B> オプションは、
+root が <B>login</B> を起動した場合にのみ用いる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>警告</H2>
+
+この版の <B>login</B> には多くのコンパイル時オプションがあるが、
+サイトによってはこのうちの一部しか使われていないかもしれない。
+<P>
+
+システム設定の違いによって上記ファイルの置き場所は変わる。
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+/etc/utmp - 現在のログインセッションのリスト
+<BR>
+
+/etc/wtmp - 過去のログインセッションのリスト
+<BR>
+
+/etc/passwd - ユーザアカウント情報
+<BR>
+
+/etc/shadow - 暗号化パスワードと有効期限情報
+<BR>
+
+/etc/motd - システムメッセージファイル
+<BR>
+
+/etc/nologin - root 以外のユーザのログインを禁止する
+<BR>
+
+/etc/ttytype - 端末の型のリスト
+<BR>
+
+$HOME/.profile - デフォルトシェルの初期化スクリプト
+<BR>
+
+$HOME/.hushlogin - システムメッセージの表示を抑制する
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>mail</B>(1),
+
+<B><A HREF="../man1/passwd.1.html">passwd</A></B>(1),
+
+<B>sh</B>(1),
+
+<B><A HREF="../man1/su.1.html">su</A></B>(1),
+
+
+<B><A HREF="../man5/login.defs.5.html">login.defs</A></B>(5),
+
+<B><A HREF="../../LDP_man-pages/man5/nologin.5.html">nologin</A></B>(5),
+
+<B><A HREF="../man5/passwd.5.html">passwd</A></B>(5),
+
+<B>getty</B>(8)
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+Julianne Frances Haugh &lt;<A HREF="mailto:jockgrrl@ix.netcom.com">jockgrrl@ix.netcom.com</A>&gt;
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">警告</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

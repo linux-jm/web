@@ -1,0 +1,253 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 18.5 realpath: ファイル名を展開して表示する</title>
+
+<meta name="description" content="GNU Coreutils: 18.5 realpath: ファイル名を展開して表示する">
+<meta name="keywords" content="GNU Coreutils: 18.5 realpath: ファイル名を展開して表示する">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="realpath-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_129.html#mktemp-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_131.html#Working-context" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_125.html#File-name-manipulation" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_125.html#File-name-manipulation" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_131.html#Working-context" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="realpath_003a-huairuMing-woZhan-Kai-siteBiao-Shi-suru"></a>
+<h2 class="section">18.5 <code>realpath</code>: ファイル名を展開して表示する</h2>
+
+<a name="index-realpath-1"></a>
+<a name="index-file-names_002c-canonicalization"></a>
+<a name="index-symlinks_002c-resolution"></a>
+<a name="index-canonical-file-name-1"></a>
+<a name="index-canonicalize-a-file-name-1"></a>
+<a name="index-realpath-2"></a>
+<a name="index-realpath-3"></a>
+
+<p><code>realpath</code> は、すべてのシンボリックリンクを展開し、
+&lsquo;<samp>/./</samp>&rsquo; や &lsquo;<samp>/../</samp>&rsquo; に対する参照を解決する。
+さらに、余分な &lsquo;<samp>/</samp>&rsquo; 文字の削除も行う。デフォルトでは、
+指定したファイル名のうち、最後の要素以外のすべての要素が実在していなければならない。
+</p>
+<p>書式:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">realpath [<var>option</var>]&hellip; <var>file</var>&hellip;
+</pre></td></tr></table>
+
+<p>このプログラムでは以下のオプションが使用できる。参照: <a href="coreutils-ja_2.html#Common-options">共通オプション</a>.
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>-e</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--canonicalize-existing</samp>&rsquo;</dt>
+<dd><a name="index-_002de-7"></a>
+<a name="index-_002d_002dcanonicalize_002dexisting-1"></a>
+<p>指定されたファイル名中のすべての構成要素が実在することを確認する。
+存在しなかったり、利用できなかったりする要素があると、&lsquo;<samp>-q</samp>&rsquo;
+オプションが指定されていないかぎり、<code>realpath</code>
+はエラーメッセージを出し、0 以外の終了コードで終了する。
+ファイル名の末尾にスラッシュを付けると、その名前はディレクトリであるという指定になる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-m</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--canonicalize-missing</samp>&rsquo;</dt>
+<dd><a name="index-_002dm-11"></a>
+<a name="index-_002d_002dcanonicalize_002dmissing-1"></a>
+<p>指定されたファイル名中に存在しなかったり、使用できなかったりする構成要素があれば、
+それをディレクトリとして処理する。
+</p>
+</dd>
+<dt> &lsquo;<samp>-L</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--logical</samp>&rsquo;</dt>
+<dd><a name="index-_002dL-10"></a>
+<a name="index-_002d_002dlogical-1"></a>
+<p>指定されたファイル名中にあるシンボリックリンクの展開を行うが、
+シンボリックリンクに &lsquo;<samp>..</samp>&rsquo; という要素が後続している場合は、
+シンボリックリンクを展開するより前に、そちらを先に処理する。
+(訳注: 例を挙げた方が、わかりやすいだろう。&lsquo;<samp>symlink-directory/../..</samp>&rsquo;
+といったファイル名が与えられた場合、symlink-directory
+というシンボリックリンクそのものの親ディレクトリの親ディレクトリに展開するということ。
+次項の注と比較していただきたい。)
+</p>
+</dd>
+<dt> &lsquo;<samp>-P</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--physical</samp>&rsquo;</dt>
+<dd><a name="index-_002dP-8"></a>
+<a name="index-_002d_002dphysical-1"></a>
+<p>指定されたファイル名中にあるシンボリックリンの展開を行う際、
+シンボリックリンクに &lsquo;<samp>..</samp>&rsquo; という要素が後続している場合も、
+シンボリックリンクを展開してから、&lsquo;<samp>..</samp>&rsquo; の処理を行う。
+こちらがデフォルトの動作モードである。(訳注: すなわち、
+&lsquo;<samp>symlink-directory/../..</samp>&rsquo; といったファイル名が与えられた場合、
+シンボリックリンクの参照先の親ディレクトリの親ディレクトリに展開する。)
+</p>
+</dd>
+<dt> &lsquo;<samp>-q</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--quiet</samp>&rsquo;</dt>
+<dd><a name="index-_002dq-6"></a>
+<a name="index-_002d_002dquiet-9"></a>
+<p>指定されたファイル名についてエラーメッセージを出力しない。
+</p>
+</dd>
+<dt> &lsquo;<samp>--relative-to=<var>file</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002drelative_002dto"></a>
+<a name="index-relpath"></a>
+<p>オプション引数に指定したファイルを基点とする相対パスとして、
+ファイル名を展開する。このオプションは、ファイルの存在に関して
+&lsquo;<samp>-m</samp>&rsquo; や &lsquo;<samp>-e</samp>&rsquo; オプションを認識することに注意していただきたい。
+</p>
+</dd>
+<dt> &lsquo;<samp>--relative-base=<var>base</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002drelative_002dbase"></a>
+<p>このオプションは &lsquo;<samp>--relative-to</samp>&rsquo; と一緒に使うこともでき、
+その場合は、操作対象の <var>file</var> が <var>base</var> 以下のディレクトリに存在するときにのみ、
+相対パス名を表示するように、&lsquo;<samp>--relative-to</samp>&rsquo; の出力に制限を課す。
+<var>file</var> が <var>base</var> 以下のディレクトリに存在しないときは、
+出力は絶対パスのファイル名になる。&lsquo;<samp>--relative-to</samp>&rsquo; を指定しなかった場合、
+<var>base</var> 以下のディレクトリに存在するファイルは、<var>base</var>
+を基点とする相対パスで表示される。&lsquo;<samp>--relative-to</samp>&rsquo; も指定するなら、
+そのディレクトリは <var>base</var> の下位ディレクトリでなければならず、
+さもないと、このオプションは効果を持たない。このオプションは、ファイルの存在に関して
+&lsquo;<samp>-m</samp>&rsquo; や &lsquo;<samp>-e</samp>&rsquo; オプションを認識することに注意していただきたい。
+例を挙げよう。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">realpath --relative-to=/usr /tmp /usr/bin
+&rArr; ../tmp
+&rArr; bin
+realpath --relative-base=/usr /tmp /usr/bin
+&rArr; /tmp
+&rArr; bin
+</pre></td></tr></table>
+
+</dd>
+<dt> &lsquo;<samp>-s</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--strip</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--no-symlinks</samp>&rsquo;</dt>
+<dd><a name="index-_002ds-23"></a>
+<a name="index-_002d_002dstrip-1"></a>
+<a name="index-_002d_002dno_002dsymlinks"></a>
+<p>シンボリックリンクの展開を行わない。すなわち、&lsquo;<samp>/./</samp>&rsquo; や &lsquo;<samp>/../</samp>&rsquo;
+の参照の解決と、余分な &lsquo;<samp>/</samp>&rsquo; 文字の削除だけを行う。
+&lsquo;<samp>-m</samp>&rsquo; オプションと組み合わせた場合、<code>realpath</code>
+は与えられたファイル名に対して操作を行うだけであり、
+その各要素が存在しているかどうか、実在のファイルに当たってみることはない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-z</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--zero</samp>&rsquo;</dt>
+<dd><a name="index-_002dz-15"></a>
+<a name="index-_002d_002dzero-4"></a>
+<a name="index-output-NUL_002dbyte_002dterminated-lines-4"></a>
+<p>各行の末尾に改行ではなく、ゼロバイト (ASCII NUL)
+を出力する。このオプションを使用すると、出力するデータの途中に改行が現れる場合でも、
+他のプログラムがその出力を解析できるようになる。
+</p>
+</dd>
+</dl>
+
+<a name="index-exit-status-of-realpath"></a>
+<p>終了ステータス:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="display">0: すべてのファイル名が問題なく表示できた場合。
+1: それ以外。
+</pre></td></tr></table>
+
+
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_129.html#mktemp-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_131.html#Working-context" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_125.html#File-name-manipulation" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_125.html#File-name-manipulation" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_131.html#Working-context" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

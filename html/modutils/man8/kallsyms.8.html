@@ -1,0 +1,235 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of KALLSYMS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>KALLSYMS</H1>
+Section: Linux Module Support (8)<BR>Updated: January 31, 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/modutils/release/man8/kallsyms.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+kallsyms - デバッグ用に全てのカーネルシンボルを抽出する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>kallsyms</B>
+
+[-Vh] kernel_filename
+<A NAME="lbAD">&nbsp;</A>
+<H2>このマニュアルについて</H2>
+
+これは、Linux Kernel 2.4 の時代に使われていた modutils
+パッケージ所収の古いユーティリティのマニュアルです。(2022/12/02,
+Linux JM Project)
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+
+<B>kallsyms</B>
+
+はカーネルからスタック以外のシンボルをすべて抽出し、
+オブジェクトデータをビルドする。このデータは
+そのカーネルからリンクすることができ、デバッガから利用できる。
+<P>
+
+通常のカーネルはモジュールから利用されるシンボルしかエクスポートしない。
+デバッグするときには、このエクスポートされたリストだけでなく、
+スタックシンボル以外の全てのリストがほしい場合があるかもしれない。
+<B>kallsyms</B>
+
+はカーネルから全てのセクションとシンボルを抽出し、
+セクション・シンボル及びそれらのアドレスのリストを構築し、
+__kallsyms セクションのみからなるリロケータブルなオブジェクトを書きだす。
+__kallsyms セクションをカーネルにリンクし、
+そのカーネルをブートすると、
+デバッガは __kallsyms セクションのデータを利用して
+より多くのシンボルを解決できるようになる。
+<P>
+
+例えば、デバッガは __kallsyms データを用いて、
+以下のようなもののカーネルアドレスを求めることができる:
+
+<DL COMPACT>
+<DT>*<DD>
+__kallsyms セクションが所属するカーネルまたはモジュール
+<DT>*<DD>
+__kallsyms セクションの所属するコード内部のセクション
+<DT>*<DD>
+一番近いシンボル
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-h</B>, <B>--help</B>
+
+<DD>
+オプションの一覧を表示して終了する。
+<DT><B>-V</B>, <B>--version</B>
+
+<DD>
+<B>kallsyms</B> のバージョンを表示する。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>リンク作業</H2>
+
+正しく __kallsyms セクションを含んだカーネルを作成するには、
+4 段階のリンク作業を行わなければならない (通常は 1 段階のみ)。
+kallsyms とリンカは高速だから、P200 なら余分の 3 段階には数秒しかかからない。
+<DL COMPACT>
+<DT>1<DD>
+__kallsyms データがない状態での、カーネルの最初のビルド。
+<B>kallsyms</B> をこのリンクの出力に対して実行し、
+生カーネルの全てのセクションと全てのシンボルを含む、
+リロケータブルなオブジェクトを作成する。
+<DT>2<DD>
+再びカーネルをリンクする。今回は (1) での <B>kallsyms</B> の出力も含める。
+__kallsyms セクションを追加すると、セクション数や多くのカーネルシンボルの
+オフセットが変更されるので、もう一度 <B>kallsyms</B> をこの二番目のリンクに実行し、
+再びリロケータブルな出力をセーブする。
+<DT>3<DD>
+再びカーネルをリンクする。今回は (2) での <B>kallsyms</B> の出力を含める。
+<B>kallsyms</B> を一番新しいカーネルに対して実行する。
+この段階で __kallsyms セクションのサイズと位置は安定し、
+これ以降はカーネルの各セクション・シンボルは変わらない。
+<B>kallsyms</B> の出力にはカーネルシンボルの最終値が含まれる。
+<DT>4<DD>
+(3) での <B>kallsyms</B> の出力を含め、最終的なカーネルをリンクする。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>データフォーマット</H2>
+
+__kallsyms セクションは通常と少々異なる。
+これはリロケータブルなデータを故意に持たず、
+全ての「ポインタ」はセクションへのバイトオフセットか、
+あるいは絶対値として表される。
+すなわちこのセクションはどこにでも置くことができ、
+リロケーションの問題を気にしなくてよい。
+これはカーネルイメージの内部に置くことができ、
+カーネルイメージの外部にも置くことができ、
+ロード直前のモジュールに追加することもでき、
+別の領域に置くこともできる、などなど。
+<P>
+
+<I>/usr/include/sys/kallsyms.h</I> には
+__kallsyms データのマッピングが記述されている。
+<A NAME="lbAI">&nbsp;</A>
+<H3>ヘッダ</H3>
+
+
+<DL COMPACT>
+<DT>*<DD>
+ヘッダのサイズ。
+<DT>*<DD>
+__kallsyms データ全体のサイズ。文字列も含む。
+<DT>*<DD>
+セクション数。メモリにロードされたセクションのみ。
+<DT>*<DD>
+__kallsyms ヘッダのスタートから、最初のセクションエントリまでのオフセット。
+<DT>*<DD>
+各セクションエントリのサイズ。名前文字列は除く。
+<DT>*<DD>
+シンボルの数。
+<DT>*<DD>
+__kallsyms ヘッダのスタートから先頭のシンボルエントリまでのオフセット。
+<DT>*<DD>
+各シンボルエントリのサイズ。名前文字列は除く。
+<DT>*<DD>
+__kallsyms ヘッダのスタートから先頭の文字列までのオフセット。
+<DT>*<DD>
+最初のセクションの開始アドレス(注[1])。
+<DT>*<DD>
+最後のセクションの終了アドレス(注[1])。
+
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>セクションエントリ</H3>
+
+ロードされたセクションごとにひとつ。
+_kallsyms はロードされるセクションなので、
+入力ファイルに __kallsyms セクションが含まれていれば、
+このリストに含まれる。
+
+<DL COMPACT>
+<DT>*<DD>
+カーネル内部でのそのセクションのスタート(注[1])。
+<DT>*<DD>
+セクションのサイズ。
+<DT>*<DD>
+セクションの名前への、 __kallsyms 文字列のスタートからのオフセット。
+<DT>*<DD>
+オリジナルの Elf セクションからのセクションフラグ。
+
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H3>シンボルエントリ</H3>
+
+入力ファイルでのシンボルごとにひとつ。
+ロードされたセクションにあったシンボルだけが保存される。
+
+<DL COMPACT>
+<DT>*<DD>
+このシンボルが属する __kallsyms のセクションエントリに対するオフセット。
+オフセットは __kallsyms のセクションエントリのスタートからとる。
+<DT>*<DD>
+カーネル内部のシンボルのアドレス(注[1])。
+シンボルはこのフィールドの昇順で保存される。
+<DT>*<DD>
+シンボル名への、 __kallsyms 文字列のスタートからのオフセット。
+
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H3>文字列</H3>
+
+NUL 終端文字列のセット。
+各名前は __kallsyms の文字列領域のスタートからのオフセットで参照される。
+<A NAME="lbAM">&nbsp;</A>
+<H3>注[1]</H3>
+
+これらのフィールドは「全てはオフセット」ルールからは除外されている。
+これらはカーネル内部での絶対アドレスである。
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/insmod.8.html">insmod</A></B>(8)
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>履歴</H2>
+
+最初のバージョンは 2000 年に Keith Owens &lt;<A HREF="mailto:kaos@ocs.com.au">kaos@ocs.com.au</A>&gt; によって
+作成された。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">このマニュアルについて</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">リンク作業</A><DD>
+<DT><A HREF="#lbAH">データフォーマット</A><DD>
+<DL>
+<DT><A HREF="#lbAI">ヘッダ</A><DD>
+<DT><A HREF="#lbAJ">セクションエントリ</A><DD>
+<DT><A HREF="#lbAK">シンボルエントリ</A><DD>
+<DT><A HREF="#lbAL">文字列</A><DD>
+<DT><A HREF="#lbAM">注[1]</A><DD>
+</DL>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">履歴</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

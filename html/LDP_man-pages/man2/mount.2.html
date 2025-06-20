@@ -1,0 +1,307 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MOUNT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MOUNT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-09-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/mount.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mount - ファイルシステムをマウント/アンマウントする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/mount.h">sys/mount.h</A>&gt;</B>
+
+<B>int mount(const char *</B><I>source</I><B>, const char *</B><I>target</I><B>,</B>
+<B>          const char *</B><I>filesystemtype</I><B>, unsigned long </B><I>mountflags</I><B>,</B>
+<B>          const void *</B><I>data</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>mount</B>()  は <I>source</I> で指定されたファイルシステム (デバイス名であることが多いが、 ディレクトリ名やダミーの場合もある) を
+<I>target</I> で指定されたディレクトリに結びつける。
+<P>
+ファイルシステムのマウントを行うには、 適切な権限 (Linux では <B>CAP_SYS_ADMIN</B> ケーパビリティ) が必要である。
+<P>
+
+Linux 2.4 以降、ひとつのファイルシステムを複数のマウントポイントに 結びつけることができ、同じマウントポイントに複数のマウントをスタック
+させることもできる。
+<P>
+引き数 <I>filesystemtype</I> としてカーネルが対応している値は、 <I>/proc/filesystems</I> で参照できる (例えば
+&quot;minix&quot;, &quot;ext2&quot;, &quot;ext3&quot;, &quot;jfs&quot;, &quot;xfs&quot;, &quot;reiserfs&quot;, &quot;msdos&quot;, &quot;proc&quot;, &quot;nfs&quot;,
+&quot;iso9660&quot; 等)。 適切なモジュールが読み込まれると、さらに別の値が利用可能になるかもしれない。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+引き数 <I>mountflags</I> の上位 16 ビットには、マジックナンバー 0xC0ED
+(<B>MS_MGC_VAL</B>) を指定することができる (マジックナンバーは、
+カーネルバージョン 2.4 より前では必須であったが、
+現在は必要なく、指定されても無視される)。
+<I>mountflags</I> の下位 16 ビットにマウントフラグを指定する。
+<DL COMPACT>
+<DT><B>MS_BIND</B> (Linux 2.4 以降)<DD>
+
+
+バインドマウントを行う。これはファイルやディレクトリの部分木を ファイルシス
+テム内部の別の場所で見えるようにするものである。 バインドマウントを使うと、
+ファイルシステムをまたいで <B><A HREF="../man2/chroot.2.html">chroot</A></B>(2) jail を構成することが可能になる。
+引き数 <I>filesystemtype</I> と <I>data</I> は無視される。 Linux 2.6.26 より前では
+<I>mountflags</I> も無視されていた (バインドマウントでは、マウントポイントとなる
+ファイルシステムと同じマウントオプションが使用される)。
+<DT><B>MS_DIRSYNC</B> (Linux 2.5.19 以降)<DD>
+このファイルシステムへのディレクトリ変更を同期的に行う。 (この特性は個々のディレクトリ、または <B><A HREF="../../e2fsprogs/man1/chattr.1.html">chattr</A></B>(1)
+を使った部分木毎に設定できる。)
+<DT><B>MS_MANDLOCK</B><DD>
+
+このファイルシステムのファイルに対して強制ロックを認める。 (強制ロックを有効にするには、 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+で述べられている方法でファイル単位で許可をしなければならない)
+<DT><B>MS_MOVE</B><DD>
+部分木を移動する。 <I>source</I> にはすでに存在するマウントポイントを指定し、 <I>target</I> には新しい場所を指定する。
+移動はアトミックである。 操作の実行中、部分ツリーがアンマウントされることはない。 <I>filesystemtype</I>, <I>mountflags</I>,
+<I>data</I> 引き数は無視される。
+<DT><B>MS_NOATIME</B><DD>
+このファイルシステムの (全ての種類の) ファイルのアクセス時刻を更新しない。
+<DT><B>MS_NODEV</B><DD>
+このファイルシステムのデバイス (スペシャルファイル) へのアクセスを許可しない。
+<DT><B>MS_NODIRATIME</B><DD>
+このファイルシステムのディレクトリのアクセス時刻を更新しない。 このフラグは <B>MS_NOATIME</B>
+で提供される機能のサブセットを提供する。つまり、 <B>MS_NOATIME</B> では <B>MS_NODIRATIME</B> が暗黙のうち設定される。
+<DT><B>MS_NOEXEC</B><DD>
+
+
+
+このファイルシステムにあるプログラムの実行を許可しない。
+<DT><B>MS_NOSUID</B><DD>
+
+
+このファイルシステムのプログラムを実行するときに、 set-user-ID ビットと set-group-ID ビットを無視する。
+<DT><B>MS_RDONLY</B><DD>
+
+
+
+
+ファイルシステムを読み込み専用でマウントする。
+<DT><B>MS_RELATIME</B> (Linux 2.6.20 以降)<DD>
+
+
+
+このファイルシステム上のファイルがアクセスされた際、 そのファイルの最終アクセス時刻 (atime) の現在値が 最終修正時刻 (mtime)
+や最終状態変更時刻 (ctime) と 等しいか小さい場合にのみ、atime を更新する。 このオプションは、 <B>mutt</B>(1)
+のように、最後の内容修正以降にファイルがいつ読み出されたかを知る 必要があるプログラムで有用である。 Linux 2.6.30 以降では、
+<B>MS_NOATIME</B> が指定されていない場合には、このフラグの動作が カーネルのデフォルト動作となっており、 Linux 2.6.30
+より前の動作をさせるためには <B>MS_STRICTATIME</B> フラグを指定する必要がある。 これに加えて、Linux 2.6.30 以降では、
+ファイルの最終アクセス時刻が 1 日以上前の場合、 ファイルの最終アクセス時刻は常に更新される。
+<DT><B>MS_REMOUNT</B><DD>
+すでに存在するマウントを再マウントする。これにより、すでに存在するマウントの <I>mountflags</I> と <I>data</I>
+を、一度アンマウントしてから再マウントするという作業をせずに 変更できる。 <I>target</I> は最初の <B>mount</B>()
+呼び出しと同じ値を指定する必要がある。 <I>source</I> と <I>filesystemtype</I> は無視される。 引き数 <I>mountflags</I>
+と <I>data</I> は、意図的に変更するもの以外は、 元の <B>mount</B>() の呼び出しで使用した値と一致するようにすべきである。
+<P>
+<I>mountflags</I> のうち <B>MS_RDONLY</B>, <B>MS_SYNCHRONOUS</B>, <B>MS_MANDLOCK</B> は変更可能である。
+カーネル 2.6.16 より前では、 <B>MS_NOATIME</B>, <B>MS_NODIRATIME</B> も変更可能であった。 カーネル 2.4.10
+より前では、上記に加えて、 <B>MS_NOSUID</B>, <B>MS_NODEV</B>, <B>MS_NOEXEC</B> も変更可能であった。
+<DT><B>MS_SILENT</B> (Linux 2.6.17 以降)<DD>
+カーネルのログ内のある種の (<I>printk</I>())  警告メッセージの表示を抑制する。 このフラグは、名前が不適切で廃止された
+<B>MS_VERBOSE</B> フラグ (Linux 2.4.12 以降で利用可能) を置き換えるもので、同じ意味を持つ。
+<DT><B>MS_STRICTATIME</B> (Linux 2.6.30 以降)<DD>
+このファイルシステムがアクセスされた際に最終アクセス時刻 (atime)  を常に更新する (Linux 2.6.30
+より前では、これがデフォルトの動作 であった)。 このフラグを指定することで、 <B>MS_NOATIME</B> と <B>MS_RELATIME</B>
+の両フラグを設定した際の影響を上書きすることができる。
+<DT><B>MS_SYNCHRONOUS</B><DD>
+ファイルシステムに対して同期的に書き込みを行う。 (このファイルシステムの全てのオープンされたファイルに対して、 <B><A HREF="../man2/open.2.html">open</A></B>(2)  のフラグに
+<B>O_SYNC</B> を指定したような動作となる)
+</DL>
+<P>
+
+Linux 2.4 以降では、 <B>MS_NODEV</B>, <B>MS_NOEXEC</B>, <B>MS_NOSUID</B> はマウントポイント単位で指定できる。
+カーネル 2.6.16 以降では、 <B>MS_NOATIME</B> と <B>MS_NODIRATIME</B> もマウントポイント単位で指定できる。 また、
+<B>MS_RELATIME</B> フラグもマウントポイント単位で設定できる。
+<P>
+
+引き数 <I>data</I> がどのように解釈されるかは、ファイルシステムによって異なる。 たいていは、指定されたファイルシステムで利用可能なオプションが
+コンマ区切りで並べられた文字列である。 各ファイルシステムに対して指定可能なオプションの詳細については <B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)  を参照のこと。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、0 が返される。 失敗した場合、 -1 が返され、 <I>errno</I> に適切な値がセットされる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+以下に示すエラーは、ファイルシステムに依存しないものである。 それぞれのファイルシステムタイプには固有のエラーが存在する場合があり、
+独自の動作をすることもある。詳しくは Linux カーネルのソースを見て欲しい。
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+
+
+パスに含まれるディレクトリに検索 (実行) 許可がない (<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)  も参照)。 または、 <B>MS_RONLY</B>
+フラグを指定せずに読み込み専用のファイルシステムを マウントしようとした。 または、ブロックデバイス <I>source</I> が <B>MS_NODEV</B>
+オプションでマウントされたファイルシステム上にある。
+<DT><B>EBUSY</B><DD>
+<I>source</I> は既にマウントされている。 または、書き込み用にオープンされたファイルがあり、 読み込み専用で再マウントすることができない。
+または、 <I>target</I> が使用中 (busy) のため、 <I>target</I> にマウントできない。 <I>target</I>
+が使用中の例としては、あるスレッドの動作ディレクトリ (working directory) であるとか、別のデバイスのマウントポイントであるとか、
+オープンされたファイルが存在する、などがある。
+<DT><B>EFAULT</B><DD>
+場所を示す引き数のひとつがユーザーのアドレス空間の外を指している。
+<DT><B>EINVAL</B><DD>
+<I>source</I> に不正なスーパーブロックがある。 または、 <I>source</I> が <I>target</I> にマウントされていないのに、再マウント
+(<B>MS_REMOUNT</B>)  が要求された。 または、 <I>source</I> がマウントポイントではないか、'/' なのに、移動
+(<B>MS_MOVE</B>)  が要求された。
+<DT><B>ELOOP</B><DD>
+パス名の解決中に登場したリンクが多すぎた。 または、 <I>target</I> が <I>source</I> の子孫なのに移動が要求された。
+<DT><B>EMFILE</B><DD>
+(ブロックデバイスが必要でない場合)  ダミーデバイスのテーブルが一杯になった。
+<DT><B>ENAMETOOLONG</B><DD>
+パス名の長さが <B>MAXPATHLEN</B> より長かった。
+<DT><B>ENODEV</B><DD>
+<I>filesystemtype</I> がカーネル中で定義 (config) されていない。
+<DT><B>ENOENT</B><DD>
+パス名が空である。もしくは指定されたパスが存在しない。
+<DT><B>ENOMEM</B><DD>
+カーネルがファイル名やデータをコピーするための空きページを確保できなかった。
+<DT><B>ENOTBLK</B><DD>
+(ブロックデバイスが必要だが)  <I>source</I> がブロックデバイスではない。
+<DT><B>ENOTDIR</B><DD>
+<I>target</I> か、 <I>source</I> のプレフィックスがディレクトリではない。
+<DT><B>ENXIO</B><DD>
+ブロックデバイス <I>source</I> のメジャー番号が範囲外である。
+<DT><B>EPERM</B><DD>
+呼び出し元が必要な権限を持っていない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+
+<B>MS_DIRSYNC</B>, <B>MS_MOVE</B>, <B>MS_REC</B>, <B>MS_RELATIME</B>, <B>MS_STRICTATIME</B> の定義が
+glibc のヘッダーに追加されたのは バージョン 2.12 においてである。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+この関数は Linux 固有の関数であり、移植を考慮したプログラムでは 使用すべきでない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+元の <B>MS_SYNC</B> フラグは、別の <B>MS_SYNC</B> が <I>&lt;<A HREF="file:///usr/include/mman.h">mman.h</A>&gt;</I> に追加されたので 1.1.69 から
+<B>MS_SYNCHRONOUS</B> に名前が変わった。
+<P>
+
+
+Linux 2.4 より前のバージョンでは、 <B>MS_NOSUID</B> オプション付きでマウントされたファイルシステム上の set-UID や
+set-GID のプログラムを実行しようとすると、 <B>EPERM</B> エラーとなった。 Linux 2.4 以降では、このような場合は set-UID
+ビットや set-GID ビットが 無視されるだけである。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>プロセス単位の名前空間</H3>
+
+カーネル 2.4.19 以降の Linux では、プロセス単位のマウント名前空間 (mount namespace)
+が提供されている。マウント名前空間とは、 あるプロセスに見えているファイルシステムのマウントの集合である。
+マウントポイントの名前空間は複数のプロセスで共有することができ、 普通は共有されている。 一つのプロセスによる名前空間の変更
+(すなわち、マウントやアンマウント) は 同じ名前空間を共有する他の全てのプロセスにも見える。 (2.4.19 より前の Linux
+は、一つの名前空間がシステム上の全プロセスで 共有される状況とみなすことができる。)
+<P>
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  経由で作成された子プロセスは親プロセスのマウント名前空間を共有する。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+の前後でマウント名前空間は保持される。
+<P>
+プロセスは自分用 (private) のマウント名前空間を持つことができる。 自分用の名前空間を持つことができるのは、 そのプロセスが
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)  <B>CLONE_NEWNS</B> フラグを使って作成された場合と、 そのプロセスが <B>CLONE_NEWNS</B> フラグ付きで
+<B><A HREF="../man2/unshare.2.html">unshare</A></B>(2)  を呼び出した場合である。 前者の場合、作成されたプロセスの新しい名前空間は <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+を呼び出したプロセスの名前空間の「コピー」で初期化される。 後者の場合、 <B><A HREF="../man2/unshare.2.html">unshare</A></B>(2)
+を呼び出すと、呼び出し元のプロセスのマウント名前空間が、 それまでは他のプロセスと共有していた名前空間の自分用のコピーとなる。
+これにより、呼び出し元のプロセスがこれ以後に行うマウント/アンマウントは 他のプロセスから見えなくなる (ただし、呼び出し元のプロセスが
+<B><A HREF="../man2/unshare.2.html">unshare</A></B>(2)  の呼び出し以降に作成した子プロセスには見える)。
+また、その逆の、他のプロセスが行ったマウント/アンマウントも呼び出し元のプロセスには 見えなくなる。
+<P>
+Linux 独自のファイル <I>/proc/PID/mounts</I> では、指定された ID を持つプロセスのマウント名前空間における
+マウントポイントのリストが公開されている。詳細は <B><A HREF="../man5/proc.5.html">proc</A></B>(5)  を参照のこと。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/umount.2.html">umount</A></B>(2), <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7), <B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7), <B><A HREF="../../util-linux/man8/lsblk.8.html">lsblk</A></B>(8),
+<B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8), <B><A HREF="../../util-linux/man8/umount.8.html">umount</A></B>(8)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">プロセス単位の名前空間</A><DD>
+</DL>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

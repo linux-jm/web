@@ -1,0 +1,151 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PASSWD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PASSWD</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2018-04-30<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man5/passwd.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+passwd - パスワードファイル
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<I>/etc/passwd</I> ファイルは、そのシステムのユーザーのログインアカウントリス
+トを記述したテキストファイルである。パスワードファイルの読み出し許可は
+全ユーザーに対して与えるが(<I><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></I>(1) 等の多くのユーティリティではユーザー
+ID をユーザー名に 対応させるのに <B>passwd</B> ファイルを使用する)、書き込
+み許可はスーパーユーザーにのみ与えるようにすべきである。
+<P>
+
+古き良き時代には、この全ユーザーに対する読み取り許可は 特別な問題を起こ
+さなかった。誰でも暗号化されたパスワードを 読むことが出来たが、上手に選
+ばれたパスワードを破るのには 当時のハードウェアの速度はあまりに遅かった
+し、それに加えて 友好的なユーザー社会であることを基本的な前提としていた。
+最近では多くの人が、何らかのバージョンの shadow password suite
+(シャドウパスワード機能を実現するためのプログラム群) を動かしている。
+その場合 <I>/etc/passwd</I> ファイルのパスワード欄には
+'x' 文字が設定され、暗号化されたパスワードは
+<I>/etc/shadow</I> ファイルに保持される。 <I>/etc/shadow</I> ファイルはスーパー
+ユーザーだけが読み出すことができる。
+<P>
+
+<I>/etc/passwd</I> と <I>/etc/shadow</I> のどちらの場合でも暗号化パスワードが
+空文字列の場合、パスワードの問い合わせなしでのログインが許可される。
+この機能は、アプリケーションで意図的に無効されたり、
+設定可能  (例えば pam_unix.so の &quot;nullok&quot; や &quot;nonull&quot; 引数など)
+になっていたりする場合がある点に注意すること。
+<P>
+
+<I>/etc/passwd</I> の暗号化パスワードが &quot;<I>*NP*</I>&quot; (クォートはなし) の場合、
+shadow レコードを NIS+ サーバから取得することを意味する。
+<P>
+
+shadow password が使われているかどうかにはよらず、多くのシステム管理者は、暗号化パスワード欄にアスタリスク (*)
+を設定することで、そのユーザーがパスワードでの認証が受けられないようにしている (下記の「注意」の項を参照)。
+<P>
+
+新しいユーザーを登録する場合には、パスワード欄にアスタリスク (*) を設定しておき、
+<B><A HREF="../../shadow/man1/passwd.1.html">passwd</A></B>(1) コマンドにより設定を行うようにすること。
+<P>
+
+ファイルの 1 行は 1 ユーザーの情報を表し、
+コロン区切りの 7 つの項目を含む。
+<P>
+
+
+
+name:password:UID:GID:GECOS:directory:shell
+
+
+<P>
+
+各フィールドは以下の通りである:
+<DL COMPACT>
+<DT><I>name</I><DD>
+ユーザーのログイン名。大文字を含まないすべきである。
+<DT><I>password</I><DD>
+暗号化されたユーザーのパスワード、アスタリスク (*)、文字 'x' の
+いずれかである ('x' の説明については <B><A HREF="../../shadow/man8/pwconv.8.html">pwconv</A></B>(8) を参照)。
+<DT><I>UID</I><DD>
+特権を持つ <I>root</I> ログインアカウント (スーパーユーザー) は
+ユーザー ID 0 である。
+<DT><I>GID</I><DD>
+このユーザーのプライマリグループ ID の番号。
+(このユーザーの追加のグループはシステムのグループ定義ファイル
+で定義される。 <B><A HREF="../man5/group.5.html">group</A></B>(5) を参照)。
+<DT><I>GECOS</I><DD>
+本欄 (「コメント欄」と呼ばれることもある) は省略可能で、情報提供の
+目的のみに使われる。ユーザーのフルネームを設定することが多い。
+(<B><A HREF="../../netkit/man1/finger.1.html">finger</A></B>(1) などの) いくつかのプログラムでは、このフィールドの
+情報が表示される。
+<DT><DD>
+GECOS は General Electric Comprehensive Operating System を意味しており、
+GE 社の大規模システム部門が Honeywell 社に売却された際に GCOS へと変更
+された。Dennis Ritchie 氏は次のように言っている:「時々プリンタ出力や、
+バッチジョブを GCOS マシンに送ったりするが、パスワードファイルの
+gcos 欄は $IDENT カード用の情報を 隠しておくための場所なんだ。
+まるっきりエレガントじゃない。」
+<DT><I>directory</I><DD>
+ユーザーのホームディレクトリ、つまりログイン直後のそのユーザーの
+初期ディレクトリである。
+このフィールドの値は <B>HOME</B> 環境変数に設定される。
+<DT><I>shell</I><DD>
+ログイン時に動くプログラム名 (空欄の場合 <I>/bin/sh</I> が使われる)。
+存在しない実行ファイルが設定された場合、そのユーザーは <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1) による
+システムへのログインができなくなる。
+このフィールドの値は <B>SHELL</B> 環境変数の値に設定される。
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/etc/passwd</I>
+<A NAME="lbAE">&nbsp;</A>
+<H2>注意</H2>
+
+ユーザーグループを作りたい場合には、そのグループが <I>/etc/group</I> の中に
+定義されていなければならない。そうしないとグループを作ったことにはならない。
+<P>
+
+暗号化パスワードとしてアスタリスク (*) を設定すると、 <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1) を
+使ってのログインができなくなるが、 <B><A HREF="../../netkit/man1/rlogin.1.html">rlogin</A></B>(1) ではまだログインができるし、
+<B><A HREF="../../netkit/man1/rsh.1.html">rsh</A></B>(1), <B><A HREF="../../cron/man8/cron.8.html">cron</A></B>(8), <B><A HREF="../../at/man1/at.1.html">at</A></B>(1) やメールのフィルタ等を使い、現存するプロセスを
+実行させたり、新たなプロセスを起動したりすることができる。
+使用する shell の欄を、単に変更することでアカウントを 使えないようにする
+のも同様の結果となる。その場合にはさらに <B><A HREF="../../0MultiFileIdx/man1/su.1.html">su</A></B>(1) も有効なまま残ってしまう。
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/chfn.1.html">chfn</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/chsh.1.html">chsh</A></B>(1), <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1), <B><A HREF="../../shadow/man1/passwd.1.html">passwd</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/su.1.html">su</A></B>(1), <B><A HREF="../man3/crypt.3.html">crypt</A></B>(3),
+<B><A HREF="../man3/getpwent.3.html">getpwent</A></B>(3), <B><A HREF="../man3/getpwnam.3.html">getpwnam</A></B>(3), <B><A HREF="../man5/group.5.html">group</A></B>(5), <B><A HREF="../../shadow/man5/shadow.5.html">shadow</A></B>(5), <B><A HREF="../../0MultiFileIdx/man8/vipw.8.html">vipw</A></B>(8)
+<A NAME="lbAG">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">ファイル</A><DD>
+<DT><A HREF="#lbAE">注意</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

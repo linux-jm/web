@@ -1,0 +1,166 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RECNO</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RECNO</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/recno.3">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+recno - レコード番号データベースへのアクセスメソッド
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>大事な注意</I>:
+このページは、バージョン 2.1 までの glibc が提供するインターフェースに
+ついて説明している。バージョン 2.2 以降の glibc では、もはやこれらの
+インターフェースは提供されていない。おそらく、このページではなく、
+<I>libdb</I> ライブラリが提供する API をお探しなのだろう。
+<P>
+
+ルーチン <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  はデータベースファイルに対するライブラリインターフェースである。 サポートされているファイルフォーマットの一つに、
+レコード番号ファイル (record number file: recno file) がある。 データベースへのアクセスメソッドに関する一般的な記述は
+<B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3), に書かれている。 このマニュアルページでは recno 特有の情報についてのみ記述する。
+<P>
+
+レコード番号データ構造は、フラットなファイル形式に格納された 可変長/固定長レコードからなり、論理レコード番号でアクセスされる。 レコード番号 5
+があれば、レコード番号 1 から 4 も存在する。 レコード番号 1 を削除すると、レコード番号 5 は 4 に付け替えられ、
+カーソルも移動する。レコード番号 1 以降のものは一つ繰り上がるわけである。
+<P>
+
+<B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  で使う recno アクセスメソッドに特有のデータ構造体は、 <I>&lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;</I>
+インクルードファイルで次のように定義されている。
+<P>
+
+
+
+typedef struct {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;flags;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;cachesize;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;psize;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lorder;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reclen;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;bval;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*bfname;
+} RECNOINFO;
+
+
+<P>
+
+この構造体の要素を以下に示す。
+<DL COMPACT>
+<DT><I>flags</I><DD>
+<I>flags</I> の値は以下の値の論理和で指定される。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>R_FIXEDLEN</B><DD>
+レコード長が固定であり、バイト区切りではない。 構造体の要素 <I>reclen</I> はレコードの長さを指定する。また、要素 <I>bval</I> は埋め文字
+(pad character) を指定する。 データベースに入れられたレコードの内 <I>reclen</I>
+バイトに満たないものでは、残りの部分に埋め文字が自動的に入る。
+<DT><B>R_NOKEY</B><DD>
+<B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  で指定されたインターフェイスでは、シーケンシャルなレコード取得は 呼び出しキーとデータ構造体の両方を埋めていく。
+<B>R_NOKEY</B> フラグが指定されていると、キー構造体を埋めるのに <I>cursor</I> ルーチンを必要としない。
+これを用いれば、アプリケーションがファイルの終りの方を取得する際に、 その途中のレコードを読まなくても済む事になる。
+<DT><B>R_SNAPSHOT</B><DD>
+このフラグを指定すると、 <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  の呼び出しの際、 オリジナルファイルから変更されていないレコードを読む代わりに、 ファイルの
+snapshot を用いる。
+</DL>
+</DL>
+
+<DT><I>cachesize</I><DD>
+想定されるメモリーキャッシュの最大サイズ (バイト単位)。 この値は <B>あくまで</B> 参考であり、アクセスメソッドはこの値を越えたメモリーの
+割り当てに成功することもある。 <I>cachesize</I> が 0 (あるいは指定されていない) の場合、デフォルトのキャッシュが使われる。
+<DT><I>psize</I><DD>
+recno アクセスメソッドは、自身のレコードのコピーをメモリー内部に btree で保存している。 この値は、その btree
+中のノードに対して用いられる ページサイズ (バイト単位) である。 <I>psize</I> が 0 (あるいは指定されていない) の場合、
+ファイルシステムの I/O ブロックサイズを基にして ページサイズが決められる。 詳細は <B><A HREF="../man3/btree.3.html">btree</A></B>(3)  を参照。
+<DT><I>lorder</I><DD>
+データベースに格納されているメタデータの整数値のバイトオーダー。 この数字は、順序を整数で表したものである。 例えばビッグエンディアンなら、この数値は
+4,321 となる。 <I>lorder</I> が 0 (指定されていない) の場合、現在のホスト で使われているバイトオーダーが使われる。
+<DT><I>reclen</I><DD>
+固定レコード長の長さ。
+<DT><I>bval</I><DD>
+可変レコード長において、 レコードの終りを示す区切りバイト (区切り文字) である。 固定レコード長では埋め文字として使われる。
+値が指定されていないと、 可変レコード長のレコードの終りには改行 (&quot;\n&quot;) が使われる。 固定レコード長のレコードは空白 (space)
+で埋められる。
+<DT><I>bfname</I><DD>
+recno アクセスメソッドは、 自身のレコードのコピーをメモリー内部で btree に保存している。 <I>bfname</I> が NULL
+でない場合、これは btree ファイル名 (btree ファイルを <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  する時に指定するファイル名) を指定する。
+</DL>
+<P>
+
+<I>recno</I> アクセスメソッドで使われるキー/データ対のデータ部分は、 他のアクセスメソッドと同じである。 しかしキーは異なっている。 キーの
+<I>data</I> フィールドは <I>recno_t</I> 型の、メモリー位置へのポインターでなければならない。 <I>recno_t</I> は
+<I>&lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;</I> インクルードファイルで定義されている。 この型は通常、その実装で利用可能な最大の符号無し整数である。 キーの
+<I>size</I> フィールドはその型のサイズとなる。
+<P>
+
+recno アクセスメソッドのファイルに関連づけられる メタデータは存在できないから、 デフォルト値 (固定レコード長やセパレータ文字など)
+に対する変更はファイルを開く毎に明示的に指定しなければならない。
+<P>
+
+<B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  で指定されたインターフェイスでは、 <I>put</I> インターフェイスを使って新しいレコードを作成するときに、
+指定したレコード番号がデータベース中に存在している最大レコード番号より 一つ以上大きいと、 空のレコードが同時にできてしまう。
+<A NAME="lbAE">&nbsp;</A>
+<H2>エラー</H2>
+
+<I>recno</I> アクセスメソッドルーチンは失敗すると <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3)  で指定されているエラーに応じた <I>errno</I> か、
+あるいは以下に示す <I>errno</I> をセットする。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+固定長データベースにレコードを追加するとき、データが長すぎた。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>バグ</H2>
+
+バイトオーダーとしてはビッグエンディアンとリトルエンディアンのみが サポートされている。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/btree.3.html">btree</A></B>(3), <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3), <B><A HREF="../man3/hash.3.html">hash</A></B>(3), <B><A HREF="../man3/mpool.3.html">mpool</A></B>(3)
+<P>
+
+<I>Document Processing in a Relational Database System</I>, Michael Stonebraker,
+Heidi Stettner, Joseph Kalash, Antonin Guttman, Nadene Lynn, Memorandum
+No. UCB/ERL M82/32, May 1982.
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">エラー</A><DD>
+<DT><A HREF="#lbAF">バグ</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

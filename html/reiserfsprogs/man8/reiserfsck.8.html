@@ -1,0 +1,341 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of REISERFSCK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>REISERFSCK</H1>
+Section: Maintenance Commands (8)<BR>Updated: February 2004<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/reiserfsprogs/release/man8/reiserfsck.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+reiserfsck - ReiserFS ファイルシステムのチェックツール
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>reiserfsck </B>
+
+[ <B>-afprVy</B> ]
+[ <B>--rebuild-sb</B> | <B>--check</B> | <B>--fix-fixable</B>
+| <B>--rebuild-tree</B> | <B>--clean-attributes</B> ]
+
+[ <B>-j</B> | <B>--journal</B> <I>device</I> ]
+[ <B>-z</B> | <B>--adjust-size</B> ]
+[ <B>-n</B> | <B>--nolog</B> ]
+[ <B>-B</B> | <B>--badblocks </B><I>file</I> ]
+[ <B>-l</B> | <B>--logfile </B><I>file</I> ]
+[ <B>-q</B> | <B>--quiet</B> ]
+[ <B>-y</B> | <B>--yes</B> ]
+
+
+
+[ <B>-S</B> | <B>--scan-whole-partition</B> ]
+[ <B>--no-journal-available</B> ]
+<I>device</I>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>reiserfsck</B> はデバイス上の ReiserFS ファイルシステムを捜して、
+必要なトランザクションを再現する。
+さらに、ファイルシステムをチェックまたは修復する。
+<DL COMPACT>
+<DT><I>device</I>
+
+<DD>
+デバイスまたはパーティションに対応するスペシャルファイル
+(例えば、/dev/hdXX は IDE ディスクパーティションで、
+/dev/sdXX は SCSI ディスクパーティションである)。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>--rebuild-sb</B>
+
+<DD>
+このオプションは ReiserFS パーティションのスーパーブロックを復旧する。
+このオプションが必要なのは、
+ReiserFS ファイルシステムがあるにも関わらず、mount が
+「read_super_block: reiserfs ファイルシステムが見つかりません
+(can't find a reiserfs file system)」と表示したときのみである。
+しかし、何らかのパーティション編集プログラムを使用した後で
+ファイルシステムが見つからなくなった場合は、
+再分割のときに何か不具合が起こって
+パーティションの開始位置が変更されたかも知れない
+ということを思い出してほしい。
+もしそうならば、間違った場所にスーパーブロックを再構築するのではなく、
+始めにパーティションの正しい開始位置を見つけるべきである。
+<DT><B>--check</B>
+
+<DD>
+デフォルトの動作であるこのオプションでは、
+ファイルシステムの整合性をチェックするが、
+壊れたデータが発見されても修正は行わない。
+読み込みのみでマウントされたファイルシステムに対しても使うことができる。
+<DT><B>--fix-fixable</B>
+
+<DD>
+このオプションは --rebuild-tree オプションなしで修正できる
+壊れたデータを復旧する。
+通常このオプションが必要なのは、
+<B>--check</B> オプションで「<B>--fix-fixable</B> で
+修復可能な壊れたデータが見つかった
+(corruption that can be fixed with <B>--fix-fixable</B>)」
+と表示されたときのみである。
+このオプションで行われるのは、
+データブロックへの誤ったポインタのゼロ化・
+ディレクトリの st_size と st_blocksの修正・
+不正なディレクトリエントリの削除などである。
+<DT><B>--rebuild-tree</B>
+
+<DD>
+このオプションは、デバイス上に見つかったリーフノード (leaf node) を使って、
+ファイルシステムツリー全体を再構築する。
+通常このオプションが必要なのは、
+<B>reiserfsck --check</B> で
+「<B>--rebuild-tree</B> を付けて実行する必要がある
+(Running with <B>--rebuild-tree</B> is required)」
+と表示されたときのみである。
+<B>--rebuild-tree</B> オプションを付けて実行する場合は、
+パーティション全体のバックアップコピーを取っておくことを強く推奨する。
+いったん <B>reiserfsck --rebuild-tree</B> を開始したら、
+動作を完了させなければならない (中断すべきではない)。
+完了しないと、ファイルシステムはマウントできない状態のままにされる。
+これはその後のデータの破壊を防ぐためである。
+<DT><B>--clean-attributes</B>
+
+<DD>
+このオプションは Stat-Data アイテムの予約フィールドをクリアする。
+かつては ReiserFS に拡張属性がなかった。
+拡張属性が実装されたとき、最初に古いパーティションを
+何も書かれていない状態にする必要があった -- カーネルの ReiserFS のコードは
+構造体の使われていないフィールドを考慮していなかった。
+そのため、古い (属性が実装される前の) カーネルを
+ReiserFS ファイルシステムとともに使っていて、
+拡張属性を使いたい場合は、最初にファイルシステムを
+何も書かれていない状態にするべきである。
+<DT><B>--journal </B><I>device </I>, <B>-j </B><I>device </I>
+
+<DD>
+このオプションは、現在のファイルシステムジャーナルのデバイス名を指定する。
+このオプションは、メインデータのデバイスとは
+別のデバイスにジャーナルが存在する場合に必要である
+(エキスパートオプション <B>--no-journal-available</B> を使用すれば、
+このオプションを使わないこともできる)。
+<DT><B>--adjust-size, -z</B>
+
+<DD>
+このオプションは、
+最後に見つかるバイトのオフセットよりもファイルサイズが大きい場合に、
+<B>reiserfsck</B> にファイルサイズを修正させる。
+つまりファイルの末尾のホール (穴) が削除される。
+最後に見つかるバイトのオフセットよりもファイルサイズが小さい場合は、
+<B>--fix-fixable</B> で修正される。
+<DT><B>--badblocks </B><I>file</I>, <B>-B </B><I> file</I><DD>
+このオプションは不正ブロックのリストを、
+指定された `file` で与えられたブロックのリストに設定する。
+ファイルシステムの不正ブロックのリストは、
+新しいリストが追加される前に削除される。
+<B>--fix-fixable</B> を指定することで不正ブロックを修復できる
+(debugreiserfs -B を参照)。
+またブロックデバイスに不正なブロックがある場合は、
+毎回 <B>--rebuild-tree</B> オプションを付けなければならない。
+<DT><B>--logfile </B><I>file</I>, <B>-l </B><I> file</I><DD>
+このオプションは、<B>reiserfsck</B> に対して
+壊れたデータに関する情報を標準エラー出力ではなく
+指定したログファイルに書き出すようにさせる。
+<DT><B>--nolog, -n</B>
+
+<DD>
+このオプションは、<B>reiserfsck</B> に対して
+壊れたデータについて報告しないようにさせる。
+<DT><B>--quiet, -q</B>
+
+<DD>
+このオプションは、<B>reiserfsck</B> に対して
+進捗状況を表示しないようにさせる。
+<DT><B>--yes, -y</B>
+
+<DD>
+このオプションは <B>reiserfsck</B> に対して、
+「これから実行することをユーザに提示した後で、
+ユーザの了承を得る」という動作をさせないようにする。
+<B>reiserfsck</B> はユーザが了承すると仮定する。
+安全のため、<B>--rebuild-tree</B> オプションと一緒に指定すると、
+このオプションは動作しない。
+<DT><B>-a</B>, <B>-p</B><DD>
+通常このオプションは、fsck -A により
+/etc/fstab にリストされているパーティションを
+自動チェックするときに受け渡される。
+これらのオプションを使うと、
+<B>reiserfsck</B> は指定されたファイルシステムの情報を表示し、
+スーパーブロックにあるエラーフラグが設定されているかをチェックし、
+簡単なチェックをいくつか行う。
+これらのチェックにより、壊れたデータが明らかになったり、
+(修正可能な) 壊れたデータを指し示すフラグが
+スーパーブロックに設定されているのが見つかった場合は、
+<B>reiserfsck</B> は修正可能データの修正モードに移行する。
+修正不能な壊れたデータを示すフラグが、
+スーパブロックに設定されているのが見つかった場合、
+<B>reiserfsck</B> はエラーを出して終了する。
+<DT><B>-V</B>
+
+<DD>
+このオプションは reiserfsprogs のバージョンを表示して終了する。
+<DT><B>-r</B>, <B>-f</B><DD>
+これらのオプションは無視される。
+<DT></DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>エキスパートオプション</H2>
+
+<DD>
+<B>自分がやっていることが分からない場合は、
+これらのオプションを使ってはならない。
+これらのオプションを使った結果、
+データが失われたとしても我々は責任はとらない。</B>
+<DL COMPACT>
+<DT><B>--no-journal-available</B>
+
+<DD>
+このオプションを指定すると、ジャーナルデバイスが使用できない場合でも
+<B>reiserfsck</B> を続行することができる。
+このオプションはジャーナルがメインデータデバイスにある場合は影響しない。
+注意: この操作の後には、<B>reiserfstune</B> により
+新しいジャーナルデバイスを指定しなければならない。
+<DT><B>--scan-whole-partition, -S</B>
+
+<DD>
+このオプションは <B>--rebuild-tree</B> のときに、
+パーティションの使用されている領域だけでなく、
+パーティション全体をスキャンさせる。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>reiserfsck の使用例</H2>
+
+1. reiserfs パーティション /dev/hda1 に何か不具合があると思った場合、
+または単に定期的なディスクチェックを行おうとした場合に
+<B>reiserfsck</B> を使用する。
+<P>
+2. <B>reiserfsck --check --logfile check.log /dev/hda1</B> を実行する。
+<B>reiserfsck --check</B> がステータス 0 で終了した場合は、
+エラーがなかったことを示している。
+<P>
+3. <B>reiserfsck --check</B> がステータス 1 で終了して
+(かつ修正可能な壊れたデータがあることが報告された) 場合は、
+<B>reiserfsck --fix-fixable --logfile fixable.log /dev/hda1</B> を
+実行すべきである。
+<P>
+4. <B>reiserfsck --check</B> がステータス 2 で終了して
+(かつ致命的な壊れたデータがあることが報告された) 場合は、
+<B>reiserfsck --rebuild-tree</B> を実行する必要がある。
+<B>reiserfsck --check</B> が何らかの理由で失敗した場合も、
+<B>reiserfsck --rebuild-tree</B> を実行すべきである。
+ただしこの場合はバグレポートとして報告してほしい。
+<P>
+5. <B>reiserfsck --rebuild-tree</B> を実行する前に、
+パーティション全体のバックアップを取っておくこと。
+その後に <B>reiserfsck --rebuild-tree --logfile rebuild.log /dev/hda1</B> を
+実行すること。
+<P>
+6. <B>reiserfsck --rebuild-tree</B> のステップが失敗した場合、
+または期待していた復旧が出来なかった場合は、
+バグレポートとして報告してほしい。
+プラットフォームや Linux カーネルのバージョンを含む
+できる限りの情報を提供してほしい。
+我々は問題を解決する手助けをしようと思う。
+<A NAME="lbAH">&nbsp;</A>
+<H2>終了コード</H2>
+
+<B>reiserfsck</B> は以下の終了コードを使う:
+<BR>
+
+&nbsp;  <I>0</I> -&nbsp;エラーなし。
+<BR>
+
+&nbsp;  <I>1</I> -&nbsp;ファイルシステムのエラーが修正された。
+<BR>
+
+&nbsp;  <I>2</I> -&nbsp;再起動が必要である。
+<BR>
+
+&nbsp;  <I>4</I> -&nbsp;ファイルシステムの致命的なエラーが
+<BR>
+
+	  修正されないまま残されており、
+<BR>
+
+	  <B>reiserfsck --rebuild-tree</B> を実行する必要がある。
+<BR>
+
+&nbsp;  <I>6</I> -&nbsp;ファイルシステムの修復可能なエラーが
+<BR>
+
+	  修正されないまま残されており、
+<BR>
+
+	  <B>reiserfsck --fix-fixable</B> を実行する必要がある。
+<BR>
+
+&nbsp;  <I>8</I> -&nbsp;操作エラー。
+<BR>
+
+&nbsp;  <I>16</I> -&nbsp;使用法エラーまたは書式エラー。
+<BR>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+このバージョンの <B>reiserfsck</B> は
+Vitaly Fertman &lt;<A HREF="mailto:vitaly@namesys.com">vitaly@namesys.com</A>&gt; によって書かれた。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+バグは、できる限り多くの情報 (ハードウェア・カーネル・パッチ・設定・
+表示された全てのメッセージ・ログファイル) とともに、
+ReiserFS の開発者 &lt;<A HREF="mailto:reiserfs-dev@namesys.com">reiserfs-dev@namesys.com</A>&gt; に報告してほしい。
+関連する情報があるかもしれないので syslog を調べてほしい。
+<A NAME="lbAK">&nbsp;</A>
+<H2>今後の予定</H2>
+
+修復の高速化とシグナル処理。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/mkreiserfs.8.html">mkreiserfs</A></B>(8),
+
+<B><A HREF="../man8/reiserfstune.8.html">reiserfstune</A></B>(8)
+
+<B><A HREF="../man8/resize_reiserfs.8.html">resize_reiserfs</A></B>(8),
+
+<B><A HREF="../man8/debugreiserfs.8.html">debugreiserfs</A></B>(8),
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">エキスパートオプション</A><DD>
+<DT><A HREF="#lbAG">reiserfsck の使用例</A><DD>
+<DT><A HREF="#lbAH">終了コード</A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">今後の予定</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

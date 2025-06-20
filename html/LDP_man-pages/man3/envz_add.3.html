@@ -1,0 +1,163 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ENVZ_ADD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ENVZ_ADD</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/envz_add.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+envz_add, envz_entry, envz_get, envz_merge, envz_remove, envz_strip -
+環境変数文字列の操作
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/envz.h">envz.h</A>&gt;</B>
+
+<B>error_t envz_add(char **</B><I>envz</I><B>, size_t *</B><I>envz_len</I><B>,</B>
+<B>                 const char *</B><I>name</I><B>, const char *</B><I>value</I><B>);</B>
+
+<B>char *envz_entry(const char *</B><I>envz</I><B>, size_t </B><I>envz_len</I><B>, const char *</B><I>name</I><B>);</B>
+
+<B>char *envz_get(const char *</B><I>envz</I><B>, size_t </B><I>envz_len</I><B>, const char *</B><I>name</I><B>);</B>
+
+<B>error_t envz_merge(char **</B><I>envz</I><B>, size_t *</B><I>envz_len</I><B>,</B>
+<B>                   const char *</B><I>envz2</I><B>, size_t </B><I>envz2_len</I><B>, int </B><I>override</I><B>);</B>
+
+<B>void envz_remove(char **</B><I>envz</I><B>, size_t *</B><I>envz_len</I><B>, const char *</B><I>name</I><B>);</B>
+
+<B>void envz_strip(char **</B><I>envz</I><B>, size_t *</B><I>envz_len</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらの関数は glibc 固有である。
+<P>
+
+argz vector は長さ情報付きの文字バッファーへのポインターである。 <B><A HREF="../man3/argz_add.3.html">argz_add</A></B>(3)  を参照のこと。 envz vector
+は、文字列が &quot;name=value (名前=値)&quot; の形式になっている特別な argz vector である。 最初の '='
+以降はすべて値とみなされる。'=' がなければ、 値は NULL と解釈される。(文字列の一番最後の文字が '='
+の場合、値は空文字列 &quot;&quot; と解釈される。)
+<P>
+
+これらの関数は envz vector を操作するためのものである。
+<P>
+
+<B>envz_add</B>()  は、文字列 &quot;<I>name</I>=<I>value</I>&quot; (<I>value</I> が NULL でない場合) または
+&quot;<I>name</I>&quot; (<I>value</I> が NULL の場合) を envz vector (<I>*envz</I>,&nbsp;<I>*envz_len</I>)
+に追加し、 <I>*envz</I> と <I>*envz_len</I> を更新する。 <I>name</I>
+と同じ名前を持つエントリーがあった場合、元のエントリーは削除される。
+<P>
+
+<B>envz_entry</B>()  は、envz vector (<I>envz</I>,&nbsp;<I>envz_len</I>)  から名前が <I>name</I>
+のエントリーを検索する。 見つかった場合はそのエントリーを返し、見つからなかった場合は NULL を返す。
+<P>
+
+<B>envz_get</B>()  は、envz vector (<I>envz</I>,&nbsp;<I>envz_len</I>)  から名前が <I>name</I>
+のエントリーを検索する。 見つかった場合はエントリーの値を返し、見つからなかった場合は NULL を返す。 (値は NULL
+の場合もあることに注意すること。名前が <I>name</I> のエントリーに '=' 符号がない場合が該当する。)
+<P>
+
+<B>envz_merge</B>()  は、 <B>envz_add</B>()  と同じように <I>envz2</I> の各エントリーを <I>*envz</I> に追加する。
+<I>override</I> が真の場合、 <I>envz2</I> の値で <I>*envz</I> 内の同じ名前をもつ値は上書きされる。 偽の場合は上書きされない。
+<P>
+
+<B>envz_remove</B>()  は、名前が <I>name</I> のエントリーがあれば (<I>*envz</I>,&nbsp;<I>*envz_len</I>)
+から削除する。
+<P>
+
+<B>envz_strip</B>()  は、値が NULL のエントリーをすべて削除する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+メモリー割り当てを行う envz 関数群はすべて <I>error_t</I> 型 (integer 型) の返り値を持つ。 成功した場合は 0
+を返し、割り当てエラーが発生した場合は <B>ENOMEM</B> を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>envz_add</B>(),
+<B>envz_entry</B>(),
+<BR>
+
+<B>envz_get</B>(),
+<B>envz_merge</B>(),
+<BR>
+
+<B>envz_remove</B>(),
+<B>envz_strip</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+これらの関数は GNU による拡張である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>例</H2>
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/envz.h">envz.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[], char *envp[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;e_len&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*str;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;envp[i]&nbsp;!=&nbsp;NULL;&nbsp;i++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_len&nbsp;+=&nbsp;strlen(envp[i])&nbsp;+&nbsp;1;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;str&nbsp;=&nbsp;envz_entry(*envp,&nbsp;e_len,&nbsp;&quot;HOME&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s\n&quot;,&nbsp;str);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;str&nbsp;=&nbsp;envz_get(*envp,&nbsp;e_len,&nbsp;&quot;HOME&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s\n&quot;,&nbsp;str);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/argz_add.3.html">argz_add</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">例</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

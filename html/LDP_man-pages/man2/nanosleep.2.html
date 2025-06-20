@@ -1,0 +1,175 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of NANOSLEEP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>NANOSLEEP</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated:  2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/nanosleep.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+nanosleep - 高精度なスリープ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</B>
+<P>
+
+<B>int nanosleep(const struct timespec *</B><I>req</I><B>, struct timespec
+*</B><I>rem</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>nanosleep</B>(): _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;199309L
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>nanosleep</B>()  は、少なくとも <I>*req</I> で指定された時間の間、プログラムの実行を遅延させる。 <B>nanosleep</B>()
+は、呼び出したスレッドの実行を、 少なくとも <I>*req</I> で指定された時間の間、もしくは呼び出したスレッドでハンドラーの起動の
+きっかけとなるシグナル、またはプロセスを終了させるシグナルの配送が 行われるまで一時停止する。
+<P>
+
+呼び出しがシグナルハンドラーにより割り込まれた場合、 <B>nanosleep</B> は -1 を返し、 <I>errno</I> に <B>EINTR</B> を設定し、
+<I>rem</I> が NULL でなければ 残りの時間を <I>rem</I> が指す構造体に格納する。 <I>*rem</I> の値を使うと、
+<B>nanosleep</B>()  をもう一度呼び出して、指定した時間の停止を 完了させることができる (但し、「注意」の節を参照のこと)。
+<P>
+
+ナノ秒刻みの時間間隔を指定するのに <I>timespec</I> 構造体が使用される。この構造体は次のように定義されている。
+<P>
+
+
+
+struct timespec {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;秒&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;tv_nsec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ナノ秒&nbsp;*/
+};
+
+
+<P>
+
+ナノ秒のフィールドの値は 0 から 999999999 の範囲になければならない。
+<P>
+
+<B><A HREF="../man3/sleep.3.html">sleep</A></B>(3)  や <B><A HREF="../man3/usleep.3.html">usleep</A></B>(3)  に比べると <B>nanosleep</B>()  には以下のような利点がある:
+停止期間の指定に関して高い時間分解能が提供されている。 シグナルと互いに影響を及ぼすことがないと POSIX.1 で明示的に規定されている。
+シグナルハンドラーによって割り込まれた際に、停止を再開するのが より簡単にできる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+要求された期間の停止に成功した場合、 <B>nanosleep</B>()  は 0 を返す。呼び出しがシグナルハンドラーにより割り込まれたり、
+エラーが発生した場合は、-1 を返し、 <I>errno</I> にエラー内容を示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+ユーザー空間からの情報のコピーで問題があった。
+<DT><B>EINTR</B><DD>
+そのスレッドに配送されたシグナルにより停止が中断された (<B><A HREF="../man7/signal.7.html">signal</A></B>(7) 参照)。 スレッドが簡単に <B>nanosleep</B>()
+を再び呼び出して停止を続けることができるように、 残りの停止時間が <I>*rem</I> に格納される。
+<DT><B>EINVAL</B><DD>
+<I>tv_nsec</I> フィールドの値が 0 から 999999999 の範囲でないか、 <I>tv_sec</I> の値が負であった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+<BR>&nbsp;POSIX.1-2001,&nbsp;POSIX.1-2008.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<I>req</I> で指定された期間が、内部で使用されるクロックの粒度の倍数になっていない 場合、期間は一番近い倍数に切り上げられる。
+また、停止が完了した後、CPU が呼び出し元のスレッドを再び実行できるように なるまでには遅延が入る。
+<P>
+
+シグナルによる割り込み後に繰り返し再開された場合、 <B>nanosleep</B>()  の停止が相対的な期間であることは問題となることがある。
+これは、呼び出しの割り込みから再開までの間の時間が原因で 停止が最終的に完了した際に時間にずれが発生するからである。 この問題は、絶対時刻が指定できる
+<B><A HREF="../man2/clock_nanosleep.2.html">clock_nanosleep</A></B>(2)  を使うことで回避できる。
+<P>
+
+
+
+
+POSIX.1 は、 <B>nanosleep</B>()  は <B>CLOCK_REALTIME</B> に対して時刻を計測するべきだと規定している。
+しかしながら、Linux は <B>CLOCK_MONOTONIC</B> クロックを用いて時刻を計測している。 このことはおそらく問題にならないだろう。
+なぜなら、POSIX.1 の <B><A HREF="../man2/clock_settime.2.html">clock_settime</A></B>(2)  の仕様には、 <B>CLOCK_REALTIME</B> の不連続な変化は
+<B>nanosleep</B>()  に影響すべきではない、と書かれているからである。
+<DL COMPACT><DT><DD>
+<P>
+
+<B><A HREF="../man2/clock_settime.2.html">clock_settime</A></B>(2)  経由で <B>CLOCK_REALTIME</B> クロックの値を設定しても、 <B>nanosleep</B>()
+関数などの <B>CLOCK_REALTIME</B> に基づくサービスにより相対的な期間だけ実行を停止するスレッドには影響はない。
+結果として、クロック値が更新前か後かに関わらず、要求された相対的な時間が 経過すると満了することになる。
+</DL>
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>以前の動作</H3>
+
+In order to support applications requiring much more precise pauses (e.g.,
+in order to control some time-critical hardware), <B>nanosleep</B>()  would
+handle pauses of up to 2 milliseconds by busy waiting with microsecond
+precision when called from a thread scheduled under a real-time policy like
+<B>SCHED_FIFO</B> or <B>SCHED_RR</B>.  This special extension was removed in kernel
+2.5.39, and is thus not available in Linux 2.6.0 and later kernels.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+If a program that catches signals and uses <B>nanosleep</B>()  receives signals
+at a very high rate, then scheduling delays and rounding errors in the
+kernel's calculation of the sleep interval and the returned <I>remain</I> value
+mean that the <I>remain</I> value may steadily <I>increase</I> on successive
+restarts of the <B>nanosleep</B>()  call.  To avoid such problems, use
+<B><A HREF="../man2/clock_nanosleep.2.html">clock_nanosleep</A></B>(2)  with the <B>TIMER_ABSTIME</B> flag to sleep to an
+absolute deadline.
+<P>
+
+In Linux 2.4, if <B>nanosleep</B>()  is stopped by a signal (e.g., <B>SIGTSTP</B>),
+then the call fails with the error <B>EINTR</B> after the thread is resumed by a
+<B>SIGCONT</B> signal.  If the system call is subsequently restarted, then the
+time that the thread spent in the stopped state is <I>not</I> counted against
+the sleep interval.  This problem is fixed in Linux 2.6.0 and later kernels.
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/clock_nanosleep.2.html">clock_nanosleep</A></B>(2), <B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A></B>(2), <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2),
+<B>timer_create</B>(2), <B><A HREF="../man3/sleep.3.html">sleep</A></B>(3), <B><A HREF="../man3/usleep.3.html">usleep</A></B>(3), <B><A HREF="../man7/time.7.html">time</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">以前の動作</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

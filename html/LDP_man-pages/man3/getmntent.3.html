@@ -1,0 +1,203 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETMNTENT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETMNTENT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getmntent.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getmntent, setmntent, addmntent, endmntent, hasmntopt, getmntent_r -
+ファイルシステム記述ファイルのエントリーを取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/mntent.h">mntent.h</A>&gt;</B>
+
+<B>FILE *setmntent(const char *</B><I>filename</I><B>, const char *</B><I>type</I><B>);</B>
+
+<B>struct mntent *getmntent(FILE *</B><I>stream</I><B>);</B>
+
+<B>int addmntent(FILE *</B><I>stream</I><B>, const struct mntent *</B><I>mnt</I><B>);</B>
+
+<B>int endmntent(FILE *</B><I>streamp</I><B>);</B>
+
+<B>char *hasmntopt(const struct mntent *</B><I>mnt</I><B>, const char *</B><I>opt</I><B>);</B>
+
+/* GNU による拡張 */
+<B>#include &lt;<A HREF="file:///usr/include/mntent.h">mntent.h</A>&gt;</B>
+
+<B>struct mntent *getmntent_r(FILE *</B><I>streamp</I><B>, struct mntent *</B><I>mntbuf</I><B>,</B>
+<B>                           char *</B><I>buf</I><B>, int </B><I>buflen</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>getmntent_r</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.19:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.19&nbsp;and&nbsp;earlier:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらのルーチンは、ファイルシステムを記述したファイル <I>/etc/fstab</I> と、マウントされているファイルシステムを記述したファイル
+<I>/etc/mtab</I> にアクセスするために用いられる。
+<P>
+
+The <B>setmntent</B>()  function opens the filesystem description file
+<I>filename</I> and returns a file pointer which can be used by <B>getmntent</B>().
+The argument <I>type</I> is the type of access required and can take the same
+values as the <I>mode</I> argument of <B><A HREF="../man3/fopen.3.html">fopen</A></B>(3).  The returned stream should
+be closed using <B>endmntent</B>()  rather than <B><A HREF="../man3/fclose.3.html">fclose</A></B>(3).
+<P>
+
+<B>getmntent</B>() 関数は <I>stream</I> からファイルシステムの記述ファイルの次の行を読み込み、
+読み込んだ行をフィールドに分割した内容を収めた構造体へのポインターを返す。 ポインターはメモリーの静的な領域を指しており、この領域は
+<B>getmntent</B>() を次に呼び出したときに上書きされてしまう。
+<P>
+
+<B>addmntent</B>()  関数は <I>mntent</I> 構造体 <I>mnt</I> の内容を、オープンされている <I>stream</I> の最後に追加する。
+<P>
+
+<B>endmntent</B>() 関数はファイルシステムの記述ファイルに関連付けられている <I>stream</I> を閉じる。
+<P>
+
+<B>hasmntopt</B>()  関数は <I>mntent</I> 構造体 <I>mnt</I> の <I>mnt_opts</I> フィールド (下記 参照) をスキャンし、
+<I>opt</I> に一致する部分文字列があるかを調べる。 有効なマウントオプションについては <I>&lt;<A HREF="file:///usr/include/mntent.h">mntent.h</A>&gt;</I> と
+<B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)  を参照のこと。
+<P>
+
+リエントラントな関数 <B>getmntent_r</B>()  は <B>getmntent</B>()  と同じだが、 ユーザーが用意した <I>*mntbuf</I> に
+<I>struct mount</I> を格納し、その構造体の各エントリーが指し示す文字列を ユーザーが用意した大きさ <I>buflen</I> の配列 <I>buf</I>
+に書き込む。
+<P>
+
+<I>mntent</I> 構造体は <I>&lt;<A HREF="file:///usr/include/mntent.h">mntent.h</A>&gt;</I> で以下のように定義されている。
+<P>
+
+
+
+struct mntent {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*mnt_fsname;&nbsp;&nbsp;&nbsp;/*&nbsp;name&nbsp;of&nbsp;mounted&nbsp;file&nbsp;system&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*mnt_dir;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;file&nbsp;system&nbsp;path&nbsp;prefix&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*mnt_type;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;mount&nbsp;type&nbsp;(see&nbsp;mntent.h)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*mnt_opts;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;mount&nbsp;options&nbsp;(see&nbsp;mntent.h)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;mnt_freq;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;dump&nbsp;frequency&nbsp;in&nbsp;days&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;mnt_passno;&nbsp;&nbsp;&nbsp;/*&nbsp;pass&nbsp;number&nbsp;on&nbsp;parallel&nbsp;fsck&nbsp;*/
+};
+
+
+<P>
+
+Since fields in the mtab and fstab files are separated by whitespace, octal
+escapes are used to represent the characters space (\040), tab (\011),
+newline (\012), and backslash (\\) in those files when they occur in one
+of the four strings in a <I>mntent</I> structure.  The routines <B>addmntent</B>()
+and <B>getmntent</B>()  will convert from string representation to escaped
+representation and back.  When converting from escaped representation, the
+sequence \134 is also converted to a backslash.
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>getmntent</B>()  と <B>getmntent_r</B>()  は <I>mntent</I> 構造体へのポインターを返す。 失敗した場合は NULL
+を返す。
+<P>
+
+<B>addmntent</B>()  関数は成功したら 0 を返し、失敗したら 1 を返す。
+<P>
+
+<B>endmntent</B>()  関数はつねに 1 を返す。
+<P>
+
+<B>hasmntopt</B>()  関数は、マッチした場合は部分文字列へのアドレスを返し、 マッチしなければ NULL を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/etc/fstab</I><DD>
+filesystem description file
+<DT><I>/etc/mtab</I><DD>
+mounted filesystem description file
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>setmntent</B>(),
+<B>endmntent</B>(),
+<B>hasmntopt</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getmntent</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:mntentbuf locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>addmntent</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe race:stream locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getmntent_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+リエントラントでない関数は SunOS 4.1.3 由来のものである。 <B>getmntent_r</B>()  関数は HPUX 10
+で導入されたが、このバージョンでは <I>int</I> を返す。 上記に示したプロトタイプは glibc 独自のものである。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+System V にも <B>getmntent</B>()  関数はあるが、 呼び出し手順が異なり、返される構造体も異なる。 System V では
+<I>/etc/mnttab</I> が用いられる。 4.4BSD と Digital UNIX には <B>getmntinfo</B>()  があるが、
+システムコール <B>getfsstat</B>()  のラッパー関数である。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/fopen.3.html">fopen</A></B>(3), <B><A HREF="../../util-linux/man5/fstab.5.html">fstab</A></B>(5), <B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

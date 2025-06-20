@@ -1,0 +1,239 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_ATFORK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_ATFORK</H1>
+Section: C Library Functions (3)<BR>Updated: LinuxThreads<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/glibc-linuxthreads/release/man3/pthread_atfork.3">roff page</A><HR>
+
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_atfork - <A HREF="../../LDP_man-pages/man2/fork.2.html">fork</A>(2) の際に呼び出されるハンドラを登録する
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>int pthread_atfork(void (*</B><I>prepare</I><B>)(void), void (*</B><I>parent</I><B>)(void), void (*</B><I>child</I><B>)(void));</B>
+
+<P>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+<B>pthread_atfork</B>
+
+は
+<B><A HREF="../../LDP_man-pages/man2/fork.2.html">fork</A></B>(2)
+
+によって新しいプロセスが生成される際、その直前と直後に呼び出される
+ハンドラ関数を登録する。
+<I>prepare</I>
+
+ハンドラは、新しいプロセスが生成される直前に親プロセスから
+呼び出される。
+<I>parent</I>
+
+ハンドラは、
+<B><A HREF="../../LDP_man-pages/man2/fork.2.html">fork</A></B>(2)
+
+がリターンする直前に親プロセスから呼び出される。
+<I>child</I>
+
+ハンドラは
+<B><A HREF="../../LDP_man-pages/man2/fork.2.html">fork</A></B>(2)
+
+が返る直前に子プロセスから呼び出される。
+<P>
+<I>prepare</I>,
+
+<I>parent</I>
+
+および
+<I>child</I>
+
+の三つのハンドラのうちの一つまたは複数に
+<B>NULL</B>
+
+を与えることができるが、これは対応する時点でいかなるハンドラをも
+呼び出す必要がないことを意味する。
+<P>
+<B>pthread_atfork</B>
+
+は複数のハンドラの組合せを登録するために複数回
+呼び出すことが可能である。
+<B><A HREF="../../LDP_man-pages/man2/fork.2.html">fork</A></B>(2)
+
+の時点で複数の
+<I>prepare</I>
+
+ハンドラは LIFO 順で呼び出される(
+<B>pthread_atfork</B>
+
+で最後に加えられたものが
+<B>fork</B>
+
+の前に最初に呼び出される)。
+他方、
+<I>parent</I>
+
+と
+<I>child</I>
+
+は FIFO 順で呼び出される
+(最初に加えられたものが最初に呼び出される)。
+<P>
+<B>pthread_atfork</B>
+
+の目的を理解するために、
+<B><A HREF="../../LDP_man-pages/man2/fork.2.html">fork</A></B>(2)
+
+は、現在ロック状態にある mutex も含めて、呼び出したスレッドのみの
+メモリ空間全体を複製することを思い出そう。つまり、他のスレッドは
+子プロセスでは実行されていないのである。従って、
+<B>fork</B>
+
+を呼び出したスレッド以外のスレッドによって mutex がロックされている
+のならば、その mutex は子プロセスの中で永遠にロックされたままであり、
+子プロセスの実行をブロックする可能性がある。
+これを避けるためには、
+<B>pthread_atfork</B>
+
+で次のようなハンドラを登録すれば良いだろう:
+<I>prepare</I>
+
+ハンドラが大域的な mutex を(ロックする際の順序で)ロックし、
+<I>parent</I>
+
+と
+<I>child</I>
+
+がそれらを(逆の順に)アンロックする。
+または、
+<I>prepare</I>
+
+と
+<I>parent</I>
+
+を
+<B>NULL</B>
+
+に設定し、
+<I>child</I>
+
+を大域的な mutex に対して
+<B>pthread_mutex_init</B>
+
+を呼び出す関数に設定しても良いだろう。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<P>
+<B>pthread_atfork</B>
+
+は成功すれば 0 を返し、エラーがあれば非ゼロのエラーコードを返す。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>ENOMEM</B>
+
+<DD>
+ハンドラを登録するのにメモリが足りない。
+<P>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>著者</H2>
+
+Xavier Leroy &lt;<A HREF="mailto:Xavier.Leroy@inria.fr">Xavier.Leroy@inria.fr</A>&gt;
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../LDP_man-pages/man2/fork.2.html">fork</A></B>(2),
+
+<B><A HREF="../man3/pthread_mutex_lock.3.html">pthread_mutex_lock</A></B>(3),
+
+<B><A HREF="../man3/pthread_mutex_unlock.3.html">pthread_mutex_unlock</A></B>(3).
+
+<P>
+[訳注] glibc-linuxthreads の最新のドキュメントは Texinfo形式で提供されている。
+以下は glibc-linuxthreads-2.3.1 の Texinfo ファイルからの引用である。
+<P>
+<B>pthread_atfork</B>
+
+の目的を理解するために、
+<B>fork</B>
+
+が現在ロック状態にある mutex も含めたメモリ空間全体を、
+しかし呼び出しスレッドだけを複製することを思い出してほしい。
+つまり、他のスレッドは子プロセスでは実行されない。
+mutex は
+<B>fork</B>
+
+の後は使うことができず、子プロセスで
+<B>pthread_mutex_init</B>
+
+を使って初期化されなければならない。
+これは現在の実装の制限で、将来のバージョンでも存在するかもしれないし、
+存在しないかもしれない。
+<P>
+これを避けるためには、
+<B>pthread_atfork</B>
+
+で次のようなハンドラを登録すればよい:
+<I>prepare</I>
+
+ハンドラで mutex を (ロックする際の順序で) ロックし、
+<I>parent</I>
+
+ハンドラで mutex をロック解除する。
+<I>child</I>
+
+ハンドラでは
+<B>pthread_mutex_init</B>
+
+を使用して mutex を初期化しなければならない。
+条件変数などの他の同期オブジェクトについても同様である。
+<P>
+グローバル mutex を fork の前にロックすると、
+他のスレッドはすべて、それらのグローバル mutex で保護される
+コードのクリティカル領域から締め出される。したがって
+<B>fork</B>
+
+が親プロセスのアドレス空間のスナップショットを取ると、
+そのスナップショットは有効で安定したデータをコピーする。
+子プロセスで同期オブジェクトを初期化することで
+親プロセスのスレッドサブシステムに由来するものが適切に清められることが保証される。
+例えば、 mutex は獲得を待つスレッドの待ちキューを引き継ぐが、
+この待ちキューは子プロセスでは意味を持たない。
+mutex を初期化することでこのことに対処する。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">著者</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

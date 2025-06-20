@@ -1,0 +1,130 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETDOMAINNAME</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETDOMAINNAME</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated:  2019-10-10<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/getdomainname.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getdomainname, setdomainname - NIS ドメイン名の取得・設定をする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>int getdomainname(char *</B><I>name</I><B>, size_t </B><I>len</I><B>);</B>
+<BR>
+
+<B>int setdomainname(const char *</B><I>name</I><B>, size_t </B><I>len</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>getdomainname</B>(), <B>setdomainname</B>():
+<PRE>
+    glibc 2.21 以降:
+        _DEFAULT_SOURCE
+    glibc 2.19 と 2.20:
+        _DEFAULT_SOURCE || (_XOPEN_SOURCE &amp;&amp; _XOPEN_SOURCE&nbsp;&lt;&nbsp;500)
+    glibc 2.19 以前:
+        _BSD_SOURCE || (_XOPEN_SOURCE &amp;&amp; _XOPEN_SOURCE&nbsp;&lt;&nbsp;500)
+</PRE>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+These functions are used to access or to change the NIS domain name of the
+host system.  More precisely, they operate on the NIS domain name associated
+with the calling process's UTS namespace.
+<P>
+
+<B>setdomainname</B>()  は、ドメイン名を、文字配列 <I>name</I> で指定された値に設定する。 引数 <I>len</I> には、
+<I>name</I> のバイト数を指定する (そのため、 <I>name</I> では文字列終端のヌルバイトは必要ない)。
+<P>
+
+<B>getdomainname</B>()  は、NULL 終端されたドメイン名を、 <I>len</I> バイトの長さの文字配列 <I>name</I>
+に格納して返す。ヌル終端されたドメイン名が <I>len</I> バイトより長い場合、 <B>getdomainname</B>()  は、(glibc では) 始めの
+<I>len</I> バイトを返し、(libc では) エラーとなる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>setdomainname</B>()  は以下のエラーで失敗する可能性がある。
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>name</I> がユーザーアドレス空間の外を指した。
+<DT><B>EINVAL</B><DD>
+<I>len</I> が負であるか、長すぎる。
+<DT><B>EPERM</B><DD>
+The caller did not have the <B>CAP_SYS_ADMIN</B> capability in the user
+namespace associated with its UTS namespace (see <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)).
+</DL>
+<P>
+
+<B>getdomainname</B>()  は以下のエラーで失敗する可能性がある。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+libc での <B>getdomainname</B>()  において、 <I>name</I> が NULL であるか、 <I>len</I> バイトより長い。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+
+POSIX では、これら関数は定義されていない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+Linux 1.0 以降では、ドメイン名の長さの上限は 終端のヌルバイトを含めて 64 バイトである。 もっと古いカーネルでは 8 バイトであった。
+<P>
+
+(x86 を含む) Linux のほとんどのアーキテクチャーでは、 <B>getdomainname</B>()  というシステムコールは存在しない。
+その代わり、glibc で <B>getdomainname</B>()  がライブラリ関数として実装されており、この関数は <B><A HREF="../man2/uname.2.html">uname</A></B>(2)
+の呼び出しで返された <I>domainname</I> フィールドのコピーを返す。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../man2/gethostname.2.html">gethostname</A></B>(2),&nbsp;<B><A HREF="../man2/sethostname.2.html">sethostname</A></B>(2),&nbsp;<B><A HREF="../man2/uname.2.html">uname</A></B>(2),&nbsp;<B>uts_namespaces</B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

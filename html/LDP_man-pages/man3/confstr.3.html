@@ -1,0 +1,144 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CONFSTR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>CONFSTR</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/confstr.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+confstr - コンフィグレーションに依存した文字列変数の取得
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>size_t confstr(int </B><I>name</I><B>, char *</B><I>buf</I><B>, size_t </B><I>len</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>confstr</B>(): _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;2 || _XOPEN_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>confstr</B>()  はコンフィグレーションに依存した文字列変数の値を取得する。
+<P>
+
+引数 <I>name</I> は、問い合わせ内容を表すシステム変数である。 以下の変数がサポートされている。
+<DL COMPACT>
+<DT><B>_CS_GNU_LIBC_VERSION</B> (GNU C library 限定; glibc 2.3.2 以降)<DD>
+そのシステムの GNU C ライブラリのバージョンを示す文字列 (例えば &quot;glibc 2.3.4&quot;)。
+<DT><B>_CS_GNU_LIBPTHREAD_VERSION</B> (GNU C library 限定; glibc 2.3.2 以降)<DD>
+その C ライブラリが提供している POSIX 実装を示す文字列 (例えば &quot;NPTL 2.3.4&quot; や &quot;linuxthreads-0.10&quot;)。
+<DT><B>_CS_PATH</B><DD>
+すべての POSIX.2 標準ユーティリティが見つかるような <B>PATH</B> の値。
+</DL>
+<P>
+
+<I>buf</I> が NULL でなく、かつ <I>len</I> が 0 でなければ <B>confstr</B>() は取得
+した文字列の内容を <I>buf</I> にコピーする。必要ならば長さが <I>len - 1</I>
+バイトに切り捨てられて、NULL バイト ('\0') で終端される。
+末尾が切り捨てられたかどうかを判定するには、 <B>confstr</B>() の返り値を
+<I>len</I> と比較すればよい。
+<P>
+
+<I>len</I> が 0 で <I>buf</I> が NULL ならば、 <B>confstr</B>()  は以下で定義された値 (訳注:
+切り捨てる前の、取得した文字列の長さ) を返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<I>name</I> が有効なコンフィギュレーション変数の場合、 <B>confstr</B>()  はその変数の値全体を保持するのに必要であったバイト数を返す
+(文字列終端のヌルバイトも含む)。この値は <I>len</I> より大きいこともある。この場合には、 <I>buf</I>
+に格納された値の末尾が切り詰められたことを意味する。
+<P>
+
+<I>name</I> が有効なコンフィギュレーション変数だが、 変数が値を持っていない場合、 <B>confstr</B>()  は 0 を返す。 <I>name</I>
+が有効なコンフィグレーション変数に対応していなければ、 <B>confstr</B>()  は 0 を返し、 <I>errno</I> に <B>EINVAL</B>
+を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>name</I> の値が不正である。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>confstr</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+次の部分的なコードは、 POSIX.2 システムのユーティリティがあるパス を取得するものである。
+<P>
+
+
+
+char *pathbuf;
+size_t n;
+<P>
+n = confstr(_CS_PATH, NULL, (size_t) 0);
+pathbuf = <A HREF="/cgi-bin/man/man2html?n+malloc">malloc</A>(n);
+if (pathbuf == NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;abort();
+confstr(_CS_PATH, pathbuf, n);
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>getconf</B>(1), <B>sh</B>(1), <B><A HREF="../man3/exec.3.html">exec</A></B>(3), <B><A HREF="../man3/fpathconf.3.html">fpathconf</A></B>(3), <B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3),
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3), <B><A HREF="../man3/system.3.html">system</A></B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">例</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

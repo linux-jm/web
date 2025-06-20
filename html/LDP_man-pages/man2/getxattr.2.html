@@ -1,0 +1,153 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETXATTR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETXATTR</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/getxattr.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getxattr, lgetxattr, fgetxattr - 拡張属性の値を取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/xattr.h">sys/xattr.h</A>&gt;</B>
+
+<B>ssize_t getxattr(const char&nbsp;*</B><I>path</I><B>, const char&nbsp;*</B><I>name</I><B>,</B>
+<B>                 void&nbsp;*</B><I>value</I><B>, size_t </B><I>size</I><B>);</B>
+<B>ssize_t lgetxattr(const char&nbsp;*</B><I>path</I><B>, const char&nbsp;*</B><I>name</I><B>,</B>
+<B>                 void&nbsp;*</B><I>value</I><B>, size_t </B><I>size</I><B>);</B>
+<B>ssize_t fgetxattr(int </B><I>fd</I><B>, const char&nbsp;*</B><I>name</I><B>,</B>
+<B>                 void&nbsp;*</B><I>value</I><B>, size_t </B><I>size</I><B>);</B>
+</PRE>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+Extended attributes are <I>name</I>:<I>value</I> pairs associated with inodes
+(files, directories, symbolic links, etc.).  They are extensions to the
+normal attributes which are associated with all inodes in the system (i.e.,
+the <B><A HREF="../man2/stat.2.html">stat</A></B>(2)  data).  A complete overview of extended attributes concepts
+can be found in <B>xattr</B>(7).
+<P>
+
+<B>getxattr</B>()  retrieves the value of the extended attribute identified by
+<I>name</I> and associated with the given <I>path</I> in the filesystem.  The
+attribute value is placed in the buffer pointed to by <I>value</I>; <I>size</I>
+specifies the size of that buffer.  The return value of the call is the
+number of bytes placed in <I>value</I>.
+<P>
+
+<B>lgetxattr</B>()  は <B>getxattr</B>()  と同じだが、シンボリックリンクの場合に、リンクが参照しているファイル
+ではなく、リンクそのものの情報を取得する点だけが異なる。
+<P>
+
+<B>fgetxattr</B>()  は <B>getxattr</B>()  と同じだが、 <I>path</I> の代わりに <I>fd</I>
+で参照されたオープン済みファイルの情報だけを取得する点が異なる (<I>fd</I> は <B><A HREF="../man2/open.2.html">open</A></B>(2)  によって返される)。
+<P>
+
+An extended attribute <I>name</I> is a null-terminated string.  The name
+includes a namespace prefix; there may be several, disjoint namespaces
+associated with an individual inode.  The value of an extended attribute is
+a chunk of arbitrary textual or binary data that was assigned using
+<B><A HREF="../man2/setxattr.2.html">setxattr</A></B>(2).
+<P>
+
+If <I>size</I> is specified as zero, these calls return the current size of the
+named extended attribute (and leave <I>value</I> unchanged).  This can be used
+to determine the size of the buffer that should be supplied in a subsequent
+call.  (But, bear in mind that there is a possibility that the attribute
+value may change between the two calls, so that it is still necessary to
+check the return status from the second call.)
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+On success, these calls return a nonnegative value which is the size (in
+bytes) of the extended attribute value.  On failure, -1 is returned and
+<I>errno</I> is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>E2BIG</B><DD>
+The size of the attribute value is larger than the maximum size allowed; the
+attribute cannot be retrieved.  This can happen on filesystems that support
+very large attribute values such as NFSv4, for example.
+<DT><B>ENODATA</B><DD>
+
+
+
+
+
+The named attribute does not exist, or the process has no access to this
+attribute.
+<DT><B>ENOTSUP</B><DD>
+拡張属性がそのファイルシステムでサポートされていない、 もしくは無効になっている。
+<DT><B>ERANGE</B><DD>
+<I>value</I> バッファーの大きさ <I>size</I> が結果を保持するのに十分な大きさでなかった。
+</DL>
+<P>
+
+上記に加えて、 <B><A HREF="../man2/stat.2.html">stat</A></B>(2) に書かれているエラーが発生する場合もある。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+これらのシステムコールはカーネル 2.4 以降の Linux で利用できる。 glibc でのサポートはバージョン 2.3 以降で行われている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+
+
+
+これらのシステムコールは Linux 独自である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man2/listxattr.2.html">listxattr</A></B>(2) を参照。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>getfattr</B>(1), <B>setfattr</B>(1), <B><A HREF="../man2/listxattr.2.html">listxattr</A></B>(2), <B><A HREF="../man2/open.2.html">open</A></B>(2),
+<B><A HREF="../man2/removexattr.2.html">removexattr</A></B>(2), <B><A HREF="../man2/setxattr.2.html">setxattr</A></B>(2), <B><A HREF="../man2/stat.2.html">stat</A></B>(2), <B><A HREF="../man7/symlink.7.html">symlink</A></B>(7), <B>xattr</B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">例</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

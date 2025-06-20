@@ -1,0 +1,201 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SPU_CREATE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SPU_CREATE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/spu_create.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+spu_create - 新しい SPU コンテキストを生成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/spu.h">sys/spu.h</A>&gt;</B>
+
+<B>int spu_create(const char *</B><I>pathname</I><B>, int </B><I>flags</I><B>, mode_t </B><I>mode</I><B>,</B>
+<B>               int </B><I>neighbor_fd</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>注</I>: このシステムコールには glibc のラッパー関数は存在しない。「注意」の節を参照。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>spu_create</B>() システムコールは、Cell Broadband Engine アーキテクチャーを実装した PowerPC
+マシンにおいて、Synergistic Processor Unit (SPU) にアクセスするために使用される。 このシステムコールは、 SPU
+に対する新しい論理コンテキストを <I>pathname</I> に生成し、 そのコンテキストに関連付けられたファイルディスクリプターを返す。
+<I>pathname</I> は SPU ファイルシステム (<B>spufs</B>) のマウントポイント内の存在しないディレクトリを指していなければならない。
+<B>spu_create</B>() が成功すると、 <I>pathname</I> にディレクトリが生成され、 そのディレクトリに <B>spufs</B>(7)
+で説明されているファイル群が配置される。
+<P>
+
+コンテキストを作成した際、返されたファイルディスクリプターは、 <B><A HREF="../man2/spu_run.2.html">spu_run</A></B>(2) に渡すか、 <B>*at</B> 系のシステムコール
+(<B><A HREF="../man2/openat.2.html">openat</A></B>(2) など) の <I>dirfd</I> 引数として使用するか、 クローズするか、しかできない。 他の操作は定義されていない。
+そのコンテキストへの最後の参照がなくなった際に、 論理 SPU コンテキストは破棄される (そのコンテキストの <I>pathname</I>
+ディレクトリに作成されたファイルもすべて破棄される)。 通常は <B>spu_create</B>()
+が返したファイルディスクリプターがクローズされた際に発生する。
+<P>
+
+<I>mode</I> 引数 (からプロセスの <B><A HREF="../man2/umask.2.html">umask</A></B>(2) でセットされたビットを除いたもの) により、 <B>spufs</B>
+に作られる新しいディレクトリで使用されるアクセス許可が決まる。 利用できる <I>mode</I> 値の完全なリストについては <B><A HREF="../man2/stat.2.html">stat</A></B>(2) を参照。
+<P>
+
+The <I>neighbor_fd</I> is used only when the <B>SPU_CREATE_AFFINITY_SPU</B> flag is
+specified; see below.
+<P>
+
+<I>flags</I> 引数には 0 か以下の定数の組み合わせ (ビット単位の論理和) を指定できる。
+<DL COMPACT>
+<DT><B>SPU_CREATE_EVENTS_ENABLED</B><DD>
+DMA エラーを通知するのにシグナルを使うのではなく、 <B><A HREF="../man2/spu_run.2.html">spu_run</A></B>(2) の <I>event</I> 引数を使用する。
+<DT><B>SPU_CREATE_GANG</B><DD>
+コンテキストの代わりに SPU gang を作成する。 (gang は、機能的に互いに関係していて、スケジューリングパラメーター (優先度とポリシー)
+を共有する SPU コンテキストのグループである。 将来、 グループ全体が一つの単位としてスイッチイン/スイッチアウトされる gang
+スケジューリングが実装されるかもしれない。)
+<DT><DD>
+<I>pathname</I> 引数で指定された場所に新しいディレクトリが作成される。 この gang を使って他の SPU
+コンテキストを保持することができる。 それには、それ以降の <B>spu_create</B>() に gang ディレクトリ内のパス名を渡す。
+<DT><B>SPU_CREATE_NOSCHED</B><DD>
+SPU スケジューラーの影響を受けないコンテキストを作成する。 一度実行されると、
+呼び出したプロセスが破棄されるまでこのコンテキストがスケジューリングで追い出されることはない。
+<DT><DD>
+このコンテキストは SPU から削除されることはないので、 <B>SPU_CREATE_NOSCHED</B> コンテキストではいくつかの機能は無効にされる。
+<B>spufs</B> のこのコンテキストのディレクトリでは一部のファイルだけができる。 また、 <B>SPU_CREATE_NOSCHED</B>
+コンテキストはクラッシュした際にコアファイルをダンプできない。
+<DT><DD>
+<B>SPU_CREATE_NOSCHED</B> コンテキストを作成するには <B>CAP_SYS_NICE</B> ケーパビリティが必要である。
+<DT><B>SPU_CREATE_ISOLATE</B><DD>
+隔離された SPU コンテキストを作成する。 隔離されたコンテキストはいくつかの PPE (PowerPC Processing Element)
+命令から保護される。 SPU ローカルストアや NPC レジスターへのアクセスなどである。
+<DT><DD>
+<B>SPU_CREATE_ISOLATE</B> コンテキストを作成するには <B>SPU_CREATE_NOSCHED</B> フラグも指定する必要がある。
+<DT><B>SPU_CREATE_AFFINITY_SPU</B> (Linux 2.6.23 以降)<DD>
+
+別の SPU コンテキストと affinity (親和性) を持ったコンテキストを作成する。 この affinity 情報は SPU
+スケジューリングアルゴリズムで使用される。 このフラグを使う際には、 他の SPU コンテキストを指すファイルディスクリプターを
+<I>neighbor_fd</I> 引数を渡す必要がある。
+<DT><B>SPU_CREATE_AFFINITY_MEM</B> (Linux 2.6.23 以降)<DD>
+
+システムメモリーと affinity (親和性) を持ったコンテキストを作成する。 この affinity 情報は SPU
+スケジューリングアルゴリズムで使用される。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>spu_create</B>() は新しいファイルディスクリプターを返す。 エラーの場合、-1 を返し、 <I>errno</I>
+に以下のリストに記載のエラーコードのいずれかを設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+現在のユーザーが <B>spufs</B>(7) のマウントポイントへの書き込み許可を持って
+いない。
+<DT><B>EEXIST</B><DD>
+指定されたパス名で SPU コンテキストがすでに生成されている。
+<DT><B>EFAULT</B><DD>
+<I>pathname</I> が呼び出し元のプロセスのアドレス空間で有効な文字列ポインターではない。
+<DT><B>EINVAL</B><DD>
+<I>pathname</I> が SPUFS マウントポイント内のディレクトリではない。 または、無効なフラグが指定された。
+<DT><B>ELOOP</B><DD>
+<I>pathname</I> を解決するまでに辿ったシンボリックリンクが多過ぎた。
+<DT><B>EMFILE</B><DD>
+The per-process limit on the number of open file descriptors has been
+reached.
+<DT><B>ENAMETOOLONG</B><DD>
+<I>pathname</I> が長過ぎる。
+<DT><B>ENFILE</B><DD>
+The system-wide limit on the total number of open files has been reached.
+<DT><B>ENODEV</B><DD>
+隔離されたコンテキストが要求されたが、 ハードウェアが SPU アイソレーションをサポートしていない。
+<DT><B>ENOENT</B><DD>
+<I>pathname</I> の一部が解決できなかった。
+<DT><B>ENOMEM</B><DD>
+カーネルが必要なリソースの全てを割り当てることができなかった。
+<DT><B>ENOSPC</B><DD>
+新しいコンテキストを生成するのに十分な SPU リソースがなかった、 または SPU コンテキスト数がそのユーザーの特定の上限に達していた。
+<DT><B>ENOSYS</B><DD>
+機能が動作中のシステムで提供されていない。理由は、 ハードウェアで SPU が提供されていないか、 spufs
+モジュールがロードされていないか、のどちらかである。
+<DT><B>ENOTDIR</B><DD>
+<I>pathname</I> の一部がディレクトリではない。
+<DT><B>EPERM</B><DD>
+<B>SPU_CREATE_NOSCHED</B> フラグが指定されたが、ユーザーが <B>CAP_SYS_NICE</B> ケーパビリティを持っていない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>pathname</I> は <B>spufs</B> のマウントポイントの配下の場所を指して
+いなければならない。 慣例では <I>/spu</I> にマウントされる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>spu_create</B>() システムコールはカーネル 2.6.16 で Linux に追加された。
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 固有であり、 PowerPC アーキテクチャーでのみ実装されている。
+このシステムコールを使ったプログラムは移植性がない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+glibc はこのシステムコールに対するラッパー関数を提供していない。 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)  を使うこと。ただし、
+<B>spu_create</B>()  は より抽象度の高い SPU へのインターフェースを実装するライブラリから
+利用されることを意図したものであり、通常のアプリケーションから 使用は意図されていない。推奨のライブラリについては
+
+
+を参照のこと。
+<P>
+
+Prior to the addition of the <B>SPU_CREATE_AFFINITY_SPU</B> flag in Linux
+2.6.23, the <B>spu_create</B>()  system call took only three arguments (i.e.,
+there was no <I>neighbor_fd</I> argument).
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+<B>spu_create</B>() の利用例については <B><A HREF="../man2/spu_run.2.html">spu_run</A></B>(2) を参照。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/close.2.html">close</A></B>(2), <B><A HREF="../man2/spu_run.2.html">spu_run</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B>spufs</B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

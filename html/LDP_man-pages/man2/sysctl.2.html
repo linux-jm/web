@@ -1,0 +1,177 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SYSCTL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SYSCTL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/sysctl.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sysctl - システムパラメーターを読み書きする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+ <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/linux/sysctl.h">linux/sysctl.h</A>&gt;</B>
+
+<B>int _sysctl(struct __sysctl_args *</B><I>args</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>This system call no longer exists on current kernels!</B> See NOTES.
+<P>
+
+<B>_sysctl</B>()  コールはカーネルパラメーターを読み書きする。例えば、 ホストネームや同時にオープンできるファイルの最大数など。
+引数は以下の形式である。
+<P>
+
+
+
+struct __sysctl_args {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;*name;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;integer&nbsp;vector&nbsp;describing&nbsp;variable&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nlen;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;length&nbsp;of&nbsp;this&nbsp;vector&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;*oldval;&nbsp;&nbsp;/*&nbsp;0&nbsp;or&nbsp;address&nbsp;where&nbsp;to&nbsp;store&nbsp;old&nbsp;value&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;*oldlenp;&nbsp;/*&nbsp;available&nbsp;room&nbsp;for&nbsp;old&nbsp;value,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;overwritten&nbsp;by&nbsp;actual&nbsp;size&nbsp;of&nbsp;old&nbsp;value&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;*newval;&nbsp;&nbsp;/*&nbsp;0&nbsp;or&nbsp;address&nbsp;of&nbsp;new&nbsp;value&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;newlen;&nbsp;&nbsp;/*&nbsp;size&nbsp;of&nbsp;new&nbsp;value&nbsp;*/
+};
+
+
+<P>
+
+このコールは <I>/proc/sys</I> の下のディレクトリツリーに似た木構造(tree structure)を検索する。
+そして、要求された項目が見つかった場合は適切なルーチンを呼び出して 値を読んだり修正したりする。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は <B>_sysctl</B>()  は 0 を返す。失敗した場合、-1 が返され、 <I>errno</I> がそのエラーを示す値に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B> か <B>EPERM</B><DD>
+「ディレクトリ」のどれかに検索許可がなかったか、 <I>oldval</I> が 0 でないのに読み込み許可がなかったか、 <I>newval</I> が 0
+でないのに書き込み許可がなかった。
+<DT><B>EFAULT</B><DD>
+<I>oldval</I> に NULL でない値を設定して、以前の値を要求しているのに、 <I>oldlenp</I> に空きがない。
+<DT><B>ENOTDIR</B><DD>
+<I>name</I> が見つからなかった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+This system call first appeared in Linux 1.3.57.  It was removed in Linux
+5.5; glibc support was removed in version 2.32.
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+このコールは Linux 特有であり、移植を意図したプログラムで使用しては いけない。これは 4.4BSD に由来している。Linux は
+<I>/proc/sys</I> に写し(mirror)をもっており、項目の名前の付け方が Linux と 4.4BSD では 異っている。しかし
+<B>sysctl</B>()  関数の宣言は両方で同じである。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+Use of this system call was long discouraged: since Linux 2.6.24, uses of
+this system call result in warnings in the kernel log, and in Linux 5.5, the
+system call was finally removed.  Use the <I>/proc/sys</I> interface instead.
+<P>
+
+Note that on older kernels where this system call still exists, it is
+available only if the kernel was configured with the
+<B>CONFIG_SYSCTL_SYSCALL</B> option.  Furthermore, glibc does not provide a
+wrapper for this system call, necessitating the use of <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+オブジェクトの名前は、カーネルのバージョンごとに異なっている。 このため、このシステムコールはアプリケーションにとって 無価値なものとなっている。
+<P>
+
+全ての可能な項目が正確に記述されているわけではない。
+<P>
+
+今のところ <I>/proc/sys/kernel/ostype</I> に書き込むことでオペーレーティングシステムを変えることはできない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/linux/sysctl.h">linux/sysctl.h</A>&gt;
+<P>
+int _sysctl(struct __sysctl_args *args );
+<P>
+#define OSNAMESZ 100
+<P>
+int
+main(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;__sysctl_args&nbsp;args;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;osname[OSNAMESZ];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;osnamelth;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;name[]&nbsp;=&nbsp;{&nbsp;CTL_KERN,&nbsp;KERN_OSTYPE&nbsp;};
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;args,&nbsp;0,&nbsp;sizeof(args));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;args.name&nbsp;=&nbsp;name;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;args.nlen&nbsp;=&nbsp;sizeof(name)/sizeof(name[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;args.oldval&nbsp;=&nbsp;osname;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;args.oldlenp&nbsp;=&nbsp;&amp;osnamelth;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;osnamelth&nbsp;=&nbsp;sizeof(osname);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(syscall(SYS__sysctl,&nbsp;&amp;args)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;_sysctl&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;This&nbsp;machine&nbsp;is&nbsp;running&nbsp;%*s\n&quot;,&nbsp;osnamelth,&nbsp;osname);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

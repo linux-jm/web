@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 27.5 ディレクトリの Set-User-ID と Set-Group-ID ビット</title>
+
+<meta name="description" content="GNU Coreutils: 27.5 ディレクトリの Set-User-ID と Set-Group-ID ビット">
+<meta name="keywords" content="GNU Coreutils: 27.5 ディレクトリの Set-User-ID と Set-Group-ID ビット">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="Directory-Setuid-and-Setgid"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_196.html#Operator-Numeric-Modes" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_198.html#Date-input-formats" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_186.html#File-permissions" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_186.html#File-permissions" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_198.html#Date-input-formats" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="deirekutorino-Set_002dUser_002dID-to-Set_002dGroup_002dID-bituto"></a>
+<h2 class="section">27.5 ディレクトリの Set-User-ID と Set-Group-ID ビット</h2>
+
+<p>ほとんどのシステムでは、ディレクトリに set-group-ID ビットが付いていると、
+そのディレクトリ内で新しく作られるファイルは、ディレクトリと同じグループを継承し、
+新しく作られるサブディレクトリは、親ディレクトリの set-group-ID ビットを継承する。
+また、若干のシステムでは、ディレクトリの set-user-ID ビットが、
+ディレクトリ内の新規ファイルの所有者と、新規サブディレクトリの set-user-ID
+ビットに対して、同様の効果を持っている。
+こうした仕組みによって、新しいファイルを共有するために <code>chmod</code> や
+<code>chown</code> を使う必要が軽減し、ユーザにとってファイルの共有がやりやすくなっているのである。
+</p>
+<p>ユーザの便宜のためのこうした仕組みは、ディレクトリの set-user-ID
+ビットや set-group-ID ビットを拠り所にしている。もし、<code>chmod</code> や
+<code>mkdir</code> が、ディレクトリのそうしたビットを常時クリアする仕様になっていたら、
+この仕組みもそれほど便利ではなくなり、ファイルの共有が面倒なことになるだろう。
+それ故、<code>chmod</code> などのコマンドは、原則としてディレクトリの
+set-user-ID ビットや set-group-ID ビットを変更しないのである。
+set-user-ID ビットや set-group-ID ビットを変更するには、
+ユーザがシンボリックモードで明示的にそう指定するか、&lsquo;<samp>=755</samp>&rsquo;
+のような演算子付き数値モードを使用するか、数値モードでビットを立てるか、5 桁以上の
+8 進数からなる数値モードでビットをクリアするか、そのどれかをやる必要がある。
+set-group-ID ビットの継承をサポートしているシステムでの例を挙げよう。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example"># 以下のコマンドは、サブディレクトリの set-user-ID ビットと
+# set-group-ID ビットを変更しない。従って、デフォルトの値が
+# 保持される。
+mkdir A B C
+chmod 755 A
+chmod 0755 B
+chmod u=rwx,go=rx C
+mkdir -m 755 D
+mkdir -m 0755 E
+mkdir -m u=rwx,go=rx F
+</pre></td></tr></table>
+
+<p>サブディレクトリの set-user-ID ビットや set-group-ID ビットを設定したかったら、
+シンボリックモードや数値モードで明示的に指定しなければならない。たとえば、次のようにだ。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example"># 以下のコマンドは、サブディレクトリに set-user-ID ビットと
+# set-group-ID bits を付けようとしている。
+mkdir G
+chmod 6755 G
+chmod +6000 G
+chmod u=rwx,go=rx,a+s G
+mkdir -m 6755 H
+mkdir -m +6000 I
+mkdir -m u=rwx,go=rx,a+s J
+</pre></td></tr></table>
+
+<p>サブディレクトリの set-user-ID ビットや set-group-ID ビットを消去したかったら、
+シンボリックモードで明示的にそう指定するか、演算子付き数値モードを使用するか、5 桁以上の
+8 進数からなる数値モードで指定するかしなければならない。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example"># 以下のコマンドは、ディレクトリ D の set-user-ID ビットと
+# set-group-ID ビットをクリアしようとしている。
+chmod a-s D
+chmod -6000 D
+chmod =755 D
+chmod 00755 D
+</pre></td></tr></table>
+
+<p>こうした動作は、GNU による拡張である。移植を考慮したスクリプトでは、
+ディレクトリの set-user-ID ビットや set-group-ID ビットを立てたり、
+クリアしたりするリクエストを当てにしない方がよい。
+POSIX の規格で、そうしたリクエストを無視する実装が認められているからだ。
+なお、GNU の許可属性指定における 4 桁以下の数値モードの動作は、ディレクトリの
+set-user-ID ビットや set-group-ID ビットを維持するシステムで使うスクリプト向けであり、
+5 桁以上の数値モードの動作は、そうしたビットを維持しないシステムでも使えるスクリプト向けである。
+</p>
+<p>(訳注: 4 桁以下と 5 桁以上の数値によるモード指定の違いについて少し整理しておく。
+数値によるモード指定は、原則として絶対的な指定である。
+たとえば、755 と指定すれば、755 に対応するモードビットだけが立てられ、
+それ以外のビットは 0 になる。ただし、ディレクトリの set-user-ID ビットと
+set-group-ID ビットについてだけは、話がもう少し複雑である。
+4 桁以下の数値による指定の場合、ディレクトリの set-user-ID ビットや
+set-group-ID ビットを維持するシステムでは、
+そうしたビットはデフォルトや現在の状態が引き継がれるのだから、
+ユーザがディレクトリの set-user-ID ビットや set-group-ID
+ビットを数値によって指定しても、それは絶対的な指定にならない。
+デフォルト値や現在値に対する追加にしかならないのである。
+当然のこととして、この方法では消去もできない。それに対して、5 桁以上の数値による指定の場合は、
+どんなシステムでも、すべてのモードビットについて、ユーザの指定は絶対指定になる。
+従って、こちらなら、ディレクトリの set-user-ID ビットや set-group-ID
+ビットの選択的な設定や消去もできるのである。もちろん、お使いの <code>chmod</code>
+のバージョンが、5 桁の数値指定をサポートしていればだが。)
+</p>
+
+
+
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_196.html#Operator-Numeric-Modes" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_198.html#Date-input-formats" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_186.html#File-permissions" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_186.html#File-permissions" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_198.html#Date-input-formats" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

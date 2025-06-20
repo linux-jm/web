@@ -1,0 +1,297 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FOPEN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FOPEN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/fopen.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fopen, fdopen, freopen - ストリームを開く関数
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<B>FILE *fopen(const char *</B><I>pathname</I><B>, const char *</B><I>mode</I><B>);</B>
+
+<B>FILE *fdopen(int </B><I>fd</I><B>, const char *</B><I>mode</I><B>);</B>
+
+<B>FILE *freopen(const char *</B><I>pathname</I><B>, const char *</B><I>mode</I><B>, FILE *</B><I>stream</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>fdopen</B>(): _POSIX_C_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>fopen</B>()  関数は、 <I>pathname</I> で指定された名前のファイルを開き、ストリームと結びつける。
+<P>
+
+引数 <I>mode</I> は、以下に続く文字のひとつから始まる文字列へのポインターであ
+る (以下の述べる、追加の文字が後に続くこともある):
+<DL COMPACT>
+<DT><B>r</B><DD>
+テキストファイルを読み出すために開く。 ストリームはファイルの先頭に位置される。
+<DT><B>r+</B><DD>
+読み出しおよび書き込みするために開く。 ストリームはファイルの先頭に位置される。
+<DT><B>w</B><DD>
+ファイルを書き込みのために開く。 ファイルが既に存在する場合には長さゼロに切り詰める。 ファイルがなかった場合には新たに作成する。
+ストリームはファイルの先頭に位置される。
+<DT><B>w+</B><DD>
+読み出しおよび書き込みのために開く。 ファイルが存在していない場合には新たに作成する。 存在している場合には長さゼロに切り詰められる。
+ストリームはファイルの先頭に位置される。
+<DT><B>a</B><DD>
+追加 (ファイルの最後に書き込む) のために開く。 ファイルが存在していない場合には新たに作成する。 ストリームはファイルの最後に位置される。
+<DT><B>a+</B><DD>
+Open for reading and appending (writing at end of file).  The file is
+created if it does not exist.  Output is always appended to the end of the
+file.  POSIX is silent on what the initial read position is when using this
+mode.  For glibc, the initial file position for reading is at the beginning
+of the file, but for Android/BSD/MacOS, the initial file position for
+reading is at the end of the file.
+</DL>
+<P>
+
+<I>mode</I> 文字列には文字 'b' を追加指定することができ、 <I>mode</I> 文字列の最後の文字として指定する。 上記のうち 2
+文字のモードの場合には 2 つの文字の間に指定することもできる。 これは C89 との互換性のためだけに用意された
+ものであり、関数の実行に対してはいかなる影響も持たない。 すなわち、Linux を含む全ての POSIX 準拠システムでは、 この 'b'
+は無視される。 (その他のシステムではテキストファイルとバイナリファイルを別々に扱うものもあるので、 もしバイナリファイルの入出力を行い、
+そのプログラムが非 UNIX 環境へ移植されると予測するなら、 'b'を付けておくのは良い考えである)
+<P>
+
+<I>mode</I> の glibc による拡張の詳細については下記の「注意」を参照。
+<P>
+
+すべての生成されたファイルは、 <B>S_IRUSR</B> | <B>S_IWUSR</B> | <B>S_IRGRP</B> | <B>S_IWGRP</B> |
+<B>S_IROTH</B> | <B>S_IWOTH</B> (0666) のモードを そのプロセスの umask 値によって修正したモードを持つ
+(<B><A HREF="../man2/umask.2.html">umask</A></B>(2)  を見よ)。
+<P>
+
+読み出し/書き込みストリームに対しては任意の順序で読み書きを行うことができる。 ただし ANSI C では、
+(入力操作がファイルの末尾に到達した場合を除いて)  出力と入力の間にはファイルの位置決め関数を 挟まなければならないことになっていることに注意されたい
+(この条件を満足しない場合には、読み込み操作は、 最後に書き込まれたものでなく、以前に書き込まれた 値を返すことを許されている)。
+したがって、このようなストリームでの読み書き操作の間には <B><A HREF="../man3/fseek.3.html">fseek</A></B>(3)  または <B><A HREF="../man3/fgetpos.3.html">fgetpos</A></B>(3)  操作を挟んでおくと良いだろう
+(Linux では本当に必要となることもときどきある)。 この操作は見かけ上何もしない操作 (no-op) でも良い (例えば <I>fseek(...,
+0L, SEEK_CUR)</I> を その副次的効果である同期のためだけに呼べば良い)。
+<P>
+
+ファイルを追加モード (<I>mode</I> の最初の文字を <B>a</B> にする) で開くと、
+このストリームに対する書き込み操作は全て (先に以下の呼び出しを行った
+かのように) ファイルの末尾で行われる。
+<P>
+
+
+
+fseek(stream, 0, SEEK_END);
+
+
+<P>
+
+The file descriptor associated with the stream is opened as if by a call to
+<B><A HREF="../man2/open.2.html">open</A></B>(2)  with the following flags:
+<DL COMPACT><DT><DD>
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>fopen() モード</B></TD><TD><B>open() フラグ</B><BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><I>r</I></TD><TD>O_RDONLY<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><I>w</I></TD><TD>O_WRONLY | O_CREAT | O_TRUNC<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><I>a</I></TD><TD>O_WRONLY | O_CREAT | O_APPEND<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><I>r+</I></TD><TD>O_RDWR<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><I>w+</I></TD><TD>O_RDWR | O_CREAT | O_TRUNC<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><I>a+</I></TD><TD>O_RDWR | O_CREAT | O_APPEND<BR></TD></TR>
+</TABLE>
+
+</DL>
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>fdopen()</H3>
+
+
+<B>fdopen</B>()  関数は、既存のファイルディスクリプター <I>fd</I> にストリームを結びつける。 ストリームの <I>mode</I> (&quot;r&quot;,
+&quot;r+&quot;, &quot;w&quot;, &quot;w+&quot;, &quot;a&quot;, &quot;a+&quot; のいずれか) は ファイルディスクリプターのモードと互換のものでなければならない。
+新しいストリームのファイル位置指示子は <I>fd</I> に属している値に設定される。 error と end-of-file の各指示子はクリアされる。
+&quot;w&quot; および &quot;w+&quot; モードでのファイルの切り詰めは行われない。 ファイルディスクリプターの複製は行なわれない。 <B>fdopen</B>()
+で作成されたストリームが閉じられたときにファイルディスクリプターも 閉じられる。 共有メモリーのオブジェクトへ <B>fdopen</B>()
+を行ったときの結果は定義されていない。
+<A NAME="lbAF">&nbsp;</A>
+<H3>freopen()</H3>
+
+<B>freopen</B>()  関数は <I>path</I> で名前が指定されたファイルを開き、 <I>stream</I>
+で指定されたストリームに、そのファイルを結びつける。 もとのストリームは (もし存在する場合には) 閉じられる。 <I>mode</I> 引数は
+<B>fopen</B>()  関数と同じ形で使われる。
+<P>
+
+If the <I>pathname</I> argument is a null pointer, <B>freopen</B>()  changes the
+mode of the stream to that specified in <I>mode</I>; that is, <B>freopen</B>()
+reopens the pathname that is associated with the stream.  The specification
+for this behavior was added in the C99 standard, which says:
+<P>
+
+<DL COMPACT><DT><DD>
+In this case, the file descriptor associated with the stream need not be
+closed if the call to <B>freopen</B>()  succeeds.  It is implementation-defined
+which changes of mode are permitted (if any), and under what circumstances.
+</DL>
+
+<P>
+
+<B>freopen</B>() 関数の主な用途は、標準テキストストリーム (<I>stderr</I>, <I>stdin</I>, <I>stdout</I>)
+と対応付けられているファイルを変更することである。
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>fopen</B>(), <B>fdopen</B>(), <B>freopen</B>()  は成功すると <I>FILE</I> 型のポインターを返す。 失敗すると NULL
+が返され、 <I>errno</I> がエラーを示す値にセットされる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<B>fopen</B>(), <B>fdopen</B>(), <B>freopen</B>()  で与えられた <I>mode</I> が不適切である。
+</DL>
+<P>
+
+<B>fopen</B>(), <B>fdopen</B>(), <B>freopen</B>()  関数は <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+ルーチンで規定されているエラーでも失敗することがあり、 その時は対応する値に <I>errno</I> をセットする。
+<P>
+
+<B>fopen</B>()  関数は <B><A HREF="../man2/open.2.html">open</A></B>(2)  ルーチンで規定されているエラーでも失敗することがあり、 その時は対応する値に <I>errno</I>
+をセットする。
+<P>
+
+<B>fdopen</B>()  関数は <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  ルーチンで規定されているエラーでも失敗することがあり、 その時は対応する値に
+<I>errno</I> をセットする。
+<P>
+
+<B>freopen</B>()  関数は <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man3/fclose.3.html">fclose</A></B>(3), <B><A HREF="../man3/fflush.3.html">fflush</A></B>(3)
+各ルーチンで規定されているエラーでも失敗することがあり、 その時は対応する値に <I>errno</I> をセットする。
+<A NAME="lbAI">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>fopen</B>(),
+<B>fdopen</B>(),
+<B>freopen</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>fopen</B>(), <B>freopen</B>(): POSIX.1-2001, POSIX.1-2008, C89, C99.
+<P>
+
+<B>fdopen</B>(): POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>glibc での注意</H3>
+
+GNU C ライブラリでは、 <I>mode</I> に指定できる文字列として、以下の拡張が行われている:
+<DL COMPACT>
+<DT><B>c</B> (glibc 2.3.3 以降)<DD>
+open 操作、それに続く read/write 操作の、 スレッドの取り消しポイント
+(cancellation points) を作成しない。
+このフラグは <B>fdopen</B>() では無視される。
+<DT><B>e</B> (glibc 2.7 以降)<DD>
+<B>O_CLOEXEC</B> フラグを有効にしてファイルをオープンする。詳細は
+<B><A HREF="../man2/open.2.html">open</A></B>(2) を参照。このフラグは <B>fdopen</B>() では無視される。
+<DT><B>m</B> (glibc 2.3 以降)<DD>
+
+I/O システムコール (<B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2))  ではなく、 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+を使ってファイルにアクセスしようとする。 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  を使おうとするのは、読み出し用にオープンするファイルについてだけである。
+<DT><B>x</B><DD>
+
+
+ファイルを排他的にオープンする (<B><A HREF="../man2/open.2.html">open</A></B>(2)  の <B>O_EXCL</B> フラグと同様)。 ファイルがすでに存在する場合、 <B>fopen</B>()
+は失敗し、 <I>errno</I> に <B>EEXIST</B> がセットされる。 このフラグは <B>fdopen</B>()  では無視される。
+</DL>
+<P>
+
+上記の文字に加えて、
+<B>fopen</B>() と <B>freopen</B>() では <I>mode</I> に
+以下の書式を 指定することができる。
+<P>
+
+<B> ,ccs=</B><I>string</I>
+<P>
+
+指定された <I>string</I> は、符号化文字集合の名前と解釈され、
+ストリームではワイド文字のストリームとして扱われる。
+内部変換関数で入出力時に文字集合 <I>string</I> との変換が行われる。
+書式 <B>,ccs=</B><I>string</I> が指定されない場合は、
+ストリームをワイド文字のストリームとして扱うかは
+最初のファイル操作時に決定される。
+最初のファイル操作がワイド文字操作であった場合は、
+そのストリームはワイド文字のストリームとして扱われ、
+符号化文字集合との変換を行う関数が読み込まれる。
+<A NAME="lbAM">&nbsp;</A>
+<H2>バグ</H2>
+
+
+<I>mode</I> の個々のフラグ文字 (&quot;ccs&quot; 指定の前の文字) を解釈する際に、
+glibc の <B>fopen</B>() と <B>freopen</B>() の実装では、
+<I>mode</I> の確認を最大 7 文字しか行わないという制限がある
+(バージョン 2.14 より前の glibc では最大 6 文字だが、
+6 文字では &quot;rb+cmxe&quot; などの指定を行うには不十分であった)。
+<B>fdopen</B>() の現在の実装では最大 5 文字の <I>mode</I> しか解釈されない。
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man3/fclose.3.html">fclose</A></B>(3), <B><A HREF="../man3/fileno.3.html">fileno</A></B>(3), <B><A HREF="../man3/fmemopen.3.html">fmemopen</A></B>(3), <B><A HREF="../man3/fopencookie.3.html">fopencookie</A></B>(3),
+<B>open_memstream</B>(3)
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">fdopen()</A><DD>
+<DT><A HREF="#lbAF">freopen()</A><DD>
+</DL>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">属性</A><DD>
+<DT><A HREF="#lbAJ">準拠</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAL">glibc での注意</A><DD>
+</DL>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

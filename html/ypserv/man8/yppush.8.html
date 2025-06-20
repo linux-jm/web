@@ -1,0 +1,104 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of YPPUSH</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>YPPUSH</H1>
+Section: Reference Manual (8)<BR>Updated: August 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/ypserv/release/man8/yppush.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+yppush - NIS データーベースの変更を強制的に伝播させる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/usr/sbin/yppush</B> [ <B>-d</B> <I>domain</I> ] [ <B>-t</B> <I>timeout</I> ] [ <B>--parallel</B>
+<I>#</I> | <B>--port</B> <I>port</I> ] [ <B>-h</B> <I>host</I> ] [ <B>-v</B> ] mapname ...
+<P>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+<B>yppush</B> は更新された NIS データーベース (やマップ) を、マスターの NIS サーバー から同じ NIS
+ドメインに所属しているスレーブサーバーにコピーする。 通常は NIS マスターでのみ実行され、 <I>/var/yp/Makefile</I>
+でマスターのデーターベースが更新された後に起動される。 デフォルトでは、 <I>/var/yp/Makefile</I> からの <B>yppush</B>
+の起動は有効になっていない。これを有効にするには <B>NOPUSH=&quot;True&quot;</B> の行をコメントアウトすること。
+<BR>
+
+<B>yppush</B> は最初に所属するドメインの <B>ypservers</B> NIS マップを読み、スレーブサーバーのリストを生成する。 送り先のホスト
+(-h コマンドを使えば複数のホストを同時指定できる) は コマンドラインからも指定できる。 &quot;transfer map&quot; 要求がそれぞれのスレーブの
+NIS サーバーに送られ、 転送エージェントである <B><A HREF="../man8/ypxfr.8.html">ypxfr</A></B>(8)  が <B>yppush</B> にコールバックを行う際に必要な情報が渡される。
+このコールバックの結果は標準エラー出力に表示することもできる。 転送ができなかったとき (要求メッセージが受付けられなかったときなど)
+にもメッセージを表示させることができる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-d </B><I>domain</I><DD>
+ドメインを指定する。デフォルトではローカルホストの NIS ドメインが 用いられる。ローカルホストのドメイン名が設定されていない場合は、
+このフラグで指定しなければならない。
+<DT><B>-t </B><I>timeout</I><DD>
+タイムアウトの時間を秒単位で指定する。このタイムアウトは、 <B>yppush</B> マップ転送要求をあるスレーブサーバーに出したあと、
+スレーブからの反応を待つ時間である。ここで指定しただけ待つと、 リストの次のスレーブサーバーへ転送要求を送る。 デフォルトでは、 <B>yppush</B> は
+90 秒待つ。大きなマップでは充分でないかもしれない。
+<DT><B>--parallel</B><I> #</I>,<B> -p </B><I>#</I><DD>
+<B>yppush</B> は通常転送を直列に行う。すなわちマップの転送要求を一つのスレーブサーバーに
+出し、その回答を待ち、そして次のスレーブサーバーに次の転送要求を出す。 多くのスレーブがあるような環境下では、複数のマップ転送を同時にスタートし、
+転送を並列に行う方が効率的である。 <B>--port</B> フラグで固定のポートを割り当てて、並列に動作させるのは不可能である。
+<DT><B>--port </B><I>port</I><DD>
+<B>yppush</B> が接続を待つポートを指定する。 デフォルトでは <B>yppush</B> は <B>portmap(8)</B>
+に無作為なポートを割り当ててもらう。 このオプションでポートを割り当てて、 <B>--parallel</B> または <B>-p</B>
+フラグで並列に動作させることは不可能である。
+<DT><B>-h </B><I>host</I><DD>
+このフラグは、ユーザーの指定するマシン (もしくはマシンのグループ)  にマップ転送を行うために用いる。通常は <B>ypservers</B>
+マップにリストされているサーバーに転送が行われる。 ホストのリストを指定したい場合は、 <B>-h</B> フラグを複数回用いればよい。
+<DT><B>-v</B><DD>
+詳細モード。実行時にデバッグ情報を表示するようになる。 このフラグを二回指定すれば、 <B>yppush</B> はさらに詳細に表示する。
+</DL>
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../net-tools/man1/domainname.1.html">domainname</A></B>(1), <B><A HREF="../man8/ypserv.8.html">ypserv</A></B>(8), <B><A HREF="../man8/ypxfr.8.html">ypxfr</A></B>(8)
+<P>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+NIS v1 での NIS マップ転送メカニズムは NIS バージョン 2 とは 異なっている。この <B>yppush</B> は NIS v2
+システムのマップ転送しかサポートしていない。
+<P>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>作者</H2>
+
+Thorsten Kukuk &lt;<A HREF="mailto:kukuk@suse.de">kukuk@suse.de</A>&gt;
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">作者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:51 GMT, December 05, 2022
+</BODY>
+</HTML>

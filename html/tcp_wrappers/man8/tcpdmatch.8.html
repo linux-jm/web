@@ -1,0 +1,191 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TCPDMATCH</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TCPDMATCH</H1>
+Section: Maintenance Commands (8)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/tcp_wrappers/release/man8/tcpdmatch.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+tcpdmatch - tcp wrapper の神託所(oracle)
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+tcpdmatch [-d] [-i inet_conf] daemon client
+<P>
+tcpdmatch [-d] [-i inet_conf] daemon[@server] [user@]client
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+<I>tcpdmatch</I> は、指定されたリクエストを tcp wrapper がどのよ
+うに取り扱うのか占うものである。
+<P>
+
+このプログラムは <I>tcpd</I> のアクセスコントロールテーブル (デフォ
+ルトは<I>/etc/hosts.allow</I> と <I>/etc/hosts.deny</I>) を詳細に
+調べ、結果を告げる。その際、正確を期すために、<I>inetd</I> または 
+<I>tlid</I> ネットワーク設定ファイルも参照し、追加情報を得る。
+<P>
+
+<I>tcpdmatch</I> はアクセスコントロールテーブル中からマッチするも
+のを見つけると、それが一致したルールであると宣言する。くわえて、
+オプショナルなシェルコマンドないしはオプションを読みやすい形にフォー
+マットして表示する。これは、望んでいるものと、プログラムが解釈し
+ていることの間の矛盾を見極めるのに役にたつ。
+<A NAME="lbAE">&nbsp;</A>
+<H2>引き数</H2>
+
+次に示すふたつの引き数は、常に必要である:
+<DL COMPACT>
+<DT>daemon<DD>
+デーモンプロセス名。一般的にはデーモンの実行パスの最後の要素と同
+じである。
+<DT>client<DD>
+クライアントのホスト名、あるいはネットワークアドレス。または 
+`unknown' `paranoid' のいずれかによって表現されるワイルドカード。
+<P>
+クライアントホスト名が提示された場合、
+<I>tcpdmatch</I> は
+そのクライアントアドレスを予言する。
+<P>
+クライアントのアドレスが提示された場合、
+<I>tcpdmatch</I> は、
+クライアントのホスト名の問い合わせが失敗した場合に
+<I>tcpd</I> がどのようにふるまうかを予言する。
+</DL>
+<P>
+
+<I><A HREF="mailto:daemon@server">daemon@server</A></I> 形式で付加情報を示す場合:
+<DL COMPACT>
+<DT>server<DD>
+サーバのホスト名、あるいはネットワークアドレス。または 
+`unknown' `paranoid' のいずれかによって表現されるワイルドカード。
+省略時のサーバ名は `unknown' である。
+</DL>
+<P>
+
+<I><A HREF="mailto:user@client">user@client</A></I> 形式で付加情報を示す場合:
+<DL COMPACT>
+<DT>user<DD>
+クライアントユーザの身元。一般的にはログイン名またはユーザIDであ
+る。省略時のユーザ名は `unknown' である。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT>-d<DD>
+システムのデフォルトのファイルでなく、カレントディレクトリにある
+<I>hosts.allow</I> と <I>hosts.deny</I> を検査する。
+<DT>-i inet_conf<DD>
+<I>tcpdchk</I> が <I>inetd.conf</I> または <I>tlid.conf</I> を自分
+で見つけることができない場合、あるいはプログラムがまちがったファ
+イルを参照している疑いがある場合に、このオプションを使う。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>例</H2>
+
+ローカルホストから telnet のリクエストが来た時、<I>tcpd</I> 
+がどのようにふるまうかを占うには:
+<P>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+tcpdmatch in.telnetd localhost
+<P>
+
+同じことを、ホスト名の問い合わせが失敗したかのようにふるまって占
+うには:
+<P>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+tcpdmatch in.telnetd 127.0.0.1
+<P>
+
+もしクライアントの名前がアドレスと一致しない場合、<I>tcpd</I> が
+どうするかを占うには:
+<P>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+tcpdmatch in.telnetd paranoid
+<P>
+
+システムによっては、デーモンの名前の頭に 'in.' がなかったり、
+<I>tcpdmatch</I> が inetd の設定ファイルを見つけるために助けを必
+要とするかも知れない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>ファイル</H2>
+
+<P>
+
+<I>tcpd</I> のアクセスコントロールファイルのデフォルトは:
+<P>
+
+/etc/hosts.allow
+<BR>
+
+/etc/hosts.deny
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+<PRE>
+<A HREF="../man8/tcpdchk.8.html">tcpdchk</A>(8), tcp wrapper 設定のチェッカー
+<A HREF="../man5/hosts_access.5.html">hosts_access</A>(5), ホストアクセスコントロールファイルの書式
+<A HREF="../man5/hosts_options.5.html">hosts_options</A>(5), ホストアクセスコントロールの拡張書式
+inetd.conf(5), inetd コントロールファイルの書式
+tlid.conf(5), tlid コントロールファイルの書式
+</PRE><A NAME="lbAJ">&nbsp;</A>
+<H2>著者</H2>
+
+
+<PRE>
+Wietse Venema (<A HREF="mailto:wietse@wzv.win.tue.nl">wietse@wzv.win.tue.nl</A>),
+Department of Mathematics and Computing Science,
+Eindhoven University of Technology
+Den Dolech 2, P.O. Box 513, 
+5600 MB Eindhoven, The Netherlands
+
+</PRE><A NAME="lbAK">&nbsp;</A>
+<H2>翻訳</H2>
+
+FUKUSHIMA Osamu &lt;<A HREF="mailto:fuku@amorph.rim.or.jp">fuku@amorph.rim.or.jp</A>&gt;
+<P>
+
+
+
+
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">引き数</A><DD>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">例</A><DD>
+<DT><A HREF="#lbAH">ファイル</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">著者</A><DD>
+<DT><A HREF="#lbAK">翻訳</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:46 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,151 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GET_MEMPOLICY</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GET_MEMPOLICY</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/get_mempolicy.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+get_mempolicy - スレッドの NUMA メモリーのポリシーを取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/numaif.h">numaif.h</A>&gt;</B>
+<PRE>
+
+<B>long get_mempolicy(int *</B><I>mode</I><B>, unsigned long *</B><I>nodemask</I><B>,</B>
+<B>                  unsigned long </B><I>maxnode</I><B>, void *</B><I>addr</I><B>,</B>
+<B>                  unsigned long </B><I>flags</I><B>);</B>
+
+<I>-lnuma</I> でリンクする。
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>get_mempolicy</B>() は、呼び出し元スレッドもしくは指定されたメモリーアドレスの NUMA ポリシーを <I>flags</I>
+の設定に従って取得する。
+<P>
+
+NUMA (非対称メモリーアクセス) マシンでは、CPU により メモリーコントローラーが異なり、距離も異なっている。
+メモリーポリシーは、どのノードからメモリーをそのスレッドに 割り当てるかを定めるものである。
+<P>
+
+If <I>flags</I> is specified as 0, then information about the calling thread's
+default policy (as set by <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2))  is returned, in the buffers
+pointed to by <I>mode</I> and <I>nodemask</I>.  The value returned in these
+arguments may be used to restore the thread's policy to its state at the
+time of the call to <B>get_mempolicy</B>()  using <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2).  When
+<I>flags</I> is 0, <I>addr</I> must be specified as NULL.
+<P>
+
+<I>flags</I> に <B>MPOL_F_MEMS_ALLOWED</B> (Linux 2.6.24 以降で利用可能) を指定すると、 <I>mode</I>
+引数は無視され、 そのスレッドがその後の <B><A HREF="../man2/mbind.2.html">mbind</A></B>(2)  や <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2)  で (<I>モードフラグ</I>
+が指定されていない場合に) 指定できるノード (メモリー) の集合が <I>nodemask</I> に返される。 <B>MPOL_F_MEMS_ALLOWED</B>
+を、 <B>MPOL_F_ADDR</B> や <B>MPOL_F_NODE</B> と同時に指定することはできない。
+<P>
+
+<I>flags</I> に <B>MPOL_F_ADDR</B> が指定された場合、 <I>addr</I>
+で指定されたメモリーアドレスに適用されているポリシーに関する情報を返す。 <B><A HREF="../man2/mbind.2.html">mbind</A></B>(2)  や <B>numa</B>(3)
+で説明されているヘルパー関数を使って、 <I>addr</I> を含むメモリー領域に対するポリシーが設定されていた場合には、
+返されるポリシーはスレッドのデフォルトポリシーと違うことがある。
+<P>
+
+<I>mode</I> 引数が NULL でない場合、 <B>get_mempolicy</B>()  は要求された NUMA ポリシーのモードと追加の
+<I>モードフラグ</I> を <I>mode</I> が指す場所に格納する。 <I>nodemask</I> が NULL 以外の場合、そのポリシーに対応するノードマスクを
+この引数が指す場所に格納する。 <I>maxnode</I> には <I>nodemask</I> に格納できるノード ID の数、つまり最大ノード ID に 1
+を足した値を指定する。 <I>maxnode</I> で指定された値は常に <I>sizeof(unsigned&nbsp;long)*8</I> の倍数に切り上げられる。
+<P>
+
+<I>flags</I> で <B>MPOL_F_NODE</B> と <B>MPOL_F_ADDR</B> の両方が指定された場合、 <B>get_mempolicy</B>()
+はアドレス <I>addr</I> が割り当てられているノードのノード ID を <I>mode</I> が指す場所に入れて返す。
+指定されたアドレスにどのページもまだ割り当てられていない場合、 <B>get_mempolicy</B>()
+は、あたかもそのスレッドがそのアドレスに対して読み込みアクセスを 実行したかのようにページの割り当てを行い、ページが割り当てられた ノードの ID
+を返す。
+<P>
+
+
+<I>flags</I> で <B>MPOL_F_NODE</B> は指定されたが、 <B>MPOL_F_ADDR</B> は指定されていない場合で、かつ
+そのスレッドの現在のポリシーが <B>MPOL_INTERLEAVE</B> の場合、 <B>get_mempolicy</B>()
+は、そのスレッドに対して割り当てられたカーネルの内部ページで 次にインターリーブ用に使用されるノードのノード ID を、 NULL でない
+<I>mode</I> 引数が指す場所に入れて返す。これには、読み込みアクセス用として <B>MAP_PRIVATE</B> フラグ付きで <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+したプロセスメモリー領域や、 任意のアクセス用として <B>MAP_SHARED</B> フラグ付きで <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+したメモリー領域の、メモリーマップされたファイルに対するページも含まれる。
+<P>
+
+他のフラグは予約されている。
+<P>
+
+設定可能なポリシーの概要については <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2)  を参照。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>get_mempolicy</B>()  は 0 を返す。エラーの場合、-1 を返し、 <I>errno</I> にエラーを示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>nodemask</I> と <I>maxnode</I> で指定されたメモリー領域の一部または全部が、 呼び出し元がアクセス可能なアドレス空間外を指している。
+<DT><B>EINVAL</B><DD>
+<I>maxnode</I> で指定された値がシステムがサポートするノード ID の数よりも少ない。 または、 <I>flags</I> に
+<B>MPOL_F_NODE</B> でも <B>MPOL_F_ADDR</B> でもない値が指定された。 または、 <I>flags</I> に <B>MPOL_F_ADDR</B>
+が指定されており、 <I>addr</I> が NULL である。 または、 <I>flags</I> に <B>MPOL_F_ADDR</B> がされておらず、
+<I>addr</I> が NULL でない。 または、 <I>flags</I> に <B>MPOL_F_NODE</B> が指定されており、 <B>MPOL_F_ADDR</B>
+が指定されておらず、 スレッドの現在のポリシーが <B>MPOL_INTERLEAVE</B> でない。 または、 <I>flags</I> に
+<B>MPOL_F_MEMS_ALLOWED</B> が指定されており、さらに <B>MPOL_F_ADDR</B> か <B>MPOL_F_NODE</B>
+のいずれかが指定されている。 (他にも <B>EINVAL</B> となる場合がある。)
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>get_mempolicy</B>()  システムコールはバージョン 2.6.7 で Linux カーネルに追加された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+ライブラリによるサポートについては <B><A HREF="../man7/numa.7.html">numa</A></B>(7)  を参照。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/getcpu.2.html">getcpu</A></B>(2), <B><A HREF="../man2/mbind.2.html">mbind</A></B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2), <B>numa</B>(3),
+<B><A HREF="../man7/numa.7.html">numa</A></B>(7), <B>numactl</B>(8)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

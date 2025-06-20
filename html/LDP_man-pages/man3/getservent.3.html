@@ -1,0 +1,180 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETSERVENT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETSERVENT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getservent.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getservent, getservbyname, getservbyport, setservent, endservent -
+サービスのエントリーを取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</B>
+
+<B>struct servent *getservent(void);</B>
+
+<B>struct servent *getservbyname(const char *</B><I>name</I><B>, const char *</B><I>proto</I><B>);</B>
+
+<B>struct servent *getservbyport(int </B><I>port</I><B>, const char *</B><I>proto</I><B>);</B>
+
+<B>void setservent(int </B><I>stayopen</I><B>);</B>
+
+<B>void endservent(void);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getservent</B>()  関数はサービスのデータベース (<B><A HREF="../man5/services.5.html">services</A></B>(5)  参照) から次のエントリーを読み込み、
+そのエントリーを <I>servent</I> 構造体の要素別のフィールドに格納し、 その構造体を返す。 必要であれば、データベースへの接続がオープンされる。
+<P>
+
+<B>getservbyname</B>()  関数は、 プロトコル <I>proto</I> を用いるサービスの名前 <I>name</I>
+にマッチするエントリーをデータベースから探し、 そのエントリーを収めた <I>servent</I> 構造体を返す。 <I>proto</I> が NULL
+の場合は、任意のプロトコルにマッチする。 必要であれば、データベースへの接続がオープンされる。
+<P>
+
+<B>getservbyport</B>()  関数は、 プロトコル <I>proto</I> を用いるサービスのポート番号 <I>port</I>
+にマッチするエントリーをデータベースから探し、 そのエントリーの内容を収めた <I>servent</I> 構造体を返す (ポート番号 <I>port</I>
+はネットワークバイトオーダで指定する)。 <I>proto</I> が NULL の場合は任意のプロトコルにマッチする。
+必要であれば、データベースへの接続がオープンされる。
+<P>
+
+<B>setservent</B>()  関数はデータベースへの接続をオープンし、 次の読み込みエントリーを先頭のエントリーに設定する。 <I>stayopen</I>
+が 0 でない場合、 一つ一つの <B>getserv*</B>()  関数の呼び出し間でデータベースへの接続をクローズしない。
+<P>
+
+<B>endservent</B>()  関数はデータベースへの接続をクローズする。
+<P>
+
+<I>servent</I> 構造体は <I>&lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</I> で以下のように定義されている。
+<P>
+
+
+
+struct servent {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;*s_name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;official&nbsp;service&nbsp;name&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;**s_aliases;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;alias&nbsp;list&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;s_port;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;port&nbsp;number&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;*s_proto;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;protocol&nbsp;to&nbsp;use&nbsp;*/
+}
+
+
+<P>
+
+<I>servent</I> 構造体のメンバーは以下の通り。
+<DL COMPACT>
+<DT><I>s_name</I><DD>
+サービスの正式名 (official name)。
+<DT><I>s_aliases</I><DD>
+サービスの別名のリスト。 リストはヌルで終端される。
+<DT><I>s_port</I><DD>
+サービスのポート番号。ネットワークバイトオーダで指定される。
+<DT><I>s_proto</I><DD>
+このサービスと共に用いるプロトコルの名前。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>getservent</B>(), <B>getservbyname</B>(), <B>getservbyport</B>()  関数は、 静的に割り当てられた
+<I>servent</I> 構造体へのポインターを返す。 エラーが起こったり、ファイルの末尾に達した場合は NULL を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/etc/services</I><DD>
+サービスのデータベースファイル
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明は <B>attributes</B>(7) を参照のこと。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getservent</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:servent
+<BR>
+
+race:serventbuf locale
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getservbyname</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:servbyname
+<BR>
+
+locale
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getservbyport</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:servbyport
+<BR>
+
+locale
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>setservent</B>(),
+<BR>
+
+<B>endservent</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:servent
+<BR>
+
+locale
+<BR></TD></TR>
+</TABLE>
+
+<P>
+In the above table, <I>servent</I> in <I>race:servent</I> signifies that if any of
+the functions <B>setservent</B>(), <B>getservent</B>(), or <B>endservent</B>()  are used
+in parallel in different threads of a program, then data races could occur.
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, 4.3BSD.
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/getnetent.3.html">getnetent</A></B>(3), <B><A HREF="../man3/getprotoent.3.html">getprotoent</A></B>(3), <B><A HREF="../man3/getservent_r.3.html">getservent_r</A></B>(3), <B><A HREF="../man5/services.5.html">services</A></B>(5)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

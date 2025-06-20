@@ -1,0 +1,123 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SLABINFO</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SLABINFO</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2007-09-30<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man5/slabinfo.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+/proc/slabinfo - カーネル slab アロケータの統計
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>cat /proc/slabinfo</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+Linux カーネルの内部で良く利用されるオブジェクト (バッファーヘッド、i-ノード、ディレクトリエントリーなど)
+は、それぞれ自分用のキャッシュを備えている。ファイル <I>/proc/slabinfo</I> はこれらの統計を与える。例を示す。
+<P>
+
+
+<PRE>
+% cat /proc/slabinfo
+slabinfo - version: 1.1
+kmem_cache            60     78    100    2    2    1
+blkdev_requests     5120   5120     96  128  128    1
+mnt_cache             20     40     96    1    1    1
+inode_cache         7005  14792    480 1598 1849    1
+dentry_cache        5469   5880    128  183  196    1
+filp                 726    760     96   19   19    1
+buffer_head        67131  71240     96 1776 1781    1
+vm_area_struct      1204   1652     64   23   28    1
+...
+size-8192              1     17   8192    1   17    2
+size-4096             41     73   4096   41   73    1
+...
+</PRE>
+
+
+<P>
+
+それぞれの slab キャッシュごとに、キャッシュの名前、 現在アクティブなオブジェクトの数、利用可能なオブジェクトの総数、 各オブジェクトのサイズ
+(バイト単位)、少なくとも一つのアクティブな オブジェクトを有するページの数、アロケートされたページの総数、 slab
+あたりのページ数、が与えられている。
+<P>
+なお、 オブジェクトのアラインメントと slab キャッシュのオーバーヘッドとにより、 オブジェクトは通常ページの内部にきっちりとは収められていない。
+利用中のオブジェクトをひとつでも保持しているページは、 利用中であるとみなされ、解放できない。
+<P>
+slab キャッシュ統計の機能を有効にしてコンパイルされたカーネルでは、 出力の最初の行に &quot;(statistics)&quot; と表示され、 5
+つのカラムが追加される。 それぞれ、アクティブなオブジェクトの瞬間最大値、 オブジェクトがアロケートされた回数、 キャッシュの大きさが拡張された
+(新しいページがこのキャッシュに追加された) 回数、 キャッシュの大きさが縮小された (使っていないページがこのキャッシュから削除された) 回数、
+新たなページをこのキャッシュにアロケートする際に起きたエラーの回数、である。 slab
+キャッシュ統計が使えないカーネルでは、これらのカラムは表示されない。
+<P>
+SMP システムでは、出力の最初の行に &quot;(SMP)&quot; と表示され、 各 slab ごとに 2 つのカラムが追加される。 これらは各 CPU
+が持つローカルなキャッシュ (per-CPU キャッシュ) の slab アロケーションポリシーを表示する (per-CPU キャッシュは、
+オブジェクトをキャッシュからアロケートする際に CPU 間での同期を減少させるために設けられている)。 最初のカラムは per-CPU 制限、
+すなわち各 CPU ごとにキャッシュできるオブジェクトの最大数である。 二番目のカラムはバッチカウント、 すなわち per-CPU
+キャッシュが空だったり一杯だったりした場合に、 グローバルなキャッシュと受け渡しできるフリーなオブジェクトの最大数である。
+<P>
+slab キャッシュ統計と SMP が両方有効になっている場合は、 per-CPU キャッシュの統計を表示する 4 つのカラムがさらに追加される。
+最初の 2 つは per-CPU キャッシュの アロケーションヒットカウントとアロケーションミスカウントである。
+すなわち、あるオブジェクトをアロケートしたときに、 それが per-CPU キャッシュの内部に あった/なかった 回数である。 続く 2
+つは、per-CPU キャッシュのフリーヒットカウントとミスカウントである。
+すなわち解放されたオブジェクトをグローバルなキャッシュにフラッシュする前に、 per-CPU キャッシュの制限の範囲に 収まった/収まらなかった
+回数である。
+<P>
+SMP において per-CPU slab キャッシュの制限値や バッチカウントを変更するには、以下のようにすればよい:
+<P>
+
+<PRE>
+echo &quot;<I>cache_name limit batchcount</I>&quot; &gt; /proc/slabinfo
+</PRE>
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>&lt;<A HREF="file:///usr/include/linux/slab.h">linux/slab.h</A>&gt;</I>
+<A NAME="lbAF">&nbsp;</A>
+<H2>バージョン</H2>
+
+<I>/proc/slabinfo</I> は Linux 2.1.23 以降に存在する。 SMP における CPU ごとのキャッシュは Linux
+2.4.0-test3 以降に存在する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+Linux 2.6.16 以降では、 <I>/proc/slabinfo</I> ファイルは、カーネル設定オプション <B>CONFIG_SLAB</B>
+を有効にした場合のみ存在する。
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">ファイル</A><DD>
+<DT><A HREF="#lbAF">バージョン</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

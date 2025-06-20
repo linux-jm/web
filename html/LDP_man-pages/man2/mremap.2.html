@@ -1,0 +1,143 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MREMAP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MREMAP</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2010-06-10<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/mremap.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mremap - 仮想メモリーアドレスを再マッピングする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+
+<B>void *mremap(void *</B><I>old_address</I><B>, size_t </B><I>old_size</I><B>,</B>
+<B>             size_t </B><I>new_size</I><B>, int </B><I>flags</I><B>, ... /* void *</B><I>new_address</I><B> */);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>mremap</B>()  は既存のメモリーマッピングの拡張 (または縮小) を行う。 同時に移動されることもある (<I>flags</I>
+引き数と利用可能な仮想アドレス空間によって決まる)。
+<P>
+<I>old_address</I> は拡張 (または縮小) しようとする仮想メモリーブロック の元のアドレスである。<I>old_address</I>
+はページ境界に合っていなければ ならない点に注意すること。<I>old_size</I> は元の仮想メモリーブロックの サイズである。 <I>new_size</I>
+は要求する変更後の仮想メモリーブロックのサイズである。 5 番目の引き数として <I>new_address</I> を指定することができる。下記の
+<B>MREMAP_FIXED</B> の説明を参照のこと。
+<P>
+Linux ではメモリーはページに分割される。ユーザープロセスは (一つまたは)  複数のリニアな仮想メモリーセグメントを持つ。
+それぞれの仮想メモリーセグメントは一つ以上の実メモリーページ にマッピングされている (マッピング情報はページテーブルで管理される)。
+仮想メモリーセグメントにはセグメント毎の保護 (アクセス権) が設定されており、 メモリーが不正にアクセスされた場合 (例えば読み込み専用のセグメントに
+書き込んだ場合)、セグメンテーション侵害 (segmentation violation) を
+引き起こす。また、セグメント外の仮想メモリーにアクセスした場合にも セグメンテーション侵害が発生する。
+<P>
+<B>mremap</B>()  は Linux のページテーブル方式を使用する。 <B>mremap</B>()
+は仮想アドレスとメモリーページのマッピングを変更する。これは非常に効率的な <B><A HREF="../man3/realloc.3.html">realloc</A></B>(3)  を実装するのに使用されている。
+<P>
+<I>flags</I> ビットマスク引数は 0 または以下のフラグを含む:
+<DL COMPACT>
+<DT><B>MREMAP_MAYMOVE</B><DD>
+デフォルトでは、現在の位置にマッピングを拡張するための 十分な空きがなければ <B>mremap</B>()  は失敗する。
+このフラグが指定されると、カーネルは必要があればマッピングを 新しい仮想アドレスに再配置することができる
+マッピングが再配置されると、古いマッピング位置への絶対ポインターは 無効になる (マッピングの開始アドレスからの相対オフセットは有効のままである)。
+<DT><B>MREMAP_FIXED</B> (Linux 2.3.31 以降)<DD>
+このフラグは <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  の <B>MAP_FIXED</B> フラグと似たような目的で用いられる。 このフラグが指定されると、
+<B>mremap</B>()  は 5 番目の引き数 <I>void&nbsp;*new_address</I>
+を受け取り、この引数はマッピングが移動されるべきアドレスを指定する。 このアドレスはページ境界に合っていなければならない。 <I>new_address</I>
+と <I>new_size</I> で指定されるアドレス範囲に過去のマッピングがあった場合、 そのマッピングはアンマップされる (unmapped)。
+<B>MREMAP_FIXED</B> を指定した場合は、 <B>MREMAP_MAYMOVE</B> も指定しなければならない。
+</DL>
+<P>
+
+<I>old_address</I> と <I>old_size</I> で指定されるメモリーセグメントが (<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2)  や同様のもので)
+ロックされている場合、セグメントのサイズが変わったり 再配置されたりした時にロックも維持される。
+その結果、プロセスによってロックされるメモリーの量は変化する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は <B>mremap</B>()  は新しい仮想メモリー領域へのポインターを返す。 エラーの場合は <B>MAP_FAILED</B> (すなわち
+<I>(void&nbsp;*)&nbsp;-1</I>) が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+呼び出し元がロックされているメモリーセグメントを拡張しようとしたが、 <B>RLIMIT_MEMLOCK</B>
+リソース制限を越えずにこれを行うことができない。
+<DT><B>EFAULT</B><DD>
+「セグメンテーション違反(segmentation fault)」 <I>old_address</I> から
+<I>old_address</I>+<I>old_size</I> の 範囲のアドレスのどれかがこのプロセスにおいて不正な仮想メモリーアドレスである。
+たとえ要求したアドレス空間全体を含むようなマッピングがあったとしても、 それらのマッピングが異なった型ならば <B>EFAULT</B> を受け取るだろう。
+<DT><B>EINVAL</B><DD>
+不正な引き数が与えられた。 可能性のある原因は以下の通りである: たいていは <I>old_address</I> がページ境界に 合ってない;
+<I>flags</I> に <B>MREMAP_MAYMOVE</B> または <B>MREMAP_FIXED</B> 以外の値が指定されている; <I>new_size</I>
+がゼロ; <I>new_size</I> または <I>new_address</I> の値が不正; <I>new_address</I> と <I>new_size</I>
+で指定される新しいアドレス範囲が <I>old_address</I> と <I>old_size</I> で指定される古いアドレス範囲と重なっている;
+<B>MREMAP_FIXED</B> が指定されているが <B>MREMAP_MAYMOVE</B> が指定されていない。
+<DT><B>ENOMEM</B><DD>
+現在の仮想アドレスではメモリー領域が拡張できず、 <B>MREMAP_MAYMOVE</B> フラグが <I>flags</I> に設定されていない。 または十分な
+(仮想) メモリーが存在しない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+このコールは Linux 特有であり、移植を意図したプログラムで 使用すべきではない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+バージョン 2.4 より前の glibc では、 <B>MREMAP_FIXED</B> の定義は公開されておらず、 <B>mremap</B>()  のプロトタイプは
+<I>new_address</I> 引き数を取らなかった。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2), <B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2), <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2), <B><A HREF="../man2/mlock.2.html">mlock</A></B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+<B><A HREF="../man2/sbrk.2.html">sbrk</A></B>(2), <B><A HREF="../man3/realloc.3.html">realloc</A></B>(3), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+<P>
+ページ分割されたメモリーについてもっと詳しく知りたいならば、あなたのお気に入りのオペレーティングシステムの教科書を参照してほしい (例えば、
+<I>Modern Operating Systems</I> by Andrew S. Tanenbaum, <I>Inside Linux</I> by
+Randolf Bentson, <I>The Design of the UNIX Operating System</I> by Maurice
+J. Bach.)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

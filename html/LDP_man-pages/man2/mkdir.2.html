@@ -1,0 +1,217 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MKDIR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MKDIR</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/mkdir.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mkdir, mkdirat - ディレクトリを作成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<B>int mkdir(const char *</B><I>pathname</I><B>, mode_t </B><I>mode</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;           </B>/* AT_* 定数の定義 */
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+
+<B>int mkdirat(int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>, mode_t </B><I>mode</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>mkdirat</B>():
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>glibc 2.10 以降:<DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>glibc 2.10 より前:<DD>
+_ATFILE_SOURCE
+</DL>
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>mkdir</B>()  は <I>pathname</I> で示される名前のディレクトリを作成しようとする。
+<P>
+
+The argument <I>mode</I> specifies the mode for the new directory (see
+<B>inode</B>(7)).  It is modified by the process's <I>umask</I> in the usual way: in
+the absence of a default ACL, the mode of the created directory is (<I>mode</I>
+&amp; ~<I>umask</I> &amp; 0777).  Whether other <I>mode</I> bits are honored for the
+created directory depends on the operating system.  For Linux, see NOTES
+below.
+<P>
+
+新しく作成されたディレクトリの所有者はプロセスの実効ユーザー ID に設定される。 新たに作成されたディレクトリが含まれる親ディレクトリに set
+group ID ビットがセットされていたり、ファイルシステムが BSD の グループセマンティクス (<I>mount -o bsdgroups</I>
+あるいは、同じ意味の <I>mount -o grpid</I>)  に従ってマウントされている場合には、
+新たに作成されたディレクトリのグループ所有権は親ディレクトリの ものが継承される (親ディレクトリと同じになる)。
+それ以外の場合は、グループ所有権はプロセスの実効グループ ID となる。
+<P>
+
+
+
+もし親ディレクトリに set group ID ビットがセットされていれば新しく作成される ディレクトリにも set group ID
+ビットがセットされる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>mkdirat()</H3>
+
+<B>mkdirat</B>() システムコールは <B>mkdir</B>() と全く同様に動作するが、以下で説明する点が異なる。
+<P>
+
+<I>pathname</I> で指定されたパス名が相対パスの場合、このパス名はファイルディスクリプター <I>dirfd</I>
+が参照するディレクトリに対する相対パスと解釈される (<B>mkdir</B>()
+に相対パス名を渡した場合のように、呼び出したプロセスのカレントワーキングディレクトリに対する相対パスではない)。
+<P>
+
+<I>pathname</I> で指定されたパス名が相対パスで、 <I>dirfd</I> が特別な値 <B>AT_FDCWD</B> の場合、 (<B>mkdir</B>()
+と同様に) <I>pathname</I> は呼び出したプロセスのカレントワーキングディレクトリに対する相対パスと解釈される。
+<P>
+
+<I>pathname</I> で指定されたパス名が絶対パスの場合、 <I>dirfd</I> は無視される。
+<P>
+
+<B>mkdirat</B>() の必要性についての説明については <B><A HREF="../man2/openat.2.html">openat</A></B>(2) を参照。
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>mkdir</B>() と <B>mkdirat</B>() は成功した場合 0 を、失敗した場合 -1 を返す (また、 <I>errno</I>
+がエラーの内容にしたがって適切に設定される)。
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+プロセスが親ディレクトリへの書き込み許可を持たない、もしくは <I>pathname</I> 中のディレクトリのどれかに検索許可属性が無い
+(<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)  も参照)。
+<DT><B>EDQUOT</B><DD>
+ディスクブロックか inode がそのファイルシステムのユーザークォータに達していた。
+<DT><B>EEXIST</B><DD>
+<I>pathname</I> が既に存在している(ただしそれがディレクトリであるとは限らない)。 <I>pathname</I> がシンボリックリンクの場合も
+(その指定先が存在するかどうかに関らず)エラーになる。
+<DT><B>EFAULT</B><DD>
+<I>pathname</I> がアクセス可能なアドレス空間の外を指している。
+<DT><B>EINVAL</B><DD>
+The final component (&quot;basename&quot;) of the new directory's <I>pathname</I> is
+invalid (e.g., it contains characters not permitted by the underlying
+filesystem).
+<DT><B>ELOOP</B><DD>
+<I>pathname</I> を解決するときに、解決すべきシンボリックリンクが多すぎた。
+<DT><B>EMLINK</B><DD>
+親ディレクトリへのリンク数が <B>LINK_MAX</B> を超えてしまう。
+<DT><B>ENAMETOOLONG</B><DD>
+<I>pathname</I> が長すぎる。
+<DT><B>ENOENT</B><DD>
+<I>pathname</I> の構成要素のディレクトリのいずれかが存在しないか、 またはリンク先が存在しないシンボリックリンクである。
+<DT><B>ENOMEM</B><DD>
+カーネルに十分なメモリーがない。
+<DT><B>ENOSPC</B><DD>
+<I>pathname</I> を含むデバイスに新たにディレクトリを作成する空きが無い。
+<DT><B>ENOSPC</B><DD>
+もしくはユーザーのディスク quota が使い切られているため、 新たにディレクトリを作成することができない。
+<DT><B>ENOTDIR</B><DD>
+<I>pathname</I> のディレクトリ部分が実際にはディレクトリでない。
+<DT><B>EPERM</B><DD>
+<I>pathname</I> を含むファイルシステムがディレクトリの作成をサポートしていない。
+<DT><B>EROFS</B><DD>
+<I>pathname</I> が読み出し専用ファイルシステム上のファイルを指している。
+</DL>
+<P>
+
+<B>mkdirat</B>() では以下のエラーも発生する。
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>dirfd</I> が適切なファイルディスクリプターでない。
+<DT><B>ENOTDIR</B><DD>
+<I>pathname</I> が相対パスで、 <I>dirfd</I> がディレクトリ以外のファイルを参照しているファイルディスクリプターである。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>mkdirat</B>()  はカーネル 2.6.16 で Linux に追加された。 ライブラリによるサポートはバージョン 2.4 で glibc
+に追加された。
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+
+<B>mkdir</B>(): SVr4, BSD, POSIX.1-2001, POSIX.1-2008.
+<P>
+
+<B>mkdirat</B>(): POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+Under Linux, apart from the permission bits, the <B>S_ISVTX</B> <I>mode</I> bit is
+also honored.
+<P>
+
+NFS を実現しているプロトコルには多くの不備が存在し、 それら中には <B>mkdir</B>()  に影響を与えるものもある。
+<A NAME="lbAK">&nbsp;</A>
+<H3>glibc での注意</H3>
+
+<B>mkdirat</B>() が利用できない古いカーネルでは、 glibc ラッパー関数は <B>mkdir</B>() を使用するモードにフォールバックする。
+<I>pathname</I> が相対パスの場合、 glibc は <I>dirfd</I> 引数に対応する <I>/proc/self/fd</I>
+のシンボリックリンクに基づいてパス名を構成する。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../../0MultiFileIdx/man1/mkdir.1.html">mkdir</A></B>(1),&nbsp;<B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),&nbsp;<B><A HREF="../man2/chown.2.html">chown</A></B>(2),&nbsp;<B><A HREF="../man2/mknod.2.html">mknod</A></B>(2),&nbsp;<B><A HREF="../man2/mount.2.html">mount</A></B>(2),
+<B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2), <B><A HREF="../man2/stat.2.html">stat</A></B>(2), <B><A HREF="../man2/umask.2.html">umask</A></B>(2), <B><A HREF="../man2/unlink.2.html">unlink</A></B>(2), <B><A HREF="../../acl/man5/acl.5.html">acl</A></B>(5),
+<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">mkdirat()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAK">glibc での注意</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

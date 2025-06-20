@@ -1,0 +1,173 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STRTOUL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>STRTOUL</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/strtoul.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+strtoul, strtoull, strtouq - 文字列を unsigned long int に変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>unsigned long strtoul(const char *</B><I>nptr</I><B>, char **</B><I>endptr</I><B>, int </B><I>base</I><B>);</B>
+
+<B>unsigned long long strtoull(const char *</B><I>nptr</I><B>, char **</B><I>endptr</I><B>,</B>
+<B>                                int </B><I>base</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>strtoull</B>():
+<DL COMPACT><DT><DD>
+_ISOC99_SOURCE ||
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Glibc&nbsp;versions&nbsp;&lt;=&nbsp;2.19:&nbsp;*/&nbsp;_SVID_SOURCE&nbsp;||&nbsp;_BSD_SOURCE
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>strtoul</B>()  関数は、 <I>nptr</I> の文字列の最初の部分を、 <I>base</I> を基数として <I>unsigned long</I>
+に変換する。 この <I>base</I> は 2 から 36 までの値 あるいは特別な意味を持つ値 0 でなければならない。
+<P>
+
+文字列の先頭には、任意の数の空白があってもよく (空白は <B><A HREF="../man3/isspace.3.html">isspace</A></B>(3) で判定される)、また数字の直前には '+' か
+'-' の 符号があってもよい。 <I>base</I> が 0 または 16 の場合には、文字列の先頭に &quot;0x&quot; を置くことが
+でき、その場合には文字列は 16進数として扱われる。 これ以外の文字列で <I>base</I> が 0 の場合は、 文字列が '0'
+で始まるときは 8進数として、 それ以外のときは 10進数として扱われる。
+<P>
+
+文字列の残りの部分は <I>unsigned long</I> に変換されるが、基数に対して 有効でない数字が現れた時点で変換は終了する。(11進数以上では
+'A' は 大文字・小文字に関わらず 10 を表し、 'B' は 11 を表現し, 以下同様に、 'Z' は 35
+を表す。)
+<P>
+
+<I>endptr</I> がヌル値 (NULL) でない場合、 <B>strtoul</B>()  は最初に不正な文字が現れたアドレスを <I>*endptr</I>
+に格納している。 文字列に有効な数字がひとつもなければ、 <B>strtoul</B>()  は <I>nptr</I> の元の値を <I>*endptr</I>
+に代入する(そして 0 を返す)。 特に、 <I>*nptr</I> が '\0' 以外で、返された <I>**endptr</I> が
+'\0' ならば、文字列全体が有効だったことになる。
+<P>
+
+<B>strtoull</B>()  関数は <B>strtoul</B>()  関数と同様だが、 <I>unsigned long long</I> 型の値を返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>strtoul</B>()  関数は変換結果を返す。文字列がマイナス符号から始まっていた場 合は、(符号反転前の値がオーバーフローしていなければ)
+変換結果を符号反転した 値を unsigned 型で返す。変換でオーバーフローが発生した場合は <B>ULONG_MAX</B> を返し、 <I>errno</I> に
+<B>ERANGE</B> を設定する。 (<B>ULONG_MAX</B> を <B>ULLONG_MAX</B> と読み替えれば)  <B>strtoull</B>()  は
+<B>strtoul</B>()  と全く同じである。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+(C99 にはない) 指定された <I>base</I> がサポートされていない値である。
+<DT><B>ERANGE</B><DD>
+結果の値が範囲外である。
+</DL>
+<P>
+
+実装によっては、変換が行われなかった場合 (数字がなく、0 を返した場合)、 <I>errno</I> に <B>EINVAL</B> が設定される場合がある。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>strtoul</B>(),
+<B>strtoull</B>(),
+<B>strtouq</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>strtoul</B>(): POSIX.1-2001, POSIX.1-2008, C89, C99 SVr4.
+<P>
+
+<B>strtoull</B>(): POSIX.1-2001, POSIX.1-2008, C99.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<B>strtoul ()</B> からは成功、失敗どちらの場合でも 0 や <B>ULONG_MAX</B> (<B>strtoull</B>()  では
+<B>ULLONG_MAX</B>)  が返る可能性があるので、 プログラムは関数を呼び出す前に <I>errno</I> を 0 に設定し、呼び出し後に
+<I>errno</I> が 0 以外の値かどうかを確認しエラーが発生したかどうかを判断する 必要がある。
+<P>
+
+&quot;C&quot; 以外のロケールの場合、その他の文字列も受け付けられるかもしれない。 (例えば、現在のロケールの 1000
+毎の区切り文字に対応しているかもしれない。)
+<P>
+
+BSD には、
+<P>
+
+
+
+<B>u_quad_t strtouq(const char *</B><I>nptr</I><B>, char **</B><I>endptr</I><B>, int </B><I>base</I><B>);</B>
+
+
+<P>
+
+という完全に同様の定義を持つ関数がある。 使用中のアーキテクチャーのワード長次第であるが、この関数は <B>strtoull</B>()  や
+<B>stroul</B>()  と等価な場合もありえる。
+<P>
+
+負の値も正当な入力とみなされ、エラーもなく、 対応する <I>unsigned long</I> 型の値に変換される。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man3/strtol.3.html">strtol</A></B>(3)  のマニュアルページの例を参照。 このページで説明した関数の使用方法も同様である。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/a64l.3.html">a64l</A></B>(3), <B><A HREF="../man3/atof.3.html">atof</A></B>(3), <B><A HREF="../man3/atoi.3.html">atoi</A></B>(3), <B><A HREF="../man3/atol.3.html">atol</A></B>(3), <B><A HREF="../man3/strtod.3.html">strtod</A></B>(3), <B><A HREF="../man3/strtol.3.html">strtol</A></B>(3),
+<B><A HREF="../man3/strtoumax.3.html">strtoumax</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

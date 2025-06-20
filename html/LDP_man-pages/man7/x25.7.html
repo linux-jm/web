@@ -1,0 +1,133 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of X25</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>X25</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/x25.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+x25 - ITU-T X.25 / ISO-8208 プロトコルインターフェース
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/x25.h">linux/x25.h</A>&gt;</B>
+<P>
+
+<B>x25_socket = socket(AF_X25, SOCK_SEQPACKET, 0);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+X25 ソケットは X.25 パケット層プロトコルに対するインターフェースを提供する。 これにより、アプリケーションはパブリックな X.25
+データネットワークで 通信することができるようになる。 X.25 は International Telecommunication Union's
+recommendation X.25 (X.25 DTE-DCE mode) で標準化されている。 X25 ソケットは、中間層のない X.25
+ネットワーク (X.25 DTE-DTE mode)  での通信にも用いることができる。 DTE-DTE モードは ISO-8208 に記述されている。
+<P>
+
+メッセージ境界は保存される。ソケットからの <B><A HREF="../man2/read.2.html">read</A></B>(2)  は、反対側のソケットからの対応する <B><A HREF="../man2/write.2.html">write</A></B>(2)
+と同じ大きさのデータを受け取り、出力する。 必要がある場合は、カーネルが長いメッセージの 分割 (segmenting) と再構成
+(reassembling) を行う。 これには X.25 の M ビットが用いられる。 メッセージサイズには、ハードコーディングされた上限はない。
+しかし、一時的にシステムリソースが足りなかったり、 他の制約 (ソケットメモリーバッファーのサイズ制限など) が
+効いてしまうと、長いメッセージの再構成には失敗するかもしれない。 この場合、その X.25 接続はリセットされることになる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>ソケットアドレス</H3>
+
+<B>AF_X25</B> ソケットアドレスファミリーは、ネットワークアドレスを表すために <I>struct sockaddr_x25</I> を用いる。これは
+ITU-T recommendation X.121 で定義されている。
+<P>
+
+
+
+struct sockaddr_x25 {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa_family_t&nbsp;sx25_family;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;must&nbsp;be&nbsp;AF_X25&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;x25_address&nbsp;sx25_addr;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;X.121&nbsp;Address&nbsp;*/
+};
+
+
+<P>
+
+<I>sx25_addr</I> には char 配列 <I>x25_addr[]</I> を含まれる。これは 0 で終端する文字列として解釈される。
+<I>sx25_addr.x25_addr[]</I> は 15 個までの ASCII 文字を含むことができ (終端のヌルバイトは含まない)、 これが
+X.121 アドレスをなす。 10 進の数文字、'0' から '9' までだけが許される。
+<A NAME="lbAF">&nbsp;</A>
+<H3>ソケットオプション</H3>
+
+以下の X.25 特有のソケットオプションは、 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  で設定でき、 <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
+で取得できる。このとき <I>level</I> 引数には <B>SOL_X25</B> を指定する。
+<DL COMPACT>
+<DT><B>X25_QBITINCL</B><DD>
+X.25 の Q ビット (Qualified データビット) にユーザーがアクセス できるかどうかをコントロールする。整数の引数を取る。 0
+にセットすると、 Q ビットは発信パケットには決してセットされず、 受信パケットでは無視される (デフォルト)。 1
+にセットすると、ソケットから読む、あるいはソケットに送る メッセージそれぞれに先頭バイトが前置される。 ソケットから読んだデータでは、先頭バイトが 0
+だと、 この到着データパケットに対応する Q ビットはセットされていなかったことになる。 先頭バイトが 1 だと、到着データパケットの Q
+ビットがセットされていたことになる。 ソケットに書き込むデータの先頭バイトが 1 だと、 その発信パケットの Q ビットをセットする。 0 だと、 Q
+ビットをセットしない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+AF_X25 プロトコルファミリーは Linux 2.2 の新機能である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+X.25 PLP 実装は <B>CONFIG_EXPERIMENTAL</B> なので、たくさんあるだろう。
+<P>
+
+この man ページは完成していない。
+<P>
+
+まだアプリケーションプログラマー用のヘッダーファイルがない。 カーネルのヘッダーファイル <I>&lt;<A HREF="file:///usr/include/linux/x25.h">linux/x25.h</A>&gt;</I>
+をインクルードしなければならない。 <B>CONFIG_EXPERIMENTAL</B> なので、将来のバージョンのインターフェースでは
+バイナリ互換性が失われるかもしれない。
+<P>
+
+X.25 N-Reset イベントは、まだユーザープロセスに伝播しない。 したがってリセットが起こると、データは通知無しに失われる。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man7/socket.7.html">socket</A></B>(7)
+<P>
+
+Jonathan Simon Naylor: "The Re-Analysis and Re-Implementation of
+X.25." The URL is
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">ソケットアドレス</A><DD>
+<DT><A HREF="#lbAF">ソケットオプション</A><DD>
+</DL>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

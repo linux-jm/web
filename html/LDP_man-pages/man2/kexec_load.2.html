@@ -1,0 +1,156 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of KEXEC_LOAD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>KEXEC_LOAD</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-08-19<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/kexec_load.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+kexec_load - 新しいカーネルを後で実行するためにロードする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/kexec.h">linux/kexec.h</A>&gt;</B>
+<BR>
+
+<B>long kexec_load(unsigned long </B><I>entry</I><B>, unsigned long
+</B><I>nr_segments</I><B>,</B>
+<BR>
+
+<B> struct kexec_segment *</B><I>segments</I><B>, unsigned long </B><I>flags</I><B>);</B>
+<P>
+<I>注</I>: このシステムコールには glibc のラッパー関数は存在しない。「注意」の節を参照。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>kexec_load</B>() システムコールは、新しいカーネルをロードし、
+その後の <B><A HREF="../man2/reboot.2.html">reboot</A></B>(2) で実行できるようにする。
+<P>
+
+<I>flags</I> 引き数は、システムコールの呼び出しの動作を制御するマスクビットである。 <I>flags</I> には以下の値を指定できる。
+<DL COMPACT>
+<DT><B>KEXEC_ON_CRASH</B> (Linux 2.6.13 以降)<DD>
+
+システムのクラッシュ時に、新しいカーネルを自動的に実行する。
+<DT><B>KEXEC_PRESERVE_CONTEXT</B> (Linux 2.6.27 以降)<DD>
+新しいカーネルを実行する前に、
+システムのハードウェアとソフトウェアの状態を保存する。
+システムの中断時 (suspend) などで使用できる。
+このフラグは、カーネルの設定で <B>CONFIG_KEXEC_JUMP</B> が有効の場合のみ
+利用可能であり、 <I>nr_segments</I> が 0 より大きい場合のみ効果がある。
+</DL>
+<P>
+
+<I>flags</I> の上位ビット (マスク 0xffff0000 に対応) には、
+実行されるカーネルのアーキテクチャーが入る。
+現在のアーキテクチャーを使うことを意味する定数 <B>KEXEC_ARCH_DEFAULT</B> か、
+アーキテクチャー定数 <B>KEXEC_ARCH_386</B>, <B>KEXEC_ARCH_68K</B>, <B>KEXEC_ARCH_X86_64</B>,
+<B>KEXEC_ARCH_PPC</B>, <B>KEXEC_ARCH_PPC64</B>, <B>KEXEC_ARCH_IA_64</B>,
+<B>KEXEC_ARCH_ARM</B>, <B>KEXEC_ARCH_S390</B>, <B>KEXEC_ARCH_SH</B>,
+<B>KEXEC_ARCH_MIPS</B>, <B>KEXEC_ARCH_MIPS_LE</B> の
+いずれか一つを (OR で) 指定する。指定するアーキテクチャーは、
+システムの CPU で実行可能なものでなければならない。
+<P>
+<I>entry</I> 引き数は、カーネルイメージの物理エントリーアドレスである。 <I>nr_segments</I> 引き数は、 <I>segments</I>
+ポインターが指すセグメントの数である。 なお、セグメント数には、カーネルにより 16 という (強制的な) 上限が課される。 <I>segments</I>
+引き数は <I>kexec_segment</I> 構造体の配列で、 この構造体によりカーネルの配置が定義される。
+
+<PRE>
+
+struct kexec_segment {
+    void   *buf;        /* Buffer in user space */
+    size_t  bufsz;      /* Buffer length in user space */
+    void   *mem;        /* Physical address of kernel */
+    size_t  memsz;      /* Physical address length */
+};
+</PRE>
+
+
+<P>
+
+
+
+<I>segments</I> で定義されたカーネルイメージは、
+呼び出したプロセスから予約済みメモリーにコピーされる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>kexec_load</B> は 0 を返す。
+エラーの場合、 -1 が返り、 <I>errno</I> にエラーを示す値が設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBUSY</B><DD>
+別のクラッシュカーネルがすでにロードされているか、
+クラッシュカーネルがすでに使用されている。
+<DT><B>EINVAL</B><DD>
+
+<I>flags</I> が無効である。 <I>nr_segments</I> が大きすぎる。
+<DT><B>EPERM</B><DD>
+呼び出し側が <B>CAP_SYS_BOOT</B> ケーパビリティを持っていない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>kexec_load</B>() システムコールは Linux 2.6.13 で初めて登場した。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+現在のところ、 <B>kexec_load</B>() は glibc ではサポートされていない。
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2) を使って呼び出すこと。
+<P>
+
+
+
+必要な定数は Linux カーネルのソースファイル <I>linux/kexec.h</I> で定義されている
+が、現在のところ glibc には公開されていない。
+そのため、これらの定数は手動で定義しなければならない。
+<P>
+このシステムコールは、カーネルの設定で <B>CONFIG_KEXEC</B> が有効になって
+いる場合にのみ利用できる。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/reboot.2.html">reboot</A></B>(2), <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.78 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

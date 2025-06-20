@@ -1,0 +1,200 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LSEEK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LSEEK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/lseek.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+lseek - ファイルの読み書きオフセットの位置を変える
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>off_t lseek(int </B><I>fd</I><B>, off_t </B><I>offset</I><B>, int </B><I>whence</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>lseek</B>()  repositions the file offset of the open file description
+associated with the file descriptor <I>fd</I> to the argument <I>offset</I>
+according to the directive <I>whence</I> as follows:
+<DL COMPACT>
+<DT><B>SEEK_SET</B><DD>
+ファイルオフセットは <I>offset</I> バイトに設定される。
+<DT><B>SEEK_CUR</B><DD>
+ファイルオフセットは現在位置に <I>offset</I> バイトを足した位置になる。
+<DT><B>SEEK_END</B><DD>
+ファイルオフセットはファイルのサイズに <I>offset</I> バイトを足した位置になる。
+</DL>
+<P>
+
+<B>lseek</B>() は、オフセットをファイルの末尾を越えた位置に設定できる (但し、これによりファイルのサイズが変わらない)。
+もしデータがこのオフセット位置以降に書き込まれた場合、 間の空隙の部分 (&quot;穴 (hole)&quot;) の読み出しがあると、
+実際にそこにデータを書き込まれるまではヌルバイト ('\0') の列が返される。
+<A NAME="lbAE">&nbsp;</A>
+<H3>ファイルのデータとホールの探索</H3>
+
+Linux バージョン 3.1 以降では、 <I>whence</I> に以下の値も指定することができる。
+<DL COMPACT>
+<DT><B>SEEK_DATA</B><DD>
+ファイルオフセットを <I>offset</I> 以上で次にデータがある位置に設定する。 <I>offset</I> がデータを指している場合には、
+ファイルオフセットは <I>offset</I> に設定される。
+<DT><B>SEEK_HOLE</B><DD>
+ファイルオフセットを、 位置が <I>offset</I> 以上の次のホール (hole) に設定する。 <I>offset</I>
+がホールの内部にある場合は、ファイルシステムは <I>offset</I> に設定される。 <I>offset</I> 以降にホールがない場合は、
+ファイルオフセットはファイル末尾に設定される (つまり、 どのファイルの末尾にも暗黙のホールが存在するということだ)。
+</DL>
+<P>
+
+上記のどちらの場合も、 <I>offset</I> がファイル末尾よりも先を指している場合には <B>lseek</B>() は失敗する。
+<P>
+
+これらの操作を使うことで、 アプリケーションが、 まばら (sparse ) にページが割り当てられたファイルでホールをマップすることができる。
+この機能はファイルバックアップツールなどのアプリケーションで有用である。 ホールを見つける仕組みがあれば、 ファイルバックアップツールで、
+バックアップを作成する際に保存領域を節約し、ホールを保持することができる。
+<P>
+
+
+
+
+これらの操作の目的としては、 ホールは (通常は) バックエンドのファイルストレージには割り当てられていない連続する 0 の列である。
+しかし、ファイルシステムにはホールを報告する義務はなく、 そのため、 これらの操作は、
+ファイルに実際に割り当てられたストレージ領域をマッピングする方法としては確実性のある仕組みではない。
+(また、バックエンドのストレージに実際に書き込まれた連続する 0 の列はホールとして報告されないこともある。) 最も単純な実装としては、
+<B>SEEK_HOLE</B> は常にファイル末尾のオフセットを返すようにし、 <B>SEEK_DATA</B> は常に <I>offset</I> を返すようにすることで、
+ファイルシステムはこれらの操作をサポートすることができる (<B>SEEK_DATA</B> は常に <I>offset</I> を返すというのは、 <I>offset</I>
+が参照する場所がホールであったとしても、 連続する 0 の列のデータで構成されているとみなすということである)。
+<P>
+
+<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> から <B>SEEK_DATA</B> と <B>SEEK_HOLE</B> の定義を得るには、 機能検査マクロ
+<B>_GNU_SOURCE</B> を定義しなければならない。
+<P>
+
+<B>SEEK_HOLE</B>, <B>SEEK_DATA</B> 操作に対応しているのは以下のファイルシステムである。
+<DL COMPACT>
+<DT>*<DD>
+Btrfs (Linux 3.1 以降)
+<DT>*<DD>
+
+OCFS (Linux 3.2 以降)
+<DT>*<DD>
+XFS (Linux 3.5 以降)
+<DT>*<DD>
+ext4 (Linux 3.8 以降)
+<DT>*<DD>
+<B>tmpfs</B>(5)  (Linux 3.8 以降)
+<DT>*<DD>
+
+
+NFS (Linux 3.18 以降)
+<DT>*<DD>
+
+FUSE (Linux 4.5 以降)
+<DT>*<DD>
+
+GFS2 (Linux 4.15 以降)
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 <B>lseek</B>()  は結果のファイル位置をファイルの先頭からのバイト数で返す。 エラーの場合、値 <I>(off_t)&nbsp;-1</I>
+が返され、 <I>errno</I> にエラーが指示される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>fd</I> がオープンされたファイルディスクリプターでない。
+<DT><B>EINVAL</B><DD>
+
+
+<I>whence</I> が有効な値ではない。または、seek の結果、ファイルオフセットが負に
+なってしまうか、 seek 可能なデバイスの末尾を越えてしまう。
+<DT><B>ENXIO</B><DD>
+<I>whence</I> is <B>SEEK_DATA</B> or <B>SEEK_HOLE</B>, and <I>offset</I> is beyond the end
+of the file, or <I>whence</I> is <B>SEEK_DATA</B> and <I>offset</I> is within a hole at
+the end of the file.
+<DT><B>EOVERFLOW</B><DD>
+
+結果のファイルオフセットを <I>off_t</I> 型で表現することができない。
+<DT><B>ESPIPE</B><DD>
+<I>fd</I> がパイプ、ソケット、FIFO を参照している。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.
+<P>
+
+
+<B>SEEK_DATA</B> と <B>SEEK_HOLE</B> は非標準の拡張で、 Solaris, FreeBSD, DragonFly BSD
+にも存在する。 これらは POSIX の次の版 (Issue 8) に入れるよう提案されている。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+ファイルディスクリプター、オープンファイル記述、ファイルの関係の説明については <B><A HREF="../man2/open.2.html">open</A></B>(2) を参照。
+<P>
+
+If the <B>O_APPEND</B> file status flag is set on the open file description,
+then a <B><A HREF="../man2/write.2.html">write</A></B>(2)  <I>always</I> moves the file offset to the end of the file,
+regardless of the use of <B>lseek</B>().
+<P>
+
+The <I>off_t</I> data type is a signed integer data type specified by POSIX.1.
+<P>
+
+いくつかのデバイスでは seek ができない。 POSIX はどのデバイスが <B>lseek</B>()  に対応すべきかは規定していない。
+<P>
+
+
+
+On Linux, using <B>lseek</B>()  on a terminal device fails with the error
+<B>ESPIPE</B>.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/dup.2.html">dup</A></B>(2), <B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2), <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man3/fseek.3.html">fseek</A></B>(3),
+<B><A HREF="../man3/lseek64.3.html">lseek64</A></B>(3), <B><A HREF="../man3/posix_fallocate.3.html">posix_fallocate</A></B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">ファイルのデータとホールの探索</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

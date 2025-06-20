@@ -1,0 +1,179 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETLINE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETLINE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getline.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getline, getdelim - 区切り文字までの文字列入力を読み込む
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<B>ssize_t getline(char **</B><I>lineptr</I><B>, size_t *</B><I>n</I><B>, FILE *</B><I>stream</I><B>);</B>
+
+<B>ssize_t getdelim(char **</B><I>lineptr</I><B>, size_t *</B><I>n</I><B>, int </B><I>delim</I><B>, FILE *</B><I>stream</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>getline</B>(), <B>getdelim</B>():
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>glibc 2.10 以降:<DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>glibc 2.10 より前:<DD>
+_GNU_SOURCE
+</DL>
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getline</B>()  は <I>stream</I> から 1 行全てを読み込み、テキストが含まれているバッファーのアドレスを <I>*lineptr</I>
+に格納する。 バッファーはヌル文字 (\0) で終端される。 改行文字が見つかった場合は、改行文字もバッファーに格納される。
+<P>
+
+<I>*lineptr</I> が NULL にセットされ、 <I>*n</I> が呼び出し前に 0 にセットされた場合、 <B>getline</B>()
+は行の内容を格納するためのバッファーを確保する。 このバッファーは、 <B>getline</B>()
+が失敗した場合であっても、ユーザーのプログラムで解放すべきである。
+<P>
+
+別の方法として、 <B>getline</B>()  を呼び出す際に、 <I>*lineptr</I> に <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  で確保した大きさ <I>*n</I>
+バイトのバッファーへのポインターを入れて渡すこともできる。 読み込んだ行を保持するのに十分なバッファーがない場合、 <B>getline</B>()  は
+<B><A HREF="../man3/realloc.3.html">realloc</A></B>(3)  を使ってバッファーのサイズを変更し、必要に応じて <I>*lineptr</I> と <I>*n</I> を更新する。
+<P>
+
+どちらの場合でも、呼び出しに成功したときには、 <I>*lineptr</I> と <I>*n</I>
+がバッファーのアドレスと割り当てたサイズを反映した値に更新される。
+<P>
+
+<B>getdelim</B>()  は <B>getline</B>()  と同じように動作するが、改行文字以外の区切り文字を引数 <I>delim</I>
+に指定することができる。 <B>getline</B>()  と同様に、ファイル終端に達するまでに入力行に区切り文字が見付からない場合は、
+区切り文字をバッファーに追加しない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 <B>getline</B>()  と <B>getdelim</B>()  は読み込んだ文字数を返す。
+文字数には区切り文字は含まれるが、終端に使うヌルバイト ('\0') は含まれない。
+この値によって、読み込んだ行に含まれるヌルバイトを操作することができる。
+<P>
+
+どちらの関数も、行の読み込みに失敗した場合には -1 を返す (ファイルの終端に達した場合にも -1 を返す)。 エラーが発生した場合には、
+<I>errno</I> にエラーの原因を示す値が設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+引数が不正である (<I>n</I> または <I>lineptr</I> が NULL である。 もしくは <I>stream</I> が有効でない)。
+<DT><B>ENOMEM</B><DD>
+Allocation or reallocation of the line buffer failed.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getline</B>(),
+<B>getdelim</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>getline</B>()  と <B>getdelim</B>()  は、どちらも元は GNU による拡張であったが、 POSIX.1-2008
+で標準化された。
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;FILE&nbsp;*stream;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*line&nbsp;=&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;len&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nread;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;file&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;stream&nbsp;=&nbsp;fopen(argv[1],&nbsp;&quot;r&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(stream&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fopen&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((nread&nbsp;=&nbsp;getline(&amp;line,&nbsp;&amp;len,&nbsp;stream))&nbsp;!=&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Retrieved&nbsp;line&nbsp;of&nbsp;length&nbsp;%zd:\n&quot;,&nbsp;nread);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fwrite(line,&nbsp;nread,&nbsp;1,&nbsp;stdout);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(line);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fclose(stream);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man3/fgets.3.html">fgets</A></B>(3), <B><A HREF="../man3/fopen.3.html">fopen</A></B>(3), <B><A HREF="../man3/fread.3.html">fread</A></B>(3), <B><A HREF="../man3/scanf.3.html">scanf</A></B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">例</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

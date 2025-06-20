@@ -1,0 +1,237 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LOSETUP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LOSETUP</H1>
+Section: MAINTENANCE COMMANDS (8)<BR>Updated: 2003-07-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/util-linux/release/man8/losetup.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+losetup - loop デバイスの設定と制御を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+
+情報を取得する:
+<P>
+
+<B>losetup</B>
+
+<I>loop_device</I>
+
+<P>
+
+loop を削除する:
+<P>
+
+<B>losetup -d</B>
+
+<I>loop_device</I>
+
+<P>
+
+使用されていない最初 loop デバイスの名前を表示する:
+<P>
+
+<B>losetup -f</B>
+
+<P>
+
+loop デバイスを設定する:
+<P>
+
+<B>losetup</B>
+
+[{-e<B>|</B>-E}
+
+<I>encryption</I>]
+
+[<B>-o</B>
+
+<I>offset</I>]
+
+[<B>-p</B>
+
+<I>pfd</I>]
+
+
+{<B>-f</B>|<B></B><I>loop_device</I>}
+
+<I>file</I>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>losetup</B>
+
+は loop デバイスを通常のファイルやブロックデバイスと接続/切断したり、
+loop デバイスへの問い合わせを行うために用いられる。
+引き数として
+<I>loop_device</I>
+
+が与えられた場合に限り、対応する loop デバイスの状態が表示される。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H3>暗号化</H3>
+
+<B>-E</B>
+
+または
+<B>-e</B>
+
+オプションのいずれか 1 つにより、
+(暗号化・復号化やその他の目的で使う) 変換関数を指定することができる。
+使いたい暗号化機能を指定する 2 つの仕組みがある。
+番号で指定する方法と名前で指定する方法である。
+暗号化機能を番号で指定する場合、
+Linux カーネルがその番号の暗号化機能を知っていることを
+確認しておかなければならない。
+この暗号化機能は、たぶんカーネルへのパッチで提供される。
+常に提供されている標準的な番号は、
+0 (暗号化なし) と 1 (XOR 暗号化) である。
+cryptoloop モジュールがロードされると (または組み込まれていると)、
+このモジュールは番号 18 を使う。
+cryptoloop は任意の暗号化タイプの名前を受け取り、
+その暗号化を実行可能なモジュールを探す。
+(よって、ユーザは
+<B>-E</B>
+
+オプションで 18 以外の番号を指定するか、
+<B>-e</B>
+
+オプションで名前を指定すればよい。)
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-d</B><DD>
+指定した loop デバイスを対応するファイルやデバイスから切り放す。
+<DT><B>-E </B><I>encryption_type</I><DD>
+指定された番号のデータ暗号化機能を有効にする。
+<DT><B>-e </B><I>encryption_name</I><DD>
+指定された名前のデータ暗号化機能を有効にする。
+<DT><B>-f</B><DD>
+使用されていない最初の loop デバイスを見つける。
+<I>file</I>
+
+引き数が指定されている場合は、そのデバイスを使用する。
+指定されていない場合は、loop デバイスの名前を表示する。
+<DT><B>-o </B><I>offset</I><DD>
+データの開始地点を指定したファイルやデバイスの
+<I>offset</I>
+
+バイトに移動する。
+<DT><B>-p </B><I>num</I><DD>
+パスフレーズを端末からではなく、番号
+<I>num</I>
+
+のファイルディスクリプタから読み込む。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>losetup</B>
+
+は成功すると 0 を返し、失敗すると 0 以外を返す。
+<B>losetup</B>
+
+に loop デバイスの状態を表示させる場合は、
+デバイスが設定されていなければ 1 を、
+デバイスの状態を決定できなくするようなエラーが起った場合は 2 を返す。
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>ファイル</H2>
+
+<PRE>
+/dev/loop0, /dev/loop1, ...   ループデバイス (major=7)
+</PRE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+ローダブルモジュールを用いている場合は、
+まず以下のコマンドによってモジュールをロードする必要がある。
+<DL COMPACT>
+<DT><DD>
+# insmod loop.o
+</DL>
+<P>
+
+暗号化モジュールも必要かも知れない。
+<PRE>
+<DL COMPACT>
+<DT><DD># insmod des.o
+# insmod cryptoloop.o
+</PRE>
+
+</DL>
+<P>
+
+以下の一連のコマンドは loop デバイスの使用例である。
+<PRE>
+<DL COMPACT>
+<DT><DD># dd if=/dev/zero of=/file bs=1k count=100
+# losetup -e des /dev/loop0 /file
+Password:
+Init (up to 16 hex digits):
+# mkfs -t ext2 /dev/loop0 100
+# mount -t ext2 /dev/loop0 /mnt
+ ...
+# umount /dev/loop0
+# losetup -d /dev/loop0
+</PRE>
+
+</DL>
+<P>
+
+ローダブルモジュールを用いている場合は、
+以下のコマンドによってモジュールを削除することができる。
+<DL COMPACT>
+<DT><DD>
+# rmmod loop
+</DL>
+<P>
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>制限</H2>
+
+DES 暗号化は非常に遅い。一方 XOR は非常に弱い。
+
+
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">暗号化</A><DD>
+</DL>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">ファイル</A><DD>
+<DT><A HREF="#lbAI">例</A><DD>
+<DT><A HREF="#lbAJ">制限</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:50 GMT, December 05, 2022
+</BODY>
+</HTML>

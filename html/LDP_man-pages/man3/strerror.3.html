@@ -1,0 +1,242 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STRERROR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>STRERROR</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/strerror.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+strerror, strerrorname_np, strerrordesc_np, strerror_r, strerror_l -
+エラー番号を説明する文字列を返す。
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;</B>
+
+<B>char *strerror(int </B><I>errnum</I><B>);</B>
+<B>const char *strerrorname_np(int </B><I>errnum</I><B>);</B>
+<B>const char *strerrordesc_np(int </B><I>errnum</I><B>);</B>
+
+<B>int strerror_r(int </B><I>errnum</I><B>, char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>);</B>
+            /* XSI-compliant */
+
+<B>char *strerror_r(int </B><I>errnum</I><B>, char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>);</B>
+            /* GNU-specific */
+
+<B>char *strerror_l(int </B><I>errnum</I><B>, locale_t </B><I>locale</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+
+<P>
+
+
+<B>strerrorname_np</B>(),
+<B>strerrordesc_np</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;_GNU_SOURCE
+<P>
+
+<B>strerror_r</B>():
+<DL COMPACT><DT><DD>
+次の場合には XSI 準拠のバージョンが提供される:
+<BR>
+
+(_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L) &amp;&amp; ! &nbsp;_GNU_SOURCE
+<BR>
+
+それ以外の場合、GNU バージョンが提供される。
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>strerror</B>() 関数は、引数 <I>errnum</I> で渡されたエラーコードについての説明が入った文字列へのポインターを返す。
+可能であるならば、適切な言語を選択するために、 現在のロケールの <B>LC_MESSAGES</B> を使う。(例えば、 <I>errnum</I> が
+<B>EINVAL</B> の場合、説明として &quot;Invalid argument&quot; が返される。) この文字列は、アプリケーションで変更してはならないが、
+これ以降に行われる <B>strerror</B>() や <B>strerror_l</B>() の呼び出しで変更されても構わない。 <B><A HREF="../man3/perror.3.html">perror</A></B>(3)
+などの、これ以外のライブラリ関数ではこの文字列は変更されない。
+<P>
+
+Like <B>strerror</B>(), the <B>strerrordesc_np</B>()  function returns a pointer to
+a string that describes the error code passed in the argument <I>errnum</I>,
+with the difference that the returned string is not translated according to
+the current locale.
+<P>
+
+
+The <B>strerrorname_np</B>()  function returns a pointer to a string containing
+the name of the error code passed in the argument <I>errnum</I>.  For example,
+given <B>EPERM</B> as an argument, this function returns a pointer to the string
+&quot;EPERM&quot;.
+<A NAME="lbAE">&nbsp;</A>
+<H3>strerror_r()</H3>
+
+<B>strerror_r</B>() 関数は <B>strerror</B>() と似ているが、スレッドセーフである。この関数には二種類のバージョンが存在し、
+POSIX.1-2001 で規定された XSI 準拠のバージョン (glibc 2.3.4 以降で利用可能だが、glibc 2.13 までは POSIX
+準拠ではない) と、 GNU 仕様のバージョン (glibc 2.0 以降で利用可能) である。 「書式」の節に記載された機能検査マクロの場合には、
+XSI 準拠のバージョンが提供される。それ以外の場合には GNU 仕様のバージョンが提供される。機能検査マクロが一つも明示的に定義されない場合、
+(glibc 2.4 以降では) デフォルトで <B>_POSIX_C_SOURCE</B> は値 200112l で定義され、その結果 XSI
+準拠のバージョンの <B>strerror_r</B>() がデフォルトで提供される。
+<P>
+
+移植性が必要なアプリケーションでは、 XSI 準拠の <B>strerror_r</B>()  を使う方がよい。 この関数は、ユーザーから提供される長さ
+<I>buflen</I> のバッファー <I>buf</I> にエラー文字列を返す。
+<P>
+
+
+GNU 仕様の <B>strerror_r</B>() は、 エラーメッセージを格納した文字列へのポインターを返す。 返り値は、 この関数が <I>buf</I>
+に格納した文字列へのポインターか、 何らかの (不変な) 静的な文字列へのポインター、 のいずれかとなる (後者の場合は <I>buf</I>
+は使用されない)。 <I>buf</I> に文字列が格納される場合は、 最大で <I>buflen</I> バイトが格納される (<I>buflen</I>
+が小さ過ぎたときには文字列は切り詰められ、 <I>errnum</I> は不定である)。 文字列には必ず終端ヌル文字 ('\0') が含まれる。
+<A NAME="lbAF">&nbsp;</A>
+<H3>strerror_l()</H3>
+
+<B>strerror_l</B>() は <B>strerror</B>() と同様だが、 <I>errnum</I> を <I>locale</I>
+で指定されたロケールのロケール依存のエラーメッセージにマッピングする。 <I>locale</I> が特別なロケールオブジェクト
+<B>LC_GLOBAL_LOCALE</B> の場合、もしくは <I>locale</I> が有効なロケールオブジェクトハンドルでない場合は、
+<B>strerror_l</B>() の動作は未定義である。
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+関数 <B>strerror</B>(), <B>strerror_l</B>() と GNU 固有の関数 <B>strerror_r</B>()
+はエラー内容を説明する文字列を返す。 エラー番号が未知の場合は &quot;Unknown error nnn&quot; という メッセージを返す。
+<P>
+
+On success, <B>strerrorname_np</B>()  and <B>strerrordesc_np</B>()  return the
+appropriate error description string.  If <I>errnum</I> is an invalid error
+number, these functions return NULL.
+<P>
+
+XSI 準拠の <B>strerror_r</B>() 関数は成功すると 0 を返す。エラーの場合には、
+(glibc 2.13 以降では) (正の) エラー番号が返され、(バージョン 2.13 より前
+の glibc では) -1 が返され、 <I>errno</I> にエラーを示す値がセットされる。
+<P>
+
+POSIX.1-2001 と POSIX.1-2008 では、 <B>strerror</B>() や <B>strerror_l</B>() が成功した場合は
+<I>errno</I>
+を変更せずに元のままにしなければならないとされている。関数のどの返り値もエラーを示すために予約されていないので、エラーをチェックしたいアプリケーションは呼び出しを行う前に
+<I>errno</I> を 0 に初期化し、呼び出しの後で <I>errno</I> をチェックすべき点に注意すること。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>errnum</I> の値が有効なエラー番号ではない。
+<DT><B>ERANGE</B><DD>
+エラーコードを説明する文字列のために、充分な領域が確保できなかった。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>strerror_l</B>() 関数は glibc 2.6 で初めて登場した。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>strerror</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:strerror<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>strerrorname_np</B>(),
+<B>strerrordesc_np</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>strerror_r</B>(),
+<BR>
+
+<B>strerror_l</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+
+<B>strerror</B>()  は POSIX.1-2001, POSIX.1-2008, C89, C99 で規定されている。
+<B>strerror_r</B>()  は POSIX.1-2001 と POSIX.1-2008 で規定されている。
+<P>
+
+<B>strerror_l</B>() は POSIX.1-2008 で規定されている。
+<P>
+
+GNU 固有の関数 <B>strerror_r</B>(), <B>strerrorname_np</B>(), <B>strerrordesc_np</B>()
+は、非標準の拡張である。
+<P>
+
+
+
+POSIX.1-2001 は、 <B>strerror</B>() がエラーに遭遇した場合に <I>errno</I> をセッ
+トすることを認めているが、エラー発生時に関数の結果として どんな値を返す
+べきかを規定してない。 あるシステムでは、 エラー番号が未知の場合、
+<B>strerror</B>() は NULL を返す。 他のシステムでは、 エラー番号が未知の場
+合、 <B>strerror</B>() は &quot;Error nnn occurred&quot; といった文字列を返し、
+<I>errno</I> に <B>EINVAL</B> をセットする。 C99 と POSIX.1-2008 では、返り値が
+NULL 以外になることが求められている。
+<A NAME="lbAL">&nbsp;</A>
+<H2>注意</H2>
+
+The GNU C Library uses a buffer of 1024 characters for <B>strerror</B>().  This
+buffer size therefore should be sufficient to avoid an <B>ERANGE</B> error when
+calling <B>strerror_r</B>().
+<P>
+
+<B>strerrorname_np</B>()  and <B>strerrordesc_np</B>()  are thread-safe and
+async-signal-safe.
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/err.3.html">err</A></B>(3), <B><A HREF="../man3/errno.3.html">errno</A></B>(3), <B><A HREF="../man3/error.3.html">error</A></B>(3), <B><A HREF="../man3/perror.3.html">perror</A></B>(3), <B><A HREF="../man3/strsignal.3.html">strsignal</A></B>(3),
+<B><A HREF="../man7/locale.7.html">locale</A></B>(7)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">strerror_r()</A><DD>
+<DT><A HREF="#lbAF">strerror_l()</A><DD>
+</DL>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
+<DT><A HREF="#lbAJ">属性</A><DD>
+<DT><A HREF="#lbAK">準拠</A><DD>
+<DT><A HREF="#lbAL">注意</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

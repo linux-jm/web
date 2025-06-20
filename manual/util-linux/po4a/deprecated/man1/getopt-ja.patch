@@ -1,0 +1,139 @@
+--- getopt.1.orig	2021-03-07 10:01:45.119867432 +0900
++++ getopt.1	2021-03-07 10:05:21.283405102 +0900
+@@ -1,8 +1,47 @@
++.\" getopt.c - Enhanced implementation of BSD getopt(1)
++.\" Copyright (c) 1997-2014 Frodo Looijaard <frodo@frodo.looijaard.name>
++.\"
++.\" This program is free software; you can redistribute it and/or modify
++.\" it under the terms of the GNU General Public License as published by
++.\" the Free Software Foundation; either version 2 of the License, or
++.\" (at your option) any later version.
++.\"
++.\" This program is distributed in the hope that it will be useful,
++.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
++.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++.\" GNU General Public License for more details.
++.\"
++.\" You should have received a copy of the GNU General Public License along
++.\" with this program; if not, write to the Free Software Foundation, Inc.,
++.\" 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++.\"
+ .\"*******************************************************************
+ .\"
+ .\" This file was generated with po4a. Translate the source file.
+ .\"
+ .\"*******************************************************************
++.\"
++.\" The original version of this translation was contributed 
++.\" to Linux JM project from NetBSD jman proj.
++.\"
++.\" The copyright for the modified parts of the translation blongs to us
++.\" with Linux JM project.
++.\"
++.\" Japanese Version Copyright for the modified parts (c) 2001-2020 Yuichi SATO
++.\"   and 2020 Yoichi Chonan,
++.\"         all rights reserved.
++.\" Translated Tue 11 Jan 1994
++.\"         by NetBSD jman proj. <jman@spa.is.uec.ac.jp>
++.\" Updated Sun Jan 14 04:46:37 JST 2001
++.\"         by Yuichi SATO <sato@complex.eng.hokudai.ac.jp>
++.\" Updated & Modified Sun Mar  2 15:11:49 JST 2003
++.\"         by Yuichi SATO <ysato444@yahoo.co.jp>
++.\" Updated & Modified (util-linux 2.34) Fri Sep 25 10:16:02 JST 2020
++.\"         by Yuichi SATO <ysato444@ybb.ne.jp>
++.\"         and Yoichi Chonan <cyoichi@maple.ocn.ne.jp>
++.\" Updated & Modified (util-linux 2.36) Sun Mar  7 09:36:18 JST 2021
++.\"         by Yoichi Chonan <cyoichi@maple.ocn.ne.jp>
++.\"
+ .TH GETOPT 1 "December 2014" util\-linux "User Commands"
+ .SH 名前
+ getopt \- コマンドのオプションを解析する (強化版)
+@@ -33,6 +72,12 @@
+ が存在するならば、それは「\fB書式\fP」セクションの第 2 の書式に当たる)、2
+ 番目の部分の最初のパラメータが、解析の対象となるショートオプションを
+ 1 つにまとめたショートオプションズ文字列 (すなわち \fIoptsting\fP) として使用される。
++.IP "[\fB訳注\fP]" 8
++「\fB書式\fP」セクションの第 3
++の書式で、解析の対象になるパラメータをオプションから始めるときは、その前に
++\&'\fB\-\-\fP' を置く必要がある。そうしないと、\fBgetopt\fP
++自体のオプションと誤解されることになる。
++解析の対象をファイル名などから始めるときは、'\fB\-\-\fP' を置かなくてもよい。
+ .PP
+ 環境変数 \fBGETOPT_COMPATIBLE\fP
+ が設定されている場合や、最初のパラメータがオプションではない場合 (すなわち、'\fB\-\fP'
+@@ -71,6 +116,12 @@
+ 中の各ロングオプション名の後ろには、コロンを続けることができる。コロンが 1 個のときは、
+ 引き数が必須だということであり、2 個のときは、
+ 引き数は任意、すなわち、あってもなくてもよいということである。
++.RS
++.IP "[\fB訳注\fP]" 8
++ロングオプションのみを使い、ショートオプションを全く使わない場合は、\fB\-o\fP
++オプションに空文字列を渡すことで (\fB\-o ''\fP)
++それを明示的に宣言しなければならない。「\fBバグ\fP」セクションを参照。
++.RE
+ .TP 
+ \fB\-n\fP,\fB \-\-name \fP\fIprogname\fP
+ \fBgetopt\fP(3) ルーティンが、エラーを通知する際に使用するプログラム名を指定する。
+@@ -127,6 +178,28 @@
+ \fBgetopt\fP に渡されるパラメータリスト中のパラメータと
+ 1 対 1 で対応していなければならないのだ (「\fB用例\fP」セクションを参照)。
+ すべての解析は、GNU \fBgetopt\fP(3) のルーティンによって行われる。
++.IP "[\fB訳注\fP]" 8
++\fBgetopt\fP の使い方の簡単な例を挙げる。
++たとえば、シェル関数やシェルスクリプト中に次のように書く。
++.sp
++.nf
++    PARAM=$(getopt -o 'a:b::c' -- "$@")
++    eval set -- "$PARAM"
++.fi
++.sp
++このようにして、シェル関数やスクリプトに渡された引き数群を、位置パラメータを利用して、
++どれがオプションで、どれがそのオプション引き数、どれがそれ以外か、わかりやすく、
++処理しやすいように再構成するわけである。詳しくは、「\fB出力\fP」セクションや、
++「\fB用例\fP」で述べているスクリプトの見本を参照していただきたい。
++.sp
++「シェル関数を呼んだときに渡す各パラメータは、\fBgetopt\fP
++に渡されるパラメータリスト中のパラメータと 1 対 1
++で対応していなければならない」というのは、
++シェル関数やシェルスクリプトに渡すパラメータでも、
++それが空白などを含むようならクォートしなければならないのはもちろん、以下で説明するような
++\fBgetopt\fP コマンドのパラメータの書式にも従っていなければならないということである。
++たとえば、引き数が任意のショートオプション \fB\-b\fP
++に引き数を指定する場合は、\fB\-bXXX\fP などと、間に空白を置かずに指定しなければならない。
+ .PP
+ パラメータ群は左から右へ解析される。各パラメータは、ショートオプション、ロングオプション、
+ オプションの引き数、オプションとは無関係なパラメータに分割分類される。
+@@ -290,19 +363,26 @@
+ 関数は、引き数が任意のロングオプションが空の任意引き数を渡された場合、それを解析できる
+ (だが、ショートオプションに対しては、それができない)。一方、この \fBgetopt\fP(1)
+ コマンドは、空の任意引き数を、引き数が存在しないかのように処理している。
++.IP "[\fB訳注\fP]" 8
++バグとは言っても、不具合ではなく、この \fBgetopt\fP コマンドが \fBgetopt\fP(3)
++関数とは、仕様が微妙に違うということを言っているらしい。すなわち、\fBgetopt\fP(3)
++(\fBgetopt_long\fP(3)) 関数は、引き数が任意のロングオプションに引数がない場合と、
++空の引き数を渡された場合とを区別している。それに対して、この \fBgetopt\fP
++コマンドの方は、ロングオプションであれ、ショートオプションであれ、
++引き数が任意のオプションに引数がない場合と、空の引き数を渡された場合とを区別せず、
++どちらも同じように処理している。
+ .PP
+ ショートオプションを全く使いたくない場合の \fBgetopt\fP
+ コマンドの構文は、あまり直感的ではない
+ (ショートオプションズ文字列を明示的に空文字列にしなければならないのだ)。
++.IP "[\fB訳注\fP]" 8
++すなわち、\fBgetopt \-o '' \-\-longoptions ...\fP
++のように使用しなければならない。
+ .SH 作者
+-.MT frodo@frodo.looijaard.name
+-Frodo Looijaard
+-.ME
++Frodo Looijaard <frodo@frodo.looijaard.name>
+ .SH 関連項目
+ \fBbash\fP(1), \fBtcsh\fP(1), \fBgetopt\fP(3)
+ .SH 入手方法
+-この getopt コマンドは、util\-linux パッケージの一部であり、
+-.UR https://\:www.kernel.org\:/pub\:/linux\:/utils\:/util\-linux/
+-Linux Kernel Archive
+-.UE
++この getopt コマンドは、util\-linux パッケージの一部であり、Linux Kernel Archive
++<https://www.kernel.org/pub/linux/utils/util\-linux/>
+ から入手できる。

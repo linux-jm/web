@@ -1,0 +1,197 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RAND</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RAND</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/rand.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rand, srand - 乱数を生成する関数
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>int rand(void);</B>
+
+<B>int rand_r(unsigned int *</B><I>seedp</I><B>);</B>
+
+<B>void srand(unsigned int </B><I>seed</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>rand_r</B>():
+<DL COMPACT><DT><DD>
+glibc 2.24 以降:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;199506L
+<BR>
+
+glibc 2.23 以前
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;_POSIX_C_SOURCE
+</DL>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>rand</B>() 関数は 0 以上 <B>RAND_MAX</B> 以下
+(数学的に書くと [0,&nbsp;<B>RAND_MAX</B>]) の範囲の疑似乱数整数を返す。
+<P>
+
+<B>srand</B>()  関数は、 <B>rand</B>()  関数で作られる疑似乱数整数系列の新しい種として、 その引数の値を使用する。
+これらの関数を使用して作られた疑似乱数系列は、 同じ値を引数として <B>srand</B>()  を呼ぶことで、 再現することが可能である。
+<P>
+
+種の値が与えられない場合には、 <B>rand</B>()  関数は 自動的に 1 を種とする。
+<P>
+
+<B>rand</B>() 関数は再入可能 (reentrant)
+ではない。この関数には隠し状態があり、呼び出される度にこの隠し状態が変更されるからである。ちょうどこの隠し状態が次の呼び出し時の乱数の種として使われるようなものである。実際にはもう少し複雑かもしれないが。スレッドを使用するアプリケーションで再現可能な動作をさせたい場合には、この状態を明示的に指定できなければならない。これを行うには、再入可能な
+<B>rand_r</B>() 関数を使用する。
+<P>
+
+<B>rand</B>() と同様、 <B>rand_r</B>() は [0,&nbsp;<B>RAND_MAX</B>] の範囲の疑似乱数整数を返す。
+<I>seedp</I> 引数は、<B>rand_r</B>() の呼び出し間で状態を保持するために使用される
+<I>unsigned int</I> へのポインターである。
+<I>seedp</I> が指す整数に同じ初期値を <B>rand_r</B>() を呼び出し、
+呼び出し間でその値が変更されなければ、同じ疑似乱数系列が得られる。
+<P>
+
+<B>rand_r</B>() の <I>seedp</I> 引数が指す値により提供される状態は非常に小さな空間
+なので、この関数は弱い疑似乱数生成器になってしまう。
+代わりに <B><A HREF="../man3/drand48_r.3.html">drand48_r</A></B>(3) を使ってみるとよい。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+関数 <B>rand</B>() と <B>rand_r</B>() は 0 以上 <B>RAND_MAX</B> 以下の数を返す。
+関数 <B>srand</B>() は値を返さない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>rand</B>(),
+<B>rand_r</B>(),
+<B>srand</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+関数 <B>rand</B>()  と <B>srand</B>()  は SVr4, 4.3BSD, C89, C99, POSIX.1-2001 に準拠している。
+関数 <B>rand_r</B>()  は POSIX.1-2001 に由来する。 POSIX.1-2008 は、 <B>rand_r</B>()
+を廃止予定としている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>rand</B>()  と <B>srand</B>()  の Linux C Library 版は、 <B><A HREF="../man3/random.3.html">random</A></B>(3)  と <B><A HREF="../man3/srandom.3.html">srandom</A></B>(3)
+の両関数と同じ乱数生成 アルゴリズムを使用している。そのため、下位のビットは上位のビットと 同じくらいにランダムである。 しかし、旧版の
+<B>rand</B>()  の実装や、他のシステムの現在の実装では、下位のビットが上位のビットほど
+ランダムになっていない。移植性を高める場合でも、精度の高い乱数が必要な アプリケーションではこの関数は使用してはいけない (代わりに
+<B><A HREF="../man3/random.3.html">random</A></B>(3)  を使うこと)。
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+POSIX 1003.1-2003 では、 <B>rand</B>()  と <B>srand</B>()
+の実装例として以下を挙げている。これは、異なる２つのマシンで同じ乱数系列が 必要な場合には便利であろう。
+<P>
+
+
+
+static unsigned long next = 1;
+<P>
+/* RAND_MAX を 32767 と仮定 */
+int myrand(void) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;next&nbsp;=&nbsp;next&nbsp;*&nbsp;1103515245&nbsp;+&nbsp;12345;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return((unsigned)(next/65536)&nbsp;%&nbsp;32768);
+}
+<P>
+void mysrand(unsigned int seed) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;next&nbsp;=&nbsp;seed;
+}
+
+
+<P>
+
+以下のプログラムを使うと、特定の乱数の種が与えられた場合に
+<B>rand</B>() が生成する疑似乱数系列を表示することができる。
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;r,&nbsp;nloops;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;seed;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;3)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;seed&gt;&nbsp;&lt;nloops&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;seed&nbsp;=&nbsp;atoi(argv[1]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nloops&nbsp;=&nbsp;atoi(argv[2]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;srand(seed);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;nloops;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r&nbsp;=&nbsp;&nbsp;rand();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%d\n&quot;,&nbsp;r);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/drand48.3.html">drand48</A></B>(3), <B><A HREF="../man3/random.3.html">random</A></B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">例</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

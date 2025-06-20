@@ -1,0 +1,944 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SYSCALLS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SYSCALLS</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/syscalls.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+syscalls - Linux のシステムコール
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+Linux のシステムコール。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+システムコールは、アプリケーションと Linux カーネルとの間の 基本的なインターフェースである。
+<A NAME="lbAE">&nbsp;</A>
+<H3>システムコールとライブラリのラッパー関数</H3>
+
+システムコールは一般には直接起動されず、 glibc (や他の何らかのライブラリ)  経由で起動される。 システムコールの直接起動については、詳細は
+<B><A HREF="../man2/intro.2.html">intro</A></B>(2)  を参照のこと。 いつもという訳ではないが、普通は、ラッパー関数の名前はその関数が起動する システムコールの名前と同じである。
+例えば、glibc には <B>chdir</B>()  という関数があり、この関数は &quot;chdir&quot; システムコールを起動する。
+<P>
+
+Often the glibc wrapper function is quite thin, doing little work other than
+copying arguments to the right registers before invoking the system call,
+and then setting <I>errno</I> appropriately after the system call has returned.
+(These are the same steps that are performed by <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2), which can be
+used to invoke system calls for which no wrapper function is provided.)
+Note: system calls indicate a failure by returning a negative error number
+to the caller on architectures without a separate error register/flag, as
+noted in <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2); when this happens, the wrapper function negates the
+returned error number (to make it positive), copies it to <I>errno</I>, and
+returns -1 to the caller of the wrapper.
+<P>
+
+しかしながら、時には、ラッパー関数がシステムコールを起動する前に 何らかの追加の処理を行う場合がある。 例えば、現在、 二つの関連するシステムコール
+<B><A HREF="../man2/truncate.2.html">truncate</A></B>(2)  と <B><A HREF="../man2/truncate64.2.html">truncate64</A></B>(2)  があり、glibc のラッパー関数 <B>truncate</B>()
+は、カーネルがこれらのシステムコールのうちどちらを提供しているかをチェックし、 どちらを採用するかを決定する。
+<A NAME="lbAF">&nbsp;</A>
+<H3>システムコールのリスト</H3>
+
+以下は Linux のシステムコールのリストである。 このリストで、 <I>Kernel</I> の列は、Linux 2.2 以降で登場したシステムコールが
+登場したカーネルバージョンを示す。 以下に詳細な説明を記す。
+<DL COMPACT>
+<DT>*<DD>
+カーネルバージョンがない場合、そのシステムコールは カーネル 1.0 もしくはそれ以前に登場した。
+<DT>*<DD>
+システムコールに &quot;1.2&quot; と書かれている場合、 そのシステムコールがおそらくバージョン 1.1.x のカーネルで登場し、 安定版のカーネルでは
+1.2 で初めて登場したことを意味する。 (バージョン 1.2 のカーネルは、カーネル 1.0.6 から分岐し、 バージョン 1.1.x
+の不安定版のカーネル系列として開発された。)
+<DT>*<DD>
+
+
+
+
+
+
+
+
+
+システムコールに &quot;2.0&quot; と書かれている場合、 そのシステムコールがおそらくバージョン 1.3.x のカーネルで登場し、 安定版のカーネルでは
+2.0 で初めて登場したことを意味する。 (バージョン 2.0 のカーネルは、バージョン 1.2.10 あたりのカーネル 1.2.x
+から分岐し、バージョン 1.3.x の不安定版のカーネル系列として開発された。)
+<DT>*<DD>
+システムコールに &quot;2.2&quot; と書かれている場合、 そのシステムコールがおそらくバージョン 2.1.x のカーネルで登場し、 安定版のカーネルでは
+2.2.0 で初めて登場したことを意味する。 (バージョン 2.2 のカーネルは、カーネル 2.0.21 から分岐し、 バージョン 2.1.x
+の不安定版のカーネル系列として開発された。)
+<DT>*<DD>
+システムコールに &quot;2.4&quot; と書かれている場合、 そのシステムコールがおそらくバージョン 2.3.x のカーネルで登場し、 安定版のカーネルでは
+2.4.0 で初めて登場したことを意味する。 (バージョン 2.4 のカーネルは、カーネル 2.2.8 から分岐し、 バージョン 2.3.x
+の不安定版のカーネル系列として開発された。)
+<DT>*<DD>
+システムコールに &quot;2.6&quot; と書かれている場合、 そのシステムコールがおそらくバージョン 2.5.x のカーネルで登場し、 安定版のカーネルでは
+2.6.0 で初めて登場したことを意味する。 (バージョン 2.6 のカーネルは、カーネル 2.4.15 から分岐し、 バージョン 2.5.x
+の不安定版のカーネル系列として開発された。)
+<DT>*<DD>
+Starting with kernel 2.6.0, the development model changed, and new system
+calls may appear in each 2.6.x release.  In this case, the exact version
+number where the system call appeared is shown.  This convention continues
+with the 3.x kernel series, which followed on from kernel 2.6.39; and the
+4.x kernel series, which followed on from kernel 3.19; and the 5.x kernel
+series, which followed on from kernel 4.20.
+<DT>*<DD>
+前の安定版カーネル系列から分岐した後に安定版カーネル系列にシステムコール が追加された場合、以前の安定版カーネル系列にそのシステムコールが 移植
+(backport) されることがある。 例えば、2.6.x で登場したシステムコールのいくつかは、 2.4.15 以降の 2.4.x リリースにも
+backport された。 この場合、システムコールが登場したバージョンとして、 両方の安定版系列のバージョンが記載されている。
+</DL>
+<P>
+
+
+
+
+
+カーネル 5.10 で利用可能なシステムコールのリストを以下に示す (それ以前のカーネルでだけ利用可能なものも少数だが含まれる):
+
+<TABLE>
+<TR VALIGN=top><TD><B>System call</B>&nbsp;&nbsp;</TD><TD><B>Kernel</B></TD><TD><B>Notes</B><BR></TD></TR>
+<TR VALIGN=top><TD></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/_llseek.2.html">_llseek</A></B>(2)</TD><TD>1.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/_newselect.2.html">_newselect</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/_sysctl.2.html">_sysctl</A></B>(2)</TD><TD>2.0</TD><TD>Removed in 5.5<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/accept.2.html">accept</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/accept4.2.html">accept4</A></B>(2)</TD><TD>2.6.28</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/access.2.html">access</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/acct.2.html">acct</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/add_key.2.html">add_key</A></B>(2)</TD><TD>2.6.10</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/adjtimex.2.html">adjtimex</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/alarm.2.html">alarm</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/alloc_hugepages.2.html">alloc_hugepages</A></B>(2)</TD><TD>2.5.36</TD><TD>2.5.44 で削除<BR></TD></TR>
+<TR VALIGN=top><TD><B>arc_gettls</B>(2)</TD><TD>3.9</TD><TD>ARC のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>arc_settls</B>(2)</TD><TD>3.9</TD><TD>ARC のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>arc_usr_cmpxchg</B>(2)</TD><TD>4.9</TD><TD>ARC のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2)</TD><TD>2.6</TD><TD>x86_64, x86 since 4.12<BR></TD></TR>
+<TR VALIGN=top><TD><B>atomic_barrier</B>(2)</TD><TD>2.6.34</TD><TD>m68k のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>atomic_cmpxchg_32</B>(2)</TD><TD>2.6.34</TD><TD>m68k のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/bdflush.2.html">bdflush</A></B>(2)</TD><TD>1.2</TD><TD>
+2.6 以降で非推奨
+<BR>
+
+(何もしない)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/bind.2.html">bind</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B>bpf</B>(2)</TD><TD>3.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/brk.2.html">brk</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>breakpoint</B>(2)</TD><TD>2.2</TD><TD>
+ARM OABI only, defined with
+<BR>
+
+<B>__ARM_NR</B> prefix
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/cacheflush.2.html">cacheflush</A></B>(2)</TD><TD>1.2</TD><TD>x86 にはない<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/capget.2.html">capget</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/capset.2.html">capset</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/chdir.2.html">chdir</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/chmod.2.html">chmod</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/chown.2.html">chown</A></B>(2)</TD><TD>2.2</TD><TD>
+バージョン毎の詳細は
+<BR>
+
+<B><A HREF="../man2/chown.2.html">chown</A></B>(2) を参照。
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/chown32.2.html">chown32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/clock_adjtime.2.html">clock_adjtime</A></B>(2)</TD><TD>2.6.39</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/clock_getres.2.html">clock_getres</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/clock_nanosleep.2.html">clock_nanosleep</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/clock_settime.2.html">clock_settime</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/clone2.2.html">clone2</A></B>(2)</TD><TD>2.4</TD><TD>IA-64 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/clone.2.html">clone</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/clone3.2.html">clone3</A></B>(2)</TD><TD>5.3</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/close.2.html">close</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>close_range</B>(2)</TD><TD>5.9</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/connect.2.html">connect</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B>copy_file_range</B>(2)</TD><TD>4.5</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/creat.2.html">creat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/create_module.2.html">create_module</A></B>(2)</TD><TD>1.0</TD><TD>2.6 で削除<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/delete_module.2.html">delete_module</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/dup.2.html">dup</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/dup2.2.html">dup2</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/dup3.2.html">dup3</A></B>(2)</TD><TD>2.6.27</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/epoll_create1.2.html">epoll_create1</A></B>(2)</TD><TD>2.6.27</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/epoll_pwait.2.html">epoll_pwait</A></B>(2)</TD><TD>2.6.19</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/eventfd.2.html">eventfd</A></B>(2)</TD><TD>2.6.22</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/eventfd2.2.html">eventfd2</A></B>(2)</TD><TD>2.6.27</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>execv</B>(2)</TD><TD>2.0</TD><TD>
+SPARC/SPARC64 のみ、
+<BR>
+
+SunOS との互換性のため
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/execve.2.html">execve</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/execveat.2.html">execveat</A></B>(2)</TD><TD>3.19</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/exit.2.html">exit</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/exit_group.2.html">exit_group</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/faccessat.2.html">faccessat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/faccessat2.2.html">faccessat2</A></B>(2)</TD><TD>5.8</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fadvise64.2.html">fadvise64</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fadvise64_64.2.html">fadvise64_64</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2)</TD><TD>2.6.23</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fanotify_init.2.html">fanotify_init</A></B>(2)</TD><TD>2.6.37</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fanotify_mark.2.html">fanotify_mark</A></B>(2)</TD><TD>2.6.37</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fchdir.2.html">fchdir</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fchmod.2.html">fchmod</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fchmodat.2.html">fchmodat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fchown.2.html">fchown</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fchown32.2.html">fchown32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fchownat.2.html">fchownat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fcntl64.2.html">fcntl64</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fdatasync.2.html">fdatasync</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fgetxattr.2.html">fgetxattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/finit_module.2.html">finit_module</A></B>(2)</TD><TD>3.8</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/flistxattr.2.html">flistxattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/flock.2.html">flock</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fork.2.html">fork</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/free_hugepages.2.html">free_hugepages</A></B>(2)</TD><TD>2.5.36</TD><TD>2.5.44 で削除<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fremovexattr.2.html">fremovexattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>fsconfig</B>(2)</TD><TD>5.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fsetxattr.2.html">fsetxattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>fsmount</B>(2)</TD><TD>5.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>fsopen</B>(2)</TD><TD>5.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>fspick</B>(2)</TD><TD>5.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fstat.2.html">fstat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fstat64.2.html">fstat64</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fstatat64.2.html">fstatat64</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fstatfs.2.html">fstatfs</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fstatfs64.2.html">fstatfs64</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/ftruncate64.2.html">ftruncate64</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/futex.2.html">futex</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/futimesat.2.html">futimesat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/get_kernel_syms.2.html">get_kernel_syms</A></B>(2)</TD><TD>1.0</TD><TD>2.6 で削除<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/get_mempolicy.2.html">get_mempolicy</A></B>(2)</TD><TD>2.6.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>get_robust_list</B>(2)</TD><TD>2.6.17</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/get_thread_area.2.html">get_thread_area</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>get_tls</B>(2)</TD><TD>4.15</TD><TD>
+ARM OABI only, has
+<BR>
+
+<B>__ARM_NR</B> prefix
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getcpu.2.html">getcpu</A></B>(2)</TD><TD>2.6.19</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getcwd.2.html">getcwd</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getdents.2.html">getdents</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getdents64.2.html">getdents64</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getdomainname.2.html">getdomainname</A></B>(2)</TD><TD>2.2</TD><TD>
+SPARC, SPARC64; available
+<BR>
+
+as <B>osf_getdomainname</B>(2)
+<BR>
+
+on Alpha since Linux 2.0
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>getdtablesize</B>(2)</TD><TD>2.0</TD><TD>
+SPARC (2.6.26 で削除),
+<BR>
+
+available on Alpha as
+<BR>
+
+<BR>&nbsp;<B>osf_getdtablesize</B>(2)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getegid.2.html">getegid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getegid32.2.html">getegid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/geteuid.2.html">geteuid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/geteuid32.2.html">geteuid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getgid.2.html">getgid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getgid32.2.html">getgid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getgroups.2.html">getgroups</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getgroups32.2.html">getgroups32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/gethostname.2.html">gethostname</A></B>(2)</TD><TD>2.0</TD><TD>
+Alpha, was available on
+<BR>
+
+SPARC up to Linux 2.6.26
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getitimer.2.html">getitimer</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2)</TD><TD>2.0</TD><TD>x86 にはない<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getpgid.2.html">getpgid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getpgrp.2.html">getpgrp</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getppid.2.html">getppid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>getrandom</B>(2)</TD><TD>3.17</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getresgid.2.html">getresgid</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getresgid32.2.html">getresgid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getresuid.2.html">getresuid</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getresuid32.2.html">getresuid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getsid.2.html">getsid</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/gettid.2.html">gettid</A></B>(2)</TD><TD>2.4.11</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getuid.2.html">getuid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getuid32.2.html">getuid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>getunwind</B>(2)</TD><TD>2.4.8</TD><TD>IA-64 only; deprecated<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getxattr.2.html">getxattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>getxgid</B>(2)</TD><TD>2.0</TD><TD>Alpha のみ; 「注意」を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B>getxpid</B>(2)</TD><TD>2.0</TD><TD>Alpha のみ; 「注意」を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B>getxuid</B>(2)</TD><TD>2.0</TD><TD>Alpha のみ; 「注意」を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/init_module.2.html">init_module</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)</TD><TD>2.6.13</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/inotify_init.2.html">inotify_init</A></B>(2)</TD><TD>2.6.13</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/inotify_init1.2.html">inotify_init1</A></B>(2)</TD><TD>2.6.27</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/inotify_rm_watch.2.html">inotify_rm_watch</A></B>(2)</TD><TD>2.6.13</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/io_cancel.2.html">io_cancel</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/io_destroy.2.html">io_destroy</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/io_getevents.2.html">io_getevents</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>io_pgetevents</B>(2)</TD><TD>4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/io_setup.2.html">io_setup</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/io_submit.2.html">io_submit</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>io_uring_enter</B>(2)</TD><TD>5.1</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>io_uring_register</B>(2)</TD><TD>5.1</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>io_uring_setup</B>(2)</TD><TD>5.1</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/ioperm.2.html">ioperm</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/iopl.2.html">iopl</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/ioprio_get.2.html">ioprio_get</A></B>(2)</TD><TD>2.6.13</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/ioprio_set.2.html">ioprio_set</A></B>(2)</TD><TD>2.6.13</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/kcmp.2.html">kcmp</A></B>(2)</TD><TD>3.5</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>kern_features</B>(2)</TD><TD>3.7</TD><TD>SPARC64 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/kexec_file_load.2.html">kexec_file_load</A></B>(2)</TD><TD>3.17</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/kexec_load.2.html">kexec_load</A></B>(2)</TD><TD>2.6.13</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>keyctl</B>(2)</TD><TD>2.6.10</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/kill.2.html">kill</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/lchown.2.html">lchown</A></B>(2)</TD><TD>1.0</TD><TD>
+バージョン毎の詳細は
+<BR>
+
+<B><A HREF="../man2/chown.2.html">chown</A></B>(2) を参照。
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/lchown32.2.html">lchown32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/lgetxattr.2.html">lgetxattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/link.2.html">link</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/linkat.2.html">linkat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/listen.2.html">listen</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/listxattr.2.html">listxattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/llistxattr.2.html">llistxattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/lookup_dcookie.2.html">lookup_dcookie</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/lremovexattr.2.html">lremovexattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/lsetxattr.2.html">lsetxattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/lstat.2.html">lstat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/lstat64.2.html">lstat64</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/madvise.2.html">madvise</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mbind.2.html">mbind</A></B>(2)</TD><TD>2.6.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>memory_ordering</B>(2)</TD><TD>2.2</TD><TD>SPARC64 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>membarrier</B>(2)</TD><TD>3.17</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/memfd_create.2.html">memfd_create</A></B>(2)</TD><TD>3.17</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/migrate_pages.2.html">migrate_pages</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mincore.2.html">mincore</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mkdir.2.html">mkdir</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mkdirat.2.html">mkdirat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mknod.2.html">mknod</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mknodat.2.html">mknodat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mlock.2.html">mlock</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mlock2.2.html">mlock2</A></B>(2)</TD><TD>4.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mmap2.2.html">mmap2</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/modify_ldt.2.html">modify_ldt</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mount.2.html">mount</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>move_mount</B>(2)</TD><TD>5.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/move_pages.2.html">move_pages</A></B>(2)</TD><TD>2.6.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mq_getsetattr.2.html">mq_getsetattr</A></B>(2)</TD><TD>2.6.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mq_notify.2.html">mq_notify</A></B>(2)</TD><TD>2.6.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mq_open.2.html">mq_open</A></B>(2)</TD><TD>2.6.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mq_timedreceive.2.html">mq_timedreceive</A></B>(2)</TD><TD>2.6.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mq_timedsend.2.html">mq_timedsend</A></B>(2)</TD><TD>2.6.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mq_unlink.2.html">mq_unlink</A></B>(2)</TD><TD>2.6.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/mremap.2.html">mremap</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/msgget.2.html">msgget</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/msync.2.html">msync</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/munlock.2.html">munlock</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/munlockall.2.html">munlockall</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/munmap.2.html">munmap</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/name_to_handle_at.2.html">name_to_handle_at</A></B>(2)</TD><TD>2.6.39</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/newfstatat.2.html">newfstatat</A></B>(2)</TD><TD>2.6.16</TD><TD>See <B><A HREF="../man2/stat.2.html">stat</A></B>(2)<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/nfsservctl.2.html">nfsservctl</A></B>(2)</TD><TD>2.2</TD><TD>3.1 で削除<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/nice.2.html">nice</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>old_adjtimex</B>(2)</TD><TD>2.0</TD><TD>Alpha のみ; 「注意」を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B>old_getrlimit</B>(2)</TD><TD>2.4</TD><TD>
+Old variant of <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)
+<BR>
+
+that used a different value
+<BR>
+
+for <B>RLIM_INFINITY</B>
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/oldfstat.2.html">oldfstat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/oldlstat.2.html">oldlstat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/oldolduname.2.html">oldolduname</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/oldstat.2.html">oldstat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>oldumount</B>(2)</TD><TD>2.4.116</TD><TD>
+Name of the old <B><A HREF="../man2/umount.2.html">umount</A></B>(2)
+<BR>
+
+syscall on Alpha
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/olduname.2.html">olduname</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/open.2.html">open</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/open_by_handle_at.2.html">open_by_handle_at</A></B>(2)</TD><TD>2.6.39</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>open_tree</B>(2)</TD><TD>5.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/openat.2.html">openat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>openat2</B>(2)</TD><TD>5.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>or1k_atomic</B>(2)</TD><TD>3.1</TD><TD>OpenRISC 1000 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pause.2.html">pause</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pciconfig_iobase.2.html">pciconfig_iobase</A></B>(2)</TD><TD>2.2.15; 2.4</TD><TD>x86 にはない<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pciconfig_read.2.html">pciconfig_read</A></B>(2)</TD><TD>2.0.26; 2.2</TD><TD>x86 にはない<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pciconfig_write.2.html">pciconfig_write</A></B>(2)</TD><TD>2.0.26; 2.2</TD><TD>x86 にはない<BR></TD></TR>
+<TR VALIGN=top><TD><B>perf_event_open</B>(2)</TD><TD>2.6.31</TD><TD>
+2.6.31 では perf_counter_open() であった;
+<BR>
+
+2.6.32 で名称変更
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/personality.2.html">personality</A></B>(2)</TD><TD>1.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>perfctr</B>(2)</TD><TD>2.2</TD><TD>SPARC のみ; 2.6.34 で削除<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/perfmonctl.2.html">perfmonctl</A></B>(2)</TD><TD>2.4</TD><TD>IA-64 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>pidfd_getfd</B>(2)</TD><TD>5.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>pidfd_send_signal</B>(2)</TD><TD>5.1</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>pidfd_open</B>(2)</TD><TD>5.3</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pipe.2.html">pipe</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pipe2.2.html">pipe2</A></B>(2)</TD><TD>2.6.27</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pivot_root.2.html">pivot_root</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>pkey_alloc</B>(2)</TD><TD>4.8</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>pkey_free</B>(2)</TD><TD>4.8</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pkey_mprotect.2.html">pkey_mprotect</A></B>(2)</TD><TD>4.8</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/poll.2.html">poll</A></B>(2)</TD><TD>2.0.36; 2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/ppoll.2.html">ppoll</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pread64.2.html">pread64</A></B>(2)</TD><TD></TD><TD>
+2.2 で &quot;pread&quot; として追加;
+<BR>
+
+2.6 で &quot;pread64&quot; に名称変更
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/preadv.2.html">preadv</A></B>(2)</TD><TD>2.6.30</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/preadv2.2.html">preadv2</A></B>(2)</TD><TD>4.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/prlimit64.2.html">prlimit64</A></B>(2)</TD><TD>2.6.36</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>process_madvise</B>(2)</TD><TD>5.10</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/process_vm_readv.2.html">process_vm_readv</A></B>(2)</TD><TD>3.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/process_vm_writev.2.html">process_vm_writev</A></B>(2)</TD><TD>3.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pselect6.2.html">pselect6</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>ptrace</B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pwrite64.2.html">pwrite64</A></B>(2)</TD><TD></TD><TD>
+2.2 で &quot;pwrite&quot; として追加;
+<BR>
+
+2.6 で &quot;pwrite64&quot; に名称変更
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pwritev.2.html">pwritev</A></B>(2)</TD><TD>2.6.30</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pwritev2.2.html">pwritev2</A></B>(2)</TD><TD>4.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/query_module.2.html">query_module</A></B>(2)</TD><TD>2.2</TD><TD>2.6 で削除<BR></TD></TR>
+<TR VALIGN=top><TD><B>quotactl</B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/read.2.html">read</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/readahead.2.html">readahead</A></B>(2)</TD><TD>2.4.13</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/readdir.2.html">readdir</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/readlink.2.html">readlink</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/readlinkat.2.html">readlinkat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/readv.2.html">readv</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/reboot.2.html">reboot</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/recv.2.html">recv</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/recvmmsg.2.html">recvmmsg</A></B>(2)</TD><TD>2.6.33</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/remap_file_pages.2.html">remap_file_pages</A></B>(2)</TD><TD>2.6</TD><TD>3.16 以降では非推奨<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/removexattr.2.html">removexattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/rename.2.html">rename</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/renameat.2.html">renameat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/renameat2.2.html">renameat2</A></B>(2)</TD><TD>3.15</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>request_key</B>(2)</TD><TD>2.6.10</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>riscv_flush_icache</B>(2)</TD><TD>4.15</TD><TD>RISC-V のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>rseq</B>(2)</TD><TD>4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/rt_sigaction.2.html">rt_sigaction</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/rt_sigpending.2.html">rt_sigpending</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/rt_sigprocmask.2.html">rt_sigprocmask</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>rt_sigqueueinfo</B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/rt_sigreturn.2.html">rt_sigreturn</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/rt_sigsuspend.2.html">rt_sigsuspend</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/rt_sigtimedwait.2.html">rt_sigtimedwait</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>rt_tgsigqueueinfo</B>(2)</TD><TD>2.6.31</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>rtas</B>(2)</TD><TD>2.6.2</TD><TD>PowerPC/PowerPC64 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>s390_runtime_instr</B>(2)</TD><TD>3.7</TD><TD>s390 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>s390_pci_mmio_read</B>(2)</TD><TD>3.19</TD><TD>s390 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>s390_pci_mmio_write</B>(2)</TD><TD>3.19</TD><TD>s390 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>s390_sthyi</B>(2)</TD><TD>4.15</TD><TD>s390 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>s390_guarded_storage</B>(2)</TD><TD>4.12</TD><TD>s390 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>sched_get_affinity</B>(2)</TD><TD>2.6</TD><TD>
+Name of <B><A HREF="../man2/sched_getaffinity.2.html">sched_getaffinity</A></B>(2)
+<BR>
+
+on SPARC and SPARC64
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_get_priority_max.2.html">sched_get_priority_max</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_getaffinity.2.html">sched_getaffinity</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_getattr.2.html">sched_getattr</A></B>(2)</TD><TD>3.14</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_getparam.2.html">sched_getparam</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_getscheduler.2.html">sched_getscheduler</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>sched_set_affinity</B>(2)</TD><TD>2.6</TD><TD>
+Name of <B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2)
+<BR>
+
+on SPARC and SPARC64
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2)</TD><TD>3.14</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>seccomp</B>(2)</TD><TD>3.17</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/select.2.html">select</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/semctl.2.html">semctl</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/semget.2.html">semget</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/semop.2.html">semop</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/semtimedop.2.html">semtimedop</A></B>(2)</TD><TD>2.6; 2.4.22</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/send.2.html">send</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sendfile.2.html">sendfile</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sendfile64.2.html">sendfile64</A></B>(2)</TD><TD>2.6; 2.4.19</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sendmmsg.2.html">sendmmsg</A></B>(2)</TD><TD>3.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sendto.2.html">sendto</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2)</TD><TD>2.6.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>set_robust_list</B>(2)</TD><TD>2.6.17</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/set_tid_address.2.html">set_tid_address</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>set_tls</B>(2)</TD><TD>2.6.11</TD><TD>
+ARM OABI/EABI only (constant
+<BR>
+
+has <B>__ARM_NR</B> prefix)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setdomainname.2.html">setdomainname</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setfsgid.2.html">setfsgid</A></B>(2)</TD><TD>1.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setfsgid32.2.html">setfsgid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2)</TD><TD>1.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setfsuid32.2.html">setfsuid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setgid.2.html">setgid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setgid32.2.html">setgid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setgroups.2.html">setgroups</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setgroups32.2.html">setgroups32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>sethae</B>(2)</TD><TD>2.0</TD><TD>Alpha のみ; 「注意」を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sethostname.2.html">sethostname</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setitimer.2.html">setitimer</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setns.2.html">setns</A></B>(2)</TD><TD>3.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setpgid.2.html">setpgid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setpgrp.2.html">setpgrp</A></B>(2)</TD><TD>2.0</TD><TD>
+Alternative name for
+<BR>
+
+<B><A HREF="../man2/setpgid.2.html">setpgid</A></B>(2) on Alpha
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setregid.2.html">setregid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setregid32.2.html">setregid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setresgid.2.html">setresgid</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setresgid32.2.html">setresgid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setresuid.2.html">setresuid</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setresuid32.2.html">setresuid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setreuid.2.html">setreuid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setreuid32.2.html">setreuid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setsid.2.html">setsid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/settimeofday.2.html">settimeofday</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setuid.2.html">setuid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setuid32.2.html">setuid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setup.2.html">setup</A></B>(2)</TD><TD>1.0</TD><TD>2.2 で削除<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setxattr.2.html">setxattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sgetmask.2.html">sgetmask</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/shmat.2.html">shmat</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/shmdt.2.html">shmdt</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/shmget.2.html">shmget</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/shutdown.2.html">shutdown</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/signal.2.html">signal</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/signalfd.2.html">signalfd</A></B>(2)</TD><TD>2.6.22</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/signalfd4.2.html">signalfd4</A></B>(2)</TD><TD>2.6.27</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sigreturn.2.html">sigreturn</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sigsuspend.2.html">sigsuspend</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/socket.2.html">socket</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2)</TD><TD>2.0</TD><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) の「注意」の節を参照<BR></TD></TR>
+<TR VALIGN=top><TD><B>spill</B>(2)</TD><TD>2.6.13</TD><TD>Xtensa のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/splice.2.html">splice</A></B>(2)</TD><TD>2.6.17</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/spu_create.2.html">spu_create</A></B>(2)</TD><TD>2.6.16</TD><TD>PowerPC/PowerPC64 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/spu_run.2.html">spu_run</A></B>(2)</TD><TD>2.6.16</TD><TD>PowerPC/PowerPC64 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/ssetmask.2.html">ssetmask</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/stat.2.html">stat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/stat64.2.html">stat64</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/statfs.2.html">statfs</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/statfs64.2.html">statfs64</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>statx</B>(2)</TD><TD>4.11</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/stime.2.html">stime</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>subpage_prot</B>(2)</TD><TD>2.6.25</TD><TD>PowerPC/PowerPC64 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>swapcontext</B>(2)</TD><TD>2.6.3</TD><TD>PowerPC/PowerPC64 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>switch_endian</B>(2)</TD><TD>4.1</TD><TD>PowerPC64 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/swapoff.2.html">swapoff</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/swapon.2.html">swapon</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/symlink.2.html">symlink</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/symlinkat.2.html">symlinkat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sync.2.html">sync</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sync_file_range.2.html">sync_file_range</A></B>(2)</TD><TD>2.6.17</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sync_file_range2.2.html">sync_file_range2</A></B>(2)</TD><TD>2.6.22</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/syncfs.2.html">syncfs</A></B>(2)</TD><TD>2.6.39</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>sys_debug_setcontext</B>(2)</TD><TD>2.6.11</TD><TD>PowerPC のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)</TD><TD>1.0</TD><TD>
+Still available on ARM OABI
+<BR>
+
+and MIPS O32 ABI
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sysfs.2.html">sysfs</A></B>(2)</TD><TD>1.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sysinfo.2.html">sysinfo</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/syslog.2.html">syslog</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>sysmips</B>(2)</TD><TD>2.6.0</TD><TD>MIPS のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/tee.2.html">tee</A></B>(2)</TD><TD>2.6.17</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/time.2.html">time</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>timer_create</B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/timer_delete.2.html">timer_delete</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>timer_getoverrun</B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>timer_gettime</B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>timer_settime</B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/timerfd_create.2.html">timerfd_create</A></B>(2)</TD><TD>2.6.25</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/timerfd_gettime.2.html">timerfd_gettime</A></B>(2)</TD><TD>2.6.25</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/timerfd_settime.2.html">timerfd_settime</A></B>(2)</TD><TD>2.6.25</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/times.2.html">times</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/tkill.2.html">tkill</A></B>(2)</TD><TD>2.6; 2.4.22</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/truncate.2.html">truncate</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/truncate64.2.html">truncate64</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/ugetrlimit.2.html">ugetrlimit</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/umask.2.html">umask</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/umount.2.html">umount</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/umount2.2.html">umount2</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/uname.2.html">uname</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/unlink.2.html">unlink</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/unlinkat.2.html">unlinkat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/unshare.2.html">unshare</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/uselib.2.html">uselib</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/ustat.2.html">ustat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>userfaultfd</B>(2)</TD><TD>4.3</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>usr26</B>(2)</TD><TD>2.4.8.1</TD><TD>ARM OABI のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B>usr32</B>(2)</TD><TD>2.4.8.1</TD><TD>ARM OABI のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/utime.2.html">utime</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/utimensat.2.html">utimensat</A></B>(2)</TD><TD>2.6.22</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/utimes.2.html">utimes</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>utrap_install</B>(2)</TD><TD>2.2</TD><TD>SPARC64 のみ<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/vhangup.2.html">vhangup</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/vm86old.2.html">vm86old</A></B>(2)</TD><TD>1.0</TD><TD>
+Was &quot;vm86&quot;; renamed in
+<BR>
+
+<BR>&nbsp;2.0.28/2.2
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/vm86.2.html">vm86</A></B>(2)</TD><TD>2.0.28; 2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/vmsplice.2.html">vmsplice</A></B>(2)</TD><TD>2.6.17</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/wait4.2.html">wait4</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/waitid.2.html">waitid</A></B>(2)</TD><TD>2.6.10</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/write.2.html">write</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/writev.2.html">writev</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>xtensa</B>(2)</TD><TD>2.6.13</TD><TD>Xtensa のみ<BR></TD></TR>
+</TABLE>
+
+
+<P>
+
+x86-32 を含む多くのプラットフォームでは、ソケット関連のシステムコールは (glibc のラッパー関数を介してだが) すべて
+<B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2) 経由に多重されている。 同様に、System&nbsp;V IPC 関連のシステムコールは <B><A HREF="../man2/ipc.2.html">ipc</A></B>(2)
+経由に多重されている。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+以下のシステムコールは、システムコールテーブルにスロットが予約されているが、
+標準のカーネルには実装されていない:
+<B><A HREF="../man2/afs_syscall.2.html">afs_syscall</A></B>(2), <B><A HREF="../man2/break.2.html">break</A></B>(2), <B>ftime</B>(2), <B><A HREF="../man2/getpmsg.2.html">getpmsg</A></B>(2), <B><A HREF="../man2/gtty.2.html">gtty</A></B>(2),
+<B><A HREF="../man2/idle.2.html">idle</A></B>(2), <B><A HREF="../man2/lock.2.html">lock</A></B>(2), <B><A HREF="../man2/madvise1.2.html">madvise1</A></B>(2), <B><A HREF="../man2/mpx.2.html">mpx</A></B>(2), <B><A HREF="../man2/phys.2.html">phys</A></B>(2), <B><A HREF="../man2/prof.2.html">prof</A></B>(2),
+<B>profil</B>(2), <B><A HREF="../man2/putpmsg.2.html">putpmsg</A></B>(2), <B><A HREF="../man2/security.2.html">security</A></B>(2), <B><A HREF="../man2/stty.2.html">stty</A></B>(2), <B><A HREF="../man2/tuxcall.2.html">tuxcall</A></B>(2),
+<B>ulimit</B>(2), <B><A HREF="../man2/vserver.2.html">vserver</A></B>(2) (<B><A HREF="../man2/unimplemented.2.html">unimplemented</A></B>(2) も参照)。
+しかし、<B><A HREF="../man3/ftime.3.html">ftime</A></B>(3), <B><A HREF="../man3/profil.3.html">profil</A></B>(3), <B><A HREF="../man3/ulimit.3.html">ulimit</A></B>(3) はライブラリルーチンとして
+実装されている。 <B><A HREF="../man2/phys.2.html">phys</A></B>(2) 用の場所は 2.1.116 以降では <B><A HREF="../man2/umount.2.html">umount</A></B>(2) 用に
+使用されている; 将来においても <B><A HREF="../man2/phys.2.html">phys</A></B>(2) は実装されない。
+<B><A HREF="../man2/getpmsg.2.html">getpmsg</A></B>(2) と <B><A HREF="../man2/putpmsg.2.html">putpmsg</A></B>(2) は STREAMS 対応のパッチが適用された
+カーネル用であり、標準のカーネルに登場することはないかもしれない。
+<P>
+
+
+<B>set_zone_reclaim</B>(2) は少しの間だけ存在した。 Linux 2.6.13 で追加され、2.6.16
+で削除された。このシステムコールがユーザー空間から使える状態になったことはない。
+<A NAME="lbAG">&nbsp;</A>
+<H3>System calls on removed ports</H3>
+
+Some system calls only ever existed on Linux architectures that have since
+been removed from the kernel:
+<DL COMPACT>
+<DT>AVR32 (port removed in Linux 4.12)<DD>
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>*<DD>
+<BR>&nbsp;<B><A HREF="../man2/pread.2.html">pread</A></B>(2)
+<DT>*<DD>
+<BR>&nbsp;<B><A HREF="../man2/pwrite.2.html">pwrite</A></B>(2)
+
+</DL>
+</DL>
+
+<DT>Blackfin (port removed in Linux 4.17)<DD>
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>*<DD>
+<B>bfin_spinlock</B>(2)  (added in Linux 2.6.22)
+<DT>*<DD>
+<B>dma_memcpy</B>(2)  (added in Linux 2.6.22)
+<DT>*<DD>
+<B><A HREF="../man2/pread.2.html">pread</A></B>(2)  (added in Linux 2.6.22)
+<DT>*<DD>
+<B><A HREF="../man2/pwrite.2.html">pwrite</A></B>(2)  (added in Linux 2.6.22)
+<DT>*<DD>
+<B>sram_alloc</B>(2)  (added in Linux 2.6.22)
+<DT>*<DD>
+<B>sram_free</B>(2)  (added in Linux 2.6.22)
+
+</DL>
+</DL>
+
+<DT>Metag (port removed in Linux 4.17)<DD>
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>*<DD>
+<B>metag_get_tls</B>(2)  (add in Linux 3.9)
+<DT>*<DD>
+<B>metag_set_fpu_flags</B>(2)  (add in Linux 3.9)
+<DT>*<DD>
+<B>metag_set_tls</B>(2)  (add in Linux 3.9)
+<DT>*<DD>
+<B>metag_setglobalbit</B>(2)  (add in Linux 3.9)
+
+</DL>
+</DL>
+
+<DT>Tile (port removed in Linux 4.17)<DD>
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>*<DD>
+<B>cmpxchg_badaddr</B>(2)  (added in Linux 2.6.36)
+
+</DL>
+</DL>
+
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+たいていは、 <I>/usr/include/asm/unistd.h</I> で定義されている番号 __NR_xxx のシステムコールのコードは、 Linux
+カーネルソースの <I>sys_xxx</I>() というルーチンに書かれている。 しかしこれには多くの例外がある。古いシステムコールは新版に置き換えられて
+きたが、この置き換えはあまり体系立てて行われて来なかったからである。 sparc, sparc64, alpha
+といったプロプリエタリなオペレーティングシステムのエミュレーション機能があるプラットフォームでは、多くの追加システムコールがある。 mips64
+には、32 ビットシステムコールのフルセットも含まれている。
+<P>
+
+Over time, changes to the interfaces of some system calls have been
+necessary.  One reason for such changes was the need to increase the size of
+structures or scalar values passed to the system call.  Because of these
+changes, certain architectures (notably, longstanding 32-bit architectures
+such as i386)  now have various groups of related system calls (e.g.,
+<B><A HREF="../man2/truncate.2.html">truncate</A></B>(2)  and <B><A HREF="../man2/truncate64.2.html">truncate64</A></B>(2))  which perform similar tasks, but
+which vary in details such as the size of their arguments.  (As noted
+earlier, applications are generally unaware of this: the glibc wrapper
+functions do some work to ensure that the right system call is invoked, and
+that ABI compatibility is preserved for old binaries.)  Examples of systems
+calls that exist in multiple versions are the following:
+<DL COMPACT>
+<DT>*<DD>
+
+
+
+これまでに、 <B><A HREF="../man2/stat.2.html">stat</A></B>(2)  には 3 種類の異なるバージョンが存在する。 <I>sys_stat</I>()  (スロットは
+<I>__NR_oldstat</I>)、 <I>sys_newstat</I>()  (スロットは <I>__NR_stat</I>)、 <I>sys_stat64</I>()
+(カーネル 2.4 で導入; スロットは <I>__NR_stat64</I>)。 3つのうち最後のものが最新である。 <B><A HREF="../man2/lstat.2.html">lstat</A></B>(2)  と
+<B><A HREF="../man2/fstat.2.html">fstat</A></B>(2)  についても同様である。
+<DT>*<DD>
+また、 <I>__NR_oldolduname</I>, <I>__NR_olduname</I>, <I>__NR_uname</I> という定義は、それぞれ
+<I>sys_olduname</I>(), <I>sys_uname</I>(), <I>sys_newuname</I>()  というルーチンを参照している。
+<DT>*<DD>
+Linux 2.0 では、 <B><A HREF="../man2/vm86.2.html">vm86</A></B>(2)  の新バージョンが登場した。カーネルルーチンの 古いバージョン、新しいバージョンはそれぞれ
+<I>sys_vm86old</I>(), <I>sys_vm86</I>()  という名前である。
+<DT>*<DD>
+Linux 2.4 では、 <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)  の新バージョンが登場した。カーネルルーチンの 古いバージョン、新しいバージョンはそれぞれ
+<I>sys_old_getrlimit</I>()  (スロットは <I>__NR_getrlimit</I>), <I>sys_getrlimit</I>()
+(スロットは <I>__NR_ugetrlimit</I>)  という名前である。
+<DT>*<DD>
+
+
+Linux 2.4 で、ユーザー ID とグループ ID のサイズが 16 ビットから 32 ビットに増えた。
+この変更に対応するため、いくつかのシステムコールが追加された (<B><A HREF="../man2/chown32.2.html">chown32</A></B>(2), <B><A HREF="../man2/getuid32.2.html">getuid32</A></B>(2),
+<B><A HREF="../man2/getgroups32.2.html">getgroups32</A></B>(2), <B><A HREF="../man2/setresuid32.2.html">setresuid32</A></B>(2)  など)。 これらのシステムコールが、末尾の &quot;32&quot; が付かない同名の
+古いバージョンに代わって使われるようになった。
+<DT>*<DD>
+Linux 2.4 では、32 ビットアーキテクチャー上のアプリケーションが 大きなファイル (つまり、32 ビットでは表現できないサイズや
+ファイルオフセットが必要なファイル) にアクセスできるようになった。 この変更に対応するため、ファイルオフセットとサイズを扱う
+システムコールの置き換えが必要となった。その結果、 <B><A HREF="../man2/fcntl64.2.html">fcntl64</A></B>(2), <B><A HREF="../man2/getdents64.2.html">getdents64</A></B>(2), <B><A HREF="../man2/stat64.2.html">stat64</A></B>(2),
+<B><A HREF="../man2/statfs64.2.html">statfs64</A></B>(2), <B><A HREF="../man2/truncate64.2.html">truncate64</A></B>(2) と、ファイルディスクリプターやシンボリックリンクで同じ機能を持つ
+システムコールが追加された。 これらのシステムコールが、末尾の &quot;64&quot; が付かない同名の 古いバージョンに代わって使われるようになった。
+但し、&quot;stat&quot; 系のシステムコールはその限りではない。
+<DT><DD>
+On newer platforms that only have 64-bit file access and 32-bit UIDs/GIDs
+(e.g., alpha, ia64, s390x, x86-64), there is just a single version of the
+UID/GID and file access system calls.  On platforms (typically, 32-bit
+platforms) where the *64 and *32 calls exist, the other versions are
+obsolete.
+<DT>*<DD>
+リアルタイムシグナル (<B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照) への対応を追加するために、 <I>rt_sig*</I> 系のシステムコールがカーネル 2.2
+で追加された。 これらのシステムコールが、先頭に &quot;rt_&quot; が付かない同名の 古いバージョンに代わって使われるようになった。
+<DT>*<DD>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The <B><A HREF="../man2/select.2.html">select</A></B>(2)  and <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  system calls use five or more arguments,
+which caused problems in the way argument passing on the i386 used to be set
+up.  Thus, while other architectures have <I>sys_select</I>()  and <I>sys_mmap</I>()
+corresponding to <I>__NR_select</I> and <I>__NR_mmap</I>, on i386 one finds
+<I>old_select</I>()  and <I>old_mmap</I>()  (routines that use a pointer to an
+argument block) instead.  These days passing five arguments is not a problem
+any more, and there is a <I>__NR__newselect</I> that corresponds directly to
+<I>sys_select</I>()  and similarly <I>__NR_mmap2</I>.  s390x is the only 64-bit
+architecture that has <I>old_mmap</I>().
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H3>アーキテクチャー固有の詳細: Alpha</H3>
+
+<DL COMPACT>
+<DT>*<DD>
+<B>getxgid</B>(2)  returns a pair of GID and effective GID via registers <B>r0</B>
+and <B>r20</B>; it is provided instead of <B><A HREF="../man2/getgid.2.html">getgid</A></B>(2) and <B><A HREF="../man2/getegid.2.html">getegid</A></B>(2).
+<DT>*<DD>
+<B>getxpid</B>(2)  returns a pair of PID and parent PID via registers <B>r0</B> and
+<B>r20</B>; it is provided instead of <B><A HREF="../man2/getpid.2.html">getpid</A></B>(2) and <B><A HREF="../man2/getppid.2.html">getppid</A></B>(2).
+<DT>*<DD>
+<B>old_adjtimex</B>(2)  is a variant of <B><A HREF="../man2/adjtimex.2.html">adjtimex</A></B>(2) that uses <I>struct
+timeval32</I>, for compatibility with OSF/1.
+<DT>*<DD>
+<B>getxuid</B>(2)  returns a pair of GID and effective GID via registers <B>r0</B>
+and <B>r20</B>; it is provided instead of <B><A HREF="../man2/getuid.2.html">getuid</A></B>(2) and <B><A HREF="../man2/geteuid.2.html">geteuid</A></B>(2).
+<DT>*<DD>
+<B>sethae</B>(2)  is used for configuring the Host Address Extension register on
+low-cost Alphas in order to access address space beyond first 27 bits.
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/intro.2.html">intro</A></B>(2), <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2), <B><A HREF="../man2/unimplemented.2.html">unimplemented</A></B>(2), <B><A HREF="../man3/errno.3.html">errno</A></B>(3), <B><A HREF="../man7/libc.7.html">libc</A></B>(7),
+<B><A HREF="../man7/vdso.7.html">vdso</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">システムコールとライブラリのラッパー関数</A><DD>
+<DT><A HREF="#lbAF">システムコールのリスト</A><DD>
+<DT><A HREF="#lbAG">System calls on removed ports</A><DD>
+</DL>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">アーキテクチャー固有の詳細: Alpha</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

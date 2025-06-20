@@ -1,0 +1,186 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of VCS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>VCS</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated:  2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man4/vcs.4">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+vcs, vcsa - 仮想コンソールメモリー (virtual console memory)
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<I>/dev/vcs0</I> はメジャーナンバー (major number) 7、マイナーナンバー (minor number) 0
+のキャラクターデバイス (character device) で、 通常、そのモードは 0644、所有権は root:tty である。
+このデバイスファイル (device file) は 現在表示されている仮想コンソール端末のメモリーを参照する。
+<P>
+
+<B>/dev/vcs[1-63]</B> は仮想コンソール端末のための キャラクターデバイスで、メジャーナンバーが 7、マイナーナンバーが 1 から 63、
+通常はモードが 0644、所有権が root:tty である。 <B>/dev/vcsa[0-63]</B> は <B>/dev/vcs[1-63]</B>
+と同様であるが、 属性を格納するのに (ホストバイトオーダの)  <I>unsigned short</I>
+を使用している点、スクリーンのサイズ・カーソルの位置を表す 4 バイトの情報 <I>lines</I>, <I>columns</I>, <I>x</I>, <I>y</I>
+(<I>x</I> =<I>y</I> = 0 が画面の左上) が先頭にある点が異なる。
+<P>
+
+512 文字から成るフォントをロードした場合、 9 ビット目の情報は <I>/dev/tty[1-63]</I> に対して <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+<B>VT_GETHIFONTMASK</B> 操作を行うことで取得できる (<B>VT_GETHIFONTMASK</B> 操作はカーネル 2.6.18 以降の
+Linux で 利用可能である)。 値は <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  の 3 番目の引数が指す <I>unsigned short</I> に格納されて返される。
+<P>
+
+これらのデバイスは <B>ioctl_console</B>(2)  の screendump <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) を代替となる。
+従って、システム管理者はファイルシステムパーミッション (filesystem permission) を使ってアクセスをコントロールできる。
+<P>
+
+最初の 8 つの仮想端末のためのデバイスは、次のようにして作る事ができる:
+<P>
+
+
+
+<BR>&nbsp;for&nbsp;x&nbsp;in&nbsp;0&nbsp;1&nbsp;2&nbsp;3&nbsp;4&nbsp;5&nbsp;6&nbsp;7&nbsp;8;&nbsp;do
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mknod&nbsp;-m&nbsp;644&nbsp;/dev/vcs$x&nbsp;c&nbsp;7&nbsp;$x;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mknod&nbsp;-m&nbsp;644&nbsp;/dev/vcsa$x&nbsp;c&nbsp;7&nbsp;$[$x+128];
+done
+chown root:tty /dev/vcs*
+
+
+<P>
+
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  による要求はサポートされない。
+<A NAME="lbAD">&nbsp;</A>
+<H2>ファイル</H2>
+
+<BR>&nbsp;<I>/dev/vcs[0-63]</I>
+<BR>
+
+
+
+<BR>&nbsp;<I>/dev/vcsa[0-63]</I>
+<A NAME="lbAE">&nbsp;</A>
+<H2>バージョン</H2>
+
+Linux カーネルバージョン 1.1.92 で導入された。
+<A NAME="lbAF">&nbsp;</A>
+<H2>例</H2>
+
+vt1 に移って以下を実行すると、vt3 のスクリーンダンプを取ることができます。
+<P>
+
+
+
+<BR>&nbsp;cat&nbsp;/dev/vcs3&nbsp;&gt;foo
+
+
+<P>
+
+主力には改行文字が含まれない点に注意して下さい。 そのため、 何らかの処理が必要となるかもしれません。 例えば、
+<P>
+
+
+
+<BR>&nbsp;fold&nbsp;-w&nbsp;81&nbsp;/dev/vcs3&nbsp;|&nbsp;lpr
+
+
+<P>
+
+(ひどい方法としては)
+<P>
+
+
+
+<BR>&nbsp;setterm&nbsp;-dump&nbsp;3&nbsp;-file&nbsp;/proc/self/fd/1
+
+
+<P>
+
+<I>/dev/vcsa0</I> デバイスを使うことで、 ブライユ点字をサポートすることができる。
+<P>
+
+以下のプログラムは、 二つ目の仮想コンソールのカーソル位置のスクリーン属性と文字を表示した後、 カーソル位置の背景色を変更する。
+<P>
+
+
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/ioctl.h">sys/ioctl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/linux/vt.h">linux/vt.h</A>&gt;
+<P>
+<BR>&nbsp;int
+main(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*device&nbsp;=&nbsp;&quot;/dev/vcsa2&quot;;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*console&nbsp;=&nbsp;&quot;/dev/tty2&quot;;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;{unsigned&nbsp;char&nbsp;lines,&nbsp;cols,&nbsp;x,&nbsp;y;}&nbsp;scrn;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;s;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;mask;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;attrib;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ch;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open(console,&nbsp;O_RDWR);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;&lt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(console);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ioctl(fd,&nbsp;VT_GETHIFONTMASK,&nbsp;&amp;mask)&nbsp;&lt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;VT_GETHIFONTMASK&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;close(fd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open(device,&nbsp;O_RDWR);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;&lt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(device);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;read(fd,&nbsp;&amp;scrn,&nbsp;4);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;lseek(fd,&nbsp;4&nbsp;+&nbsp;2*(scrn.y*scrn.cols&nbsp;+&nbsp;scrn.x),&nbsp;SEEK_SET);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;read(fd,&nbsp;&amp;s,&nbsp;2);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ch&nbsp;=&nbsp;s&nbsp;&amp;&nbsp;0xff;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;&amp;&nbsp;mask)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ch&nbsp;|=&nbsp;0x100;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;attrib&nbsp;=&nbsp;((s&nbsp;&amp;&nbsp;~mask)&nbsp;&gt;&gt;&nbsp;8);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;ch=%#03x&nbsp;attrib=%#02x\n&quot;,&nbsp;ch,&nbsp;attrib);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;^=&nbsp;0x1000;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;lseek(fd,&nbsp;-2,&nbsp;SEEK_CUR);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;write(fd,&nbsp;&amp;s,&nbsp;2);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B>ioctl_console</B>(2),&nbsp;<B><A HREF="../man4/tty.4.html">tty</A></B>(4),&nbsp;<B><A HREF="../man4/ttyS.4.html">ttyS</A></B>(4),&nbsp;<B>gpm</B>(8)
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">ファイル</A><DD>
+<DT><A HREF="#lbAE">バージョン</A><DD>
+<DT><A HREF="#lbAF">例</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

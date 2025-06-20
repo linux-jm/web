@@ -1,0 +1,160 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of VMSPLICE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>VMSPLICE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/vmsplice.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+vmsplice - ユーザーページをパイプに継ぎ合わせる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/uio.h">sys/uio.h</A>&gt;</B>
+
+<B>ssize_t vmsplice(int </B><I>fd</I><B>, const struct iovec *</B><I>iov</I><B>,</B>
+<B>                 unsigned long </B><I>nr_segs</I><B>, unsigned int </B><I>flags</I><B>);</B>
+</PRE>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+
+
+
+
+
+
+
+
+If <I>fd</I> is opened for writing, the <B>vmsplice</B>()  system call maps
+<I>nr_segs</I> ranges of user memory described by <I>iov</I> into a pipe.  If <I>fd</I>
+is opened for reading, the <B>vmsplice</B>()  system call fills <I>nr_segs</I>
+ranges of user memory described by <I>iov</I> from a pipe.  The file descriptor
+<I>fd</I> must refer to a pipe.
+<P>
+
+ポインター <I>iov</I> は <I>iovec</I> 構造体の配列を指す。 <I>iovec</I> 構造体は <I>&lt;<A HREF="file:///usr/include/sys/uio.h">sys/uio.h</A>&gt;</I>
+で以下のように定義されている:
+<P>
+
+
+
+struct iovec {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;*iov_base;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;開始アドレス&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;iov_len;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;バイト数&nbsp;*/
+};
+
+
+<P>
+
+<I>flags</I> 引数には、以下の値の 0 個以上をビット毎の論理和の形で指定する。
+<DL COMPACT>
+<DT><B>SPLICE_F_MOVE</B><DD>
+<B>vmsplice</B>()  では未使用。 <B><A HREF="../man2/splice.2.html">splice</A></B>(2)  参照。
+<DT><B>SPLICE_F_NONBLOCK</B><DD>
+
+
+入出力で停止 (block) しない。詳細は <B><A HREF="../man2/splice.2.html">splice</A></B>(2)  参照。
+<DT><B>SPLICE_F_MORE</B><DD>
+現在のところ <B>vmsplice</B>()  では何の効果もないが、将来的には実装される可能性がある。 <B><A HREF="../man2/splice.2.html">splice</A></B>(2)  参照。
+<DT><B>SPLICE_F_GIFT</B><DD>
+
+
+
+
+
+
+ユーザーページがカーネルへ渡すもの (gift) であることを示す。 アプリケーションはこのメモリーを絶対に変更してはならない。
+さもなければ、ページキャッシュとディスク上のデータは 一致しなくなるだろう。 ページをカーネルに渡すと、この次の <B><A HREF="../man2/splice.2.html">splice</A></B>(2)
+<B>SPLICE_F_MOVE</B> でそのページの移動を行うことができる。 このフラグが指定されなかった場合、この次の <B><A HREF="../man2/splice.2.html">splice</A></B>(2)
+<B>SPLICE_F_MOVE</B> でそのページのコピーを行わなければならない。 データはメモリー上でページ境界にあっていなければならず、
+長さもページ境界の倍数でなければならない。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功して完了すると、 <B>vmsplice</B>()  はパイプに転送したバイト数を返す。 エラーの場合、 <B>vmplice</B>()  は -1 を返し、
+<I>errno</I> をエラーを示す値に設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+<B>SPLICE_F_NONBLOCK</B> が <I>flags</I> に指定されていて、かつ操作が停止するような状態であった。
+<DT><B>EBADF</B><DD>
+<I>fd</I> が有効でない、もしくはパイプを参照していない。
+<DT><B>EINVAL</B><DD>
+<I>nr_segs</I> が <B>IOV_MAX</B> よりも大きい。または <B>SPLICE_F_GIFT</B>
+が設定されたがメモリーがページ境界にあっていない。
+<DT><B>ENOMEM</B><DD>
+メモリー不足。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>vmsplice</B>() システムコールは Linux 2.6.17 で初めて登場した。
+ライブラリによるサポートは glibc バージョン 2.5 で追加された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+
+指定されたセグメント数が上限に達した場合、 <B>vmsplice</B>()  は他のベクトル形式の read/write を行う関数と同じ動作をする。
+上限は <B>IOV_MAX</B> であり、 <I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I> で定義されている。現時点では、この値は 1024 である。
+<P>
+
+
+<B>vmsplice</B>()  really supports true splicing only from user memory to a
+pipe.  In the opposite direction, it actually just copies the data to
+userspace.  But this makes the interface nice and symmetric and enables
+people to build on <B>vmsplice</B>()  with room for future improvement in
+performance.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/splice.2.html">splice</A></B>(2), <B><A HREF="../man2/tee.2.html">tee</A></B>(2), <B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

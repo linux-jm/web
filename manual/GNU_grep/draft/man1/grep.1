@@ -1,0 +1,2254 @@
+.\" GNU grep man page
+.if !\n(.g \{\
+.	if !\w|\*(lq| \{\
+.		ds lq ``
+.		if \w'\(lq' .ds lq "\(lq
+.	\}
+.	if !\w|\*(rq| \{\
+.		ds rq ''
+.		if \w'\(rq' .ds rq "\(rq
+.	\}
+.\}
+.
+.ie \n[.g] .mso www.tmac
+.el \{\
+. de MTO
+\\$2 \(laemail: \\$1 \(ra\\$3
+..
+. de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+.\}
+.
+..
+.\"
+.\" About Japanese translation
+.\"   The original version was contributed to Linux JM project 
+.\"     by FreeBSD jpman Project.
+.\"     It contained these lines:
+.\"       %FreeBSD: src/gnu/usr.bin/grep/grep.1,v 1.16.2.3 2001/11/27 08:25:45 ru Exp %
+.\"       .Id %Id: grep.1,v 1.3 2000/06/09 21:58:50 horikawa Exp %
+.\"   Updated and Modified (grep-2.6.3) Thu Nov 11 11:44:47 JST 2010
+.\"     by Chonan Yoichi <cyoichi@maple.ocn.ne.jp>
+.\"   Updated and Modified (grep-2.27) Thu Feb 25 2017
+.\"     by Masakazu Takahashi <emasaka@gmail.com>
+.\"
+.TH GREP 1 \*(Dt "GNU grep 2.27" "User Commands"
+.hy 0
+.
+.\"O .SH NAME
+.SH 名前
+.\"O grep, egrep, fgrep \- print lines matching a pattern
+grep, egrep, fgrep \- パターンにマッチする行を表示する
+.
+.\"O .SH SYNOPSIS
+.SH 書式
+.B grep
+.RI [ OPTIONS ]
+.I PATTERN
+.RI [ FILE .\|.\|.]
+.br
+.B grep
+.RI [ OPTIONS ]
+.RB [ \-e
+.I PATTERN
+|
+.B \-f
+.IR FILE ]
+.RI [ FILE .\|.\|.]
+.
+.\"O .SH DESCRIPTION
+.SH 説明
+.\"O .B grep
+.\"O searches the named input
+.\"O .IR FILE s
+.\"O for lines containing a match to the given
+.\"O .IR PATTERN .
+.\"O If no files are specified, or if the file
+.\"O .RB "\*(lq" \- "\*(rq"
+.\"O is given,
+.\"O .B grep
+.\"O searches standard input.
+.\"O By default,
+.\"O .B grep
+.\"O prints the matching lines.
+.B grep
+は
+.IR FILE
+で名前を指定されたファイルを検索して、与えられた
+.IR PATTERN
+にマッチする部分を含む行を探します。
+ファイルが指定されていない場合や、
+ファイル名の代わりに 1 個のマイナス記号
+.RB "\*(lq" \- "\*(rq"
+が指定されている場合は、
+.B grep
+は標準入力から検索します。
+デフォルトでは、
+.B grep
+はマッチした行を表示します。
+.PP
+.\"O In addition, two variant programs
+.\"O .B egrep
+.\"O and
+.\"O .B fgrep
+.\"O are the same as
+.\"O .BR "grep\ \-E" ,
+.\"O and
+.\"O .BR "grep\ \-F" ,
+.\"O respectively.
+さらに、兄弟プログラム
+.B egrep
+と
+.B fgrep
+は、それぞれ
+.BR "grep\ \-E"
+と
+.BR "grep\ \-F"
+と同じです。
+.\"O These variants are deprecated, but are provided for backward compatibility.
+.\"O .
+これらの兄弟プログラムは非推奨ですが、後方互換性のために用意されています。
+.
+.\"O .SH OPTIONS
+.SH オプション
+.\"O .SS "Generic Program Information"
+.SS "プログラムについての一般情報"
+.TP
+.B \-\^\-help
+.\"O Output a usage message and exit.
+使用法を出力して終了します。
+.TP
+.BR \-V ", " \-\^\-version
+.\"O Output the version number of
+.\"O .B grep
+.\"O and exit.
+.B grep
+のバージョン番号を出力して終了します。
+.\"O .SS "Matcher Selection"
+.SS "正規表現の選択"
+.TP
+.BR \-E ", " \-\^\-extended\-regexp
+.\"O Interpret
+.\"O .I PATTERN
+.\"O as an extended regular expression (ERE, see below).
+.I PATTERN
+を拡張正規表現 (ERE) として扱います (下記参照)。
+.TP
+.BR \-F ", " \-\^\-fixed\-strings
+.\"O Interpret
+.\"O .I PATTERN
+.\"O as a list of fixed strings (instead of regular expressions),
+.\"O separated by newlines,
+.\"O any of which is to be matched.
+.I PATTERN
+を改行で区切られた固定文字列 (正規表現のかわりに) のリストとして扱い、
+その文字列のいずれかとマッチするかどうかを調べます。
+.TP
+.BR \-G ", " \-\^\-basic\-regexp
+.\"O Interpret
+.\"O .I PATTERN
+.\"O as a basic regular expression (BRE, see below).
+.\"O This is the default.
+.I PATTERN
+を基本正規表現 (BRE) として扱います (下記参照)。これがデフォルトです。
+.TP
+.BR \-P ", " \-\^\-perl\-regexp
+.\"O Interpret the pattern as a Perl-compatible regular expression (PCRE).
+.\"O This is highly experimental and
+.\"O .B "grep \-P"
+.\"O may warn of unimplemented features.
+パターンを Perl 互換の正規表現 (PCRE) として扱います。
+きわめて実験的なものなので、
+.B "grep \-P"
+を使うと、その機能は実装されていませんという
+警告が出るかもしれません。
+.\"O .SS "Matching Control"
+.SS "マッチングの制御"
+.TP
+.BI \-e " PATTERN" "\fR,\fP \-\^\-regexp=" PATTERN
+.\"O Use
+.\"O .I PATTERN
+.\"O as the pattern.
+.I PATTERN
+をパターンとして指定します。
+.\"O If this option is used multiple times or is combined with the
+.\"O .B \-f
+.\"O .RB ( \-\-file )
+.\"O option, search for all patterns given.
+このオプションを複数回使ったときや、
+.B \-f
+.RB ( \-\-file )
+オプションと組み合わせたときは、与えられたすべてのパターンを検索します。
+.\"O This option can be used to protect a pattern beginning with \*(lq\-\*(rq.
+このオプションは、ハイフン  \*(lq\-\*(rq
+で始まるパターンを保護するのにも使えます。
+.TP
+.BI \-f " FILE" "\fR,\fP \-\^\-file=" FILE
+.\"O Obtain patterns from
+.\"O .IR FILE ,
+.\"O one per line.
+パターンを
+.IR FILE
+から 1 行 1 パターンとして読み込みます。
+.\"O If this option is used multiple times or is combined with the
+.\"O .B \-e
+.\"O .RB ( \-\-regexp )
+.\"O option, search for all patterns given.
+このオプションを複数回使ったときや、
+.B \-e
+.RB ( \-\-regexp )
+オプションと組み合わせたときは、与えられたすべてのパターンを検索します。
+.\"O The empty file contains zero patterns, and therefore matches nothing.
+空のファイルはパターンを含まないので、何にもマッチしません。
+.TP
+.BR \-i ", " \-\^\-ignore\-case
+.\"O Ignore case distinctions in both the
+.\"O .I PATTERN
+.\"O and the input files.
+.I PATTERN
+と入力ファイルの双方で、アルファベットの大文字と小文字を
+区別しないようにします。
+.TP
+.BR \-v ", " \-\^\-invert\-match
+.\"O Invert the sense of matching, to select non-matching lines.
+マッチの意味を逆にして、マッチしない行を抜き出して表示します。
+.TP
+.BR \-w ", " \-\^\-word\-regexp
+.\"O Select only those lines containing matches that form whole words.
+.\"O The test is that the matching substring must either be at the
+.\"O beginning of the line, or preceded by a non-word constituent
+.\"O character.
+.\"O Similarly, it must be either at the end of the line
+.\"O or followed by a non-word constituent character.
+.\"O Word-constituent characters are letters, digits, and the underscore.
+マッチする部分が完全な単語を形成するときにのみ、その行を選択します。
+次の条件を検査します。パターンにマッチする部分文字列は、行頭にあるか、
+さもなければ、単語構成文字以外の文字の直後になければならない。
+また、その部分文字列は、行末にあるか、さもなければ、単語構成文字以外の文字の
+直前になければならない (訳注: ここで「完全な単語を形成する」というのは、
+それが空白、改行、引用符、句読点などで前後を区切られた文字列だ
+ということです。たとえば、文字列「A word with you」中の word という
+部分文字列は完全な単語ですが、文字列「two words」中の部分文字列 word は
+完全な単語を形成しません)。
+単語構成文字とは、アルファベット、数字、アンダスコアです
+(訳注: 実は漢字や仮名も単語構成文字として扱われます)。
+.\"O This option has no effect if
+.\"O .B \-x
+.\"O is also specified.
+このオプションは、
+.B \-x
+が同時に指定されたときには無効になります。
+.TP
+.BR \-x ", " \-\^\-line\-regexp
+.\"O Select only those matches that exactly match the whole line.
+パターンが行全体とぴったりマッチしたときにのみ、その行を選択します。
+.\"O For a regular expression pattern, this is like parenthesizing the
+.\"O pattern and then surrounding it with
+.\"O .B ^
+.\"O and
+.\"O .BR $ .
+正規表現でいうと、これはパターンを括弧で囲み、前後に
+.B ^
+と
+.BR $
+を付けるようなものです。
+.TP
+.B \-y
+.\"O Obsolete synonym for
+.\"O .BR \-i .
+.BR \-i
+と同じ意味を持つ旧式のオプションです。
+.\"O .SS "General Output Control"
+.SS "一般的な出力の制御"
+.TP
+.BR \-c ", " \-\^\-count
+.\"O Suppress normal output; instead print a count of
+.\"O matching lines for each input file.
+.\"O With the
+.\"O .BR \-v ", " \-\^\-invert\-match
+.\"O option (see below), count non-matching lines.
+通常の出力はせず、各入力ファイルについてマッチした行数を表示します。
+.BR \-v ", " \-\^\-invert-match
+オプション (上記参照) と共に指定した場合は、
+マッチしなかった行数を表示します。
+.TP
+.BR \-\^\-color [ =\fIWHEN\fP "], " \-\^\-colour [ =\fIWHEN\fP ]
+.\"O Surround the matched (non-empty) strings, matching lines, context lines,
+.\"O file names, line numbers, byte offsets, and separators (for fields and
+.\"O groups of context lines) with escape sequences to display them in color
+.\"O on the terminal.
+.\"O The colors are defined by the environment variable
+.\"O .BR GREP_COLORS .
+.\"O The deprecated environment variable
+.\"O .B GREP_COLOR
+.\"O is still supported, but its setting does not have priority.
+.\"O .I WHEN
+.\"O is
+.\"O .BR never ", " always ", or " auto .
+マッチした (空文字列ではない) 文字列、マッチする行、前後の文脈行、
+ファイル名、行番号、バイトオフセット、(フィールドや、前後の文脈行を含む
+グループ同士の) 区切り記号をエスケープ・シーケンスで囲み、ターミナル上に
+色付きで表示します。
+どの色を使うかは、環境変数
+.B GREP_COLORS
+で定義します。非推奨の環境変数
+.B GREP_COLOR
+も、これまでどおり使用できますが、その設定は優先されません。
+.I WHEN
+は
+.BR never ", " always ", " auto
+のいづれかです。
+.TP
+.BR \-L ", " \-\^\-files\-without\-match
+.\"O Suppress normal output; instead print the name
+.\"O of each input file from which no output would
+.\"O normally have been printed.
+.\"O The scanning will stop on the first match.
+通常の出力はしません。その代わりに、
+.BR grep
+を普通に実行した際に、何の検索結果も表示しないような入力ファイルの名前を
+列挙します (訳注: すなわち、\fB\-L\fR オプションを指定すると、
+\fB\-v\fR オプションを同時に指定しない場合は、パターンにマッチする
+文字列を含む行がまったく存在しないファイルの名前を列挙するということです)。
+個々のファイルに対する走査は、最初のマッチで終了します。
+.TP
+.BR \-l ", " \-\^\-files\-with\-matches
+.\"O Suppress normal output; instead print
+.\"O the name of each input file from which output
+.\"O would normally have been printed.
+.\"O The scanning will stop on the first match.
+通常の出力はしません。その代わりに、
+.BR grep
+を普通に実行した際に、何らかの検索結果を表示するような入力ファイルの名前を
+列挙します (訳注: すなわち、\fB\-l\fR オプションを指定すると、
+\fB\-v\fR オプションを同時に指定しない場合は、パターンにマッチする
+文字列を含む行が存在するファイルの名前を列挙するということです)。
+個々のファイルに対する走査は、最初のマッチで終了します。
+.TP
+.BI \-m " NUM" "\fR,\fP \-\^\-max\-count=" NUM
+.\"O Stop reading a file after
+.\"O .I NUM
+.\"O matching lines.
+.\"O If the input is standard input from a regular file,
+.\"O and
+.\"O .I NUM
+.\"O matching lines are output,
+.\"O .B grep
+.\"O ensures that the standard input is positioned to just after the last
+.\"O matching line before exiting, regardless of the presence of trailing
+.\"O context lines.
+.\"O This enables a calling process to resume a search.
+.\"O When
+.\"O .B grep
+.\"O stops after
+.\"O .I NUM
+.\"O matching lines, it outputs any trailing context lines.
+.\"O When the
+.\"O .B \-c
+.\"O or
+.\"O .B \-\^\-count
+.\"O option is also used,
+.\"O .B grep
+.\"O does not output a count greater than
+.\"O .IR NUM .
+.\"O When the
+.\"O .B \-v
+.\"O or
+.\"O .B \-\^\-invert\-match
+.\"O option is also used,
+.\"O .B grep
+.\"O stops after outputting
+.\"O .I NUM
+.\"O non-matching lines.
+マッチした行数が
+.I NUM
+に達したら、ファイルの読み込みを中止します。
+入力が通常ファイルから標準入力を介して行われている場合は、マッチした行を
+.I NUM
+行出力した時点で、
+.B grep
+は標準入力の読み出し位置を最後にマッチした行の直後に来るようにしてから、
+終了します。続いて表示する文脈行がある場合でも、この動作は変わりません。
+このことは、
+.B grep
+を呼び出すプロセスが、中止したところから検索を
+再開することを可能にします。
+.B grep
+はマッチした行数が
+.I NUM
+に達してストップしたとき、それに続く文脈行があれば、それを出力します。
+.B \-c
+や
+.B \-\^\-count
+オプションを同時に使用した場合、
+.B grep
+は
+.I NUM
+よりも大きい数を出力しません。
+.B \-v
+や
+.B \-\^\-invert\-match
+を同時に使用した場合は、マッチしない行を
+.I NUM
+行出力したところで、
+.B grep
+はストップします。
+.TP
+.BR \-o ", " \-\^\-only\-matching
+.\"O Print only the matched (non-empty) parts of a matching line,
+.\"O with each such part on a separate output line.
+マッチする行のマッチした部分だけを (それが空文字列でなければ) 表示します。
+マッチした各文字列は、それぞれ別の行に書き出します。
+.TP
+.BR \-q ", " \-\^\-quiet ", " \-\^\-silent
+.\"O Quiet; do not write anything to standard output.
+.\"O Exit immediately with zero status if any match is found,
+.\"O even if an error was detected.
+.\"O Also see the
+.\"O .B \-s
+.\"O or
+.\"O .B \-\^\-no\-messages
+.\"O option.
+沈黙モードです。標準出力に何も書き出しません。
+マッチするものが 1 つでも見つかると、エラーを検出していた場合でも、
+終了ステータス 0 で即座に終了します。
+.B \-s
+や
+.B \-\^\-no\-messages
+オプションも参照してください。
+.TP
+.BR \-s ", " \-\^\-no\-messages
+.\"O Suppress error messages about nonexistent or unreadable files.
+ファイルが存在しないことや読み込みめないことを示す
+エラーメッセージを抑止します。
+.\"O .SS "Output Line Prefix Control"
+.SS "出力する行の前に付ける情報の制御"
+.TP
+.BR \-b ", " \-\^\-byte\-offset
+.\"O Print the 0-based byte offset within the input file
+.\"O before each line of output.
+.\"O If
+.\"O .B \-o
+.\"O .RB ( \-\^\-only\-matching )
+.\"O is specified,
+.\"O print the offset of the matching part itself.
+出力する各行の前に、その入力ファイル内での 0 から始まる
+バイト単位のオフセットを表示します。
+.B \-o
+.RB ( \-\^\-only\-matching )
+も指定されているときは、マッチする部分そのもののオフセットを示します。
+.TP
+.BR \-H ", " \-\^\-with\-filename
+.\"O Print the file name for each match.
+.\"O This is the default when there is more than one file to search.
+各々のマッチに対してそのファイル名を表示します。
+検索するファイルが 2 個以上の場合は、これがデフォルトの動作です。
+.TP
+.BR \-h ", " \-\^\-no\-filename
+.\"O Suppress the prefixing of file names on output.
+.\"O This is the default when there is only one file
+.\"O (or only standard input) to search.
+出力する行の前にファイル名を付けないようにします。
+検索するファイルが 1 つしかない (あるいは、標準入力だけだった) 場合は、
+これがデフォルトの動作です。
+.TP
+.BI \-\^\-label= LABEL
+.\"O Display input actually coming from standard input as input coming from file
+.\"O .IR LABEL.
+.\"O This is especially useful when implementing tools like
+.\"O .BR zgrep ,
+.\"O e.g.,
+.\"O .BR "gzip -cd foo.gz | grep --label=foo -H something" .
+.\"O See also the
+.\"O .B \-H
+.\"O option.
+実際には標準入力から来た入力を
+.IR LABEL
+というファイルから来たもののように見せかけます。
+これは
+.BR zgrep
+のようなツールを自分で作成する際にとりわけ便利です。たとえば、
+.BR "gzip -cd foo.gz | grep --label=foo -H something"
+といった具合です。
+.B \-H
+オプションも参照してください。
+.TP
+.BR \-n ", " \-\^\-line\-number
+.\"O Prefix each line of output with the 1-based line number
+.\"O within its input file.
+各出力行の前に、その入力ファイル内での 1 から始まる行番号を表示します。
+.TP
+.BR \-T ", " \-\^\-initial\-tab
+.\"O Make sure that the first character of actual line content lies on a
+.\"O tab stop, so that the alignment of tabs looks normal.
+.\"O This is useful with options that prefix their output to the actual content:
+.\"O .BR \-H , \-n ,
+.\"O and
+.\"O .BR \-b .
+.\"O In order to improve the probability that lines
+.\"O from a single file will all start at the same column,
+.\"O this also causes the line number and byte offset (if present)
+.\"O to be printed in a minimum size field width.
+行の実際の内容をなす最初の文字が、必ずタブ・ストップの位置に
+来るようにします。その結果、タブがきちんと揃って見えるようになります。
+このオプションは
+.BR \-H , \-n , \-b
+といった、実際の内容の前に情報を付加するオプションを使うときに
+役に立ちます。
+また、このオプションは、
+1 つのファイルから抜き出した行の先頭ができるだけ揃うように、
+行番号やバイトオフセットがある場合は、そのフィールド幅を
+必要最小のサイズにして表示します。
+.TP
+.BR \-u ", " \-\^\-unix\-byte\-offsets
+.\"O Report Unix-style byte offsets.
+.\"O This switch causes
+.\"O .B grep
+.\"O to report byte offsets as if the file were a Unix-style text file,
+.\"O i.e., with CR characters stripped off.
+.\"O This will produce results identical to running
+.\"O .B grep
+.\"O on a Unix machine.
+.\"O This option has no effect unless
+.\"O .B \-b
+.\"O option is also used;
+.\"O it has no effect on platforms other than \s-1MS-DOS\s0 and \s-1MS\s0-Windows.
+Unix 形式のバイトオフセットを報告します。
+このスイッチを使うと、
+.B grep
+は、検索対象のファイルが Unix 形式のテキストファイルであるかのように、
+バイトオフセットを報告します。すなわち、CR 文字を切り捨てるのです。
+そのため、表示される結果は、Unix マシンで
+.B grep
+を実行したときと同じものになります。
+このオプションは、
+.B \-b
+オプションを同時に使用しないかぎり、効果がありません。
+また、このオプションは、\s-1MS-DOS\s0 と \s-1MS\s0-Windows 以外の
+プラットホームでは、何の効果もありません。
+.TP
+.BR \-Z ", " \-\^\-null
+.\"O Output a zero byte (the \s-1ASCII\s0
+.\"O .B NUL
+.\"O character) instead of the character that normally follows a file name.
+.\"O For example,
+.\"O .B "grep \-lZ"
+.\"O outputs a zero byte after each file name instead of the usual newline.
+.\"O This option makes the output unambiguous, even in the presence of file
+.\"O names containing unusual characters like newlines.
+.\"O This option can be used with commands like
+.\"O .BR "find \-print0" ,
+.\"O .BR "perl \-0" ,
+.\"O .BR "sort \-z" ,
+.\"O and
+.\"O .B "xargs \-0"
+.\"O to process arbitrary file names,
+.\"O even those that contain newline characters.
+ファイル名に続いて通常出力される文字の代わりに、
+値が 0 の 1 バイト (\s-1ASCII\s0
+.B NUL
+文字) を出力します。
+たとえば、
+.B "grep \-lZ"
+は、いつもの改行 (newline) ではなく、値が 0 の 1 バイトを各ファイル名の後ろに
+出力するのです。
+このオプションは、改行のような変わった文字を含むファイル名があるときでも、
+出力の曖昧さをなくしてくれます。
+このオプションを
+.BR "find \-print0" ,
+.BR "perl \-0" ,
+.BR "sort \-z" ,
+.B "xargs \-0"
+などのコマンドと組み合わせて使うと、行儀の悪いファイル名も
+処理することができます。
+ファイル名が改行文字を含んでいても処理できるのです。
+.\"O .SS "Context Line Control"
+.SS "前後の文脈行の制御"
+.TP
+.BI \-A " NUM" "\fR,\fP \-\^\-after\-context=" NUM
+.\"O Print
+.\"O .I NUM
+.\"O lines of trailing context after matching lines.
+.\"O Places a line containing a group separator
+.\"O .RB ( \-\^\- )
+.\"O between contiguous groups of matches.
+.\"O With the
+.\"O .B \-o
+.\"O or
+.\"O .B \-\^\-only\-matching
+.\"O option, this has no effect and a warning is given.
+.I NUM
+で指定した行数だけ、パターンにマッチした行の後に続く文脈も表示します。
+マッチした行を含むグループ同士の間には、グループを区切る印
+.RB ( \-\^\- )
+からなる行を置きます。
+.B \-o
+や
+.B \-\^\-only\-matching
+と同時に使うと、このオプションは効果がなく、警告メッセージを出します。
+.TP
+.BI \-B " NUM" "\fR,\fP \-\^\-before\-context=" NUM
+.\"O Print
+.\"O .I NUM
+.\"O lines of leading context before matching lines.
+.\"O Places a line containing a group separator
+.\"O .RB ( \-\^\- )
+.\"O between contiguous groups of matches.
+.\"O With the
+.\"O .B \-o
+.\"O or
+.\"O .B \-\^\-only\-matching
+.\"O option, this has no effect and a warning is given.
+.I NUM
+で指定した行数だけ、パターンにマッチした行に先行する文脈も表示します。
+マッチした行を含むグループ同士の間には、グループを区切る印
+.RB ( \-\^\- )
+からなる行を置きます。
+.B \-o
+や
+.B \-\^\-only\-matching
+と同時に使うと、このオプションは効果がなく、警告メッセージを出します。
+.TP
+.BI \-C " NUM" "\fR,\fP \-" NUM "\fR,\fP \-\^\-context=" NUM
+.\"O Print
+.\"O .I NUM
+.\"O lines of output context.
+.\"O Places a line containing a group separator
+.\"O .RB ( \-\^\- )
+.\"O between contiguous groups of matches.
+.\"O With the
+.\"O .B \-o
+.\"O or
+.\"O .B \-\^\-only\-matching
+.\"O option, this has no effect and a warning is given.
+.I NUM
+で指定した行数だけ、パターンにマッチした行の前後の文脈も表示します。
+マッチした行を含むグループ同士の間には、グループを区切る印
+.RB ( \-\^\- )
+からなる行を置きます。
+.B \-o
+や
+.B \-\^\-only\-matching
+と同時に使うと、このオプションは効果がなく、警告メッセージを出します。
+.\"O .SS "File and Directory Selection"
+.SS "ファイルやディレクトリの選択"
+.TP
+.BR \-a ", " \-\^\-text
+.\"O Process a binary file as if it were text; this is equivalent to the
+.\"O .B \-\^\-binary\-files=text
+.\"O option.
+バイナリファイルをテキストファイルであるかのように処理します。
+これは
+.B \-\^\-binary-files=text
+オプションと等価です。
+.TP
+.BI \-\^\-binary\-files= TYPE
+.\"O If a file's data or metadata
+.\"O indicate that the file contains binary data,
+.\"O assume that the file is of type
+.\"O .IR TYPE .
+ファイルのデータやメタデータが、
+ファイルにバイナリデータが含まれていることを示す場合に、
+ファイルのタイプを
+.IR TYPE
+だと見なします。
+.\"O Non-text bytes indicate binary data; these are either output bytes that are
+.\"O improperly encoded for the current locale, or null input bytes when the
+.\"O .B \-z
+.\"O option is not given.
+.\"O .IP
+テキストではないバイトが見つかれば、バイナリデータです。
+テキストではないバイトが、
+現在使用しているロケールに不適切にエンコードして出力されたバイトや、
+.B \-z
+オプションが指定されていないときの入力中のヌルバイトだということもあります。
+.IP
+.\"O By default,
+.\"O .I TYPE
+.\"O is
+.\"O .BR binary ,
+.\"O and when
+.\"O .B grep
+.\"O discovers that a file is binary it suppresses any further output, and
+.\"O instead outputs either a one-line message saying that a binary file
+.\"O matches, or no message if there is no match.
+.\"O .IP
+デフォルトでは
+.I TYPE
+は
+.BR binary
+であり、
+.B grep
+はファイルがバイナリだとわかると、
+その先の出力を抑制します。そのかわりにバイナリファイルにマッチしたという
+1 行のメッセージを表示します。マッチする部分がない場合には何も表示しません。
+.IP
+.\"O If
+.\"O .I TYPE
+.\"O is
+.\"O .BR without-match ,
+.\"O when
+.\"O .B grep
+.\"O discovers that a file is binary it assumes that the rest of the file
+.\"O does not match; this is equivalent to the
+.\"O .B \-I
+.\"O option.
+.\"O .IP
+.I TYPE
+が
+.BR without-match
+の場合、
+.B grep
+はファイルがバイナリだとわかると、残りはマッチしないものと仮定します。
+これは
+.B \-I
+オプションと等価です。
+.IP
+.\"O If
+.\"O .I TYPE
+.\"O is
+.\"O .BR text ,
+.\"O .B grep
+.\"O processes a binary file as if it were text; this is equivalent to the
+.\"O .B \-a
+.\"O option.
+.\"O .IP
+.I TYPE
+が
+.BR text
+の場合、
+.B grep
+はバイナリファイルをテキストであるかのように扱います。
+これは
+.B \-a
+オプションと等価です。
+.IP
+.\"O When
+.\"O .I type
+.\"O is
+.\"O .BR binary ,
+.\"O .B grep
+.\"O may treat non-text bytes as line terminators even without the
+.\"O .B \-z
+.\"O option.  This means choosing
+.\"O .B binary
+.\"O versus
+.\"O .B text
+.\"O can affect whether a pattern matches a file.  For
+.\"O example, when
+.\"O .I type
+.\"O is
+.\"O .B binary
+.\"O the pattern
+.\"O .B q$ might
+.\"O match
+.\"O .B q
+.\"O immediately followed by a null byte, even though this
+.\"O is not matched when
+.\"O .I type
+.\"O is
+.\"O .BR text .
+.I type
+が
+.BR binary
+の場合、
+.B grep
+は
+.B \-z
+がなくてもテキスト以外の文字を行の区切りとして扱う場合があります。
+これは、
+.B binary
+を選ぶか
+.B text
+を選ぶかによって、
+パターンがファイルにマッチするかどうかに影響があることを意味します。
+たとえば、
+.I type
+が
+.B binary
+の場合は
+.B q$
+というパターンが
+.B q
+の直後に NULL 文字が続く箇所にマッチする可能性があるのに対し、
+.I type
+が
+.BR text
+の場合にはマッチしません。
+.\"O Conversely, when
+.\"O .I type
+.\"O is
+.\"O .B binary
+.\"O the pattern
+.\"O .B .\&
+.\"O (period) might not match a null byte.
+.\"O .IP
+逆に、
+.I type
+が
+.B binary
+の場合、
+.B .\&
+(period) というパターンは NULL 文字にはマッチしないかもしれません。
+.IP
+.\"O .I Warning:
+.\"O The
+.\"O .B \-a
+.\"O option might output binary garbage,
+.\"O which can have nasty side effects if the output is a terminal and if the
+.\"O terminal driver interprets some of it as commands.
+.I 警告:
+.B \-a
+オプションはバイナリのゴミを出力するかもしれません。
+出力先が端末であり、しかも
+端末ドライバがゴミの一部をコマンドだと解釈する場合には、
+このゴミが厄介な副作用を起こす可能性があります。
+.\"O On the other hand, when reading files whose text encodings are
+.\"O unknown, it can be helpful to use
+.\"O .B \-a
+.\"O or to set
+.\"O .B LC_ALL='C'
+.\"O in the environment, in order to find more matches even if the matches
+.\"O are unsafe for direct display.
+一方、テキストのエンコーディングが不明なファイルを読み込むとき、
+マッチした結果をそのまま表示するのが安全でなくても、
+より多くのマッチを探すために、
+.B \-a
+を指定するか、環境変数で
+.B LC_ALL='C'
+を指定するのが役に立つ場合があります。
+.TP
+.BI \-D " ACTION" "\fR,\fP \-\^\-devices=" ACTION
+.\"O If an input file is a device, FIFO or socket, use
+.\"O .I ACTION
+.\"O to process it.
+.\"O By default,
+.\"O .I ACTION
+.\"O is
+.\"O .BR read ,
+.\"O which means that devices are read just as if they were ordinary files.
+.\"O If
+.\"O .I ACTION
+.\"O is
+.\"O .BR skip ,
+.\"O devices are silently skipped.
+入力ファイルがデバイス、FIFO、ソケットのいづれかである場合に、
+.I ACTION
+を使ってその処理を行います。
+デフォルトの
+.I ACTION
+は
+.BR read
+です。すなわち、デバイスなどを、それが普通のファイルであるかのように、
+読み込みます。
+.I ACTION
+が
+.BR skip
+ならば、デバイスなどを黙ってスキップします。
+.TP
+.BI \-d " ACTION" "\fR,\fP \-\^\-directories=" ACTION
+.\"O If an input file is a directory, use
+.\"O .I ACTION
+.\"O to process it.
+.\"O By default,
+.\"O .I ACTION
+.\"O is
+.\"O .BR read ,
+.\"O i.e., read directories just as if they were ordinary files.
+.\"O If
+.\"O .I ACTION
+.\"O is
+.\"O .BR skip ,
+.\"O silently skip directories.
+.\"O If
+.\"O .I ACTION
+.\"O is
+.\"O .BR recurse ,
+.\"O read all files under each directory, recursively,
+.\"O following symbolic links only if they are on the command line.
+.\"O This is equivalent to the
+.\"O .B \-r
+.\"O option.
+入力ファイルがディレクトリの場合に、
+.I ACTION
+を使ってその処理を行います。デフォルトの
+.I ACTION
+は
+.BR read
+です。すなわち、ディレクトリを、それが普通のファイルであるかのように、
+読み込みます。
+.I ACTION
+が
+.BR skip
+ならば、ディレクトリを黙ってスキップします。
+.I ACTION
+が
+.BR recurse
+なら、
+.B
+grep
+は各ディレクトリの下にあるすべてのファイルを再帰的に読み込みます。
+ただし、シンボリックリンクはコマンドラインで指定されたときにのみたどります。
+これは
+.B \-r
+オプションと等価です。
+.TP
+.BI \-\^\-exclude= GLOB
+.\"O Skip any command-line file with a name suffix that matches the pattern
+.\"O .IR GLOB ,
+.\"O using wildcard matching; a name suffix is either the whole
+.\"O name, or any suffix starting after a
+.\"O .B /
+.\"O and before a +non-\fB/\fP.
+コマンドラインで指定されているファイルについては、
+その名前の尾部が、
+ワイルドカードによるマッチングでパターン
+.IR GLOB
+にマッチするファイルをスキップします。
+ここで言う「名前の尾部」とは、
+ファイル名の全体か、
+.B /
+の直後に始まり
+.B /
+以外の文字で終るファイル名の最後の部分のことです。
+.\"O When searching recursively, skip any subfile whose base name matches
+.\"O .IR GLOB ;
+.\"O the base name is the part after the last
+.\"O .BR / .
+また、ディレクトリを再帰検索しているときに出会うファイルについては、
+ベースネームが
+.IR GLOB
+にマッチするファイルをスキップします。
+ベースネームとは最後の
+.BR /
+より後の部分です。
+.\"O A pattern can use.\"O .\"O .BR * ,
+.\"O .BR ? ,
+.\"O and
+.\"O .BR [ ... ]
+.\"O as wildcards, and
+.\"O .B \e
+.\"O to quote a wildcard or backslash character literally.
+パターンには、
+.BR * ,
+.BR ? ,
+.BR [ ... ]
+がワイルドカードとして使えます。
+.B \e
+を文字の前に置けば、
+ワイルドカード文字やバックスラッシュ文字を本来の意味で使用できます。
+.TP
+.BI \-\^\-exclude-from= FILE
+.\"O Skip files whose base name matches any of the file-name globs read from
+.\"O .I FILE
+.\"O (using wildcard matching as described under
+.\"O .BR \-\^\-exclude ).
+ファイル
+.I FILE
+を読み込み、そこに書かれているファイル名 (ワイルドカード可) のどれかに
+ベースネームがマッチするファイルをスキップします
+.RB ( \-\^\-exclude
+の項で説明したワイルドカードのマッチングを使用します)。
+.TP
+.BI \-\^\-exclude-dir= GLOB
+.\"O Skip any command-line directory with a name suffix that matches the
+.\"O pattern
+.\"O .IR GLOB .
+コマンドラインで指定されているディレクトリのうち、
+名前の尾部がパターン
+.IR GLOB
+にマッチするディレクトリをスキップします。
+.\"O When searching recursively, skip any subdirectory
+.\"O whose base name matches
+.\"O .IR GLOB .
+また、ディレクトリを再帰検索しているときに出会うサブディレクトリについては、
+ベースネームが
+.IR GLOB
+にマッチするサブディレクトリをスキップします。
+.\"O Ignore any redundant trailing slashes in
+.\"O .IR GLOB .
+.IR GLOB
+末尾の余分なスラッシュは無視されます。
+.TP
+.BR \-I
+.\"O Process a binary file as if it did not contain matching data; this is
+.\"O equivalent to the
+.\"O .B \-\^\-binary\-files=without-match
+.\"O option.
+バイナリファイルをマッチするデータを含んでいないものとして
+処理します。これは
+.B \-\^\-binary\-files=without-match
+オプションと等価です。
+.TP
+.BI \-\^\-include= GLOB
+.\"O Search only files whose base name matches
+.\"O .I GLOB
+.\"O (using wildcard matching as described under
+.\"O .BR \-\^\-exclude ).
+ベースネームが
+.I GLOB
+にマッチするファイルのみを検索します
+.RB ( \-\^\-exclude
+の項で説明したワイルドカードのマッチングを使用します)。
+.TP
+.BR \-r ", " \-\^\-recursive
+.\"O Read all files under each directory, recursively,
+.\"O following symbolic links only if they are on the command line.
+各ディレクトリの下にあるすべてのファイルを再帰的に読み込みます。
+ただし、シンボリックリンクはコマンドラインで指定されたときにのみたどります。
+.\"O Note that if no file operand is given, grep searches the working directory.
+検索対象のファイルが指定されなかった場合には
+grep は現在のディレクトリを探すことに注意してください。
+.\"O This is equivalent to the
+.\"O .B "\-d recurse"
+.\"O option.
+これは
+.B "\-d recurse"
+オプションと等価です。
+.TP
+.BR \-R ", " \-\^\-dereference\-recursive
+.\"O Read all files under each directory, recursively.
+.\"O Follow all symbolic links, unlike
+.\"O .BR \-r .
+各ディレクトリの下にあるすべてのファイルを再帰的に読み込みます。
+.BR \-r
+と異なり、すべてのシンボリックリンクを追跡します。
+.\"O .SS "Other Options"
+.SS "その他のオプション"
+.TP
+.BR \-\^\-line\-buffered
+.\"O Use line buffering on output.
+.\"O This can cause a performance penalty.
+行ごとに出力を行います。
+実行速度が落ちるかもしれません。
+.TP
+.BR \-U ", " \-\^\-binary
+.\"O Treat the file(s) as binary.
+ファイルをバイナリとして扱います。
+.\"O By default, under \s-1MS-DOS\s0 and \s-1MS\s0-Windows,
+.\"O .BR grep
+.\"O guesses the file type by looking at the contents of the first 32KB
+.\"O read from the file.
+MS-DOS や MS-Windows の環境下で、
+.BR grep
+はデフォルトでは、
+ファイルがテキストかバイナリかを
+.B \-\^\-binary\-files
+オプションで記述された方法で推測します。
+.\"O If
+.\"O .BR grep
+.\"O decides the file is a text file, it strips the CR characters from the
+.\"O original file contents (to make regular expressions with
+.\"O .B ^
+.\"O and
+.\"O .B $
+.\"O work correctly).
+.BR grep
+はファイルをテキストファイルと判断した場合、オリジナルのファイル内容から
+.RB ( ^
+や
+.B $
+を使った正規表現が正しく動作するように)
+CR 文字を取り除きます。
+.\"O Specifying
+.\"O .B \-U
+.\"O overrules this guesswork, causing all files to be read and passed to the
+.\"O matching mechanism verbatim; if the file is a text file with CR/LF
+.\"O pairs at the end of each line, this will cause some regular
+.\"O expressions to fail.
+.B \-U
+を指定すると、この推測を抑制し、すべてのファイルを読み取って、
+そのまま手を加えずにマッチ処理へ渡すのです。もしファイルが
+各行の末尾に CR/LF の組み合わせを持つテキストファイルなら、
+このオプションのせいで正規表現がうまく働かないことがあるかもしれません。
+.\"O This option has no effect on platforms
+.\"O other than \s-1MS-DOS\s0 and \s-1MS\s0-Windows.
+このオプションは MS-DOS や MS-Windows 以外のプラットフォームでは
+効果がありません。
+.TP
+.BR \-z ", " \-\^\-null\-data
+.\"O Treat input and output data as sequences of lines, each terminated by
+.\"O a zero byte (the ASCII NUL character) instead of a newline.
+入力と出力のデータを、
+改行のかわりに、
+値が 0 のバイト (ASCII NULL 文字) で区切られた一連の行として扱います。
+.\"O Like the
+.\"O .B \-Z
+.\"O or
+.\"O .B \-\^\-null
+.\"O option, this option can be used with commands like
+.\"O .B sort -z
+.\"O to process arbitrary file names.
+.\"O .
+.B \-Z
+や
+.B \-\^\-null
+と同様、このオプションは
+.B sort -z
+などのコマンドと組み合わせて、
+行儀の悪いファイル名の処理に使用することができます。
+.\"O .SH "REGULAR EXPRESSIONS"
+.SH "正規表現"
+.\"O A regular expression is a pattern that describes a set of strings.
+.\"O Regular expressions are constructed analogously to arithmetic
+.\"O expressions, by using various operators to combine smaller expressions.
+.\"O .PP
+正規表現とは、一群の文字列を一まとめにして表現するパターンのことです。
+正規表現の構成方法は、数式によく似ています。すなわち、さまざまな演算子を
+使い、小さな表現を組み合わせて構成するのです。
+.PP
+.\"O .B grep
+.\"O understands three different versions of regular expression syntax:
+.\"O \*(lqbasic\*(rq (BRE), \*(lqextended\*(rq (ERE) and \*(lqperl\*(rq (PCRE).
+.\"O In
+.\"O .RB "\s-1GNU\s0\ " grep ,
+.\"O there is no difference in available functionality between basic and
+.\"O extended syntaxes.
+.\"O In other implementations, basic regular expressions are less powerful.
+.\"O The following description applies to extended regular expressions;
+.\"O differences for basic regular expressions are summarized afterwards.
+.\"O Perl-compatible regular expressions give additional functionality, and are
+.\"O documented in pcresyntax(3) and pcrepattern(3), but only work if
+.\"O PCRE is available in the system.
+.\"O .PP
+.B grep
+は、「基本」正規表現 (BRE)、「拡張」正規表現 (ERE)、「Perl の」正規表現
+(PCRE) という 3 種類の正規表現文法を扱うことができます。
+.RB "\s-1GNU\s0\ " grep
+では、「基本」と「拡張」の文法の間で、利用できる機能に違いはありません。
+他の実装では、基本正規表現は拡張正規表現ほど強力ではないものです。
+ここでは、拡張正規表現について説明し、
+基本正規表現との相違については、後で簡単にまとめることにします。
+なお、Perl 互換の正規表現にはより多くの機能があり、
+pcresyntax(3) や pcrepattern(3) で詳細に解説されていますが、
+PCRE が用意されているシステムでしか利用できません。
+.PP
+.\"O The fundamental building blocks are the regular expressions
+.\"O that match a single character.
+.\"O Most characters, including all letters and digits,
+.\"O are regular expressions that match themselves.
+.\"O Any meta-character with special meaning
+.\"O may be quoted by preceding it with a backslash.
+.\"O .PP
+正規表現を構成する基本単位は、1 文字にマッチする正規表現です。
+アルファベットや数字を含むほとんどの文字が、自分自身にマッチする正規表現です。
+また、特殊な意味を持つメタ文字も、その文字の前にバックスラッシュ
+を付けると、その本来の文字にマッチするようになります。
+.PP
+.\"O The period
+.\"O .B .\&
+.\"O matches any single character.
+ピリオド
+.B .\&
+は、任意の 1 文字にマッチします。
+.\"O .SS "Character Classes and Bracket Expressions"
+.SS "文字クラスと角括弧式 (ブラケット式)"
+.\"O A
+.\"O .I "bracket expression"
+.\"O is a list of characters enclosed by
+.\"O .B [
+.\"O and
+.\"O .BR ] .
+.\"O It matches any single
+.\"O character in that list; if the first character of the list
+.\"O is the caret
+.\"O .B ^
+.\"O then it matches any character
+.\"O .I not
+.\"O in the list.
+.\"O For example, the regular expression
+.\"O .B [0123456789]
+.\"O matches any single digit.
+.\"O .PP
+.I "角括弧式"
+とは、
+.B [
+と
+.BR ]
+で囲まれた文字のリストのことです。
+.I "角括弧式"
+は、リスト中の任意の 1 文字にマッチします。
+また、リストの最初の文字がキャレット
+.B ^
+の場合は、リスト中の文字以外の任意の 1 文字にマッチします。
+たとえば、正規表現
+.B [0123456789]
+は任意の数字 1 個にマッチするわけです。
+.PP
+.\"O Within a bracket expression, a
+.\"O .I "range expression"
+.\"O consists of two characters separated by a hyphen.
+.\"O It matches any single character that sorts between the two characters,
+.\"O inclusive, using the locale's collating sequence and character set.
+.\"O For example, in the default C locale,
+.\"O .B [a\-d]
+.\"O is equivalent to
+.\"O .BR [abcd] .
+.\"O Many locales sort characters in dictionary order, and in these locales
+.\"O .B [a\-d]
+.\"O is typically not equivalent to
+.\"O .BR [abcd] ;
+.\"O it might be equivalent to
+.\"O .BR [aBbCcDd] ,
+.\"O for example.
+.\"O To obtain the traditional interpretation of bracket expressions,
+.\"O you can use the C locale by setting the
+.\"O .B LC_ALL
+.\"O environment variable to the value
+.\"O .BR C .
+.\"O .PP
+角括弧式の内側に
+.I "範囲式"
+を置くことができますが、これはハイフンで区切られた 2 つの文字から
+なっています。範囲式は、現在使用中のロケールにおける照合順序と
+文字集合を使ったときに、その 2 文字の間に並ぶ、その 2 文字を含む
+任意の 1 文字にマッチします。
+たとえば、デフォルトの C ロケールでは、
+.B [a\-d]
+は
+.BR [abcd]
+と等価です。
+多くのロケールでは文字を辞書式の順序で並べていますが、そうしたロケールで
+.B [a\-d]
+が
+.BR [abcd]
+と等価でないこともよくあります。
+たとえば、
+.BR [aBbCcDd]
+と等価かもしれないのです。
+角括弧式を伝統的な意味に解釈させたいなら、
+環境変数
+.B LC_ALL
+の値を
+.BR C
+に設定して、C ロケールを使用するとよいでしょう。
+.PP
+.\"O Finally, certain named classes of characters are predefined within
+.\"O bracket expressions, as follows.
+.\"O Their names are self explanatory, and they are
+.\"O .BR [:alnum:] ,
+.\"O .BR [:alpha:] ,
+.\"O .BR [:cntrl:] ,
+.\"O .BR [:digit:] ,
+.\"O .BR [:graph:] ,
+.\"O .BR [:lower:] ,
+.\"O .BR [:print:] ,
+.\"O .BR [:punct:] ,
+.\"O .BR [:space:] ,
+.\"O .BR [:upper:] ,
+.\"O and
+.\"O .BR [:xdigit:].
+.\"O For example,
+.\"O .B [[:alnum:]]
+.\"O means the character class of numbers and
+.\"O letters in the current locale. In the C locale and \s-1ASCII\s0
+.\"O character set encoding, this is the same as
+.\"O .BR [0\-9A\-Za\-z] .
+.\"O (Note that the brackets in these class names are part of the symbolic
+.\"O names, and must be included in addition to the brackets delimiting
+.\"O the bracket expression.)
+.\"O Most meta-characters lose their special meaning inside bracket expressions.
+.\"O To include a literal
+.\"O .B ]
+.\"O place it first in the list.
+.\"O Similarly, to include a literal
+.\"O .B ^
+.\"O place it anywhere but first.
+.\"O Finally, to include a literal
+.\"O .B \-
+.\"O place it last.
+最後に、角括弧式内で使えるように、特定の名前を持つ文字クラスが
+あらかじめ定義されています。
+名前が内容を示しており、それは次のようなものです。
+.BR [:alnum:] ,
+.BR [:alpha:] ,
+.BR [:cntrl:] ,
+.BR [:digit:] ,
+.BR [:graph:] ,
+.BR [:lower:] ,
+.BR [:print:] ,
+.BR [:punct:] ,
+.BR [:space:] ,
+.BR [:upper:] ,
+.BR [:xdigit:]。
+たとえば、
+.B [[:alnum:]]
+は
+現在のロケールの文字クラスで数字と文字を意味します。
+C ロケールや \s-1ASCII\s0 文字集合のエンコーディングの場合、
+これは
+.BR [0\-9A\-Za\-z]
+と同じです。
+(こうしたクラス名に使用されている角括弧は、シンボル名の一部なので、
+角括弧式の前後に付く角括弧とは別に指定する必要があることに
+注意してください。)
+角括弧式の内側では、ほとんどのメタ文字がその特別な意味を
+持たなくなります。
+.B ]
+という記号そのものを角括弧式に含めるには、
+それをリストの先頭に置いてください。
+同様に、
+.B ^
+という記号そのものを含めるには、
+それを先頭以外のどこかに置けばよいでしょう。
+最後に、
+.B \-
+そのものを含めるには、
+それをリストの最後に置きます。
+.\"O .SS Anchoring
+.SS "行頭と行末 (アンカリング)"
+.\"O The caret
+.\"O .B ^
+.\"O and the dollar sign
+.\"O .B $
+.\"O are meta-characters that respectively match the empty string at the
+.\"O beginning and end of a line.
+キャレット
+.B ^
+と
+ドル記号
+.B $
+は、それぞれ行頭と行末の空文字列にマッチするメタ文字です。
+.\"O .SS "The Backslash Character and Special Expressions"
+.SS "バックスラッシュ付きの特別な表現"
+.\"O The symbols
+.\"O .B \e<
+.\"O and
+.\"O .B \e>
+.\"O respectively match the empty string at the beginning and end of a word.
+.\"O The symbol
+.\"O .B \eb
+.\"O matches the empty string at the edge of a word,
+.\"O and
+.\"O .B \eB
+.\"O matches the empty string provided it's
+.\"O .I not
+.\"O at the edge of a word.
+.\"O The symbol
+.\"O .B \ew
+.\"O is a synonym for
+.\"O .B [_[:alnum:]]
+.\"O and
+.\"O .B \eW
+.\"O is a synonym for
+.\"O .BR [^_[:alnum:]] .
+シンボル
+.B \e<
+とシンボル
+.B \e>
+は、それぞれ単語の先頭と末尾の空文字列にマッチするメタ文字です。
+シンボル
+.B \eb
+は単語の端の空文字列にマッチします。
+シンボル
+.B \eB
+は単語の端
+.I 以外
+の空文字列にマッチします。
+シンボル
+.B \ew
+は
+.B [_[:alnum:]]
+と同じ意味で、
+シンボル
+.B \eW
+は
+.B [^_[:alnum:]]
+と同じ意味です。
+.\"O .SS Repetition
+.SS "繰り返し"
+.\"O A regular expression may be followed by one of several repetition operators:
+正規表現の後には、繰り返し演算子のどれかが続くことがあります。
+.PD 0
+.TP
+.B ?
+.\"O The preceding item is optional and matched at most once.
+直前の項目があってもなくてもよく、マッチするとしても 1 回だけということ。
+.TP
+.B *
+.\"O The preceding item will be matched zero or more times.
+直前の項目が 0 回以上マッチするということ。
+.TP
+.B +
+.\"O The preceding item will be matched one or more times.
+直前の項目が 1 回以上マッチするということ。
+.TP
+.BI { n }
+.\"O The preceding item is matched exactly
+.\"O .I n
+.\"O times.
+直前の項目がちょうど
+.I n
+回マッチするということ。
+.TP
+.BI { n ,}
+.\"O The preceding item is matched
+.\"O .I n
+.\"O or more times.
+直前の項目が
+.I n
+回以上マッチするということ。
+.TP
+.BI {, m }
+.\"O The preceding item is matched at most
+.\"O .I m
+.\"O times.
+直前の項目が
+.I m
+回以下マッチするということ。
+.\"O This is a \s-1GNU\s0 extension.
+これは \s-1GNU\s0 拡張です。
+.TP
+.BI { n , m }
+.\"O The preceding item is matched at least
+.\"O .I n
+.\"O times, but not more than
+.\"O .I m
+.\"O times.
+直前の項目が
+.I n
+回以上
+.I m
+回以下マッチするということ。
+.PD
+.\"O .SS Concatenation
+.SS "結合"
+.\"O Two regular expressions may be concatenated; the resulting
+.\"O regular expression matches any string formed by concatenating
+.\"O two substrings that respectively match the concatenated
+.\"O expressions.
+2 つの正規表現は結合することができます。
+結果としてできあがる正規表現は、
+結合対象となる部分表現にそれぞれマッチする
+2 つの部分文字列を結合して作られる、どんな文字列にもマッチします。
+.\"O .SS Alternation
+.SS "選択"
+.\"O Two regular expressions may be joined by the infix operator
+.\"O .BR | ;
+.\"O the resulting regular expression matches any string matching
+.\"O either alternate expression.
+2 つの正規表現は中置き型演算子の
+.BR |
+で繋ぐことができます。
+結果としてできあがる正規表現は、
+どちらかの部分表現にマッチするどんな文字列にもマッチします。
+.\"O .SS Precedence
+.SS "優先順位"
+.\"O Repetition takes precedence over concatenation, which in turn
+.\"O takes precedence over alternation.
+.\"O A whole expression may be enclosed in parentheses
+.\"O to override these precedence rules and form a subexpression.
+繰り返しは結合に優先します。また結合は選択に優先します。
+表現の 1 つのまとまりを括弧でくくると、その内側の式をこうした優先規則より
+さらに優先させることができます。
+括弧でくくった部分は、1 つの部分表現になるのです。
+.\"O .SS "Back References and Subexpressions"
+.SS "後方参照と部分表現"
+.\"O The back-reference
+.\"O .BI \e n\c
+.\"O \&, where
+.\"O .I n
+.\"O is a single digit, matches the substring
+.\"O previously matched by the
+.\"O .IR n th
+.\"O parenthesized subexpression of the regular expression.
+.I n
+が 1 個の数字であるような
+後方参照
+.BI \e n
+は、正規表現中の括弧で囲まれた
+.IR n
+番目の部分表現が前もってマッチした文字列とマッチします。
+.\"O .SS "Basic vs Extended Regular Expressions"
+.SS "基本正規表現と拡張正規表現"
+.\"O In basic regular expressions the meta-characters
+.\"O .BR ? ,
+.\"O .BR + ,
+.\"O .BR { ,
+.\"O .BR | ,
+.\"O .BR ( ,
+.\"O and
+.\"O .BR )
+.\"O lose their special meaning; instead use the backslashed
+.\"O versions
+.\"O .BR \e? ,
+.\"O .BR \e+ ,
+.\"O .BR \e{ ,
+.\"O .BR \e| ,
+.\"O .BR \e( ,
+.\"O and
+.\"O .BR \e) .
+.\"O .PP
+基本正規表現では、メタ文字
+.BR ? ,
+.BR + ,
+.BR { ,
+.BR | ,
+.BR ( ,
+.BR )
+は、その特殊な意味を失います。バックスラッシュを付けた
+.BR \e? ,
+.BR \e+ ,
+.BR \e{ ,
+.BR \e| ,
+.BR \e( ,
+.BR \e)
+を代わりに使用してください。
+.
+.\"O .SH "ENVIRONMENT VARIABLES"
+.SH "環境変数"
+.\"O The behavior of
+.\"O .B grep
+.\"O is affected by the following environment variables.
+.\"O .PP
+.B grep
+の動作は、
+以下に挙げる環境変数の影響を受けます。
+.PP
+.\"O The locale for category
+.\"O .BI LC_ foo
+.\"O is specified by examining the three environment variables
+.\"O .BR LC_ALL ,
+.\"O .BR LC_\fIfoo\fP ,
+.\"O .BR LANG ,
+.\"O in that order.
+.\"O The first of these variables that is set specifies the locale.
+.\"O For example, if
+.\"O .B LC_ALL
+.\"O is not set, but
+.\"O .B LC_MESSAGES
+.\"O is set to
+.\"O .BR pt_BR ,
+.\"O then the Brazilian Portuguese locale is used for the
+.\"O .B LC_MESSAGES
+.\"O category.
+.\"O The C locale is used if none of these environment variables are set,
+.\"O if the locale catalog is not installed, or if
+.\"O .B grep
+.\"O was not compiled with national language support (\s-1NLS\s0).
+.BI LC_ foo
+カテゴリのロケールは、
+.BR LC_ALL ,
+.BR LC_\fIfoo\fP ,
+.BR LANG
+という 3 つの環境変数をこの順番で調べることで決まります。
+この 3 つの環境変数のうち、設定されている最初のものが、
+.BI LC_ foo
+のロケールを決めるのです。
+たとえば、
+.B LC_ALL
+が設定されていず、
+.B LC_MESSAGES
+が
+.BR pt_BR
+に設定されているとしましょう。
+そのときは、ブラジルのポルトガル語というロケールが
+.B LC_MESSAGES
+カテゴリに使用されるわけです。
+こうした環境変数がまったく設定されていなかったり、ロケールの
+カタログがインストールされていなかったり、
+.B grep
+が各国語サポート (\s-1NLS\s0) を有効にしてコンパイルされていなかったり
+した場合は、C ロケールが使用されます。
+.\"O The shell command
+.\"O .B "locale \-a"
+.\"O lists locales that are currently available.
+シェルの
+.B "locale \-a"
+コマンドによって現在利用できるロケールが一覧できます。
+.TP
+.B GREP_OPTIONS
+.\"O This variable specifies default options
+.\"O to be placed in front of any explicit options.
+.\"O As this causes problems when writing portable scripts,
+.\"O this feature will be removed in a future release of
+.\"O .BR grep ,
+.\"O and
+.\"O .B grep
+.\"O warns if it is used.
+.\"O Please use an alias or script instead.
+この変数ではデフォルトのオプションを指定します。そうしたオプションは
+コマンドラインで明示的に指定するオプションの前に置かれます。
+これが移植性の高いスクリプトを書くときに問題となるため、
+この機能は
+.BR grep
+の将来のリリースで削除されることになっており、
+使用すると
+.B grep
+が警告を表示します。
+かわりにエイリアスやスクリプトを使ってください。
+.TP
+.B GREP_COLOR
+.\"O This variable specifies the color used to highlight matched (non-empty) text.
+.\"O It is deprecated in favor of
+.\"O .BR GREP_COLORS ,
+.\"O but still supported.
+.\"O The
+.\"O .BR mt ,
+.\"O .BR ms ,
+.\"O and
+.\"O .B mc
+.\"O capabilities of
+.\"O .B GREP_COLORS
+.\"O have priority over it.
+.\"O It can only specify the color used to highlight
+.\"O the matching non-empty text in any matching line
+.\"O (a selected line when the
+.\"O .B -v
+.\"O command-line option is omitted,
+.\"O or a context line when
+.\"O .B -v
+.\"O is specified).
+.\"O The default is
+.\"O .BR 01;31 ,
+.\"O which means a bold red foreground text on the terminal's default background.
+この変数は、パターンにマッチした (空文字列ではない) テキストを強調するために
+使用する色彩を指定します。
+.BR GREP_COLORS
+変数を使用する方が望ましく、この変数は非推奨なのですが、今でも
+使えないことはありません。
+.B GREP_COLORS
+変数の
+.BR mt ,
+.BR ms ,
+.B mc
+機能を使用している場合は、この変数による指定より、そちらのほうが
+優先されます。
+この変数によって指定できるのは、マッチする空文字列ではないテキストを
+強調するために、マッチする行ならどこでも使用する色彩だけなのです
+(マッチする行は、コマンドラインオプション
+.B -v
+を指定しなかったときは、選択される行になり、
+.B -v
+を指定したときは、前後の文脈行になります)。
+この変数のデフォルトの値は
+.BR 01;31
+ですが、それはターミナルのデフォルトの背景色に赤い前景色の太字で
+テキストを表示するということです。
+.TP
+.B GREP_COLORS
+.\"O Specifies the colors and other attributes
+.\"O used to highlight various parts of the output.
+.\"O Its value is a colon-separated list of capabilities
+.\"O that defaults to
+.\"O .B ms=01;31:mc=01;31:sl=:cx=:fn=35:ln=32:bn=32:se=36
+.\"O with the
+.\"O .B rv
+.\"O and
+.\"O .B ne
+.\"O boolean capabilities omitted (i.e., false).
+.\"O Supported capabilities are as follows.
+この変数は、出力のさまざまな部分を強調するために使用する、
+色彩などの属性を指定します。
+この変数の値はコロンで区切った機能のリストであり、
+デフォルトでは、
+.B ms=01;31:mc=01;31:sl=:cx=:fn=35:ln=32:bn=32:se=36
+になっていて、
+.B rv
+と
+.B ne
+という真偽値を取る機能は設定してありません (すなわち、false になっています)。
+使用できる機能は、以下のとおりです。
+.RS
+.TP
+.B sl=
+.\"O SGR substring for whole selected lines
+.\"O (i.e.,
+.\"O matching lines when the
+.\"O .B \-v
+.\"O command-line option is omitted,
+.\"O or non-matching lines when
+.\"O .B \-v
+.\"O is specified).
+.\"O If however the boolean
+.\"O .B rv
+.\"O capability
+.\"O and the
+.\"O .B \-v
+.\"O command-line option are both specified,
+.\"O it applies to context matching lines instead.
+.\"O The default is empty (i.e., the terminal's default color pair).
+選択される行全体に適用される SGR パラメータ
+(選択される行とは、コマンドラインで
+.B \-v
+オプションを指定しなかったときは、マッチする行、
+.B \-v
+オプションを指定したときは、マッチしない行のことです)。
+ただし、値に真偽値を取る
+.B rv
+機能とコマンドライン・オプションの
+.B \-v
+の両方を指定したときは、前後の文脈行扱いになるマッチする行に
+適用されます。
+デフォルトは空です (すなわち、端末のデフォルトの背景色と
+前景色の組み合わせ)。
+.TP
+.B cx=
+.\"O SGR substring for whole context lines
+.\"O (i.e.,
+.\"O non-matching lines when the
+.\"O .B \-v
+.\"O command-line option is omitted,
+.\"O or matching lines when
+.\"O .B \-v
+.\"O is specified).
+.\"O If however the boolean
+.\"O .B rv
+.\"O capability
+.\"O and the
+.\"O .B \-v
+.\"O command-line option are both specified,
+.\"O it applies to selected non-matching lines instead.
+.\"O The default is empty (i.e., the terminal's default color pair).
+前後の文脈行全体に適用される SGR パラメータ
+(前後の文脈行とは、コマンドラインで
+.B \-v
+オプションを指定しなかったときは、マッチしない行、
+.B \-v
+オプションを指定したときは、マッチする行のことです)。
+ただし、値に真偽値を取る
+.B rv
+機能とコマンドライン・オプションの
+.B \-v
+の両方を指定したときは、選択されるマッチしない行に
+適用されます。
+デフォルトは空です (すなわち、端末のデフォルトの背景色と
+前景色の組み合わせ)。
+.TP
+.B rv
+.\"O Boolean value that reverses (swaps) the meanings of
+.\"O the
+.\"O .B sl=
+.\"O and
+.\"O .B cx=
+.\"O capabilities
+.\"O when the
+.\"O .B \-v
+.\"O command-line option is specified.
+.\"O The default is false (i.e., the capability is omitted).
+コマンドラインで
+.B \-v
+が指定されているときに、
+.B sl=
+と
+.B cx=
+機能の意味を逆にする (入れ替える) 真偽値。
+デフォルトは空です (すなわち、この機能は指定されていません)。
+.TP
+.B mt=01;31
+.\"O SGR substring for matching non-empty text in any matching line
+.\"O (i.e.,
+.\"O a selected line when the
+.\"O .B \-v
+.\"O command-line option is omitted,
+.\"O or a context line when
+.\"O .B \-v
+.\"O is specified).
+.\"O Setting this is equivalent to setting both
+.\"O .B ms=
+.\"O and
+.\"O .B mc=
+.\"O at once to the same value.
+.\"O The default is a bold red text foreground over the current line background.
+マッチする行ならどこでも、空文字列ではないマッチするテキストに適用される
+SGR パラメータ
+(マッチする行は、コマンドラインで
+.B \-v
+オプションを指定しなかったときは、選択される行になり、
+.B \-v
+を指定したときは、前後の文脈行になります)。
+この機能を設定するのは、
+.B ms=
+と
+.B mc=
+を同時に同じ値に設定するのと同じことです。
+デフォルトは、カレント行の背景色に赤い前景色の太字になっています。
+.TP
+.B ms=01;31
+.\"O SGR substring for matching non-empty text in a selected line.
+.\"O (This is only used when the
+.\"O .B \-v
+.\"O command-line option is omitted.)
+.\"O The effect of the
+.\"O .B sl=
+.\"O (or
+.\"O .B cx=
+.\"O if
+.\"O .BR rv )
+.\"O capability remains active when this kicks in.
+.\"O The default is a bold red text foreground over the current line background.
+選択される行中の空文字列ではないマッチするテキストに適用される SGR パラメータ
+(この機能が使用されるのは、コマンドラインで
+.B \-v
+オプションを指定しないときだけです)。
+.B sl=
+機能
+.RB ( rv
+が設定されているときは、
+.B cx=
+機能) の効果は、この機能を使用しても、相変わらず有効です。
+デフォルトは、カレント行の背景色に赤い前景色の太字になっています。
+.TP
+.B mc=01;31
+.\"O SGR substring for matching non-empty text in a context line.
+.\"O (This is only used when the
+.\"O .B \-v
+.\"O command-line option is specified.)
+.\"O The effect of the
+.\"O .B cx=
+.\"O (or
+.\"O .B sl=
+.\"O if
+.\"O .BR rv )
+.\"O capability remains active when this kicks in.
+.\"O The default is a bold red text foreground over the current line background.
+前後の文脈行中の空文字列ではないマッチするテキストに適用される SGR パラメータ
+(この機能が使用されるのは、コマンドラインで
+.B \-v
+オプションが指定されているときだけです)。
+.B cx=
+機能
+.RB ( rv
+が設定されているときは、
+.B sl=
+機能) の効果は、この機能を使用しても、相変わらず有効です。
+デフォルトは、カレント行の背景色に赤い前景色の太字になっています。
+.TP
+.B fn=35
+.\"O SGR substring for file names prefixing any content line.
+.\"O The default is a magenta text foreground over the terminal's default background.
+表示される行の前にファイル名が付くとき、それに適用される SGR パラメータ。
+デフォルトは、端末のデフォルトの背景色にマゼンタの前景色の文字です。
+.TP
+.B ln=32
+.\"O SGR substring for line numbers prefixing any content line.
+.\"O The default is a green text foreground over the terminal's default background.
+表示される行の前に行番号が付くとき、それに適用される SGR パラメータ。
+デフォルトは、端末のデフォルトの背景色に緑の前景色の文字です。
+.TP
+.B bn=32
+.\"O SGR substring for byte offsets prefixing any content line.
+.\"O The default is a green text foreground over the terminal's default background.
+表示される行の前にバイトオフセットが付くとき、それに適用される SGR パラメータ。
+デフォルトは、端末のデフォルトの背景色に緑の前景色の文字です。
+.TP
+.B se=36
+.\"O SGR substring for separators that are inserted
+.\"O between selected line fields
+.\"O .RB ( : ),
+.\"O between context line fields,
+.\"O .RB ( \- ),
+.\"O and between groups of adjacent lines when nonzero context is specified
+.\"O .RB ( \-\^\- ).
+.\"O The default is a cyan text foreground over the terminal's default background.
+区切り記号に適用される SGR パラメータ。
+区切り記号としては、選択される行のフィールド間には
+.RB ' : '
+を置き、
+前後の文脈行のフィールド間には
+.RB ' \- '
+を置きます。
+前後の文脈行の表示が指定されているときは、隣接行グループの間に
+.RB ' \-\^\- '
+を挿入します。
+デフォルトは、端末のデフォルトの背景色にシアンの前景色の記号です。
+.TP
+.B ne
+.\"O Boolean value that prevents clearing to the end of line
+.\"O using Erase in Line (EL) to Right
+.\"O .RB ( \\\\\\33[K )
+.\"O each time a colorized item ends.
+.\"O This is needed on terminals on which EL is not supported.
+.\"O It is otherwise useful on terminals
+.\"O for which the
+.\"O .B back_color_erase
+.\"O .RB ( bce )
+.\"O boolean terminfo capability does not apply,
+.\"O when the chosen highlight colors do not affect the background,
+.\"O or when EL is too slow or causes too much flicker.
+.\"O The default is false (i.e., the capability is omitted).
+.\"O .PP
+真偽値です。通常、色付けされた項目が終わるたびに、
+エスケープ・シーケンス Erase in Line (EL) to Right
+.RB ( \\\\\\33[K )
+を使用して、行末まで消去しますが、
+.B ne
+を設定すると、それをやらなくなります。
+これは、端末が EL をサポートしていない場合に必要です。
+そのほか、
+真偽値を取る terminfo の機能
+.B back_color_erase
+.RB ( bce )
+を使用していない端末で、採用した強調色が背景に作用しない場合や、
+EL が遅すぎたり、画面にひどいチラつきを引き起こしたりする場合にも、
+これの設定が役に立ちます。
+デフォルトは false です (すなわち、この機能は設定されていません)。
+.PP
+.\"O Note that boolean capabilities have no
+.\"O .BR = ...
+.\"O part.
+.\"O They are omitted (i.e., false) by default and become true when specified.
+.\"O .PP
+真偽値を取る機能には
+.BR = ..
+の部分がないことに注意してください。そうした機能はデフォルトでは
+設定されていず (すなわち、false)、設定されたとき true になります。
+.PP
+.\"O See the Select Graphic Rendition (SGR) section
+.\"O in the documentation of the text terminal that is used
+.\"O for permitted values and their meaning as character attributes.
+.\"O These substring values are integers in decimal representation
+.\"O and can be concatenated with semicolons.
+使用しているテキスト端末の文書にある Select Graphic Rendition (SGR) の
+セクションを見て、使用できる値や、それが文字属性として使われたときの意味を
+調べてください。
+SGR パラメータの値は十進法の整数であり、セミコロンで結合することができます。
+.\"O .B grep
+.\"O takes care of assembling the result
+.\"O into a complete SGR sequence
+.\"O .RB ( \\\\\\33[ ... m ).
+.B grep
+はそうしたセミコロンで結合された数字から完全な SGR シーケンス
+.RB ( \\\\\\33[ ... m )
+を構成します。
+.\"O Common values to concatenate include
+結合される値でよく使われるものを挙げると、
+.\"O .B 1
+.\"O for bold,
+.B 1
+は太字、
+.\"O .B 4
+.\"O for underline,
+.B 4
+は下線、
+.\"O .B 5
+.\"O for blink,
+.B 5
+は点滅、
+.\"O .B 7
+.\"O for inverse,
+.B 7
+は反転です。
+.\"O .B 39
+.\"O for default foreground color,
+.B 39
+はデフォルトの前景色、
+.\"O .B 30
+.\"O to
+.\"O .B 37
+.\"O for foreground colors,
+.B 30
+から
+.B 37
+は前景色、
+.\"O .B 90
+.\"O to
+.\"O .B 97
+.\"O for 16-color mode foreground colors,
+.B 90
+から
+.B 97
+は 16 色モードの前景色、
+.\"O .B 38;5;0
+.\"O to
+.\"O .B 38;5;255
+.\"O for 88-color and 256-color modes foreground colors,
+.B 38;5;0
+から
+.B 38;5;255
+は 88 色と 256 色モードの前景色に使われます。また、
+.\"O .B 49
+.\"O for default background color,
+.B 49
+はデフォルトの背景色であり、
+.\"O .B 40
+.\"O to
+.\"O .B 47
+.\"O for background colors,
+.B 40
+から
+.B 47
+は背景色、
+.\"O .B 100
+.\"O to
+.\"O .B 107
+.\"O for 16-color mode background colors, and
+.B 100
+から
+.B 107
+は 16 色モードの背景色、
+.\"O .B 48;5;0
+.\"O to
+.\"O .B 48;5;255
+.\"O for 88-color and 256-color modes background colors.
+.B 48;5;0
+から
+.B 48;5;255
+は 88 色と 256 色モードの背景色です。
+.RE
+.TP
+\fBLC_ALL\fP, \fBLC_COLLATE\fP, \fBLANG\fP
+.\"O These variables specify the locale for the
+.\"O .B LC_COLLATE
+.\"O category,
+.\"O which determines the collating sequence
+.\"O used to interpret range expressions like
+.\"O .BR [a\-z] .
+こうした変数は
+.B LC_COLLATE
+カテゴリのロケールを指定します。
+.B LC_COLLATE
+は
+.BR [a\-z]
+のような範囲式を解釈するときの照合順序を決めるものです。
+.TP
+\fBLC_ALL\fP, \fBLC_CTYPE\fP, \fBLANG\fP
+.\"O These variables specify the locale for the
+.\"O .B LC_CTYPE
+.\"O category,
+.\"O which determines the type of characters,
+.\"O e.g., which characters are whitespace.
+こうした変数は
+.B LC_CTYPE
+カテゴリのロケールを指定します。
+.B LC_CTYPE
+は文字のタイプ、たとえば、空白 (whitespace) に当たるのは
+どの文字とどの文字か、といったことを決めるものです。
+.\"O This category also determines the character encoding, that is, whether
+.\"O text is encoded in UTF-8, ASCII, or some other encoding.  In the C or
+.\"O POSIX locale, all characters are encoded as a single byte and every
+.\"O byte is a valid character.
+このカテゴリーは、文字のエンコーディングも決定します。
+つまり、テキストのエンコーディングが UTF-8 か、ASCII か、
+それ以外のエンコーディングかということです。
+ロケールが C か POSIX の場合は、
+すべての文字が 1 バイトとしてエンコードされ、
+すべてのバイトが有効な文字となります。
+.TP
+\fBLC_ALL\fP, \fBLC_MESSAGES\fP, \fBLANG\fP
+.\"O These variables specify the locale for the
+.\"O .B LC_MESSAGES
+.\"O category,
+.\"O which determines the language that
+.\"O .B grep
+.\"O uses for messages.
+.\"O The default C locale uses American English messages.
+こうした変数は
+.B LC_MESSAGES
+カテゴリのロケールを指定します。
+.B LC_MESSAGES
+は
+.B grep
+がメッセージに使う言語を決めるものです。
+デフォルトの C ロケールでは、アメリカ英語のメッセージが使用されます。
+.TP
+.B POSIXLY_CORRECT
+.\"O If set,
+.\"O .B grep
+.\"O behaves as \s-1POSIX\s0 requires; otherwise,
+.\"O .B grep
+.\"O behaves more like other \s-1GNU\s0 programs.
+.\"O \s-1POSIX\s0 requires that options that follow file names must be
+.\"O treated as file names; by default, such options are permuted to the
+.\"O front of the operand list and are treated as options.
+.\"O Also, \s-1POSIX\s0 requires that unrecognized options be diagnosed as
+.\"O \*(lqillegal\*(rq, but since they are not really against the law the default
+.\"O is to diagnose them as \*(lqinvalid\*(rq.
+.\"O .B POSIXLY_CORRECT
+.\"O also disables \fB_\fP\fIN\fP\fB_GNU_nonoption_argv_flags_\fP,
+.\"O described below.
+これが設定されていると、
+.B grep
+は \s-1POSIX\s0 が要求するとおりの動作をします。
+設定されていない場合の動作は、ほかの \s-1GNU\s0 のプログラムに
+より近いものです。
+\s-1POSIX\s0 の規定では、ファイル名の後にオプションが現れた場合、
+それをファイル名として扱わなければならないことになっています。
+これに対して、
+.B grep
+のデフォルトでは、そうしたオプションを引き数リストの前の方に移動して、
+オプションとして扱います。
+また、\s-1POSIX\s0 の規定では、理解できないオプションは
+\*(lqillegal\*(rq (違法) と判断するようになっていますが、
+そうしたオプションも法律に違反しているわけではないので、
+.B grep
+のデフォルトでは、\*(lqinvalid\*(rq (無効) という判断を下します。
+.\" さらに、
+.\" .B POSIXLY_CORRECT
+.\" は、下記の \fB_\fP\fIN\fP\fB_GNU_nonoption_argv_flags_\fP を無効にします。
+.\" (訳注: 次項を表示しないことに合わせて、「さらに」以下の文も
+.\" コメントにします) 
+.\" .TP
+.\" \fB_\fP\fIN\fP\fB_GNU_nonoption_argv_flags_\fP
+.\"O (Here
+.\"O .I N
+.\"O is
+.\"O .BR grep 's
+.\"O numeric process ID.)  If the
+.\"O .IR i th
+.\"O character of this environment variable's value is
+.\"O .BR 1 ,
+.\"O do not consider the
+.\"O .IR i th
+.\"O operand of
+.\"O .B grep
+.\"O to be an option, even if it appears to be one.
+.\"O A shell can put this variable in the environment for each command it runs,
+.\"O specifying which operands are the results of file name wildcard
+.\"O expansion and therefore should not be treated as options.
+.\"O This behavior is available only with the \s-1GNU\s0 C library, and only
+.\"O when
+.\"O .B POSIXLY_CORRECT
+.\"O is not set.
+.\"O .
+.\" (ここで
+.\" .I N
+.\" は、
+.\" .BR grep
+.\" のプロセス ID 番号です) もし、この環境変数の値の
+.\" .IR i
+.\" 番目の文字が
+.\" .BR 1
+.\" だったら、
+.\" .B grep
+.\" の
+.\" .IR i
+.\" 番目の引き数がオプションのように見えても、
+.\" それをオプションと見なしてはいけない、ということです。
+.\" シェルはコマンドを実行するたびに、そのコマンドの環境にこの変数を
+.\" 挿入して、どの引き数がファイル名をワイルドカード展開した結果であり、
+.\" それ故オプションとして扱ってはいけないかを指定することができます。
+.\" この動作は \s-1GNU\s0 C ライブラリを使用しているときにのみ、それも、
+.\" .B POSIXLY_CORRECT
+.\" が設定されていないときにのみ、利用することができます。
+.\" (訳注: この環境変数は、bash 2.0 で採用されたが、問題を起こすために
+.\" bash 2.01 で削除されたとのことです。それ故、ユーザからは man
+.\" コマンドで見えないようにしておきます。getopt(3) を参照してください)
+.
+.\"O .SH "EXIT STATUS"
+.SH "終了ステータス"
+.\"O Normally the exit status is 0 if a line is selected, 1 if no lines
+.\"O were selected, and 2 if an error occurred.  However, if the
+.\"O .B \-q
+.\"O or
+.\"O .B \-\^\-quiet
+.\"O or
+.\"O .B \-\^\-silent
+.\"O is used and a line is selected, the exit status is 0 even if an error
+.\"O occurred.
+.\"O .
+通常では、選択される行が見つかったときの終了ステータスは 0 であり、
+見つからなかったときは 1 であり、エラーが起きた場合は 2 です。
+ただし、
+.B \-q ,
+.B \-\^\-quiet ,
+.B \-\^\-silent
+といったオプションが使われていて、選択される行が見つかったときは、
+エラーが起きたときでも終了ステータスは 0 です。
+.
+.\"O .SH COPYRIGHT
+.SH "著作権"
+Copyright 1998-2000, 2002, 2005-2016 Free Software Foundation, Inc.
+.PP
+This is free software;
+see the source for copying conditions.
+There is NO warranty;
+not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.
+.\"O .SH BUGS
+.SH "バグ"
+.\"O .SS "Reporting Bugs"
+.SS "バグの報告"
+.\"O Email bug reports to
+.\"O .MTO bug-grep@gnu.org "the bug-reporting address" .
+.\"O An
+.\"O .URL http://lists.gnu.org/mailman/listinfo/bug-grep "email archive"
+.\"O and a
+.\"O .URL http://debbugs.gnu.org/cgi/pkgreport.cgi?package=grep "bug tracker"
+.\"O are available.
+バグ報告は
+.MTO bug-grep@gnu.org "バグ報告アドレス"
+宛に E メールで送ってください。
+.URL http://lists.gnu.org/mailman/listinfo/bug-grep "メールアーカイブ"
+と
+.URL http://debbugs.gnu.org/cgi/pkgreport.cgi?package=grep "バグトラッカー"
+も用意されています。
+.\"O .SS "Known Bugs"
+.SS "既知のバク"
+.\"O Large repetition counts in the
+.\"O .BI { n , m }
+.\"O construct may cause
+.\"O .B grep
+.\"O to use lots of memory.
+.\"O In addition,
+.\"O certain other obscure regular expressions require exponential time
+.\"O and space, and may cause
+.\"O .B grep
+.\"O to run out of memory.
+.\"O .PP
+.BI { n , m }
+を使って何度も繰り返しを行うと、
+.B grep
+は大量のメモリを消費するかもしれません。
+また、ほかの曖昧な正規表現にも、指数関数的な時間と
+メモリ空間を要するものがあり、
+.B grep
+がメモリ不足を起こすことがあります。
+.PP
+.\"O Back-references are very slow, and may require exponential time.
+.\"O .
+後方参照は非常に遅く、とんでもなく時間がかかることがあります。
+.PP
+.\"O .SH "SEE ALSO"
+.SH "関連項目"
+.\"O .SS "Regular Manual Pages"
+.SS "標準のマニュアルページ"
+awk(1), cmp(1), diff(1), find(1), gzip(1),
+perl(1), sed(1), sort(1), xargs(1), zgrep(1),
+read(2),
+pcre(3), pcresyntax(3), pcrepattern(3),
+terminfo(5),
+glob(7), regex(7).
+.\"O .SS "\s-1POSIX\s0 Programmer's Manual Page"
+.SS "\s-1POSIX\s0 プログラマーズ・マニュアルページ"
+grep(1p).
+.\"O .SS "Full Documentation"
+.SS "完全版の文書"
+.\"O A
+.\"O .URL http://www.gnu.org/software/grep/manual/ "complete manual"
+.\"O is available.
+.\"O If the
+.\"O .B info
+.\"O and
+.\"O .B grep
+.\"O programs are properly installed at your site, the command
+.\"O .IP
+.\"O .B info grep
+.\"O .PP
+.\"O should give you access to the complete manual.
+.\"O .
+.URL http://www.gnu.org/software/grep/manual/ "完全版のマニュアル"
+が用意されています。
+.B info
+と
+.B grep
+プログラムが御使用のサイトにきちんとインストールされているならば、
+.IP
+.B info grep
+.PP
+とコマンドを打ち込むことで、完備したマニュアルが読めるはずです。
+.\"O .SH NOTES
+.SH "注記"
+.\"O This man page is maintained only fitfully;
+.\"O the full documentation is often more up-to-date.
+.\"O .PP
+このマニュアルは断続的にメンテナンスされるため、
+完全版の文書のほうが最新であることがよくあります。
+.SH "訳者謝辞"
+この翻訳は、FreeBSD jpman Project <http://www.jp.freebsd.org/man-jp/>
+から Linux JM project に寄贈していただいたマニュアルを元にし、
+GNU grep の新しいマニュアルに合わせて、増補・改訂しています。
+この場を借りて、FreeBSD jpman Project の翻訳者の方々にお礼を申し上げます。
+.\" Work around problems with some troff -man implementations.
+.br

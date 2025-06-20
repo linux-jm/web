@@ -1,0 +1,289 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FANOTIFY_INIT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FANOTIFY_INIT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/fanotify_init.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fanotify_init - fanotify グループを作成し、初期化する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/fanotify.h">sys/fanotify.h</A>&gt;</B>
+<P>
+
+<B>int fanotify_init(unsigned int </B><I>flags</I><B>, unsigned int
+</B><I>event_f_flags</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+fanotify API の概要については <B><A HREF="../man7/fanotify.7.html">fanotify</A></B>(7) を参照。
+<P>
+
+<B>fanotify_init</B>() は新しい fanotify グループを初期化し、
+このグループに関連付けられたイベントキューに対するファイルディスクリプターを返す。
+<P>
+
+このファイルディスクリプターは、 <B><A HREF="../man2/fanotify_mark.2.html">fanotify_mark</A></B>(2) の呼び出しで fanotify イベントが作成されるファイル、 ディレクトリ、
+マウント、ファイルシステムを指定するのに使用できる。 <B><A HREF="../man2/fanotify_mark.2.html">fanotify_mark</A></B>(2) で指定したファイル、 これらのイベントは、
+このファイルディスクリプターからの読み出しで受信する。 いくつかのイベントは、 ファイルがアクセスされたことを示す単なる情報である。
+他のいくつかのイベントは、 別のアプリケーションがファイルやディレクトリにアクセスする許可を与えるかを判定するのに使用される。
+ファイルシステムオブジェクトへのアクセス許可イベントについては、 承認結果をこのファイルディスクリプターに書き込む。
+<P>
+
+複数のプログラムが同時に fanotify インターフェースを使って同じファイルを同時に監視することができる。
+<P>
+
+現在の実装では、 ユーザーあたりの fanotify グループ数は 128 に制限されている。 この制限は上書きすることができない。
+<P>
+
+<B>fanotify_init</B>() を呼び出すには <B>CAP_SYS_ADMIN</B> ケーパビリティーが必要である。 この制約は将来のバージョンの
+API で緩和される可能性がある。 そのため、 以下に示すケーパビリティーチェックのいくつかが実装されている。
+<P>
+
+<I>flags</I> 引数は、 イベントを待つアプリケーションの通知クラスを定義する複数ビットのフィールドである。 これに加えて、
+このファイルディスクリプターの動作を示す 1 ビットのフィールドがある。
+<P>
+
+アクセス許可イベントを監視しているプログラムが複数いる場合、 通知クラスを使って監視するプログラムのイベント受信順序が管理される。
+<P>
+
+以下の通知クラスのいずれか一つだけを <I>flags</I> に指定できる。
+<DL COMPACT>
+<DT><B>FAN_CLASS_PRE_CONTENT</B><DD>
+この値は、 ファイルがアクセスされたことを通知するイベントと、 ファイルへのアクセスするかの許可の判断を求めるイベントを受信することを示す。
+これはイベント受信者がファイルが最終的なデータを格納する前にそのファイルにアクセスする必要がある場合に使用される。
+この通知クラスは例えば階層型ストレージ管理などで使用される。
+<DT><B>FAN_CLASS_CONTENT</B><DD>
+この値は、 ファイルがアクセスされたことを通知するイベントと、 ファイルへのアクセスするかの許可の判断を求めるイベントを受信することを示す。
+これはイベント受信者がファイルに最終的なデータが格納された際にそのファイルにアクセスする必要がある場合に使用される。
+この通知クラスは例えばウイルス検知プログラムなどで使用される。
+<DT><B>FAN_CLASS_NOTIF</B><DD>
+これはデフォルト値である。 この値を指定する必要はない。 この値は、 ファイルがアクセスされたことを通知するイベントの受信だけを行うことを意味する。
+ファイルがアクセスする前にアクセス許可の判定を行うことはできない。
+</DL>
+<P>
+
+異なる通知クラスの受信者は <B>FAN_CLASS_PRE_CONTENT</B>, <B>FAN_CLASS_CONTENT</B>,
+<B>FAN_CLASS_NOTIF</B> の順序でイベントを受信する。 同じ通知クラスの受信者での通知順序は不定である。
+<P>
+
+<I>flags</I> には以下のビットを追加でセットすることができる。
+<DL COMPACT>
+<DT><B>FAN_CLOEXEC</B><DD>
+close-on-exec フラグ (<B>FD_CLOEXEC</B>) を新しいファイルディスクリプターにセットする。 <B><A HREF="../man2/open.2.html">open</A></B>(2) の
+<B>O_CLOEXEC</B> フラグの説明を参照。
+<DT><B>FAN_NONBLOCK</B><DD>
+ノンブロッキングフラグ (<B>O_NONBLOCK</B>) をそのファイルディスクリプターで有効にする。
+このファイルディスクリプターからの読み出しは停止しない。 その代わり、 読みだし可能なデータが何もない場合、 <B><A HREF="../man2/read.2.html">read</A></B>(2) はエラー
+<B>EAGAIN</B> で失敗する。
+<DT><B>FAN_UNLIMITED_QUEUE</B><DD>
+そのイベントキューの 16384 イベントの上限を削除する。 このフラグを使用するには <B>CAP_SYS_ADMIN</B> ケーパビリティーが必要である。
+<DT><B>FAN_UNLIMITED_MARKS</B><DD>
+8192 マークの上限を削除する。 このフラグを使用するには <B>CAP_SYS_ADMIN</B> ケーパビリティーが必要である。
+<DT><B>FAN_REPORT_TID</B> (Linux 4.20 以降)<DD>
+
+Report thread ID (TID) instead of process ID (PID)  in the <I>pid</I> field of
+the <I>struct fanotify_event_metadata</I> supplied to <B><A HREF="../man2/read.2.html">read</A></B>(2)  (see
+<B><A HREF="../man7/fanotify.7.html">fanotify</A></B>(7)).
+<DT><B>FAN_REPORT_FID</B> (Linux 5.1 以降)<DD>
+
+This value allows the receipt of events which contain additional information
+about the underlying filesystem object correlated to an event.  An
+additional record of type <B>FAN_EVENT_INFO_TYPE_FID</B> encapsulates the
+information about the object and is included alongside the generic event
+metadata structure.  The file descriptor that is used to represent the
+object correlated to an event is instead substituted with a file handle.  It
+is intended for applications that may find the use of a file handle to
+identify an object more suitable than a file descriptor.  Additionally, it
+may be used for applications monitoring a directory or a filesystem that are
+interested in the directory entry modification events <B>FAN_CREATE</B>,
+<B>FAN_DELETE</B>, and <B>FAN_MOVE</B>, or in events such as <B>FAN_ATTRIB</B>,
+<B>FAN_DELETE_SELF</B>, and <B>FAN_MOVE_SELF</B>.  All the events above require an
+fanotify group that identifies filesystem objects by file handles.  Note
+that for the directory entry modification events the reported file handle
+identifies the modified directory and not the created/deleted/moved child
+object.  The use of <B>FAN_CLASS_CONTENT</B> or <B>FAN_CLASS_PRE_CONTENT</B> is not
+permitted with this flag and will result in the error <B>EINVAL</B>.  See
+<B><A HREF="../man7/fanotify.7.html">fanotify</A></B>(7)  for additional details.
+<DT><B>FAN_REPORT_DIR_FID</B> (Linux 5.9 以降)<DD>
+Events for fanotify groups initialized with this flag will contain (see
+exceptions below) additional information about a directory object correlated
+to an event.  An additional record of type <B>FAN_EVENT_INFO_TYPE_DFID</B>
+encapsulates the information about the directory object and is included
+alongside the generic event metadata structure.  For events that occur on a
+non-directory object, the additional structure includes a file handle that
+identifies the parent directory filesystem object.  Note that there is no
+guarantee that the directory filesystem object will be found at the location
+described by the file handle information at the time the event is received.
+When combined with the flag <B>FAN_REPORT_FID</B>, two records may be reported
+with events that occur on a non-directory object, one to identify the
+non-directory object itself and one to identify the parent directory
+object.  Note that in some cases, a filesystem object does not have a
+parent, for example, when an event occurs on an unlinked but open file.  In
+that case, with the <B>FAN_REPORT_FID</B> flag, the event will be reported with
+only one record to identify the non-directory object itself, because there
+is no directory associated with the event.  Without the <B>FAN_REPORT_FID</B>
+flag, no event will be reported.  See <B><A HREF="../man7/fanotify.7.html">fanotify</A></B>(7)  for additional
+details.
+<DT><B>FAN_REPORT_NAME</B> (Linux 5.9 以降)<DD>
+Events for fanotify groups initialized with this flag will contain
+additional information about the name of the directory entry correlated to
+an event.  This flag must be provided in conjunction with the flag
+<B>FAN_REPORT_DIR_FID</B>.  Providing this flag value without
+<B>FAN_REPORT_DIR_FID</B> will result in the error <B>EINVAL</B>.  This flag may be
+combined with the flag <B>FAN_REPORT_FID</B>.  An additional record of type
+<B>FAN_EVENT_INFO_TYPE_DFID_NAME</B>, which encapsulates the information about
+the directory entry, is included alongside the generic event metadata
+structure and substitutes the additional information record of type
+<B>FAN_EVENT_INFO_TYPE_DFID</B>.  The additional record includes a file handle
+that identifies a directory filesystem object followed by a name that
+identifies an entry in that directory.  For the directory entry modification
+events <B>FAN_CREATE</B>, <B>FAN_DELETE</B>, and <B>FAN_MOVE</B>, the reported name is
+that of the created/deleted/moved directory entry.  For other events that
+occur on a directory object, the reported file handle is that of the
+directory object itself and the reported name is '.'.  For other events that
+occur on a non-directory object, the reported file handle is that of the
+parent directory object and the reported name is the name of a directory
+entry where the object was located at the time of the event.  The rationale
+behind this logic is that the reported directory file handle can be passed
+to <B><A HREF="../man2/open_by_handle_at.2.html">open_by_handle_at</A></B>(2)  to get an open directory file descriptor and
+that file descriptor along with the reported name can be used to call
+<B><A HREF="../man2/fstatat.2.html">fstatat</A></B>(2).  The same rule that applies to record type
+<B>FAN_EVENT_INFO_TYPE_DFID</B> also applies to record type
+<B>FAN_EVENT_INFO_TYPE_DFID_NAME</B>: if a non-directory object has no parent,
+either the event will not be reported or it will be reported without the
+directory entry information.  Note that there is no guarantee that the
+filesystem object will be found at the location described by the directory
+entry information at the time the event is received.  See <B><A HREF="../man7/fanotify.7.html">fanotify</A></B>(7)
+for additional details.
+<DT><B>FAN_REPORT_DFID_NAME</B><DD>
+This is a synonym for (<B>FAN_REPORT_DIR_FID</B>|<B>FAN_REPORT_NAME</B>).
+</DL>
+<P>
+
+<I>event_f_flags</I> 引数は fanotify イベントが作成されるオープンファイル記述にセットされるファイル状態フラグを定義する。
+これらのフラグの詳細については <B><A HREF="../man2/open.2.html">open</A></B>(2) の <I>flags</I> 値の説明を参照のこと。 <I>event_f_flags</I>
+にはアクセスモードのビットを複数入れることができる。 このフィールドには以下の値も指定することができる。
+<DL COMPACT>
+<DT><B>O_RDONLY</B><DD>
+読み出しアクセスのみを許可する。
+<DT><B>O_WRONLY</B><DD>
+書き込みアクセスのみを許可する。
+<DT><B>O_RDWR</B><DD>
+読み出しと書き込みの両方を許可する。
+</DL>
+<P>
+
+他のビットも <I>event_f_flags</I> もセットすることができる。 役立つであろう値は以下である。
+<DL COMPACT>
+<DT><B>O_LARGEFILE</B><DD>
+2&nbsp;GB を超えるファイルのサポートを有効にする。 このフラグのセットに失敗すると、 32 ビットシステムで fanotify
+グループが監視するラージファイルをオープンしようとした際に <B>EOVERFLOW</B> エラーとなる。
+<DT><B>O_CLOEXEC</B> (Linux 3.18 以降)<DD>
+
+このファイルディスクリプターで close-on-exec フラグを有効にする。 このフラグが役立つ理由については <B><A HREF="../man2/open.2.html">open</A></B>(2) の
+<B>O_CLOEXEC</B> フラグの説明を参照。
+</DL>
+<P>
+
+<B>O_APPEND</B>, <B>O_DSYNC</B>, <B>O_NOATIME</B>, <B>O_NONBLOCK</B>, <B>O_SYNC</B> も指定することができる。
+<I>event_f_flags</I> にこれ以外のフラグを指定すると、 エラー <B>EINVAL</B> が起こる (ただし、バグを参照)。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると <B>fanotify_init</B>() は新しいファイルディスクリプターを返す。 エラーの場合、 -1 を返し、 <I>errno</I>
+にエラーを示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+
+An invalid value was passed in <I>flags</I> or <I>event_f_flags</I>.
+<B>FAN_ALL_INIT_FLAGS</B> (deprecated since Linux kernel version 4.20)  defines
+all allowable bits for <I>flags</I>.
+<DT><B>EMFILE</B><DD>
+このユーザーの fanotify グループ数が 128 を超過した。
+<DT><B>EMFILE</B><DD>
+The per-process limit on the number of open file descriptors has been
+reached.
+<DT><B>ENOMEM</B><DD>
+通知グループへのメモリー割り当てが失敗した。
+<DT><B>ENOSYS</B><DD>
+このカーネルは <B>fanotify_init</B>() を実装していない。 fanotify API が利用できるのは、 カーネルが
+<B>CONFIG_FANOTIFY</B> を有効にして作成されている場合だけである。
+<DT><B>EPERM</B><DD>
+呼び出し元が <B>CAP_SYS_ADMIN</B> ケーパビリティーを持っていないので、操作が許可されない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>fanotify_init</B>() は Linux カーネルのバージョン 2.6.36 で導入され、 バージョン 2.6.37 で有効になった。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 独自である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+The following bug was present in Linux kernels before version 3.18:
+<DL COMPACT>
+<DT>*<DD>
+
+<B>O_CLOEXEC</B> が <I>event_f_flags</I> に指定された場合、 無視される。
+</DL>
+<P>
+
+バージョン 3.14 より前の Linux カーネルには以下のバグが存在する。
+<DL COMPACT>
+<DT>*<DD>
+
+<I>event_f_flags</I> 引数に無効なフラグがないかのチェックが行われない。 <B>FMODE_EXEC</B>
+などの内部での使用のみが意図されたフラグを指定することができ、 その場合 fanotify
+ファイルディスクリプターからの読み出し時に返されるファイルディスクリプターにそのフラグがセットされる。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/fanotify_mark.2.html">fanotify_mark</A></B>(2), <B><A HREF="../man7/fanotify.7.html">fanotify</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

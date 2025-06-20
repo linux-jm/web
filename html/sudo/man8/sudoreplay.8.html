@@ -1,0 +1,383 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SUDOREPLAY</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SUDOREPLAY</H1>
+Section: System Manager's Manual (8)<BR>Updated: May 4, 2016<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/sudo/release/man8/sudoreplay.8">roff page</A><HR>
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<B>sudoreplay</B> - sudo のセッションログを再生する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<DL COMPACT>
+<DT>
+<B>sudoreplay</B> [<B>-h</B>] [<B>-d</B>&nbsp;<I>dir</I>] [<B>-f</B>&nbsp;<I>filter</I>] [<B>-m</B>&nbsp;<I>num</I>]
+[<B>-s</B>&nbsp;<I>num</I>] ID
+<DT>
+<B>sudoreplay</B> [<B>-h</B>] [<B>-d</B>&nbsp;<I>dir</I>] <B>-l</B> [search&nbsp;expression]
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>sudoreplay</B> は、<B>sudo</B> が生成した出力ログの再生、
+または一覧表示を行う。再生する場合、
+<B>sudoreplay</B> はセッションの再生をリアルタイムで実行することもできるし、
+コマンドライン・オプションによって再生速度を (早くしたり、
+遅くしたり) 調節することもできる。
+<P>
+
+上記書式の一つ目 (再生モード) で指定する引き数 <I>ID</I> は、たとえば 0100A5 のような、
+数字とアルファベットの大文字からなる 6 字の文字列か、
+<I>sudoers</I> ファイルの <I>iolog_file</I> オプションにマッチするパターンかの、
+どちらかでなければならない。
+<I>sudoers</I> ファイルの <I>log_output</I> オプションが有効な状態で
+<B>sudo</B> を使ってコマンドを実行すると、
+<I>TSID=ID</I> という文字列が、syslog 経由や <B>sudo</B> 独自のログファイルに記録される
+(訳注: その ID を引き数として指定するのである)。
+また、<I>ID</I> は、<B>sudoreplay</B> のリストモード (上記書式の二つ目) を使用して、
+突き止めることもできる。
+<DL COMPACT>
+<DT>[<B>訳注</B>]:<DD>
+セッションの出力のロギングを有効にするには、
+<I>sudoers</I> ファイルの Defaults 行で <I>log_output</I> を指定するか、
+あるいは、同ファイルのユーザ設定でコマンドに <I>LOG_OUTPUT</I> タグを付ける。
+詳細については、<I>sudoers</I> のマニュアルを参照していただきたい。
+</DL>
+<P>
+
+リストモードで <B>sudoreplay</B> を使用すると、ユーザ、使用した端末 (tty)、
+実行したコマンドなど、いくつかの条件に基づいて、セッションの ID
+を知ることができる。
+<P>
+
+再生モードでは、標準出力がリダイレクトされていないかぎり、
+以下のキーが有効である。
+<DL COMPACT>
+<DT>'\n' または '\r'<DD>
+次の再生イベントに飛ぶ。イベント間の休止が長いとき便利。
+<DT>'&nbsp;' (space)<DD>
+出力を停止する。任意のキーを押せば、続行する。
+<DT>'&lt;'<DD>
+再生速度を半分に下げる。
+<DT>'&gt;'<DD>
+再生速度を倍にする。
+</DL>
+<P>
+
+オプションとして以下のものが使用できる。
+<DL COMPACT>
+<DT><B>-d</B> <I>dir</I>, <B>--directory</B>=<I>dir</I><DD>
+セッションログは、デフォルトの <I>/var/log/sudo-io</I> ではなく、
+<I>dir</I> にある。
+<DT><B>-f</B> <I>filter</I>, <B>--filter</B>=<I>filter</I><DD>
+再生する I/O タイプを選択する。
+デフォルトでは、<B>sudoreplay</B> はコマンドの標準出力、標準エラー、
+それに端末 (tty) への出力を表示することになっている。
+引き数 <I>filter</I> は、コンマで区切ったリストであり、<I>stdout</I>, <I>stderr</I>,
+<I>ttyout</I> から一つ以上指定する。
+<DT><B>-h</B>, <B>--help</B><DD>
+簡単なヘルプ・メッセージを標準出力に表示して終了する。
+<DT><B>-l</B>, <B>--list</B> [<I>search expression</I>]<DD>
+「リスト・モード」を有効にする。
+このモードでは、<B>sudoreplay</B> は、再生可能なセッションのリストを、
+<B>sudo</B> のログファイルにおける表記と同じような書式で、
+/var/log/sudo-io 以下のファイル名 (すなわち、シーケンス・ナンバー)
+によってソートして表示する。検索式 (<I>search expression</I>) を指定すると、
+表示する ID を絞り込むために、それが使用されることになる。
+検索式は以下の述語 (predicate) から構成される。
+</DL>
+<P>
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT><DD>command <I>pattern</I><DD>
+実行されたコマンドが POSIX の拡張正規表現 <I>pattern</I> にマッチすれば、
+真になる。
+
+<DT>cwd <I>directory</I><DD>
+指定したディレクトリをカレントディレクトリとしてコマンドが実行されていれば、
+真になる。
+<DT>fromdate <I>date</I><DD>
+コマンドを実行した日付が <I>date</I> 以後なら、真になる。
+サポートしている日時のフォーマットについては、
+「日付と時刻のフォーマット」を参照すること。
+<DT>group <I>runas_group</I><DD>
+指定された <I>runas_group</I> としてコマンドが実行されていれば、真になる。
+<I>runas_group</I> を明示的に指定して、
+<B>sudo</B> を実行していないかぎり、
+この欄はログに書き込まれないことに注意していただきたい。
+<DT>runas <I>runas_user</I><DD>
+指定された <I>runas_user</I> としてコマンドが実行されていれば、真になる。
+<B>sudo</B> は、デフォルトでは
+<I>root</I> ユーザとしてコマンドを実行することをお忘れなく。
+<DT>todate <I>date</I><DD>
+コマンドを実行した日付が <I>date</I> 以前なら、真になる。
+サポートしている日付のフォーマットについては、
+「日付と時刻のフォーマット」を参照すること。
+<DT>tty <I>tty name</I><DD>
+コマンドを実行したのが指定した端末デバイスならば、
+真になる。<I>tty name</I> は <I>/dev/</I> の部分を取って指定するべきである。
+たとえば、<I>/dev/tty01</I> ではなく、<I>tty01</I> のように。
+(訳注: この説明は sudo-1.7.4 のころの指定法である。
+最近の <B>sudoreplay</B> では、<I>/dev/tty01</I> などと指定する必要があるようだ。)
+<DT>user <I>user name</I><DD>
+コマンドを実行したユーザが <I>user name</I> なら、真になる。
+</DL>
+<P>
+
+述語は、他と区別できるなら、最短の文字列にまで短縮することができる
+(訳注: たとえば、現在のところ、述語 user の代わりに u が使える)。
+<P>
+述語は、<I>and</I>, <I>or</I>, <I>!</I> 演算子を使って、組み合わせることができる。
+また、'(' と ')' によるグループ化も可能だ
+(ただし、たいていの場合、カッコはシェルに解釈されないように、
+エスケープしなければならない)。<I>and</I> 演算子は省略可能である。
+隣り合った述語は、間に <I>or</I> がないかぎり、
+<I>and</I> で結合していると見なされるからだ。
+</DL>
+
+<DL COMPACT>
+<DT><B>-m</B>, <B>--max-wait</B> <I>max_wait</I><DD>
+キーを押してから次のキーを押すまでの間や、データ出力同士の間にある
+待ち時間の上限を指定する。<B>sudoreplay</B> はデフォルトでは、
+キーの押し下げやプログラムの出力の間にある経過時間を正確に再現する。
+しかし、それだと、セッション中に長い間合いがある場合など、
+うんざりすることになりかねない。
+<I>-m</I> オプションを指定すると、<B>sudoreplay</B> はそうした間合いを、
+長くても <I>max_wait</I> 秒以内に抑えるようになる。この値は、
+たとえば <I>2.5</I> といった、浮動小数点数で指定することも可能だ。
+<DT><B>-s</B>, <B>--speed</B> <I>speed_factor</I><DD>
+このオプションを指定すると、<B>sudoreplay</B> は、
+キーの押し下げやプログラムの出力の間にある待ち時間の秒数を調節する。
+このオプションを使えば、再生速度を早くしたり遅くしたりできるわけだ。
+たとえば、<I>speed_factor</I> に <I>2</I> を指定すれば、再生速度が 2 倍になるし、
+<I>.5</I> を指定すれば、再生速度が半分になる。
+<DT><B>-V</B>, <B>--version</B><DD>
+<B>sudoreplay</B> のバージョン番号を表示して終了する。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>日付と時刻のフォーマット</H3>
+
+日付と時刻の指定には、幾通りもの方法がある。よく使うフォーマットには、
+次のものがある。
+<DL COMPACT>
+<DT>HH:MM:SS am MM/DD/CCYY timezone<DD>
+午前/午後 (am/pm) の代わりに 24 時間制の時刻を使ってもよい。
+<DT>HH:MM:SS am Month Day, Year timezone<DD>
+午前/午後 (am/pm) の代わりに 24 時間制の時刻を使ってもよい。
+月や曜日の名前には短縮形を使うこともできる。
+月や曜日の名前は、英語で指定しなければならないのに注意すること。
+(訳注: 曜日を指定する場合は、月と日にちの間以外なら、
+たいていの場所に置くことができる。
+なお、上記書式のように、日にちの後ろにコンマを入れるかどうかは、任意である。)
+<DT>CCYY-MM-DD HH:MM:SS<DD>
+ISO の日時フォーマット。
+<DT>DD Month CCYY HH:MM:SS<DD>
+月の名前には短縮形も使える。
+</DL>
+<P>
+
+日付と時刻の一方を省略することができる。am/pm とタイムゾーンは、
+指定してもしなくてもよい。日付が指定されない場合は、
+当日が指定されたものと見なされる。時刻が指定されない場合は、
+指定された日にちの 00:00:00 が使用される。
+時刻や日付のそれほど重要ではない部分も省略できるが、
+その場合は 0 が指定されたものと見なされる。
+<P>
+
+以下の表記は、すべて有効な日時の指定である。
+<DL COMPACT>
+<DT>now<DD>
+今日の今。
+<DT>tomorrow<DD>
+今からちょうど 1 日後。
+<DT>yesterday<DD>
+24 時間前。
+<DT>2 hours ago<DD>
+2 時間前。
+<DT>next Friday<DD>
+来週の (やがて来る週の) 金曜日の 00:00:00。
+&quot;this friday&quot; と混同してはいけない。
+&quot;this friday&quot; ならば、今週の金曜日とマッチする。
+<DT>last week<DD>
+7 日前の現在時刻。&quot;a week ago&quot; と同じ。
+<DT>a fortnight ago<DD>
+14 日前の現在時刻。
+<DT>10:01 am 9/17/2009<DD>
+2009 年 9 月 17 日 午前 10 時 01 分。
+<DT>10:01 am<DD>
+今日の午前 10 時 01 分。
+<DT>10<DD>
+今日の午前 10 時 00 分。
+<DT>9/17/2009<DD>
+2009 年 9 月 17 日 午前 0 時 00 分。
+<DT>10:01 am Sep 17, 2009<DD>
+2009 年 9 月 17 日 午前 10 時 01 分。
+</DL>
+<P>
+
+注意していただきたいが、相対的な日時指定は、
+必ずしも期待通りに動作するとはかぎらない。
+たとえば、&quot;next&quot; 修飾子は、&quot;next Monday&quot; などのように、
+曜日と一緒に使うようになっている。
+week, month, year などの単位と組み合わせて使った場合は、結果が期待よりも
+1 多いものになってしまうのだ。たとえば、&quot;next week&quot; は、
+今からちょうど 2 週間後の日時を指すことになってしまい、
+意図したところとはたぶん違うだろう。この問題については、
+<B>sudoreplay</B> の将来のバージョンで対処するつもりだ。
+<A NAME="lbAF">&nbsp;</A>
+<H3>sudoreplay のデバッグ</H3>
+
+バージョン 1.8.4 以上の <B>sudoreplay</B> は、
+柔軟なデバッグ用の枠組みをサポートしており、
+<A HREF="../man5/sudo.conf.5.html">sudo.conf</A>(5) ファイルの Debug 行で設定するようになっている。
+<P>
+
+<A HREF="../man5/sudo.conf.5.html">sudo.conf</A>(5) の設定についてさらに詳しいことをお知りになりたかったら、
+<A HREF="../man5/sudo.conf.5.html">sudo.conf</A>(5) のマニュアルをご覧になっていただきたい。
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/etc/sudo.conf</I><DD>
+デバッグ用枠組みの設定
+<DT><I>/var/log/sudo-io</I><DD>
+入出力ログを格納するデフォルトのディレクトリ
+<DT><I>/var/log/sudo-io/00/00/01/log</I><DD>
+セッションログについての情報 (一例)
+<DT><I>/var/log/sudo-io/00/00/01/stdin</I><DD>
+セッションの標準入力のログ (一例)
+<DT><I>/var/log/sudo-io/00/00/01/stdout</I><DD>
+セッションの標準出力のログ (一例)
+<DT><I>/var/log/sudo-io/00/00/01/stderr</I><DD>
+セッションの標準エラーのログ (一例)
+<DT><I>/var/log/sudo-io/00/00/01/ttyin</I><DD>
+セッションの tty 入力のログ (一例)
+<DT><I>/var/log/sudo-io/00/00/01/ttyout</I><DD>
+セッションの tty 出力のログ (一例)
+<DT><I>/var/log/sudo-io/00/00/01/timing</I><DD>
+セッションのタイミングを記録したファイル (一例)
+</DL>
+<P>
+
+<B>sudo</B> があるコマンドのパイプラインの一部として使用されたときを除いて、
+<I>stdin</I>, <I>stdout</I>, <I>stderr</I> ファイルは空になることに注意していただきたい。
+<A NAME="lbAH">&nbsp;</A>
+<H2>用例</H2>
+
+ユーザ <I>millert</I> が実行したセッションを列挙する。
+<PRE>
+
+<DL COMPACT><DT><DD># sudoreplay -l user millert
+</DL>
+</PRE>
+
+<P>
+
+ユーザ <I>bob</I> が実行したセッションのうち、
+コマンドに vi という文字列が含まれるものを列挙する。
+<PRE>
+
+<DL COMPACT><DT><DD># sudoreplay -l user bob command vi
+</DL>
+</PRE>
+
+<P>
+
+ユーザ <I>jeff</I> が実行したセッションのうち、
+コマンドが下記の正規表現にマッチするものを列挙する。
+<PRE>
+
+<DL COMPACT><DT><DD># sudoreplay -l user jeff command '/bin/[a-z]*sh'
+</DL>
+</PRE>
+
+<P>
+
+<I>jeff</I> か <I>bob</I> がコンソールで実行したセッションを列挙する。
+<PRE>
+
+<DL COMPACT><DT><DD># sudoreplay -l \( user jeff or user bob \) tty console
+</DL>
+</PRE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../../util-linux/man1/script.1.html">script</A>(1), <A HREF="../man5/sudo.conf.5.html">sudo.conf</A>(5), <A HREF="../man8/sudo.8.html">sudo</A>(8)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>作者</H2>
+
+多数の人々が長年に渡って <B>sudo</B> の開発に携わってきた。
+当バージョンは主として次の者が書いたコードからできている。
+<P>
+<DL COMPACT><DT><DD>
+Todd C. Miller
+</DL>
+
+<P>
+
+<B>sudo</B> の開発に貢献してくださった方々の詳細なリストについては、
+配布物中の CONTRIBUTORS ファイルをご覧になっていただきたい。
+(<A HREF="https://www.sudo.ws/contributors.html)">https://www.sudo.ws/contributors.html)</A>
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>sudoreplay</B> にバグを発見したと思ったら、<A HREF="https://bugzilla.sudo.ws/">https://bugzilla.sudo.ws/</A>
+にアクセスして、バグレポートを提出していただきたい。
+<A NAME="lbAL">&nbsp;</A>
+<H2>サポート</H2>
+
+ある程度の無料サポートが sudo-users メーリングリストを通して利用できる。
+購読やアーカイブの検索には、次の URL を御覧になるとよい。
+<A HREF="https://www.sudo.ws/mailman/listinfo/sudo-users">https://www.sudo.ws/mailman/listinfo/sudo-users</A>
+<A NAME="lbAM">&nbsp;</A>
+<H2>免責</H2>
+
+<B>sudoreplay</B> は「現状のまま」提供される。
+明示的な、あるいは黙示的ないかなる保証も、
+商品性や特定目的への適合性についての黙示的な保証を含め、
+またそれのみに止まらず、これを否認する。詳細な全文については、
+<B>sudo</B> と一緒に配布されている LICENSE ファイルや、
+次の Web ページをご覧いただきたい。
+<A HREF="https://www.sudo.ws/license.html">https://www.sudo.ws/license.html</A>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">日付と時刻のフォーマット</A><DD>
+<DT><A HREF="#lbAF">sudoreplay のデバッグ</A><DD>
+</DL>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">用例</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">作者</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">サポート</A><DD>
+<DT><A HREF="#lbAM">免責</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:46 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,177 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ENVIRON</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ENVIRON</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated:  2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/environ.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+environ - ユーザー環境
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>extern char **</B><I>environ</I><B>;</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+The variable <I>environ</I> points to an array of pointers to strings called the
+&quot;environment&quot;.  The last pointer in this array has the value NULL.  (This
+variable must be declared in the user program, but is declared in the header
+file <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> if the <B>_GNU_SOURCE</B> feature test macro is
+defined.)  This array of strings is made available to the process by the
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3)  call that started the process.  When a child process is created
+via <B><A HREF="../man2/fork.2.html">fork</A></B>(2), it inherits a <I>copy</I> of its parent's environment.
+<P>
+
+通例では、 <I>environ</I> の文字列は &quot;<I>name</I><B>=</B><I>value</I>&quot; という書式をとる。 よく用いられる例を以下に示す。
+<DL COMPACT>
+<DT><B>USER</B><DD>
+ユーザーのログイン名 (BSD 起源のプログラムなどによって使用される)。
+<DT><B>LOGNAME</B><DD>
+ユーザーのログイン名(System V 起源のプログラムなどによって使用される)。
+<DT><B>HOME</B><DD>
+ユーザーのログインディレクトリ。 <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1)  がパスワードファイル <B><A HREF="../man5/passwd.5.html">passwd</A></B>(5)  から取得して設定する。
+<DT><B>LANG</B><DD>
+ロケールの各カテゴリーで使用されるロケールの名前。<B>LC_ALL</B> や、 より狭い範囲を対象とする環境変数 (<B>LC_COLLATE</B>,
+<B>LC_CTYPE</B>, <B>LC_MESSAGES</B>, <B>LC_MONETARY</B>, <B>LC_NUMERIC</B>, <B>LC_TIME</B> など)
+によって上書きされることもある (<B>LC_*</B> 環境変数のさらなる詳細は <B><A HREF="../man7/locale.7.html">locale</A></B>(7) 参照)。
+<DT><B>PATH</B><DD>
+<B>sh</B>(1)  や他のプログラムが、フルパスで与えられなかった実行ファイルを検索するとき、 ファイル名に前置されるディレクトリの配列。
+各ディレクトリは '<B>:</B>' によって区切られる。 (同じようなものに、 シェルがディレクトリ変更コマンドの変更先を探すために用いる
+<B>CDPATH</B> や、 <B><A HREF="../../0MultiFileIdx/man1/man.1.html">man</A></B>(1)  がマニュアルページの検索に用いる <B>MANPATH</B> などがある。)
+<DT><B>PWD</B><DD>
+現在のワーキングディレクトリ。いくつかのシェルが設定する。
+<DT><B>SHELL</B><DD>
+ユーザーのログインシェルのパス名。
+<DT><B>TERM</B><DD>
+端末の種類。出力はこれにあわせて用意される。
+<DT><B>PAGER</B><DD>
+テキストファイルを表示するユーテリティ。ユーザーが好みのものを設定する。
+<DT><B>EDITOR</B>/<B>VISUAL</B><DD>
+
+
+
+
+テキストファイルを編集するユーテリティ。ユーザーが好みのものを設定する。
+</DL>
+<P>
+
+Names may be placed in the shell's environment by the <I>export</I> command in
+<B>sh</B>(1), or by the <I>setenv</I> command if you use <B>csh</B>(1).
+<P>
+
+The initial environment of the shell is populated in various ways, such as
+definitions from <I>/etc/environment</I> that are processed by <B>pam_env</B>(8)
+for all users at login time (on systems that employ <B>pam</B>(8)).  In
+addition, various shell initialization scripts, such as the system-wide
+<I>/etc/profile</I> script and per-user initializations script may include
+commands that add variables to the shell's environment; see the manual page
+of your preferred shell for details.
+<P>
+
+Bourne-style shells support the syntax
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;NAME=value&nbsp;command
+<P>
+
+to create an environment variable definition only in the scope of the
+process that executes <I>command</I>.  Multiple variable definitions, separated
+by white space, may precede <I>command</I>.
+<P>
+
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3)  の引数としても環境を設定することができる。 C プログラムからは、 <B><A HREF="../man3/getenv.3.html">getenv</A></B>(3), <B><A HREF="../man3/putenv.3.html">putenv</A></B>(3),
+<B><A HREF="../man3/setenv.3.html">setenv</A></B>(3), <B><A HREF="../man3/unsetenv.3.html">unsetenv</A></B>(3)  などの関数を用いて環境を扱うことができる。
+<P>
+
+Note that the behavior of many programs and library routines is influenced
+by the presence or value of certain environment variables.  Examples include
+the following:
+<DL COMPACT>
+<DT>*<DD>
+<B>LANG</B>, <B>LANGUAGE</B>, <B>NLSPATH</B>, <B>LOCPATH</B>, <B>LC_ALL</B>, <B>LC_MESSAGES</B>,
+などの変数は、ロケールの扱いに影響する。 <B><A HREF="../man3/catopen.3.html">catopen</A></B>(3), <B>gettext</B>(3), <B><A HREF="../man5/locale.5.html">locale</A></B>(5) を参照。
+<DT>*<DD>
+<B>TMPDIR</B> は、 <B><A HREF="../man3/tempnam.3.html">tempnam</A></B>(3) などのルーチンによって作成されるファイル名や <B><A HREF="../../0MultiFileIdx/man1/sort.1.html">sort</A></B>(1)
+や他のプログラムが使用する一時ディレクトリに前置されるパスに影響する。
+<DT>*<DD>
+<B>LD_LIBRARY_PATH</B>, <B>LD_PRELOAD</B> などの <B>LD_*</B> 変数はダイナミックローダーリンカーの動作に影響する。
+<DT>*<DD>
+<B>POSIXLY_CORRECT</B> が指定されると、ある種のプログラムやライブラリルーチンは POSIX の規定に従うようになる。
+<DT>*<DD>
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  の動作は <B>MALLOC_*</B> 変数によって影響される。
+<DT>*<DD>
+<B>HOSTALIAS</B> 変数は、 <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)  が用いるエイリアスが書かれているファイル名を与える。
+<DT>*<DD>
+<B>TZ</B> と <B>TZDIR</B> は <B><A HREF="../man3/tzset.3.html">tzset</A></B>(3)  および、この関数を使う <B><A HREF="../man3/ctime.3.html">ctime</A></B>(3), <B><A HREF="../man3/localtime.3.html">localtime</A></B>(3),
+<B><A HREF="../man3/mktime.3.html">mktime</A></B>(3), <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)  といった関数で用いられるタイムゾーンの情報を与える。 <B><A HREF="../man8/tzselect.8.html">tzselect</A></B>(8)
+も参照のこと。
+<DT>*<DD>
+<B>TERMCAP</B> は、現在の端末情報の取得先 (あるいはそのような情報が書かれているファイル名) を与える。
+<DT>*<DD>
+<B>COLUMNS</B> と <B>LINES</B> アプリケーションにウインドウのサイズを伝える。 実際のサイズとは違う値を与えることもできる。
+<DT>*<DD>
+<B>PRINTER</B> または <B>LPDEST</B> 用いたいプリンタを指定する。 <B><A HREF="../../0MultiFileIdx/man1/lpr.1.html">lpr</A></B>(1)  を参照のこと。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>注意</H2>
+
+The <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)  <B>PR_SET_MM_ENV_START</B> and <B>PR_SET_MM_ENV_END</B> operations
+can be used to control the location of the process's environment.
+<A NAME="lbAF">&nbsp;</A>
+<H2>バグ</H2>
+
+これらの中には、明らかにセキュリティ上の危険が存在する。 ユーザーが <B>IFS</B> や <B>LD_LIBRARY_PATH</B>
+に異常な値を与えたことによって、 これまで多くのシステムコマンドがだまされて、 システムをひどい目にあわせてきた。
+<P>
+
+名前空間が汚染される危険性も存在する。 <I>make</I> や <I>autoconf</I> のようなプログラムでは、デフォルトのユーティリティを
+環境にある似たような名前の変数で上書きすることができる (通常はすべて大文字の変数を用いる)。 すなわち、利用したい C コンパイラは <B>CC</B>
+で選択できる。また同様に <B>MAKE</B>, <B>AR</B>, <B>AS</B>, <B>FC</B>, <B>LD</B>, <B>LEX</B>, <B>RM</B>, <B>YACC</B>
+なども用いることができる。 ところが一方では、このような変数を (パス名ではなく)  プログラムに対するオプションとして扱うような流儀も存在してきた。
+例えば <B>MORE</B>, <B>LESS</B>, <B>GZIP</B> などがそうである。 このような利用法は間違っていると考えるべきで、
+新しいプログラムでは避けるべきである。 <I>gzip</I> の作者たちは、オプションを与える環境変数を <B>GZIP_OPT</B>
+に改名することを考えるほうがよい。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../GNU_bash/man1/bash.1.html">bash</A></B>(1), <B>csh</B>(1), <B><A HREF="../../0MultiFileIdx/man1/env.1.html">env</A></B>(1), <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/printenv.1.html">printenv</A></B>(1), <B>sh</B>(1),
+<B><A HREF="../../tcsh/man1/tcsh.1.html">tcsh</A></B>(1), <B><A HREF="../man2/execve.2.html">execve</A></B>(2), <B><A HREF="../man3/clearenv.3.html">clearenv</A></B>(3), <B><A HREF="../man3/exec.3.html">exec</A></B>(3), <B><A HREF="../man3/getenv.3.html">getenv</A></B>(3),
+<B><A HREF="../man3/putenv.3.html">putenv</A></B>(3), <B><A HREF="../man3/setenv.3.html">setenv</A></B>(3), <B><A HREF="../man3/unsetenv.3.html">unsetenv</A></B>(3), <B><A HREF="../man7/locale.7.html">locale</A></B>(7), <B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8),
+<B>pam_env</B>(8)
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">注意</A><DD>
+<DT><A HREF="#lbAF">バグ</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

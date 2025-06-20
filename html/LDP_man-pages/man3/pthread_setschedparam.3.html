@@ -1,0 +1,459 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_SETSCHEDPARAM</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_SETSCHEDPARAM</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/pthread_setschedparam.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_setschedparam, pthread_getschedparam - スレッドの
+スケジューリングポリシーとパラメーターを設定/取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<B>int pthread_setschedparam(pthread_t </B><I>thread</I><B>, int </B><I>policy</I><B>,</B>
+<B>                          const struct sched_param *</B><I>param</I><B>);</B>
+<B>int pthread_getschedparam(pthread_t </B><I>thread</I><B>, int *</B><I>policy</I><B>,</B>
+<B>                          struct sched_param *</B><I>param</I><B>);</B>
+
+<I>-pthread</I> でコンパイルしてリンクする。
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pthread_setschedparam</B>() 関数は、スレッド <I>thread</I> の
+スケジューリングポリシーとスケジューリングパラメーターを設定する。
+<P>
+
+
+
+
+<I>policy</I> は <I>thread</I> の新しいスケジューリングポリシーを指定する。 <I>policy</I> に指定できる値とその意味は
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7) で説明されている。
+<P>
+
+<I>param</I> が指す構造体は <I>thread</I> の新しいスケジューリングパラメーターを
+指定する。スケジューリングパラメーターは以下の構造体で管理される。
+<P>
+
+
+
+struct sched_param {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sched_priority;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Scheduling&nbsp;priority&nbsp;*/
+};
+
+
+<P>
+
+見て分かる通り、サポートされているスケジューリングパラメーターは一つだけである。各スケジューリングポリシーで許可されるスケジューリング優先度の詳細については、<B><A HREF="../man7/sched.7.html">sched</A></B>(7)
+を参照のこと。
+<P>
+
+
+
+
+
+
+<B>pthread_getschedparam</B>() 関数は、スレッド <I>thread</I> の
+スケジューリングポリシーとパラメーターを、
+それぞれ <I>policy</I> と <I>param</I> が指すバッファーに入れて返す。
+返された優先度の値は、最も最近実行した <I>thread</I> に影響を与える
+<B>pthread_setschedparam</B>(), <B>pthread_setschedprio</B>,
+<B>pthread_create</B> で設定された値となる。
+返された優先度は、優先度の継承や優先度の上限を設定する関数
+(例えば <B>pthread_mutexattr_setprioceiling</B>(3) や
+<B>pthread_mutexattr_setprotocol</B>(3) を参照) の呼び出しの結果
+行われる一時的な優先度の調整の影響を受けない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、これらの関数は 0 を返す。
+エラーの場合、0 以外のエラー番号を返す。
+<B>pthread_setschedparam</B>() が失敗した場合、 <I>thread</I> の
+スケジューリングポリシーとパラメーターは変更されない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+これらの関数はどちらも以下のエラーで失敗する場合がある。
+<DL COMPACT>
+<DT><B>ESRCH</B><DD>
+ID が <I>thread</I> のスレッドが見つからなかった。
+</DL>
+<P>
+
+<B>pthread_setschedparam</B>() はさらに以下のエラーで失敗する場合がある。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>policy</I> が認識できないポリシーであるか、
+<I>param</I> が <I>policy</I> では意味を持たない値である。
+<DT><B>EPERM</B><DD>
+呼び出し側が、指定されたスケジューリングポリシーやパラメーターを設定する
+のに必要な特権を持たない。
+</DL>
+<P>
+
+
+
+POSIX.1 では、 <B>pthread_setschedparam</B>() に関して
+エラー <B>ENOTSUP</B> (&quot;サポートされていない値をスケジューリングポリシーや
+パラメーターに設定しようとした&quot;) も追加で規定されている。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>pthread_setschedparam</B>(),
+<B>pthread_getschedparam</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+スレッドのスケジューリングポリシーや優先度を変更するために必要な許可や変更した場合の影響、および各スケジューリングポリシーで認められる優先度の範囲の詳細については、
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7) を参照。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは <B>pthread_setschedparam</B>() と
+<B>pthread_getschedparam</B>() やスケジューリングに関連する pthreads の
+他のいろいろな関数の使用例を示すものである。
+<P>
+
+以下の実行例では、メインスレッドは、自分のスケジューリングポリシーを
+優先度 10 の <B>SCHED_FIFO</B> を設定し、スレッド属性オブジェクトを
+スケジューリングポリシー属性 <B>SCHED_RR</B> とスケジューリング優先度
+属性 20 で初期化する。
+次に、このプログラムは (<B><A HREF="../man3/pthread_attr_setinheritsched.3.html">pthread_attr_setinheritsched</A></B>(3) を使って)
+そのスレッド属性オブジェクトの inherit scheduler 属性に
+<B>PTHREAD_EXPLICIT_SCHED</B> を設定する。<B>PTHREAD_EXPLICIT_SCHED</B> は、
+そのスレッド属性オブジェクトを使って作成されたスレッドはスレッド属性
+オブジェクトからスケジューリング属性を取得して使うことを意味する。
+それから、このスレッド属性オブジェクトを使ってスレッドを作成し、
+作成したスレッドのスケジューリングポリシーと優先度を表示する。
+<P>
+
+
+
+$ <B>su</B>      # Need privilege to set real-time scheduling policies
+Password:
+# <B>./a.out -mf10 -ar20 -i e</B>
+Scheduler settings of main thread
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;policy=SCHED_FIFO,&nbsp;priority=10
+<P>
+Scheduler settings in 'attr'
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;policy=SCHED_RR,&nbsp;priority=20
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;inheritsched&nbsp;is&nbsp;EXPLICIT
+<P>
+Scheduler attributes of new thread
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;policy=SCHED_RR,&nbsp;priority=20
+
+
+<P>
+
+上記の出力では、スケジューリングポリシーと優先度がスレッド属性
+オブジェクトで指定された値から取られていることが分かる。
+<P>
+
+次の実行例は前のものと同じだが、 inherit scheduler 属性が
+<B>PTHREAD_INHERIT_SCHED</B> に設定される点が異なる。
+<B>PTHREAD_INHERIT_SCHED</B> は、そのスレッド属性オブジェクトを使って作成
+されたスレッドは、スレッド属性オブジェクトからスケジューリング属性を
+無視し、代わりに呼び出したスレッドからスケジューリング属性を取得する
+ことを意味する。
+<P>
+
+
+
+# <B>./a.out -mf10 -ar20 -i i</B>
+Scheduler settings of main thread
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;policy=SCHED_FIFO,&nbsp;priority=10
+<P>
+Scheduler settings in 'attr'
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;policy=SCHED_RR,&nbsp;priority=20
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;inheritsched&nbsp;is&nbsp;INHERIT
+<P>
+Scheduler attributes of new thread
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;policy=SCHED_FIFO,&nbsp;priority=10
+
+
+<P>
+
+上記の出力では、スケジューリングポリシーと優先度が、
+スレッド属性オブジェクトからではなく、
+スレッドを作成したスレッドから取れれていることが分かる。
+<P>
+
+なお、 <I>-i&nbsp;i</I> を省略した場合でも、
+<B>PTHREAD_INHERIT_SCHED</B> が inherit scheduler 属性のデフォルト値なので、
+出力は同じになる。
+<A NAME="lbAK">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+/* pthreads_sched_test.c */
+<P>
+#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+<P>
+#define handle_error_en(en, msg) \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;errno&nbsp;=&nbsp;en;&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+static void
+usage(char *prog_name, char *msg)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(msg&nbsp;!=&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fputs(msg,&nbsp;stderr);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;[options]\n&quot;,&nbsp;prog_name);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Options&nbsp;are:\n&quot;);
+#define fpe(msg) fprintf(stderr, &quot;\t%s&quot;, msg);          /* Shorter */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fpe(&quot;-a&lt;policy&gt;&lt;prio&gt;&nbsp;Set&nbsp;scheduling&nbsp;policy&nbsp;and&nbsp;priority&nbsp;in\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fpe(&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;thread&nbsp;attributes&nbsp;object\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fpe(&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;policy&gt;&nbsp;can&nbsp;be\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fpe(&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f&nbsp;&nbsp;SCHED_FIFO\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fpe(&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r&nbsp;&nbsp;SCHED_RR\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fpe(&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;o&nbsp;&nbsp;SCHED_OTHER\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fpe(&quot;-A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Use&nbsp;default&nbsp;thread&nbsp;attributes&nbsp;object\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fpe(&quot;-i&nbsp;{e|i}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set&nbsp;inherit&nbsp;scheduler&nbsp;attribute&nbsp;to\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fpe(&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'explicit'&nbsp;or&nbsp;'inherit'\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fpe(&quot;-m&lt;policy&gt;&lt;prio&gt;&nbsp;Set&nbsp;scheduling&nbsp;policy&nbsp;and&nbsp;priority&nbsp;on\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fpe(&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;main&nbsp;thread&nbsp;before&nbsp;pthread_create()&nbsp;call\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+}
+<P>
+static int
+get_policy(char p, int *policy)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(p)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'f':&nbsp;*policy&nbsp;=&nbsp;SCHED_FIFO;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'r':&nbsp;*policy&nbsp;=&nbsp;SCHED_RR;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'o':&nbsp;*policy&nbsp;=&nbsp;SCHED_OTHER;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;default:&nbsp;&nbsp;return&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+<P>
+static void
+display_sched_attr(int policy, struct sched_param *param)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;policy=%s,&nbsp;priority=%d\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(policy&nbsp;==&nbsp;SCHED_FIFO)&nbsp;&nbsp;?&nbsp;&quot;SCHED_FIFO&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(policy&nbsp;==&nbsp;SCHED_RR)&nbsp;&nbsp;&nbsp;&nbsp;?&nbsp;&quot;SCHED_RR&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(policy&nbsp;==&nbsp;SCHED_OTHER)&nbsp;?&nbsp;&quot;SCHED_OTHER&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;???&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;param-&gt;sched_priority);
+}
+<P>
+static void
+display_thread_sched_attr(char *msg)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;policy,&nbsp;s;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sched_param&nbsp;param;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_getschedparam(pthread_self(),&nbsp;&amp;policy,&nbsp;&amp;param);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_getschedparam&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s\n&quot;,&nbsp;msg);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;display_sched_attr(policy,&nbsp;&amp;param);
+}
+<P>
+static void *
+thread_start(void *arg)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;display_thread_sched_attr(&quot;Scheduler&nbsp;attributes&nbsp;of&nbsp;new&nbsp;thread&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s,&nbsp;opt,&nbsp;inheritsched,&nbsp;use_null_attrib,&nbsp;policy;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;thread;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_attr_t&nbsp;attr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_attr_t&nbsp;*attrp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*attr_sched_str,&nbsp;*main_sched_str,&nbsp;*inheritsched_str;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sched_param&nbsp;param;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Process&nbsp;command-line&nbsp;options&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;use_null_attrib&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;attr_sched_str&nbsp;=&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;main_sched_str&nbsp;=&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;inheritsched_str&nbsp;=&nbsp;NULL;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((opt&nbsp;=&nbsp;getopt(argc,&nbsp;argv,&nbsp;&quot;a:Ai:m:&quot;))&nbsp;!=&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(opt)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'a':&nbsp;attr_sched_str&nbsp;=&nbsp;optarg;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'A':&nbsp;use_null_attrib&nbsp;=&nbsp;1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'i':&nbsp;inheritsched_str&nbsp;=&nbsp;optarg;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'m':&nbsp;main_sched_str&nbsp;=&nbsp;optarg;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:&nbsp;&nbsp;usage(argv[0],&nbsp;&quot;Unrecognized&nbsp;option\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(use_null_attrib&nbsp;&amp;&amp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(inheritsched_str&nbsp;!=&nbsp;NULL&nbsp;||&nbsp;attr_sched_str&nbsp;!=&nbsp;NULL))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;usage(argv[0],&nbsp;&quot;Can't&nbsp;specify&nbsp;-A&nbsp;with&nbsp;-i&nbsp;or&nbsp;-a\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Optionally&nbsp;set&nbsp;scheduling&nbsp;attributes&nbsp;of&nbsp;main&nbsp;thread,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;display&nbsp;the&nbsp;attributes&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(main_sched_str&nbsp;!=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!get_policy(main_sched_str[0],&nbsp;&amp;policy))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;usage(argv[0],&nbsp;&quot;Bad&nbsp;policy&nbsp;for&nbsp;main&nbsp;thread&nbsp;(-m)\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;param.sched_priority&nbsp;=&nbsp;strtol(&amp;main_sched_str[1],&nbsp;NULL,&nbsp;0);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_setschedparam(pthread_self(),&nbsp;policy,&nbsp;&amp;param);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_setschedparam&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;display_thread_sched_attr(&quot;Scheduler&nbsp;settings&nbsp;of&nbsp;main&nbsp;thread&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Initialize&nbsp;thread&nbsp;attributes&nbsp;object&nbsp;according&nbsp;to&nbsp;options&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;attrp&nbsp;=&nbsp;NULL;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!use_null_attrib)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_init(&amp;attr);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_init&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attrp&nbsp;=&nbsp;&amp;attr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(inheritsched_str&nbsp;!=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(inheritsched_str[0]&nbsp;==&nbsp;'e')
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inheritsched&nbsp;=&nbsp;PTHREAD_EXPLICIT_SCHED;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;if&nbsp;(inheritsched_str[0]&nbsp;==&nbsp;'i')
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inheritsched&nbsp;=&nbsp;PTHREAD_INHERIT_SCHED;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;usage(argv[0],&nbsp;&quot;Value&nbsp;for&nbsp;-i&nbsp;must&nbsp;be&nbsp;'e'&nbsp;or&nbsp;'i'\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_setinheritsched(&amp;attr,&nbsp;inheritsched);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_setinheritsched&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(attr_sched_str&nbsp;!=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!get_policy(attr_sched_str[0],&nbsp;&amp;policy))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;usage(argv[0],
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;Bad&nbsp;policy&nbsp;for&nbsp;'attr'&nbsp;(-a)\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;param.sched_priority&nbsp;=&nbsp;strtol(&amp;attr_sched_str[1],&nbsp;NULL,&nbsp;0);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_setschedpolicy(&amp;attr,&nbsp;policy);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_setschedpolicy&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_setschedparam(&amp;attr,&nbsp;&amp;param);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_setschedparam&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;If&nbsp;we&nbsp;initialized&nbsp;a&nbsp;thread&nbsp;attributes&nbsp;object,&nbsp;display
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;scheduling&nbsp;attributes&nbsp;that&nbsp;were&nbsp;set&nbsp;in&nbsp;the&nbsp;object&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(attrp&nbsp;!=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_getschedparam(&amp;attr,&nbsp;&amp;param);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_getschedparam&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_getschedpolicy(&amp;attr,&nbsp;&amp;policy);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_getschedpolicy&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Scheduler&nbsp;settings&nbsp;in&nbsp;'attr'\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;display_sched_attr(policy,&nbsp;&amp;param);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_getinheritsched(&amp;attr,&nbsp;&amp;inheritsched);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;inheritsched&nbsp;is&nbsp;%s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(inheritsched&nbsp;==&nbsp;PTHREAD_INHERIT_SCHED)&nbsp;&nbsp;?&nbsp;&quot;INHERIT&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(inheritsched&nbsp;==&nbsp;PTHREAD_EXPLICIT_SCHED)&nbsp;?&nbsp;&quot;EXPLICIT&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;???&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;a&nbsp;thread&nbsp;that&nbsp;will&nbsp;display&nbsp;its&nbsp;scheduling&nbsp;attributes&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_create(&amp;thread,&nbsp;attrp,&nbsp;&amp;thread_start,&nbsp;NULL);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_create&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Destroy&nbsp;unneeded&nbsp;thread&nbsp;attributes&nbsp;object&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!use_null_attrib)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_destroy(&amp;attr);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_destroy&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_join(thread,&nbsp;NULL);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_join&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2), <B><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></B>(2), <B><A HREF="../man3/pthread_attr_init.3.html">pthread_attr_init</A></B>(3),
+<B><A HREF="../man3/pthread_attr_setinheritsched.3.html">pthread_attr_setinheritsched</A></B>(3), <B><A HREF="../man3/pthread_attr_setschedparam.3.html">pthread_attr_setschedparam</A></B>(3),
+<B><A HREF="../man3/pthread_attr_setschedpolicy.3.html">pthread_attr_setschedpolicy</A></B>(3), <B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3), <B><A HREF="../man3/pthread_self.3.html">pthread_self</A></B>(3),
+<B><A HREF="../man3/pthread_setschedprio.3.html">pthread_setschedprio</A></B>(3), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7), <B><A HREF="../man7/sched.7.html">sched</A></B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DL>
+<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

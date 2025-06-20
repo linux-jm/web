@@ -1,0 +1,378 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FOPENCOOKIE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FOPENCOOKIE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/fopencookie.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fopencookie - 独自のストリームをオープンする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<B>FILE *fopencookie(void *</B><I>cookie</I><B>, const char *</B><I>mode</I><B>,</B>
+<B>                  cookie_io_functions_t </B><I>io_funcs</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>fopencookie</B>() を使うと、 プログラマーは標準 I/O ストリームの独自の実装を作成することができる。
+この実装はストリームのデータを自分が選んだ場所に格納することができる。 例えば、 <B>fopencookie</B>() は <B><A HREF="../man3/fmemopen.3.html">fmemopen</A></B>(3)
+を実装するのに使用されている。 <B><A HREF="../man3/fmemopen.3.html">fmemopen</A></B>(3)
+はメモリー上のバッファーに格納されたデータに対するストリームインターフェースを提供している。
+<P>
+
+独自のストリームを作成するためには、 プログラマーは以下を行う必要がある。
+<DL COMPACT>
+<DT>*<DD>
+ストリームに対する I/O を実行する際に標準 I/O ライブラリが内部で使用する 4 つの &quot;フック&quot; 関数を実装する。
+<DT>*<DD>
+&quot;cookie&quot; データ型を定義する。 &quot;cookie&quot; データ型は、上記のフック関数が使用する管理情報 (例えば、データを格納する場所など)
+を提供する構造体である。 標準の I/O パッケージにはこの cookie の内容に関する情報を持たないが (したがって
+<B>fopencookie</B>() に渡される際の型は <I>void&nbsp;*</I> である)、 フック関数が呼び出される際に第一引数として cookie
+が渡される。
+<DT>*<DD>
+<B>fopencookie</B>() を呼び出して、新しいストリームをオープンし、 そのストリームに cookie とフック関数を関連付ける。
+</DL>
+<P>
+
+<B>fopencookie</B>() 関数は <B><A HREF="../man3/fopen.3.html">fopen</A></B>(3) と同様の機能を持つ。 新しいストリームをオープンし、
+そのストリームに対して操作を行うのに使用する <I>FILE</I> オブジェクトへのポインターを返す。
+<P>
+
+<I>cookie</I> 引数は、 新しいストリームに関連付けられる呼び出し元の cookie 構造体へのポインターである。 このポインターは、 標準 I/O
+ライブラリが以下で説明するフック関数のいずれかを呼び出す際に第 1 引数として渡される。
+<P>
+
+<I>mode</I> 引数は <B><A HREF="../man3/fopen.3.html">fopen</A></B>(3) と同じ意味を持つ。 指定できるモードは <I>r</I>, <I>w</I>, <I>a</I>, <I>r+</I>, <I>w+</I>,
+<I>a+</I> である。 詳細は <B><A HREF="../man3/fopen.3.html">fopen</A></B>(3) を参照。
+<P>
+
+<I>io_funcs</I> 引数は、 このストリームを実装するのに使用されるプログラマーが定義した関数を指す 4 つのフィールドを持つ構造体である。
+この構造体は以下のように定義されている。
+<P>
+
+
+
+typedef struct {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie_read_function_t&nbsp;&nbsp;*read;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie_write_function_t&nbsp;*write;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie_seek_function_t&nbsp;&nbsp;*seek;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie_close_function_t&nbsp;*close;
+} cookie_io_functions_t;
+
+
+<P>
+
+4 つのフィールドの詳細は以下のとおりである。
+<DL COMPACT>
+<DT><I>cookie_read_function_t *read</I><DD>
+この関数はストリームに対する read 操作を実装する。 呼び出される際、 3 つの引数を受け取る。
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;read(void&nbsp;*cookie,&nbsp;char&nbsp;*buf,&nbsp;size_t&nbsp;size);
+<DT><DD>
+引数 <I>buf</I> と <I>size</I> は、 それぞれ、 入力データを配置できるバッファーとそのバッファーのサイズである。 関数の結果として、
+<I>read</I> 関数は <I>buf</I> にコピーされたバイト数を、 ファイル末尾の場合は 0 を、 エラーの場合は -1 を返す。 <I>read</I>
+関数はストリームのオフセットを適切に更新すべきである。
+<DT><DD>
+<I>*read</I> がヌルポインターの場合、 独自のストリームからの読み出しは常にファイル末尾 (end of file) を返す。
+<DT><I>cookie_write_function_t *write</I><DD>
+この関数はストリームに対する write 操作を実装する。 呼び出される際、 3 つの引数を受け取る。
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;write(void&nbsp;*cookie,&nbsp;const&nbsp;char&nbsp;*buf,&nbsp;size_t&nbsp;size);
+<DT><DD>
+引数 <I>buf</I> と <I>size</I> は、 それぞれ、 ストリームへの出力するデータが入ったバッファーとそのバッファーのサイズである。
+関数の結果として、 <I>write</I> 関数は <I>buf</I> からコピーされたバイト数を返し、 エラーの場合は -1 を返す。
+(この関数は負の値を返してはならない。) <I>write</I> 関数はストリームのオフセットを適切に更新すべきである。
+<DT><DD>
+<I>*write</I> がヌルポインターの場合、 このストリームへの出力は破棄される。
+<DT><I>cookie_seek_function_t *seek</I><DD>
+この関数はストリームに対する seek 操作を実装する。 呼び出される際、 3 つの引数を受け取る。
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;seek(void&nbsp;*cookie,&nbsp;off64_t&nbsp;*offset,&nbsp;int&nbsp;whence);
+<DT><DD>
+<I>*offset</I> 引数は新しいファイルオフセットを指定する。 新しいオフセットは <I>whence</I> に以下の値のどれが指定されたかに応じて決まる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>SEEK_SET</B><DD>
+ストリームオフセットを、ストリームの先頭から <I>*offset</I> バイトの位置に設定する。
+<DT><B>SEEK_CUR</B><DD>
+ストリームの現在のオフセットに <I>*offset</I> を加算する。
+<DT><B>SEEK_END</B><DD>
+ストリームのオフセットを、ストリームのサイズに <I>*offset</I> を足した場所に設定する。
+</DL>
+</DL>
+
+<DT><DD>
+関数が返る前に、 <I>seek</I> 関数はストリームの新しいオフセットを示すように <I>*offset</I> を更新すべきである。
+<DT><DD>
+関数の結果として、 <I>seek</I> 関数は成功すると 0 を、 エラーの場合 -1 を返す。
+<DT><DD>
+<I>*seek</I> がヌルポインターの場合、 このストリームに対して seek 操作を行うことができない。
+<DT><I>cookie_close_function_t *close</I><DD>
+この関数はストリームをクローズする。 このフック関数では、 このストリームに割り当てられたバッファーを解放するといったことができる。 呼び出される際、
+1 つの引数を受け取る。
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;close(void&nbsp;*cookie);
+<DT><DD>
+<I>cookie</I> 引数は <B>fopencookie</B>() の呼び出し時にプログラマーが渡した cookie である。
+<DT><DD>
+関数の結果として、 <I>close</I> 関数は成功すると 0 を、 エラーの場合 <B>EOF</B> を返す。
+<DT><DD>
+<I>*close</I> が NULL の場合、 ストリームがクローズされる際に特別な操作は何も行われない。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+
+
+成功すると <B>fopencookie</B>() は新しいストリームへのポインターを返す。 エラーの場合、 NULL が返される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>fopencookie</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+この関数は非標準の GNU 拡張である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは、 <B><A HREF="../man3/fmemopen.3.html">fmemopen</A></B>(3) で利用できるのと似た (同じではない) 機能を持つ独自のストリームを実装している。
+データがメモリーバッファーに格納されるストリームを実装している。 このプログラムは、 コマンドライン引数をストリームに書き込み、
+それからストリームをたどって 5 文字ごとに 2 文字を読み出して、 それを標準出力に書き込む。 以下のシェルセッションはこのプログラムの使用例である。
+<P>
+
+
+
+$<B> ./a.out 'hello world'</B>
+/he/
+/ w/
+/d/
+Reached end of file
+
+
+<P>
+
+このプログラムを改良して様々なエラー状況に強くすることもできる (例えば、 オープン済みのストリームに対応する cookie
+でストリームをオープンしようとした、 すでにクローズされたストリームをクローズしようとした、など)。
+<A NAME="lbAI">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+#define INIT_BUF_SIZE 4
+<P>
+struct memfile_cookie {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*buf;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Dynamically&nbsp;sized&nbsp;buffer&nbsp;for&nbsp;data&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;allocated;&nbsp;&nbsp;/*&nbsp;Size&nbsp;of&nbsp;buf&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;endpos;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;characters&nbsp;in&nbsp;buf&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;off_t&nbsp;&nbsp;&nbsp;offset;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Current&nbsp;file&nbsp;offset&nbsp;in&nbsp;buf&nbsp;*/
+};
+<P>
+ssize_t
+memfile_write(void *c, const char *buf, size_t size)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*new_buff;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;memfile_cookie&nbsp;*cookie&nbsp;=&nbsp;c;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Buffer&nbsp;too&nbsp;small?&nbsp;Keep&nbsp;doubling&nbsp;size&nbsp;until&nbsp;big&nbsp;enough&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(size&nbsp;+&nbsp;cookie-&gt;offset&nbsp;&gt;&nbsp;cookie-&gt;allocated)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new_buff&nbsp;=&nbsp;realloc(cookie-&gt;buf,&nbsp;cookie-&gt;allocated&nbsp;*&nbsp;2);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(new_buff&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;allocated&nbsp;*=&nbsp;2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;buf&nbsp;=&nbsp;new_buff;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memcpy(cookie-&gt;buf&nbsp;+&nbsp;cookie-&gt;offset,&nbsp;buf,&nbsp;size);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;offset&nbsp;+=&nbsp;size;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cookie-&gt;offset&nbsp;&gt;&nbsp;cookie-&gt;endpos)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;endpos&nbsp;=&nbsp;cookie-&gt;offset;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;size;
+}
+<P>
+ssize_t
+memfile_read(void *c, char *buf, size_t size)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;xbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;memfile_cookie&nbsp;*cookie&nbsp;=&nbsp;c;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Fetch&nbsp;minimum&nbsp;of&nbsp;bytes&nbsp;requested&nbsp;and&nbsp;bytes&nbsp;available&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;xbytes&nbsp;=&nbsp;size;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cookie-&gt;offset&nbsp;+&nbsp;size&nbsp;&gt;&nbsp;cookie-&gt;endpos)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;xbytes&nbsp;=&nbsp;cookie-&gt;endpos&nbsp;-&nbsp;cookie-&gt;offset;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(xbytes&nbsp;&lt;&nbsp;0)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;offset&nbsp;may&nbsp;be&nbsp;past&nbsp;endpos&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;xbytes&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memcpy(buf,&nbsp;cookie-&gt;buf&nbsp;+&nbsp;cookie-&gt;offset,&nbsp;xbytes);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;offset&nbsp;+=&nbsp;xbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;xbytes;
+}
+<P>
+int
+memfile_seek(void *c, off64_t *offset, int whence)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;off64_t&nbsp;new_offset;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;memfile_cookie&nbsp;*cookie&nbsp;=&nbsp;c;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(whence&nbsp;==&nbsp;SEEK_SET)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new_offset&nbsp;=&nbsp;*offset;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;if&nbsp;(whence&nbsp;==&nbsp;SEEK_END)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new_offset&nbsp;=&nbsp;cookie-&gt;endpos&nbsp;+&nbsp;*offset;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;if&nbsp;(whence&nbsp;==&nbsp;SEEK_CUR)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new_offset&nbsp;=&nbsp;cookie-&gt;offset&nbsp;+&nbsp;*offset;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(new_offset&nbsp;&lt;&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;offset&nbsp;=&nbsp;new_offset;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;*offset&nbsp;=&nbsp;new_offset;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;
+}
+<P>
+int
+memfile_close(void *c)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;memfile_cookie&nbsp;*cookie&nbsp;=&nbsp;c;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(cookie-&gt;buf);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;allocated&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;buf&nbsp;=&nbsp;NULL;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie_io_functions_t&nbsp;&nbsp;memfile_func&nbsp;=&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.read&nbsp;&nbsp;=&nbsp;memfile_read,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.write&nbsp;=&nbsp;memfile_write,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.seek&nbsp;&nbsp;=&nbsp;memfile_seek,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.close&nbsp;=&nbsp;memfile_close
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;};
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;FILE&nbsp;*stream;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;memfile_cookie&nbsp;mycookie;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;nread;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[1000];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Set&nbsp;up&nbsp;the&nbsp;cookie&nbsp;before&nbsp;calling&nbsp;fopencookie()&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mycookie.buf&nbsp;=&nbsp;malloc(INIT_BUF_SIZE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mycookie.buf&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mycookie.allocated&nbsp;=&nbsp;INIT_BUF_SIZE;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mycookie.offset&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mycookie.endpos&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;stream&nbsp;=&nbsp;fopencookie(&amp;mycookie,&quot;w+&quot;,&nbsp;memfile_func);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(stream&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fopencookie&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Write&nbsp;command-line&nbsp;arguments&nbsp;to&nbsp;our&nbsp;file&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;1;&nbsp;j&nbsp;&lt;&nbsp;argc;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fputs(argv[j],&nbsp;stream)&nbsp;==&nbsp;EOF)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fputs&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Read&nbsp;two&nbsp;bytes&nbsp;out&nbsp;of&nbsp;every&nbsp;five,&nbsp;until&nbsp;EOF&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(long&nbsp;p&nbsp;=&nbsp;0;&nbsp;;&nbsp;p&nbsp;+=&nbsp;5)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fseek(stream,&nbsp;p,&nbsp;SEEK_SET)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fseek&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nread&nbsp;=&nbsp;fread(buf,&nbsp;1,&nbsp;2,&nbsp;stream);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nread&nbsp;==&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ferror(stream)&nbsp;!=&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;fread&nbsp;failed\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Reached&nbsp;end&nbsp;of&nbsp;file\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;/%.*s/\n&quot;,&nbsp;(int)&nbsp;nread,&nbsp;buf);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/fclose.3.html">fclose</A></B>(3), <B><A HREF="../man3/fmemopen.3.html">fmemopen</A></B>(3), <B><A HREF="../man3/fopen.3.html">fopen</A></B>(3), <B><A HREF="../man3/fseek.3.html">fseek</A></B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">例</A><DD>
+<DL>
+<DT><A HREF="#lbAI">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

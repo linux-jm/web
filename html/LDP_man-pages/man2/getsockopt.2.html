@@ -1,0 +1,143 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETSOCKOPT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETSOCKOPT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/getsockopt.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getsockopt, setsockopt - ソケットのオプションの設定と取得を行なう
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>          /* 「注意」参照 */
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<B>int getsockopt(int </B><I>sockfd</I><B>, int </B><I>level</I><B>, int </B><I>optname</I><B>,</B>
+<B>               void *</B><I>optval</I><B>, socklen_t *</B><I>optlen</I><B>);</B>
+<B>int setsockopt(int </B><I>sockfd</I><B>, int </B><I>level</I><B>, int </B><I>optname</I><B>,</B>
+<B>               const void *</B><I>optval</I><B>, socklen_t </B><I>optlen</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getsockopt</B>()  と <B>setsockopt</B>()  は、ファイルディスクリプター <I>socket</I>
+で参照されるソケットに関連するオプションの操作を行う。 オプションは複数のプロトコル層(level)に存在するかもしれないが、
+これらは常に最上位のソケット層へと設定される。
+<P>
+
+ソケットオプションを操作する際には、オプションの層 (level) と オプションの名前を指定しなければならない。 ソケット API
+層でオプションを操作する為には、 <I>level</I> を <B>SOL_SOCKET</B> に指定する。
+他の全ての層でオプションを操作する為には、与えられたオプションの 制御主体となるプロトコルのプロトコル番号を指定する。例えば、 オプションが
+<B>TCP</B> プロトコルで解釈されるべきことを指示するには、 <I>level</I> に <B>TCP</B> のプロトコル番号を指定しなければならない。
+<B><A HREF="../man3/getprotoent.3.html">getprotoent</A></B>(3)  を参照すること。
+<P>
+
+<I>optval</I> と <I>optlen</I> 引数は <B>setsockopt</B>()  のオプションの値にアクセスするために用いられる。
+<B>getsockopt</B>()  では要求したオプションの値を返すためのバッファーを指定する。 <B>getsockopt</B>()  では
+<I>optlen</I> は値と結果両用の引数で、最初に <I>optval</I> の指しているバッファーのサイズを与え、実際に返される値のサイズに
+書き換えられる。もしオプション値を与えず、返されもしない場合には <I>optval</I> は NULL でも良い。
+<P>
+
+<I>optname</I> および指定されたオプションは解釈されずに、適切なプロトコルモジュールに 渡されて解釈される。インクルードファイル
+<I>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</I> には後述のソケット層のオプションの定義が含まれている。 他のプロトコル層では名前や形式は異なる。
+マニュアルのセクション 4 の適切なエントリーを参照すること。
+<P>
+
+ほとんどのソケット層のオプションは <I>optval</I> に <I>int</I> 引数を利用する。 <B>setsockopt</B>()
+で、二値(boolean)オプションを有効(enable)にするにはゼロ以外を指定し、 無効(disable)にするにはゼロを指定する。
+<P>
+
+利用可能なソケットオプションの説明に関しては、 <B><A HREF="../man7/socket.7.html">socket</A></B>(7)  と適切なプロトコルの man ページを参照のこと。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+On success, zero is returned for the standard options.  On error, -1 is
+returned, and <I>errno</I> is set appropriately.
+<P>
+
+Netfilter allows the programmer to define custom socket options with
+associated handlers; for such options, the return value on success is the
+value returned by the handler.
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+引数 <I>sockfd</I> は有効なファイルディスクリプターでない。
+<DT><B>EFAULT</B><DD>
+<I>optval</I> で指定されたアドレスがプロセスのアドレス空間の有効な部分ではない。 <B>getsockopt</B>()  の場合、 <I>optlen</I>
+がプロセスのアドレス空間の有効な部分でない場合にもこのエラーが返される。
+<DT><B>EINVAL</B><DD>
+<B>setsockopt</B>()  で <I>option</I> が不正である。 <I>optval</I>
+に無効な値が指定された場合にも、このエラーが発生する可能性がある (例えば、 <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  に説明がある <B>IP_ADD_MEMBERSHIP</B>
+オプションなど)。
+<DT><B>ENOPROTOOPT</B><DD>
+指定された層(level)にはこのオプションは存在しない。
+<DT><B>ENOTSOCK</B><DD>
+ファイルディスクリプター <I>sockfd</I> がソケットを参照していない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+
+POSIX.1-2001, POSIX.1-2008, SVr4, 4.4BSD (これらのシステムコールは 4.2BSD で最初に現れた)
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+POSIX.1 では <I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I> のインクルードは必須とされておらず、 Linux
+ではこのヘッダーファイルは必要ではない。 しかし、歴史的には、いくつかの実装 (BSD 系) でこのヘッダーファイルが
+必要であり、移植性が必要なアプリケーションではこのファイルを インクルードするのが賢明であろう。
+<P>
+
+For background on the <I>socklen_t</I> type, see <B><A HREF="../man2/accept.2.html">accept</A></B>(2).
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+ソケットのオプションのいくつかはシステムのより低い層で 処理されるべきである。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2), <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man3/getprotoent.3.html">getprotoent</A></B>(3), <B><A HREF="../man5/protocols.5.html">protocols</A></B>(5), <B><A HREF="../man7/ip.7.html">ip</A></B>(7),
+<B><A HREF="../man7/packet.7.html">packet</A></B>(7), <B><A HREF="../man7/socket.7.html">socket</A></B>(7), <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7), <B><A HREF="../man7/udp.7.html">udp</A></B>(7), <B><A HREF="../man7/unix.7.html">unix</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

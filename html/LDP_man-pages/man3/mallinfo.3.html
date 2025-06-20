@@ -1,0 +1,300 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MALLINFO</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MALLINFO</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/mallinfo.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mallinfo - メモリー割り当て情報を取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/malloc.h">malloc.h</A>&gt;</B>
+<P>
+
+<B>struct mallinfo mallinfo(void);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>mallinfo</B>() 関数は、 <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3) や一連の関数により実行されたメモリー割り当てに関する情報を格納した構造体のコピーを返す。
+<P>
+
+Note that not all allocations are visible to <B>mallinfo</B>(); see BUGS and
+consider using <B><A HREF="../man3/malloc_info.3.html">malloc_info</A></B>(3)  instead.
+<P>
+
+The returned structure is defined as follows:
+<P>
+
+
+
+struct mallinfo {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;arena;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Non-mmapped&nbsp;space&nbsp;allocated&nbsp;(bytes)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ordblks;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;free&nbsp;chunks&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;smblks;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;free&nbsp;fastbin&nbsp;blocks&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;hblks;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;mmapped&nbsp;regions&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;hblkhd;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Space&nbsp;allocated&nbsp;in&nbsp;mmapped&nbsp;regions&nbsp;(bytes)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;usmblks;&nbsp;&nbsp;&nbsp;/*&nbsp;See&nbsp;below&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fsmblks;&nbsp;&nbsp;&nbsp;/*&nbsp;Space&nbsp;in&nbsp;freed&nbsp;fastbin&nbsp;blocks&nbsp;(bytes)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;uordblks;&nbsp;&nbsp;/*&nbsp;Total&nbsp;allocated&nbsp;space&nbsp;(bytes)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fordblks;&nbsp;&nbsp;/*&nbsp;Total&nbsp;free&nbsp;space&nbsp;(bytes)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;keepcost;&nbsp;&nbsp;/*&nbsp;Top-most,&nbsp;releasable&nbsp;space&nbsp;(bytes)&nbsp;*/
+};
+
+
+<P>
+
+<I>mallinfo</I> 構造体の各フィールドには以下の情報が格納される。
+<DL COMPACT>
+<DT><I>arena</I><DD>
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2) 以外の手段で割り当てられた総メモリー量 (例えばヒープに割り当てられたメモリー) 。
+この数字には使用中のブロックやフリーリスト上のブロックも含まれる。
+<DT><I>ordblks</I><DD>
+通常の (つまり fastbin ではない) 未使用ブロック数。
+<DT><I>smblks</I><DD>
+
+
+fastbin 未使用ブロック数 (<B>mallopt</B>(3) 参照)。
+<DT><I>hblks</I><DD>
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2) を使って現在割り当てられているブロック数 (<B>mallopt</B>(3) の <B>M_MMAP_THRESHOLD</B>
+の議論を参照)。
+<DT><I>hblkhd</I><DD>
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2) を使って現在割り当てられているブロックのバイト数。
+<DT><I>usmblks</I><DD>
+
+This field is unused, and is always 0.  Historically, it was the &quot;highwater
+mark&quot; for allocated space---that is, the maximum amount of space that was
+ever allocated (in bytes); this field was maintained only in nonthreading
+environments.
+<DT><I>fsmblks</I><DD>
+
+
+fastbin フリーブロックの総バイト数。
+<DT><I>uordblks</I><DD>
+使用中の割り当てメモリーで使われているバイト数。
+<DT><I>fordblks</I><DD>
+フリーブロックの総バイト数。
+<DT><I>keepcost</I><DD>
+
+
+ヒープの一番上にある解放可能な未使用の空間の大きさ。 この値は <B><A HREF="../man3/malloc_trim.3.html">malloc_trim</A></B>(3) で理想的な場合に解放できる最大のバイト数である
+(理想的というのは、 ページ境界の制限などを無視した場合である。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>mallinfo</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe init const:mallopt<BR></TD></TR>
+</TABLE>
+
+<P>
+<B>mallinfo</B>()  would access some global internal objects.  If modify them
+with non-atomically, may get inconsistent results.  The identifier
+<I>mallopt</I> in <I>const:mallopt</I> mean that <B>mallopt</B>()  would modify the
+global internal objects with atomics, that make sure <B>mallinfo</B>()  is safe
+enough, others modify with non-atomically maybe not.
+<A NAME="lbAF">&nbsp;</A>
+<H2>準拠</H2>
+
+この関数は POSIX や C 標準では規定されていない。 多くの System V 由来のシステムに同様の関数が存在し、 SVID
+では同様の関数が規定されていた。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+
+<B>これらの情報はメインのメモリー割り当て領域に対するもののみである。</B> 他の領域の割り当ては対象にならない。
+他の領域の情報も取得できる別の手段については <B><A HREF="../man3/malloc_stats.3.html">malloc_stats</A></B>(3) や <B><A HREF="../man3/malloc_info.3.html">malloc_info</A></B>(3) を参照。
+<P>
+
+<I>mallinfo</I> 構造体の各フィールドは <I>int</I> 型である。 しかし、 いくつかの内部管理用の値は <I>long</I> 型の場合もあるので、
+報告される値が一周してしまい、 不正確になる可能性がある。
+<A NAME="lbAH">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは <B>mallinfo</B>() を利用して、 メモリーブロックの割り当て、解放のそれぞれ前後でメモリー割り当ての統計情報を取得する。
+統計情報は標準出力に表示される。
+<P>
+
+最初の 2 つのコマンドライン引数は <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3) で割り当てるブロック数とサイズを指定する。
+<P>
+
+残りの 3 つの引数は、どの割り当てられたブロックを <B><A HREF="../man3/free.3.html">free</A></B>(3) で解放すべきかを指定する。 これらの 3 つの引数の指定は任意で、
+最初のものから順に以下の情報を指定する。 1 つ目の引数は、 ブロックを解放するループで使用するステップサイズを指定する (デフォルト値は 1 で、 1
+は指定した範囲のすべてのブロックを解放することを意味する)。 2 つ目の引数は、 解放する先頭ブロックの場所番号を指定する (デフォルト値は 0 で、
+0 は先頭の割り当て済みブロックを意味する)。 3 つ目の引数は、 解放する最終ブロックの場所番号よりひとつ大きい値を指定する
+(デフォルト値は最大ブロック番号よりもひとつ大きい値である)。 これらの 3 つの引数が省略された場合、
+デフォルトではすべての割り当てられたブロックが解放される。
+<P>
+
+以下のプログラムの実行例では、 100 バイトの割り当てを 1000 回実行し、 割り当てたブロックの 2 つに 1 つを解放する。
+<P>
+
+
+
+$ <B>./a.out 1000 100 2</B>
+============== Before allocating blocks ==============
+Total non-mmapped bytes (arena):       0
+# of free chunks (ordblks):            1
+# of free fastbin blocks (smblks):     0
+# of mapped regions (hblks):           0
+Bytes in mapped regions (hblkhd):      0
+Max. total allocated space (usmblks):  0
+Free bytes held in fastbins (fsmblks): 0
+Total allocated space (uordblks):      0
+Total free space (fordblks):           0
+Topmost releasable block (keepcost):   0
+<P>
+============== After allocating blocks ==============
+Total non-mmapped bytes (arena):       135168
+# of free chunks (ordblks):            1
+# of free fastbin blocks (smblks):     0
+# of mapped regions (hblks):           0
+Bytes in mapped regions (hblkhd):      0
+Max. total allocated space (usmblks):  0
+Free bytes held in fastbins (fsmblks): 0
+Total allocated space (uordblks):      104000
+Total free space (fordblks):           31168
+Topmost releasable block (keepcost):   31168
+<P>
+============== After freeing blocks ==============
+Total non-mmapped bytes (arena):       135168
+# of free chunks (ordblks):            501
+# of free fastbin blocks (smblks):     0
+# of mapped regions (hblks):           0
+Bytes in mapped regions (hblkhd):      0
+Max. total allocated space (usmblks):  0
+Free bytes held in fastbins (fsmblks): 0
+Total allocated space (uordblks):      52000
+Total free space (fordblks):           83168
+Topmost releasable block (keepcost):   31168
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/malloc.h">malloc.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+static void
+display_mallinfo(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;mallinfo&nbsp;mi;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mi&nbsp;=&nbsp;mallinfo();
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Total&nbsp;non-mmapped&nbsp;bytes&nbsp;(arena):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.arena);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;#&nbsp;of&nbsp;free&nbsp;chunks&nbsp;(ordblks):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.ordblks);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;#&nbsp;of&nbsp;free&nbsp;fastbin&nbsp;blocks&nbsp;(smblks):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.smblks);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;#&nbsp;of&nbsp;mapped&nbsp;regions&nbsp;(hblks):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.hblks);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Bytes&nbsp;in&nbsp;mapped&nbsp;regions&nbsp;(hblkhd):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.hblkhd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Max.&nbsp;total&nbsp;allocated&nbsp;space&nbsp;(usmblks):&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.usmblks);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Free&nbsp;bytes&nbsp;held&nbsp;in&nbsp;fastbins&nbsp;(fsmblks):&nbsp;%d\n&quot;,&nbsp;mi.fsmblks);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Total&nbsp;allocated&nbsp;space&nbsp;(uordblks):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.uordblks);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Total&nbsp;free&nbsp;space&nbsp;(fordblks):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.fordblks);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Topmost&nbsp;releasable&nbsp;block&nbsp;(keepcost):&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.keepcost);
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+#define MAX_ALLOCS 2000000
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*alloc[MAX_ALLOCS];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;numBlocks,&nbsp;freeBegin,&nbsp;freeEnd,&nbsp;freeStep;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;blockSize;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;3&nbsp;||&nbsp;strcmp(argv[1],&nbsp;&quot;--help&quot;)&nbsp;==&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s&nbsp;num-blocks&nbsp;block-size&nbsp;[free-step&nbsp;&quot;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;[start-free&nbsp;[end-free]]]\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;numBlocks&nbsp;=&nbsp;atoi(argv[1]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;blockSize&nbsp;=&nbsp;atoi(argv[2]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;freeStep&nbsp;=&nbsp;(argc&nbsp;&gt;&nbsp;3)&nbsp;?&nbsp;atoi(argv[3])&nbsp;:&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;freeBegin&nbsp;=&nbsp;(argc&nbsp;&gt;&nbsp;4)&nbsp;?&nbsp;atoi(argv[4])&nbsp;:&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;freeEnd&nbsp;=&nbsp;(argc&nbsp;&gt;&nbsp;5)&nbsp;?&nbsp;atoi(argv[5])&nbsp;:&nbsp;numBlocks;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;==============&nbsp;Before&nbsp;allocating&nbsp;blocks&nbsp;==============\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;display_mallinfo();
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;numBlocks;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(numBlocks&nbsp;&gt;=&nbsp;MAX_ALLOCS)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Too&nbsp;many&nbsp;allocations\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;alloc[j]&nbsp;=&nbsp;malloc(blockSize);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(alloc[j]&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n==============&nbsp;After&nbsp;allocating&nbsp;blocks&nbsp;==============\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;display_mallinfo();
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;freeBegin;&nbsp;j&nbsp;&lt;&nbsp;freeEnd;&nbsp;j&nbsp;+=&nbsp;freeStep)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;free(alloc[j]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n==============&nbsp;After&nbsp;freeing&nbsp;blocks&nbsp;==============\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;display_mallinfo();
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3), <B><A HREF="../man3/malloc_info.3.html">malloc_info</A></B>(3), <B><A HREF="../man3/malloc_stats.3.html">malloc_stats</A></B>(3),
+<B><A HREF="../man3/malloc_trim.3.html">malloc_trim</A></B>(3), <B>mallopt</B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">属性</A><DD>
+<DT><A HREF="#lbAF">準拠</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">例</A><DD>
+<DL>
+<DT><A HREF="#lbAI">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

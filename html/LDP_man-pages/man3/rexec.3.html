@@ -1,0 +1,139 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of REXEC</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>REXEC</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/rexec.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rexec, rexec_af - リモートコマンドへのストリームを返す
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</B>
+
+<B>int rexec(char **</B><I>ahost</I><B>, int </B><I>inport</I><B>, const char *</B><I>user</I><B>,</B>
+<B>          const char *</B><I>passwd</I><B>, const char *</B><I>cmd</I><B>, int *</B><I>fd2p</I><B>);</B>
+
+<B>int rexec_af(char **</B><I>ahost</I><B>, int </B><I>inport</I><B>, const char *</B><I>user</I><B>,</B>
+<B>             const char *</B><I>passwd</I><B>, const char *</B><I>cmd</I><B>, int *</B><I>fd2p</I><B>,</B>
+<B>             sa_family_t </B><I>af</I><B>);</B>
+</PRE>
+
+<P>
+
+<B>rexec</B>(), <B>rexec_af</B>():
+<PRE>
+    Since glibc 2.19:
+        _DEFAULT_SOURCE
+    In glibc up to and including 2.19:
+        _BSD_SOURCE
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+このインターフェースは <B><A HREF="../man3/rcmd.3.html">rcmd</A></B>(3)  によって置き換えられた。
+<P>
+
+<B>rexec</B>()  関数は <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)  を使ってホスト <I>*ahost</I> を探す。ホストが存在しない場合は -1
+を返し、それ以外の場合には <I>*ahost</I> にそのホストの標準的な名前を設定する。 ユーザー名とパスワードの両方が指定された場合には、これらは
+接続先のホストへの認証に利用される。そうでない場合には、 適切な情報を入手するために、環境変数と、そのユーザーの ホームディレクトリの
+<I>.netrc</I> ファイルが検索される。情報が見つからなかった時には、 ユーザーに対して情報を入力するプロンプトが表示される。
+<P>
+
+ポート <I>inport</I> には、接続に使用する DARPA Internet の well-known ポートを指定する。
+<I>getservbyname(&quot;exec&quot;, &quot;tcp&quot;)</I> を呼び出すと構造体へのポインターが返され (<B><A HREF="../man3/getservent.3.html">getservent</A></B>(3)
+参照)、この構造体には必要なポートが入っている。 接続に使用されるプロトコルについての詳細は <B><A HREF="../../netkit/man8/rexecd.8.html">rexecd</A></B>(8)  に書かれている (訳注:
+現在のところ存在しない)。
+<P>
+
+接続に成功すると、インターネットドメインの <B>SOCK_STREAM</B> 型のソケットが返され、そのソケットはリモートコマンドの
+標準入力および標準出力となる。 <I>fd2p</I> が 0 以外の場合、制御プロセスへの補助チャンネルがセットアップされ、
+補助チャンネルのファイルディスクリプターが <I>*fd2p</I> に書かれる。 制御プロセスはコマンドからの診断メッセージ出力 (ファイルディスクリプター
+2)  をこのチャンネルで返す。また、このチャンネル経由で UNIX のシグナル番号を示すバイトを受信する。受信したシグナルは
+コマンドが属すプロセスグループに転送される。 診断情報にはリモートの認証失敗は含まれない。なぜなら、認証の確認が行われた
+後で補助チャンネルの接続はセットアップされるからである。 <I>fd2p</I> が 0 の場合、標準エラー (リモートコマンドのファイルディスクリプター 2)
+は 標準出力と同様に扱われ、リモートプロセスに任意のシグナルを送るための 手段は提供されない。但し、リモートプロセスに対してトリガーをかけるために、
+帯域外データ (out-of-band data) を使うことはできる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>rexec_af()</H3>
+
+<B>rexec</B>() 関数は IPv4 (<B>AF_INET</B>) 上で動作する。
+これに対して、 <B>rexec_af</B>() 関数は追加の引数 <I>af</I> があり、
+この引数で呼び出し側がプロトコルを選択できる。
+この引数には <B>AF_INET</B>, <B>AF_INET6</B>, <B>AF_UNSPEC</B> を指定できる
+(<B>AF_UNSPEC</B> は実装側がプロトコルを選択することを意味する)。
+<A NAME="lbAF">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>rexec_af</B>() 関数は glibc バージョン 2.9 で追加された。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明は <B>attributes</B>(7) を参照のこと。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>rexec</B>(),
+<B>rexec_af</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+これらの関数は POSIX.1 にはない。<B>rexec</B>() 関数は 4.2BSD で始めて
+登場し、BSD 系、Solaris や他の多くのシステムに存在する。<B>rexec_af</B>()
+関数はもっと新しく、それほど広く使われているわけではない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>rexec</B>()  関数はネットワークに暗号化されていないパスワードを送信する。
+<P>
+
+基礎的なサービスにおいては大きなセキュリティホールと考えられるため、
+多くのサイトで無効になっている。詳細は <B><A HREF="../../netkit/man8/rexecd.8.html">rexecd</A></B>(8) を参照。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/rcmd.3.html">rcmd</A></B>(3), <B><A HREF="../../netkit/man8/rexecd.8.html">rexecd</A></B>(8)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">rexec_af()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">バージョン</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

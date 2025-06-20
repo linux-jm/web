@@ -1,0 +1,118 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DSP56K</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>DSP56K</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated:  2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man4/dsp56k.4">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+dsp56k - DSP56001 のインターフェースデバイス
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+ <B>#include &lt;<A HREF="file:///usr/include/asm/dsp56k.h">asm/dsp56k.h</A>&gt;</B>
+
+<B>ssize_t read(int </B><I>fd</I><B>, void *</B><I>data</I><B>, size_t </B><I>length</I><B>);</B>
+<B>ssize_t write(int </B><I>fd</I><B>, void *</B><I>data</I><B>, size_t </B><I>length</I><B>);</B>
+
+<B>int ioctl(int </B><I>fd</I><B>, DSP56K_UPLOAD, struct dsp56k_upload *</B><I>program</I><B>);</B>
+<B>int ioctl(int </B><I>fd</I><B>, DSP56K_SET_TX_WSIZE, int </B><I>wsize</I><B>);</B>
+<B>int ioctl(int </B><I>fd</I><B>, DSP56K_SET_RX_WSIZE, int </B><I>wsize</I><B>);</B>
+<B>int ioctl(int </B><I>fd</I><B>, DSP56K_HOST_FLAGS, struct dsp56k_host_flags *</B><I>flags</I><B>);</B>
+<B>int ioctl(int </B><I>fd</I><B>, DSP56K_HOST_CMD, int </B><I>cmd</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>設定</H2>
+
+<B>dsp56k</B> デバイスは、メジャー番号 55、マイナー番号 0 の キャラクターデバイスである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+Motorola DSP56001 は、Atari Falcon030 互換のコンピュータで使われている フルプログラマブルな 24
+ビットのデジタルシグナルプロセッサーである。 スペシャルファイル <I>dsp56k</I> は、DSP56001 の制御と
+双方向ハンドシェイクホストポートでのデータの送受信のために使われる。
+<P>
+
+データストリームをシグナルプロセッサーに送信するためには、 デバイスに対して <B><A HREF="../man2/write.2.html">write</A></B>(2)  を使うこと。
+処理されたデータを受信するためには、 <B><A HREF="../man2/read.2.html">read</A></B>(2)  を使うこと。 ホスト側では、データは 8, 16, 24, 32
+ビット単位で送受信できるが、 DSP56001 内では、24 ビット単位で扱われる。
+<P>
+
+次の <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  コールが <I>dsp56k</I> デバイスを制御するために使われる。
+<DL COMPACT>
+<DT><B>DSP56K_UPLOAD</B><DD>
+DSP56001 をリセットし、プログラムをアップロードする。 <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  の 3 番目の引数は、 構造体 <I>struct
+dsp56k_upload</I> へのポインターでなければならない。 構造体のメンバー <I>bin</I> は DSP56001 バイナリプログラムを指し、
+構造体のメンバー <I>len</I> は 24 ビットワードで数えた プログラムの長さに設定されていなければならない。
+<DT><B>DSP56K_SET_TX_WSIZE</B><DD>
+sets the transmit word size.  Allowed values are in the range 1 to 4, and is
+the number of bytes that will be sent at a time to the DSP56001.  These data
+quantities will either be padded with bytes containing zero, or truncated to
+fit the native 24-bit data format of the DSP56001.
+<DT><B>DSP56K_SET_RX_WSIZE</B><DD>
+受信ワードサイズを設定する。 設定できる値は 1 〜 4 の範囲で、 このバイト数分だけ 1 度に DSP56001 から受信する。
+このデータ単位は、DSP56001 本来の 24 ビットデータ形式に合わせるため、 切り詰められたり、ヌルバイト ('\0')
+で埋められたりする。
+<DT><B>DSP56K_HOST_FLAGS</B><DD>
+ホストフラグを読み書きする。 ホストフラグは、一般的な目的で使うことのできるビットで、 ホストコンピュータと DSP56001
+の両方から読むことができる。 ビット 0 と 1 は、ホストによって書き込むことができ、 ビット 2 と 3 は、DSP56001
+によって書き込むことができる。
+<DT><DD>
+ホストフラグにアクセスするためには、 <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  の 3 番目の引数が 構造体 <I>struct dsp56k_host_flags</I>
+へのポインターでなければならない。 この構造体のメンバー <I>dir</I> のビット 0 または 1 が設定されると、 メンバー <I>out</I>
+の対応するビットの値がホストフラグに書き込まれる。 すべてのホストフラグの状態は、構造体のメンバー <I>status</I> の 下から 4
+ビットとして返される。
+<DT><B>DSP56K_HOST_CMD</B><DD>
+ホストコマンドを送信する。 送信できる値は 0 〜 31 の範囲で、DSP56001 で動作しているプログラムによって
+処理されるユーザー定義コマンドである。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+
+
+
+<BR>&nbsp;<I>/dev/dsp56k</I>
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<I>linux/include/asm-m68k/dsp56k.h</I>, <I>linux/drivers/char/dsp56k.c</I>,
+
+
+DSP56000/DSP56001 Digital Signal
+Processor User's Manual
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">設定</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

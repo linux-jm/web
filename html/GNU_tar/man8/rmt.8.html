@@ -1,0 +1,278 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RMT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RMT</H1>
+Section: GNU TAR マニュアル (8)<BR>Updated: 2018/03/24<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_tar/release/man8/rmt.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rmt - リモートの磁気テープサーバー
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>rmt</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>Rmt</B> は、<B><A HREF="../man1/tar.1.html">tar</A></B>(1), <B><A HREF="../../GNU_cpio/man1/cpio.1.html">cpio</A></B>(1)
+などのバックアップユーティリティーを利用したファイルやデバイスの処理を、リモートからアクセスする機能を提供します。 普通リモートマシンに対しては
+<B><A HREF="../../netkit/man1/rsh.1.html">rsh</A></B>(1) または <B>ssh</B>(1) を利用して実現します。 ログイン名を指定して別ユーザーを用いることもできます。
+<P>
+
+呼び出しを行うプログラムが <B>rmt</B> とやり取りをする際には、標準入力に対してリクエストを送信し、その結果を標準出力から読み取ります。
+送信する要求は、要求を表す英字の次に (必要があれば) 引数が続き、最後に改行文字により構成されます。
+追加データがある場合は、その改行文字の次に送信されます。 処理が成功すると <B>rmt</B> は以下を返します。
+<P>
+
+
+<B>A</B><I>number</I><B>\n</B>
+<P>
+
+上の <I>number</I> は 10 進数のリターンコードを ASCII 表現したものです。 追加の情報はこの行の次に返されます。
+エラー発生時には、以下のレスポンスが返されます。
+<P>
+
+
+<B>E</B><I>errno</I><B>\n</B><I>error-message</I><B>\n</B>
+<P>
+
+ここで <I>errno</I> はシステムエラーコードを表すもので、 <B><A HREF="../../LDP_man-pages/man3/errno.3.html">errno</A></B>(3) に説明されています。  <I>error-message</I>
+はエラー内容を 1 行にわかりやすく示したもので、 <B><A HREF="../../LDP_man-pages/man3/perror.3.html">perror</A></B>(3) を用いて出力されています。
+<P>
+
+利用できるコマンドとレスポンスの種類については、後述するセクションにおいて説明しています。
+<A NAME="lbAE">&nbsp;</A>
+<H2>コマンド</H2>
+
+<DL COMPACT>
+<DT><B>O</B><I>device</I><B>\n</B><I>flags</I><B>\n</B><DD>
+指定された <I>flags</I> を使って <I>device</I>
+をオープンします。デバイスがすでにオープンされていた場合は、一度クローズしてから新たにオープンされます。
+<P>
+<B>引数</B>
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>device</I><DD>
+オープンするデバイス名。
+<DT><I>flags</I><DD>
+<B><A HREF="../../LDP_man-pages/man2/open.2.html">open</A></B>(2) に対するフラグ。 10 進数値、または <B>fcntl.h</B> に定義された <B>O_*</B> 定数 (先頭の <B>O_</B>
+は省略される場合があります)。 またビット表現や (<B>|</B> を利用して) 以下のようにこれらを合わせた数値指定もできます。
+
+
+576
+64|512
+CREAT|TRUNC
+
+<DL COMPACT><DT><DD>
+さらに指定を組み合わせることもできます。 たとえば 10 進数によるモードに、そのシンボリックな表現を付け加えるような場合です。
+その場合は、シンボリック表現が優先されます。
+</DL>
+
+<P>
+<B>返信 (reply)</B>
+<DL COMPACT><DT><DD>
+成功時には <B>A0\n</B> を返します。
+</DL>
+
+<P>
+<B>拡張</B>
+<DL COMPACT><DT><DD>
+BSD バージョンでは <I>flags</I> に 10 進数のみ指定可能です。
+</DL>
+
+<DT><B>C</B>[<I>device</I>]<B>\n</B><DD>
+現在オープンしているデバイスをクロースします。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>引数</B><DD>
+<BR>
+
+引数はすべて無視されます。
+<DT><B>返信 (reply)</B><DD>
+<BR>
+
+成功時には <B>A0\n</B> を返します。
+</DL>
+</DL>
+
+<DT><B>L</B><I>whence</I><B>\n</B><I>offset</I><B>\n</B><DD>
+<DL COMPACT><DT><DD>
+指定されたパラメーターを使って、現在オープンしているデバイスに対して <B><A HREF="../../LDP_man-pages/man2/lseek.2.html">lseek</A></B>(2) を実行します。
+<DL COMPACT>
+<DT><B>引数</B><DD>
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>whence</I><DD>
+オフセットをどこからにするか。 指定可能な値は以下です：
+<P>
+<PRE>
+
+ 0, SET, SEEK_SET   ファイル先頭からシーク
+ 1, CUR, SEEK_CUR   現在位置からシーク
+ 2, END, SEEK_END   ファイル終端からシーク
+</PRE>
+
+</DL>
+</DL>
+
+<DT><B>返信 (reply)</B><DD>
+<BR>
+
+成功時には <B>A</B><I>offset</I><B>\n</B> を返します。 <I>offset</I> は新たなオフセット値になります。
+<DT><B>拡張</B><DD>
+BSD バージョンは <I>whence</I> に対して 0,1,2 のみ指定可能です。
+</DL>
+</DL>
+
+<DT><B>R</B><I>count</I><B>\n</B><DD>
+<BR>
+
+現在のデバイスから <I>count</I> バイト分のデータを読み込みます。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>引数</B><DD>
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>count</I><DD>
+読み込みを行うバイト数。
+</DL>
+</DL>
+
+<DT><B>返信 (reply)</B><DD>
+<BR>
+
+成功時には以下を返します。
+<P>
+
+<B>A</B><I>rdcount</I><B>\n</B>
+
+<P>
+この後ろに、デバイスから読み取った <I>rdcount</I> バイト分のデータが続きます。
+</DL>
+</DL>
+
+<DT><B>W</B><I>count</I><B>\n</B><DD>
+現在のデバイスにデータを書き込みます。 このコマンドの後ろに、<I>count</I> バイト分の入力データを続けます。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>引数</B><DD>
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>count</I><DD>
+書き込みを行うバイト数。
+</DL>
+</DL>
+
+<DT><B>返信 (reply)</B><DD>
+<BR>
+
+成功時には <B>A</B><I>wrcount</I><B>\n</B> を返します。 ここで <I>wrcount</I> は、実際に書き込みを行ったバイト数です。
+</DL>
+</DL>
+
+<DT><B>I</B><I>opcode</I><B>\n</B><I>count</I><B>\n</B><DD>
+指定されたパラメーターを用いて <B>MTIOCOP</B> <B><A HREF="../../LDP_man-pages/man2/ioctl.2.html">ioctl</A></B>(2) コマンドを実行します。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>引数</B><DD>
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>opcode</I><DD>
+<B>MTIOCOP</B> オペレーションコード。
+<DT><I>count</I><DD>
+mt_count
+</DL>
+</DL>
+
+<DT><B>返信 (reply)</B><DD>
+<BR>
+
+成功時には <B>A0\n</B> を返します。
+</DL>
+</DL>
+
+<DT><B>S\n</B><DD>
+現在オープンしているデバイスのステータスを返します。 これは <B>MTIOCGET</B> <B><A HREF="../../LDP_man-pages/man2/ioctl.2.html">ioctl</A></B>(2) を呼び出して得ています。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>引数</B><DD>
+<BR>
+
+なし。
+<DT><B>返信 (reply)</B><DD>
+<BR>
+
+成功時は <B>A</B><I>count</I><B>\n</B> と、その後に <I>count</I> バイト分のデータが続きます。
+</DL>
+</DL>
+
+</DL>
+</DL>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/tar.1.html">tar</A></B>(1)
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+このユーティリティーを汎用目的のリモートファイルアクセスツールとして利用することはお勧めしません。
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ報告</H2>
+
+バグ報告は &lt;<A HREF="mailto:bug-tar@gnu.org">bug-tar@gnu.org</A>&gt; までお願いします。
+<A NAME="lbAI">&nbsp;</A>
+<H2>開発経緯</H2>
+
+<B>rmt</B> コマンドは 4.2BSD において登場しました。 GNU <B>rmt</B> は BSD の仕様に基づいて一から書き起こされました。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>著作権</H2>
+
+Copyright &#169; 2013, 2018 Free Software Foundation, Inc.
+<BR>
+
+
+License GPLv3+: GNU GPL version 3 or later
+&lt;<A HREF="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</A>&gt;
+<BR>
+
+
+This is free software: you are free to change and redistribute it.  There is
+NO WARRANTY, to the extent permitted by law.
+
+
+
+
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">コマンド</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">バグ報告</A><DD>
+<DT><A HREF="#lbAI">開発経緯</A><DD>
+<DT><A HREF="#lbAJ">著作権</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:25 GMT, December 05, 2022
+</BODY>
+</HTML>

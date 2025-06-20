@@ -1,0 +1,451 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MMAP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MMAP</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-01-22<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/mmap.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mmap, munmap - ファイルやデバイスをメモリーにマップ/アンマップする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+
+<B>void *mmap(void *</B><I>addr</I><B>, size_t </B><I>length</I><B>, int </B><I>prot</I><B>, int </B><I>flags</I><B>,</B>
+<B>           int </B><I>fd</I><B>, off_t </B><I>offset</I><B>);</B>
+<B>int munmap(void *</B><I>addr</I><B>, size_t </B><I>length</I><B>);</B>
+</PRE>
+
+<P>
+機能検査マクロの要件に関する情報は「注意」の節を参照。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>mmap</B>()  は、新しいマッピングを呼び出し元プロセスの仮想アドレス空間に作成する。 新しいマッピングの開始アドレスは <I>addr</I>
+で指定される。マッピングの長さは <I>length</I> 引き数で指定される。
+<P>
+
+
+<I>addr</I> が NULL の場合、カーネルがマッピングを作成するアドレスを選択する。 この方法は最も移植性のある新しいマッピングの作成方法である。
+<I>addr</I> が NULL でない場合、カーネルはマッピングをどこに配置するかのヒントとして <I>addr</I> を使用する。Linux
+では、マッピングはすぐ近くのページ境界に作成される。 新しいマッピングのアドレスは、呼び出しの返り値として返される。
+<P>
+ファイルマッピングの内容は、 ファイルディスクリプター <I>fd</I> で参照されるファイル (もしくは他のオブジェクト) のオフセット <I>offset</I>
+から開始される <I>length</I> バイトのデータで初期化される (ファイルマッピングは無名マッピングの反対語である。 <B>MAP_ANONYMOUS</B>
+を参照)。 <I>offset</I> は <I>sysconf(_SC_PAGE_SIZE)</I> が返すページサイズの倍数でなければならない。
+<P>
+
+引き数 <I>prot</I> には、マッピングのメモリー保護をどのように行なうかを指定する (ファイルのオープンモードと矛盾してはいけない)。 <I>prot</I>
+には、 <B>PROT_NONE</B> か、以下のフラグをひとつ以上ビット毎の論理和 (OR) をとったものを 指定できる。
+<DL COMPACT>
+<DT><B>PROT_EXEC</B><DD>
+ページは実行可能である。
+<DT><B>PROT_READ</B><DD>
+ページは読み込み可能である。
+<DT><B>PROT_WRITE</B><DD>
+ページに書き込み可能である。
+<DT><B>PROT_NONE</B><DD>
+ページにはアクセスできない。
+</DL>
+<P>
+
+<I>flags</I> 引き数により、マッピングに対する更新が同じ領域をマッピングしている 他のプロセスに見えるか、更新がマッピング元のファイルを通じて
+伝えられるか、が決定される。この動作は、以下の値のいずれか一つだけ (複数は指定できない) を <I>flags</I> に含めることで指定する。
+<DL COMPACT>
+<DT><B>MAP_SHARED</B><DD>
+このマッピングを共有する。 マッピングに対する更新はこのファイルをマッピングしている他のプロセス
+から見える。更新はマッピング元のファイルを通じて伝えられる。 ただし、ファイルの実際の更新は <B><A HREF="../man2/msync.2.html">msync</A></B>(2)  または <B>munmap</B>()
+が呼ばれるまで行われないこともある。
+<DT><B>MAP_PRIVATE</B><DD>
+プライベートな copy-on-write (書き込み時コピー) マップを生成する。
+マッピングに対する更新は同じファイルをマッピングしている他のプロセス には見えず、更新がマッピング元のファイルを通じて伝えられることもない。
+<B>mmap</B>()  の呼び出し後にマッピング元のファイルに対して行われた変更が、 マップ領域に反映されるかどうかは規定されていない。
+</DL>
+<P>
+
+上記の二つのフラグは POSIX.1-2001 で規定されている。
+<P>
+さらに、以下の値のうち 0 個以上をビット毎の論理和 (OR) で <I>flags</I> に指定することができる。
+<DL COMPACT>
+<DT><B>MAP_32BIT</B> (Linux 2.4.20, 2.6 以降)<DD>
+
+マッピングをプロセスのアドレス空間の先頭 2 ギガバイト以内に配置する。 このフラグがサポートされているのは x86-64 アーキテクチャー上の 64
+ビットプログラムのみである。 このフラグが追加されたのは、スレッドのスタックをメモリーの先頭 2GB 以内の どこかに割り当てることで、初期のいくつかの
+64 ビットプロセッサにおける コンテキストスイッチの性能問題を改善するためである。 最近の x86-64 プロセッサではこの性能問題はもはや存在せず、
+そのようなシステムではこのフラグを使用する必要はない。 <B>MAP_FIXED</B> がセットされている場合は、 <B>MAP_32BIT</B>
+フラグは無視される。
+<DT><B>MAP_ANON</B><DD>
+<B>MAP_ANONYMOUS</B> の同義語。非推奨。
+<DT><B>MAP_ANONYMOUS</B><DD>
+マッピングはどのファイルとも関連付けされない。 マッピングの内容は 0 で初期化される。 引き数 <I>fd</I> と <I>offset</I> は無視される。
+ただし、実装によっては <B>MAP_ANONYMOUS</B> (もしくは <B>MAP_ANON</B>)  が指定された場合、 <I>fd</I> を -1
+にする必要があり、 移植性が必要なアプリケーションでは必ず <I>fd</I> を -1 にすべきである。 <B>MAP_ANONYMOUS</B> と
+<B>MAP_SHARED</B> を組み合わせての利用は カーネル 2.4 以降の Linux でのみサポートされている。
+<DT><B>MAP_DENYWRITE</B><DD>
+
+このフラグは無視される (ずっと前は、マップ元のファイルへの書き込みを行おうとすると、エラー <B>ETXTBUSY</B>
+で失敗するようにシグナルが設定されていたが、これは denial-of-service (サービス拒否) 攻撃の原因となった)。
+<DT><B>MAP_EXECUTABLE</B><DD>
+
+
+
+
+
+このフラグは無視される。
+<DT><B>MAP_FILE</B><DD>
+
+
+互換性のためのフラグ。無視される。
+<DT><B>MAP_FIXED</B><DD>
+<I>addr</I> をアドレスのヒントとして使用するのではなく、 <I>addr</I> で指定されたアドレスをそのまま使用してマッピングを配置する。
+<I>addr</I> はページサイズの倍数でなければならない。 <I>addr</I> と <I>len</I>
+で指定されたメモリー領域が既存のマッピングのページと重なる場合、 既存のマッピングの重なった部分は捨てられる。
+もし指定されたアドレスが使用できない場合、 <B>mmap</B>()  は失敗する。 マッピングに対して固定アドレスを要求するのは移植性の面で劣るので、
+このオプションは使用しないことを推奨する。
+<DT><B>MAP_GROWSDOWN</B><DD>
+スタック用に使用される。マッピングをメモリー内で逆向きに行うことを カーネル仮想メモリーシステムに指示する。
+(訳注：マッピングは通常はメモリーアドレスが増加する向きに行うが、 このオプションを指定すると逆向きにマッピングを行う)
+<DT><B>MAP_HUGETLB</B> (Linux 2.6.32 以降)<DD>
+&quot;huge page&quot; を使ってマッピングを割り当てる。詳しい情報は、Linux カーネルソースの
+<I>Documentation/vm/hugetlbpage.txt</I> を参照。
+<DT><B>MAP_LOCKED</B> (Linux 2.5.37 以降)<DD>
+
+マップされた領域のページを <B><A HREF="../man2/mlock.2.html">mlock</A></B>(2)  の方法でメモリー内にロックする。 それ以前のカーネルでは、このフラグは無視される。
+<DT><B>MAP_NONBLOCK</B> (Linux 2.5.46 以降)<DD>
+<B>MAP_POPULATE</B> と組み合わせた場合のみ意味を持つ。 read-ahead (前もって読み込むこと) を実行しない。 単に、すでに RAM
+上に存在するページに対してのみページテーブルエントリーを作成する。 Linux 2.6.23 以降では、このフラグは <B>MAP_POPULATE</B>
+に何の影響も与えない。 いつか <B>MAP_POPULATE</B> と <B>MAP_NONBLOCK</B>
+を組み合わせた場合の動作は実装し直されるかもしれない。
+<DT><B>MAP_NORESERVE</B><DD>
+このマッピングに対するスワップ空間の予約を行わない。 スワップ空間を予約した場合は、このマッピングの変更が必ず可能なことが
+保証される。予約を行わなかった場合、物理メモリーに空きがないと 書き込み時に <B>SIGSEGV</B> エラーを受け取ることがある。 <B><A HREF="../man5/proc.5.html">proc</A></B>(5)
+の <I>/proc/sys/vm/overcommit_memory</I> ファイルについての議論も参照。 バージョン 2.6
+より前のカーネルでは、このフラグは書き込み可能な プライベートマッピングについてのみ効果があった。
+<DT><B>MAP_POPULATE</B> (Linux 2.5.46 以降)<DD>
+マッピング用のページテーブルを配置 (populate) する ファイルマッピングの場合には、これによりファイルが先読み (read-ahead)
+が行われる。この以後は、マッピングに対するアクセスがページフォールトで ブロックされることがなくなる。 Linux 2.6.23
+以降でのみプライベートマッピングについて <B>MAP_POPULATE</B> がサポートされている。
+<DT><B>MAP_STACK</B> (Linux 2.6.27 以降)<DD>
+
+
+
+
+
+プロセスやスレッドのスタックに適したアドレスにマッピングを割り当てる。 現在のところ、このフラグは何もしないが、 glibc
+のスレッド実装では使用されている。 これは、いくつかのアーキテクチャーではスタックの割り当てに関して特別な扱い が必要な場合に、glibc
+にそのサポートを後で透過的に実装できるようにする ためである。
+<DT><B>MAP_UNINITIALIZED</B> (Linux 2.6.33 以降)<DD>
+無名ページ (anonymous page) のクリアを行わない。このフラグは組み込みデバイス
+での性能向上を目的に作られてものである。カーネルの設定で
+<B>CONFIG_MMAP_ALLOW_UNINITIALIZED</B> オプションが有効になっている場合のみ、
+このフラグは効果を持つ。
+セキュリティ面の考慮から、このオプションは通常組み込みデバイス (すなわち、
+ユーザーメモリーの内容を完全に制御化におけるデバイス) においてのみ有効にされる。
+</DL>
+<P>
+
+上記のフラグの中では、 <B>MAP_FIXED</B> だけが POSIX.1-2001 で規定されている。 しかしながら、ほとんどのシステムで
+<B>MAP_ANONYMOUS</B> (またはその同義語である <B>MAP_ANON</B>)  もサポートされている。
+<P>
+
+いくつかのシステムでは、上記以外にフラグとして <B>MAP_AUTOGROW</B>, <B>MAP_AUTORESRV</B>, <B>MAP_COPY</B>,
+<B>MAP_LOCAL</B> が規定されている。
+<P>
+
+<B>mmap</B>()  によってマップされたメモリーの属性は <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  の際に継承される。
+<P>
+
+ファイルはページサイズの整数倍の領域にマップされる。サイズがページサイズの 整数倍でないファイルの場合、マップ時に残りの領域は 0
+で埋められ、この領域へ 書きこみを行ってもファイルに書き出されることはない。マッピングを行った元
+ファイルのサイズを変更した場合、元ファイルの追加されたり削除された領域に対応 するマップされたページに対してどのような影響があるかは規定されていない。
+<A NAME="lbAE">&nbsp;</A>
+<H3>munmap()</H3>
+
+システムコール <B>munmap</B>()  は指定されたアドレス範囲のマップを消去し、 これ以降のその範囲内へのメモリー参照は不正となる。
+この領域は、プロセスが終了したときにも自動的にアンマップされる。 一方、ファイルディスクリプターをクローズしても、この領域はアンマップされない。
+<P>
+
+<I>addr</I> アドレスはページサイズの整数倍でなければならない。指定された範囲の一部分を
+含む全てのページはアンマップされ、これ以降にこれらのページへの参照があると <B>SIGSEGV</B> が発生する。
+指定した範囲内にマップされたページが一つも含まれていない場合でも エラーにならない。
+<A NAME="lbAF">&nbsp;</A>
+<H3>ファイルと関連付けられたマッピングに対するタイムスタンプの更新</H3>
+
+ファイルと関連付けられたマッピングの場合、マッピングされたファイルの <I>st_atime</I> フィールドは、 <B>mmap</B>()  されてからアンマップ
+(unmap) されるまでの間に更新されることがある。 それまでに更新が行われていなければ、マップされたページへの最初の参照があった 際に更新される。
+<P>
+
+<B>PROT_WRITE</B> と <B>MAP_SHARED</B> の両方を指定してマップされたファイルの場合、書き込みがあると、 <I>st_ctime</I> と
+<I>st_mtime</I> の両フィールドは、マップされた領域への書き込みより後で、 <B>MS_SYNC</B> または <B>MS_ASYNC</B> フラグを指定して
+<B><A HREF="../man2/msync.2.html">msync</A></B>(2)  が呼ばれる前までに更新される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>mmap</B>()  は成功するとマップされた領域へのポインターを返す。 失敗すると値 <B>MAP_FAILED</B> (つまり <I>(void&nbsp;*)&nbsp;-1</I>)  を返し、 <I>errno</I> がエラーの内容にしたがってセットされる。 <B>munmap</B>()  は成功すると 0 を返す。失敗すると -1
+を返し、 <I>errno</I> がセットされる (多くの場合 <B>EINVAL</B> になるだろう)。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+以下のいずれかの場合。 ファイルディスクリプターの参照先が通常のファイルではない (non-regular file) 。
+ファイルマッピングを要求したが <I>fd</I> は読み込み用にオープンされていない。 <B>MAP_SHARED</B> を要求して <B>PROT_WRITE</B>
+をセットしたが <I>fd</I> は読み書きモード (<B>O_RDWR</B>)  でオープンされていない、 <B>PROT_WRITE</B>
+をセットしたが、ファイルは追加 (append) 専用である。
+<DT><B>EAGAIN</B><DD>
+ファイルがロックされている。またはロックされているメモリーが多すぎる (<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)  を参照)。
+<DT><B>EBADF</B><DD>
+<I>fd</I> が有効なファイルディスクリプター (file descriptor) ではない (かつ <B>MAP_ANONYMOUS</B>
+がセットされていない)。
+<DT><B>EINVAL</B><DD>
+<I>addr</I> か <I>length</I> か <I>offset</I> が適切でない (例えば、大きすぎるとか、ページ境界にアラインメントされていない)。
+<DT><B>EINVAL</B><DD>
+(Linux 2.6.12 以降)  <I>length</I> が 0 であった。
+<DT><B>EINVAL</B><DD>
+<I>flags</I> に <B>MAP_PRIVATE</B> と <B>MAP_SHARED</B> のどちらも含まれていなかった、もしくは その両方が含まれていた。
+<DT><B>ENFILE</B><DD>
+
+
+
+
+
+システム全体でオープンされているファイルの総数が上限に達した。
+<DT><B>ENODEV</B><DD>
+指定されたファイルが置かれているファイルシステムがメモリーマッピングをサポート していない。
+<DT><B>ENOMEM</B><DD>
+メモリーに空きがない、または処理中のプロセスのマッピング数が最大数を超過した。
+<DT><B>EPERM</B><DD>
+
+<I>prot</I> 引き数は <B>PROT_EXEC</B> を行うように指定されているが、 no-exec でマウントされたファイルシステム上のファイルに
+マップ領域が対応している。
+<DT><B>EPERM</B><DD>
+操作が file seal により禁止されている。 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2) 参照。
+<DT><B>ETXTBSY</B><DD>
+<B>MAP_DENYWRITE</B> がセットされているが <I>fd</I> で指定されているオブジェクトは書き込み用に開かれている。
+<DT><B>EOVERFLOW</B><DD>
+32 ビットアーキテクチャーで large file 拡張を使っている場合 (つまり 64 ビットの <I>off_t</I> を使う場合)、
+<I>length</I> で使うページ数と <I>offset</I> で使うページ数を足した値は <I>unsigned long</I> (32 ビット) を超えてしまう
+(オーバーフローしてしまう) 場合がある。
+</DL>
+<P>
+
+マップ領域を利用する際に、以下のシグナルが発生することがある:
+<DL COMPACT>
+<DT><B>SIGSEGV</B><DD>
+読み込み専用で mmap された領域へ書き込みを行おうとした。
+<DT><B>SIGBUS</B><DD>
+バッファーのうち、ファイルに関連づけられていない部分 (例えばファイル末尾を越えた部分など。これには
+他のプロセスがファイルを切り詰めた場合なども含まれる)  にアクセスしようとした。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+SVr4, 4.4BSD, POSIX.1-2001.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>可用性</H2>
+
+
+
+
+<B>mmap</B>(), <B><A HREF="../man2/msync.2.html">msync</A></B>(2)  <B>munmap</B>()  が利用可能な POSIX システムでは、
+<B>_POSIX_MAPPED_FILES</B> は &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt; で 0 より大きな値に定義される (<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)
+も参照のこと)。
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+(i386 などの) いくつかのアーキテクチャーでは、 <B>PROT_WRITE</B> をセットすると、暗黙のうちに <B>PROT_READ</B>
+がセットされる。 <B>PROT_READ</B> をセットした際に暗黙のうちに <B>PROT_EXEC</B>
+がセットされるかどうかは、アーキテクチャー依存である。 移植性を考慮したプログラムでは、 新規にマップした領域でコードを実行したい場合は、常に
+<B>PROT_EXEC</B> をセットすべきである。
+<P>
+マッピングを作成する移植性のある方法は、 <I>addr</I> に 0 (NULL) を指定し、 <I>flags</I> から <B>MAP_FIXED</B>
+を外すことである。 この場合、システムがマッピング用のアドレスの選択を行う。 アドレスは既存のマッピングと衝突しないように、 かつ 0
+にならないように選択される。 <B>MAP_FIXED</B> フラグが指定され、かつ <I>addr</I> が 0 (NULL)
+の場合には、マップされるアドレスが 0 (NULL) になる。
+<P>
+
+特定の <I>flags</I> 定数は <B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B> のいずれかが定義された場合にのみ定義される。
+(<B>_GNU_SOURCE</B> も定義されている必要がある。これらのフラグはすべて Linux 固有のものなので、 特に <B>_GNU_SOURCE</B>
+を必要とする点はもっと論理的に決められるべきであった。) 関係するフラグは <B>MAP_32BIT</B>, <B>MAP_ANONYMOUS</B>
+(とその同義語の <B>MAP_ANON</B>), <B>MAP_DENYWRITE</B>, <B>MAP_EXECUTABLE</B>, <B>MAP_FILE</B>,
+<B>MAP_GROWSDOWN</B>, <B>MAP_HUGETLB</B>, <B>MAP_LOCKED</B>, <B>MAP_NONBLOCK</B>,
+<B>MAP_NORESERVE</B>, <B>MAP_POPULATE</B>, <B>MAP_STACK</B> である。
+<A NAME="lbAL">&nbsp;</A>
+<H3>C ライブラリとカーネル ABI の違い</H3>
+
+
+このページでは glibc の <B>mmap</B>() のラッパー関数が提供するインターフェースに
+ついて説明している。元々は、この関数は同じ名前のシステムコールを起動していた。
+カーネル 2.4 以降、このシステムコールは <B><A HREF="../man2/mmap2.2.html">mmap2</A></B>(2) に取って代わられ、現在
+では、 glibc の <B>mmap</B>() のラッパー関数は <I>offset</I> を適切に調整してから
+<B><A HREF="../man2/mmap2.2.html">mmap2</A></B>(2) を起動する。
+<A NAME="lbAM">&nbsp;</A>
+<H2>バグ</H2>
+
+Linux においては、上記の <B>MAP_NORESERVE</B> で述べられているような保証はない。
+デフォルトでは、システムがメモリーを使い切った場合には、 どのプロセスがいつ強制終了されるか分からないからである。
+<P>
+2.6.7 より前のカーネルでは、 <I>prot</I> に <B>PROT_NONE</B> が指定された場合にのみ、 <B>MAP_POPULATE</B>
+フラグが効力を持つ。
+<P>
+SUSv3 では、 <I>length</I> が 0 の場合、 <B>mmap</B>()  は失敗すると規定されている。しかしながら、2.6.12
+より前のカーネルでは、 この場合に <B>mmap</B>()  は成功していた (マッピングは作成されず、 <I>addr</I> が返されていた)。 カーネル
+2.6.12 以降では、 <B>mmap</B>()  はエラー <B>EINVAL</B> で失敗する。
+<P>
+POSIX では、 システムはオブジェクト末尾の部分ページを常に 0 で埋め、 末尾より後ろのオブジェクトを決して変更してはならない、と規定している。
+Linux では、 オブジェクト末尾より後ろの部分ページにデータを書き込んだ場合、
+そのファイルをクローズしてアンマップした後であってもページキャッシュにデータが残り続け、 データがファイル自体に書き込まれていなくても、
+それ以降のマッピングで変更された内容が見える可能性がある。 いくつかの場合では、 アンマップを行う前に <B><A HREF="../man2/msync.2.html">msync</A></B>(2) を呼び出すことで、
+この状況を修正することができる。 しかし、 これは tmpfs では機能しない (例えば、 <B><A HREF="../man7/shm_overview.7.html">shm_overview</A></B>(7) で説明されている
+POSIX 共有メモリーインターフェースを使った場合)。
+<A NAME="lbAN">&nbsp;</A>
+<H2>例</H2>
+
+
+
+<P>
+
+以下のプログラムは、一番目のコマンドライン引き数で指定された ファイルの一部を標準出力に表示する。
+表示する範囲は、二番目、三番目のコマンドライン引き数で渡される オフセットと長さで指定される。
+このプログラムは、指定されたファイルの必要なページのメモリー マッピングを作成し、 <B><A HREF="../man2/write.2.html">write</A></B>(2)  を使って所望のバイトを出力する。
+<A NAME="lbAO">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+
+#define handle_error(msg) \
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+int
+main(int argc, char *argv[])
+{
+    char *addr;
+    int fd;
+    struct stat sb;
+    off_t offset, pa_offset;
+    size_t length;
+    ssize_t s;
+
+    if (argc &lt; 3 || argc &gt; 4) {
+        fprintf(stderr, &quot;%s file offset [length]\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    fd = open(argv[1], O_RDONLY);
+    if (fd == -1)
+        handle_error(&quot;open&quot;);
+
+    if (fstat(fd, &amp;sb) == -1)           /* To obtain file size */
+        handle_error(&quot;fstat&quot;);
+
+    offset = atoi(argv[2]);
+    pa_offset = offset &amp; ~(sysconf(_SC_PAGE_SIZE) - 1);
+        /* offset for mmap() must be page aligned */
+
+    if (offset &gt;= sb.st_size) {
+        fprintf(stderr, &quot;offset is past end of file\n&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    if (argc == 4) {
+        length = atoi(argv[3]);
+        if (offset + length &gt; sb.st_size)
+            length = sb.st_size - offset;
+                /* Can't display bytes past end of file */
+
+    } else {    /* No length arg ==&gt; display to end of file */
+        length = sb.st_size - offset;
+    }
+
+    addr = mmap(NULL, length + offset - pa_offset, PROT_READ,
+                MAP_PRIVATE, fd, pa_offset);
+    if (addr == MAP_FAILED)
+        handle_error(&quot;mmap&quot;);
+
+    s = write(STDOUT_FILENO, addr + offset - pa_offset, length);
+    if (s != length) {
+        if (s == -1)
+            handle_error(&quot;write&quot;);
+
+        fprintf(stderr, &quot;partial write&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAP">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2), <B><A HREF="../man2/memfd_create.2.html">memfd_create</A></B>(2), <B><A HREF="../man2/mincore.2.html">mincore</A></B>(2), <B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
+<B><A HREF="../man2/mmap2.2.html">mmap2</A></B>(2), <B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2), <B><A HREF="../man2/mremap.2.html">mremap</A></B>(2), <B><A HREF="../man2/msync.2.html">msync</A></B>(2),
+<B><A HREF="../man2/remap_file_pages.2.html">remap_file_pages</A></B>(2), <B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2), <B><A HREF="../man2/shmat.2.html">shmat</A></B>(2), <B><A HREF="../man3/shm_open.3.html">shm_open</A></B>(3),
+<B><A HREF="../man7/shm_overview.7.html">shm_overview</A></B>(7)
+<P>
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5) の <I>/proc/[pid]/maps</I>, <I>/proc/[pid]/map_files</I>,
+<I>/proc/[pid]/smaps</I> の説明。
+<P>
+
+
+
+B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
+<A NAME="lbAQ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">munmap()</A><DD>
+<DT><A HREF="#lbAF">ファイルと関連付けられたマッピングに対するタイムスタンプの更新</A><DD>
+</DL>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">可用性</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAL">C ライブラリとカーネル ABI の違い</A><DD>
+</DL>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">例</A><DD>
+<DL>
+<DT><A HREF="#lbAO">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAP">関連項目</A><DD>
+<DT><A HREF="#lbAQ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

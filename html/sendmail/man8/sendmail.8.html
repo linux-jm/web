@@ -1,0 +1,883 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SENDMAIL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>SENDMAIL</H1>
+Section: Maintenance Commands (8)<BR>Updated: %Date: 2000/12/14 23:08:15 %<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/sendmail/contrib/man8/sendmail.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+sendmail
+- 電子メール配送デーモン
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>sendmail</B>
+
+[<I>flags</I>] [<I>address ...</I>]
+
+<BR>
+
+<B>newaliases</B>
+
+<BR>
+
+<B>mailq</B>
+
+[<B>-v</B>]
+
+<BR>
+
+<B>hoststat</B>
+
+<BR>
+
+<B>purgestat</B>
+
+<BR>
+
+<B>smtpd</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>解説</H2>
+
+<B>sendmail</B>
+
+はメッセージを一人または複数の受け手
+(<I>recipient</I>)
+
+に送ります。必要ならばインターネットワークを
+通してメッセージを正しい場所に転送します。
+<P>
+
+<B>sendmail</B>
+
+はユーザインタフェースとして使われることは考慮されていません。
+ユーザにとって使いやすいフロントエンドは別のプログラムで
+提供されます。
+<B>sendmail</B>
+
+は、あらかじめメールとして整形されたメッセージ
+を配送するためだけに使われます。
+<P>
+
+引数を指定せずに起動すると、
+<B>sendmail</B>
+
+は標準入力をファイルの終端まで、または `.'だけを含む行まで読み込み、
+そこで確認したメッセージのコピーを、
+列挙されたアドレスに送ります。アドレスの文法や内容にもとづいて
+経路に使用するネットワークを決定します。
+<P>
+
+ローカルアドレスは、あるファイルの中を検索して適当なエイリアスを行います。
+先頭にバックスラッシュ `\' のついたアドレスについては、エイリアスは
+行なわれません。
+8.10 から、送り手はエイリアス展開の対象に含まれるようになりました。
+つまり、`john' が `group' にメールを送る
+際に、 `john' が `group' に含まれているならば、
+送ったメッセージは `john' にも送られます。
+<A NAME="lbAE">&nbsp;</A>
+<H3>パラメータ</H3>
+
+<DL COMPACT>
+<DT><B>-B</B><I>type</I>
+
+<DD>
+ボディのタイプを
+<I>type</I>
+
+に設定します。現在有効なのは、
+7BIT
+か
+8BITMIME
+です。
+<DT><B>-ba</B>
+
+<DD>
+ARPANET
+モードに移行します。すべての入力行は CR-LF で終わらなければならず、
+すべてのメッセージの末尾には CR-LF がつきます。また、``From:'' と ``Sender:''
+フィールドは送り手の名前としてチェックされます。
+<DT><B>-bd</B>
+
+<DD>
+デーモンモードで実行します。Berkley
+IPC
+が必要です。
+<B>sendmail</B>
+
+は
+fork
+を行い、バックグラウンドで動作し、ソケット番号 25 で
+SMTP
+コネクションを
+待ちます。通常このモードは、
+/etc/rc
+から実行されています。
+<DT><B>-bD</B>
+
+<DD>
+フォアグラウンドで動作する以外は
+<B>-bd</B>
+
+と同じです。
+<DT><B>-bh</B>
+
+<DD>
+継続的なホスト状況データベースの現在の値を表示します。
+<DT><B>-bH</B>
+
+<DD>
+継続的なホスト状況データベースから
+期限切れのエントリを抹消します。
+<DT><B>-bi</B>
+
+<DD>
+エイリアスデータベースを初期化します。
+<DT><B>-bm</B>
+
+<DD>
+普通にメールを配送します(デフォルト)。
+<DT><B>-bp</B>
+
+<DD>
+メールキューのリストを表示します。
+<DT><B>-bs</B>
+
+<DD>
+標準入出力で
+RFC821
+にもとづいた
+SMTP
+プロトコルを使います。この
+フラグは、
+<B>-ba</B>
+
+フラグのうち
+SMTP
+互換の全ての操作を含みます。
+<DT><B>-bt</B>
+
+<DD>
+アドレスのテストモードで起動します。このモードは対話
+モードでアドレスを入力し、処理の過程を表示します。設定ファイル
+をデバッグするのに使います。
+<DT><B>-bv</B>
+
+<DD>
+名前のチェックだけを行います。メッセージの収集や配送は行い
+ません。ベリファイモードは、ユーザやメーリングリストが有効かどうかを確認する
+ために使います。
+<DT><B>-C</B><I>file</I>
+
+<DD>
+別の設定ファイルを使います。
+<B>sendmail</B>
+
+は、別の設定ファイル
+を使用する場合は root として実行することはできません。
+<DT><B>-d</B><I>X</I>
+
+<DD>
+デバッグ値を
+<I>X</I>
+
+に設定します。
+
+<DT><B>-F</B><I>fullname</I>
+
+<DD>
+送り手のフルネームを設定します。
+<DT><B>-f</B><I>name</I>
+
+<DD>
+``from'' に入る名前(つまり、エンベロープ中の送り手
+(<I>envelope sender</I>)
+
+の名前です)を設定します。
+最初の送信依頼の間に From: ヘッダが失われている場合、
+このアドレスは From: ヘッダの中でも用いられる場合があります。
+エンベロープ中の送り手アドレスは、
+メッセージ伝送状態の通知の受け手として
+用いられ、また、Return-Path: ヘッダにも現れます。
+<B>-f</B>
+
+は、``trusted'' なユーザ(普通は
+<I>root</I>, <I>daemon</I>, <I>network</I>
+
+です)が使うか、
+送り手が自分自身の名前を指定して使う場合のみ指定することができます。
+それ以外の場合、X-Authentication-Warning ヘッダがメッセージに
+付加されます。
+<DT><B>-G</B>
+
+<DD>
+メッセージのリレー (ゲートウェイ) 送信。
+例えば、
+<B>rmail</B>
+
+が
+<B>sendmail</B>
+
+を呼ぶときがそうです。
+<DT><B>-h</B><I>N</I>
+
+<DD>
+ホップカウントを
+<I>N</I>
+
+に設定します。ホップカウントは、
+メールが処理されるたびに増えていきます。ホップカウントが上限に達した
+とき、メールは「エイリアスがループしている」という旨のエラーメッセージと
+いっしょに送り返されます。
+もしこのフラグが指定されなければ、メッセージの
+なかの ``Received:'' 行がカウントされます。
+<DT><B>-i</B>
+
+<DD>
+入力されるメッセージ中の `.' だけを含む行を無視します。
+このフラグは、データをファイルから読み込むような場合に使用する必要があります。
+<DT><B>-L </B><I>tag</I>
+
+<DD>
+syslog メッセージ中で使われる識別子を、指定した
+<I>tag</I>
+
+に設定します。
+<DT><B>-N </B><I>dsn</I>
+
+<DD>
+配送状況の通知条件を
+<I>dsn</I>
+
+に設定します。
+<I>dsn</I>
+
+には、
+`never'
+(何も通知しない)または、コンマで区切った、
+`failure'
+(配送が失敗した場合に通知する)
+`delay'
+(配送が遅れた場合に通知する)
+`success'
+(配送が正常に行われた場合に通知する)
+の組み合わせを指定する事ができます。
+<DT><B>-n</B>
+
+<DD>
+エイリアスを行いません。
+<DT><B>-O</B> <I>option</I>=<I>value</I><DD>
+オプション
+<I>option</I>
+
+を、指定した
+<I>value</I>
+
+に設定します。この形式では長いオプション名が使用されます。
+詳しくは後に記述します。
+<DT><B>-o</B><I>x value</I>
+
+<DD>
+オプション
+<I>x</I>
+
+を、指定した
+<I>value</I>
+
+に設定します。
+この形式では、一文字のオプション名しか使用できません。
+短いオプション名についてはこのマニュアルには記述されていません。
+詳しくは、
+<I>Sendmail Installation and Operation Guide</I>
+
+を参照して下さい。
+<DT><B>-p</B><I>protocol</I>
+
+<DD>
+メッセージを受け取るために利用するプロトコル名を設定します。
+設定できるのは、``UUCP'' のようなプロトコル名だけか
+プロトコル+ホスト名、たとえば ``UUCP:ucbvax'' などです。
+<DT><B>-q</B>[<I>time</I>]<DD>
+キューのなかにあるメッセージを処理する間隔を設定します。
+<I>time</I>
+
+を省略した場合は、キューの内容を一度だけしか処理しません。
+<I>time</I>
+
+は、
+`s'
+(秒)、
+`m'
+(分)、
+`h'
+(時間)、
+`d'
+(日)、
+`w'
+(週)の単位を付けた数字で指定します。
+たとえば、
+`-q1h30m'
+や
+`-q90m'
+は、タイムアウトを 1 時間 30 分に設定します。
+<I>time</I>
+
+が指定されると、
+<B>sendmail</B>
+
+はデーモンとしてバックグラウンドで
+実行されます。
+このオプションは、問題なく
+<B>-bd</B>
+
+と共に指定可能です。
+<DT><B>-qI</B><I>substr</I>
+
+<DD>
+キュー ID の文字列に
+<I>substr</I>
+
+が含まれるジョブのみを処理します。
+<DT><B>-qR</B><I>substr</I>
+
+<DD>
+受け手のリストの文字列に
+<I>substr</I>
+
+が含まれるジョブのみを処理します。
+<DT><B>-qS</B><I>substr</I>
+
+<DD>
+送り手の文字列に
+<I>substr</I>
+
+が含まれるジョブのみを処理します。
+<DT><B>-R </B><I>return</I>
+
+<DD>
+メッセージがバウンスした時に返送されるメッセージの量を設定します。
+<I>return</I>
+
+パラメータには、メッセージ全体を返送する場合は
+`full'
+を、ヘッダのみを返送する場合は
+`hdrs'
+を指定します。
+<DT><B>-r</B><I>name</I>
+
+<DD>
+<B>-f</B>
+
+フラグと同じですが、古い形式です。
+<DT><B>-t</B>
+
+<DD>
+受け手をメッセージから読み取ります。To:, Cc:, Bcc: フィールドが受け手
+のアドレスとして読み込まれます。Bcc: フィールドはメッセージの転送前に
+削除されます。
+<DT><B>-U</B>
+
+<DD>
+最初の(ユーザからの)発送である事を示します。
+このフラグは、
+<B>Mail</B>
+
+や
+<B>exmh</B>
+
+のようなユーザエージェントから呼び出す場合は
+<I>必ず</I>
+
+指定する必要があり、
+<B>rmail</B>
+
+などのネットワーク配送エージェントから呼び出す場合は、
+<I>絶対に</I>
+
+指定してはいけません。
+<DT><B>-V </B><I>envid</I>
+
+<DD>
+オリジナルのエンベロープ ID を設定します。
+これは、DSN をサポートするサーバ間では SMTP 上を伝達し、
+DSN に従ったエラーメッセージの中で返送されます。
+<DT><B>-v</B>
+
+<DD>
+詳細モードに移行します。
+エイリアスの展開などが報告されます。
+<DT><B>-X </B><I>logfile</I>
+
+<DD>
+指定された
+<I>logfile</I>
+
+に、メーラに出入りする情報すべてを記録します。
+メーラをデバッグする際の
+最後の手段としてのみ使ってください。非常に大量の情報があっという間に記録
+されます。
+<DT><B>--</B>
+
+<DD>
+コマンドフラグ処理を停止し、残りの引数をアドレスとして使用します。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>オプション</H3>
+
+<B>sendmail</B>
+
+には、設定することができる多くの処理オプションがあります。
+通常、これらのオプションはシステム管理者のみが使います。
+オプションは、コマンドラインから
+<B>-o</B>
+
+フラグを使って(短いオプション名で)指定したり、
+<B>-O</B>
+
+フラグを使って(長いオプション名で)指定したり、
+設定ファイルから指定することができます。ここに記述して
+いるのは部分的なもので、コマンド行から指定する場合に便利な物だけを、
+長いオプション名で示しています。完全なリスト(と詳細)は、
+<I>Sendmail Installation and Operation Guide</I>
+
+を参照してください。
+オプションには以下の物があります。
+<DL COMPACT>
+<DT>AliasFile=<I>file</I>
+
+<DD>
+別のエイリアスファイルを使います。
+<DT>HoldExpensive<DD>
+接続するのに時間がかかるホストと接続するときは、
+すぐに接続せず、リクエストはキューに入れられます。
+<DT>CheckpointInterval=<I>N</I>
+
+<DD>
+<B>sendmail</B>
+
+が、
+<I>N</I>
+
+個の配送に成功するたびにキューファイルに
+チェックポイントを設定します(デフォルトは 10 個です)。これによって、
+システムのクラッシュによって長いメーリングリストの配送が中断
+されたときでも、再開時に同じ人に重複して配送されることを防ぎます。
+
+<DT>DeliveryMode=<I>x</I>
+
+<DD>
+配送モードを
+<I>x</I>
+
+に設定します。配送モードには
+`i'
+対話的(同期的)配送モード、
+`b'
+バックグラウンド(非同期的)配送モード、
+`q'
+キューモード(実際の配送は、キューが実行されるときに行われる)、
+`d'
+延期モード( -D オプションで指定された
+マップ (デフォルトはホストマップ) に対し
+データベースの検索が行われない以外は
+`q'
+と同じ)があります。
+<DT>ErrorMode=<I>x</I>
+
+<DD>
+エラー処理をモード
+<I>x</I>
+
+に設定します。有効なモードとして、
+`m'
+はエラーメッセージを送り返します。
+`w'
+はエラーメッセージを送り手の端末に書き出します
+(送り手がログインしていなければ、メールを返します)。
+`p'
+は、エラーメッセージを端末に表示します(デフォルト)。
+`q'
+は、エラーメッセージを捨てます(exit コードだけを返します)。
+`e'
+は、BerkNet 用に特別処理をします。
+もし、モード
+`m'
+や
+`w'
+を使っている場合に、エラーとなったメッセージが
+エラーメールとして送り返されず、送り手が
+<B>sendmail</B>
+
+を実行している
+マシン上のユーザならば、
+メッセージのコピーは送り手のホームディレクトリにある
+<I>dead.letter</I>
+
+に追加されます。
+<DT>SaveFromLine<DD>
+メッセージのはじめに
+UNIX-style
+の
+From 行を残します。
+<DT>MaxHopCount=<I>N</I>
+
+<DD>
+メールがループしていると判断されない、最大のホップ数を
+指定します。
+<DT>IgnoreDots<DD>
+`.' だけを含む行をメッセージの終わりとして解釈しません。
+<DT>SendMimeErrors<DD>
+エラーメッセージをMIMEフォーマットで送り返します。
+設定されていない場合は、DSN (Delivery Status Notification: 配送状況通知) SMTP
+拡張は無効になります。
+<DT>ConnectionCacheTimeout=<I>timeout</I>
+
+<DD>
+コネクションキャッシュの
+タイムアウトを設定します。
+<DT>ConnectionCacheSize=<I>N</I>
+
+<DD>
+コネクションキャッシュのサイズを
+設定します。
+<DT>LogLevel=<I>n</I>
+
+<DD>
+ログレベルを設定します。
+<DT>MeToo=<I>False</I>
+
+<DD>
+エイリアスに自分自身が含まれていても、``me''(送り手自身)には送りません。
+<DT>CheckAliases<DD>
+<A HREF="../man1/newaliases.1.html">newaliases</A>(1)
+コマンドの実行の際、
+エイリアスの右辺(エイリアスの値)の有効性をチェックします。
+<DT>OldStyleHeaders<DD>
+このオプションが設定されていれば、メッセージが古いスタイルのヘッダ
+を持つことがあることを意味します。
+このオプションが設定されていなければ、このメッセージが新しい
+スタイルを持っていることが保証されます(2 つのアドレスの間は
+スペースのかわり
+にコンマで区切られます)。このオプションが設定されていると、
+ヘッダのフォーマットをたいていの場合に
+正しく決定する適応アルゴリズムが用いられます。
+<DT>QueueDirectory=<I>queuedir</I>
+
+<DD>
+キューメッセージを保存するディレクトリを選択します。
+<DT>StatusFile=<I>file</I>
+
+<DD>
+指定した名前のファイルに統計情報をセーブします。
+<DT>Timeout.queuereturn=<I>time</I>
+
+<DD>
+キューのなかの配送されなかったメッセージのタイムアウト時間を設定します。
+この時間内に(ホストのダウンなどにより)配送が行われなかったときには、
+失敗した旨のメッセージが送り返されます。デフォルトは 5 日です。
+<DT>UserDatabaseSpec=<I>userdatabase</I>
+
+<DD>
+セットした場合、ユーザデータベースを見て、
+フォワード情報を得ます。
+この方法をエイリアス機構の補助として使用する事ができます。
+この方法は、データベースが分配されることを意図している点が異なります。
+一方、エイリアスは、そのホストローカルでのみ有効です。
+<B>sendmail</B>
+
+が
+USERDB
+付きでコンパイルされていなければ使うことはできません。
+<DT>ForkEachJob<DD>
+キューを処理する間、各ジョブごとに
+fork
+を行います。メモリが少ないマシン
+では便利です。
+<DT>SevenBitInput<DD>
+到着するメッセージを 7 ビットにします (8 ビット目は落します)。
+<DT>EightBitMode=<I>mode</I>
+
+<DD>
+8 ビットの入力を 7 ビットの宛先へ送る場合の処理方法を
+<I>mode</I>
+
+に設定します。
+処理方法には、
+m
+(mime 化) 7 ビット MIME 形式へ変換、
+p
+(パス) 8 ビットのまま配送(プロトコルには違反します)、
+s
+(厳密) メッセージをバウンス、
+があります。
+<DT>MinQueueAge=<I>timeout</I>
+
+<DD>
+配送の試行の間、ジョブがキューに蓄積される時間を設定します。
+<DT>DefaultCharSet=<I>charset</I>
+
+<DD>
+文字集合が特に指定されていない 8 ビットデータにラベル付けする際に
+用いる、デフォルトの文字集合を設定します。
+<DT>DialDelay=<I>sleeptime</I>
+
+<DD>
+コネクションの確立が失敗した場合に、再試行までに
+<I>sleeptime</I>
+
+だけスリープします。オンデマンドでダイヤル接続するサイトでの
+使用に便利です。
+<DT>NoRecipientAction=<I>action</I>
+
+<DD>
+受け手ヘッダ (To:, Cc:, Bcc:) がない場合の動作を
+<I>action</I>
+
+に設定します。
+none
+メッセージを変更しない、
+add-to
+エンベロープで指定された受け手を入れた To: ヘッダを加える、
+add-apparrently-to
+エンベロープで指定された受け手を入れた Apparrently-To: ヘッダを加える、
+add-bcc
+空の Bcc: ヘッダを加える、
+add-to-undisclosed
+`To: undisclosed-recipients:;'
+というヘッダを加える、という動作を指定できます。
+<DT>MaxDaemonChildren=<I>N</I>
+
+<DD>
+待ち受け SMTP デーモンが同時に生成する子プロセスの最大数を
+<I>N</I>
+
+に設定します。
+<DT>ConnectionRateThrottle=<I>N</I>
+
+<DD>
+SMTP ポートへの 1 秒当りの最大コネクション数を
+<I>N</I>
+
+に設定します。
+</DL>
+<P>
+
+エイリアスのなかで最初の文字が `|' で始まるものは、メールの内容を
+パイプでコマンドに送るものと解釈されます。
+<B>sendmail</B>
+
+に引数の間から空白文字を削除させないようにする場合は
+名前をクォートする (&quot; でくくる)必要があります。
+以下に、例を示します:
+<DL COMPACT>
+<DT><DD>
+msgs: &quot;|/usr/bin/msgs -s&quot;
+</DL>
+<P>
+
+エイリアスには、
+``:include:<I>filename</I>''
+
+という文法もあります。
+<B>sendmail</B>
+
+は、
+メールの受け手のリストを得るために、指定されたファイルを読みます。
+以下に、例を示します:
+<DL COMPACT>
+<DT><DD>
+poets: &quot;:include:/usr/local/lib/poets.list&quot;
+</DL>
+<P>
+
+上記の例の場合は、
+<I>/usr/local/lib/poets.list</I>
+
+を読み、`poets' のグループの
+ためのアドレスリストを作ります。
+<P>
+
+<B>sendmail</B>
+
+は、以下に示すような終了コードを返します。これらの
+コードは、
+&lt;<I>sysexits.h</I>&gt;
+
+に定義されています。
+<DL COMPACT>
+<DT>EX_OK<DD>
+すべてのアドレスについて完全に成功しました。
+<DT>EX_NOUSER<DD>
+ユーザ名が認識できません。
+<DT>EX_UNAVAILABLE<DD>
+処理に必要なリソースを得ることができません。
+<DT>EX_SYNTAX<DD>
+アドレスに文法的な間違いがあります。
+<DT>EX_SOFTWARE<DD>
+引数が間違っているなどの、内部的なエラーです。
+<DT>EX_OSERR<DD>
+``cannot fork'''
+のような、一時的な OS エラーです。
+<DT>EX_NOHOST<DD>
+ホスト名が認識できません。
+<DT>EX_TEMPFAIL<DD>
+メッセージはすぐには送られませんでしたが、
+キューには入れられました。
+</DL>
+<P>
+
+<B>newaliases</B>
+
+というコマンドで実行されると、
+<B>sendmail</B>
+
+はエイリアスデータベースを再構築します。
+<B>mailq</B>
+
+というコマンドで実行されると、
+<B>sendmail</B>
+
+はメールキューの内容を表示します。
+<B>hoststat</B>
+
+というコマンドで実行されると、
+<B>sendmail</B>
+
+は、継続的なホスト状態データベースの内容を表示します。
+<B>purgestat</B>
+
+というコマンドで実行されると、
+<B>sendmail</B>
+
+は、継続的なホスト状態データベースから期限切れのエントリを抹消します。
+<B>smtpd</B>
+
+というコマンドで実行されると、
+<B>-bd</B>
+
+オプションを指定されたの同じように、
+<B>sendmail</B>
+
+はデーモンとして動作します。
+<A NAME="lbAG">&nbsp;</A>
+<H2>注</H2>
+
+<B>sendmail</B>
+
+は、多くの問題の原因だと責められることがよくありますが、
+実際のところ、それらの問題は、
+ディレクトリのモードが過剰に許可された状態であるなど、
+他の問題に起因するものです。このため、
+<B>sendmail</B>
+
+は、システムディレクトリとファイルのモードをチェックし、
+それらディレクトリ、ファイルが信頼するに足るものかどうかを
+決定します。
+<B>DontBlameSendmail</B>
+
+オプションを設定することにより、
+このチェックをオフにし、システムのセキュリティを低下することも
+できますが、基本的には、パーミッションの問題は修正されねばなりません。
+詳細な情報は、
+<P>
+<I><A HREF="http://www.sendmail.org/tips/DontBlameSendmail.html">http://www.sendmail.org/tips/DontBlameSendmail.html</A></I>
+
+<P>
+を参照して下さい。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+<I>/etc/mail/sendmail.cf</I>
+
+それ自身を除き、以下のファイルのパスはすべて
+<I>/etc/mail/sendmail.cf</I>
+
+の内部で指定されています。以下の値は概略に過ぎません。
+<P>
+
+<DL COMPACT>
+<DT>/etc/mail/aliases<DD>
+エイリアス名の生データ
+<DT>/etc/mail/aliases.db<DD>
+エイリアス名のデータベース
+<DT>/etc/mail/sendmail.cf<DD>
+設定ファイル
+<DT>/etc/mail/helpfile<DD>
+ヘルプファイル
+<DT>/etc/mail/statistics<DD>
+統計情報ファイル
+<DT>/var/spool/mqueue/*<DD>
+テンポラリファイル
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+mail(1),
+<A HREF="../../LDP_man-pages/man3/syslog.3.html">syslog</A>(3),
+<A HREF="../man5/aliases.5.html">aliases</A>(5),
+<A HREF="../../0MultiFileIdx/man7/mailaddr.7.html">mailaddr</A>(7),
+<A HREF="../man8/mail.local.8.html">mail.local</A>(8),
+rc(8),
+<A HREF="../man8/rmail.8.html">rmail</A>(8)
+<P>
+
+DARPA
+Internet Request For Comments
+<I>RFC819</I>,
+
+<I>RFC821</I>,
+
+<I>RFC822</I>.
+
+<I>Sendmail Installation and Operation Guide</I>,
+
+No. 8, SMM.
+<P>
+
+<A HREF="http://www.sendmail.org/">http://www.sendmail.org/</A>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>歴史</H2>
+
+<B>sendmail</B>
+
+コマンドは
+4.2BSD
+から登場しました。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">解説</A><DD>
+<DL>
+<DT><A HREF="#lbAE">パラメータ</A><DD>
+<DT><A HREF="#lbAF">オプション</A><DD>
+</DL>
+<DT><A HREF="#lbAG">注</A><DD>
+<DT><A HREF="#lbAH">関連ファイル</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">歴史</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

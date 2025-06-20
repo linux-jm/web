@@ -1,0 +1,239 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FUSER</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FUSER</H1>
+Section: User Commands (1)<BR>Updated: October 25, 1999<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/psmisc/release/man1/fuser.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fuser - ファイルやソケットを使用しているプロセスを特定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+
+<B>fuser</B>
+
+[<B>-a</B>|<B>-s</B>]
+
+[<B>-n&nbsp;</B><I>space</I>]
+
+[<B>-</B><I>signal</I><B></B>]
+
+[<B>-kimuv</B>]
+
+<I>name ...</I>
+
+[<B>-</B>]
+
+[<B>-n&nbsp;</B><I>space</I>]
+
+[<B>-</B><I>signal</I><B></B>]
+
+[<B>-kimuv</B>]
+
+<I>name ...</I>
+
+<BR>
+
+<B>fuser </B>
+
+-l
+
+<BR>
+
+<B>fuser </B>
+
+-V
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>fuser</B>
+
+は，引数としてわたされたファイルやファイルシステムを使用しているプロ
+セスの PID を表示する。デフォルトの表示モードでは、それぞ
+れのファイル名の後に、アクセスの形式を示す以下の文字が表示される：
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>c</B><DD>
+カレントディレクトリ。
+<DT><B>e</B><DD>
+実行中のファイル。
+<DT><B>f</B><DD>
+オープンしているファイル。 <B>f</B> はデフォルトの表示モードで
+は省略される。
+<DT><B>r</B><DD>
+ルートディレクトリ。
+<DT><B>m</B><DD>
+mmap されたファイルか共有ライブラリ。
+</DL>
+</DL>
+
+<P>
+
+引数としてわたされたファイルが一つもアクセスされていないときや、致命的
+なエラーが発生した場合には、 <B>fuser</B> は 0 以外の値を返す。引数とし
+て指定したファイルがどれかひとつでもアクセスされていれば、 <B>fuser</B> 
+はゼロを返す。
+<P>
+
+TCP と UDP のソケットを使用しているプロセスを探す場合には、名前空間を 
+<B>-n</B> オプションによって選択しなければならない。このオプションを用
+いれば、ソケットはローカルとリモートのポート、およびリモートのアドレス
+によって指定できる (複数のソケットを指定することもできる)。すべてのフィー
+ルドは省略可能であるが、省略したフィールドの前にはコンマを置かなければ
+ならない。
+<P>
+<B>[</B><I>lcl_port</I><B>][</B>,<B>[</B><I>rmt_host</I><B>][</B>,<B>[</B><I>rmt_port</I><B>]]]</B>
+
+<P>
+IP アドレスにもポート番号にも、シンボルによる記述と数値による記述の両
+方が可能である。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-a</B><DD>
+コマンドラインで渡されたすべてのファイルを表示する。デフォルトでは、一
+つ以上のプロセスからアクセスされているファイルのみが表示される。
+<DT><B>-k</B><DD>
+指定したファイルにアクセスしているプロセスを kill する。 
+<B>-</B><I>signal</I> で変更しなければ SIGKILL が送られる。 <B>fuser</B> 
+プロセスは自分自身を kill することはできないが、他の <B>fuser</B> プロ
+セスを kill することはできる。  <B>fuser</B> を実行しているプロセスの実
+効ユーザー ID は、 kill を行う前に、その実ユーザー ID にセットされる。
+<DT><B>-i</B><DD>
+プロセスを kill する前にユーザーに確認する。
+このオプションは、<B>-k</B> オプションが指定されていない時には無視される。
+<DT><B>-l</B><DD>
+使用できる signal すべてをリストアップする。
+<DT><B>-m</B><DD>
+<I>filename</I> には、マウントされたファイルシステム上のファイルか、マウ
+ントされたブロックデバイスを指定する。そのファイルシステム上のファイル
+にアクセスしているすべてのプロセスが表示される。ディレクトリファイルが
+指定されると、それは自動的に <I>name</I>/. に変換され、そのディレクトリ
+にマウントされているファイルシステムが用いられるようになる。
+<DT><B>-n&nbsp;</B><I>space</I><DD>
+別の名前空間を選択する。サポートされている名前空間は、 <B>file</B> (ファ
+イル名。これがデフォルト), <B>udp</B> (ローカルの UDP ポート),
+<B>tcp</B> (ローカルの TCP ポート) である。ポートの指定には、ポート番号
+とシンボル名の両方が使える。重複がなければ、省略記法
+<I>name</I><B>/</B><I>space</I> (例えば <I>name</I><B>/</B><I>proto</I>) を用いることも
+できる。
+<DT><B>-s</B><DD>
+表示を抑制する。 <B>-u</B>, <B>-v</B> はこのモードでは無視される。
+<B>-a</B> オプションは <B>-s</B> オプションと同時に使ってはならない。
+<DT><B>-</B><I>signal</I><DD>
+プロセスを kill する時に、 SIGKILL 以外のシグナルを指定する。シグナル
+の指定は名前 (例: <B>-HUP</B>) 数字 (例: <B>-1</B>) のどちらでも良い。
+<DT><B>-u</B><DD>
+それぞれの PID にプロセスの所有者名を追加する。
+<DT><B>-v</B><DD>
+饒舌 (verbose) モード。プロセスは <B>ps</B> のような形式で表示される。
+PID, USER, COMMAND の各フィールドは，<B>ps</B> と同じような内容である。
+ACCESS は、プロセスがどのようにファイルへアクセスしているかを示す。
+アクセスがカーネルによって行われている場合 (たとえばマウントポイントや
+スワップファイルなど) には、 PID の代わりに <B>kernel</B> と表示される。
+<DT><B>-V</B><DD>
+バージョン情報を表示する。
+<DT><B>-</B><DD>
+すべてのオプションをリセットし、送るシグナルを SIGKILL にセットする。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<PRE>
+/proc   location of the proc file system
+/proc   proc ファイルシステムの場所
+</PRE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>例</H2>
+
+<B>fuser -km /home</B> は、 /home ファイルシステムにアクセスしている
+すべてのプロセスを kill する。
+<P>
+
+<B>if fuser -s /dev/ttyS1; then :; else </B><I>something</I>; fi は、
+他のプロセスが /dev/ttyS1 を使っていない場合に限って
+<I>something</I> を実行する。
+<P>
+
+<B>fuser telnet/tcp</B> は、(ローカルの) TELNET ポートにアクセスしている
+すべてのプロセスを表示する。
+<A NAME="lbAH">&nbsp;</A>
+<H2>制限</H2>
+
+同一のファイルや同一のファイルシステムに、同じ方法で複数アクセスしている
+プロセス群は、一つだけ表示される。
+<P>
+
+同一のオブジェクトがコマンドラインで二回以上指定されても、
+それらのエントリは無視される。
+<P>
+
+ルート権限で実行しない限り、 <B>fuser</B> が得ることのできる情報は
+部分的なものである。したがって、他のユーザーのプロセスによってオープンされた
+ファイルは表示されないし、実行ファイルは mapped に分類されるだけになるだろう。
+<P>
+
+情報が部分的にしか得られないことによって生じるこの問題は、
+<B>fuser</B> を root に SUID してインストールすれば避けることができるだろう。
+しかしこの方法は、セキュリティやプライバシーの理由から望まれないことが
+多いだろう。
+<P>
+
+<B>udp</B> と <B>tcp</B> の名前空間と UNIX ドメインソケットは、
+1.3.78 より古いカーネルでは見つけることができない。
+<P>
+
+<B>udp</B> と <B>tcp</B> は、現在のところ IPv4 でしか動作しない。
+<P>
+
+カーネルによるアクセスは <B>-v</B> オプションをつけないと表示されない。
+<P>
+
+<B>-k</B> オプションはプロセスにしか有効でない。ユーザーが kernel の
+場合、 <B>fuser</B> はそれなりの助言を表示するだろうが、それ以上の
+動作は行わない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+Werner Almesberger &lt;<A HREF="mailto:Werner.Almesberger@epfl.ch">Werner.Almesberger@epfl.ch</A>&gt;
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../../0MultiFileIdx/man1/kill.1.html">kill</A>(1), <A HREF="../man1/killall.1.html">killall</A>(1), <A HREF="../../procps/man1/ps.1.html">ps</A>(1), <A HREF="../../LDP_man-pages/man2/kill.2.html">kill</A>(2)
+
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">例</A><DD>
+<DT><A HREF="#lbAH">制限</A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

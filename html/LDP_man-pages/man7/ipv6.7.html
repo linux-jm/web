@@ -1,0 +1,257 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of IPV6</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>IPV6</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/ipv6.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ipv6 - Linux IPv6 プロトコルの実装
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</B>
+<P>
+
+<I>tcp6_socket</I><B> = socket(AF_INET6, SOCK_STREAM, 0);</B>
+<BR>
+
+<I>raw6_socket</I><B> = socket(AF_INET6, SOCK_RAW, </B><I>protocol</I><B>);</B>
+<BR>
+
+<I>udp6_socket</I><B> = socket(AF_INET6, SOCK_DGRAM, </B><I>protocol</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+Linux 2.2 では、Internet Protocol, version 6 を オプションとして実装している。 この man
+ページでは、Linux カーネルと glibc 2.1 での実装に基づいて、 IPv6 の基本的な API を解説する。 インターフェースは BSD
+ソケットインターフェースをもとにしている。 <B><A HREF="../man7/socket.7.html">socket</A></B>(7)  を参照。
+<P>
+
+IPv6 API は、 IPv4 API (<B><A HREF="../man7/ip.7.html">ip</A></B>(7)  参照) とほぼ互換になることを目指している。 この man
+ページでは相違点のみを解説する。
+<P>
+
+<B>AF_INET6</B> ソケットを何らかのプロセスにバインドするには、 ローカルアドレスを <I>in6_addr</I> 型の変数
+<I>in6addr_any</I> からコピーしてくる必要がある。 static な初期値 <B>IN6ADDR_ANY_INIT</B>
+も用いることができ、これは定数式に展開される。 これらの両者はネットワークバイトオーダーである。
+<P>
+
+IPv6 のループバックアドレス (::1) は global 変数 <I>in6addr_loopback</I> から取得できる。初期化には
+<B>IN6ADDR_LOOPBACK_INIT</B> を用いるべきである。
+<P>
+
+v4-mapped-on-v6 アドレス型を用いることで、 IPv4 接続も v6 API で扱うことができる。 こうすれば、プログラムは v6 の
+API をサポートするだけで、 両方のプロトコルをサポートできる。 v4-mapped-on-v6 アドレス型は C ライブラリ内部のアドレスを
+扱う関数によって透過的に処理される。
+<P>
+
+IPv4 と IPv6 はローカルポート空間を共有する。 IPv4 の接続 (またはパケット) を IPv6 ソケットが取得すると、 発信元アドレスが
+v6 にマップされ、その接続 (パケット) も v6 にマップされる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>アドレスのフォーマット</H3>
+
+
+
+struct sockaddr_in6 {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa_family_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sin6_family;&nbsp;&nbsp;&nbsp;/*&nbsp;AF_INET6&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;in_port_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sin6_port;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;port&nbsp;number&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sin6_flowinfo;&nbsp;/*&nbsp;IPv6&nbsp;flow&nbsp;information&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;in6_addr&nbsp;sin6_addr;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;IPv6&nbsp;address&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sin6_scope_id;&nbsp;/*&nbsp;Scope&nbsp;ID&nbsp;(new&nbsp;in&nbsp;2.4)&nbsp;*/
+};
+<P>
+struct in6_addr {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;&nbsp;s6_addr[16];&nbsp;&nbsp;&nbsp;/*&nbsp;IPv6&nbsp;address&nbsp;*/
+};
+
+
+<P>
+
+<I>sin6_family</I> は常に <B>AF_INET6</B> に設定される。
+<I>sin6_port</I> はプロトコルポートである (<B><A HREF="../man7/ip.7.html">ip</A></B>(7) の <I>sin_port</I> を参照)。
+<I>sin6_flowinfo</I> は IPv6 のフロー指定子 (flow identifier) である。
+<I>sin6_addr</I> は 128 ビットの IPv6 アドレスである。 <I>sin6_scope_id</I> は
+アドレスのスコープに依存した ID である (これは Linux 2.4 で導入された)。
+Linux の場合は、これはリンクローカルアドレスでのみサポートされている。
+この場合 <I>sin6_scope_id</I> にはインターフェースのインデックスが含まれる
+ことになる (<B><A HREF="../man7/netdevice.7.html">netdevice</A></B>(7) を参照)。
+<P>
+
+IPv6 は何種類かのアドレスタイプをサポートしている。 単一のホストをアドレスするための unicast、 ホストのグループをアドレスするための
+multicast、 ホストのグループ中で最も近くにいるものをアドレスするための anycast (これは Linux では実装されていない)、
+IPv4 ホストをアドレスするための IPv4-on-IPv6。 他にも予約済みのアドレスタイプがある。
+<P>
+
+IPv6 でのアドレス表記は 4 桁の 16 進数 8 個からなり、 ':' は区切り文字はで、&quot;::&quot; は 0 ビットの文字列を表す。
+特殊なアドレスとして、ループバックを表す ::1、 IPv4-mapped-on-IPv6 を表す ::FFFF::&lt;IPv4
+アドレス&gt; がある。
+<P>
+
+IPv6 のポート空間は IPv4 と共有されている。
+<A NAME="lbAF">&nbsp;</A>
+<H3>ソケットオプション</H3>
+
+IPv6 はプロトコル固有のソケットオプションをいくつかサポートしている。 これらは <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  で設定でき、
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  で取得できる。 IPv6 のソケットオプションレベルは <B>IPPROTO_IPV6</B> である。
+ブール整数のフラグは、0 が偽であり、それ以外は真である。
+<DL COMPACT>
+<DT><B>IPV6_ADDRFORM</B><DD>
+<B>AF_INET6</B> ソケットを別のアドレスファミリーのソケットに変える。 現在は <B>AF_INET</B>
+のみが変更先のアドレスファミリーとしてサポートされている。 これが許可されるのは、IPv6 が接続され、 v4-mapped-on-v6
+アドレスにバインドされた場合に限られる。 引数は <B>AF_INET</B> が入っている整数へのポインターである。 v4-mapped ソケットを、IPv6
+API を扱えないプログラムに対して ファイルディスクリプターとして渡す場合に便利。
+<DT><B>IPV6_ADD_MEMBERSHIP, IPV6_DROP_MEMBERSHIP</B><DD>
+multicast グループのメンバーを制御する。 引数は <I>struct ipv6_mreq</I> 構造体へのポインター。
+<DT><B>IPV6_MTU</B><DD>
+<B>getsockopt</B>(): ソケットの、既知の path MTU を取得する。ソケットが接続している場合のみ有効である。整数を返す。
+<DT><DD>
+<B>setsockopt</B>(): そのソケットに対して用いる MTU の値を設定する。 MTU の大きさは、 そのデバイスの MTU または (Path
+MTU Discovery が可能なら) その経路の MTU の大きさ以下でなければならない。 引数は整数へのポインター。
+<DT><B>IPV6_MTU_DISCOVER</B><DD>
+そのソケットでの Path MTU Discovery を制御する。 詳細は <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  の <B>IP_MTU_DISCOVER</B> を参照。
+<DT><B>IPV6_MULTICAST_HOPS</B><DD>
+そのソケットでの multicast の hop 数の上限値を設定する。 引数は整数へのポインターである。 -1
+を指定すると経路のデフォルトを用いることを意味する。 それ以外の場合は 0 から 255 の範囲を指定する。
+<DT><B>IPV6_MULTICAST_IF</B><DD>
+そのソケットでの、送信 multicast パケットに用いるデバイスを設定する。 これは <B>SOCK_DGRAM</B> および <B>SOCK_RAW</B>
+各ソケットでのみ許される。 引数はインターフェースのインデックスの整数値 (<B><A HREF="../man7/netdevice.7.html">netdevice</A></B>(7)  を参照) へのポインターである。
+<DT><B>IPV6_MULTICAST_LOOP</B><DD>
+ソケットが、自分自身の送信した multicast パケットを監視するかどうかを制御する。 引数はブール値へのポインター。
+<DT><B>IPV6_RECVPKTINFO</B> (Linux 2.6.14 以降)<DD>
+データグラムの到着時における <B>IPV6_PKTINFO</B> 制御メッセージを配送するかどうかを設定する。 制御メッセージは RFC 3542 に基づき
+<I>struct in6_pktinfo</I> に格納される。 <B>SOCK_DGRAM</B> ソケットまたは <B>SOCK_RAW</B>
+ソケットに対してのみ許可される。 引数はブール値の入った整数。
+<DT>
+<DD>
+<B>IPV6_RTHDR, IPV6_AUTHHDR, IPV6_DSTOPTS, IPV6_HOPOPTS, IPV6_FLOWINFO, IPV6_HOPLIMIT</B>
+
+受信パケットのデータグラムに拡張ヘッダーが含まれている場合の、 制御メッセージの配送を設定する。 <B>IPV6_RTHDR</B>: routing
+ヘッダーを配送するかどうか。 <B>IPV6_AUTHHDR</B>: authentication ヘッダーを配送するかどうか。
+<B>IPV6_DSTOPTS</B>: destination オプションを配送するかどうか。 <B>IPV6_HOPOPTS</B>: hop
+オプションを配送するかどうか。 <B>IPV6_FLOWINFO</B>: flow ID を含む整数を配送するかどうか。 <B>IPV6_HOPLIMIT</B>:
+パケットの hop カウントを含む整数を配送するかどうか。 制御メッセージはソケットオプションのものと同じタイプを持つ。
+これらのすべてのヘッダーオプションは、 適切な制御メッセージを <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  の制御バッファーに書きこめば、
+送信パケットにでも設定できる。 <B>SOCK_DGRAM</B> ソケットまたは <B>SOCK_RAW</B>
+ソケットでのみ許される。引数はブール値へのポインター。
+<DT><B>IPV6_RECVERR</B><DD>
+非同期エラー (asynchronous error) オプションの受信を制御する。 詳細は <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  の <B>IP_RECVERR</B>
+を参照。 引数はブール値へのポインター。
+<DT><B>IPV6_ROUTER_ALERT</B><DD>
+このソケットで、router alert hop-by-hop オプションの付いた転送パケットを 通すかどうかを制御する。 <B>SOCK_RAW</B>
+ソケットでのみ許可される。 tap されたパケットはカーネルによっては転送されない。そうしたパケットを 再度送信するのはユーザーの責任である。
+引数は整数 (integer) へのポインター。 正の整数は傍受を行う router alert オプション値を示す。 オプション値がこの整数である
+router alert オプションの付いたパケットは ソケットに配送される。負の整数を指定すると、このソケットへの router alert
+オプションの付いたパケットの配送が行われない。
+<DT><B>IPV6_UNICAST_HOPS</B><DD>
+そのソケットでの unicast の hop 数の上限値を設定する。 引数は整数へのポインターである。 -1
+を指定すると経路のデフォルトを用いることを意味する。 それ以外の場合は 0 から 255 の範囲を指定する。
+<DT><B>IPV6_V6ONLY</B> (Linux 2.4.21 以降および 2.6 以降)<DD>
+
+このフラグを真 (0 以外) に設定すると、そのソケットは IPv6 パケットだけを 送受信するように制限される。 この場合、IPv4
+アプリケーションと IPv6 アプリケーションが同時に 一つのポートをバインドできる。
+<DT><DD>
+このフラグを偽 (0) に設定すると、そのソケットはパケットの送受信に IPv6 アドレスと IPv4-mapped IPv6
+アドレスの両方を使用できる。
+<DT><DD>
+引数はブール値の入った整数へのポインターである。
+<DT><DD>
+
+このフラグのデフォルト値はファイル <I>/proc/sys/net/ipv6/bindv6only</I> の内容により定義される。
+このファイルのデフォルト値は 0 (偽) である。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>ENODEV</B><DD>
+ユーザーがリンクローカルの IPv6 アドレスを <B><A HREF="../man2/bind.2.html">bind</A></B>(2) しようとしたが、
+指定された <I>sockaddr_in6</I> 構造体の <I>sin6_scope_id</I> が
+有効なインターフェースのインデックスでなかった。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+Linux 2.4 では 64 ビットのホストに対して <I>sockaddr_in6</I> のバイナリ互換性が保たれていない。 <I>in6_addr</I>
+のアラインメントが変更され、また <I>sin6_scope_id</I> フィールドが新たに追加されたからである。
+カーネルインターフェースの互換性は保たれているが、 <I>sockaddr_in6</I> や <I>in6_addr</I>
+を他の構造体に含んでいるようなプログラムでは 保たれないかもしれない。 これは i386 のような 32 ビットのホストでは問題にならない。
+<P>
+
+<I>sin6_flowinfo</I> フィールドは Linux 2.4 で登場した。 これが渡されたアドレス長に含まれていると、
+カーネルに透過的に渡され、読まれる。 より長いアドレスバッファーを渡し、 そして送信アドレスの長さをチェックするようなプログラムは
+うまく動かないかもしれない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<I>sockaddr_in6</I> 構造体はジェネリックな <I>sockaddr</I> よりも大きい。 すべてのアドレスタイプが <I>struct
+sockaddr</I> の中に安全に納められると仮定しているプログラムは、代わりに <I>struct sockaddr_storage</I>
+を用いるように変更する必要がある。
+<P>
+
+<B>SOL_IP</B>, <B>SOL_IPV6</B>, <B>SOL_ICMPV6</B>, and other <B>SOL_*</B> socket options are
+nonportable variants of <B>IPPROTO_*</B>.  See also <B><A HREF="../man7/ip.7.html">ip</A></B>(7).
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+IPv6 拡張 API は、現在まだ RFC&nbsp;2292 を完全には実装していない。 2.2
+カーネルは受信オプションをほぼ完全にサポートサポートしているが、 glibc2.1 には IPv6 オプションを生成するマクロが存在していない。
+<P>
+
+EH および AH ヘッダー での IPSec のサポートは存在しない。
+<P>
+
+フローラベル管理はまだ完全でなく、ここにも記述されていない。
+<P>
+
+この man ページはまだ完成していない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3), <B><A HREF="../man7/ip.7.html">ip</A></B>(7)
+<P>
+
+RFC&nbsp;2553: IPv6 BASIC API; Linux はこの RFC に準拠するようにしている。 RFC&nbsp;2460: IPv6
+specification.
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">アドレスのフォーマット</A><DD>
+<DT><A HREF="#lbAF">ソケットオプション</A><DD>
+</DL>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,157 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETFSENT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETFSENT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getfsent.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getfsent, getfsspec, getfsfile, setfsent, endfsent - fstab エントリーの処理
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/fstab.h">fstab.h</A>&gt;</B>
+<P>
+
+<B>void endfsent(void);</B>
+<P>
+
+<B>struct fstab *getfsent(void);</B>
+<P>
+
+<B>struct fstab *getfsfile(const char *</B><I>mount_point</I><B>);</B>
+<P>
+
+<B>struct fstab *getfsspec(const char *</B><I>special_file</I><B>);</B>
+<P>
+
+<B>int setfsent(void);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらの関数は <I>/etc/fstab</I> ファイルから情報を読み込む。<I>fstab</I> 構造体は次のように定義されている。
+<P>
+
+
+
+struct fstab {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*fs_spec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;block&nbsp;device&nbsp;name&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*fs_file;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;mount&nbsp;point&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*fs_vfstype;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;file-system&nbsp;type&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*fs_mntops;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;mount&nbsp;options&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;char&nbsp;*fs_type;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;rw/rq/ro/sw/xx&nbsp;option&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fs_freq;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;dump&nbsp;frequency,&nbsp;in&nbsp;days&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fs_passno;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;pass&nbsp;number&nbsp;on&nbsp;parallel&nbsp;dump&nbsp;*/
+};
+
+
+<P>
+
+*BSD システムの場合、 <I>fs_type</I> フィールドには、5 つの文字列 &quot;rw&quot;, &quot;rq&quot;, &quot;ro&quot;, &quot;sw&quot;, &quot;xx&quot;
+のいずれかが入る (それぞれ read-write, quota 付き read-write, read-only, swap, ignore)。
+<P>
+
+関数 <B>setfsent</B>()  は呼び出されると fstab ファイルをオープンし、 最初の行に移動する。
+<P>
+
+関数 <B>getfsent</B>()  は fstab ファイルから次の行をパースする (必要な場合はファイルをオープンする)。
+<P>
+
+関数 <B>endfsent</B>()  は呼び出されると fstab ファイルをクローズする。
+<P>
+
+関数 <B>getfsspec</B>()  は fstab ファイルを先頭から検索し、 <I>fs_spec</I> フィールドが <I>special_file</I>
+引数にマッチするエントリーが見つかったら、その最初のものを返す。
+<P>
+
+関数 <B>getfsfile</B>()  は fstab ファイルを先頭から検索し、 <I>fs_file</I> フィールドが <I>mount_point</I>
+引数にマッチするエントリーが見つかったら、その最初のものを返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+
+
+
+
+成功すると、 <B>getfsent</B>(), <B>getfsfile</B>(), <B>getfsspec</B>()  の各関数は <I>fstab</I>
+構造体へのポインターを返し、 <B>setfsent</B>()  関数は 1 を返す。 失敗するとこれらの関数は NULL を返し、 end-of-file
+になったら 0 を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>endfsent</B>(),
+<BR>
+
+<B>setfsent</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:fsent<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getfsent</B>(),
+<BR>
+
+<B>getfsspec</B>(),
+<BR>
+
+<B>getfsfile</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:fsent locale<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+These functions are not in POSIX.1.  Several operating systems have them,
+for example, *BSD, SunOS, Digital UNIX, AIX (which also has a
+<B>getfstype</B>()).  HP-UX has functions of the same names, that however use a
+<I>struct checklist</I> instead of a <I>struct fstab</I>, and calls these functions
+obsolete, superseded by <B><A HREF="../man3/getmntent.3.html">getmntent</A></B>(3).
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+これらの関数はスレッドセーフではない。
+<P>
+
+Linux ではブロックスペシャルデバイスを複数の場所にマウントでき、 また複数のデバイスが同じマウントポイントを共有できる
+(この場合はそのマウントポイントに最後にマウントされたデバイスが意味を持つ)  が、 <B>getfsfile</B>()  と <B>getfsspec</B>()
+はマッチした最初のエントリーしか返さないので、 これらの 2 つの関数は Linux での利用には適していない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/getmntent.3.html">getmntent</A></B>(3), <B><A HREF="../../util-linux/man5/fstab.5.html">fstab</A></B>(5)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

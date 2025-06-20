@@ -1,0 +1,195 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ARGZ_ADD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ARGZ_ADD</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/argz_add.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+argz_add, argz_add_sep, argz_append, argz_count, argz_create,
+argz_create_sep, argz_delete, argz_extract, argz_insert, argz_next,
+argz_replace, argz_stringify - argz リストを操作するための関数群
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/argz.h">argz.h</A>&gt;</B>
+
+<B>error_t argz_add(char **</B><I>argz</I><B>, size_t *</B><I>argz_len</I><B>, const char *</B><I>str</I><B>);</B>
+
+<B>error_t argz_add_sep(char **</B><I>argz</I><B>, size_t *</B><I>argz_len</I><B>,</B>
+<B>                     const char *</B><I>str</I><B>, int </B><I>delim</I><B>);</B>
+
+<B>error_t argz_append(char **</B><I>argz</I><B>, size_t *</B><I>argz_len</I><B>,</B>
+<B>                     const char *</B><I>buf</I><B>, size_t </B><I>buf_len</I><B>);</B>
+
+<B>size_t argz_count(const char *</B><I>argz</I><B>, size_t </B><I>argz_len</I><B>);</B>
+
+<B>error_t argz_create(char * const </B><I>argv</I><B>[], char **</B><I>argz</I><B>,</B>
+<B>                     size_t *</B><I>argz_len</I><B>);</B>
+
+<B>error_t argz_create_sep(const char *</B><I>str</I><B>, int </B><I>sep</I><B>, char **</B><I>argz</I><B>,</B>
+<B>                     size_t *</B><I>argz_len</I><B>);</B>
+
+<B>void argz_delete(char **</B><I>argz</I><B>, size_t *</B><I>argz_len</I><B>, char *</B><I>entry</I><B>);</B>
+
+<B>void argz_extract(const char *</B><I>argz</I><B>, size_t </B><I>argz_len</I><B>, char **</B><I>argv</I><B>);</B>
+
+<B>error_t argz_insert(char **</B><I>argz</I><B>, size_t *</B><I>argz_len</I><B>, char *</B><I>before</I><B>,</B>
+<B>                     const char *</B><I>entry</I><B>);</B>
+
+<B>char *argz_next(const char *</B><I>argz</I><B>, size_t </B><I>argz_len</I><B>, const char *</B><I>entry</I><B>);</B>
+
+<B>error_t argz_replace(char **</B><I>argz</I><B>, size_t *</B><I>argz_len</I><B>, const char *</B><I>str</I><B>,</B>
+<B>                     const char *</B><I>with</I><B>, unsigned int *</B><I>replace_count</I><B>);</B>
+
+<B>void argz_stringify(char *</B><I>argz</I><B>, size_t </B><I>len</I><B>, int </B><I>sep</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらの関数は glibc 固有である。
+<P>
+
+argz vector は長さ情報付きの文字バッファーへのポインターである。 文字バッファーでは、複数の文字列がヌルバイト ('\0')
+で区切られており、 文字列の配列として解釈されるようになっている。 長さが 0 でない場合、バッファーの最後のバイトはヌルバイトでなければならない。
+<P>
+
+これらの関数は argz vector を操作するためのものである。 ペア (NULL,0) は argz vector であり、逆に言えば 長さ 0
+の argz vectorはヌルポインターを持たなければならない。 空でない argz vector の割り当ては <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+を使って行われる。したがって、argz vector を解放するのに <B><A HREF="../man3/free.3.html">free</A></B>(3)  を使うことができる。
+<P>
+
+<B>argz_add</B>()  は、文字列 <I>str</I> を配列 <I>*argz</I> の末尾に追加し、 <I>*argz</I> と <I>*argz_len</I>
+を更新する。
+<P>
+
+<B>argz_add_sep</B>()  も同様の動作をするが、区切り文字 <I>delim</I> にしたがって文字列 <I>str</I>
+を複数の文字列に分割する点が異なる。 例えば、区切り文字 ':' を指定して、UNIX サーチパスに対して
+この関数を使うことができるだろう。
+<P>
+
+<B>argz_append</B>()  は argz vector (<I>buf</I>,&nbsp;<I>buf_len</I>)  の後ろに (<I>*argz</I>,&nbsp;<I>*argz_len</I>) を付け加え、 <I>*argz</I> と <I>*argz_len</I> を更新する。 (したがって、 <I>*argz_len</I> は
+<I>buf_len</I> だけ増加する。)
+<P>
+
+<B>argz_count</B>()  は (<I>argz</I>,&nbsp;<I>argz_len</I>)  内の文字列の数を数える。実際にはヌルバイト
+('\0') の数を数えている。
+<P>
+
+<B>argz_create</B>() は、UNIX 流の引数ベクトルである (<I>(char&nbsp;*)&nbsp;0</I> で終端される) <I>argv</I> を、argz
+vector (<I>*argz</I>,&nbsp;<I>*argz_len</I>)  に変換する。
+<P>
+
+<B>argz_create_sep</B>()  は、ヌル終端された文字列 <I>str</I> を区切り文字 <I>sep</I> が現れる毎に分割しながら、argz
+vector (*<I>argz</I>,&nbsp;<I>*argz_len</I>)  に変換する。
+<P>
+
+<B>argz_delete</B>()  は、 <I>entry</I> で指し示された文字列を argz vector (<I>*argz</I>,&nbsp;<I>*argz_len</I>) から削除し、 <I>*argz</I> と <I>*argz_len</I> を更新する。
+<P>
+
+<B>argz_extract</B>()  は <B>argz_create</B>()  の反対の操作を行う。argz vector (<I>argz</I>,&nbsp;<I>argz_len</I>)  を調べ、 <I>argv</I> から始まる配列をサブ文字列へのポインターで埋めていき、 一番最後に NULL を入れて、UNIX
+流の argv ベクトルを作成する。 配列 <I>argv</I> は <I>argz_count</I>(<I>argz</I>,<I>argz_len</I>) + 1
+個のポインターを収容できる空間を持っていなければならない。
+<P>
+
+<B>argz_insert</B>()  は <B>argz_delete</B>()  の反対の操作を行う。argz vector (<I>*argz</I>,&nbsp;<I>*argz_len</I>)  の位置 <I>before</I> に引数 <I>entry</I> を挿入し、 <I>*argz</I> と <I>*argz_len</I>
+を更新する。 <I>before</I> が NULL の場合、 <I>entry</I> は末尾に挿入される。
+<P>
+
+<B>argz_next</B>()  は argz vector を順番に調べるための関数である。 <I>entry</I> が NULL
+の場合、最初のエントリーを返す。 そうでない場合、次のエントリーを返す。 次のエントリーがない場合、NULL を返す。
+<P>
+
+<B>argz_replace</B>()  は、 <I>str</I> をすべて <I>with</I> で置き換える (必要に応じて argz の再割り当てを行う)。
+<I>replace_count</I> が NULL でない場合、 <I>*replace_count</I> を置き換えを行った数だけ増やす。
+<P>
+
+<B>argz_stringify</B>()  は <B>argz_create_sep</B>()  の反対の操作を行う。 末尾の ヌルバイト以外の全てのヌルバイト
+('\0') を <I>sep</I> で置き換えて、 argz vector を通常の文字列に変換する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+メモリー割り当てを行う argz 関数群はすべて <I>error_t</I> 型 (integer 型) の返り値を持つ。 成功した場合は 0
+を返し、割り当てエラーが発生した場合は <B>ENOMEM</B> を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>argz_add</B>(),
+<B>argz_add_sep</B>(),
+<BR>
+
+<B>argz_append</B>(),
+<B>argz_count</B>(),
+<BR>
+
+<B>argz_create</B>(),
+<B>argz_create_sep</B>(),
+<BR>
+
+<B>argz_delete</B>(),
+<B>argz_extract</B>(),
+<BR>
+
+<B>argz_insert</B>(),
+<B>argz_next</B>(),
+<BR>
+
+<B>argz_replace</B>(),
+<B>argz_stringify</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+これらの関数は GNU による拡張である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+ヌルバイトで終端されていない argz vector を使用した場合、 segmentation fault を起こすかもしれない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/envz_add.3.html">envz_add</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:26 GMT, December 05, 2022
+</BODY>
+</HTML>

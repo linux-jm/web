@@ -1,0 +1,876 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREADS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREADS</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/pthreads.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthreads - POSIX スレッド
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+POSIX.1 は、一般に POSIX スレッドや Pthreads として知られる スレッドプログラミングのインターフェース群
+(関数、ヘッダーファイル)  を規定している。一つのプロセスは複数のスレッドを持つことができ、 全てのスレッドは同じプログラムを実行する。
+これらのスレッドは同じ大域メモリー (データとヒープ領域) を共有するが、 各スレッドは自分専用のスタック (自動変数) を持つ。
+<P>
+
+POSIX.1 はスレッド間でどのような属性を共有するかについても定めている (つまり、これらの属性はスレッド単位ではなくプロセス全体で共通である):
+<DL COMPACT>
+<DT>-<DD>
+プロセス ID
+<DT>-<DD>
+親プロセス ID
+<DT>-<DD>
+プロセスグループ ID とセッション ID
+<DT>-<DD>
+制御端末
+<DT>-<DD>
+ユーザー ID とグループ ID
+<DT>-<DD>
+オープンするファイルディスクリプター
+<DT>-<DD>
+レコードのロック (<B>fcntl</B>(3)  参照)
+<DT>-<DD>
+シグナルの配置
+<DT>-<DD>
+ファイルモード作成マスク (<B><A HREF="../man2/umask.2.html">umask</A></B>(2))
+<DT>-<DD>
+カレントディレクトリ (<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2))  とルートディレクトリ (<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2))
+<DT>-<DD>
+インターバルタイマー (<B><A HREF="../man2/setitimer.2.html">setitimer</A></B>(2))  と POSIX タイマー (<B>timer_create</B>(2))
+<DT>-<DD>
+nice 値 (<B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2))
+<DT>-<DD>
+リソース制限 (<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2))
+<DT>-<DD>
+CPU 時間 (<B><A HREF="../man2/times.2.html">times</A></B>(2))  とリソース (<B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2))  の消費状況の計測
+</DL>
+<P>
+
+スタックについても、POSIX.1 はどのような属性が 個々のスレッドで独立に管理されるかを規定している:
+<DL COMPACT>
+<DT>-<DD>
+スレッド ID (<B>pthread_t</B> データ型)
+<DT>-<DD>
+シグナルマスク (<B><A HREF="../man3/pthread_sigmask.3.html">pthread_sigmask</A></B>(3))
+<DT>-<DD>
+<I>errno</I> 変数
+<DT>-<DD>
+代替シグナルスタック (<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2))
+<DT>-<DD>
+リアルタイムスケジューリングのポリシーと優先度 (<B><A HREF="../man7/sched.7.html">sched</A></B>(7))
+</DL>
+<P>
+
+以下の Linux 特有の機能もスレッド単位である:
+<DL COMPACT>
+<DT>-<DD>
+ケーパビリティ (<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)  参照)
+<DT>-<DD>
+CPU affinity (親和度)  (<B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2))
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H3>pthreads 関数の返り値</H3>
+
+Most pthreads functions return 0 on success, and an error number on
+failure.  The error numbers that can be returned have the same meaning as
+the error numbers returned in <I>errno</I> by conventional system calls and C
+library functions.  Note that the pthreads functions do not set <I>errno</I>.
+For each of the pthreads functions that can return an error, POSIX.1-2001
+specifies that the function can never fail with the error <B>EINTR</B>.
+<A NAME="lbAE">&nbsp;</A>
+<H3>スレッド ID</H3>
+
+あるプロセス内の各スレッドは (<I>pthread_t</I> 型の) 一意なスレッド識別子を持つ。 この識別子は、 <B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3)
+の呼び出し元に返される。また、スレッドは自身のスレッド識別子を <B><A HREF="../man3/pthread_self.3.html">pthread_self</A></B>(3) を使って取得できる。
+<P>
+
+Thread IDs are guaranteed to be unique only within a process.  (In all
+pthreads functions that accept a thread ID as an argument, that ID by
+definition refers to a thread in the same process as the caller.)
+<P>
+
+The system may reuse a thread ID after a terminated thread has been joined,
+or a detached thread has terminated.  POSIX says: &quot;If an application
+attempts to use a thread ID whose lifetime has ended, the behavior is
+undefined.&quot;
+<A NAME="lbAF">&nbsp;</A>
+<H3>スレッドセーフな関数</H3>
+
+スレッドセーフな関数は、複数のスレッドから同時に呼び出しても安全な (すなわち、同時に呼び出されたかに関わらず、同じ結果を返す) 関数のことである。
+<P>
+
+POSIX.1-2001 と POSIX.1-2008では、一部の例外を除き、 標準で規定されている全ての関数がスレッドセーフであることを要求している。
+以下の関数が例外である。
+<P>
+
+
+
+asctime()
+basename()
+catgets()
+crypt()
+ctermid() (NULL でない引数を渡された場合)
+ctime()
+dbm_clearerr()
+dbm_close()
+dbm_delete()
+dbm_error()
+dbm_fetch()
+dbm_firstkey()
+dbm_nextkey()
+dbm_open()
+dbm_store()
+dirname()
+dlerror()
+drand48()
+ecvt() [POSIX.1-2001 のみ (POSIX.1-2008 で削除された)]
+encrypt()
+endgrent()
+endpwent()
+endutxent()
+fcvt() [POSIX.1-2001 のみ (POSIX.1-2008 で削除された)]
+ftw()
+gcvt() [POSIX.1-2001 のみ (POSIX.1-2008 で削除された)]
+getc_unlocked()
+getchar_unlocked()
+getdate()
+getenv()
+getgrent()
+getgrgid()
+getgrnam()
+gethostbyaddr() [POSIX.1-2001 のみ (POSIX.1-2008 で削除された)]
+gethostbyname() [POSIX.1-2001 のみ (POSIX.1-2008 で削除された)]
+gethostent()
+getlogin()
+getnetbyaddr()
+getnetbyname()
+getnetent()
+getopt()
+getprotobyname()
+getprotobynumber()
+getprotoent()
+getpwent()
+getpwnam()
+getpwuid()
+getservbyname()
+getservbyport()
+getservent()
+getutxent()
+getutxid()
+getutxline()
+gmtime()
+hcreate()
+hdestroy()
+hsearch()
+inet_ntoa()
+l64a()
+lgamma()
+lgammaf()
+lgammal()
+localeconv()
+localtime()
+lrand48()
+mrand48()
+nftw()
+nl_langinfo()
+ptsname()
+putc_unlocked()
+putchar_unlocked()
+putenv()
+pututxline()
+rand()
+readdir()
+setenv()
+setgrent()
+setkey()
+setpwent()
+setutxent()
+strerror()
+strsignal() [POSIX.1-2008 で追加された]
+strtok()
+system() [POSIX.1-2008 で追加された]
+tmpnam() (NULL でない引数を渡された場合)
+ttyname()
+unsetenv()
+wcrtomb() (最後の引数が NULL の場合)
+wcsrtombs() (最後の引数が NULL の場合)
+wcstombs()
+wctomb()
+
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>async-cancel-safe 関数</H3>
+
+async-cancel-safe 関数は、
+非同期キャンセル機能が有効になっているアプリケーションで
+安全に呼び出すことができる関数のことである
+(<B><A HREF="../man3/pthread_setcancelstate.3.html">pthread_setcancelstate</A></B>(3) を参照)。
+<P>
+
+以下の関数だけが、POSIX.1-2001 と POSIX.1-2008 で async-cancel-safe で
+なければならないとされている。
+<P>
+
+
+
+pthread_cancel()
+pthread_setcancelstate()
+pthread_setcanceltype()
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>取り消しポイント (cancellation points)</H3>
+
+POSIX.1 の規定では、特定の関数は取り消しポイントでなければならず、 他の特定の関数は取り消しポイントであってもよいとされている。
+あるスレッドが取り消し可能で、その取り消し種別 (cancelability type)  が延期 (deferred)
+で、そのスレッドに対する取り消し要求が処理待ちの場合、 取り消しポイントである関数を呼び出した時点で、そのスレッドのキャンセルが 行われる。
+<P>
+
+POSIX.1-2001 と POSIX.1-2008 の両方、もしくはいずれか一方では、 以下の関数は、取り消しポイント (cancellation
+points) で あることが必須となっている。
+<P>
+
+
+
+
+
+accept()
+aio_suspend()
+clock_nanosleep()
+close()
+connect()
+creat()
+fcntl() F_SETLKW
+fdatasync()
+fsync()
+getmsg()
+getpmsg()
+lockf() F_LOCK
+mq_receive()
+mq_send()
+mq_timedreceive()
+mq_timedsend()
+msgrcv()
+msgsnd()
+msync()
+nanosleep()
+open()
+openat() [POSIX.1-2008 で追加された]
+pause()
+poll()
+pread()
+pselect()
+pthread_cond_timedwait()
+pthread_cond_wait()
+pthread_join()
+pthread_testcancel()
+putmsg()
+putpmsg()
+pwrite()
+read()
+readv()
+recv()
+recvfrom()
+recvmsg()
+select()
+sem_timedwait()
+sem_wait()
+send()
+sendmsg()
+sendto()
+sigpause() [POSIX.1-2001 only (moves to &quot;may&quot; list in POSIX.1-2008)]
+sigsuspend()
+sigtimedwait()
+sigwait()
+sigwaitinfo()
+sleep()
+system()
+tcdrain()
+usleep() [POSIX.1-2001 のみ (POSIX.1-2008 で削除された)]
+wait()
+waitid()
+waitpid()
+write()
+writev()
+
+
+<P>
+
+POSIX.1-2001 と POSIX.1-2008 の両方、もしくはいずれか一方では、 以下の関数は、取り消しポイント (cancellation
+points) で あってもよいことになっている。
+<P>
+
+
+
+access()
+asctime()
+asctime_r()
+catclose()
+catgets()
+catopen()
+chmod() [POSIX.1-2008 で追加された]
+chown() [POSIX.1-2008 で追加された]
+closedir()
+closelog()
+ctermid()
+ctime()
+ctime_r()
+dbm_close()
+dbm_delete()
+dbm_fetch()
+dbm_nextkey()
+dbm_open()
+dbm_store()
+dlclose()
+dlopen()
+dprintf() [POSIX.1-2008 で追加された]
+endgrent()
+endhostent()
+endnetent()
+endprotoent()
+endpwent()
+endservent()
+endutxent()
+faccessat() [POSIX.1-2008 で追加された]
+fchmod() [POSIX.1-2008 で追加された]
+fchmodat() [POSIX.1-2008 で追加された]
+fchown() [POSIX.1-2008 で追加された]
+fchownat() [POSIX.1-2008 で追加された]
+fclose()
+fcntl() (cmd 引数が何であっても)
+fflush()
+fgetc()
+fgetpos()
+fgets()
+fgetwc()
+fgetws()
+fmtmsg()
+fopen()
+fpathconf()
+fprintf()
+fputc()
+fputs()
+fputwc()
+fputws()
+fread()
+freopen()
+fscanf()
+fseek()
+fseeko()
+fsetpos()
+fstat()
+fstatat() [POSIX.1-2008 で追加された]
+ftell()
+ftello()
+ftw()
+futimens() [POSIX.1-2008 で追加された]
+fwprintf()
+fwrite()
+fwscanf()
+getaddrinfo()
+getc()
+getc_unlocked()
+getchar()
+getchar_unlocked()
+getcwd()
+getdate()
+getdelim() [POSIX.1-2008 で追加された]
+getgrent()
+getgrgid()
+getgrgid_r()
+getgrnam()
+getgrnam_r()
+gethostbyaddr() [POSIX.1-2001 のみ (この関数は
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSIX.1-2008&nbsp;で削除されている)]
+gethostbyname() [POSIX.1-2001 のみ (この関数は
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSIX.1-2008&nbsp;で削除されている)]
+gethostent()
+gethostid()
+gethostname()
+getline() [POSIX.1-2008 で追加された]
+getlogin()
+getlogin_r()
+getnameinfo()
+getnetbyaddr()
+getnetbyname()
+getnetent()
+getopt() (opterr が 0 以外の場合)
+getprotobyname()
+getprotobynumber()
+getprotoent()
+getpwent()
+getpwnam()
+getpwnam_r()
+getpwuid()
+getpwuid_r()
+gets()
+getservbyname()
+getservbyport()
+getservent()
+getutxent()
+getutxid()
+getutxline()
+getwc()
+getwchar()
+getwd() [POSIX.1-2001 のみ (この関数は
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSIX.1-2008&nbsp;で削除されている)]
+glob()
+iconv_close()
+iconv_open()
+ioctl()
+link()
+linkat() [POSIX.1-2008 で追加された]
+lio_listio() [POSIX.1-2008 で追加された]
+localtime()
+localtime_r()
+lockf() [POSIX.1-2008 で追加された]
+lseek()
+lstat()
+mkdir() [POSIX.1-2008 で追加された]
+mkdirat() [POSIX.1-2008 で追加された]
+mkdtemp() [POSIX.1-2008 で追加された]
+mkfifo() [POSIX.1-2008 で追加された]
+mkfifoat() [POSIX.1-2008 で追加された]
+mknod() [POSIX.1-2008 で追加された]
+mknodat() [POSIX.1-2008 で追加された]
+mkstemp()
+mktime()
+nftw()
+opendir()
+openlog()
+pathconf()
+pclose()
+perror()
+popen()
+posix_fadvise()
+posix_fallocate()
+posix_madvise()
+posix_openpt()
+posix_spawn()
+posix_spawnp()
+posix_trace_clear()
+posix_trace_close()
+posix_trace_create()
+posix_trace_create_withlog()
+posix_trace_eventtypelist_getnext_id()
+posix_trace_eventtypelist_rewind()
+posix_trace_flush()
+posix_trace_get_attr()
+posix_trace_get_filter()
+posix_trace_get_status()
+posix_trace_getnext_event()
+posix_trace_open()
+posix_trace_rewind()
+posix_trace_set_filter()
+posix_trace_shutdown()
+posix_trace_timedgetnext_event()
+posix_typed_mem_open()
+printf()
+psiginfo() [POSIX.1-2008 で追加された]
+psignal() [POSIX.1-2008 で追加された]
+pthread_rwlock_rdlock()
+pthread_rwlock_timedrdlock()
+pthread_rwlock_timedwrlock()
+pthread_rwlock_wrlock()
+putc()
+putc_unlocked()
+putchar()
+putchar_unlocked()
+puts()
+pututxline()
+putwc()
+putwchar()
+readdir()
+readdir_r()
+readlink() [POSIX.1-2008 で追加された]
+readlinkat() [POSIX.1-2008 で追加された]
+remove()
+rename()
+renameat() [POSIX.1-2008 で追加された]
+rewind()
+rewinddir()
+scandir() [POSIX.1-2008 で追加された]
+scanf()
+seekdir()
+semop()
+setgrent()
+sethostent()
+setnetent()
+setprotoent()
+setpwent()
+setservent()
+setutxent()
+sigpause() [POSIX.1-2008 で追加された]
+stat()
+strerror()
+strerror_r()
+strftime()
+symlink()
+symlinkat() [POSIX.1-2008 で追加された]
+sync()
+syslog()
+tmpfile()
+tmpnam()
+ttyname()
+ttyname_r()
+tzset()
+ungetc()
+ungetwc()
+unlink()
+unlinkat() [POSIX.1-2008 で追加された]
+utime() [POSIX.1-2008 で追加された]
+utimensat() [POSIX.1-2008 で追加された]
+utimes() [POSIX.1-2008 で追加された]
+vdprintf() [POSIX.1-2008 で追加された]
+vfprintf()
+vfwprintf()
+vprintf()
+vwprintf()
+wcsftime()
+wordexp()
+wprintf()
+wscanf()
+
+
+<P>
+
+実装時に、標準規格で規定されていないその他の関数を取り消しポイント とすることも認められている。 特に、停止 (block)
+する可能性がある非標準の関数を取り消しポイントと する実装はあり得ることだろう (ファイルを扱う可能性のあるほとんどの関数がこれに含まれる)。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+It should be noted that even if an application is not using asynchronous
+cancellation, that calling a function from the above list from an
+asynchronous signal handler may cause the equivalent of asynchronous
+cancellation.  The underlying user code may not expect asynchronous
+cancellation and the state of the user data may become inconsistent.
+Therefore signals should be used with caution when entering a region of
+deferred cancellation.
+<A NAME="lbAI">&nbsp;</A>
+<H3>Linux でのコンパイル</H3>
+
+Linux では、Pthreads API を用いたプログラムは <I>cc -pthread</I> でコンパイルすべきである。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>POSIX スレッドの Linux での実装</H3>
+
+これまで、2つのスレッドの実装が Linux の GNU C ライブラリにより 提供されてきた。
+<DL COMPACT>
+<DT><B>LinuxThreads</B><DD>
+最初の Pthreads の実装。
+glibc 2.4 以降は、この実装はもはやサポートされていない。
+<DT><B>NPTL</B> (Native POSIX Threads Library)<DD>
+新しい Pthreads の実装。LinuxThreads と比べると、 NPTL は POSIX.1 の要求仕様への準拠の度合いが高く、
+多数のスレッドを作成した際の性能も高い。 NPTL は glibc 2.3.2 以降で利用可能である。 NPTL を利用するには Linux 2.6
+カーネルに実装されている機能が必要である。
+</DL>
+<P>
+
+どちらの実装もいわゆる 1:1 実装、すなわち個々のスレッドが カーネルのスケジューリング実体にマッピングされる。 どちらのスレッドの実装も Linux
+の <B><A HREF="../man2/clone.2.html">clone</A></B>(2)  システムコールを利用している。 NPTL では、スレッド同期の基本機構 (mutex や スレッドの join 等) は
+Linux の <B><A HREF="../man2/futex.2.html">futex</A></B>(2)  システムコールを使って実装されている。
+<A NAME="lbAK">&nbsp;</A>
+<H3>LinuxThreads</H3>
+
+この実装の大きな特徴は以下の通りである:
+<DL COMPACT>
+<DT>-<DD>
+メインスレッド (最初のスレッド) とプログラムが <B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3)  を使って作成したスレッドに加え、 この実装では「管理
+(manager)」スレッドが作成される。 管理スレッドはスレッドの作成と終了を取り扱う (このスレッドがうっかり kill
+されると、問題が起こることがある)。
+<DT>-<DD>
+この実装では内部でシグナルを使用している。 Linux 2.2 以降では、リアルタイムシグナルのうち最初の 3つが使われる (<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+参照)。 それ以前のカーネルでは <B>SIGUSR1</B> と <B>SIGUSR2</B> が使われる。
+アプリケーションは、スレッド実装で利用されているシグナルを どれも使わないようにしなければならない。
+<DT>-<DD>
+スレッド間でプロセス ID を共有しない (実際には LinuxThreads のスレッドは通常よりは情報を共有するプロセスとして
+実装されているが、一つの共通のプロセス ID を共有してはいない)。 (管理スレッドを含む) LinuxThreads スレッドは <B><A HREF="../../procps/man1/ps.1.html">ps</A></B>(1)
+を使うと別のプロセスのように見える。
+</DL>
+<P>
+
+LinuxThreads の実装では POSIX.1 仕様から逸脱している点が いくつかある。以下に示すような点がある:
+<DL COMPACT>
+<DT>-<DD>
+<B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)  を呼び出したときに、スレッド毎に異なる値が返される。
+<DT>-<DD>
+メインスレッド以外のスレッドで <B><A HREF="../man2/getppid.2.html">getppid</A></B>(2)  を呼び出すと、管理スレッドのプロセス ID が返される。 本当は、これらのスレッドで
+<B><A HREF="../man2/getppid.2.html">getppid</A></B>(2)  を呼んだ場合にはメインスレッドでの <B><A HREF="../man2/getppid.2.html">getppid</A></B>(2)  と同じ値が返るべきである。
+<DT>-<DD>
+あるスレッドが <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  を使って新しい子プロセスを作成した場合、 どのスレッドでもこの子プロセスを <B><A HREF="../man2/wait.2.html">wait</A></B>(2)
+できるべきである。しかしながら、この実装では子プロセスを作成した スレッドだけがこの子プロセスを <B><A HREF="../man2/wait.2.html">wait</A></B>(2)  できる。
+<DT>-<DD>
+あるスレッドが <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  を呼び出した場合、他のスレッドは全て終了される (POSIX.1 の仕様通り)。
+しかしながら、新しいプロセスは <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  を呼んだスレッドと同じ PID を持つ。正しくは メインスレッドと同じ PID
+を持つべきである。
+<DT>-<DD>
+スレッド間でユーザー ID とグループ ID が共有されない このことは、set-user-ID プログラムで面倒な事態を招いたり、 アプリケーションが
+<B><A HREF="../man2/seteuid.2.html">seteuid</A></B>(2)  などを使って信用情報 (credentials) を変更した場合に Pthreads 関数が失敗する原因となる。
+<DT>-<DD>
+スレッド間で共通のセッション ID やプロセスグループ ID を共有しない。
+<DT>-<DD>
+スレッド間で <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  を使って作成されるレコードロックを共有しない。
+<DT>-<DD>
+<B><A HREF="../man2/times.2.html">times</A></B>(2)  と <B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2)  が返す情報がプロセス全体の情報でなくスレッド単位の情報である。
+<DT>-<DD>
+スレッド間でセマフォのアンドゥ値 (<B><A HREF="../man2/semop.2.html">semop</A></B>(2)  参照) を共有しない。
+<DT>-<DD>
+スレッド間でインターバルタイマーを共有しない。
+<DT>-<DD>
+スレッドは共通の nice 値を共有しない。
+<DT>-<DD>
+POSXI.1 では、全体としてのプロセスに送られるシグナルと、 個別のスレッドに送られるシグナルを区別して考えている。 POSIX.1
+によると、プロセスに送られたシグナル (例えば <B><A HREF="../man2/kill.2.html">kill</A></B>(2)  を使って送る) は、そのプロセスに属すスレッドのうち 勝手に
+(arbitrarily) に選択された一つのスレッドにより処理される ことになっている。LinuxThreads はプロセスに送られるシグナルの
+概念に対応しておらず、シグナルは特定のスレッドにだけ送ることができる。
+<DT>-<DD>
+スレッドはそれぞれの独自の代替シグナルスタックの設定を持つ。 しかし、新しいスレッドの代替シグナルスタックの設定は
+そのスレッドを作成したスレッドからコピーされ、そのため スレッドは最初は一つの代替シグナルスタックを共有する。
+(仕様では、新しいスレッドは代替シグナルスタックが定義されていない状態 で開始されるべきとされている。
+2つのスレッドが共有されている代替シグナルスタック上で同時に シグナルの処理を行った場合、予測不可能なプログラムのエラーが 起こり得る。)
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H3>NPTL</H3>
+
+NPTL では、一つのプロセスの全てのスレッドは同じスレッドグループ に属する; スレッドグループの全メンバーは同じ PID を共有する。 NPTL
+は管理スレッド (manager thread) を利用しない。
+<P>
+
+<BR>&nbsp;NPTL&nbsp;は内部でリアルタイムシグナルのうち最初の&nbsp;2つの番号を使用しており、これらのシグナルはアプリケーションでは使用できない。詳細は
+<B>nptl</B>(7) を参照のこと。
+<P>
+
+NPTL にも POSIX.1 に準拠していない点が少なくとも一つある:
+<DL COMPACT>
+<DT>-<DD>
+
+
+
+
+
+スレッドは共通の nice 値を共有しない。
+</DL>
+<P>
+
+NPTL の標準非準拠な点のうちいくつかは以前のカーネルでのみ発生する:
+<DL COMPACT>
+<DT>-<DD>
+<B><A HREF="../man2/times.2.html">times</A></B>(2)  と <B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2)  が返す情報がプロセス全体の情報でなくスレッド単位の情報である (カーネル 2.6.9
+で修正された)。
+<DT>-<DD>
+スレッド間でリソース制限を共有しない (カーネル 2.6.10 で修正された)。
+<DT>-<DD>
+スレッド間でインターバルタイマーを共有しない (カーネル 2.6.12 で修正された)。
+<DT>-<DD>
+メインスレッドだけが <B><A HREF="../man2/setsid.2.html">setsid</A></B>(2)  を使って新しいセッションを開始することができる (カーネル 2.6.16 で修正された)。
+<DT>-<DD>
+メインスレッドだけが <B><A HREF="../man2/setpgid.2.html">setpgid</A></B>(2)  を使ってそのプロセスをプロセスグループリーダーにすることができる (カーネル 2.6.16
+で修正された)。
+<DT>-<DD>
+スレッドはそれぞれの独自の代替シグナルスタックの設定を持つ。 しかし、新しいスレッドの代替シグナルスタックの設定は
+そのスレッドを作成したスレッドからコピーされ、そのため スレッドは最初は一つの代替シグナルスタックを共有する (カーネル 2.6.16 で修正された)。
+</DL>
+<P>
+
+NPTL の実装では以下の点についても注意すること:
+<DL COMPACT>
+<DT>-<DD>
+スタックサイズのリソースのソフトリミット (<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)  の <B>RLIMIT_STACK</B> の説明を参照) が
+<I>unlimited</I> 以外の値に設定されている場合、ソフトリミットの値が 新しいスレッドのデフォルトのスタックサイズとなる。
+設定を有効にするためには、プログラムを実行する前にリミット値を 設定しておかなければならない。たいていは、シェルの組み込みコマンドの <I>ulimit
+-s</I> (C シェルでは <I>limit stacksize</I>)  を使って設定する。
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H3>スレッド実装の判定</H3>
+
+glibc 2.3.2 以降では、 <B>getconf</B>(1)  コマンドを使って、 システムのスレッド実装を判定することができる。 以下に例を示す:
+<P>
+
+
+
+bash$ getconf GNU_LIBPTHREAD_VERSION
+NPTL 2.3.4
+
+
+<P>
+
+ぞれ以前の glibc のバージョンでは、以下のようなコマンドで デフォルトのスレッド実装を判定することができる。
+<P>
+
+
+
+bash$ $( ldd /bin/ls | grep libc.so | awk '{print $3}' ) | \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;egrep&nbsp;-i&nbsp;'threads|ntpl'
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Native&nbsp;POSIX&nbsp;Threads&nbsp;Library&nbsp;by&nbsp;Ulrich&nbsp;Drepper&nbsp;et&nbsp;al
+
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>スレッドの実装の選択: LD_ASSUME_KERNEL</H3>
+
+LinuxThreads と NPTL の両方をサポートしている glibc (glibc 2.3.<I>x</I>) があるシステムでは、
+<B>LD_ASSUME_KERNEL</B> 環境変数を使うことで、動的リンカーがデフォルトで 選択するスレッド実装を上書きすることができる。
+この変数により、動的リンカーが特定のバージョンのカーネル上で 動作していると仮定するように指定する。 NPTL
+が必要とするサポート機能を提供していないカーネルバージョンを 指定することで、強制的に LinuxThreads を使うことができる
+(このようなことをする最もありそうな場面は、 LinuxThreads の標準非準拠な振舞いに依存する (壊れた) アプリケーション
+を動作させる場合だろう)。 以下に例を示す:
+<P>
+
+
+
+bash$ $( LD_ASSUME_KERNEL=2.2.5 ldd /bin/ls | grep libc.so | \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;awk&nbsp;'{print&nbsp;$3}'&nbsp;)&nbsp;|&nbsp;egrep&nbsp;-i&nbsp;'threads|nptl'
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;linuxthreads-0.10&nbsp;by&nbsp;Xavier&nbsp;Leroy
+
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2), <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man2/futex.2.html">futex</A></B>(2), <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2), <B><A HREF="../man5/proc.5.html">proc</A></B>(5),
+<B>attributes</B>(7), <B><A HREF="../man7/futex.7.html">futex</A></B>(7), <B>nptl</B>(7), <B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7), <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+<P>
+
+pthreads の各種マニュアルページ、例えば: <B><A HREF="../../glibc-linuxthreads/man3/pthread_atfork.3.html">pthread_atfork</A></B>(3), <B><A HREF="../man3/pthread_attr_init.3.html">pthread_attr_init</A></B>(3),
+<B><A HREF="../man3/pthread_cancel.3.html">pthread_cancel</A></B>(3), <B><A HREF="../man3/pthread_cleanup_push.3.html">pthread_cleanup_push</A></B>(3), <B><A HREF="../../glibc-linuxthreads/man3/pthread_cond_signal.3.html">pthread_cond_signal</A></B>(3),
+<B><A HREF="../../glibc-linuxthreads/man3/pthread_cond_wait.3.html">pthread_cond_wait</A></B>(3), <B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3), <B><A HREF="../man3/pthread_detach.3.html">pthread_detach</A></B>(3),
+<B><A HREF="../man3/pthread_equal.3.html">pthread_equal</A></B>(3), <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3), <B><A HREF="../../glibc-linuxthreads/man3/pthread_key_create.3.html">pthread_key_create</A></B>(3),
+<B><A HREF="../man3/pthread_kill.3.html">pthread_kill</A></B>(3), <B><A HREF="../../glibc-linuxthreads/man3/pthread_mutex_lock.3.html">pthread_mutex_lock</A></B>(3), <B><A HREF="../../glibc-linuxthreads/man3/pthread_mutex_unlock.3.html">pthread_mutex_unlock</A></B>(3),
+<B><A HREF="../../glibc-linuxthreads/man3/pthread_mutexattr_destroy.3.html">pthread_mutexattr_destroy</A></B>(3), <B><A HREF="../../glibc-linuxthreads/man3/pthread_mutexattr_init.3.html">pthread_mutexattr_init</A></B>(3),
+<B><A HREF="../../glibc-linuxthreads/man3/pthread_once.3.html">pthread_once</A></B>(3), <B>pthread_spin_init</B>(3), <B>pthread_spin_lock</B>(3),
+<B><A HREF="../man3/pthread_rwlockattr_setkind_np.3.html">pthread_rwlockattr_setkind_np</A></B>(3), <B><A HREF="../man3/pthread_setcancelstate.3.html">pthread_setcancelstate</A></B>(3),
+<B><A HREF="../man3/pthread_setcanceltype.3.html">pthread_setcanceltype</A></B>(3), <B>pthread_setspecific</B>(3),
+<B><A HREF="../man3/pthread_sigmask.3.html">pthread_sigmask</A></B>(3), <B><A HREF="../man3/pthread_sigqueue.3.html">pthread_sigqueue</A></B>(3), and <B><A HREF="../man3/pthread_testcancel.3.html">pthread_testcancel</A></B>(3)
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">pthreads 関数の返り値</A><DD>
+<DT><A HREF="#lbAE">スレッド ID</A><DD>
+<DT><A HREF="#lbAF">スレッドセーフな関数</A><DD>
+<DT><A HREF="#lbAG">async-cancel-safe 関数</A><DD>
+<DT><A HREF="#lbAH">取り消しポイント (cancellation points)</A><DD>
+<DT><A HREF="#lbAI">Linux でのコンパイル</A><DD>
+<DT><A HREF="#lbAJ">POSIX スレッドの Linux での実装</A><DD>
+<DT><A HREF="#lbAK">LinuxThreads</A><DD>
+<DT><A HREF="#lbAL">NPTL</A><DD>
+<DT><A HREF="#lbAM">スレッド実装の判定</A><DD>
+<DT><A HREF="#lbAN">スレッドの実装の選択: LD_ASSUME_KERNEL</A><DD>
+</DL>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,301 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ZIC</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ZIC</H1>
+Section: Linux System Administration (8)<BR>Updated: 2010-02-25<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man8/zic.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+zic - タイムゾーンコンパイラ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>zic</B> [ <B>-v</B> ] [ <B>-d</B> <I>directory</I> ] [ <B>-l</B> <I>localtime</I> ] [ <B>-p</B>
+<I>posixrules</I> ] [ <B>-L</B> <I>leapsecondfilename</I> ] [ <B>-s</B> ] [ <B>-y</B> <I>command</I>
+] [ <I>filename</I> ... ]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+
+
+
+<I>zic</I> はコマンドラインで指定されたファイル (複数指定可) からテキストを読み、
+時刻変換情報ファイルを生成する。ファイル名も読み込みテキストで指定しておく。 <I>filename</I> が <B>-</B> の場合は、標準入力から読み込む。
+<P>
+
+以下のオプションを指定できる:
+<DL COMPACT>
+<DT><B>-d </B><I>directory</I><DD>
+時刻変換情報ファイルを生成するディレクトリを、標準のディレクトリ (以下を参照) ではなく指定したディレクトリにする。
+<DT><B>-l </B><I>timezone</I><DD>
+指定したタイムゾーンをローカルタイムに用いる。 <I>zic</I> は入力に以下の書式のリンク行が含まれているかのように振る舞う。
+<P>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Link<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>timezone</I><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>localtime<BR>
+<DT><B>-p </B><I>timezone</I><DD>
+POSIX 形式のタイムゾーン環境変数を扱うとき、 指定したタイムゾーンのルールを用いる。 <I>zic</I>
+は入力に以下の書式のリンク行が含まれているかのように振る舞う。
+<P>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Link<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>timezone</I><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>posixrules<BR>
+<DT><B>-L </B><I>leapsecondfilename</I><DD>
+閏秒情報を与えられた名前のファイルから読み込む。 このオプションが指定されなかった場合には、 出力ファイルには閏秒の情報は含まれない。
+<DT><B>-v</B><DD>
+データファイルに現れる年が <B><A HREF="../man2/time.2.html">time</A></B>(2)  で表記できる範囲を越えている場合に文句を言う。
+<DT><B>-s</B><DD>
+出力ファイルに格納される時刻の値を、 signed で評価しても unsigned で 評価しても同じ値になるような範囲に制限する。
+このオプションを使うと SVVS 互換なファイルを生成することができる。
+<DT><B>-y </B><I>command</I><DD>
+年の型のチェック (以下参照) に <B>yearistype</B> ではなく指定した <I>command</I> を用いる。
+</DL>
+<P>
+
+入力行はフィールドからなる。 フィールド間は、連続した任意の個数の空白文字によって区切られる。 行頭・行末の空白文字は無視される。
+クォートされていないシャープ文字 (#) が入力行に現れた場合は、 そこから行末まではコメントとして扱われる。 空白文字やシャープ文字をダブルクォート
+(&quot;) で囲めば、 フィールドの一部として用いることができる。 (コメント除去処理を行った後のものを含めて) 空行は無視される。 空行以外の行は、 3
+種類あるタイプの行のいずれかであるとみなされる。 3 つのタイプとは、ルール行 (rule line)、ゾーン行 (zone line)、 リンク行
+(link line) である。
+<P>
+
+ルール行の書式は以下のようなものである。
+<PRE>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+Rule  NAME  FROM  TO    TYPE  IN   ON       AT    SAVE  LETTER/S
+
+例:
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Rule  US    1967  1973  -     Apr  lastSun  2:00  1:00  D
+
+</PRE>
+
+ルール行を構成するフィールドは以下の通り:
+<DL COMPACT>
+<DT><B>NAME</B><DD>
+このルールが所属するルールセットの名前を与える (任意)。
+<DT><B>FROM</B><DD>
+このルールが適用される最初の年を与える。 任意の整数を年として与えることができる。グレゴリオ暦が仮定される。 <I>minimum</I> (あるいはその短縮)
+は整数表記できる最小の年を意味する。 <I>maximum</I> (あるいはその短縮) は整数表記できる最大の年を意味する。 ルールでは時刻値 (time
+value) では表記できない時刻も記述できる。 表記できない時刻は無視される。つまりルールは 異なった時刻値の型を持つホスト間でポータブルである。
+<DT><B>TO</B><DD>
+このルールが適用される最後の年を与える。 <I>minimum</I> と <I>maximum</I> (上述) に加え、 <I>only</I> (またはその短縮)
+を用いることができ、この場合は <B>FROM</B> フィールドに指定した値と同じ値が用いられる。
+<DT><B>TYPE</B><DD>
+ルールの適用される年のタイプを与える。 <B>TYPE</B> が <B>-</B> であれば、このルールは <B>FROM</B> から <B>TO</B> に挟まれた (両端含む)
+全ての年に適用される。 <B>TYPE</B> がそれ以外の場合には、 <I>zic</I> は以下のコマンドを実行して年のタイプをチェックする。
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<B>yearistype</B> <I>year</I> <I>type</I>
+<BR>
+
+返り値が 0 の場合は、その年は与えられたタイプに含まれ、 返り値が 1 の場合は含まれないことになる。
+<DT><B>IN</B><DD>
+ルールが効力を持つ月の名前を指定する。 月名は短縮できる。
+<DT><B>ON</B><DD>
+ルールが効力を持つ日の名前を指定する。 以下のような書式を認識する:
+<PRE>
+
+
+5        その月の第 5 日
+lastSun  その月の最後の日曜日
+lastMon  その月の最後の月曜日
+Sun&gt;=8   第 8 日以降の最初の日曜日
+Sun&lt;=25  第 25 日以前の最後の日曜日
+</PRE>
+
+
+<P>
+曜日の名前は短縮できる。全部綴っても良い。 <B>ON</B> フィールドの内部にはスペースを入れてはいけないことに注意。
+<DT><B>AT</B><DD>
+ルールが効力を持つ一日のうちの時刻を与える。 以下のような書式を認識する:
+<PRE>
+
+
+2        時間での表記
+2:00     時間と分での表記
+15:00    24 時間形式の時間 (正午以降)
+1:28:14  時間・分・秒での表記
+-        0 と同じ
+</PRE>
+
+
+<P>
+ここで 0 時はその日のはじまりであり、 24 時はその日の終わりである。 これらの書式のあとには、以下の文字のいずれかを指定することができる。
+<I>w</I> 与えられた時刻がローカルな
+
+時刻である; <I>s</I> 与えられた時刻がローカルな
+
+時刻である; <I>u</I> (または <I>g</I> または <I>z</I>)  与えられた時刻が標準時 (universal
+time) である。 これらの表意文字がいずれも指定されなかった場合は、 壁時計時刻が仮定される。
+<DT><B>SAVE</B><DD>
+ルールが効力を持っているとき、ローカルな標準時刻に追加すべき 時間の量を与える。このフィールドの書式は <B>AT</B> フィールドのものと同じである
+(ただしもちろん <I>w</I> と <I>s</I> の後置文字は用いられない)。
+<DT><B>LETTER/S</B><DD>
+このルールが効力を持っている場合に用いられるタイムゾーン短縮型の
+
+を与える (例えば
+
+や
+
+における
+
+や
+
+など)。 このフィールドが <B>-</B> であった場合には、
+可変部は存在しない。
+</DL>
+<P>
+
+ゾーン行の書式は以下のようなものである。
+<P>
+<PRE>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Zone  NAME                UTCOFF  RULES/SAVE  FORMAT  [UNTIL]
+
+例:
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Zone                 Australia/Adelaide  9:30    AusCST1971 Oct 31 2:00
+
+</PRE>
+
+ゾーン行を構成するフィールドは以下の通り:
+<DL COMPACT>
+<DT><B>NAME</B><DD>
+タイムゾーンの名前。この名前がこのゾーンの時刻変換情報ファイルを 生成するときに用いられる。
+<DT><B>UTCOFF</B><DD>
+このゾーンの標準時刻を得るために、 UTC に加える時間。 このフィールドの書式は、ルール行の <B>AT</B> および <B>SAVE</B>
+フィールドのものと同じである。時間を UTC から引く必要がある場合は マイナス記号を前置する。
+<DT><B>RULES/SAVE</B><DD>
+タイムゾーンに適用されるルールの名前か、あるいは ローカル標準時刻に加えるべき時間の量を指定する。 このフィールドが <B>-</B>
+ならば、常に標準時刻がこのゾーンに対して用いられる。
+<DT><B>FORMAT</B><DD>
+このタイムゾーンに対するタイムゾーン短縮名の書式。 2 文字の文字列 <B>%s</B> を用いて、どこが
+
+になるかを指定できる。あるいはスラッシュ文字 (/) を用いて 標準の短縮名とサマータイム短縮名を区切ることができる。
+<DT><B>UNTIL</B><DD>
+UTC に対するオフセットか、その場所におけるルールが変更される時刻。 年・月・日・時刻で指定する。
+これが指定された場合には、タイムゾーンの情報は与えられている UTC オフセットから生成され、ルールは指定時刻になると変更される。
+月・日・時刻は、ルールの IN, ON, AT カラムと同じ書式で指定する。 この後に続くカラムは省略できる。 省略されたカラムに対しては、
+可能性のあるもののうち最も早い値がデフォルトで用いられる。
+<DT><DD>
+この行には必ず
+
+行が続く。 継続行はゾーン行と同じ書式を持つが、
+
+と名前は省略される。なぜなら継続行は直前の行の <B>UNTIL</B> フィールドで指定された時刻以降の情報を与えるものだからである。
+継続行にもゾーン行と同じように <B>UNTIL</B> フィールドを指定することができ、この場合はその次の行が さらなる継続行になることとなる。
+</DL>
+<P>
+
+リンク行の書式は以下のようなものである。
+<P>
+<PRE>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Link  LINK-FROM        LINK-TO
+
+例:
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Link              Europe/IstanbulAsia/Istanbul
+
+</PRE>
+
+<B>LINK-FROM</B> フィールドはゾーン行の <B>NAME</B> フィールドが記述される。 <B>LINK-TO</B> フィールドはそのゾーンの別名である。
+<P>
+
+Except for continuation lines, lines may appear in any order in the input.
+<P>
+
+ファイル中で閏秒を記述する行は以下のような書式を持つ。
+<PRE>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+Leap  YEAR  MONTH  DAY  HH:MM:SS  CORR  R/S
+
+例:
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Leap  1974  Dec    31   23:59:60  +     S
+
+</PRE>
+
+
+
+
+
+
+
+
+
+
+
+
+<B>YEAR</B>, <B>MONTH</B>, <B>DAY</B>, <B>HH:MM:SS</B> は閏秒の生じた瞬間を示す。 <B>CORR</B>
+フィールドには、秒が挿入された場合
+
+を、秒がスキップされた場合
+
+を指定する。 <B>R/S</B>
+フィールドには、他のフィールドが記述している閏秒の時刻が UTC ならば
+
+(あるいはその短縮形)
+を、ローカルな壁時計時刻なら
+
+(あるいはその短縮形) を指定する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>ファイル</H2>
+
+/usr/local/etc/zoneinfo<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>生成されたファイル用の標準ディレクトリ<BR>
+<A NAME="lbAF">&nbsp;</A>
+<H2>注意</H2>
+
+二つ以上のローカルタイムを持っている地域では、 ローカルな標準時を 最も早い方の時刻変換ルールの <B>AT</B>
+フィールドに用いる必要があるだろう。さもないと コンパイルされたファイルに記録された最も早い変換時刻が 正しいことが保証されない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+<B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5), <B><A HREF="../man8/zdump.8.html">zdump</A></B>(8)
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">ファイル</A><DD>
+<DT><A HREF="#lbAF">注意</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

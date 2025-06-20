@@ -1,0 +1,722 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FILE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FILE</H1>
+Section: User Commands  (1)<BR>Updated: Copyright but distributable<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/file/release/man1/file.1">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+file
+- ファイルタイプを判定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>file</B>
+
+[
+<B>-bcikLnNprsvz</B>
+
+]
+[
+<B>-f</B>
+
+<I>namefile</I>
+
+]
+[
+<B>-F</B>
+
+<I>separator</I>
+
+]
+[
+<B>-m </B>
+
+<I>magicfiles</I>
+
+]
+<I>file</I>
+
+...
+<BR>
+
+<B>file</B>
+
+<B>-C</B>
+
+[
+<B>-m </B>
+
+magicfile ]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+この man ページは
+<B>file</B>
+
+コマンド version 4.12 について記述している。
+<P>
+
+<B>file</B>
+
+は各引き数をテストして分類する。
+ファイルシステムテスト、マジックナンバーテスト、言語テストの
+順序で 3 つのテストを行う。
+そのうちの<I>最初に</I>成功したテストで、ファイルタイプを表示する。
+<P>
+
+表示されるタイプには通常以下のうち 1 つの単語が含まれる。
+<B>text</B>
+
+(このファイルには表示可能文字といくつかの一般的な制御文字のみが含まれ、
+<FONT SIZE="-1">ASCII</FONT>
+端末で読んでも多分安全である)、
+<B>executable</B>
+
+(このファイルにはプログラムをコンパイルした結果が含まれ、
+<FONT SIZE="-1">UNIX</FONT> カーネルなどにより実行可能な形式である)、
+<B>data</B>
+
+その他のもの (data は通常「バイナリ」または表示不能なファイルである)。
+ただしバイナリデータを含んでいる良く知られた形式のフォーマット
+(core ファイル、tar アーカイブなど) は例外である。
+<I>/usr/share/file/magic</I>
+
+ファイルや file プログラム自身を変更する場合も、
+<B>これらのキーワードは変更しないこと</B>。
+人々は、ディレクトリ内の読み取り可能なファイルに対しては、
+全て ``text'' が表示されると思っている。
+Berkeley がかつてやったように、
+``shell commands text'' を ``shell script'' に変更したりしてはいけない。
+ファイル
+<I>/usr/share/file/magic</I>
+
+は、このプログラムのソースディストリビューションのサブディレクトリ
+<I>Magdir</I>
+
+にある数多くの小さなファイルから機械的に作られている点に注意すること。
+<P>
+
+ファイルシステムのテストは、
+<B><A HREF="../../LDP_man-pages/man2/stat.2.html">stat</A></B>(2)
+
+システムコールの結果の検討に基づいて行われる。
+このプログラムは、ファイルが空であるかや、
+特殊ファイルであるかをチェックする。
+実行中のシステムに特有の既存のファイルタイプ
+(ソケット・シンボリックリンク・名前付きパイプ (FIFO)
+(ただしシステムで実装されている場合)) は、
+システムのヘッダファイル
+<I>&lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</I>
+
+に定義されていれば、すぐに分かる。
+<P>
+
+マジックナンバーテストは、
+特定の決まった形式のデータを含むファイルをチェックするのに使われる。
+もっとも簡単な例は、バイナリ実行可能ファイル (コンパイルされたプログラム)
+<I>a.out</I>
+
+である。
+この形式は標準インクルードディレクトリの
+<I>a.out.h</I>
+
+で定義されている
+(<I>exec.h</I>
+
+の場合もある)。
+これらのファイルにはファイルの先頭付近の特定位置に
+「マジックナンバー」が格納されている。
+これにより <FONT SIZE="-1">UNIX</FONT> オペレーティングシステムは、
+ファイルがバイナリ実行可能であることが分かり、
+そのうちのどのファイルタイプであるかも分かる。
+「マジックナンバー」の考え方は、データファイルに対する拡張にも応用されている。
+ファイルの先頭から近い場所に一定の識別子を持つファイルは、
+通常はこの方法で記述できる。
+これらのファイルについての情報識別子は、コンパイルされたマジックファイル
+<I>/usr/share/file/magic.mgc</I>
+
+から読み込まれる。
+このコンパイルされたファイルがない場合は、
+<I>/usr/share/file/magic</I>
+
+から読み込まれる。
+更に
+<B>file</B>
+
+は
+<I>$HOME/.magic.mgc</I>
+
+または
+<I>$HOME/.magic</I>
+
+からマジックファイルのエントリを探す。
+<P>
+
+ファイルがマジックファイルのどのエントリともマッチしなかった場合、
+テキストファイルであるかを調べる。
+文字集合内の表示可能なテキストを構成する
+バイト列の範囲の違いを調べることにより、
+ASCII, ISO-8859-x, (Macintosh や IBM PC システムで使用されている)
+ISO に準拠しない 8 ビット拡張 ASCII 文字集合、
+UTF-8 エンコードされたユニコード、UTF-16 エンコードされたユニコード、
+EBCDIC 文字集合を識別する。
+ファイルがこれらのテストをパスすると、文字集合名が表示される。
+ASCII, ISO-8859-x, UTF-8, 拡張 ASCII のファイルは、
+これはほぼ全ての端末で読むことができるので、
+``text'' として識別される。
+UTF-16 と EBCDIC のファイルは、
+たとえテキストを含んでいたとしても読む前に変換が必要なので、
+単なる ``character data'' とされる。
+さらに
+<B>file</B>
+
+はテキスト型ファイルの他の特徴も決定しようとする。
+ファイルの行が Unix で標準的な LF ではなく、
+CR, CRLF, NEL で終了している場合は、その旨を表示する。
+ファイルに組み込み (embedded) エスケープシーケンスや
+重ね打ち (overstriking) が含まれている場合も、その旨を表示する。
+<P>
+
+<B>file</B>
+
+はテキスト型ファイルで使われている文字集合を決定した後は、
+ファイルが書かれている言語を決定しようとする。
+言語テストではファイルの最初の数ブロックのどこかに現れる特定の文字列
+(<I>names.h</I>
+
+を参照) を探す。
+例えばキーワード
+<B>.br</B>
+
+があれば、そのファイルは多くの場合
+<B><A HREF="../../GNU_groff/man1/troff.1.html">troff</A></B>(1)
+
+の入力ファイルであることを示しており、
+キーワード
+<B>struct</B>
+
+は C 言語プログラムであることを示している。
+これらのテストは前のテストに比べると信頼性が低いので、
+最後に実行される。
+言語テストのルーチンは他のファイルタイプ (例えば
+<B><A HREF="../../GNU_tar/man1/tar.1.html">tar</A></B>(1)
+
+アーカイブ) に関するテストも行う。
+<P>
+
+上に挙げた文字集合のどれにも当てはまらないファイルは、
+単に ``data'' と表示される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-b, --brief</B>
+
+<DD>
+出力行の最初にファイル名を表示しない (簡易モード)。
+<DT><B>-c, --checking-printout</B>
+
+<DD>
+マジックファイルの解析形式を表示してチェックする。
+通常は
+<B>-m</B>
+
+オプションと一緒に用いて、
+新しいマジックファイルをインストールする前のデバッグに使う。
+<DT><B>-C, --compile</B>
+
+<DD>
+マジックファイルを事前に解析した内容を含む出力ファイル
+magic.mgc を書き出す。
+<DT><B>-f, --files-from</B><I> namefile</I>
+
+<DD>
+他の引き数リストより先に、検査するファイルの名前を
+<I>namefile</I>
+
+ファイルから読み込む
+(1 行に 1 つのファイル名)。 
+<I>namefile</I>
+
+または少なくとも 1 つのファイル名引き数がなければいけない。
+標準入力をテストする場合は、ファイル名引き数として ``-'' を使うこと。
+<DT><B>-F, --separator</B><I> separator</I>
+
+<DD>
+指定した文字列をファイル名とファイルをテストした結果の区切り文字とする。
+デフォルトは ``:'' である。
+<DT><B>-i, --mime</B>
+
+<DD>
+file コマンドの出力を人間が読みやすい昔ながらのものではなく、
+mime タイプ文字列にする。
+したがって ``ASCII text'' ではなく、
+``text/plain; charset=us-ascii'' のように出力される。
+このオプションを動作させるため、
+file コマンドが認識するファイルの取り扱い方法
+(多くのテキストファイルタイプやディレクトリ) を変更し、
+別の ``magic'' ファイルを使うようにした。
+(下記の「ファイル」のセクションを参照)。
+<DT><B>-k, --keep-going</B>
+
+<DD>
+最初にマッチしたもので停止せず、次のマッチングに進む。
+<DT><B>-L, --dereference</B>
+
+<DD>
+(システムがシンボリックリンクをサポートしている場合は)
+<B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1)
+
+の同じ名前のオプションと同様に、シンボリックリンクを辿るようにさせる。
+<DT><B>-m, --magic-file</B><I> list</I>
+
+<DD>
+マジックナンバーが書かれた別のファイルのリストを指定する。
+1 つのファイルでも、コンマで区切られたファイルのリストでもよい。
+コンパイル済みのマジックファイルが一緒に指定された場合は、
+代りにそれを使う。
+<DT><B>-n, --no-buffer</B>
+
+<DD>
+1 つのファイルをチェックする毎に、標準出力をフラッシュする。
+これは複数のファイルをチェックするときにのみ役立つ。
+このオプションは、ファイルタイプをパイプから出力する
+プログラムで使われることを意図している。
+-i または --mime オプションと一緒に指定すると、
+このプログラムは各ファイル名の後に &quot;.mime&quot; を追加する。
+<DT><B>-N, --no-pad</B>
+
+<DD>
+出力を整列するためのファイル名への空白の追加を行わない。
+<DT><B>-p, --preserve-date</B>
+
+<DD>
+<B><A HREF="../../LDP_man-pages/man2/utime.2.html">utime</A></B>(2)
+
+または
+<B><A HREF="../../LDP_man-pages/man2/utimes.2.html">utimes</A>(2)</B>
+
+をサポートするシステムでは、
+<B><A HREF="../man1/file.1.html">file</A></B>(1)
+
+が解析したファイルを読み込まれなかったかのようにするため、
+アクセス時刻を保存しようとする。
+<DT><B>-r, --raw</B>
+
+<DD>
+印字不能文字を \ooo に変換しない。
+通常、
+<B>file</B>
+
+は印字不能文字を 8 進数表現に変換する。
+<DT><B>-s, --special-files</B>
+
+<DD>
+通常
+<B>file</B>
+
+は、引き数で指定されたファイルのうち
+<B><A HREF="../../LDP_man-pages/man2/stat.2.html">stat</A></B>(2)
+
+で通常のファイル (ordinary file) とされたファイルのみを読み込んで、
+タイプの決定を行う。
+特殊ファイルを読み込むと異常な結果を引き起こすかも知れないため、
+この動作により問題を防止している。
+<B>-s</B>
+
+オプションを指定すると、
+<B>file</B>
+
+は引き数で指定されたブロックスペシャルファイルや
+キャラクタスペシャルファイルも読み込む。
+ブロックスペシャルファイルである
+raw ディスクパーティションのデータの
+ファイルシステムタイプを決定するのに役立つ。
+このオプションを指定すると
+<B>file</B>
+
+は
+<B><A HREF="../../LDP_man-pages/man2/stat.2.html">stat</A></B>(2)
+
+が返すファイルサイズを無視する。
+これは raw ディスクパーティションのサイズを
+0 として返すシステムも存在するためである。
+<DT><B>-v, --version</B>
+
+<DD>
+プログラムのバージョンを表示して終了する。
+<DT><B>-z, --uncompress</B>
+
+<DD>
+圧縮ファイルの中も検査する。
+<DT><B>--help</B>
+
+<DD>
+ヘルプメッセージを表示して終了する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/usr/share/file/magic.mgc</I>
+
+<DD>
+デフォルトのコンパイル済みのマジックナンバーのリスト。
+<DT><I>/usr/share/file/magic</I>
+
+<DD>
+デフォルトのマジックナンバーのリスト。
+<DT><I>/usr/share/file/magic.mime.mgc</I>
+
+<DD>
+デフォルトのコンパイル済みのマジックナンバーのリスト。
+-i オプションが指定された場合に、mime タイプを出力するのに使用される。
+<DT><I>/usr/share/file/magic.mime</I>
+
+<DD>
+デフォルトのマジックナンバーのリスト。
+-i オプションが指定された場合に、mime タイプを出力するのに使用される。
+<DT><I>/etc/magic</I>
+
+<DD>
+マジックナンバーについてのローカルな追加情報。
+<P>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>環境変数</H2>
+
+環境変数
+<B>MAGIC</B>
+
+はデフォルトのマジックナンバーファイルの名前を設定する。
+<B>file</B>
+
+はこの変数の値に &quot;.mime&quot; と &quot;.mgc&quot; を適宜追加する
+(どちらか一方の場合もある)。
+この変数が設定されると、
+<B>file</B>
+
+は
+<B>$HOME/.magic</B>
+
+をオープンしない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man4/magic.4.html">magic</A></B>(4)
+
+- マジックファイルのフォーマットについての記述。
+<BR>
+
+<B><A HREF="../../GNU_binutils/man1/strings.1.html">strings</A></B>(1),<B> <A HREF="../../0MultiFileIdx/man1/od.1.html">od</A></B>(1),<B> <A HREF="../../util-linux/man1/hexdump.1.html">hexdump</A></B>(1)
+
+- 非テキストファイルを検査するためのツール。
+<A NAME="lbAI">&nbsp;</A>
+<H2>標準への準拠</H2>
+
+このプログラムは System V Interface Definition の
+FILE(CMD) より優れていると考えている。
+ファイルに含まれている曖昧な言語から決定するという点では似ている。
+動作は同じ名前の System V のプログラムとほぼ互換性がある。
+このバージョンはより多くのマジックナンバーを認識する。
+しかし多くの場合、System V のものとは異なった
+(ただしもっと正確な) 出力を行う。
+<P>
+
+System V バージョンとの重要な違いは、
+このバージョンでは空白を区切り文字として扱うために、
+パターン文字列における空白文字をしなければならないという点にある。
+例えば、
+<BR>
+
+&gt;10<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT>string<TT>&nbsp;&nbsp;</TT>language impress&nbsp;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>(imPRESS data)<BR>
+<BR>
+
+という既存のマジックファイルは、
+<BR>
+
+&gt;10<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT>string<TT>&nbsp;&nbsp;</TT>language\ impress<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>(imPRESS data)<BR>
+<BR>
+
+のように変更しなければならない。
+更にこのバージョンでは、バックスラッシュを含むパターン文字列は
+エスケープしなければならない。
+例えば、
+<BR>
+
+0<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>string<TT>&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>\begindata<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>Andrew Toolkit document<BR>
+<BR>
+
+という既存のマジックファイルは、
+<BR>
+
+0<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>string<TT>&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>\\begindata<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>Andrew Toolkit document<BR>
+<BR>
+
+のように変更しなければならない。
+<P>
+
+Sun Microsystems の SunOS releases 3.2 以降には、
+System V のものから派生した
+<B><A HREF="../man1/file.1.html">file</A></B>(1)
+
+コマンドが含まれているが、いくつか拡張されている。
+私の作ったバージョンは、Sun のものと些細な違いしかない。
+Sun のバージョンは `&amp;' オペレータの拡張が含まれ、
+例えば以下のように使われる。
+<BR>
+
+&gt;16<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT>long&amp;0x7fffffff<TT>&nbsp;</TT>&gt;0<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>not stripped<BR>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>マジックディレクトリ</H2>
+
+マジックファイルのエントリは、
+いろいろな情報源、主に USENET から集められ、
+多くの著者から寄贈してもらった。
+Christos Zoulas (アドレスは以下) はマジックファイルエントリを
+集めたり修正したりしてくれた。
+マジックファイルのエントリを整理統合したものは、
+定期的に配布される予定である。
+<P>
+
+マジックファイルのエントリは順番が重要である。
+使用しているシステムによっては、順番の組みが不正であるかもしれない。
+古い
+<B>file</B>
+
+コマンドがマジックファイルを使っている場合、
+比較のために古いマジックファイルを残しておくこと
+(<I>/usr/share/file/magic.orig</I>
+
+に名前を変更しておく)。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+<PRE>
+$ file file.c file /dev/{wd0a,hda}
+file.c:   C program text
+file:     ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV),
+          dynamically linked (uses shared libs), stripped
+/dev/wd0a: block special (0/0)
+/dev/hda: block special (3/0)
+
+$ file -s /dev/wd0{b,d}
+/dev/wd0b: data
+/dev/wd0d: x86 boot sector
+
+$ file -s /dev/hda{,1,2,3,4,5,6,7,8,9,10}
+/dev/hda:   x86 boot sector
+/dev/hda1:  Linux/i386 ext2 filesystem
+/dev/hda2:  x86 boot sector
+/dev/hda3:  x86 boot sector, extended partition table
+/dev/hda4:  Linux/i386 ext2 filesystem
+/dev/hda5:  Linux/i386 swap file
+/dev/hda6:  Linux/i386 swap file
+/dev/hda7:  Linux/i386 swap file
+/dev/hda8:  Linux/i386 swap file
+/dev/hda9:  empty
+/dev/hda10: empty
+
+$ file -i file.c file /dev/{wd0a,hda}
+file.c:      text/x-c
+file:        application/x-executable, dynamically linked (uses shared libs),
+not stripped
+/dev/hda:    application/x-not-regular-file
+/dev/wd0a:   application/x-not-regular-file
+
+</PRE>
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>履歴</H2>
+
+少なくとも Research Version 4 以降の全ての <FONT SIZE="-1">UNIX</FONT> に、
+<B>file</B>
+
+コマンドは含まれている
+(man ページの日付は 1973 年 11 月である)。
+System V バージョンでは重大な変更が行われ、
+マジックナンバータイプのリストを外部に保持するようになった。
+この変更はプログラムを幾らかは遅くしたが、とても柔軟にした。
+<P>
+
+System V バージョンをベースにしたこのプログラムは、
+誰のソースコードも見ずに
+Ian Darwin &lt;<A HREF="mailto:ian@darwinsys.com">ian@darwinsys.com</A>&gt; によって書かれた。
+<P>
+
+John Gilmore はコードを広範囲にわたって改訂し、
+最初のバージョンより改良した。
+Geoff Collyer はいくつかの欠点を見つけ、
+マジックファイルエントリを提供した。
+`&amp;' オペレータについては 1989 年に
+Rob McMahon, <A HREF="mailto:cudcv@warwick.ac.uk">cudcv@warwick.ac.uk</A> が貢献した。
+<P>
+
+Guy Harris, <A HREF="mailto:guy@netapp.com">guy@netapp.com</A> は 1993 年から現在に至るまで
+多くの変更を行っている。
+<P>
+
+Christos Zoulas (<A HREF="mailto:christos@astron.com">christos@astron.com</A>) は 1990 年に最初の開発を行い、
+現在までメンテナンスを行っている。
+<P>
+
+2000 年の Chris Lowth, <A HREF="mailto:chris@lowth.com">chris@lowth.com</A> による変更:
+別のマジックファイルと内部ロジックを使い、
+``-i'' で mime タイプ文字列を出力するようにした。
+<P>
+
+2000 年 7 月の Eric Fischer (<A HREF="mailto:enf@pobox.com">enf@pobox.com</A>) による変更:
+文字コードを識別し、非 ASCII ファイルの言語を識別するようにした。
+<P>
+
+&quot;Magdir&quot; ディレクトリ (/etc/magic ファイルのソース) の貢献者のリストは、
+長すぎるのでここには含められない。
+貢献してくれた人は自分が貢献したことを知っているでしょう。
+感謝します。
+<A NAME="lbAM">&nbsp;</A>
+<H2>法的な注意</H2>
+
+Copyright (c) Ian F. Darwin, Toronto, Canada, 1986-1999.
+このソフトウェアは standard Berkeley Software Distribution copyright により
+保護されている。
+ソース配布にある LEGAL.NOTICE ファイルを参照すること。
+<P>
+
+ファイル
+<I>tar.h</I>
+
+と
+<I>is_tar.c</I>
+
+は John Gilmore によって書かれたもので、
+彼のパブリックドメイン
+<B>tar</B>
+
+プログラムに由来する。
+この 2 つのファイルには上記のライセンスが適用されない。
+<A NAME="lbAN">&nbsp;</A>
+<H2>バグ</H2>
+
+magdir にある全てのファイルから Magic ファイルを自動的に構築する
+もっと良い方法があるべきだ。
+それはどんなものだろうか ?
+起動を速くするためには、
+マジックファイルをバイナリにコンパイルしておくべきだろう
+(つまり
+<B>ndbm</B>(3)
+
+や、異なる OS によるネットワーク環境で使うために固定長の
+<FONT SIZE="-1">ASCII</FONT>
+文字列にするのも良いだろう)。
+これにより、System V バージョンの柔軟性を備えたまま、
+同じ名前の Version 7 のプログラムより速くなるだろう。
+<P>
+
+<B>file</B>
+
+には正確さよりも速度を重視したアルゴリズムが使われているため、
+テキストファイルの内容を読み誤ることがある。
+<P>
+
+(主にプログラミング言語を対象とした) テキストファイルのサポートは、
+単純化されていて不十分であり、更新するには再コンパイルが必要である。
+<P>
+
+後続の行を追っていくためには、``else'' 節を付けておくべきである。
+<P>
+
+マジックファイルとキーワードで正規表現をサポートすべきである。
+<FONT SIZE="-1">ASCII TAB</FONT>
+をフィールドの区切り文字として使用するのは、
+見苦しく編集しづらいが、定着している。
+例えば
+<B><A HREF="../../GNU_groff/man1/troff.1.html">troff</A></B>(1)
+
+コマンドに対する man ページのマクロのように、
+キーワードで大文字を許可するようにするのが望ましいだろう。
+正規表現がサポートされれば、これが簡単にできるだろう。
+<P>
+
+このプログラムは <FONT SIZE="-2">FORTRAN</FONT> を判別できない。
+開始行でインデントされているキーワードを見て、
+<FONT SIZE="-2">FORTRAN</FONT> であると判断すべきである。
+正規表現がサポートされれば、これが簡単にできるだろう。
+<P>
+
+<I>ascmagic</I>
+
+にあるキーワードは、多分 Magic ファイルに入れるべきだろう。
+これはオフセット値に `*' のようなキーワードを使うことで可能だろう。
+<P>
+
+その他の最適化としてはマジックファイルのソートがある。
+これにより一度読み込んでしまえば、
+最初のバイト・最初のワード・最初の long 型、... というように
+全てのテストで突き止めていくことができる。
+マジックファイルエントリの衝突について苦情を言ってください。
+マジックファイルのエントリのソートは、
+マジックファイルにおける位置ではなくファイルオフセットで行う、
+というルールにするべきだろうか ?
+<P>
+
+推定した結果が「どのくらい良いか」を評価する手段を、
+プログラムが提供すべきである。
+最終的には (例えば ``Newsgroups:'' に対する ``Return-Path:'' のように) 
+他の推定結果より良くない推定結果
+(例えば、ファイルの最初の 5 文字が ``From '' など) は削除する。
+しかし他の推定結果が出なければ、
+最初の推定結果を使えるようにしておくべきである。
+<P>
+
+このプログラムは、いくつかのベンダの file コマンドより遅い。
+複数文字コードを新しくサポートしたことで、いっそう遅くなってしまった。
+<P>
+
+この man ページ、特にこのセクションが長すぎる。
+<A NAME="lbAO">&nbsp;</A>
+<H2>入手方法</H2>
+
+オリジナルの作者の最新バージョンは、anonymous FTP で
+<B><A HREF="ftp://ftp.astron.com">ftp.astron.com</A></B>
+
+のディレクトリ
+<I>/pub/file/file-X.YZ.tar.gz</I>
+
+から入手できる。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">環境変数</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">標準への準拠</A><DD>
+<DT><A HREF="#lbAJ">マジックディレクトリ</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAL">履歴</A><DD>
+<DT><A HREF="#lbAM">法的な注意</A><DD>
+<DT><A HREF="#lbAN">バグ</A><DD>
+<DT><A HREF="#lbAO">入手方法</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:37 GMT, December 05, 2022
+</BODY>
+</HTML>

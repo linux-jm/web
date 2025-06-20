@@ -1,0 +1,184 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DEPMOD.D</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>DEPMOD.D</H1>
+Section: depmod.d (5)<BR>Updated: 2021/01/29<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/kmod/release/man5/depmod.d.5">roff page</A><HR>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+depmod.d - depmod 用の設定ディレクトリ
+<A NAME="lbAC">&nbsp;</A>
+<H2>概要</H2>
+
+<P>
+
+/usr/lib/depmod.d/*.conf
+<P>
+
+/usr/local/lib/depmod.d/*.conf
+<P>
+
+/run/depmod.d/*.conf
+<P>
+
+/etc/depmod.d/*.conf
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+モジュールが <B>depmod</B> コマンドによって処理される順番は、
+全体としても、モジュールごとにも変更することができます。
+これが役に立つ典型的なケースは、カーネルに付属するモジュールが、
+同じモジュールのカスタムビルト版で補正されており、
+ユーザとしては、カーネルの供給するモジュールのバージョンを使わないようにするために、
+処理の優先順位を変更したい場合です。
+<P>
+
+depmod.d の下にあるファイルの書式は単純です。1 行 1 コマンドで、空行や
+'#' で始まる行は無視されます (後者はコメントを付けるのに使えます)。行末に
+1 個の '\' があると、その行は次の行に続くことになります。これを使うと、
+ファイルの見かけがちょっとよくなります。
+<A NAME="lbAE">&nbsp;</A>
+<H2>コマンド</H2>
+
+<P>
+
+search <I>subdirectory...</I>
+<DL COMPACT><DT><DD>
+このコマンドを使うと、/lib/modules
+(あるいは、モジュールの置き場として設定されたほかの場所)
+以下のサブディレクトリが、<B>depmod</B> によって処理される順番を指定することができます。
+リストするディレクトリの順番では、最初のものの優先度が最も高く、
+最後のものの優先度が最も低くなります。スペシャルキーワードの <B>built-in</B>
+は、カーネルによってインストールされる標準のモジュールディレクトリを指しています。
+もう一つのスペシャルキーワード <B>external</B> は、<B>external</B>
+コマンドによって定義される外部のディレクトリのリストを指しています。
+<P>
+デフォルトでは、<B>depmod</B> は、プログラムに埋め込まれた &quot;updates built-in&quot;
+という検索文字列を使って、<B>updates</B> という名前のディレクトリに、<B>built-in</B>
+よりも高い優先度を与えています。でも、もっと複雑な順番の設定も可能であり、
+有名なディストリビューションのいくつかでは、
+そうした順番が実際に使われています。
+</DL>
+
+<P>
+
+override <I>modulename</I> <I>kernelversion</I> <I>modulesubdirectory</I>
+<DL COMPACT><DT><DD>
+このコマンドを使うと、同じ名前を持つ複数のモジュールが <B>depmod</B>
+コマンドの処理の対象になる場合に、
+特定のモジュールについて、使用するバージョンを変更することができます。
+ある一つのカーネルを指定することもできますし、ワイルドカードの *
+を使って、すべてのカーネルを指定することも可能です。(書式中の)
+<I>modulesubdirectory</I> は、/lib/modules
+(あるいは、モジュールの存在するほかの場所) 以下のサブディレクトリの名前であり、
+処理対象になるモジュールがインストールされているところです。
+<P>
+たとえば、更新版の出た <B>kmod</B>
+という名前のテストモジュールの優先度を、&quot;override kmod * extra&quot;
+というコマンドを指定することで変更することができます。
+このようにすると、/lib/modules (あるいは、モジュールの存在するほかの場所)
+の内にある <B>extra</B> というサブディレクトリ以下にインストールされているモジュールの中に、
+モジュール名のマッチするものがあれば、
+カーネルによってすでに提供されている同名のどんなモジュールよりも、
+それが高い優先度を持つようになるのです。
+</DL>
+
+<P>
+
+external <I>kernelversion</I> <I>absolutemodulesdirectory...</I>
+<DL COMPACT><DT><DD>
+このコマンドでは、ディレクトリのリストを指定しますが、そのリストは、<B>search</B>
+コマンドにおける優先順位に従って照合されることになります。
+順序はここでも意味があり、先に挙げたディレクトリが、より高い優先度を持ちます。
+<P>
+<I>kernelversion</I> は、POSIX の正規表現、またはワイルドカードの * です。<B>override</B>
+におけると同様です
+</DL>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>著作権</H2>
+
+<P>
+
+このマニュアルページは、&quot;Copyright 2006-2010, Jon Masters,
+Red Hat, Inc&quot; です。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<P>
+
+<B><A HREF="../man8/depmod.8.html">depmod</A></B>(8)
+<A NAME="lbAH">&nbsp;</A>
+<H2>著者</H2>
+
+<P>
+
+<B>Jon Masters</B> &lt;<A HREF="mailto:jcm@jonmasters.org">jcm@jonmasters.org</A>&gt;
+<DL COMPACT><DT><DD>
+開発者
+</DL>
+
+<P>
+
+<B>Robby Workman</B> &lt;<A HREF="mailto:rworkman@slackware.com">rworkman@slackware.com</A>&gt;
+<DL COMPACT><DT><DD>
+開発者
+</DL>
+
+<P>
+
+<B>Lucas De Marchi</B> &lt;<A HREF="mailto:lucas.de.marchi@gmail.com">lucas.de.marchi@gmail.com</A>&gt;
+<DL COMPACT><DT><DD>
+開発者
+</DL>
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">概要</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">コマンド</A><DD>
+<DT><A HREF="#lbAF">著作権</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

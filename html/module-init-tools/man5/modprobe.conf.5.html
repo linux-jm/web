@@ -1,0 +1,139 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MODPROBE.CONF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MODPROBE.CONF</H1>
+Section:  (5)<BR>Updated: 30 September 2004<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/module-init-tools/release/man5/modprobe.conf.5">roff page</A><HR>
+
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+modprobe.conf - modprobe の設定ファイル
+<A NAME="lbAC">&nbsp;</A>
+<H2>このマニュアルについて</H2>
+
+<P>
+
+これは、module-init-tools パッケージに所属する <B>modprobe</B>
+の設定ファイル <B>modprobe.conf</B> の説明です。module-init-tools
+は、現在では kmod パッケージに引き継がれており、設定ファイルのマニュアルも
+<B>modprobe.d</B> に変わっているので、そちらをご覧になることをお勧めします。
+(2022/12/02, Linux JM Project)
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+<B>modprobe</B> コマンドはモジュールの依存関係に応じて 複数のモジュールを追加したり削除したりできるため、
+これらのモジュールにどのオプションを使うかを指定する手段が必要である。 <I>/etc/modprobe.conf</I> (または
+<I>/etc/modprobe.conf</I> が存在しない場合、 <I>/etc/modprobe.d</I> ディレクトリ以下のすべてのファイル) は
+必要に応じてこれらのオプションを指定する。 また、便利なようにエイリアス (モジュールの別名) を作成するためにも用いられる。 最後に、
+(複数のモジュールを登録するなどの) 特別な要求に応えるために、 <B>modprobe</B> の通常の振る舞いを完全に無効にして乗っ取ることができる。
+<P>
+
+モジュール名やエイリアス名には (他のモジュール名と同様に)  - や _ を含めることができる。 ここで、 - と _
+はすべてのモジュールコマンドにおいて、 互いに入れ替え可能である (区別されない) ことに注意。
+<P>
+
+<I>modprobe.conf</I> や <I>modprobe.d</I> 以下のファイルの形式は単純である。 1 行に 1 コマンドで、 空行と #
+で始まる行は無視される (コメントを追加するのに使える) 。 行末の \ は次の行に続くことを意味し、これを使えばファイルが少し見やすくなる。
+<P>
+
+書式は <I>modules.conf</I> を簡単にしたものである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>コマンド</H2>
+
+<DL COMPACT>
+<DT><B>alias </B><I>wildcard</I><B> </B><I>modulename</I><B> </B><DD>
+モジュールの別名を付ける。 例えば、 &quot;alias my-mod really_long_modulename&quot; とすると、 &quot;modprobe
+really_long_modulename&quot; の代わりに &quot;modprobe my-mod&quot; を使うことができる。
+シェル形式のワイルドカードも使うことができ、 &quot;alias my-mod* really_long_modulename&quot; とすると &quot;modprobe
+my-mod-something&quot; も同じ効果となる。 他のエイリアスに対するエイリアスを設定することはできない (正しく動作しない) が、
+エイリアスにオプションを設定することができ、 それらは他のオプションに追加される。
+<P>
+モジュールはそれ自身にエイリアスを持つことができる点に注意。 それらは <B>modinfo</B> で見ることができる。
+これらのエイリアスは最後の望みとして使われる (つまり、その名前の実モジュールもなく、設定ファイル中に その名前の <B>install</B>,
+<B>remove</B>, <B>alias</B> コマンドが 存在しない場合に使われる) 。
+<DT><B>options </B><I>modulename</I><B> </B><I>option...</I><B> </B><DD>
+このコマンドで モジュール <I>modulename</I> (エイリアスも可) に オプションを追加することができる。 ここで設定されたオプションは
+カーネルに登録される際に毎回使われ、 (<B>modprobe</B> <I>modulename</I> で) 直接登録される場合にも
+そのモジュールに依存するモジュールと一緒に登録される場合にも 使われる。
+<P>
+モジュール自身に対する <B>option</B> 、 エイリアスに対する <B>option</B> 、 コマンドラインのオプションは、
+全てのオプションがいっしょに渡される。
+<DT><B>install </B><I>modulename</I><B> </B><I>command...</I><B> </B><DD>
+<I>modprobe.conf</I> の中でもっとも強力なコマンドである。 <B>modprobe</B> は、 通常はカーネルにモジュールを登録するが、
+install コマンドを記述すると、 代わりにここで指定された command を実行する。 command はどんなシェルコマンドでもよい。
+そのため、どんな複雑な処理でも思いどおりに指定できる。 例えば、モジュール &quot;fred&quot; が、 &quot;barney&quot; がインストールされている状態のほうが
+うまく動作する (が依存関係にないので <B>modprobe</B> が自動的にロードしない) 場合、 &quot;install fred
+/sbin/modprobe barney; /sbin/modprobe --ignore-install fred&quot; と書けば、
+望みどおりのことをさせることができる。 ここで、 <B>--ignore-install</B> は 2 番目の <B>modprobe</B> が同じ
+<B>install</B> コマンドを 再び実行しないようにするためのものである。 <B>remove</B> も参照。
+<P>
+<B>install</B> を使って、 実際には存在しないモジュールを作ることもできる。 例えば、 &quot;install probe-ethernet
+/sbin/modprobe e100 || /sbin/modprobe eepro100&quot; と書けば、 &quot;modprobe
+probe-ethernet&quot; としたときに、 まず e100 ドライバを試し、次に eepro100 を試す。
+<DT><B>remove </B><I>modulename</I><B> </B><I>command...</I><B> </B><DD>
+上の <B>install</B> コマンドと同様であるが、 &quot;modprobe -r&quot; が呼び出されたときに実行される。 上の 2
+つの例を削除にあてはめると、 &quot;remove fred /sbin/modprobe -r --ignore-remove fred &amp;&amp;
+/sbin/modprobe -r barney&quot; および &quot;remove probe-ethernet /sbin/modprobe -r
+eepro100 || /sbin/modprobe -r e100&quot; のようになる。
+<DT><B>include </B><I>filename</I><B> </B><DD>
+このコマンドを使うと、 他の設定ファイルまたはディレクトリ全体を読み込むことができ、 これが便利なこともある。 読み込まれたファイル中のエイリアスは
+現在のファイルで定義されたエイリアスを上書きすることに注意。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>下位互換性</H2>
+
+<P>
+
+現在の (2.4 または 2.2 の) モジュール設定から <I>modprobe.conf</I> を生成してくれる
+<B>generate_modprobe.conf</B> というプログラムがある。
+<P>
+
+書式は以前の <I>/etc/modules.conf</I> と似ているが、 多くの機能が削除されている。 これには 2 つの理由がある: まず、
+install および remove コマンドでほとんど何でもできる。 二つ目に、 module-init-tools の modprobe は
+他のツールで簡単に置き換えることができるよう、 十分単純になるように設計されている。
+<P>
+
+実際のモジュールの登録の複雑さが 3 つのシステムコール (open, read, init_module) で軽減され、 <I>modules.dep</I>
+ファイルが単純でオープンであるおかげで、 もし必要があればもっと強力な改良版の modprobe を作ることも可能である。
+<A NAME="lbAG">&nbsp;</A>
+<H2>著作権</H2>
+
+<P>
+
+このマニュアルページの著作権表示は Copyright 2004, Rusty Russell, IBM Corporation.
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<P>
+
+<B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8), <B><A HREF="../man5/modules.dep.5.html">modules.dep</A></B>(5)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">このマニュアルについて</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">コマンド</A><DD>
+<DT><A HREF="#lbAF">下位互換性</A><DD>
+<DT><A HREF="#lbAG">著作権</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

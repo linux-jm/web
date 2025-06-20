@@ -1,0 +1,158 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LDCONFIG</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LDCONFIG</H1>
+Section: Linux Programmer's Manual (8)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man8/ldconfig.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ldconfig - 動的リンカーによる実行時の結合関係を設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/sbin/ldconfig</B> [<B>-nNvXV</B>] [<B>-f</B> <I>conf</I>] [<B>-C</B> <I>cache</I>] [<B>-r</B>
+<I>root</I>] <I>directory</I>...
+
+<P>
+
+
+<B>/sbin/ldconfig</B> <B>-l</B> [<B>-v</B>] <I>library</I>...
+
+<P>
+
+
+<B>/sbin/ldconfig</B> <B>-p</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>ldconfig</B> creates the necessary links and cache to the most recent shared
+libraries found in the directories specified on the command line, in the
+file <I>/etc/ld.so.conf</I>, and in the trusted directories, <I>/lib</I> and
+<I>/usr/lib</I> (on some 64-bit architectures such as x86-64, <I>/lib</I> and
+<I>/usr/lib</I> are the trusted directories for 32-bit libraries, while
+<I>/lib64</I> and <I>/usr/lib64</I> are used for 64-bit libraries).
+<P>
+
+キャッシュは実行時リンカー <I>ld.so</I> または <I>ld-linux.so</I> によって使われる。 <B>ldconfig</B>
+は処理するライブラリのヘッダー部分とファイル名をチェックし、 どのバージョンに対してリンクを更新すべきかを判断する。
+<P>
+
+
+
+
+
+<B>ldconfig</B> は ELF ライブラリの種類 (libc5 か libc6/glibc か) を判断するとき、 そのライブラリがリンクしている
+C ライブラリを参考にする。
+<P>
+
+すでに存在しているライブラリの中には、種類を区別するために充分な 情報が含まれていないものもある。 このため <I>/etc/ld.so.conf</I>
+ファイルでライブラリの形式を指定することができるようになっている。 これは区別不能な ELF ライブラリ「だけ」に用いるものである。 フォーマットは
+&quot;dirname=TYPE&quot; とする。 ここで TYPE は libc4, libc5, libc6 のいずれかである
+(この書式はコマンドラインでも使える)。 「スペースを入れてはならない」。 <B>-p</B> オプションも見ておくこと。 <B>ldconfig</B>
+は通常スーパーユーザー権限で実行しなければならない。 root が所有しているディレクトリやファイルへの書き込み権限が 必要になるからである。
+<P>
+
+Note that <B>ldconfig</B> will only look at files that are named <I>lib*.so*</I>
+(for regular shared objects) or <I>ld-*.so*</I> (for the dynamic loader
+itself).  Other files will be ignored.  Also, <B>ldconfig</B> expects a certain
+pattern to how the symlinks are set up, like this example, where the middle
+file (<B>libfoo.so.1</B> here) is the SONAME for the library:
+<P>
+
+
+
+libfoo.so -&gt; libfoo.so.1 -&gt; libfoo.so.1.12
+
+
+<P>
+
+Failure to follow this pattern may result in compatibility issues after an
+upgrade.
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-c</B> <I>fmt</I>, <B>--format=</B><I>fmt</I><DD>
+
+(Since glibc 2.2)  Cache format to use: <I>old</I>, <I>new</I>, or <I>compat</I>.  Since
+glibc 2.32, the default is <I>new</I>.  Before that, it was <I>compat</I>.
+<DT><B>-C </B><I>cache</I><DD>
+<I>cache</I> を <I>/etc/ld.so.cache</I> の代わりに用いる。
+<DT><B>-f </B><I>conf</I><DD>
+
+<I>conf</I> を <I>/etc/ld.so.conf</I> の代わりに用いる。
+<DT><B>-i</B>, <B>--ignore-aux-cache</B><DD>
+
+(Since glibc 2.7)  Ignore auxiliary cache file.
+<DT><B>-l</B><DD>
+(glibc 2.2 以降) ライブラリモード。それぞれのライブラリを手動でリンクする。 熟練者のみが用いるべきである。
+<DT><B>-n</B><DD>
+コマンドラインで指定されたディレクトリのみを処理する。 通常共有ライブラリが置かれるディレクトリや <I>/etc/ld.so.conf</I>
+で指定されたディレクトリは処理しない。 暗黙のうちに <B>-N</B> が指定される。
+<DT><B>-N</B><DD>
+キャッシュを再構成しない。 同時に <B>-X</B> が同時に指定されなければ、リンクのほうは更新される。
+<DT><B>-p</B>, <B>--print-cache</B><DD>
+現在のキャッシュに保存されているディレクトリのリストと、 ライブラリの候補を表示する。
+<DT><B>-r </B><I>root</I><DD>
+<I>root</I> にカレントディレクトリを変更し、ここをルートディレクトリとして用いる。
+<DT><B>-v</B>, <B>--verbose</B><DD>
+詳細表示モード。 現在のバージョン番号を表示する。 またそれぞれのディレクトリをスキャンし、 新しいリンクを生成するたびに、その内容を表示する。
+メッセージ抑制モードを上書きする。
+<DT><B>-V</B>, <B>--version</B><DD>
+プログラムのバージョンを表示する。
+<DT><B>-X</B><DD>
+リンクを更新しない。 <B>-N</B> が同時に指定されなければ、キャッシュのほうは再構成される。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+
+
+
+
+<DL COMPACT>
+<DT><I>/lib/ld.so</I><DD>
+実行時リンカー/ローダー。
+<DT><I>/etc/ld.so.conf</I><DD>
+ディレクトリのリストが入ったファイル。 1 行に 1 エントリー。それぞれのディレクトリでライブラリが検索される。
+<DT><I>/etc/ld.so.cache</I><DD>
+<I>/etc/ld.so.conf</I> で指定されたディレクトリにあるライブラリ、および信頼されたディレクトリにあるライブラリの順序付きリスト。
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/ldd.1.html">ldd</A></B>(1), <B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

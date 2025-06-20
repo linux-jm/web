@@ -1,0 +1,211 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of WIPEFS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>WIPEFS</H1>
+Section: System Administration (8)<BR>Updated: December 2014<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/util-linux/release/man8/wipefs.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+wipefs - デバイスからシグナチャーを消去する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>wipefs</B> [<B>options</B>] <I>device</I>...
+<P>
+<B>wipefs</B> [<B>--backup</B>] <B>-o</B> <I>offset</I> <I>device</I>...
+<P>
+<B>wipefs</B> [<B>--backup</B>] <B>-a</B> <I>device</I>...
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>wipefs</B> を使えば、指定された <I>device</I> からファイルシステム、raid、
+パーティションテーブルなどのシグナチャー (signatures, マジックストリング)
+を消去して、シグナチャーを libblkid から見えなくすることができる。
+<B>wipefs</B> は、デバイスからファイルシステムそのものを消去するわけではない。
+また、シグナチャー以外のいかなるデータも消去しない。
+<P>
+<B>wipefs</B> は、オプションなしで使用すると
+(訳注: たとえば、<B>wipefs /dev/sda*</B> と実行すると)、
+見ることが可能なすべてのファイルシステムと、その基本的なシグナチャーのオフセットを一覧表示する。
+デフォルトで何を出力するかは、バージョンによって違うことがよくあるので、スクリプトで使うときは、
+デフォルトの出力の使用は、なるべく避けた方がよい。
+いつでも一定の出力が必要な場合には、<B>--output</B> <I>column-list</I>
+を使用して、表示させたい項目が何と何かを、必ず明確に指定するべきである。
+<P>
+<B>wipefs</B> は、パーティションテーブルのシグナチャーの消去が済むと、BLKRRPART
+ioctl を呼んで、変更についてカーネルに知らせる。ioctl
+を呼ぶのは、最後のステップなので、
+そのときには、指定されたすべてのデバイスの、指定されたすべてのシグナチャーは、
+すでに消去されているわけである。
+<P>
+ファイルシステムやパーティションテーブルによっては、
+複数のマジックストリングをデバイスに保存するものがある
+(たとえば、FAT, ZFS, GPT など)。<B>wipefs</B> コマンドは (v2.31 以来)
+マジックストリングを検出したすべてのオフセット位置を列挙する。
+<P>
+オプション <B>-a</B> を使用すると、libblkid
+から見えるすべてのマジックストリングが消去される。その際、<B>wipefs</B> は、変更 (消去)
+を行うごとに、デバイスを再度スキャンして、マジックストリングがひとつも見つからなくなるまで、
+それを繰り返す。
+<P>
+気を付けていただきたいが、<B>wipefs</B> は、デフォルトでは、
+ディスク全体ではないデバイスにある、ネストしたパーティションテーブルを消去しない。
+そうするためには、<B>--force</B> オプションが必要である。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-a</B>,<B> --all</B><DD>
+処理可能なシグナチャーをすべて消去する。消去するシグナチャーを何と何にするかは、<B>-t</B>
+オプションによって絞り込むことができる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>[<B>訳注</B>]<DD>
+オプションの名前が <B>--all</B> のせいで紛らわしいが、<B>-t</B>
+オプションを使って、シグナチャーのタイプを限定している場合でも、消去操作には
+<B>-a</B> (<B>--all</B>) が必要である。<B>-t</B>
+だけだと、動作が消去ではなく、表示になる。
+</DL>
+</DL>
+
+<DT><B>-b</B>,<B> --backup</B><DD>
+ファイル $HOME/wipefs-&lt;devname&gt;-&lt;offset&gt;.bak
+にシグナチャーのバックアップを作成する。詳しくは、「<B>用例</B>」をご覧いただきたい。
+<DT><B>-f</B>,<B> --force</B><DD>
+ファイルシステムがマウントされている場合でも、消去を強行する。
+このオプションは、ブロックデバイス上のパーティションテーブル・シグナチャーを消去するために必要である。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>[<B>訳注</B>]<DD>
+2 番目の文は、訳者には意味不明である。
+確かに、ファイルシステムがマウントされている場合に、
+ファイルシステムのシグナチャーを消すには、<B>-f</B> が必要だろう。
+また、おそらく、ネストしたパーティションテーブルのシグナチャーを消去するためにも、
+<B>-f</B> が必要なのだろう。しかし、そういうことでないならば、ルート権限さえ持っていれば、
+ブロックデバイス上のパーティションテーブルのシグナチャーを消すのに、
+普通 <B>-f</B> は要らないはずである。
+それとも、あるデバイスのパーティションに自分が目下実行しているシステムが含まれているとき、
+そのディスクのパーティションテーブルのシグナチャーを消去するということだろうか。
+それは、やらない方がよい乱暴なことだと思うのだが。
+</DL>
+</DL>
+
+<DT><B>-h</B>,<B> --help</B><DD>
+ヘルプテキストを表示して終了する。
+<DT><B>-J</B>,<B> --json</B><DD>
+出力に JSON フォーマットを使用する。
+<DT><B>-i</B>,<B> --noheadings</B><DD>
+ヘッダ行を表示しない。
+<DT><B>-O</B>,<B> --output </B><I>list</I><DD>
+出力にどの項目 (column) を表示するかを指定する。
+サポートされている全項目のリストを得るには、<B>--help</B> を使用すればよい。
+<DT><B>-n</B>,<B> --no-act</B><DD>
+write() 呼び出し以外のすべてを行うようにする。
+<DT><B>-o</B>,<B> --offset </B><I>offset</I><DD>
+デバイスから消去すべきシグナチャーの位置を (バイト単位で) 指定する。<I>offset</I>
+には接頭辞　&quot;0x&quot; を付けてもよく、その場合は、数値が
+16 進数と見なされることになる。複数の <B>-o</B> オプションを指定することもできる。
+(訳注: <B>-t</B> と違って、こちらは <B>-a</B> オプションと一緒に使う必要はない。
+と言うより、両方指定すると、エラーになる。)
+<P>
+引き数 <I>offset</I> には、KiB (=1024), MiB (=1024*1024)
+のような乗数を表す接尾辞を付けることができる。GiB, TiB, PiB, EiB,
+ZiB, YiB も同様に使える。(&quot;iB&quot; を続けるのは任意であり、たとえば、&quot;K&quot;
+は &quot;KiB&quot; と同じ意味である)。あるいは、KB (=1000), MB (=1000*1000)
+といった接尾辞を付けてもよい。GB, TB, PB, EB, ZB, YB も同様に使える。
+<DT><B>-p</B>,<B> --parsable</B><DD>
+人間に見やすい (printable) フォーマットではなく、プログラムが解析しやすい
+(parsable) フォーマットで出力する。文字列中の問題を起こしかねないすべての文字は、
+対応する '\x' を頭に点けた 16 進数にエンコードされる。
+<DT><B>-q</B>,<B> --quiet</B><DD>
+シグナチャーの消去に成功した場合は、いかなるメッセージも表示しない。
+<DT><B>-t</B>,<B> --types </B><I>list</I><DD>
+表示、または消去するシグナチャーを絞り込む。
+複数のタイプを指定するには、コンマで区切ったリストにすればよい。
+リスト、または個々のタイプの前に、'no' という接頭辞を付けることができ、
+その場合は、作業の対象にすべきではないタイプを指定することになる。
+もっと詳しく知りたければ、<B><A HREF="../man8/mount.8.html">mount</A></B>(8) のマニュアルをご覧になるとよい。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>[<B>訳注</B>]<DD>
+<I>list</I> に使えるのは、基本的には <B><A HREF="../man8/mount.8.html">mount</A></B>(8) の <B>-t</B>
+に指定するファイルシステムのタイプと同じものだが、<B>gpt</B> や <B>swap</B>
+を指定することもできる。すなわち、<B>wipefs /dev/sda*</B> の出力の TYPE
+の項目に表示されるものが使えるわけである。
+</DL>
+</DL>
+
+<DT><B>-V</B>,<B> --version</B><DD>
+バージョン情報を表示して終了する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>用例</H2>
+
+<DL COMPACT>
+<DT><B>wipefs /dev/sda*</B><DD>
+sda と sda 上のすべてのパーティションの情報を表示する。
+<DT><B>wipefs --all --backup /dev/sdb</B><DD>
+デバイス /dev/sdb からすべてのシグナチャーを消去し、
+シグナチャーそれぞれに対して、~/wipefs-sdb-&lt;offset&gt;.bak
+というバックアップファイルを作成する。
+<DT><B>dd if=~/wipefs-sdb-0x00000438.bak of=/dev/sdb seek=$((0x00000438)) bs=1 conv=notrunc</B><DD>
+バックアップファイル  ~/wipefs-sdb-0x00000438.bak から
+ext2 のシグナチャーを復元する。
+<DT>[<B>訳注</B>]<DD>
+3 番目の例は、ちょっと変わったことをしていると言えるかもしれない。
+ここでは、/dev/sdb にファイルシステムのシグナチャーを復元している。
+とすると、/dev/sdb1 のようなパーティションにではなく、/dev/sdb というディスクに直接
+ext2 のファイルシステムを作成していたことになりそうだ。/dev/sdb が、たとえば
+USB メモリなら、そういうこともあるだろうけれど。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>作者</H2>
+
+Karel Zak &lt;<A HREF="mailto:kzak@redhat.com">kzak@redhat.com</A>&gt;
+<A NAME="lbAH">&nbsp;</A>
+<H2>環境変数</H2>
+
+<DL COMPACT>
+<DT>LIBBLKID_DEBUG=all<DD>
+libblkid デバッグ出力を有効にする。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/blkid.8.html">blkid</A></B>(8), <B><A HREF="../../e2fsprogs/man8/findfs.8.html">findfs</A></B>(8)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>入手方法</H2>
+
+この wipfs コマンドは、util-linux パッケージの一部であり、次の URL
+から入手できる。<A HREF="https://www.kernel.org/pub/linux/utils/util-linux/">https://www.kernel.org/pub/linux/utils/util-linux/</A>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">用例</A><DD>
+<DT><A HREF="#lbAG">作者</A><DD>
+<DT><A HREF="#lbAH">環境変数</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">入手方法</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:51 GMT, December 05, 2022
+</BODY>
+</HTML>

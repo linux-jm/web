@@ -1,0 +1,128 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TCGETPGRP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TCGETPGRP</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated:  2015-08-08<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/tcgetpgrp.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+tcgetpgrp, tcsetpgrp - 端末のフォアグラウンドプロセスグループの 取得/設定を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>pid_t tcgetpgrp(int </B><I>fd</I><B>);</B>
+<P>
+
+<B>int tcsetpgrp(int </B><I>fd</I><B>, pid_t </B><I>pgrp</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+関数 <B>tcgetpgrp</B>()  は、 <I>fd</I> に対応する端末のフォアグラウンドプロセスグループの プロセスグループ ID を返す。 <I>fd</I>
+で指定された端末は、呼び出しを行うプロセスの制御端末でなければならない。
+<P>
+
+関数 <B>tcsetpgrp</B>()  は、プロセスグループID が <I>pgrp</I> のプロセスグループを <I>fd</I>
+に対応する端末のフォアグラウンドプロセスグループにする。 このとき、 <I>fd</I> は <B>tcsetpgrp</B>()
+を呼び出すプロセスの制御端末でなければならない。 さらに、 <I>pgrp</I> は、呼び出しを行うプロセスと同じセッションに 属する (メンバが空でない)
+プロセスグループでなければならない。
+<P>
+
+<B>tcsetpgrp</B>()  がセッションに属するバックグラウンドグループプロセスのメンバから 呼び出され、かつ呼び出しを行うプロセスが
+<B>SIGTTOU</B> をブロックしたり 無視したりするようになっていない場合、 <B>SIGTTOU</B> シグナルは
+バックグラウンドプロセスグループの全てのメンバに送られる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<I>fd</I> が呼び出しを行ったプロセスの制御端末を参照している場合、関数 <B>tcgetpgrp</B>()
+は、その制御端末のフォアグラウンドプロセスグループがあれば そのプロセスグループの ID を返す。
+そのようなプロセスグループがなければ、現在プロセスグループ ID として使用されていない、1より大きな何らかの値が返される。 <I>fd</I>
+が呼び出しを行ったプロセスの制御端末を参照していない場合、 -1 が返され、 <I>errno</I> が適切に設定される。
+<P>
+
+成功した場合、 <B>tcsetpgrp</B>()  は 0 を返す。そうでない場合、 -1 を返し、 <I>errno</I> を適切に設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>fd</I> が適切なファイルディスクリプターでない。
+<DT><B>EINVAL</B><DD>
+<I>pgrp</I> が無効な値である。
+<DT><B>ENOTTY</B><DD>
+呼び出しを行ったプロセスが制御端末を持っていない、もしくは 制御端末を持っているが <I>fd</I> で参照されるものとは異なる、
+<B>tcsetpgrp</B>()  の場合は、 <I>fd</I> で指定された制御端末がすでに呼び出しを行ったプロセスのセッション
+と関係のないものになっている際にも、このエラーとなる。
+<DT><B>EPERM</B><DD>
+<I>pgrp</I> が有効な値だが、呼び出しを行ったプロセスと同じセッションに属する プロセスのプロセスグループ ID には該当するものがない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>tcgetpgrp</B>(),
+<B>tcsetpgrp</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+この関数は <B>TIOCGPGRP</B> と <B>TIOCGSID</B> の ioctl 経由で実現されている。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>歴史</H3>
+
+これらの ioctl は 4.2BSD で登場した。 これらの関数は POSIX で考案されたものである。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/setpgid.2.html">setpgid</A></B>(2), <B><A HREF="../man2/setsid.2.html">setsid</A></B>(2), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">歴史</A><DD>
+</DL>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

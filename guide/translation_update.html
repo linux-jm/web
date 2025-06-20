@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>翻訳更新方法 &mdash; Linux JM Guide master ドキュメント</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'master',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Linux JM Guide master ドキュメント" href="index.html" />
+    <link rel="next" title="LDP man-pages 翻訳ガイド" href="LDP_man-pages.html" />
+    <link rel="prev" title="翻訳作業の流れ" href="translation_procedure.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="総合索引"
+             accesskey="I">索引</a></li>
+        <li class="right" >
+          <a href="LDP_man-pages.html" title="LDP man-pages 翻訳ガイド"
+             accesskey="N">次へ</a> |</li>
+        <li class="right" >
+          <a href="translation_procedure.html" title="翻訳作業の流れ"
+             accesskey="P">前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Linux JM Guide master ドキュメント</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>翻訳更新方法<a class="headerlink" href="#id1" title="このヘッドラインへのパーマリンク">¶</a></h1>
+<p>JM リポジトリの構成は <a class="reference internal" href="git_repository.html"><em>リポジトリの構成</em></a> に書かれている通りです。</p>
+<p>JM の翻訳の管理方法は</p>
+<ul class="simple">
+<li>roff を直接翻訳</li>
+<li>po4a を使って翻訳</li>
+</ul>
+<p>の2つの方法が混在しています。</p>
+<p>po4a を使用している場合には、各パッケージのディレクトリに po4a というフォルダが存在します。
+存在しない場合は、roff を直接編集して翻訳しています。</p>
+<div class="section" id="roff">
+<h2>roff を直接翻訳<a class="headerlink" href="#roff" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>release 版を編集する場合は、必ず draft を編集してから、 release に反映して下さい。
+draft 側には、原文がコメントとして入っていますが、release には翻訳済みの文章のみが含まれます。</p>
+<div class="admonition note">
+<p class="first admonition-title">注釈</p>
+<p class="last">以下の説明は、各パッケージのディレクトリ (manual/fetchmail など) で作業することを前提に説明します。</p>
+</div>
+<ol class="arabic">
+<li><p class="first">draft を更新します</p>
+</li>
+<li><p class="first">draft の更新が終わったら、release に反映します。
+対象ファイルを draft 以下から release 以下にコピーするだけですが、 JM-release.sh コマンドを利用するのが楽です。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ ../../admin/JM-release.sh -f -g draft/man1/fetchmail.1 release
+draft/man1/fetchmail.1 -&gt; release/man1/fetchmail.1
+</pre></div>
+</div>
+</li>
+<li><p class="first">Git でコミットして、sourceforge.jp に push します。</p>
+</li>
+</ol>
+<p>draft 以下の全ファイルを release に反映する場合は、JM-release-all.sh コマンドを実行します。
+draft の全ファイルがリリース済みの場合に release への反映もれがないかを確認する際などに使います。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ cd manual/fetchmail
+$ ../../admin/JM-release-all.sh
+(git status や git diff で変更内容を確認)
+(git commit -&gt; git push)
+</pre></div>
+</div>
+</div>
+<div class="section" id="po4a">
+<h2>po4a を使って翻訳<a class="headerlink" href="#po4a" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p><strong>LDP_man-pages と GNU_coreutils は管理方法が少し複雑です。詳細は下の方にありますので参照して下さい。</strong></p>
+<p>翻訳は po4a ディレクトリ以下の ja.po ファイルで管理しています。
+ja.po ファイルは po4a/ja.po の場合と、po4a/&lt;dir&gt;/ja.po にある場合があります。</p>
+<ol class="arabic">
+<li><p class="first">man ページに対応する ja.po がどれかは <code class="docutils literal"><span class="pre">po4a/**/*.cfg</span></code> を見て判断します。
+更新したいファイルが分かっている場合は以下のように grep して下さい。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ grep iptables-save.8 po4a/**/*.cfg
+</pre></div>
+</div>
+</li>
+<li><p class="first">ja.po を編集します。編集にあたっては Emacs の po-mode, poedit などが利用できます。</p>
+</li>
+<li><p class="first">make または make translate で ja.po の内容を draft 以下に反映します。</p>
+</li>
+<li><p class="first">(参考 make stat で ja.po の翻訳状況を表示できます)</p>
+</li>
+<li><p class="first">release に反映する必要がある場合は、「roff を直接翻訳」の場合と同様に JM-release.sh を使用して、release フォルダ以下に反映して下さい。</p>
+</li>
+<li><p class="first">git commit で更新を登録して、git push で sf.jp に送信して下さい</p>
+</li>
+</ol>
+<div class="section" id="id2">
+<h3>po4a 移行後の課題<a class="headerlink" href="#id2" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<ul class="simple">
+<li>レビューをどのようにして行うか?</li>
+<li>ja.po を投稿してもレビューできない。 できあがった draft でレビューする必要がある。</li>
+<li>translation-list の更新が手動になっている</li>
+<li>複数のファイルが一つの ja.po の変更で更新されることがあり、管理が面倒</li>
+</ul>
+</div>
+</div>
+<div class="section" id="ldp-man-pages">
+<h2>LDP man-pages<a class="headerlink" href="#ldp-man-pages" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p><a class="reference internal" href="LDP_man-pages.html"><em>LDP man-pages 翻訳ガイド</em></a> を参照。</p>
+</div>
+<div class="section" id="gnu-coreutils">
+<h2>GNU_coreutils<a class="headerlink" href="#gnu-coreutils" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p><a class="reference internal" href="GNU_coreutils.html"><em>GNU coreutils 翻訳ガイド</em></a> を参照。</p>
+<p><code class="docutils literal"><span class="pre">help2man</span></code> の出力と、追加ファイル <code class="docutils literal"><span class="pre">*.x</span></code> の翻訳を合わせて、
+日本語マニュアルを生成しています。
+そのため、管理が他のものと異なっています。</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">目次</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">翻訳更新方法</a><ul>
+<li><a class="reference internal" href="#roff">roff を直接翻訳</a></li>
+<li><a class="reference internal" href="#po4a">po4a を使って翻訳</a><ul>
+<li><a class="reference internal" href="#id2">po4a 移行後の課題</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ldp-man-pages">LDP man-pages</a></li>
+<li><a class="reference internal" href="#gnu-coreutils">GNU_coreutils</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>前のトピックへ</h4>
+  <p class="topless"><a href="translation_procedure.html"
+                        title="前の章へ">翻訳作業の流れ</a></p>
+  <h4>次のトピックへ</h4>
+  <p class="topless"><a href="LDP_man-pages.html"
+                        title="次の章へ">LDP man-pages 翻訳ガイド</a></p>
+  <div role="note" aria-label="source link">
+    <h3>このページ</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/translation_update.txt"
+            rel="nofollow">ソースコードを表示</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>クイック検索</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="検索" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    モジュール、クラス、または関数名を入力してください
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="総合索引"
+             >索引</a></li>
+        <li class="right" >
+          <a href="LDP_man-pages.html" title="LDP man-pages 翻訳ガイド"
+             >次へ</a> |</li>
+        <li class="right" >
+          <a href="translation_procedure.html" title="翻訳作業の流れ"
+             >前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Linux JM Guide master ドキュメント</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016-2021, Linux JM project.
+      このドキュメントは <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5 で生成しました。
+    </div>
+  </body>
+</html>

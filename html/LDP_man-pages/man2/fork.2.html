@@ -1,0 +1,230 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FORK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FORK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/fork.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fork - 子プロセスを生成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>pid_t fork(void);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>fork</B>()
+は呼び出し元プロセスを複製して新しいプロセスを生成する。新しいプロセスは「子」プロセスと呼ばれ、呼び出し元プロセスは「親」プロセスと呼ばれる。
+<P>
+
+The child process and the parent process run in separate memory spaces.  At
+the time of <B>fork</B>()  both memory spaces have the same content.  Memory
+writes, file mappings (<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)), and unmappings (<B><A HREF="../man2/munmap.2.html">munmap</A></B>(2))  performed
+by one of the processes do not affect the other.
+<P>
+
+The child process is an exact duplicate of the parent process except for the
+following points:
+<DL COMPACT>
+<DT>*<DD>
+The child has its own unique process ID, and this PID does not match the ID
+of any existing process group (<B><A HREF="../man2/setpgid.2.html">setpgid</A></B>(2))  or session.
+<DT>*<DD>
+子プロセスの親プロセス ID は、親プロセスのプロセス ID と同じである。
+<DT>*<DD>
+子プロセスは親プロセスのメモリーロック (<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2), <B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2))  を引き継がない。
+<DT>*<DD>
+プロセスの資源利用量 (<B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2))  と CPU タイムカウンター (<B><A HREF="../man2/times.2.html">times</A></B>(2))  が、子プロセスでは 0
+にリセットされる。
+<DT>*<DD>
+子プロセスの処理待ちのシグナルの集合 (<B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2))  は、初期状態では空になる。
+<DT>*<DD>
+子プロセスは親プロセスからセマフォ調整 (<B><A HREF="../man2/semop.2.html">semop</A></B>(2))  を引き継がない。
+<DT>*<DD>
+子プロセスは親プロセスからプロセスに関連付けられたレコードロックを引き継がない (<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))。 (一方、子プロセスは親プロセスから
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2) オープンファイル記述ロックと <B><A HREF="../man2/flock.2.html">flock</A></B>(2) ロックを引き継ぐ。)
+<DT>*<DD>
+子プロセスは親プロセスからタイマー (<B><A HREF="../man2/setitimer.2.html">setitimer</A></B>(2), <B><A HREF="../man2/alarm.2.html">alarm</A></B>(2), <B>timer_create</B>(2))
+を引き継がない。
+<DT>*<DD>
+子プロセスは親プロセスから主だった非同期 I/O 操作を引き継がない (<B><A HREF="../man3/aio_read.3.html">aio_read</A></B>(3), <B><A HREF="../man3/aio_write.3.html">aio_write</A></B>(3)  参照)。
+また、親プロセスから非同期 I/O コンテキストを引き継がない (<B><A HREF="../man2/io_setup.2.html">io_setup</A></B>(2)  参照)。
+</DL>
+<P>
+
+上記のリストにあるプロセス属性は、POSIX.1 で全て指定されている。 親プロセスと子プロセスは、以下の Linux 固有のプロセス属性も異なる:
+<DL COMPACT>
+<DT>*<DD>
+子プロセスは親プロセスからディレクトリ変更通知 (dnotify)  (<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  における <B>F_NOTIFY</B> の説明を参照)
+を引き継がない。
+<DT>*<DD>
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)  の <B>PR_SET_PDEATHSIG</B> の設定がリセットされ、子プロセスは親プロセスが終了したときに
+シグナルを受信しない。
+<DT>*<DD>
+timer slack value のデフォルト値には、親プロセスの現在の timer slack value が設定される。 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+の <B>PR_SET_TIMERSLACK</B> の説明を参照。
+<DT>*<DD>
+<B><A HREF="../man2/madvise.2.html">madvise</A></B>(2)  の <B>MADV_DONTFORK</B> フラグでマークされたメモリーマッピングは、 <B>fork</B>()
+によって引き継がれない。
+<DT>*<DD>
+Memory in address ranges that have been marked with the <B><A HREF="../man2/madvise.2.html">madvise</A></B>(2)
+<B>MADV_WIPEONFORK</B> flag is zeroed in the child after a <B>fork</B>().  (The
+<B>MADV_WIPEONFORK</B> setting remains in place for those address ranges in the
+child.)
+<DT>*<DD>
+子プロセスの終了シグナルは常に <B>SIGCHLD</B> である (<B><A HREF="../man2/clone.2.html">clone</A></B>(2)  を参照)。
+<DT>*<DD>
+<B><A HREF="../man2/ioperm.2.html">ioperm</A></B>(2) で設定されるポートアクセス許可ビットは、子プロセスには継承されない。子プロセスでは、 <B><A HREF="../man2/ioperm.2.html">ioperm</A></B>(2)
+を使って必要なビットをセットしなければならない。
+</DL>
+<P>
+
+以下の点についても注意すること:
+<DL COMPACT>
+<DT>*<DD>
+子プロセスはシングルスレッドで生成される。つまり、 <B>fork</B>()  を呼び出したスレッドとなる。
+親プロセスの仮想アドレス空間全体が子プロセスに複製される。 これにはミューテックス (mutex) の状態・条件変数・ pthread
+オブジェクトが含まれる。 これが引き起こす問題を扱うには、 <B><A HREF="../../glibc-linuxthreads/man3/pthread_atfork.3.html">pthread_atfork</A></B>(3)  を使うと良いだろう。
+<DT>*<DD>
+After a <B>fork</B>()  in a multithreaded program, the child can safely call
+only async-signal-safe functions (see <B>signal-safety</B>(7))  until such time
+as it calls <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+<DT>*<DD>
+子プロセスは親プロセスが持つ オープンファイルディスクリプターの集合のコピーを引き継ぐ。 子プロセスの各ファイルディスクリプターは、
+親プロセスのファイルディスクリプターに対応する 同じオープンファイル記述 (file description) を参照する (<B><A HREF="../man2/open.2.html">open</A></B>(2)
+を参照)。 これは 2 つのファイルディスクリプターが、ファイル状態フラグ・ ファイルオフセット、シグナル駆動 (signal-driven) I/O
+属性 (<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  における <B>F_SETOWN</B>, <B>F_SETSIG</B> の説明を参照) を共有することを意味する。
+<DT>*<DD>
+子プロセスは親プロセスが持つオープンメッセージキューディスクリプター (<B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7)  を参照) の集合のコピーを引き継ぐ。
+子プロセスの各ファイルディスクリプターは、 親プロセスのファイルディスクリプターに対応する同じオープンメッセージキューディスクリプターを参照する。
+これは 2 つのファイルディスクリプターが同じフラグ (<I>mq_flags</I>)  を共有することを意味する。
+<DT>*<DD>
+子プロセスは、親プロセスのオープン済みのディレクトリストリームの集合 (<B><A HREF="../man3/opendir.3.html">opendir</A></B>(3)  参照) のコピーを継承する。 POSIX.1
+では、親プロセスと子プロセス間の対応するディレクトリストリーム はディレクトリストリームの位置 (positioning)
+を共有してもよいとされている。 Linux/glibc ではディレクトリストリームの位置の共有は行われていない。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、親プロセスには子プロセスの PID が返され、 子プロセスには 0 が返される。 失敗した場合、親プロセスに -1
+が返され、子プロセスは生成されず、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+
+A system-imposed limit on the number of threads was encountered.  There are
+a number of limits that may trigger this error:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+the <B>RLIMIT_NPROC</B> soft resource limit (set via <B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)), which
+limits the number of processes and threads for a real user ID, was reached;
+<DT>*<DD>
+the kernel's system-wide limit on the number of processes and threads,
+<I>/proc/sys/kernel/threads-max</I>, was reached (see <B><A HREF="../man5/proc.5.html">proc</A></B>(5));
+<DT>*<DD>
+the maximum number of PIDs, <I>/proc/sys/kernel/pid_max</I>, was reached (see
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5)); or
+<DT>*<DD>
+the PID limit (<I>pids.max</I>)  imposed by the cgroup &quot;process number&quot; (PIDs)
+controller was reached.
+</DL>
+</DL>
+
+<DT><B>EAGAIN</B><DD>
+呼び出し元は、スケジューリングポリシー <B>SCHED_DEADLINE</B> で動作しており、かつ reset-on-fork
+フラグがセットされていない。 <B><A HREF="../man7/sched.7.html">sched</A></B>(7) 参照。
+<DT><B>ENOMEM</B><DD>
+メモリーが足りないために、 <B>fork</B>()  は必要なカーネル構造体を割り当てることができなかった。
+<DT><B>ENOMEM</B><DD>
+An attempt was made to create a child process in a PID namespace whose
+&quot;init&quot; process has terminated.  See <B><A HREF="../man7/pid_namespaces.7.html">pid_namespaces</A></B>(7).
+<DT><B>ENOSYS</B><DD>
+
+<B>fork</B>() はこのプラットフォームではサポートされていない
+(例えば、メモリー管理ユニット (MMU) がないハードウェア)。
+<DT><B>ERESTARTNOINTR</B> (Linux 2.6.17 以降)<DD>
+
+System call was interrupted by a signal and will be restarted.  (This can be
+seen only during a trace.)
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+<BR>&nbsp;POSIX.1-2001,&nbsp;POSIX.1-2008,&nbsp;SVr4,&nbsp;4.3BSD.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+Linux では、 <B>fork</B>()  を 書き込み時コピー (copy-on-write) ページを用いて実装している。 したがって、fork
+を行うことの唯一のデメリットは、 親プロセスのページテーブルを複製と 子プロセス自身のタスク構造の作成のための時間とメモリーが必要なことである。
+<A NAME="lbAI">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+
+
+glibc 2.3.3 以降では、 NPTL スレッド実装の一部として提供されている
+glibc の<B>fork</B>() ラッパー関数は、 カーネルの <B>fork</B>() システムコール
+を起動するのではなく、<B><A HREF="../man2/clone.2.html">clone</A></B>(2) を起動する。
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2) に渡すフラグとして、伝統的な <B>fork</B>() システムコールと
+同じ効果が得られるようなフラグが指定される (<B>fork</B>() の呼び出しは、
+<I>flags</I> に <B>SIGCHLD</B> だけを指定して <B><A HREF="../man2/clone.2.html">clone</A></B>(2) を呼び出すのと等価である)。
+glibc のラッパー関数は <B><A HREF="../../glibc-linuxthreads/man3/pthread_atfork.3.html">pthread_atfork</A></B>(3) を使って設定されている
+任意の fork ハンドラーを起動する。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man2/pipe.2.html">pipe</A></B>(2)  および <B><A HREF="../man2/wait.2.html">wait</A></B>(2)  を参照。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../man2/clone.2.html">clone</A></B>(2),&nbsp;<B><A HREF="../man2/execve.2.html">execve</A></B>(2),&nbsp;<B><A HREF="../man2/exit.2.html">exit</A></B>(2),&nbsp;<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2),&nbsp;<B><A HREF="../man2/unshare.2.html">unshare</A></B>(2),
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2), <B><A HREF="../man2/wait.2.html">wait</A></B>(2), <B><A HREF="../man3/daemon.3.html">daemon</A></B>(3), <B><A HREF="../../glibc-linuxthreads/man3/pthread_atfork.3.html">pthread_atfork</A></B>(3),
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

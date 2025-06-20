@@ -1,0 +1,145 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MINCORE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MINCORE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/mincore.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mincore - ページがメモリー内にあるかどうかを判定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+<P>
+
+<B>int mincore(void *</B><I>addr</I><B>, size_t </B><I>length</I><B>, unsigned char
+*</B><I>vec</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>mincore</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以降:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.19&nbsp;以前:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>mincore</B>()  は、呼び出し元プロセスの仮想メモリーのページがコア (RAM) 内に存在し、 ページ参照時にディスクアクセス
+(ページフォールト) を起こさないか どうかを示すベクトルを返す。カーネルは、アドレス <I>addr</I> から始まる <I>length</I>
+バイトの範囲のページに関する存在情報を返す。
+<P>
+
+<I>addr</I> 引数はシステムのページサイズの倍数でなければならない。 <I>length</I> 引数はページサイズの倍数である必要はないが、
+ページ全体に関する存在情報が返されるので、事実上 <I>length</I> はページサイズの倍数に切り上げられることになる。 ページサイズ
+(<B>PAGE_SIZE</B>)  は <I>sysconf(_SC_PAGESIZE)</I> を使って入手できる。
+<P>
+
+<I>vec</I> 引数は、少なくとも <I>(length+PAGE_SIZE-1) / PAGE_SIZE</I>
+バイトが格納できる配列を指していなければならない。 この呼び出しが返るとき、 各バイトの最下位ビットは、対応するページがメモリー内にそのとき存在すれば
+セットされ、そうでない場合はクリアされる (各バイトのその他のビットは未定義であり、これらのビットは将来の使用に そなえて予約されている)。 もちろん、
+<I>vec</I> で返された情報はスナップショットでしかない。 メモリー内にロックされていないページは、任意の時点でメモリー内に
+入ったり出たりでき、この呼び出しが返るときには <I>vec</I> の内容はすでに古くなっているかもしれない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 <B>mincore</B>()  は 0 を返す。 エラーの場合は -1 を返して、 <I>errno</I> を適切な値に設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>EAGAIN</B> カーネルが一時的にリソースを使い果たしている。
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>vec</I> が無効なアドレスを指している。
+<DT><B>EINVAL</B><DD>
+<I>addr</I> がページサイズの倍数でない。
+<DT><B>ENOMEM</B><DD>
+<I>length</I> が (<I>TASK_SIZE</I> - <I>addr</I>)  より大きい。 (<I>length</I> に負の値が指定された場合、
+その値が大きな符号なし整数として解釈されるために起こることがある。)  Linux 2.6.11 以前では、この条件の場合はエラー <B>EINVAL</B>
+が返されていた。
+<DT><B>ENOMEM</B><DD>
+<I>addr</I> から <I>addr</I> + <I>length</I> の間にマップされていないメモリーがあった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+Linux 2.3.99pre1 と glibc 2.2 から利用可能である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+
+
+
+<B>mincore</B>()  は POSIX.1 に記述されておらず、 全ての UNIX 実装で利用可能であるわけではない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+カーネル 2.6.21 より前は、 <B>mincore</B>()  は、 <B>MAP_PRIVATE</B> マッピングや非線形マッピング
+(<B><A HREF="../man2/remap_file_pages.2.html">remap_file_pages</A></B>(2)  を使って作成される) について正しい情報を返さなかった。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B>fincore</B>(1),&nbsp;<B><A HREF="../man2/madvise.2.html">madvise</A></B>(2),&nbsp;<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),&nbsp;<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),&nbsp;<B><A HREF="../man2/posix_fadvise.2.html">posix_fadvise</A></B>(2),
+<B>posix_madvise</B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

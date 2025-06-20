@@ -1,0 +1,225 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RWHOD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RWHOD</H1>
+Section: Maintenance Commands (8)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/netkit/release/man8/rwhod.8">roff page</A><HR>
+<BR>BSD mandoc<BR>
+Linux NetKit (0.17)
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<B>rwhod</B>
+
+ - システムステータスサーバ
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>rwhod</B>
+
+[-<B>bpa</B>
+
+]
+
+[-<B>u </B><I>user</I>
+
+
+
+]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>rwhod</B>
+
+は、
+<A HREF="../man1/rwho.1.html">rwho</A>(1)
+
+
+と
+<A HREF="../man1/ruptime.1.html">ruptime</A>(1)
+
+
+プログラムで使用されるデータベースを管理するサーバである。
+このサーバの運用は、ネットワーク上で
+<I>ブロードキャスト</I>
+
+メッセージが使用できることを前提としている。
+<P>
+
+<B>rwhod</B>
+
+は、ステータス情報の作成側としても、利用側としても動作する。
+情報の作成側としては、システム状態を定期的に問い合わせ、
+ネットワークにブロードキャストされるステータスメッセージを作成する。
+情報の利用側としては、他の
+<B>rwhod</B>
+
+サーバのステータスメッセージを受け取り、確認した後、
+/var/spool/rwho
+
+ディレクトリに作られたファイルに記録する。
+<P>
+
+サーバは、``rwho'' サービスの指定で指示されているポートを使って
+メッセージの送受信を行う。
+<A HREF="../../LDP_man-pages/man5/services.5.html">services</A>(5)
+
+
+を参照すること。
+<P>
+
+-<B>b</B>
+
+フラグが指定された場合、
+イーサネットのようなブロードキャストインターフェースのみが使われる。
+-<B>p</B>
+
+フラグが指定された場合、
+point-to-point のインターフェースのみが使われる。
+-<B>a</B>
+
+フラグが指定された場合、またはフラグが何も指定されない場合、
+全てのインターフェースが使われる。
+<P>
+
+-<B>u</B>
+
+フラグが指定された場合、
+rwhod は root ではなく指定されたユーザーとして実行される。
+<P>
+
+送受信されるメッセージは以下の形式である。
+
+<BLOCKQUOTE>
+<PRE>
+struct  outmp {
+        char    out_line[8];            /* tty の名前 */
+        char    out_name[8];            /* ユーザー ID */
+        long    out_time;               /* 時間 */
+};
+
+struct  whod {
+        char    wd_vers;
+        char    wd_type;
+        char    wd_fill[2];
+        int     wd_sendtime;
+        int     wd_recvtime;
+        char    wd_hostname[32];
+        int     wd_loadav[3];
+        int     wd_boottime;
+        struct  whoent {
+                struct  outmp we_utmp;
+                int     we_idle;
+        } wd_we[1024 / sizeof (struct whoent)];
+};
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+全てのフィールドは、送信の前にネットワークバイトオーダーに変換される。
+平均負荷は
+<A HREF="../../procps/man1/w.1.html">w</A>(1)
+
+
+プログラムによって計算され、
+サーバが送信する前の 5, 10, 15 分間隔の平均負荷を表す。
+平均負荷は 100 を掛けて整数で表される。
+使用されるホスト名は、
+<A HREF="../../LDP_man-pages/man2/gethostname.2.html">gethostname</A>(2)
+
+
+システムコールによって返されたもので、ドメイン名は省略される。
+メッセージの最後の配列には、メッセージを送信したマシンにログインしている
+ユーザーの情報が含まれている。
+この情報には、アイドルでない端末ラインの
+<A HREF="../../LDP_man-pages/man5/utmp.5.html">utmp</A>(5)
+
+
+エントリと端末ラインから最後に文字が受信されてからの秒数が入っている。
+<P>
+
+rwho
+
+
+サーバに受信されるメッセージは、
+rwho
+
+
+サーバのポートから送信されたものでなければ、破棄される。
+さらに、メッセージ中で指定されたホスト名が表示できない
+<B>ASCII</B>
+
+文字を含んでいる場合も、メッセージは破棄される。
+<B>rwhod</B>
+
+に受信された有効なメッセージは、ディレクトリ
+/var/spool/rwho
+
+にある
+whod.hostname
+
+というファイルに入れられる。
+これらのファイルには、
+最新のメッセージのみが上で説明したフォーマットで格納されている。
+<P>
+
+ステータスメッセージは、約 3 分に 1 回作成される。
+<B>rwhod</B>
+
+はシステムのブート時刻を 30 分毎に再計算する。
+なぜなら、(Linux 以外の) システムの中には、
+ブート時刻の計算が完全に信用のおけるプロセスではない
+システムも存在するためである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man1/rwho.1.html">rwho</A>(1),
+
+
+<A HREF="../man1/ruptime.1.html">ruptime</A>(1)
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>バグ</H2>
+
+ネットワーク間でステータス情報を中継する方法が必要である。
+サーバが死んでいる場合やネットワーク通信が失敗している場合に、
+マシンがダウンしていると解釈してしまうことがある。
+<A NAME="lbAG">&nbsp;</A>
+<H2>履歴</H2>
+
+<B></B>
+
+
+コマンドは
+BSD 4.2
+で登場した。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">関連項目</A><DD>
+<DT><A HREF="#lbAF">バグ</A><DD>
+<DT><A HREF="#lbAG">履歴</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:41 GMT, December 05, 2022
+</BODY>
+</HTML>

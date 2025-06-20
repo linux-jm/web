@@ -1,0 +1,278 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FMEMOPEN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FMEMOPEN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-01-22<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/fmemopen.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fmemopen, open_memstream, open_wmemstream - メモリーをストリームとしてオープンする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<B>FILE *fmemopen(void *</B><I>buf</I><B>, size_t </B><I>size</I><B>, const char *</B><I>mode</I><B>);</B>
+
+<B>FILE *open_memstream(char **</B><I>ptr</I><B>, size_t *</B><I>sizeloc</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/wchar.h">wchar.h</A>&gt;</B>
+
+<B>FILE *open_wmemstream(wchar_t **</B><I>ptr</I><B>, size_t *</B><I>sizeloc</I><B>);</B>
+</PRE>
+
+<P>
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+<B>fmemopen</B>(), <B>open_memstream</B>(), <B>open_wmemstream</B>():
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>glibc 2.10 以降:<DD>
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;700 || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>glibc 2.10 より前:<DD>
+_GNU_SOURCE
+</DL>
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>fmemopen</B>()  関数は、ストリームをオープンし、そのストリームに <I>mode</I> で指定されたアクセス許可を設定する。
+そのストリームを通じて、 <I>buf</I> で指定された文字列やメモリーバッファーへの読み書きができる。 このバッファーは少なくとも <I>size</I>
+バイトの長さでなければならない。
+<P>
+
+引き数 <I>mode</I> は <B><A HREF="../man3/fopen.3.html">fopen</A></B>(3) の場合と同じである。 <I>mode</I> で追記モード
+(append mode) が指定された場合、ファイル位置の初期値は バッファー中の
+最初のヌルバイト ('\0') の位置に設定される。
+それ以外の場合は、ファイル位置の初期値はバッファーの先頭になる。
+glibc 2.9 以降では、文字 'b' を <I>mode</I> の二番目の文字として指定
+することができる。 この文字は「バイナリ」モードを指定するものである。
+このモードでは、書き込み時に文字列終端のヌルバイトが黙って追加 される
+ことはない。また、 <B><A HREF="../man3/fseek.3.html">fseek</A></B>(3) <B>SEEK_END</B> は、文字列の長さからの相対値
+ではなく、バッファーの末尾 (<I>size</I> で指定した値) からの相対値となる。
+<P>
+
+書き込み用にオープンされたストリームをフラッシュ (<B><A HREF="../man3/fflush.3.html">fflush</A></B>(3))  やクローズ (<B><A HREF="../man3/fclose.3.html">fclose</A></B>(3))  した時に、
+(バッファーに空きがあれば) ヌルバイトがバッファーの末尾に書き込まれる。 このようにするためには、呼び出し元は バッファーに 1バイト余裕を作る
+(<I>size</I> にこの 1バイトを含めた値を指定する) 必要がある。
+<P>
+バッファーに <I>size</I> バイトよりたくさん書き込もうとした場合には、エラーとなる。 (デフォルトでは、このようなエラーが見えるのは
+<I>stdio</I> バッファーがフラッシュされた時だけである。 以下の呼び出しを使ってバッファーリングを無効にする方法は、
+出力操作を行った時点でエラーを検出するのに役立つ。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;setbuf(stdream,&nbsp;NULL);
+<P>
+別の方法としては、 以下のように、 呼び出し側が明示的に stdio ストリームバッファーとして <I>buf</I>
+を指定し、バッファーの指定時にバッファーのサイズを stdio に教える方法がある。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;setbuffer(stream,&nbsp;buf,&nbsp;size);
+<P>
+
+
+
+<P>
+
+読み出し用にオープンされたストリームでは、 バッファー内にヌルバイト ('\0') があっても 読み出し操作がファイル末尾
+(end-of-file) を返すことはない。 バッファーからの読み出しでファイル末尾が返るのは、 ファイルポインターがバッファーの先頭から
+<I>size</I> バイトを越えて先に進もうとした場合だけである。
+<P>
+
+<I>buf</I> に NULL が指定された場合、 <B>fmemopen</B>()  は動的に <I>size</I> バイトの長さのバッファーを確保する。
+この方法は、一時バッファーにデータの書き込みを行ってから、 その内容を再度読み出すようなアプリケーションで有用である。
+このバッファーはストリームがクローズされるときに自動的に解放される。 呼び出し元からはこの関数が割り当てた一時バッファーへのポインター値を
+知る方法は存在しない点に注意 (下記の <B>open_memstream</B>()  も参照)。
+<P>
+<B>open_memstream</B>()  関数は、バッファーへの書き込み用にストリームをオープンする。 バッファーは (<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+を使って) 動的に割り当てられ、必要に応じて自動的に伸長する。 ストリームをクローズした後で、呼び出し元はこのバッファーを <B><A HREF="../man3/free.3.html">free</A></B>(3)
+すべきである。
+<P>
+このストリームが クローズ (<B><A HREF="../man3/fclose.3.html">fclose</A></B>(3))  されたりフラッシュ (<B><A HREF="../man3/fflush.3.html">fflush</A></B>(3))  された時に、 <I>ptr</I> と
+<I>sizeloc</I> の値はそれぞれバッファーへのポインターとそのサイズに更新される。 これらの値は、呼び出し元がそのストリームに新たな書き込みを
+行わない場合に限り有効である。 ストリームに書き込みを行った際には、これらの変数を参照する前に ストリームを再度フラッシュしなければならない。
+<P>
+バッファー末尾のヌルバイトは保持される。 このヌルバイトは <I>sizeloc</I> に格納されるサイズには「含まれない」。
+<P>
+ストリームのファイル位置は <B><A HREF="../man3/fseek.3.html">fseek</A></B>(3)  や <B><A HREF="../man3/fseeko.3.html">fseeko</A></B>(3)  で変更できる。
+すでにデータが書き込まれた領域の末尾より先にファイル位置を動かすと、 その間の領域は 0 で埋められる。
+<P>
+<B>open_wmemstream</B>()  は <B>open_memstream</B>()
+と同様だが、バイトではなくワイド文字に対して操作を行う点が異なる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功して終了した場合には、 <B>fmemopen</B>(), <B>open_memstream</B>(), <B>open_wmemstream</B>()  は
+<I>FILE</I> ポインターを返す。 失敗した場合は、 NULL を返し、 <I>errno</I> にエラーを示す値をセットする。
+<A NAME="lbAF">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>fmemopen</B>()  と <B>open_memstream</B>()  は glibc 1.0.x ですでに利用可能であった。
+<B>open_wmemstream</B>()  は glibc 2.4 以降で利用可能である。
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2008.  これらの関数は POSIX.1-2001 では規定れていないが、 Linux 以外のシステムで広く利用可能である。
+<P>
+
+POSIX.1-2008 では <I>mode</I> の 'b' は無視されるべきだと規定されて
+いる。一方、Technical Corrigendum (正誤表) 1 では、<I>mode</I> の
+'b' が指定された場合の扱いは実装依存であることを許容するように
+標準規格が修正されており、glibc の 'b' の扱いは許されている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+これらの関数が返すファイルストリームに対応するファイル ディスクリプターはない (つまり、返されたストリームに対して <B><A HREF="../man3/fileno.3.html">fileno</A></B>(3)
+を呼び出すとエラーが返ることになる)。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+
+バージョン 2.7 より前の glibc では、 <B>open_memstream</B>()
+で作成されたストリームの末尾より先にファイル位置を動かしても、 バッファーが伸長されず、 <B><A HREF="../man3/fseek.3.html">fseek</A></B>(3)  が失敗し -1 が返る。
+<P>
+
+<I>size</I> に 0 が指定された場合、 <B>fmemopen</B>() はエラー <B>EINVAL</B> で失敗
+する。この場合にはストリームの作成に成功して、最初の読み出しを行った際に
+EOF (end of file) が返される方が、ストリームの扱いの一貫性が増すだろう。
+また、 POSIX.1-2008 ではこの場合のエラーは規定されていない。
+<P>
+
+<B>fmemopen</B>() に追記モード (&quot;a&quot; や &quot;a+&quot;) を指定すると、
+ファイル位置の初期値は最初のヌルバイトに設定されるが、(ファイル
+オフセットをストリームの末尾以外の位置に再設定した場合)それ以降の
+書き込みではストリームの末尾への追記が行われる訳ではない。
+<P>
+
+<B>fmemopen</B>() の <I>mode</I> 引き数に追記モード (&quot;a&quot; や &quot;a+&quot;) を指定し、
+<I>size</I> 引き数で指定した範囲の <I>buf</I> 内にヌルバイトがない場合、
+POSIX.1-2008 では、ファイル位置の初期値はバッファーの末尾の直後の
+バイトに設定すべきとされている。しかし、glibc の <B>fmemopen</B>() では
+この場合ファイル位置は -1 に設定される。
+<P>
+
+<B>fmemopen</B>() でバイナリモードを指定するには、
+'b' は <I>mode</I> の <I>2 文字目</I> でなければならない。
+例えば、 &quot;wb+&quot; は意図通りの効果になるが、 &quot;w+b&quot; はそうではない。
+これは <B><A HREF="../man3/fopen.3.html">fopen</A></B>(3) の <I>mode</I> の扱いとは異なる。
+<P>
+
+glibc 2.9 での <B>fmemopen</B>() の「バイナリ」モードの追加は、
+ABI (Application Binary Interface) が黙って変更された。
+それ以前の <B>fmemopen</B>() では <I>mode</I> 内の 'b' は無視されていた。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+このプログラムは <B>fmemopen</B>()  を使って出力バッファーをオープンし、 <B>open_memstream</B>()
+を使って動的にサイズが変化する出力バッファーをオープンしている。 (プログラムの第一コマンドライン引き数から取った) 入力文字列を
+スキャンして整数を読み込み、これらの整数の二乗を出力バッファーに書き出す。 このプログラムの実行例は以下のようになる。
+
+<PRE>
+
+$<B> ./a.out '1 23 43'</B>
+size=11; ptr=1 529 1849
+</PRE>
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+<PRE>
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+
+#define handle_error(msg) \
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+int
+main(int argc, char *argv[])
+{
+    FILE *out, *in;
+    int v, s;
+    size_t size;
+    char *ptr;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s &lt;file&gt;\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    in = fmemopen(argv[1], strlen(argv[1]), &quot;r&quot;);
+    if (in == NULL)
+        handle_error(&quot;fmemopen&quot;);
+
+    out = open_memstream(&amp;ptr, &amp;size);
+    if (out == NULL)
+        handle_error(&quot;open_memstream&quot;);
+
+    for (;;) {
+        s = fscanf(in, &quot;%d&quot;, &amp;v);
+        if (s &lt;= 0)
+            break;
+
+        s = fprintf(out, &quot;%d &quot;, v * v);
+        if (s == -1)
+            handle_error(&quot;fprintf&quot;);
+    }
+    fclose(in);
+    fclose(out);
+    printf(&quot;size=%zu; ptr=%s\n&quot;, size, ptr);
+    free(ptr);
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/fopen.3.html">fopen</A></B>(3), <B><A HREF="../man3/fopencookie.3.html">fopencookie</A></B>(3)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">バージョン</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DL>
+<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

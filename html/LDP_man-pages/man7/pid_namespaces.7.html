@@ -1,0 +1,219 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PID_NAMESPACES</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PID_NAMESPACES</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2015-01-10<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/pid_namespaces.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pid_namespaces - Linux PID 名前空間の概要
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+名前空間の概要については <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7) を参照。
+<P>
+PID 名前空間はプロセス ID 番号空間を分離する。 これは、異なる PID 名前空間のプロセスは同じ PID を持つことができることを意味する。
+PID 名前空間を使うことで、コンテナー内のプロセス群を中断、再開したり、 コンテナー内のプロセスの PID
+を保持したままコンテナーを新しいホストに移行したりするといった機能をコンテナーが提供することが可能になる。
+<P>
+新しい PID 名前空間の PID は、 独立したシステムであるかのように、 1 から始まる。 <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man2/vfork.2.html">vfork</A></B>(2),
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2) を呼び出すと、 その名前空間内で一意な PID でプロセスが生成される。
+<P>
+
+
+
+PID 名前空間を使用するには、設定 <B>CONFIG_PID_NS</B> が有効になったカーネルが必要である。
+<A NAME="lbAD">&nbsp;</A>
+<H3>名前空間の init プロセス</H3>
+
+新しい名前空間で作成される最初のプロセス (すなわち、<B>CLONE_NEWPID</B> フラグで <B><A HREF="../man2/clone.2.html">clone</A></B>(2) を使って作成されたプロセスや、
+<B>CLONE_NEWPID</B> フラグで <B><A HREF="../man2/unshare.2.html">unshare</A></B>(2) を呼び出した後のプロセスによって作成された最初のプロセス) は PID 1
+を持ち、 そのプロセスはその名前空間の &quot;init&quot; プロセスとなる (<B>init</B>(1) 参照)。 名前空間内でみなしごになった
+(親プロセスがいなくなった) 子プロセスは、 <B>init</B>(1) ではなくこのプロセスが親プロセスになる (ただし、 同じ PID
+名前空間内のその子プロセスの先祖が、 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2) の <B>PR_SET_CHILD_SUBREAPER</B> コマンドを使って、
+自分自身をみなしごとなった子孫のプロセスの引き取り手になっている場合はこの限りではなく)。
+<P>
+PID 名前空間の &quot;init&quot; プロセスが終了すると、 カーネルはその名前空間の全プロセスを <B>SIGKILL</B> シグナルで終了する。 この動作は、
+PID 名前空間の正しい操作のためには &quot;init&quot; プロセスは不可欠であるという事実を反映したものである。 この場合、 その PID
+名前空間へのそれ以降の <B><A HREF="../man2/fork.2.html">fork</A></B>(2) はエラー <B>ENOMEM</B> で失敗する。 &quot;init&quot; プロセスが終了している PID
+名前空間に新しいプロセスを作成することはできない。 このような状況は、 例えば、 名前空間にいたプロセスに対応する
+<I>/proc/[pid]/ns/pid</I> ファイルに対してオープンしたファイルディスクリプターを使って、 &quot;init&quot;
+プロセスが終了した後にその名前空間に <B><A HREF="../man2/setns.2.html">setns</A></B>(2) を行った場合に起こり得る。 <B><A HREF="../man2/unshare.2.html">unshare</A></B>(2)
+を呼び出した後にも、この状況は起こり得る。 それ以降に <B><A HREF="../man2/fork.2.html">fork</A></B>(2) で作成された最初の子プロセスが終了すると、 それ以降の
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2) の呼び出しは <B>NOMEM</B> で失敗する。
+<P>
+PID 名前空間の他のメンバーは、 &quot;init&quot; プロセスがシグナルハンドラーを設定したシグナルだけを、 &quot;init&quot; プロセスに送信することができる。
+この制限は特権プロセスに対しても適用される。 この制限により、 PID 名前空間の他のメンバーがうっかり &quot;init&quot;
+プロセスを殺してしまうのを防ぐことができる。
+<P>
+同様に、 先祖の名前空間のプロセスは、 &quot;init&quot; プロセスがそのシグナルに対するハンドラーを設定している場合にのみ、 <B><A HREF="../man2/kill.2.html">kill</A></B>(2)
+で説明されている通常のアクセス許可のチェックを経た上で、 子供の PID 名前空間の &quot;init&quot; プロセスにシグナルを送信できる。
+(ハンドラー内では、 <I><A HREF="../man2/sigaction.2.html">sigaction</A></I>(2) に説明がある <I>siginfo_t</I> の <I>si_pid</I> フィールドは 0 になる。)
+<B>SIGKILL</B> と <B>SIGSTOP</B> は例外として扱われ、 これらのシグナルが先祖の PID
+名前空間から送信された場合には強制的に配送される。 これらのシグナルはどちらも &quot;init&quot; プロセルが捕捉することはできない。
+そのため、これらのシグナルに関連付けられた通常のアクション (それぞれ、プロセスの終了とプロセスの強制停止) が実行される。
+<P>
+
+
+
+Linux 3.4 以降では、 <B><A HREF="../man2/reboot.2.html">reboot</A></B>(2) システムコールを呼び出すと、 シグナルがその名前空間の &quot;init&quot; プロセスに送信される。
+詳細は <B><A HREF="../man2/reboot.2.html">reboot</A></B>(2) を参照。
+<A NAME="lbAE">&nbsp;</A>
+<H3>ネストされた PID 名前空間</H3>
+
+PID 名前空間は入れ子にすることができる。 最初の (&quot;root&quot;) PID 名前空間以外の各 PID 名前空間は親を持つ。 PID 名前空間の親は
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2) や <B><A HREF="../man2/unshare.2.html">unshare</A></B>(2) を使ってその名前空間を作成したプロセスの PID 名前空間である。 したがって、 PID
+名前空間は木構造を構成し、 すべての名前空間は親を辿って行くと、最終的には root 名前空間に辿り着く。
+<P>
+プロセスは、所属する PID 名前空間の他のプロセスから見える。また、 root PID 名前空間に向かう直径の先祖の各 PID
+名前空間のプロセスからも見える。 この場合、「見える」とは、 あるプロセスが、 他のプロセスがプロセス ID
+を指定するシステムコールを使う際に操作の対象にできることを意味する。 逆に、子供 PID 名前空間のプロセスから親や先祖の名前空間のプロセスは見えない。
+あるプロセスは自分自身の PID 名前空間とその子孫の名前空間のプロセスだけが見える (例えば、<B><A HREF="../man2/kill.2.html">kill</A></B>(2) でシグナルを送信したり、
+<B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2) で nice 値を設定したり、など)。
+<P>
+プロセスは、そのプロセスが見える PID 名前空間の階層の各層においてプロセス ID を一つ持ち、 直接の先祖の名前空間を辿ることで通って root
+PID 名前空間に至ることができる。 プロセス ID に対して操作を行うシステムコールは、常に、呼び出し元プロセスの PID 名前空間で見えるプロセス
+ID を使って操作を行う。 <B><A HREF="../man2/getpid.2.html">getpid</A></B>(2) の呼び出しでは、 常に、 プロセスが作成された名前空間に関連付けられた PID を返す。
+<P>
+PID 名前空間内のプロセスは名前空間の外部に親プロセスを持つことができる。 例えば、その名前空間の初期プロセス (すなわち PID 1 を持つ
+<B>init</B>(1) プロセス) の親プロセスは必然的に別の名前空間に属すことになる。 同様に、 あるプロセスが <B><A HREF="../man2/setns.2.html">setns</A></B>(2)
+を使って子プロセスを PID 名前空間に参加させた場合、 子プロセスは <B><A HREF="../man2/setns.2.html">setns</A></B>(2) の呼び出し元とは異なる PID 名前空間に属す。
+子プロセスで <B><A HREF="../man2/getppid.2.html">getppid</A></B>(2) を呼び出すと 0 が返される。
+<P>
+
+
+
+プロセスは (<B><A HREF="../man2/setns.2.html">setns</A></B>(2) を <B>CLONE_NEWPID</B> で使うなどで) 子供の PID 名前空間に自由に入ることができるが、
+逆の方向には移動できない。 つまり、 プロセスは先祖の名前空間 (親、親の親など) に入ることはできない。 PID 名前空間の変更は一方向の操作である。
+<A NAME="lbAF">&nbsp;</A>
+<H3><A HREF="../man2/setns.2.html">setns</A>(2) と <A HREF="../man2/unshare.2.html">unshare</A>(2) の動作</H3>
+
+PID 名前空間のファイルディスクリプターを指定して <B><A HREF="../man2/setns.2.html">setns</A></B>(2) を呼び出したり、 <B>CLONE_NEWPID</B> フラグ付きで
+<B><A HREF="../man2/unshare.2.html">unshare</A></B>(2) を呼び出したりすると、 その結果作成された子プロセスは呼び出し元とは異なる PID 名前空間に置かれる。
+しかし、これらの呼び出しでは呼び出し元プロセスの PID 名前空間は変更されない。 なぜなら、PID 名前空間を変更してしまうと、 呼び出し元が認識する
+(<B>getpid</B>() が返す) 自分の PID が変わってしまい、 多くのアプリケーションやライブラリが正しく動作しなくなるからである。
+<P>
+別の言い方をすると、 あるプロセスがどの PID 名前空間に所属するかは、 そのプロセスが作成されたときに決定され、 それ以降は変更されることはない。
+いろいろあるが、プロセス間の親子関係には、PID 名前空間の親子関係がそのまま反映されるということだ。
+プロセスの親プロセスは、同じ名前空間にいるか、もしくは直接の親 PID 名前空間にいるかのいずれかである。
+<A NAME="lbAG">&nbsp;</A>
+<H3>CLONE_NEWPID の他の CLONE_* フラグとの互換性</H3>
+
+<B>CLONE_NEWPID</B> はいくつかの他の <B>CLONE_*</B> フラグと組み合わせることができない。
+<DL COMPACT>
+<DT>*<DD>
+<B>CLONE_THREAD</B> は、 プロセス内のスレッド間で互いにシグナルを送信できるようにするため、 同じ PID 名前空間に属している必要がある。
+同様に、 プロセス内の全スレッドが <B><A HREF="../man5/proc.5.html">proc</A></B>(5) ファイルシステムで見える必要がある。
+<DT>*<DD>
+<B>CLONE_SIGHAND</B> は、同じ PID 名前空間である必要がある。 さもなければ、
+シグナルが送信された際に、シグナルを送信したプロセスのプロセス ID を意味のある形でエンコードすることができない (<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2) の
+<I>siginfo_t</I> 型の説明を参照)。 複数の PID 名前空間に属するプロセス間で一つのシグナルキューを共有すると、うまく動かなくなる。
+<DT>*<DD>
+<B>CLONE_VM</B> は、全スレッドが同じ PID 名前空間に属している必要がある。 なぜなら、 コアダンプの観点から見ると、 2
+つのプロセスが同じアドレス空間を共有していれば、 これらはスレッドであり、コアダンプが一緒に行われるからである。 コアダンプが書き込まれる際に、
+各スレッドの PID がコアダンプに書き込まれる。 もしプロセス ID のいくつかが親 PID 名前空間に属していたとすると、 プロセス ID
+の書き込みは意味を持たなくなってしまう。
+</DL>
+<P>
+
+まとめると、 <B>CLONE_THREAD</B>, <B>CLONE_SIGHAND</B>, <B>CLONE_VM</B> では技術的な要件として PID
+名前空間が共有されている点がある。 (さらに <B><A HREF="../man2/clone.2.html">clone</A></B>(2) では <B>CLONE_THREAD</B> か <B>CLONE_SIGHAND</B>
+が指定された際には <B>CLONE_VM</B> が指定されている必要がある点にも注意。) したがって、以下のような順序で呼び出しを行うと (エラー
+<B>EINVAL</B> で) 失敗する。
+<P>
+<PRE>
+    unshare(CLONE_NEWPID);
+    clone(..., CLONE_VM, ...);    /* Fails */
+
+    setns(fd, CLONE_NEWPID);
+    clone(..., CLONE_VM, ...);    /* Fails */
+
+    clone(..., CLONE_VM, ...);
+    setns(fd, CLONE_NEWPID);      /* Fails */
+
+    clone(..., CLONE_VM, ...);
+    unshare(CLONE_NEWPID);        /* Fails */
+</PRE>
+
+
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>/proc と PID 名前空間</H3>
+
+<I>/proc</I> ファイルシステムは、<I>/proc</I> のマウントを行ったプロセスの PID 名前空間で見えるプロセスだけを表示する。 たとえ、 その
+<I>/proc</I> ファイルシステムが他の名前空間のプロセスから参照されたとしても、そうである。
+<P>
+新しい PID 名前空間を作成した後、 子プロセスが、自身の root ディレクトリを変更し、新しい procfs インスタンスを <I>/proc</I>
+にマウントするのは <B><A HREF="../../procps/man1/ps.1.html">ps</A></B>(1) などのツールが正しく動作するためにも有用である。 <B><A HREF="../man2/clone.2.html">clone</A></B>(2) の <I>flags</I> 引き数に
+<B>CLONE_NEWNS</B> も指定されて新しいマウント名前空間が同時に作成された場合は、 root ディレクトリを変更する必要はない。 新しい
+procfs インスタンスを <I>/proc</I> にそのままマウントすることができる。
+<P>
+シェルから、コマンドで <I>/proc</I> のマウントを行うには次のようにする。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;$&nbsp;mount&nbsp;-t&nbsp;proc&nbsp;proc&nbsp;/proc
+<P>
+
+
+
+パス <I>/proc/self</I> に対して <B><A HREF="../man2/readlink.2.html">readlink</A></B>(2) を呼び出すと、 procfs のマウントを行ったプロセスの PID
+名前空間におけるプロセス ID が得られる。 これは調査目的でプロセスが他の名前空間で自身の PID を知りたい場合などに役立つ。
+<A NAME="lbAI">&nbsp;</A>
+<H3>その他</H3>
+
+プロセス ID が UNIX ドメインソケット経由で別の PID 名前空間のプロセスに渡される場合 (<B><A HREF="../man7/unix.7.html">unix</A></B>(7) の
+<B>SCM_CREDENTIALS</B> の説明を参照)、 プロセス ID は受信プロセスの PID 名前空間での対応する PID 値に翻訳される。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>準拠</H2>
+
+名前空間は Linux 独自の機能である。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7) 参照。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2), <B><A HREF="../man2/setns.2.html">setns</A></B>(2), <B><A HREF="../man2/unshare.2.html">unshare</A></B>(2), <B><A HREF="../man5/proc.5.html">proc</A></B>(5), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7),
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7), <B>switch_root</B>(8)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">名前空間の init プロセス</A><DD>
+<DT><A HREF="#lbAE">ネストされた PID 名前空間</A><DD>
+<DT><A HREF="#lbAF">setns(2) と unshare(2) の動作</A><DD>
+<DT><A HREF="#lbAG">CLONE_NEWPID の他の CLONE_* フラグとの互換性</A><DD>
+<DT><A HREF="#lbAH">/proc と PID 名前空間</A><DD>
+<DT><A HREF="#lbAI">その他</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">準拠</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

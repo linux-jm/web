@@ -1,0 +1,480 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SCHED</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SCHED</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2014-10-02<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/sched.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sched - スケジューリング API の概要
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<A NAME="lbAD">&nbsp;</A>
+<H3>API の概要</H3>
+
+Linux のスケジューリング API は以下のとおりである。
+<DL COMPACT>
+<DT><B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)<DD>
+指定されたスレッドのスケジューリングポリシーとパラメーターを設定する。
+<DT><B><A HREF="../man2/sched_getscheduler.2.html">sched_getscheduler</A></B>(2)<DD>
+指定されたスレッドのスケジューリングポリシーを返す。
+<DT><B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2)<DD>
+指定されたスレッドのスケジューリングパラメーターを設定する。
+<DT><B><A HREF="../man2/sched_getparam.2.html">sched_getparam</A></B>(2)<DD>
+指定されたスレッドのスケジューリングパラメーターを取得する。
+<DT><B><A HREF="../man2/sched_get_priority_max.2.html">sched_get_priority_max</A></B>(2)<DD>
+指定されたスケジューリングポリシーで利用可能な最小の優先度を返す。
+<DT><B><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></B>(2)<DD>
+指定されたスケジューリングポリシーで利用可能な最大の優先度を返す。
+<DT><B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2)<DD>
+「ラウンドロビン」スケジューリングポリシーでスケジューリグされるスレッドで使用される単位時間 (quantum) を取得する。
+<DT><B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2)<DD>
+呼び出し元が CPU の使用権を明け渡して、 他のスレッドが実行できるようにする。
+<DT><B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2)<DD>
+(Linux 固有) 指定されたスレッドの CPU affinity を設定する。
+<DT><B><A HREF="../man2/sched_getaffinity.2.html">sched_getaffinity</A></B>(2)<DD>
+(Linux 固有) 指定されたスレッドの CPU affinity を取得する。
+<DT><B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2)<DD>
+指定されたスレッドのスケジューリングポリシーとパラメーターを設定する。 この (Linux 固有の) システムコールは
+<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2) と <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2) の両方の機能を持つ。
+<DT><B><A HREF="../man2/sched_getattr.2.html">sched_getattr</A></B>(2)<DD>
+
+指定されたスレッドのスケジューリングポリシーとパラメーターを取得する。 この (Linux 固有の) システムコールは
+<B><A HREF="../man2/sched_getscheduler.2.html">sched_getscheduler</A></B>(2) と <B><A HREF="../man2/sched_getparam.2.html">sched_getparam</A></B>(2) の両方の機能を持つ。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>スケジューリングポリシー (scheduling policy)</H3>
+
+スケジューラ (scheduler) とはカーネルの構成要素で、 次に CPU で実行される実行可能なスレッドを決定するものである。
+各々のスレッドには、スケジューリングポリシーと 「静的」なスケジューリング優先度 <I>sched_priority</I> が対応付けられる。
+スケジューラは、システム上の全スレッドのスケジューリングポリシーと 静的優先度に関する知識に基づいて決定を行う。
+<P>
+通常のスケジューリングポリシー (<B>SCHED_OTHER</B>, <B>SCHED_IDLE</B>, <B>SCHED_BATCH</B>)
+の下でスケジューリングされるスレッドでは、 <I>sched_priority</I> はスケジューリングの決定に使用されない
+(<I>sched_priority</I> には 0 を指定しなければならない)。
+<P>
+リアルタイムスケジューリングポリシー (<B>SCHED_FIFO</B>, <B>SCHED_RR</B>)  の下でスケジューリングされるスレッドは、
+<I>sched_priority</I> の値は 1 (最低) から 99 (最高) の範囲となる
+(数字から分かるように、リアルタイムスレッドは常に通常のスレッドよりも 高い優先度を持つ)。 ここで注意すべきなのは、POSIX.1-2001
+が要求しているのは、 リアルタイムポリシーの実装において最低 32 種類の異なる優先度レベルが
+サポートされることだけであり、いくつかのシステムではこの最低限の数の 優先度しか提供されていない、ということである。 移植性が必要なプログラムでは、
+<B><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></B>(2)  と <B><A HREF="../man2/sched_get_priority_max.2.html">sched_get_priority_max</A></B>(2)
+を使って、あるポリシーがサポートする優先度の範囲を調べるべきである。
+<P>
+概念としては、 スケジューラはその <I>sched_priority</I> の値それぞれに対して 実行可能なスレッドのリストを管理している。
+どのスレッドを次に実行するかを決定するために、 スケジューラは静的優先度の最も高い空でないリストを探して、 そのリストの先頭のスレッドを選択する。
+<P>
+各スレッドのスケジューリングポリシーは、 そのスレッドが同じ静的優先度を持つスレッドのリストの中のどこに挿入され、
+このリストの中をどのように移動するかを決定する。
+<P>
+全てのスケジューリングはプリエンプティブ (preemptive) である: より高い優先度のスレッドが実行可能になると、現在実行中のスレッドは実行権を
+取り上げられ (preempted)、そのスレッドの静的優先度レベルの待ちリストに 戻される。スケジューリングポリシーは同じ静的優先度を持つ実行可能な
+スレッドのリストの中で順番のみを決定する。
+<A NAME="lbAF">&nbsp;</A>
+<H3>SCHED_FIFO: ファーストインファーストアウトスケジューリング</H3>
+
+<B>SCHED_FIFO</B> は 0 より大きな静的優先度でのみ使用できる。このポリシーでは、 <B>SCHED_FIFO</B>
+スレッドが実行可能になった場合、 そのポリシーが <B>SCHED_OTHER</B>、 <B>SCHED_BATCH</B>、 <B>SCHED_IDLE</B> の
+現在実行中のスレッドは直ちに実行権を取り上げられる。 <B>SCHED_FIFO</B> は時分割のない単純なスケジューリングアルゴリズムである。
+<B>SCHED_FIFO</B> ポリシーでスケジューリングされているスレッドには以下の ルールが適用される:
+<DL COMPACT>
+<DT>*<DD>
+より高い優先度の他のスレッドによって取って代わられた <B>SCHED_FIFO</B> スレッドはその優先度のリストの先頭に留まり続け、
+より高い優先度のスレッド全てが停止 (block) した場合に実行を再開する。
+<DT>*<DD>
+<B>SCHED_FIFO</B> スレッドが実行可能になった時、その優先度のリストの最後 に挿入される。
+<DT>*<DD>
+
+
+<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2), <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2), <B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2) は <I>pid</I>
+で指定された <B>SCHED_FIFO</B> (または <B>SCHED_RR</B>) スレッドが 実行可能な場合、リストの最初に置く。
+結果として、もし優先度が同じだった場合、 現在実行中のスレッドに先んじるかもしれない。 (POSIX.1-2001
+ではスレッドはリストの最後に行くべきと規定されている。)
+<DT>*<DD>
+<B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2)  を呼び出したスレッドはリストの最後に置かれる。
+</DL>
+<P>
+
+その他のイベントによって <B>SCHED_FIFO</B>
+ポリシーでスケジューリングされるスレッドが同じ優先度の実行可能なスレッドの待ちリストの中を移動することはない。
+<P>
+<B>SCHED_FIFO</B> スレッドは I/O 要求によって停止するか、 より高い優先度のスレッドによって置きかえられるか、
+<B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2)  を呼び出すまで実行を続ける。
+<A NAME="lbAG">&nbsp;</A>
+<H3>SCHED_RR: ラウンドロビン (round-robin) スケジューリング</H3>
+
+
+
+
+<B>SCHED_RR</B> は <B>SCHED_FIFO</B> の単純な拡張である。 上述された
+<B>SCHED_FIFO</B> に関する記述は全て <B>SCHED_RR</B> に 適用できる。異なるのは
+それぞれのスレッドは最大時間単位までしか実行できない ということである。
+<B>SCHED_RR</B> スレッドが時間単位と同じかそれより 長い時間実行されると、
+その優先度のリストの最後に置かれる。 より高い優先度のスレッドによって
+置きかえられ、その後実行を再開した <B>SCHED_RR</B> スレッドは、そのラウンド
+ロビン時間単位を完全に使い切る まで実行される。その時間単位の長さは
+<B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2) を使って取得できる。
+<A NAME="lbAH">&nbsp;</A>
+<H3>SCHED_DEADLINE: 散発タスクモデルのデッドラインスケジューリング</H3>
+
+バージョン 3.14 以降では、 Linux はデッドラインスケジューリングポリシー (<B>SCHED_DEADLINE</B>) が提供される。
+現在のところ、 このポリシーは GEDF (Global Earliest Deadline First) を使って CBS (Constant
+Bandwidth Server) との組み合わせで実装されている。 このポリシーと関連する属性の設定、取得を行うには、 Linux
+固有のシステムコール <B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2) と <B><A HREF="../man2/sched_getattr.2.html">sched_getattr</A></B>(2) を使用する必要がある。
+<P>
+散発タスク (sporadic task) はジョブ列を持つタスクで、 各ジョブは期間 (period) あたり多くとも 1 回だけ有効化される。
+各ジョブには <I>relative deadline</I> (相対デッドライン) と <I>computation time</I> (計算時間) がある。
+相対デッドラインは、そのジョブがそのデッドラインより前に実行が終了すべきであることを示す。 計算時間は、このジョブを実行するのに必要な CPU
+時間である。 新しいジョブを実行する必要が出てタスクが起こされる時点は <I>arrival time</I> (到着時刻) と呼ばれる (要求時刻
+(request time) や解放時刻 (release time) と呼ばれることもある)。 <I>start time</I>
+はタスクが実行を開始する時刻である。 したがって、 <I>absolute deadline</I> (絶対デッドライン)
+は到着時刻に相対デッドラインを加算することで求められる。
+<P>
+以下の図はこれらの用語をまとめたものである。
+<P>
+
+<PRE>
+arrival/wakeup                    absolute deadline
+     |    start time                    |
+     |        |                         |
+     v        v                         v
+-----x--------xooooooooooooooooo--------x--------x---
+              |&lt;- comp. time -&gt;|
+     |&lt;------- relative deadline ------&gt;|
+     |&lt;-------------- period -------------------&gt;|
+</PRE>
+
+
+<P>
+<B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2) を使ってスレッドに <B>SCHED_DEADLINE</B> ポリシーを設定する際、 <I>Runtime</I>,
+<I>Deadline</I>, <I>Period</I> の 3 つのパラメーターを指定することができる。
+これらのパラメーターは必ずしも上で述べた用語に対応しているわけではない。 よくある方法としては、 Runtime に平均計算時間
+(もしくはハードリアルタイムタスクの場合は最悪ケースの実行時間) よりも大きな値を、 Deadline に相対デッドラインを、 Period
+にタスクの期間 (period) を設定する。 したがって、 <B>SCHED_DEADLINE</B> スケジューリングでは、 以下のようになる。
+<P>
+
+<PRE>
+arrival/wakeup                    absolute deadline
+     |    start time                    |
+     |        |                         |
+     v        v                         v
+-----x--------xooooooooooooooooo--------x--------x---
+              |&lt;-- Runtime -------&gt;|
+     |&lt;----------- Deadline -----------&gt;|
+     |&lt;-------------- Period -------------------&gt;|
+</PRE>
+
+
+<P>
+
+
+
+3 つのデッドラインスケジューリングパラメーターは <I>sched_attr</I> 構造体の <I>sched_runtime</I>,
+<I>sched_deadline</I>, <I>sched_period</I> フィールドに対応する。 これらのフィールドはナノ秒単位の値である。
+<I>sched_period</I> に 0 が指定された場合 <I>sched_deadline</I> と同じ値になる。
+<P>
+カーネルでは以下の関係が成り立つことが求められる。
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sched_runtime&nbsp;&lt;=&nbsp;sched_deadline&nbsp;&lt;=&nbsp;sched_period
+<P>
+
+これに加えて、 現在の実装では、 すべてのパラメーター値は少なくとも 1024 (実装の粒度である 1 マイクロ秒よりも少しだけ大きな値) で 2^63
+よりも小さくなければならない。 これらのチェックのいずれかが失敗すると、 <B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2) はエラー <B>EINVAL</B>
+で失敗する。
+<P>
+CBS によりタスク間の干渉がないことが保証される。 指定された Runtime を超えて実行しようとしたスレッドは絞り込まれることになる。
+<P>
+デッドラインスケジューリングの保証がきちんと機能するためには、 カーネルは <B>SCHEDULING</B> スレッドの集合が指定された制約条件におさまらない
+(スケジューリングできない) 状況を防止しなければならない。 そのため、カーネルは <B>SCHED_DEADLINE</B>
+ポリシーと属性を設定、変更する際に、受け入れチェック (admittance test) を実行する。
+この受け入れチェックは、変更が実行可能かを計算し、もし実行できないようであれば <B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2) はエラー <B>EBUSY</B>
+で失敗する。
+<P>
+例えば、 使用率の合計が利用可能な合計 CPU 数以下である必要がある (ただし、必ずしも十分というわけではない)。 なお、 各スレッドは最大で
+Period あたり Runtime だけ実行されることがあるので、 そのスレッドの使用率は Runtime を Period で割ったものとなる。
+<P>
+スレッドが <B>SCHED_DEADLINE</B> ポリシーに受け入れられた場合に保証を実現するため、 <B>SCHED_DEADLINE</B>
+スレッドはシステムで (ユーザーが制御可能な) 最高優先度のスレッドとなる。 いずれかの <B>SCHED_DEADLINE</B>
+スレッドが実行可能であれば、 他のポリシーでスケジューリングされているスレッドはすべて横取りされる。
+<P>
+<B>SCHED_DEADLINE</B> ポリシーでスケジューリングされているスレッドが <B><A HREF="../man2/fork.2.html">fork</A></B>(2) を呼び出すと、 そのスレッドで
+reset-on-fork フラグがセットされている場合 (下記参照) を除き、 エラー <B>EAGAIN</B> で失敗する。
+<P>
+
+
+
+
+
+<B>SCHED_DEADLINE</B> スレッドが <B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2) を呼び出すと、 現在のジョブが CPU
+を明け渡し、新しい期間が開始するのを待つ。
+<A NAME="lbAI">&nbsp;</A>
+<H3>SCHED_OTHER: Linux のデフォルトの時分割スケジューリング</H3>
+
+
+<B>SCHED_OTHER</B> は静的優先度 0 でのみ使用できる。 <B>SCHED_OTHER</B> は Linux 標準の時分割スケジューラで、
+特別なリアルタイム機構を必要としていない全てのスレッドで使用される。 実行するスレッドは、静的優先度 0 のリストから、このリストの中だけで
+決定される「動的な」優先度 (dynamic priority) に基いて決定される。 動的な優先度は (<B><A HREF="../man2/nice.2.html">nice</A></B>(2),
+<B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2), <B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2) により設定される) nice 値に基づいて決定されるもので、
+単位時間毎に、スレッドが実行可能だが、スケジューラにより実行が拒否された 場合にインクリメントされる。 これにより、全ての <B>SCHED_OTHER</B>
+スレッドでの公平性が保証される。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>SCHED_BATCH: バッチプロセスのスケジューリング</H3>
+
+(Linux 2.6.16 以降)  <B>SCHED_BATCH</B> は静的優先度 0 でのみ使用できる。 このポリシーは (nice 値に基づく)
+動的な優先度にしたがってスレッドの スケジューリングが行われるという点で、<B>SCHED_OTHER</B> に似ている。
+異なるのは、このポリシーでは、スレッドが常に CPU に負荷のかかる (CPU-intensive)  処理を行うと、スケジューラが仮定する点である。
+スケジューラはスレッドを呼び起こす毎にそのスレッドにスケジューリング上の ペナルティを少し課し、その結果、このスレッドはスケジューリングの決定で
+若干冷遇されるようになる。
+<P>
+
+
+
+
+
+このポリシーは、非対話的な処理だがその nice 値を下げたくない処理や、 (処理のタスク間で) 余計なタスクの置き換えの原因とある対話的な処理なしで
+確定的な (deterministic) スケジューリングポリシーを適用したい処理に 対して有効である。
+<A NAME="lbAK">&nbsp;</A>
+<H3>SCHED_IDLE: 非常に優先度の低いジョブのスケジューリング</H3>
+
+(Linux 2.6.23 以降)  <B>SCHED_IDLE</B> は静的優先度 0 でのみ使用できる。 このポリシーではプロセスの nice
+値はスケジューリングに影響を与えない。
+<P>
+
+非常に低い優先度でのジョブの実行を目的としたものである (非常に低い優先度とは、ポリシー <B>SCHED_OTHER</B> か <B>SCHED_BATCH</B>
+での nice 値 +19 よりさらに低い優先度である)。
+<A NAME="lbAL">&nbsp;</A>
+<H3>子プロセスでのスケジューリングポリシーのリセット</H3>
+
+各スレッドには reset-on-fork スケジューリングフラグがある。 このフラグがセットされると、 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+で作成される子プロセスは特権スケジューリングポリシーを継承しない。 reset-on-fork フラグは以下のいずれかの方法でセットできる。
+<DL COMPACT>
+<DT>*<DD>
+<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2) を呼び出す際に <B>SCHED_RESET_ON_FORK</B> フラグを <I>policy</I>
+引き数に論理和で指定する (Linux 2.6.32 以降)。
+<DT>*<DD>
+<B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2) を呼び出し際に <I>attr.sched_flags</I> に
+<B>SCHED_FLAG_RESET_ON_FORK</B> フラグを指定する。
+</DL>
+<P>
+
+これらの 2 つの API で使用される定数は名前が違っている点に注意すること。 同様に reset-on-fork フラグの状態は
+<B><A HREF="../man2/sched_getscheduler.2.html">sched_getscheduler</A></B>(2) と <B><A HREF="../man2/sched_getattr.2.html">sched_getattr</A></B>(2) を使って取得できる。
+<P>
+reset-on-fork 機能はメディア再生アプリケーションでの利用を意図したものである。 複数の子プロセスを作成することで、 アプリケーションは
+<B>RLIMIT_RTTIME</B> リソース上限 (<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2) を参照) を避けることができる。
+<P>
+より正確には、 reset-on-fork フラグがセットされた場合、それ以降に作成される子プロセスに以下のルールが適用される。
+<DL COMPACT>
+<DT>*<DD>
+呼び出したスレッドのスケジューリングポリシーが <B>SCHED_FIFO</B> か <B>SCHED_RR</B> の場合、子プロセスのポリシーは
+<B>SCHED_OTHER</B> にリセットされる。
+<DT>*<DD>
+子プロセスが負の nice 値を持っている場合、子プロセスの nice 値は 0 にリセットされる。
+</DL>
+<P>
+
+
+一度 reset-on-fork フラグが有効にされた後は、このフラグをリセットできるのは、スレッドが <B>CAP_SYS_NICE</B>
+ケーパビリティを持つ場合だけである。このフラグは <B><A HREF="../man2/fork.2.html">fork</A></B>(2) で作成された子プロセスでは無効になる。
+<A NAME="lbAM">&nbsp;</A>
+<H3>特権とリソース制限</H3>
+
+2.6.12 より前のバージョンの Linux カーネルでは、 特権スレッド (<B>CAP_SYS_NICE</B> ケーパビリティを持つスレッド) だけが
+0 以外の静的優先度を設定する (すなわち、リアルタイムスケジューリングポリシーを設定する) ことができる。 非特権スレッドができる変更は
+<B>SCHED_OTHER</B> ポリシーを設定することだけであり、さらに、 この変更を行えるのは、 呼び出し元の実効ユーザー ID
+がポリシーの変更対象スレッド (<I>pid</I> で指定されたスレッド) の実ユーザー ID か実効ユーザー ID と 一致する場合だけである。
+<P>
+<B>SCHED_DEADLINE</B> ポリシーを設定、変更するには、スレッドが特権 (<B>CAP_SYS_NICE</B>) を持っていなければならない。
+<P>
+Linux 2.6.12 以降では、リソース制限 <B>RLIMIT_RTPRIO</B> が定義されており、 スケジューリングポリシーが
+<B>SCHED_RR</B> と <B>SCHED_FIFO</B> の場合の、非特権スレッドの静的優先度の上限を定めている。
+スケジューリングポリシーと優先度を変更する際のルールは以下の通りである。
+<DL COMPACT>
+<DT>*<DD>
+非特権スレッドに 0 以外の <B>RLIMIT_RTPRIO</B> ソフトリミットが設定されている場合、
+非特権スレッドはそのスレッドのスケジューリングポリシーと優先度を 変更できるが、優先度を現在の自身の優先度と <B>RLIMIT_RTPRIO</B>
+ソフトリミットの大きい方よりも高い値に設定できないという制限が課される。
+<DT>*<DD>
+<B>RLIMIT_RTPRIO</B> ソフトリミットが 0 の場合、優先度を下げるか、 リアルタイムでないポリシーへ切り替えるかの変更だけが許可される。
+<DT>*<DD>
+ある非特権スレッドが別のスレッドに対してこれらの変更を行う際にも、 同じルールが適用される。変更を行えるのは、変更を行おうとするスレッド の実効ユーザー
+ID が変更対象のスレッドの実ユーザー ID か実効ユーザー ID と 一致している場合に限られる。
+<DT>*<DD>
+
+<B>SCHED_IDLE</B> ポリシーの場合には特別なルールが適用される。 2.6.39 より前の Linux
+カーネルでは、このポリシーで動作する非特権スレッドは、 <B>RLIMIT_RTPRIO</B>
+リソース上限の値に関わらず、自分のポリシーを変更することができない。 2.6.39 以降の Linux カーネルでは、非特権スレッドは、自分の nice
+値が <B>RLIMIT_NICE</B> リソース上限 (<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2) 参照)
+で許可された範囲である限りは、自分のスケジューリングポリシーを <B>SCHED_BATCH</B> か <B>SCHED_NORMAL</B>
+ポリシーに切り替えることができる。
+</DL>
+<P>
+
+特権スレッド (<B>CAP_SYS_NICE</B> ケーパビリティを持つスレッド) の場合、 <B>RLIMIT_RTPRIO</B> の制限は無視される;
+古いカーネルと同じように、スケジューリングポリシーと優先度に対し 任意の変更を行うことができる。 <B>RLIMIT_RTPRIO</B>
+に関するもっと詳しい情報は <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)  を参照のこと。
+<A NAME="lbAN">&nbsp;</A>
+<H3>リアルタイムプロセスとデッドラインプロセスの CPU 使用量を制限する</H3>
+
+<B>SCHED_FIFO</B>, <B>SCHED_RR</B>, <B>SCHED_DEADLINE</B> でスケジューリングされる
+スレッドが停止せずに無限ループに陥ると、 他の全てのより低い優先度のスレッドを永久に停止 (block) させてしまう。 Linux 2.6.25
+より前では、 リアルタイムプロセスが暴走してしまい、システムが止まってしまうのを防止する唯一の方法は、 (コンソールで)
+シェルをテスト対象のアプリケーションよりも高い静的優先度で実行することだけであった。 これによって期待通りに停止したり終了したりしないリアルタイム
+アプリケーションを緊急終了させることが可能になる。
+<P>
+Linux 2.6.25 以降では、 暴走したリアルタイムプロセスやデッドラインプロセスを扱う別の方法が提供されている。 一つは
+<B>RLIMIT_RTTIME</B> リソース上限を使ってリアルタイムプロセスが消費できる CPU 時間の上限を設定する方法である。 詳細は
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2) を参照。
+<P>
+Linux 2.6.25 以降では、 2 つの <I>/proc</I> ファイルを使って、リアルタイムでないプロセスが使用できる CPU
+時間を一定量予約することができる。 この方法で CPU 時間をいくらか予約しておくことで、 CPU 時間が (例えば) root
+シェルに割り当てられ、このシェルから暴走したプロセスを殺すことができる。 これらのファイルでは両方ともマイクロ秒で時間を指定する。
+<DL COMPACT>
+<DT><I>/proc/sys/kernel/sched_rt_period_us</I><DD>
+このファイルは、 CPU 時間 100% にあたるスケジューリング間隔を指定する。 このファイルの値として 1 から <B>INT_MAX</B>
+を指定できる。 この値は実際の時間としては 1 マイクロ秒から約 35 分に相当する。 このファイルのデフォルト値は 1,000,000 (1 秒)
+である。
+<DT><I>/proc/sys/kernel/sched_rt_runtime_us</I><DD>
+このファイルの値は、 システム上のリアルタイムスケジューリングやデッドラインスケジューリングの全プロセスが使用できる「期間」を指定する。
+このファイルの値として -1 から <B>INT_MAX</B>-1 を指定できる。 -1 を指定すると、実行時間 (runtime) はスケジューリング間隔
+(period) と同じになる。 つまり、 CPU 時間はリアルタイムでないプロセスには確保されない (カーネル 2.6.25 より前の Linux
+の動作である)。 このファイルのデフォルト値は 950,000 (0.95 秒) である。 これは CPU 時間の 5%
+がリアルタイムやデッドラインスケジューリングポリシー以外で動作するプロセスに確保されるという意味する。
+</DL>
+<P>
+
+<A NAME="lbAO">&nbsp;</A>
+<H3>応答時間 (response time)</H3>
+
+
+
+I/O 待ちで停止したより高い優先度のスレッドは再びスケジューリングされる 前にいくらかの応答時間がかかる。デバイスドライバーを書く場合には &quot;slow
+interrupt&quot; 割り込みハンドラーを使用することで この応答時間を劇的に減少させることができる。
+<A NAME="lbAP">&nbsp;</A>
+<H3>その他</H3>
+
+子プロセスは <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  の際に親プロセスのスケジューリングポリシーとパラメーターを継承する。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+の前後で、スケジューリングポリシーとパラメーターは保持される。
+<P>
+リアルタイムプロセスは大抵、ページングの待ち時間を避けるために <B><A HREF="../man2/mlock.2.html">mlock</A></B>(2)  や <B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2)
+を使ってメモリーロックをしなければならない。
+<A NAME="lbAQ">&nbsp;</A>
+<H2>注意</H2>
+
+<P>
+
+もともとは、標準の Linux は一般目的のオペレーティングシステムとして 設計されており、バックグラウンドプロセスや対話的アプリケーション、
+リアルタイム性の要求が厳しくないリアルタイムアプリケーション (普通はタイミングの応答期限 (deadline) を満たす必要があるアプリケーション)
+を扱うことができた。 Linux カーネル 2.6 では、 カーネルのプリエンプション (タスクの置き換え) が可能であり、 新たに導入された O(1)
+スケジューラにより、 アクティブなタスクの数に関わらずスケジューリングに必要な時間は 固定で確定的 (deterministic)
+であることが保証されている。 それにも関わらず、カーネル 2.6.17 までは 真のリアルタイムコンピューティングは実現できなかった。
+<A NAME="lbAR">&nbsp;</A>
+<H3>本流の Linux カーネルでのリアルタイム機能</H3>
+
+
+
+カーネル 2.6.18 から現在まで、 Linux は徐々にリアルタイム機能を備えつつ
+あるが、 これらの機能のほとんどは、 Ingo Molnar, Thomas Gleixner,
+Steven Rostedt らによって開発された、 以前の <I>realtime-preempt</I> パッチ
+からのものである。 これらのパッチが本流のカーネルに完全にマージされるま
+では (マージの完了はカーネル 2.6.30 あたりの予定)、 最高のリアルタイム
+性能を達成するには realtime-preempt パッチを 組み込まなければならない。
+これらのパッチは
+
+<PRE>
+
+patch-<I>kernelversion</I>-rt<I>patchversion</I>
+</PRE>
+
+
+<P>
+
+という名前で、
+
+
+からダウンロードできる。
+<P>
+このパッチが適用されず、かつパッチの内容の本流のカーネルへのマージが 完了するまでは、カーネルの設定では <B>CONFIG_PREEMPT_NONE</B>,
+<B>CONFIG_PREEMPT_VOLUNTARY</B>, <B>CONFIG_PREEMPT_DESKTOP</B> の 3つのプリエンプションクラス
+(preemption class) だけが提供される。 これらのクラスでは、最悪の場合のスケジューリング遅延がそれぞれ
+全く減らない、いくらか減る、かなり減る。
+<P>
+パッチが適用された場合、またはパッチの内容の本流のカーネルへのマージが 完了した後では、上記に加えて設定項目として
+<B>CONFIG_PREEMPT_RT</B> が利用可能になる。この項目を選択すると、 Linux は通常のリアルタイムオペレーティングシステムに変身する。
+この場合には、 FIFO と RR のスケジューリングポリシーは、 真のリアルタイム優先度を持つスレッドを最悪の場合のスケジューリング遅延が
+最小となる環境で動作させるために使われることになる。
+<A NAME="lbAS">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B>chrt</B>(1), <B>taskset</B>(1), <B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2), <B><A HREF="../man2/mlock.2.html">mlock</A></B>(2), <B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2),
+<B><A HREF="../man2/munlock.2.html">munlock</A></B>(2), <B><A HREF="../man2/munlockall.2.html">munlockall</A></B>(2), <B><A HREF="../man2/nice.2.html">nice</A></B>(2), <B><A HREF="../man2/sched_get_priority_max.2.html">sched_get_priority_max</A></B>(2),
+<B><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></B>(2), <B><A HREF="../man2/sched_getscheduler.2.html">sched_getscheduler</A></B>(2),
+<B><A HREF="../man2/sched_getaffinity.2.html">sched_getaffinity</A></B>(2), <B><A HREF="../man2/sched_getparam.2.html">sched_getparam</A></B>(2), <B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2),
+<B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2), <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2), <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2),
+<B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2), <B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2), <B><A HREF="../man3/pthread_getaffinity_np.3.html">pthread_getaffinity_np</A></B>(3),
+<B><A HREF="../man3/pthread_setaffinity_np.3.html">pthread_setaffinity_np</A></B>(3), <B><A HREF="../man3/sched_getcpu.3.html">sched_getcpu</A></B>(3), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+<B>cpuset</B>(7)
+
+<P>
+
+<I>Programming for the real world - POSIX.4</I> by Bill O. Gallmeister, O'Reilly
+&amp; Associates, Inc., ISBN 1-56592-074-0.
+<P>
+
+Linux カーネルソースのファイル <I>Documentation/scheduler/sched-deadline.txt</I>,
+<I>Documentation/scheduler/sched-rt-group.txt</I>,
+<I>Documentation/scheduler/sched-design-CFS.txt</I>,
+<I>Documentation/scheduler/sched-nice-design.txt</I>
+<A NAME="lbAT">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">API の概要</A><DD>
+<DT><A HREF="#lbAE">スケジューリングポリシー (scheduling policy)</A><DD>
+<DT><A HREF="#lbAF">SCHED_FIFO: ファーストインファーストアウトスケジューリング</A><DD>
+<DT><A HREF="#lbAG">SCHED_RR: ラウンドロビン (round-robin) スケジューリング</A><DD>
+<DT><A HREF="#lbAH">SCHED_DEADLINE: 散発タスクモデルのデッドラインスケジューリング</A><DD>
+<DT><A HREF="#lbAI">SCHED_OTHER: Linux のデフォルトの時分割スケジューリング</A><DD>
+<DT><A HREF="#lbAJ">SCHED_BATCH: バッチプロセスのスケジューリング</A><DD>
+<DT><A HREF="#lbAK">SCHED_IDLE: 非常に優先度の低いジョブのスケジューリング</A><DD>
+<DT><A HREF="#lbAL">子プロセスでのスケジューリングポリシーのリセット</A><DD>
+<DT><A HREF="#lbAM">特権とリソース制限</A><DD>
+<DT><A HREF="#lbAN">リアルタイムプロセスとデッドラインプロセスの CPU 使用量を制限する</A><DD>
+<DT><A HREF="#lbAO">応答時間 (response time)</A><DD>
+<DT><A HREF="#lbAP">その他</A><DD>
+</DL>
+<DT><A HREF="#lbAQ">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAR">本流の Linux カーネルでのリアルタイム機能</A><DD>
+</DL>
+<DT><A HREF="#lbAS">関連項目</A><DD>
+<DT><A HREF="#lbAT">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

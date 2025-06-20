@@ -1,0 +1,680 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SIGACTION</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SIGACTION</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/sigaction.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sigaction, rt_sigaction - シグナルの動作の確認と変更
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+
+<B>int sigaction(int </B><I>signum</I><B>, const struct sigaction *</B><I>act</I><B>,</B>
+<B>              struct sigaction *</B><I>oldact</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>sigaction</B>(): _POSIX_C_SOURCE
+<P>
+
+<I>siginfo_t</I>: _POSIX_C_SOURCE &gt;= 199309L
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>sigaction</B>()  システムコールは、特定のシグナルを受信した際の プロセスの動作を変更するのに使用される (シグナルの概要については
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)  を参照)。
+<P>
+
+<I>signum</I> には、 <B>SIGKILL</B> と <B>SIGSTOP</B> 以外の有効なシグナルをどれでも指定できる。
+<P>
+
+<I>act</I> が NULL 以外であれば、シグナル <I>signum</I> の新しい動作 (action) として <I>act</I> が設定される。
+<I>oldact</I> が NULL でなければ、今までの動作が <I>oldact</I> に格納される。
+<P>
+
+<I>sigaction</I> 構造体は以下のような感じに定義される。
+<P>
+
+
+
+struct sigaction {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(*sa_handler)(int);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(*sa_sigaction)(int,&nbsp;siginfo_t&nbsp;*,&nbsp;void&nbsp;*);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigset_t&nbsp;&nbsp;&nbsp;sa_mask;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sa_flags;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(*sa_restorer)(void);
+};
+
+
+<P>
+
+アーキテクチャーによっては共用体 (union) が用いられており、その場合には <I>sa_handler</I> と <I>sa_sigaction</I>
+の両方を同時に割り当てることはできない。
+<P>
+
+<I>sa_restorer</I> はアプリケーションが使用することを意図したフィールドではない (POSIX は <I>sa_restorer</I>
+フィールドを規定していない)。 このフィールドの詳細な目的については <B><A HREF="../man2/sigreturn.2.html">sigreturn</A></B>(2) に書かれている。
+<P>
+
+<I>sa_handler</I> specifies the action to be associated with <I>signum</I> and is be
+one of the following:
+<DL COMPACT>
+<DT>*<DD>
+<B>SIG_DFL</B> for the default action.
+<DT>*<DD>
+<B>SIG_IGN</B> to ignore this signal.
+<DT>*<DD>
+A pointer to a signal handling function.  This function receives the signal
+number as its only argument.
+</DL>
+<P>
+
+If <B>SA_SIGINFO</B> is specified in <I>sa_flags</I>, then <I>sa_sigaction</I> (instead
+of <I>sa_handler</I>)  specifies the signal-handling function for <I>signum</I>.
+This function receives three arguments, as described below.
+<P>
+
+<I>sa_mask</I> は、シグナルハンドラー実行中に禁止 (block) すべきシグナルのマスクを指定する
+(ハンドラー実行中のシグナルの禁止は、シグナルハンドラーが起動されたスレッド のシグナルのマスクに追加することで行われる)。 さらに、
+<B>SA_NODEFER</B> フラグが指定されていない場合は、ハンドラーを起動するきっかけとなる シグナルにも <I>sa_mask</I> が適用される。
+<P>
+
+<I>sa_flags</I> はシグナルハンドラーの動作を変更するためのフラグの集合を指定する。 <I>sa_flags</I> には、以下に示すフラグの (0
+個以上の) 論理和をとったものを指定する。
+<DL COMPACT>
+<DT><B>SA_NOCLDSTOP</B><DD>
+<I>signum</I> が <B>SIGCHLD</B> の場合、 子プロセスが停止したり (子プロセスが <B>SIGSTOP</B>, <B>SIGTSTP</B>,
+<B>SIGTTIN</B>, <B>SIGTTOU</B> を受けたとき) 再開したり (子プロセスが <B>SIGCONT</B> を受けたとき) したときに
+<B>SIGCHLD</B> の通知を受けない。 このフラグは、 <B>SIGCHLD</B> に対してハンドラーを設定する際にのみ意味を持つ。
+<DT><B>SA_NOCLDWAIT</B> (Linux 2.6 以降)<DD>
+
+(Linux 2.6 以降)  <I>signum</I> が <B>SIGCHLD</B> の場合、子プロセスが終了したときに
+子プロセスをゾンビプロセスに変化させない (<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)  も参照)。 このフラグは、 <B>SIGCHLD</B>
+に対してハンドラーを設定する際、もしくはそのシグナルの処理方法を <B>SIG_DFL</B> に設定する際にのみ意味を持つ。
+<DT><DD>
+<B>SIGCHLD</B> に対してハンドラーを設定する際に <B>SA_NOCLDWAIT</B> フラグをセットした場合、 子プロセスが終了した際に
+<B>SIGCHLD</B> シグナルが生成されるかどうかは、 POSIX.1 では規定されていない。 Linux では、この状況で <B>SIGCHLD</B>
+シグナルは生成される。 いくつかの他の実装では生成されない。
+<DT><B>SA_NODEFER</B><DD>
+Do not add the signal to the thread's signal mask while the handler is
+executing, unless the signal is specified in <I>act.sa_mask</I>.  Consequently,
+a further instance of the signal may be delivered to the thread while it is
+executing the handler.  This flag is meaningful only when establishing a
+signal handler.
+<DT><DD>
+<B>SA_NOMASK</B> is an obsolete, nonstandard synonym for this flag.
+<DT><B>SA_ONSTACK</B><DD>
+<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2)  で提供される別のシグナルスタックでシグナルハンドラーを呼び出す。
+別のシグナルスタックが利用可能でなければ、デフォルトのスタックが 使用される。 このフラグはシグナルハンドラーを設定する際にのみ意味を持つ。
+<DT><B>SA_RESETHAND</B><DD>
+Restore the signal action to the default upon entry to the signal handler.
+This flag is meaningful only when establishing a signal handler.
+<DT><DD>
+<B>SA_ONESHOT</B> is an obsolete, nonstandard synonym for this flag.
+<DT><B>SA_RESTART</B><DD>
+いくつかのシステムコールをシグナルの通知の前後で再開できるようにして、 BSD シグナル方式 (semantics) と互換性のある動作を提供する。
+このフラグはシグナルハンドラーを設定する際にのみ意味を持つ。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  に書かれているシステムコールの再開に関する議論を参照のこと。
+<DT><B>SA_RESTORER</B><DD>
+<I>アプリケーションでの使用を意図したものではない</I>。 このフラグは C ライブラリが <I>sa_restorer</I> フィールドに &quot;signal
+trampoline&quot; のアドレスが入っていることを示すために使用される。 詳細は <B><A HREF="../man2/sigreturn.2.html">sigreturn</A></B>(2) を参照。
+<DT><B>SA_SIGINFO</B> (Linux 2.2 以降)<DD>
+
+
+
+
+シグナルハンドラーは一つではなく、三つの引数を持つ。この場合は <I>sa_handler</I> のかわりに <I>sa_sigaction</I>
+を設定しなければならない このフラグはシグナルハンドラーを設定する際にのみ意味を持つ。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>The siginfo_t argument to a SA_SIGINFO handler</H3>
+
+When the <B>SA_SIGINFO</B> flag is specified in <I>act.sa_flags</I>, the signal
+handler address is passed via the <I>act.sa_sigaction</I> field.  This handler
+takes three arguments, as follows:
+<P>
+
+
+
+void
+handler(int sig, siginfo_t *info, void *ucontext)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;...
+}
+
+
+<P>
+
+These three arguments are as follows
+<DL COMPACT>
+<DT><I>sig</I><DD>
+The number of the signal that caused invocation of the handler.
+<DT><I>info</I><DD>
+A pointer to a <I>siginfo_t</I>, which is a structure containing further
+information about the signal, as described below.
+<DT><I>ucontext</I><DD>
+This is a pointer to a <I>ucontext_t</I> structure, cast to <I>void&nbsp;*</I>.  The
+structure pointed to by this field contains signal context information that
+was saved on the user-space stack by the kernel; for details, see
+<B><A HREF="../man2/sigreturn.2.html">sigreturn</A></B>(2).  Further information about the <I>ucontext_t</I> structure can
+be found in <B><A HREF="../man3/getcontext.3.html">getcontext</A></B>(3)  and <B><A HREF="../man7/signal.7.html">signal</A></B>(7).  Commonly, the handler
+function doesn't make any use of the third argument.
+</DL>
+<P>
+
+The <I>siginfo_t</I> data type is a structure with the following fields:
+<P>
+
+
+
+
+
+
+
+
+siginfo_t {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;si_signo;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Signal&nbsp;number&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;si_errno;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;An&nbsp;errno&nbsp;value&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;si_code;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Signal&nbsp;code&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;si_trapno;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Trap&nbsp;number&nbsp;that&nbsp;caused
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hardware-generated&nbsp;signal
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(unused&nbsp;on&nbsp;most&nbsp;architectures)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;&nbsp;&nbsp;&nbsp;si_pid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Sending&nbsp;process&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid_t&nbsp;&nbsp;&nbsp;&nbsp;si_uid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Real&nbsp;user&nbsp;ID&nbsp;of&nbsp;sending&nbsp;process&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;si_status;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Exit&nbsp;value&nbsp;or&nbsp;signal&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;clock_t&nbsp;&nbsp;si_utime;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;User&nbsp;time&nbsp;consumed&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;clock_t&nbsp;&nbsp;si_stime;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;System&nbsp;time&nbsp;consumed&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;union&nbsp;sigval&nbsp;si_value;&nbsp;/*&nbsp;Signal&nbsp;value&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;si_int;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;POSIX.1b&nbsp;signal&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;*si_ptr;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;POSIX.1b&nbsp;signal&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;si_overrun;&nbsp;&nbsp;&nbsp;/*&nbsp;Timer&nbsp;overrun&nbsp;count;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSIX.1b&nbsp;timers&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;si_timerid;&nbsp;&nbsp;&nbsp;/*&nbsp;Timer&nbsp;ID;&nbsp;POSIX.1b&nbsp;timers&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;*si_addr;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Memory&nbsp;location&nbsp;which&nbsp;caused&nbsp;fault&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;si_band;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Band&nbsp;event&nbsp;(was&nbsp;<I>int</I>&nbsp;in
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.3.2&nbsp;and&nbsp;earlier)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;si_fd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;File&nbsp;descriptor&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;&nbsp;&nbsp;&nbsp;si_addr_lsb;&nbsp;&nbsp;/*&nbsp;Least&nbsp;significant&nbsp;bit&nbsp;of&nbsp;address
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.32)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;*si_lower;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Lower&nbsp;bound&nbsp;when&nbsp;address&nbsp;violation
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;occurred&nbsp;(since&nbsp;Linux&nbsp;3.19)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;*si_upper;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Upper&nbsp;bound&nbsp;when&nbsp;address&nbsp;violation
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;occurred&nbsp;(since&nbsp;Linux&nbsp;3.19)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;si_pkey;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Protection&nbsp;key&nbsp;on&nbsp;PTE&nbsp;that&nbsp;caused
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fault&nbsp;(since&nbsp;Linux&nbsp;4.6)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;*si_call_addr;&nbsp;/*&nbsp;Address&nbsp;of&nbsp;system&nbsp;call&nbsp;instruction
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;3.5)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;si_syscall;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;attempted&nbsp;system&nbsp;call
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;3.5)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;si_arch;&nbsp;&nbsp;/*&nbsp;Architecture&nbsp;of&nbsp;attempted&nbsp;system&nbsp;call
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;3.5)&nbsp;*/
+}
+
+
+<P>
+
+<I>si_signo</I>, <I>si_errno</I>, <I>si_code</I> は全てのシグナルに対して定義されている (<I>si_errno</I> は
+Linux では一般的には使用されない)。 構造体の残りの部分は、共用体 (union) になっているかもしれない。
+その場合は該当するシグナルにおいて意味のあるフィールドのみを読み込む ことができる。
+<DL COMPACT>
+<DT>*<DD>
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2) や <B><A HREF="../man3/sigqueue.3.html">sigqueue</A></B>(3) で送信されたシグナルでは <I>si_pid</I> と <I>si_uid</I> が設定される。 さらに、
+<B><A HREF="../man3/sigqueue.3.html">sigqueue</A></B>(3) で送信されたシグナルでは <I>si_int</I> と <I>si_pid</I>
+にシグナルの送信者により指定された値が設定される。詳細は <B><A HREF="../man3/sigqueue.3.html">sigqueue</A></B>(3) を参照。
+<DT>*<DD>
+POSIX.1b タイマー (Linux 2.6 以降) は <I>si_overrun</I> と <I>si_timerid</I> を設定する。
+<I>si_timerid</I> フィールドはカーネルがタイマーを特定するのに使用する内部 ID であり、 <B>timer_create</B>(2)
+が返すタイマー ID と同じではない。 <I>si_overrun</I> フィールドはタイマーが回り切った回数である。 これは
+<B>timer_getoverrun</B>(2) の呼び出しで取得できる情報と同じである。 これらのフィールドは非標準で Linux による拡張である。
+<DT>*<DD>
+メッセージキューの通知用に送信されたシグナル (<B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3) の <B>SIGEV_SIGNAL</B> の説明を参照) では、
+<I>si_int</I>/<I>si_ptr</I> に <B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3) に渡された <I>sigev_value</I> が設定される。 <I>si_pid</I>
+にはメッセージ送信者のプロセス ID が設定され、 <I>si_uid</I> にはメッセージ送信者の実ユーザー ID が設定される。
+<DT>*<DD>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>SIGCHLD</B> は <I>si_pid</I>, <I>si_uid</I>, <I>si_status</I>, <I>si_utime</I>, <I>si_stime</I>
+を設定し、子プロセスに関する情報を提供する。 <I>si_pid</I> フィールドは子プロセスのプロセス ID で、 <I>si_uid</I>
+フィールドは子プロセスの実ユーザー ID である。 <I>si_stime</I> フィールドには、 (<I>si_code</I> が <B>CLD_EXITED</B>
+の場合は) 子プロセスの終了ステータスが、それ以外の場合は状態が変化する原因となったシグナル番号が格納される。 <I>si_utime</I> と
+<I>si_stime</I> には子プロセスが使用したユーザー CPU 時間とシステム CPU 時間がそれぞれ格納される。(<B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2) や
+<B><A HREF="../man2/times.2.html">times</A></B>(2) と異なり) これらのフィールドには wait 待ちの子プロセスにより使用された時間は含まれない。 2.6 より前と 2.6.27
+以降のカーネルでは、 これらのフィールドに格納される CPU 時間の単位は <I>sysconf(_SC_CLK_TCK)</I> である。 2.6.27
+より前の 2.6 系のカーネルでは、バグがあり、 これらのフィールドの CPU 時間の単位が (カーネルのコンフィグで指定される) システムの
+jiffy であった (<B><A HREF="../man7/time.7.html">time</A></B>(7) 参照)。
+<DT>*<DD>
+<B>SIGILL</B>, <B>SIGFPE</B>, <B>SIGSEGV</B>, <B>SIGBUS</B>, <B>SIGTRAP</B> では、 <I>si_addr</I> に
+fault が発生したアドレスが設定される。 いくつかのアーキテクチャーでは、 これらのシグナルは <I>si_trapno</I> フィールドにも設定される。
+<DT><DD>
+<B>SIGBUS</B> が発生するエラーのいくつか、特に <B>BUS_MCEERR_AO</B> と <B>BUS_MCEERR_AR</B> では、
+<I>si_addr_lsb</I> も設定される。 このフィールドは報告されるアドレスの最下位ビットを示し、 これによりメモリー破壊の程度を知ることができる。
+例えば、ページ全体が壊れている場合には <I>si_addr_lsb</I> には <I>log2(sysconf(_SC_PAGESIZE))</I> が入る。
+<B>SIGTRAP</B> が <B>ptrace</B>(2) イベント (PTRACE_EVENT_foo) に対応して配送される際、 <I>si_addr</I>
+は設定されないが、 <I>si_pid</I> と <I>si_uid</I> にはトラップの配送に責任を負うプロセス ID とユーザー ID がそれぞれ格納される。
+<B>seccomp</B>(2) の場合、 トレース対象はイベントを配送した元として示される。 <B>BUS_MCEERR_*</B> と
+<I>si_addr_lsb</I> は Linux 固有の拡張である。
+<DT><DD>
+The <B>SEGV_BNDERR</B> suberror of <B>SIGSEGV</B> populates <I>si_lower</I> and
+<I>si_upper</I>.
+<DT><DD>
+The <B>SEGV_PKUERR</B> suberror of <B>SIGSEGV</B> populates <I>si_pkey</I>.
+<DT>*<DD>
+<B>SIGIO</B>/<B>SIGPOLL</B> (2 つの名前は Linux では同義語) では <I>si_band</I> と <I>si_fd</I> が設定される。
+<I>si_band</I> イベントは、 <B><A HREF="../man2/poll.2.html">poll</A></B>(2) が <I>revents</I> フィールドに設定するのと同じ値が入ったビットマスクである。
+<I>si_fd</I> フィールドは I/O イベントが発生したファイルディスクリプターを示す。詳細については <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2) の
+<B>F_SETSIG</B> の説明を参照のこと。
+<DT>*<DD>
+
+
+seccomp フィルターが <B>SECCOMP_RET_TRAP</B> を返す際に (Linux 3.5 以降で) 生成される <B>SIGSYS</B>
+シグナルでは、 <I>si_call_addr</I>, <I>si_syscall</I>, <I>si_arch</I>, <I>si_arch</I> や
+<B>seccomp</B>(2) で説明されている他のフィールドが設定される。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>The si_code field</H3>
+
+The <I>si_code</I> field inside the <I>siginfo_t</I> argument that is passed to a
+<B>SA_SIGINFO</B> signal handler is a value (not a bit mask)  indicating why
+this signal was sent.  For a <B>ptrace</B>(2)  event, <I>si_code</I> will contain
+<B>SIGTRAP</B> and have the ptrace event in the high byte:
+<P>
+
+
+
+(SIGTRAP | PTRACE_EVENT_foo &lt;&lt; 8).
+
+
+<P>
+
+For a non-<B>ptrace</B>(2)  event, the values that can appear in <I>si_code</I> are
+described in the remainder of this section.  Since glibc 2.20, the
+definitions of most of these symbols are obtained from <I>&lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</I>
+by defining feature test macros (before including <I>any</I> header file) as
+follows:
+<DL COMPACT>
+<DT>*<DD>
+<B>_XOPEN_SOURCE</B> with the value 500 or greater;
+<DT>*<DD>
+<B>_XOPEN_SOURCE</B> and <B>_XOPEN_SOURCE_EXTENDED</B>; or
+<DT>*<DD>
+<B>_POSIX_C_SOURCE</B> with the value 200809L or greater.
+</DL>
+<P>
+
+For the <B>TRAP_*</B> constants, the symbol definitions are provided only in the
+first two cases.  Before glibc 2.20, no feature test macros were required to
+obtain these symbols.
+<P>
+
+通常のシグナルの場合には、 以下のリストに示す値がどのシグナルの場合でも <I>si_code</I> に入りうる。シグナルが生成された理由も記載している。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>SI_USER</B><DD>
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2)
+<DT><B>SI_KERNEL</B><DD>
+カーネルにより送信された
+<DT><B>SI_QUEUE</B><DD>
+<B><A HREF="../man3/sigqueue.3.html">sigqueue</A></B>(3)
+<DT><B>SI_TIMER</B><DD>
+POSIX タイマーが満了した
+<DT><B>SI_MESGQ</B> (Linux 2.6.6 以降)<DD>
+POSIX メッセージキューの状態が変化した; <B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3) 参照
+<DT><B>SI_ASYNCIO</B><DD>
+非同期 IO (AIO) が完了した
+<DT><B>SI_SIGIO</B><DD>
+<B>SIGIO</B> がキューイングされた (Linux 2.2 以下のカーネルのみ; Linux 2.4 以降では以下で説明する
+<B>SIGIO</B>/<B>SIGPOLL</B> の <I>si_code</I> が入る)
+<DT><B>SI_TKILL</B> (Linux 2.4.19 以降)<DD>
+
+
+
+<B><A HREF="../man2/tkill.2.html">tkill</A></B>(2) または <B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2)
+</DL>
+</DL>
+
+<P>
+
+<B>SIGILL</B> シグナルの場合、 <I>si_code</I> には以下の値が入る可能性がある:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>ILL_ILLOPC</B><DD>
+不正な命令コード
+<DT><B>ILL_ILLOPN</B><DD>
+不正なオペランド
+<DT><B>ILL_ILLADR</B><DD>
+不正なアドレッシングモード
+<DT><B>ILL_ILLTRP</B><DD>
+不正なトラップ
+<DT><B>ILL_PRVOPC</B><DD>
+特権が必要な命令コード
+<DT><B>ILL_PRVREG</B><DD>
+特権が必要なレジスター
+<DT><B>ILL_COPROC</B><DD>
+コプロセッサのエラー
+<DT><B>ILL_BADSTK</B><DD>
+内部スタックエラー
+</DL>
+</DL>
+
+<P>
+
+<B>SIGFPE</B> シグナルの場合、 <I>si_code</I> には以下の値が入る可能性がある:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>FPE_INTDIV</B><DD>
+整数の 0 による除算
+<DT><B>FPE_INTOVF</B><DD>
+整数のオーバーフロー
+<DT><B>FPE_FLTDIV</B><DD>
+浮動小数点の 0 による除算
+<DT><B>FPE_FLTOVF</B><DD>
+浮動小数点のオーバーフロー
+<DT><B>FPE_FLTUND</B><DD>
+浮動小数点のアンダーフロー
+<DT><B>FPE_FLTRES</B><DD>
+浮動小数点の不正確な演算結果 (inexact result)
+<DT><B>FPE_FLTINV</B><DD>
+浮動小数点の不正な操作
+<DT><B>FPE_FLTSUB</B><DD>
+範囲外の添字 (subscript)
+</DL>
+</DL>
+
+<P>
+
+<B>SIGSEGV</B> シグナルの場合、 <I>si_code</I> には以下の値が入る可能性がある:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>SEGV_MAPERR</B><DD>
+オブジェクトにマッピングされていないアドレス
+<DT><B>SEGV_ACCERR</B><DD>
+マッピングされたオブジェクトに対するアクセス許可がない
+<DT><B>SEGV_BNDERR</B> (Linux 3.19 以降)<DD>
+
+Failed address bound checks.
+<DT><B>SEGV_PKUERR</B> (Linux 4.6 以降)<DD>
+
+Access was denied by memory protection keys.  See <B>pkeys</B>(7).  The
+protection key which applied to this access is available via <I>si_pkey</I>.
+</DL>
+</DL>
+
+<P>
+
+<B>SIGBUS</B> シグナルの場合、 <I>si_code</I> には以下の値が入る可能性がある:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>BUS_ADRALN</B><DD>
+不正なアドレスアライメント (alignment)
+<DT><B>BUS_ADRERR</B><DD>
+存在しない物理アドレス
+<DT><B>BUS_OBJERR</B><DD>
+オブジェクト固有のハードウェアエラー
+<DT><B>BUS_MCEERR_AR</B> (Linux 2.6.32 以降)<DD>
+マシンチェックで使用中のハードウェアメモリーのエラーが検出された。対応が必須。
+<DT><B>BUS_MCEERR_AO</B> (Linux 2.6.32  以降)<DD>
+実行中にハードウェアメモリーエラーが検出されたが、使用中のメモリーではない。対応は必須ではない。
+</DL>
+</DL>
+
+<P>
+
+<B>SIGTRAP</B> シグナルの場合、 <I>si_code</I> には以下の値が入る可能性がある:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>TRAP_BRKPT</B><DD>
+プロセスのブレークポイント
+<DT><B>TRAP_TRACE</B><DD>
+プロセスのトレーストラップ
+<DT><B>TRAP_BRANCH</B> (Linux 2.4 以降, IA64 のみ)<DD>
+プロセスのブランチトラップ
+<DT><B>TRAP_HWBKPT</B> (Linux 2.4 以降, IA64 のみ)<DD>
+ハードウェアのブレークポイント/ウォッチポイント
+</DL>
+</DL>
+
+<P>
+
+<B>SIGCHLD</B> シグナルの場合、 <I>si_code</I> には以下の値が入る可能性がある:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>CLD_EXITED</B><DD>
+子プロセスが終了した (exited)
+<DT><B>CLD_KILLED</B><DD>
+子プロセスが kill された
+<DT><B>CLD_DUMPED</B><DD>
+子プロセスが異常終了した
+<DT><B>CLD_TRAPPED</B><DD>
+トレース対象の子プロセスがトラップを上げた
+<DT><B>CLD_STOPPED</B><DD>
+子プロセスが停止 (stop) した
+<DT><B>CLD_CONTINUED</B> (Linux 2.6.9 以降)<DD>
+停止していた子プロセスが再開した
+</DL>
+</DL>
+
+<P>
+
+<B>SIGIO</B>/<B>SIGPOLL</B> シグナルの場合、 <I>si_code</I> には以下の値が入る可能性がある:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>POLL_IN</B><DD>
+入力データが利用可能
+<DT><B>POLL_OUT</B><DD>
+出力バッファーが利用可能
+<DT><B>POLL_MSG</B><DD>
+入力メッセージが利用可能
+<DT><B>POLL_ERR</B><DD>
+I/O エラー
+<DT><B>POLL_PRI</B><DD>
+高優先の入力が利用可能
+<DT><B>POLL_HUP</B><DD>
+デバイスが接続されていない
+</DL>
+</DL>
+
+<P>
+
+<B>SIGSYS</B> シグナルの場合、 <I>si_code</I> には以下の値が入る可能性がある:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>SYS_SECCOMP</B> (Linux 3.5 以降)<DD>
+<B>seccomp</B>(2) のフィルタールールによる配送された
+</DL>
+</DL>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>sigaction</B>() 関数は成功すると 0 を返す。 エラーの場合、-1 を返し、 <I>errno</I> にエラーを示す値をセットする。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>act</I> か <I>oldact</I> が指しているメモリーが正しいプロセスのアドレス空間にない。
+<DT><B>EINVAL</B><DD>
+無効なシグナルが指定された。補足 (catch) したり無視したりできない シグナルである <B>SIGKILL</B> や <B>SIGSTOP</B>
+に対する動作を変更しようとした場合にも発生する。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+
+POSIX.1-2001, POSIX.1-2008, SVr4.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2) 経由で作成された子プロセスは、親プロセスのシグナルの処理方法の コピーを継承する。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+の前後で、ハンドラーが設定されているシグナルの処理方法はデフォルトにリセットされ、 無視が設定されているシグナルの処理方法は変更されずそのままとなる。
+<P>
+
+POSIX では、 <B><A HREF="../man2/kill.2.html">kill</A></B>(2)  や <B><A HREF="../man3/raise.3.html">raise</A></B>(3)  で生成できないシグナル <B>SIGFPE</B>, <B>SIGILL</B>,
+<B>SIGSEGV</B> を無視 (ignore) した場合、その後の動作は未定義である。 ゼロによる整数割り算の結果は未定義となる。
+アーキテクチャーによっては、このとき <B>SIGFPE</B> シグナルが生成される。 (同様に負の最大整数を -1 で割ると <B>SIGFPE</B>
+が生成されるかもしれない)  このシグナルを無視すると無限ループに陥るかもしれない。
+<P>
+
+POSIX.1-1990 では <B>SIGCHLD</B> に <B>SIG_IGN</B> を設定することを認めていない。 POSIX.1-2001
+とそれ以降では認められており、 <B>SIGCHLD</B> を無視することでゾンビプロセスの生成を防止することができる (<B><A HREF="../man2/wait.2.html">wait</A></B>(2)  を参照)。
+さらに、BSD と System&nbsp;V では <B>SIGCHLD</B> を無視した際の動作が異なっている。
+そのため、完全に移植性がある方法で、終了した子プロセスがゾンビにならないこと を保証するには、 <B>SIGCHLD</B> シグナルを補足し、
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)  などを実行するしかない。
+<P>
+
+POSIX.1-1990 の仕様では <B>SA_NOCLDSTOP</B> のみが定義されている。 POSIX.1-2001 では
+<B>SA_NOCLDSTOP</B>, <B>SA_NOCLDWAIT</B>, <B>SA_NODEFER</B>, <B>SA_ONSTACK</B>,
+<B>SA_RESETHAND</B>, <B>SA_RESTART</B>, <B>SA_SIGINFO</B> が追加された。 UNIX
+の古い実装で動かすアプリケーションで、 他の <I>sa_flags</I> フラグを使用すると移植性が下がる。
+<P>
+
+<B>SA_RESETHAND</B> フラグは SVr4 の同じ名前のフラグと互換性がある。
+<P>
+
+<B>SA_NODEFER</B> フラグは 1.3.9 以降のカーネルでは同じ名前の SVr4 のフラグと互換性がある。 ぞれ以前の Linux
+カーネルの実装では、このフラグを設定しているシグナル だけでなく、どのシグナルでも受けることを許していた (実際には <I>sa_mask</I>
+の設定により無効にできる)。
+<P>
+
+<B>sigaction</B>()  の二番目の引数に NULL を指定して呼び出すと、現在のシグナルハンドラーを確認する
+ことができる。また、二番目と三番目の引数を NULL にて呼び出すことで、 指定されたシグナルが現在のマシンで使えるかどうかチェックできる。
+<P>
+
+<B>SIGKILL</B> や <B>SIGSTOP</B> を (<I>sa_mask</I> に指定して) 禁止することはできない。 禁止しようとしても黙って無視される。
+<P>
+
+シグナル集合の操作に関する詳細は <B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3)  を参照のこと。
+<P>
+
+
+シグナルハンドラー内から安全に呼び出すことができる、 async-signal-safe functions (非同期シグナルで安全な関数) の
+リストについては <B>signal-safety</B>(7)  を参照。
+<A NAME="lbAK">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+The glibc wrapper function for <B>sigaction</B>()  gives an error (<B>EINVAL</B>)
+on attempts to change the disposition of the two real-time signals used
+internally by the NPTL threading implementation.  See <B>nptl</B>(7)  for
+details.
+<P>
+
+On architectures where the signal trampoline resides in the C library, the
+glibc wrapper function for <B>sigaction</B>()  places the address of the
+trampoline code in the <I>act.sa_restorer</I> field and sets the <B>SA_RESTORER</B>
+flag in the <I>act.sa_flags</I> field.  See <B><A HREF="../man2/sigreturn.2.html">sigreturn</A></B>(2).
+<P>
+
+
+The original Linux system call was named <B>sigaction</B>().  However, with the
+addition of real-time signals in Linux 2.2, the fixed-size, 32-bit
+<I>sigset_t</I> type supported by that system call was no longer fit for
+purpose.  Consequently, a new system call, <B>rt_sigaction</B>(), was added to
+support an enlarged <I>sigset_t</I> type.  The new system call takes a fourth
+argument, <I>size_t sigsetsize</I>, which specifies the size in bytes of the
+signal sets in <I>act.sa_mask</I> and <I>oldact.sa_mask</I>.  This argument is
+currently required to have the value <I>sizeof(sigset_t)</I> (or the error
+<B>EINVAL</B> results).  The glibc <B>sigaction</B>()  wrapper function hides these
+details from us, transparently calling <B>rt_sigaction</B>()  when the kernel
+provides it.
+<A NAME="lbAL">&nbsp;</A>
+<H3>非公式</H3>
+
+Before the introduction of <B>SA_SIGINFO</B>, it was also possible to get some
+additional information about the signal.  This was done by providing an
+<I>sa_handler</I> signal handler with a second argument of type <I>struct
+sigcontext</I>, which is the same structure as the one that is passed in the
+<I>uc_mcontext</I> field of the <I>ucontext</I> structure that is passed (via a
+pointer) in the third argument of the <I>sa_sigaction</I> handler.  See the
+relevant Linux kernel sources for details.  This use is obsolete now.
+<A NAME="lbAM">&nbsp;</A>
+<H2>バグ</H2>
+
+When delivering a signal with a <B>SA_SIGINFO</B> handler, the kernel does not
+always provide meaningful values for all of the fields of the <I>siginfo_t</I>
+that are relevant for that signal.
+<P>
+
+
+2.6.13 以前のカーネルでは、 <I>sa_flags</I> に <B>SA_NODEFER</B> を指定した場合、
+ハンドラーが実行中に配送されたシグナル自身がマスクされなくなるだけでなく、 <I>sa_mask</I> に指定されたシグナルもマスクされなくなる。
+このバグは、カーネル 2.6.14 で修正された。
+<A NAME="lbAN">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2)  参照。
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/kill.1.html">kill</A></B>(1), <B><A HREF="../man2/kill.2.html">kill</A></B>(2), <B><A HREF="../man2/pause.2.html">pause</A></B>(2), <B>pidfd_send_signal</B>(2),
+<B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A></B>(2), <B>seccomp</B>(2), <B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2), <B><A HREF="../man2/signal.2.html">signal</A></B>(2),
+<B><A HREF="../man2/signalfd.2.html">signalfd</A></B>(2), <B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2), <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2), <B><A HREF="../man2/sigreturn.2.html">sigreturn</A></B>(2),
+<B><A HREF="../man2/sigsuspend.2.html">sigsuspend</A></B>(2), <B><A HREF="../man2/wait.2.html">wait</A></B>(2), <B>killpg</B>(3), <B><A HREF="../man3/raise.3.html">raise</A></B>(3), <B><A HREF="../man3/siginterrupt.3.html">siginterrupt</A></B>(3),
+<B><A HREF="../man3/sigqueue.3.html">sigqueue</A></B>(3), <B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3), <B><A HREF="../man3/sigvec.3.html">sigvec</A></B>(3), <B><A HREF="../man5/core.5.html">core</A></B>(5), <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">The siginfo_t argument to a SA_SIGINFO handler</A><DD>
+<DT><A HREF="#lbAF">The si_code field</A><DD>
+</DL>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAK">C ライブラリとカーネルの違い</A><DD>
+<DT><A HREF="#lbAL">非公式</A><DD>
+</DL>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">例</A><DD>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

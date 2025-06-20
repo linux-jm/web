@@ -1,0 +1,117 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of WCSRTOMBS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>WCSRTOMBS</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/wcsrtombs.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+wcsrtombs - ワイド文字文字列をマルチバイト文字列に変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/wchar.h">wchar.h</A>&gt;</B>
+
+<B>size_t wcsrtombs(char *</B><I>dest</I><B>, const wchar_t **</B><I>src</I><B>,</B>
+<B>                 size_t </B><I>len</I><B>, mbstate_t *</B><I>ps</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>dest</I> が NULL でなければ、 <B>wcsrtombs</B>()  関数は ワイド文字文字列 <I>*src</I> を <I>dest</I>
+が指すマルチバイト文字列 に変換する。最大 <I>len</I> バイトまでが <I>dest</I> に書き込まれる。 シフト状態 <I>*ps</I>
+は更新される。実際の効果としては、この変換は以下 の動作と同じになる: <I>wcrtomb(dest, *src, ps)</I> を呼び、成功が返ったら、
+<I>dest</I> を書き込んだバイト数だけ増やし、<I>*src</I> を 1 増やす。 そして、wcrtomb が成功を返す限りこれを繰り返す。
+変換が止まる理由は 3 つ考えられる:
+<DL COMPACT>
+<DT>1.<DD>
+(現在のロケールに基づいて)マルチバイト列で表現できないワイド文字に 出会った場合。この場合は、<I>*src</I> は不正なワイド文字を指した状態になり、
+<I>(size_t)&nbsp;-1</I> が返され、<I>errno</I> に <B>EILSEQ</B> が設定される。
+<DT>2.<DD>
+長さの制限により変換が止められた場合。この場合には、<I>*src</I> は次に 変換されるべきワイド文字列を指した状態になり、<I>dest</I> に書き込まれ
+たバイト数が返される。
+<DT>3.<DD>
+ワイド文字列が終端のヌルワイド文字 (L'\0') も含めて全て 変換された場合。この際、<I>*ps</I>
+が初期状態に戻るという副作用がある。 この場合には <I>*src</I> に NULL が設定され、<I>dest</I> に書き込まれた バイト数が返される
+(終端のヌルバイト (L'\0') は数えない)。
+</DL>
+<P>
+
+<I>dest</I> が NULL ならば <I>len</I> は無視されて前述のように変換が行わ
+れるが、変換されたバイトデータはメモリーに書き出されない点と、出力先の長 さの制限がない点が異なる。
+<P>
+
+上記のいずれの場合も、<I>ps</I> が NULL ならば、<B>wcsrtombs</B>() 関数
+だけが知っている静的な匿名の状態がシフト状態の代わりに用いられる。
+<P>
+
+プログラマは少なくとも <I>len</I> バイトの領域を <I>dest</I> に確保しな ければならない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>wcsrtombs</B>()  は、変換して得られたマルチバイト列のバイト数を返す。 これには終端の null バイトは含まれない。
+変換できないワイド文字に出会った場合には <I>(size_t)&nbsp;-1</I> が返され、 <I>errno</I> に <B>EILSEQ</B> が設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>wcsrtombs</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:wcsrtombs/!ps<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, C99.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>wcsrtombs</B>()  の動作は現在のロケールの <B>LC_CTYPE</B> カテゴリーに依存する。
+<P>
+
+<I>ps</I> に NULL を渡した際の動作はマルチスレッドセーフでない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/iconv.3.html">iconv</A></B>(3), <B><A HREF="../man3/mbsinit.3.html">mbsinit</A></B>(3), <B><A HREF="../man3/wcrtomb.3.html">wcrtomb</A></B>(3), <B><A HREF="../man3/wcsnrtombs.3.html">wcsnrtombs</A></B>(3), <B><A HREF="../man3/wcstombs.3.html">wcstombs</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

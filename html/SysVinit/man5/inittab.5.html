@@ -1,0 +1,302 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of INITTAB</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>INITTAB</H1>
+Section: Linux System Administrator's Manual (5)<BR>Updated: May 19, 1998<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/SysVinit/release/man5/inittab.5">roff page</A><HR>
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+inittab - sysv-互換のinitが使うinittabファイルの書式
+
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>概要</H2>
+
+<B>inittab</B>ファイルは、ブートアップ時や通常運転中にどの様なプロセスを
+起動するのか(例えば /etc/init.d/boot, /etc/rc, getty等)を指定するファイルである。
+<B><A HREF="../man8/init.8.html">init</A></B>(8)
+
+は複数の<I>ランレベル</I>を区別する。
+それぞれの<I>ランレベル</I>に対して固有のプロセス群を起動する事ができる。
+ランレベルとして有効なものは、<B>0</B>-<B>6</B>と、
+<B>ondemand</B>エントリーとしての<B>A</B>, <B>B</B>, <B>C</B>である。
+<B>inittab</B>ファイル中のエントリーは次の書式で記される :
+<DL COMPACT><DT><DD>
+<P>
+<I>id</I>:<I>runlevels</I>:<I>action</I>:<I>process</I>
+<P>
+</DL>
+
+`#' で始まる行は無視される。
+
+<DL COMPACT>
+<DT><I>id</I><DD>
+は
+<B>inittab</B>
+
+ファイル中でエントリーを識別するための、
+1-4文字からなる固有の識別子である
+(バージョン5.2.18以前の、又はa.outのライブラリでコンパイルされた
+sysvinitでは2文字までに制限されている) 。
+<P>
+註:gettys や他のログインプロセスに対しては、
+<I>id</I>欄と対応する tty の添字を同じにすべきである
+(例えば<B>tty1</B>に対しては<B>1</B>というように)。
+でないと、ログインのアカウンティングが正常に動作しない可能性がある。
+
+
+<DT><I>runlevels</I><DD>
+は、指定した動作を行なうランレベルの一覧を示す。
+
+
+<DT><I>action</I><DD>
+はどのような動作を行うべきかをあらわす。
+
+
+<DT><I>process</I><DD>
+には実行されるプロセスを指定する。
+プロセス欄の最初の文字が`+'である場合、
+<B>init</B>
+
+はそのプロセスに対して utmp 及び wtmp アカウンティングを行わない。
+これは gettys が自分のutmp/wtmpの面倒を自分でみてしまうために必要となっている。
+これは歴史上有名なバグでもある。
+
+</DL>
+<P>
+
+<I>runlevels</I>には異なったランレベルを表わす複数の文字を書いても良い。
+例えば、<B>123</B>はランレベル1, 2, 3でそのプロセスを起動することを表わす。
+<B>ondemand</B>エントリーのための<I>runlevels</I>は
+<B>A</B>, <B>B</B>, <B>C</B>のいずれか一つのみを書くことができる。
+<B>sysinit</B>、<B>boot</B>及び<B>bootwait</B>エントリーの
+<I>runlevel</I>欄は無視される。
+<P>
+
+システムのランレベルが変更された場合は、
+現在実行中のプロセスのうち新たなランレベルに記されていないものは、
+先ず<FONT SIZE="-2">SIGTERM</FONT>により、次いで<FONT SIZE="-2">SIGKILL</FONT>シグナルにより kill される。
+<P>
+
+<I>action</I> として有効なものは次の通り:
+
+<DL COMPACT>
+<DT><B>respawn</B><DD>
+プロセスが終了した場合は常に再起動する(例えば getty) 。
+
+
+<DT><B>wait</B><DD>
+指定したランレベルになった時に一度だけ起動する。
+<B>init</B>
+
+はこのプロセスが終了するまで待機する。
+
+
+<DT><B>once</B><DD>
+指定したランレベルになった時に一度だけ実行する。
+
+
+<DT><B>boot</B><DD>
+システムブート中に実行される。
+<I>runlevels</I>欄は無視される。
+
+
+<DT><B>bootwait</B><DD>
+システムブート中に実行されるが、
+<B>init</B>
+
+はそれが終了するまで待機する
+(例えば/etc/rc)。
+<I>runlevels</I>欄は無視される。
+
+
+<DT><B>off</B><DD>
+何もしない。
+
+
+<DT><B>ondemand</B><DD>
+<B>ondemand</B>ランレベルの印が付いたプロセスは、
+指定した<B>ondemand</B>ランレベルになった時に常に実行される。
+しかし、ランレベルは変化しない
+(<B>ondemand</B>ランレベルとは`a', `b', `c'のことである)。
+
+
+<DT><B>initdefault</B><DD>
+<B>initdefault</B>エントリーは、システムブート完了時に入るべき
+ランレベルを示す。
+<B>initdefault</B>エントリーが存在しない場合は、
+<B>init</B>
+
+はどのランレベルに入るべきかをコンソールに問い合わせる。
+<I>process</I>欄は無視される。
+
+
+<DT><B>sysinit</B><DD>
+システムブート中に実行される。
+このエントリーはいかなる<B>boot</B>及び<B>bootwait</B>エントリーよりも
+先に実行される。
+<I>runlevels</I>欄は無視される。
+
+
+<DT><B>powerwait</B><DD>
+電源に異常が起きた時に実行されるプロセス。
+init は普通コンピュータと接続されている UPS と通信しているプロセスから
+このことを知らされる。
+<B>init</B>はこのプロセスが終了するまで待機する。
+
+
+<DT><B>powerfail</B><DD>
+<B>powerwait</B>と同様だが、<B>init</B>はこのプロセスが完了するのを
+待たないところが異なる。
+
+
+<DT><B>powerokwait</B><DD>
+このプロセスは電源が回復したことを<B>init</B>が知った時に実行される。
+<DT><B>powerfailnow</B><DD>
+このプロセスは電源に異常が起き、さらに外部 UPS のバッテリー容量が
+少なくなったことを(外部 UPS と監視プロセスがこのような状態を
+検出できるようになっている場合に)<B>init</B>が知った時に実行される。
+
+
+<DT><B>ctrlaltdel</B><DD>
+<B>init</B>がSIGINTシグナルを受け取ったときに実行される。
+これは誰かがシステムコンソールで<B>CTRL-ALT-DEL</B>という組み合わせで
+キーを押したことを意味する。
+システムをシングルユーザレベルにしたい時やマシンをリブート
+したい時など、<B>shutdown</B>的なことを行いたい場合に実行される。
+
+
+<DT><B>kbrequest</B><DD>
+<B>init</B>がキーボードハンドラーから、コンソールキーボード上で特定の組み合わせ
+のキー入力が行なわれた、とのシグナルを受け取ったときに実行される。
+<P>
+この機能に関する文書はまだ不完全である; 
+kbd-x.xx パッケージ中を探せばより多くの資料が見つかるだろう
+(この文書を書いている時点で最新のものは kbd-0.94 である)。
+基本的には、あるキーの組み合わせを&quot;KeyboardSignal&quot;という動作に結びつけたい
+という場合に用いられる。
+例えば、Alt-上向き矢印というキーの組み合わせをこの用途に使いたい場合は、
+キーマップファイル中に次の様に書いておけばよい:
+<DL COMPACT><DT><DD>
+<P>
+alt keycode 103 = KeyboardSignal
+<P>
+</DL>
+
+
+
+
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>例</H2>
+
+以下は、昔のLinuxで使われていたものに似たinittabの例である:
+<DL COMPACT><DT><DD>
+<P>
+<PRE>
+# linux用のinittab
+id:1:initdefault:
+rc::bootwait:/etc/rc
+1:1:respawn:/etc/getty 9600 tty1
+2:1:respawn:/etc/getty 9600 tty2
+3:1:respawn:/etc/getty 9600 tty3
+4:1:respawn:/etc/getty 9600 tty4
+</PRE>
+
+<P>
+</DL>
+
+このinittabファイルはブート中に<B>/etc/rc</B>を実行し、
+tty1-tty4でgettyを起動する。
+<P>
+
+次に示すのは、異なったランレベルがある手の込んだ例である
+(スクリプト中のコメントを参照):
+<DL COMPACT><DT><DD>
+<P>
+<PRE>
+# ブート後に入るべきランレベル
+id:2:initdefault:
+
+# 何より先ずシステムの初期化をする。
+si::sysinit:/etc/rc.d/bcheckrc
+
+# ランレベル0及び6はそれぞれ haltとreboot。
+# 1 はメンテナンスモード
+l0:0:wait:/etc/rc.d/rc.halt
+l1:1:wait:/etc/rc.d/rc.single
+l2:2345:wait:/etc/rc.d/rc.multi
+l6:6:wait:/etc/rc.d/rc.reboot
+
+# &quot;三つ指をついてリセット&quot;された時に何をすべきか。
+ca::ctrlaltdel:/sbin/shutdown -t5 -rf now
+
+# ランレベル2及び3: コンソールでgettyを実行する
+# (レベル3の場合はモデムポートでも)。
+1:23:respawn:/sbin/getty tty1 VC linux
+2:23:respawn:/sbin/getty tty2 VC linux
+3:23:respawn:/sbin/getty tty3 VC linux
+4:23:respawn:/sbin/getty tty4 VC linux
+S2:3:respawn:/sbin/uugetty ttyS2 M19200
+
+</PRE>
+
+<P>
+</DL>
+
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>ファイル</H2>
+
+/etc/inittab
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>著者</H2>
+
+<B>init</B>はMiquel van Smoorenburg
+(<A HREF="mailto:miquels@drinkel.ow.org">miquels@drinkel.ow.org</A>)により作成された。
+この man ページは
+Sebastian Lederer (<A HREF="mailto:lederer@francium.informatik.uni-bonn.de">lederer@francium.informatik.uni-bonn.de</A>)が作成し
+Michael Haardt (<A HREF="mailto:u31b3hs@pool.informatik.rwth-aachen.de">u31b3hs@pool.informatik.rwth-aachen.de</A>)が変更を行った。
+
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/init.8.html">init</A></B>(8),
+
+<B><A HREF="../man8/telinit.8.html">telinit</A></B>(8)
+
+
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">概要</A><DD>
+<DT><A HREF="#lbAD">例</A><DD>
+<DT><A HREF="#lbAE">ファイル</A><DD>
+<DT><A HREF="#lbAF">著者</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

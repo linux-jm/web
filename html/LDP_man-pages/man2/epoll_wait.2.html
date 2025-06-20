@@ -1,0 +1,234 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of EPOLL_WAIT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>EPOLL_WAIT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/epoll_wait.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+epoll_wait, epoll_pwait - epoll ファイルディスクリプターの I/O イベントを待つ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/epoll.h">sys/epoll.h</A>&gt;</B>
+
+<B>int epoll_wait(int </B><I>epfd</I><B>, struct epoll_event *</B><I>events</I><B>,</B>
+<B>               int </B><I>maxevents</I><B>, int </B><I>timeout</I><B>);</B>
+<B>int epoll_pwait(int </B><I>epfd</I><B>, struct epoll_event *</B><I>events</I><B>,</B>
+<B>               int </B><I>maxevents</I><B>, int </B><I>timeout</I><B>,</B>
+<B>               const sigset_t *</B><I>sigmask</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+The <B>epoll_wait</B>()  system call waits for events on the <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+instance referred to by the file descriptor <I>epfd</I>.  The buffer pointed to
+by <I>events</I> is used to return information from the ready list about file
+descriptors in the interest list that have some events available.  Up to
+<I>maxevents</I> are returned by <B>epoll_wait</B>().  The <I>maxevents</I> argument
+must be greater than zero.
+<P>
+
+The <I>timeout</I> argument specifies the number of milliseconds that
+<B>epoll_wait</B>()  will block.  Time is measured against the
+<B>CLOCK_MONOTONIC</B> clock.
+<P>
+
+A call to <B>epoll_wait</B>()  will block until either:
+<DL COMPACT>
+<DT>&bull;<DD>
+ファイルディスクリプターがイベントを配送した
+<DT>&bull;<DD>
+呼び出しがシグナルハンドラーにより割り込まれた
+<DT>&bull;<DD>
+タイムアウトが満了する
+</DL>
+<P>
+
+<I>timeout</I> 時間はシステムクロックの粒度に切り上げられ、カーネルのスケジューリング遅延により少しだけ長くなる可能性がある点に注意すること。
+<I>timeout</I> を -1 に指定すると、 <B>epoll_wait</B>() は無限に停止する。 <I>timeout</I> を 0 に指定すると、
+<B>epoll_wait</B>() は利用可能なイベントがなくても、すぐに返る。
+<P>
+
+<I>struct epoll_event</I> は以下のように定義される。
+<P>
+
+
+
+typedef union epoll_data {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;&nbsp;*ptr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;u32;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint64_t&nbsp;u64;
+} epoll_data_t;
+<P>
+struct epoll_event {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;events;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;epoll&nbsp;イベント&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;epoll_data_t&nbsp;data;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ユーザーデータ変数&nbsp;*/
+};
+
+
+<P>
+
+The <I>data</I> field of each returned <I>epoll_event</I> structure contains the
+same data as was specified in the most recent call to <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+(<B>EPOLL_CTL_ADD</B>, <B>EPOLL_CTL_MOD</B>)  for the corresponding open file
+descriptor.
+<P>
+
+
+The <I>events</I> field is a bit mask that indicates the events that have
+occurred for the corresponding open file description.  See <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+for a list of the bits that may appear in this mask.
+<A NAME="lbAE">&nbsp;</A>
+<H3>epoll_pwait()</H3>
+
+<B>epoll_wait</B>()  と <B>epoll_pwait</B>()  の関係は、 <B><A HREF="../man2/select.2.html">select</A></B>(2)  と <B><A HREF="../man2/pselect.2.html">pselect</A></B>(2)
+の関係と同様である。 <B><A HREF="../man2/pselect.2.html">pselect</A></B>(2)  同様、 <B>epoll_pwait</B>()
+を使うと、アプリケーションは、ファイルディスクリプターが準備できた状態になるか、 シグナルが捕捉されるまで、安全に待つことができる。
+<P>
+
+以下の <B>epoll_pwait</B>()  の呼び出しは、
+<P>
+
+
+
+ready = epoll_pwait(epfd, &amp;events, maxevents, timeout, &amp;sigmask);
+
+
+<P>
+
+次の呼び出しを <I>atomic</I> に実行するのと等価である。
+<P>
+
+
+
+sigset_t origmask;
+<P>
+pthread_sigmask(SIG_SETMASK, &amp;sigmask, &amp;origmask);
+ready = epoll_wait(epfd, &amp;events, maxevents, timeout);
+pthread_sigmask(SIG_SETMASK, &amp;origmask, NULL);
+
+
+<P>
+
+<I>sigmask</I> 引数には NULL を指定してもよい。 その場合には、 <B>epoll_pwait</B>()  は <B>epoll_wait</B>()
+と等価となる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 <B>epoll_wait</B>()  は要求された I/O に対して準備ができているファイルディスクリプターの数を返す。 また要求された
+<I>timeout</I> ミリ秒の間にファイルディスクリプターが準備できない場合は、0 を返す。 エラーが起こった場合、 <B>epoll_wait</B>()
+は -1 を返し、 <I>errno</I> を適切に設定する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>epfd</I> が有効なファイルディスクリプターでない。
+<DT><B>EFAULT</B><DD>
+<I>events</I> で指されるメモリー領域に書き込み権限でアクセスできない。
+<DT><B>EINTR</B><DD>
+(1) 要求されたどのイベントも発生せず、かつ (2) <I>timeout</I>
+の期限が切れる前に、システムコールがシグナルハンドラーによって割り込まれた。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7) 参照。
+<DT><B>EINVAL</B><DD>
+<I>epfd</I> が <B>epoll</B> ファイルディスクリプターでない。 または <I>maxevents</I> が 0 以下である。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+
+<B>epoll_wait</B>() はカーネル 2.6 で追加された。
+ライブラリによるサポートは glibc バージョン 2.3.2 以降で提供されている。
+<P>
+
+<B>epoll_pwait</B>() はカーネル 2.6.19 で Linux に追加された。
+ライブラリによるサポートは glibc バージョン 2.6 以降で提供されている。
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>epoll_wait</B>() は Linux 独自である。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+あるスレッドが <B>epoll_wait</B>() を呼び出して停止されている間に、別のスレッドが wait 中の <B>epoll</B>
+インストールにファイルディスクリプターを追加することがある。新しいファイルディスクリプターでイベントが発生すると、 <B>epoll_wait</B>()
+の呼び出しによる停止が解除されることになる。
+<P>
+
+If more than <I>maxevents</I> file descriptors are ready when <B>epoll_wait</B>()
+is called, then successive <B>epoll_wait</B>()  calls will round robin through
+the set of ready file descriptors.  This behavior helps avoid starvation
+scenarios, where a process fails to notice that additional file descriptors
+are ready because it focuses on a set of file descriptors that are already
+known to be ready.
+<P>
+
+Note that it is possible to call <B>epoll_wait</B>()  on an <B>epoll</B> instance
+whose interest list is currently empty (or whose interest list becomes empty
+because file descriptors are closed or removed from the interest in another
+thread).  The call will block until some file descriptor is later added to
+the interest list (in another thread) and that file descriptor becomes
+ready.
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+バージョン 2.6.37 より前のカーネルでは、おおよそ <I>LONG_MAX / HZ</I> ミリ秒より大きい <I>timeout</I> 値は -1
+(つまり無限大) として扱われる。したがって、例えば、<I>sizeof(long)</I> が 4 で、カーネルの <I>HZ</I> の値が 1000
+のシステムでは、 35.79 分よりも大きなタイムアウトは無限大として扱われるということである。
+<A NAME="lbAL">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+素の <B>epoll_pwait</B>() システムコールは 6 番目の引数 <I>size_t sigsetsize</I> を取る。 この引数は
+<I>sigmask</I> 引数のバイト単位のサイズを指定する。 glibc の <B>epoll_pwait</B>() ラッパー関数は、この引数に固定値
+(<I>sizeof(sigset_t)</I> と同じ) を指定する。
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2), <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">epoll_pwait()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DL>
+<DT><A HREF="#lbAL">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

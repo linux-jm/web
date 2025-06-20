@@ -1,0 +1,417 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of VIS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>VIS</H1>
+Section: C Library Functions (3)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/netkit/release/man3/vis.3">roff page</A><HR>
+<BR>BSD mandoc<BR>
+Linux NetKit (0.17)
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<B>vis</B>
+
+ - 文字を表示可能文字にエンコードする
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+Fd #include &lt;<A HREF="file:///usr/include/vis.h">vis.h</A>&gt;
+
+Ft char *
+
+Fn vis char *dst char c int flag char nextc
+
+Ft int 
+
+Fn strvis char *dst char *src int flag
+
+Ft int 
+
+Fn strvisx char *dst char *src int len int flag
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+Fn vis
+
+関数は、文字
+Fa c
+
+を表現する文字列を
+Fa dst
+
+にコピーする。
+Fa c
+
+をエンコードする必要がない場合、変更せずにコピーされる。
+文字列は NUL 文字で終端され、文字列の最後の文字へのポインタが返される。
+エンコードされた文字の最大長は 4 文字である (最後の
+<B>NUL 文字</B>
+
+は含まない)。
+よって、複数の文字をバッファにエンコードする場合、
+バッファの大きさは「エンコードされる文字の数の 4 倍 + 最後の
+<B>NUL 文字</B>
+
+のための 1 文字」でなければならない。
+引き数 flag は、エンコードまたは表示可能文字に変更される文字の
+デフォルトの範囲を変更する。
+その他の文字
+Fa nextc
+
+は、エンコードフォーマット
+<B>VIS_CSTYLE</B>
+
+(以下で説明する) を選択する場合にのみ使われる。
+<P>
+
+Fn strvis
+
+と
+Fn strvisx
+
+関数は、
+文字列
+Fa src
+
+を表示可能文字にしたものを
+Fa dst
+
+にコピーする。
+Fn strvis
+
+関数は、
+Fa src
+
+を
+<B>NUL 文字 </B>
+
+が現れるまでエンコードする。
+Fn strvisx
+
+関数は、
+Fa src
+
+をちょうど
+Fa len
+
+文字分だけエンコードする (これは
+<B>NUL</B>
+
+を含むデータブロックをエンコードするのに役立つ)。
+どちらの形式でも、
+Fa dst
+
+は
+<B>NUL</B>
+
+終端される。
+Fa dst
+
+の大きさは、エンコードされる文字
+Fa src
+
+の数の 4 倍 (+
+<B>NUL</B>
+
+のための 1 文字分) でなければならない。
+どちらの形式でも dst の文字数が返される (最後の
+<B>NUL</B>
+
+は含まない)。
+<P>
+
+エンコードは唯一のもので、全て表示文字から構成された可逆表現になっている。
+つまり、エンコードされた文字は、
+unvis(3)
+
+
+や
+strunvis(3)
+
+
+関数を用いて元の形式にデコードすることができる。
+<P>
+
+制御可能な 2 つのパラメータがある:
+エンコードされる文字の範囲と使われる表現のタイプである。
+デフォルトでは、スペース・タブ・改行以外の非表示文字がエンコードされる
+<B>( <A HREF="../../LDP_man-pages/man3/isgraph.3.html">isgraph</A>(3)
+
+</B>
+
+を参照)。
+以下のフラグは、この動作を変更する:
+<DL COMPACT>
+<P>
+
+<DT><B>VIS_SP</B>
+
+
+<DD>
+スペースもエンコードする。
+<DT><B>VIS_TAB<TT>&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+
+<DD>
+タブもエンコードする。<BR>
+<DT><B>VIS_NL</B>
+
+
+<DD>
+改行もエンコードする。
+<DT><B>VIS_WHITE<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+
+<DD>
+<B>VIS_SP</B>
+
+|<BR>
+<B>VIS_TAB</B>
+
+|
+<B>VIS_NL</B>
+
+と同じ。
+<DT><B>VIS_SAFE<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+
+<DD>
+「安全でない」文字だけをエンコードする。<BR>
+安全でないとは、一般的な端末に予期せぬ機能を動作させてしまうことを意味する。
+現在のところ、スペース・タブ・改行・バックスペース・ベル・リターン
+- そして全ての表示可能文字 - はエンコードされない。
+</DL>
+<P>
+
+<P>
+
+3 つのエンコード形式がある。
+全ての形式で、バックスペース
+`\'
+
+が特殊シーケンスの始まりとして使われる。
+2 つのバックスペースが実際のバックスペースを表現するために使われる。
+以下のような可視化フォーマットがある:
+<DL COMPACT>
+<P>
+
+<DT><B>(デフォルト)</B>
+<DD>
+メタ文字 (8 ビット目を使う文字) を表現するためには、
+`M'
+
+を使うこと。
+制御文字
+( <A HREF="../../LDP_man-pages/man3/iscntrl.3.html">iscntrl</A>(3)
+
+
+
+を参照) を表現するためには、キャレット
+`^'
+
+を使うこと。
+以下のフォーマットが使われる:
+<DL COMPACT>
+<P>
+
+<DT><B>\^C</B>
+
+
+<DD>
+制御文字
+`C'
+
+を表す。
+`\000'
+
+から
+`\037'
+
+の間の文字と
+`\177'
+
+<B>( `\^?'
+
+</B>
+
+と同じ) を表す。
+<DT><B>\M-C</B>
+
+
+<DD>
+8 ビット目がセットされている文字
+`C'
+
+を表す。
+`\241'
+
+から
+`\376'
+
+の間の文字を表す。
+<DT><B>\M^C</B>
+
+
+<DD>
+8 ビット目がセットされている制御文字
+`C'
+
+を表す。
+with the 8th bit set.
+Spans characters
+`\200'
+
+から
+`\237'
+
+の間の文字と
+`\377'
+
+<B>( `\M^?'
+
+</B>
+
+と同じ) を表す。
+<DT><B>\040</B>
+
+
+<DD>
+<B>ASCII</B>
+
+スペースを表す。
+<DT><B>\240</B>
+
+
+<DD>
+メタスペースを表す。
+</DL>
+<P>
+
+<P>
+
+<DT><B>VIS_CSTYLE</B>
+
+
+<DD>
+標準的な非表示文字を表現するために、
+C 言語形式のバックスラッシュシーケンスを使う。
+このような文字を表すために以下のシーケンスが使われる:
+
+<BLOCKQUOTE>
+<PRE>
+<B>\a - BEL (007)</B>
+
+
+<B>\b - BS (010)</B>
+
+
+<B>\f - NP (014)</B>
+
+
+<B>\n - NL (012)</B>
+
+
+<B>\r - CR (015)</B>
+
+
+<B>\t - HT (011)</B>
+
+
+<B>\v - VT (013)</B>
+
+
+<B>\0 - NUL (000)</B>
+
+
+</PRE>
+</BLOCKQUOTE>
+
+<P>
+
+このフォーマットを使った場合、
+<B>NUL</B>
+
+文字を
+`\000'
+
+ではなく
+`\0'
+
+としてエンコードするかを決定するために、引き数 nextc が参照される。
+Fa nextc
+
+が 1 個の 8 進数の場合、曖昧さを避けるため後者の表現が使われる。
+<DT><B>VIS_OCTAL</B>
+
+
+<DD>
+3 個の 8 進数シーケンスを使う。
+`\ddd'
+
+という形式が使われる。
+ここで
+<I>d</I>
+
+は 8 進数を表す。
+</DL>
+<P>
+
+<P>
+
+さらに、もう 1 つフラグ
+<B>VIS_NOSLASH</B>
+
+がある。
+このフラグは、2 つのバックスラッシュと
+デフォルトフォーマットで前におかれるバックスラッシュを使わないようにする。
+(つまり、制御文字は
+`^C'
+
+で、メタ文字は
+`M-C'
+
+で表される)。
+このフラグが設定されると、エンコードは曖昧で可逆でなくなる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>関連項目</H2>
+
+vis(1),
+
+
+unvis(1),
+
+
+unvis(3)
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>履歴</H2>
+
+これらの関数は 4.4BSD で初めて登場した。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">関連項目</A><DD>
+<DT><A HREF="#lbAF">履歴</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:41 GMT, December 05, 2022
+</BODY>
+</HTML>

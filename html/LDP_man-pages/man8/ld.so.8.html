@@ -1,0 +1,345 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LD.SO</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LD.SO</H1>
+Section: Linux Programmer's Manual (8)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man8/ld.so.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ld.so, ld-linux.so* - 動的なリンカー/ローダー
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+動的リンカーは、動的にリンクされたプログラムやライブラリの実行によって 間接的に実行することができる (ELF
+の場合、動的リンカーにコマンドラインオプションを渡すことはできず、 プログラムの <B>.interp</B>
+セクションに入っている動的リンカーが実行される)。 また以下のように直接実行することもできる
+<P>
+
+<I>/lib/ld-linux.so.*</I> [OPTIONS] [PROGRAM [ARGUMENTS]]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+プログラム <B>ld.so</B> と <B>ld-linux.so*</B> はプログラムに必要な共有ライブラリを見つけてロードし、
+プログラムの実行を準備してから起動させる。
+<P>
+
+Linux のバイナリは、コンパイルの時に <B><A HREF="../../GNU_binutils/man1/ld.1.html">ld</A></B>(1)  に対して <B>-static</B> オプションが指定されていない限り、動的リンク
+(実行時リンク) が必要となる。
+<P>
+
+プログラム <B>ld.so</B> は a.out バイナリを扱う。 これはずっと昔に使われていたフォーマットである。 <B>ld-linux.so*</B>
+(libc5 では <I>/lib/ld-linux.so.1</I>, glibc2 では <I>/lib/ld-linux.so.2</I>)  は ELF
+バイナリを扱う。 このフォーマットは多くの人が最近何年も使っている。 それ以外の点では両方とも同じように動作し、 同じサポートファイルとプログラム
+<B><A HREF="../man1/ldd.1.html">ldd</A></B>(1), <B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8), <I>/etc/ld.so.conf</I> を使用する。
+<P>
+
+ライブラリの依存関係を解決する際、動的リンカーは、最初に、依存関係の各文字列がスラッシュを含んでいるかをチェックする
+(この状況になるのは、リンク時にスラッシュを含むライブラリのパス名が指定された場合である)。スラッシュが見つかった場合、その依存関係の文字列はパス名
+(相対パス、絶対パスのどちらも可) として解釈され、そのパス名を使ってそのライブラリはロードされる。
+<P>
+
+ライブラリの依存関係にスラッシュが含まれない場合、以下の順序で検索される。
+<DL COMPACT>
+<DT>o<DD>
+(ELF のみ)  バイナリの動的セクション属性 DT_RPATH が存在し、 DT_RUNPATH 属性が存在しない場合は、 DT_RPATH
+で指定されたディレクトリを使用する。 DT_RPATH の使用は推奨されない。
+<DT>o<DD>
+環境変数 <B>LD_LIBRARY_PATH</B> を用いる。 ただし実行ファイルが set-user-ID/set-group-ID バイナリの場合、
+これは無視される。
+<DT>o<DD>
+(ELF のみ)  バイナリの動的セクション属性 DT_RUNPATH が存在すれば、 DT_RUNPATH で指定されたディレクトリを使用する。
+<DT>o<DD>
+キャッシュファイル <I>/etc/ld.so.cache</I> を探す。このファイルは、 (ld.so.conf で追加指定されたものも含めた)
+ライブラリ検索パスから見つかったライブラリファイルの情報を集めたものである。ただし、バイナリがリンカーオプション <B>-z nodeflib</B>
+でリンクされている場合は、デフォルトのライブラリパスにある ライブラリはスキップされる。ハードウェア機能ディレクトリ (下記参照)
+にインストールされたライブラリは、他のライブラリよりも優先される。
+<DT>o<DD>
+デフォルトパスである <I>/lib</I>、 次いで <I>/usr/lib</I> を用いる。 バイナリがリンカーオプション <B>-z nodeflib</B>
+でリンクされている場合、このステップはスキップされる。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>rpath トークンの展開</H3>
+
+<P>
+
+<B>ld.so</B> では rpath 指定 (DT_RPATH や DT_RUNPATH) 中にいくつかの特定の文字列を使うことができる。
+それらの文字列は以下のように置き換えられる。
+<DL COMPACT>
+<DT><I>$ORIGIN</I> (<I>${ORIGIN}</I> も同じ)<DD>
+プログラムや共有ライブラリが入っているディレクトリに展開される。 したがって、 <I>somedir/app</I> に置かれたアプリケーションを
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gcc&nbsp;-Wl,-rpath,'$ORIGIN/../lib'
+<P>
+でコンパイルすることで、 <I>somedir</I> がディレクトリ階層のどこにあっても、 <B>ld.so</B> は <I>somedir/lib</I>
+にある対応する共有ライブラリを見つけることができる。 この機能を使うと、
+特別なディレクトリではなく任意のディレクトリにインストールしても「ややこしい設定なしで」独自の共有ライブラリを使えるアプリケーションを作成することができる。
+<DT><I>$LIB</I> (<I>${LIB}</I> も同じ)<DD>
+アーキテクチャーに応じて <I>lib</I> か <I>lib64</I> に展開される (例えば、 x86-64 では <I>lib64</I> に、 x86-32 では
+<I>lib</I> に展開される)。
+<DT><I>$PLATFORM</I> (<I>${PLATFORM}</I> も同じ)<DD>
+
+
+
+
+
+
+
+
+ホストシステムのプロセッサ種別に対応する文字列に展開される (例えば &quot;x86_64&quot;)。
+いくつかのアーキテクチャーでは、 Linux カーネルから動的リンカーにプラットフォームを表す文字列が提供されない。 この文字列の値は補助ベクトルの
+<B>AT_PLATFORM</B> 値から取得される (<B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3) 参照)。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>--list</B><DD>
+全ての依存関係とその解決法をリストする。
+<DT><B>--verify</B><DD>
+プログラムが動的にリンクされているかと、 動的リンカーがそのプログラムを扱えるかを検証する。
+<DT><B>--inhibit-cache</B><DD>
+/etc/ld.so.cache を使用しない。
+<DT><B>--library-path PATH</B><DD>
+<B>LD_LIBRARY_PATH</B> 環境変数の設定ではなく、
+指定した PATH を使用する (下記参照)。
+<DT><B>--inhibit-rpath LIST</B><DD>
+LIST にあるオブジェクト名の RPATH と RUNPATH の情報を無視する。 <B>ld.so</B> が set-user-ID か
+set-group-ID されている場合、 このオプションは無視される。
+<DT><B>--audit LIST</B><DD>
+LIST で指定された名前のオブジェクトを監査者として使用する。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>ハードウェア機能</H2>
+
+いくつかのライブラリは、(すべての CPU に存在するわけではない)ハードウェア固有
+の命令を使ってコンパイルされている。そのようなライブラリは、
+<I>/usr/lib/sse2/</I> のような、必要なハードウェア機能 (hardware capability) を規
+定する名前のディレクトリにインストールすべきである。
+動的リンカーは、マシンのハードウェアに基づいてこれらのディレクトリを確認し、
+指定されたライブラリに最も適したバージョンを選択する。
+ハードウェア機能ディレクトリはつなげることができ、
+複数の CPU 機能を組み合わることができる。
+対応しているハードウェア機能名のリストは CPU に依存する。
+現在のところ、以下の名前が認識される。
+<DL COMPACT>
+<DT><B>Alpha</B><DD>
+ev4, ev5, ev56, ev6, ev67
+<DT><B>MIPS</B><DD>
+loongson2e, loongson2f, octeon, octeon2
+<DT><B>PowerPC</B><DD>
+4xxmac, altivec, arch_2_05, arch_2_06, booke, cellbe, dfp, efpdouble,
+efpsingle, fpu, ic_snoop, mmu, notb, pa6t, power4, power5, power5+, power6x,
+ppc32, ppc601, ppc64, smt, spe, ucache, vsx
+<DT><B>SPARC</B><DD>
+flush, muldiv, stbar, swap, ultra3, v9, v9v, v9v2
+<DT><B>s390</B><DD>
+dfp, eimm, esan3, etf3enh, g5, highgprs, hpage, ldisp, msa, stfle, z900,
+z990, z9-109, z10, zarch
+<DT><B>x86 (32-bit のみ)</B><DD>
+acpi, apic, clflush, cmov, cx8, dts, fxsr, ht, i386, i486, i586, i686, mca,
+mmx, mtrr, pat, pbe, pge, pn, pse36, sep, ss, sse, sse2, tm
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>環境変数</H2>
+
+重要な環境変数には以下のものがある。
+<DL COMPACT>
+<DT><B>LD_ASSUME_KERNEL</B><DD>
+(glibc 2.2.3 以降)  各共有ライブラリは動的リンカーに必要なカーネル ABI の最小バージョンを通知することができる (必要なバージョンは
+ELF の note section に格納され、 <I>readelf&nbsp;-n</I> で <B>NT_GNU_ABI_TAG</B>
+のラベルが付いたセクションとして見ることができる)。 実行時に、 動的リンカーは実行中のカーネルの ABI バージョンを判定し、 カーネルの ABI
+バージョンよりも大きな ABI の最小バージョンが指定された共有ライブラリのロードを行わない。
+<P>
+<B>LD_ASSUME_KERNEL</B> を使うことで、 動的リンカーに、 異なるカーネル ABI
+バージョンのシステムで実行されているかのように見せることができる。 例えば、 以下のコマンドラインを実行すると、 動的リンカーは <I>myprog</I>
+が必要とする共有ライブラリをロードする際に Linux 2.2.5 上で動作していると仮定する。
+<P>
+
+<PRE>
+$ <B>LD_ASSUME_KERNEL=2.2.5 ./myprog</B>
+</PRE>
+
+
+<P>
+必要なカーネル ABI の最低バージョンが異なる複数の共有ライブラリが (検索パス中の異なるディレクトリに) あるシステムでは、
+<B>LD_ASSUME_KERNEL</B> を使って (ディレクトリ検索順序に基づき) 使用するライブラリのバージョンを選択することができる。
+歴史的に見ると、 <B>LD_ASSUME_KERNEL</B> の最も一般的な使い道は、 LinuxThreads と NPTL
+の両方を提供しているシステムで、 古い LinuxThreads の POSIX スレッド実装を手動で選択するためであった
+(そのようなシステムでは、通常は NPTL がデフォルトであった)。 <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7) を参照。
+<DT><B>LD_BIND_NOT</B><DD>
+(glibc 2.2 以降) シンボルを解決した際、Global Offset Table (GOT) と Procedure Linkage
+Table (PLT) を更新しない。
+<DT><B>LD_BIND_NOW</B><DD>
+(libc5; glibc 2.1.1 以降)  空文字列でない場合、 動的リンカーはプログラムの開始時に全てのシンボルを解決する。
+空文字列の場合、解決しなければならない関数呼び出しが 最初に参照された時点で解決する。 デバッガを使っているときに役立つ。
+<DT><B>LD_LIBRARY_PATH</B><DD>
+コロン区切りのディレクトリのリスト。実行時に ELF ライブラリを検索するディレクトリを指定する。 <B>PATH</B> 環境変数と同じように指定する。
+set-user-ID/set-group-ID されたプログラムでは無視される。
+<DT><B>LD_PRELOAD</B><DD>
+追加でユーザーが指定する ELF
+共有ライブラリのリスト。指定されたライブラリは、すべてのライブラリより前にロードされる。リストの区切りはスペースとコロンである。他の共有ライブラリにある関数を選択的に置き換えるために用いることができる。指定されたライブラリは「説明」の節で述べたルールを基いて検索される。
+set-user-ID/set-group-ID された ELF
+バイナリでは、スラッシュを含んだパス名のライブラリは無視され、標準の検索ディレクトリのライブラリはそのライブラリファイルの set-user-ID
+許可ビットが有効になっている場合のみロードされる。
+<DT><B>LD_TRACE_LOADED_OBJECTS</B><DD>
+(ELF のみ)  空文字列でない場合、 プログラムを普通に実行するのではなく、 <B><A HREF="../man1/ldd.1.html">ldd</A></B>(1)
+を実行したときのように動的ライブラリの依存関係をリスト表示させる。
+</DL>
+<P>
+
+そして、それほど知られていない環境変数もある。 多くは廃れてしまったものか内部でのみ使用される環境変数である。
+<DL COMPACT>
+<DT><B>LD_AOUT_LIBRARY_PATH</B><DD>
+(libc5)  a.out バイナリにのみ使われる環境変数で、 <B>LD_LIBRARY_PATH</B> と同じ役割をする。 ld-linux.so.1
+の古いバージョンでは <B>LD_ELF_LIBRARY_PATH</B> もサポートしていた。
+<DT><B>LD_AOUT_PRELOAD</B><DD>
+(libc5)  a.out バイナリにのみ使われる環境変数で、 <B>LD_PRELOAD</B> と同じ役割をする。 ld-linux.so.1
+の古いバージョンでは <B>LD_ELF_PRELOAD</B> もサポートしていた。
+<DT><B>LD_AUDIT</B><DD>
+(glibc 2.4 以降)  他のオブジェクトよりも前に、別のリンカー名前空間 (そのプロセスで行われる 通常のシンボル結合 (symbol
+bindigns) には関与しない名前空間) で ロードされる、ユーザー指定の ELF 共有オブジェクトのコロン区切りのリスト。
+これらのライブラリを使って、動的リンカーの動作を監査することができる。 set-user-ID/set-group-ID されたバイナリでは、
+<B>LD_AUDIT</B> は無視される。
+<P>
+動的リンカーは、いわゆる監査チェックポイント (auditing checkpoints)  において、監査 (audit)
+ライブラリの適切な関数を呼び出すことで、 監査ライブラリへの通知を行う。監査チェックポイントの例としては、
+新たなライブラリのロード、シンボルの解決、別の共有オブジェクト からのシンボルの呼び出し、などがある。 詳細は <B>rtld-audit</B>(7)
+を参照してほしい。 audit インターフェースは、Solaris で提供されているものと 大部分は互換性がある。Solaris の audit
+インターフェースについては、 <I>Linker and Libraries Guide</I> の <I>Runtime Linker Auditing
+Interface</I> の章に説明がある。
+<DT><B>LD_BIND_NOT</B><DD>
+(glibc 2.1.95 以降)  シンボルを解決した後、GOT (global offset table) と PLT (procedure
+linkage table) を更新しない。
+<DT><B>LD_DEBUG</B><DD>
+(glibc 2.1 以降)  動的リンカーの詳細なデバッグ情報を出力する。 <B>all</B>
+に設定した場合、全ての動的リンカーが持つデバッグ情報を表示する。 <B>help</B>
+に設定した場合、この環境変数で指定されるカテゴリーのヘルプ情報を表示する。 glibc 2.3.4 以降、
+set-user-ID/set-group-ID されたバイナリでは <B>LD_DEBUG</B> は無視される。
+<DT><B>LD_DEBUG_OUTPUT</B><DD>
+(glibc 2.1 以降)  <B>LD_DEBUG</B> の出力を書き込むファイル。 デフォルトは標準エラーである。
+set-user-ID/set-group-ID されたバイナリでは、 <B>LD_DEBUG_OUTPUT</B> は無視される。
+<DT><B>LD_DYNAMIC_WEAK</B><DD>
+(glibc 2.1.19 以降)  上書きされる弱いシンボル (昔の glibc の挙動を逆にする)。 セキュリティ上の理由から、glibc
+2.3.4 以降、 set-user-ID/set-group-ID されたバイナリでは <B>LD_DYNAMIC_WEAK</B> は無視される。
+<DT><B>LD_HWCAP_MASK</B><DD>
+(glibc 2.1 以降)  ハードウェア機能のマスク。
+<DT><B>LD_KEEPDIR</B><DD>
+(a.out のみ)(libc5)  ロードする a.out ライブラリの名前において、ディレクトリを無視しない。 このオプションは用いるべきではない。
+<DT><B>LD_NOWARN</B><DD>
+(a.out のみ)(libc5)  a.out ライブラリにおけるマイナーバージョン番号の非互換に 対する警告メッセージを抑制する。
+<DT><B>LD_ORIGIN_PATH</B><DD>
+
+
+(glibc 2.1 以降)  バイナリへのパス (set-user-ID されていないプログラムについて)。 セキュリティ上の理由から、glibc
+2.3.4 以降、 set-user-ID/set-group-ID されたバイナリでは <B>LD_ORIGIN_PATH</B> は無視される。
+<DT><B>LD_POINTER_GUARD</B><DD>
+(glibc 2.4 以降)  0 に設定すると、ポインター保護 (pointer guarding) が無効になる。
+それ以外の値の場合はポインター保護が有効になる。 デフォルトはポインター保護有効である。
+ポインター保護はセキュリティ機構の一つで、書き込み可能なプログラムメモリー に格納されたコードへのポインターをほぼランダム化することで、
+攻撃者がバッファーオーバーランやスタック破壊 (stack-smashing) 攻撃の際に ポインターを乗っ取ることを困難にするものである。
+<DT><B>LD_PROFILE</B><DD>
+(glibc 2.1 以降)  プロファイルを行う共有オブジェクトの名前。 パス名か共有オブジェクト名 (soname) で指定される。
+プロフィールの出力は &quot;<I>$LD_PROFILE_OUTPUT</I>/<I>$LD_PROFILE</I>.profile&quot; という名前の ファイルに追記される。
+<DT><B>LD_PROFILE_OUTPUT</B><DD>
+(glibc 2.1 以降)  <B>LD_PROFILE</B> の出力が書き込まれるディレクトリ。
+この変数が定義されていないか、空の文字列が定義されている場合、 デフォルト値は <I>/var/tmp</I> となる。
+set-user-ID/set-group-ID されたプログラムでは、 LD_PROFILE_OUTPUT は無視される。 出力ファイルは常に
+<I>/var/profile</I> が使用される。
+<DT><B>LD_SHOW_AUXV</B><DD>
+
+
+
+
+(glibc 2.1 以降)  カーネルから渡される補助的な (パラメーターの) 配列を表示する。 セキュリティ上の理由から、glibc 2.3.4
+以降、 set-user-ID/set-group-ID されたバイナリでは <B>LD_SHOW_AUXV</B> は無視される。
+<DT><B>LD_USE_LOAD_BIAS</B><DD>
+
+
+
+デフォルトでは (つまり、この変数が定義されていない場合)、 実行ファイルと prelink された共有オブジェクトでは、それらが依存する
+ライブラリのベースアドレスが尊重される一方、 (prelink されていない) position-independent executables
+(PIEs) と 他の共有オブジェクトでは依存するライブラリのベースアドレスは 尊重されない。 <B>LD_USE_LOAD_BIAS</B> が値 1
+で定義された場合、実行ファイルと PIE のどちらでも ベースアドレスが尊重される。 <B>LD_USE_LOAD_BIAS</B> が値 0
+で定義された場合、実行ファイルと PIE のどちらでも ベースアドレスは尊重されない。 set-user-ID や set-group-ID
+されたプログラムでは、 この変数は無視される。
+<DT><B>LD_VERBOSE</B><DD>
+(glibc 2.1 以降) 空文字列でない場合に、<B>LD_TRACE_LOADED_OBJECTS</B>
+環境変数が設定されていれば、プログラムのシンボルバージョン情報を出力する。
+<DT><B>LD_WARN</B><DD>
+(ELF のみ)(glibc 2.1.3 以降)  空文字列でない場合、解決されていないシンボルがあれば警告を出す。
+<DT><B>LDD_ARGV0</B><DD>
+(libc5)  <B><A HREF="../man1/ldd.1.html">ldd</A></B>(1)  の引き数がない場合に、 <I>argv</I>[0] として使われる値。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>ファイル</H2>
+
+
+<DL COMPACT>
+<DT><I>/lib/ld.so</I><DD>
+a.out の動的リンカー/ローダー
+<DT><I>/lib/ld-linux.so.</I>{<I>1</I>,<I>2</I>}<DD>
+ELF の動的リンカー/ローダー
+<DT><I>/etc/ld.so.cache</I><DD>
+ライブラリを検索するディレクトリを集めたリストと、 共有ライブラリの候補の整列リストを含むファイル。
+<DT><I>/etc/ld.so.preload</I><DD>
+プログラムの前にロードすべき ELF 共有ライブラリを スペースで区切ったリストが書かれているファイル。
+<DT><B>lib*.so*</B><DD>
+共有ライブラリ
+
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<B>ld.so</B> の機能は libc のバージョン 4.4.3 以上を用いてコンパイルされた 実行ファイルで使用可能である。 ELF の機能は
+Linux 1.1.52 以降と libc5 以降で使用可能である。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+
+
+
+
+<B><A HREF="../../GNU_binutils/man1/ld.1.html">ld</A></B>(1), <B><A HREF="../man1/ldd.1.html">ldd</A></B>(1), <B><A HREF="../man1/pldd.1.html">pldd</A></B>(1), <B><A HREF="../man1/sprof.1.html">sprof</A></B>(1), <B><A HREF="../man3/dlopen.3.html">dlopen</A></B>(3), <B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3),
+<B>rtld-audit</B>(7), <B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8), <B><A HREF="../man8/sln.8.html">sln</A></B>(8)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">rpath トークンの展開</A><DD>
+</DL>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">ハードウェア機能</A><DD>
+<DT><A HREF="#lbAH">環境変数</A><DD>
+<DT><A HREF="#lbAI">ファイル</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

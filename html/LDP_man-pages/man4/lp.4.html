@@ -1,0 +1,115 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LP</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated:  2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man4/lp.4">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+lp - ラインプリンターデバイス
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/lp.h">linux/lp.h</A>&gt;</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>設定</H2>
+
+<B>lp</B>[0-2] はパラレルプリンターのためのキャラクターデバイスでメジャー ナンバー 6 マイナーナンバー 0-2
+を持つ。マイナーナンバーは、ベース アドレス 0x03bc, 0x0378, 0x0278 のそれぞれのプリンターポートに対応する
+通常、このデバイスファイルは、モード 220 で、所有権はユーザー <I>root</I> でグループ <I>lp</I>
+となっている。プリンターポートはポーリング(polling)または割り込み (interrupts)
+のどちらを用いても利用できる。割り込みの利用は、高負荷が 予想される時、例えばレーザープリンターをプリンタポートに接続する場合な
+どに推奨される。普通のドットマトリクスプリンターでは、ポーリングの利用 で通常は十分である。デフォルトではポーリングを利用する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+次の <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  コールがサポートされている。
+<DL COMPACT>
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPTIME, int </B><I>arg</I><B>)</B><DD>
+プリンターのバッファー (buffer) がいっぱいになった時、ドライバがプリンター を再チェックするまでに休止する時間を <I>arg</I>
+とする。高速なプリンター の時はこれを減らし、遅いプリンターの時には増やす。単位は1秒の100分の1
+で、デフォルトの2は0.02秒にあたる。ポーリングドライバ (polling driver) のみに影響する。
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPCHAR, int </B><I>arg</I><B>)</B><DD>
+ポーリングドライバがプリンターの文字受取り準備ができるのを待 つビジーウエイト (busy-wait) の回数の最大値を <I>arg</I> とする。
+もし印刷が遅すぎる時はこれを増やし、システムが遅くなりすぎる時には 減らす。デフォルトは 1000 である。ポーリングドライバのみに影響する。
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPABORT, int </B><I>arg</I><B>)</B><DD>
+もし、<I>arg</I> が 0 なら、プリンタードライバはエラーについて再試行 を行う。それ以外の場合は中止する。デフォルトは 0 である。
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPABORTOPEN, int </B><I>arg</I><B>)</B><DD>
+もし、<I>arg</I> が 0 なら <B><A HREF="../man2/open.2.html">open</A></B>(2)  の結果がエラーの場合、動作が中止される。それ以外ならエラーは無
+視される。デフォルトではエラーは無視される。
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPCAREFUL, int </B><I>arg</I><B>)</B><DD>
+<I>arg</I> が 0 のときには、すべての書き出しの時に、紙切れ、オフライン、エ ラーのシグナルが偽 (false) であることが必要とされるが、0
+以外ならこれらのシグナルは無視される。デフォルトでもこれらのシグナルは無視される。
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPWAIT, int </B><I>arg</I><B>)</B><DD>
+
+プリンターが送られた文字を受け取るのを待つため、ドライバが文字を送っ てからストローブ(strobe)するまでの待ちの繰り返しの回数と、ストローブ
+を再びオフにするまでの待ちの繰り返しの回数を <I>arg</I>に設定 する。仕様によればこの時間は 0.5 マイクロ秒とするべきだが、経験によれば
+このコードによって生じる遅れで十分である。そのため、デフォルトでは 0 で ある。これは、ポーリングと割り込みドライバの両方で使われる。
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPSETIRQ, int </B><I>arg</I><B>)</B><DD>
+この <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  を使うには、スーパーユーザーの権限が必要である。新しいIRQを示す <I>int</I>
+を引数としてとる。また、副作用としてプリンターはリセットされる。 <I>arg</I>が0の時またはデフォルトの動作では、ポーリングドライバーが使わ れる。
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPGETIRQ, int *</B><I>arg</I><B>)</B><DD>
+現在使われているIRQを<I>arg</I>にいれる。
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPGETSTATUS, int *</B><I>arg</I><B>)</B><DD>
+ステータスポートの値を<I>arg</I>に収める。各ビットには次のような意味が ある：
+<TABLE>
+<TR VALIGN=top><TD>LP_PBUSY</TD><TD>ビジー信号の反転、ハイがアクティブ<BR></TD></TR>
+<TR VALIGN=top><TD>LP_PACK</TD><TD>アクノリッジ信号、ローがアクティブ<BR></TD></TR>
+<TR VALIGN=top><TD>LP_POUTPA</TD><TD>紙切れ信号、ハイがアクティブ<BR></TD></TR>
+<TR VALIGN=top><TD>LP_PSELECD</TD><TD>選択信号、ハイがアクティブ<BR></TD></TR>
+<TR VALIGN=top><TD>LP_PERRORP</TD><TD>エラー信号、ローがアクティブ<BR></TD></TR>
+</TABLE>
+
+<DT><DD>
+信号の意味については各自のプリンターのマニュアルを参照のこと。プリンター によっては記載のないビットもセットされるかもしれないので、注意のこと。
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPRESET)</B><DD>
+プリンターをリセットする。引数はとらない。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+
+
+
+
+
+
+
+<BR>&nbsp;<I>/dev/lp*</I>
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/chmod.1.html">chmod</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/chown.1.html">chown</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/mknod.1.html">mknod</A></B>(1), <B>lpcntl</B>(8), <B><A HREF="../../util-linux/man8/tunelp.8.html">tunelp</A></B>(8)
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">設定</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

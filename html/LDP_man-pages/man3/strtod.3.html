@@ -1,0 +1,177 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STRTOD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>STRTOD</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/strtod.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+strtod, strtof, strtold - ASCII 文字列を浮動小数点実数に変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+<P>
+
+<B>double strtod(const char *</B><I>nptr</I><B>, char **</B><I>endptr</I><B>);</B>
+<BR>
+
+<B>float strtof(const char *</B><I>nptr</I><B>, char **</B><I>endptr</I><B>);</B>
+<BR>
+
+<B>long double strtold(const char *</B><I>nptr</I><B>, char **</B><I>endptr</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+
+<P>
+
+<B>strtof</B>(), <B>strtold</B>():
+<DL COMPACT><DT><DD>
+_ISOC99_SOURCE || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>strtod</B>(), <B>strtof</B>(), <B>strtold</B>()  関数は、 <I>nptr</I> が指し示す文字列のはじめの部分を
+<I>double</I>, <I>float</I>, <I>long double</I> 型の値にそれぞれ変換する。
+<P>
+
+入力する文字列 (の先頭部分) は以下の形式が期待されている。 先頭にホワイトスペース、 次にプラス ('+') またはマイナス
+('-') の記号、 その後に (i) 10 進数、(ii) 16 進数、(iii) 無限、 (iv) NAN
+(計算できない数、not-a-number) のいずれかがある (ホワイトスペース、符号は省略可能。 ホワイトスペースは <B><A HREF="../man3/isspace.3.html">isspace</A></B>(3)
+で識別される)。
+<P>
+
+<I>10 進数</I> は 1 文字以上の 10 進の数字の列からなり、 基を表す文字 (radix charater)
+(小数点。ロケールに依存するが、通常は '.') が含まれることもある。 この後に 10 進の指数部が続いても良い。 10 進の指数部は
+'E' または 'e' と、その後に置かれる正負記号 (省略可)、 およびその後に続く 1 文字以上の 10
+進の数字の列からなり、 10 の何乗であるかを表す。
+<P>
+
+<I>16 進数</I> は、&quot;0x&quot; または &quot;0X&quot; とその後に続く 1 文字以上の 16 進の数字の列からなり、 基を表す文字が含まれることもある。
+この後に 2 進の指数部が続いても良い。 2 進の指数部は 'P' または 'p' と、その後に置かれる正負記号 (省略可)、
+およびその後に続く 1 文字以上の 10 進の数字の列から構成され、 2 の何乗であるかを表す。 基を表す文字と 2
+進の指数部は、どちらか一方しか存在してはならない。
+<P>
+
+<I>無限</I> は &quot;INF&quot; または &quot;INFINITY&quot; で表され、大文字小文字は区別されない。
+<P>
+
+<I>NAN</I> は &quot;NAN&quot; (大文字小文字は区別されない) で表され、 その後に文字列 <I>(n-char-sequence)</I> が続く場合もある。
+<I>(n-char-sequence)</I> は実装に依存する NAN の型を指定する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+これらの関数は、変換された値があれば、それを返す。
+<P>
+
+<I>endptr</I> が NULL でないときは、変換に使われた最終文字の次の文字へのポインターが <I>endptr</I> で参照される場所へ保存される。
+<P>
+
+If no conversion is performed, zero is returned and (unless <I>endptr</I> is
+null) the value of <I>nptr</I> is stored in the location referenced by
+<I>endptr</I>.
+<P>
+
+If the correct value would cause overflow, plus or minus <B>HUGE_VAL</B>,
+<B>HUGE_VALF</B>, or <B>HUGE_VALL</B> is returned (according to the return type and
+sign of the value), and <B>ERANGE</B> is stored in <I>errno</I>.
+<P>
+
+If the correct value would cause underflow, a value with magnitude no larger
+than <B>DBL_MIN</B>, <B>FLT_MIN</B>, or <B>LDBL_MIN</B> is returned and <B>ERANGE</B> is
+stored in <I>errno</I>.
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>ERANGE</B><DD>
+オーバーフローまたはアンダーフローが起こった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>strtod</B>(),
+<B>strtof</B>(),
+<B>strtold</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, C99.
+<P>
+
+<B>strtod</B>()  was also described in C89.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+成功、失敗どちらの場合でも 0 を返す可能性があるので、 プログラムは呼び出す前に <I>errno</I> を 0 に設定し、呼び出し後に <I>errno</I>
+が 0 以外の値かどうかを確認しエラーが発生したかどうかを判断する 必要がある。
+<P>
+
+
+
+
+
+
+
+
+glibc の実装では、&quot;NAN&quot; の後ろに置くことができる <I>n-char-sequence</I> は、整数値として解釈される (基数の 8 や 16
+を示す '0' や '0x' を接頭辞として付けることができる)。 この整数値は返り値の仮数部として使われる。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man3/strtol.3.html">strtol</A></B>(3)  のマニュアルページの例を参照。 このページで説明した関数の使用方法も同様である。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/atof.3.html">atof</A></B>(3), <B><A HREF="../man3/atoi.3.html">atoi</A></B>(3), <B><A HREF="../man3/atol.3.html">atol</A></B>(3), <B><A HREF="../man3/nan.3.html">nan</A></B>(3), <B><A HREF="../man3/nanf.3.html">nanf</A></B>(3), <B><A HREF="../man3/nanl.3.html">nanl</A></B>(3),
+<B>strfromd</B>(3), <B><A HREF="../man3/strtol.3.html">strtol</A></B>(3), <B><A HREF="../man3/strtoul.3.html">strtoul</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

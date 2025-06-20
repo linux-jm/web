@@ -1,0 +1,163 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TOUPPER</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TOUPPER</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/toupper.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+toupper, tolower, toupper_l, tolower_l - 小文字を大文字にする。または大文字を小文字にする。
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/ctype.h">ctype.h</A>&gt;</B>
+
+<B>int toupper(int </B><I>c</I><B>);</B>
+<B>int tolower(int </B><I>c</I><B>);</B>
+
+<B>int toupper_l(int </B><I>c</I><B>, locale_t </B><I>locale</I><B>);</B>
+<B>int tolower_l(int </B><I>c</I><B>, locale_t </B><I>locale</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>toupper_l</B>(), <B>tolower_l</B>():
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>glibc 2.10 以降:<DD>
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;700
+<DT>glibc 2.10 より前:<DD>
+_GNU_SOURCE
+</DL>
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらの関数は、小文字を大文字に、もしくは大文字を小文字に変換する。
+<P>
+
+<I>c</I> が小文字の場合、現在のロケールで大文字表現が存在する場合、 <B>toupper</B>()
+は対応する大文字を返す。大文字表現が存在しない場合、<I>c</I> を返す。 <B>toupper_l</B>() 関数は同じ動作をするが、ロケールハンドル
+<I>locale</I> が参照するロケールを使って変換を行う。
+<P>
+
+If <I>c</I> is an uppercase letter, <B>tolower</B>()  returns its lowercase
+equivalent, if a lowercase representation exists in the current locale.
+Otherwise, it returns <I>c</I>.  The <B>tolower_l</B>()  function performs the same
+task, but uses the locale referred to by the locale handle <I>locale</I>.
+<P>
+
+もし <I>c</I> が <I>unsigned char</I> 値でも <B>EOF</B> でもない場合、これらの関数の動作は未定義である。
+<P>
+
+<I>locale</I> が特別なロケールオブジェクト <B>LC_GLOBAL_LOCALE</B> の場合 (<B><A HREF="../man3/duplocale.3.html">duplocale</A></B>(3) 参照)、または
+<I>locale</I> が有効なロケールオブジェクトハンドルでない場合、 <B>toupper_l</B>() と <B>tolower_l</B>()
+の動作は未定義である。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+変換ができれば変換後の文字を返す。できなければ変換前の <I>c</I> を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>toupper</B>(),
+<B>tolower</B>(),
+<BR>
+
+<B>toupper_l</B>(),
+<B>tolower_l</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>toupper</B>(), <B>tolower</B>(): C89, C99, 4.3BSD, POSIX.1-2001, POSIX.1-2008.
+<P>
+
+<B>toupper_l</B>(), <B>tolower_l</B>(): POSIX.1-2008.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+The standards require that the argument <I>c</I> for these functions is either
+<B>EOF</B> or a value that is representable in the type <I>unsigned char</I>.  If
+the argument <I>c</I> is of type <I>char</I>, it must be cast to <I>unsigned char</I>,
+as in the following example:
+<P>
+
+
+
+char c;
+...
+res = toupper((unsigned char) c);
+
+
+<P>
+
+This is necessary because <I>char</I> may be the equivalent <I>signed char</I>, in
+which case a byte where the top bit is set would be sign extended when
+converting to <I>int</I>, yielding a value that is outside the range of
+<I>unsigned char</I>.
+<P>
+
+なにが大文字でなにが小文字なのかということの詳細は、ロケールに依存している。たとえば、デフォルトの <B>&quot;C&quot;</B>
+ロケールではウムラウトを認識しないため、それらの文字は変換できない。
+<P>
+
+
+
+
+いくつかの非英語ロケールでは、対応する大文字を持たない小文字が存在する。 ドイツ語のエスツェットが一つの例である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/isalpha.3.html">isalpha</A></B>(3), <B>newlocale</B>(3), <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3), <B><A HREF="../man3/towlower.3.html">towlower</A></B>(3),
+<B><A HREF="../man3/towupper.3.html">towupper</A></B>(3), <B><A HREF="../man3/uselocale.3.html">uselocale</A></B>(3), <B><A HREF="../man7/locale.7.html">locale</A></B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

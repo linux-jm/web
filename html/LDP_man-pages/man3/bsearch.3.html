@@ -1,0 +1,142 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of BSEARCH</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>BSEARCH</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/bsearch.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+bsearch - ソートされた配列を二分木検索 (binary search) する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>void *bsearch(const void *</B><I>key</I><B>, const void *</B><I>base</I><B>,</B>
+<B>              size_t </B><I>nmemb</I><B>, size_t </B><I>size</I><B>,</B>
+<B>              int (*</B><I>compar</I><B>)(const void *, const void *));</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>bsearch</B>()  関数は <I>nmemb</I> 個のオブジェクトからなる配列を検索 する。配列の最初のメンバーへのポインターは <I>base</I>
+によって与える。 ポインター <I>key</I> で参照されるオブジェクトと一致するメンバーが返される。 配列中の各々のメンバーのサイズは <I>size</I>
+によって指定する。
+<P>
+
+配列の内容は比較関数 <I>compar</I> に基づき、昇順にソートされていなけれ ばならない。 <I>compar</I> ルーチンは二つの引数を取る関数で、一つ
+目に <I>key</I> へのポインター、次に配列のメンバーへのポインターを取る。 この順に指定したとき、 <I>key</I> が配列メンバーより小さいときには
+負の整数を、大きいときには正の整数を、一致したときには 0 を、それぞれ <I>compar</I> は返さなければならない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>bsearch</B>()  関数は、配列のメンバーのうち、一致したものへのポインターを 返す。見つからなかったときは NULL を返す。 <I>key</I>
+と一致したメンバーが 複数あるとき、そのうちのどのメンバーが返されるかはわからない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>bsearch</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, C89, C99, SVr4, 4.3BSD.
+<A NAME="lbAH">&nbsp;</A>
+<H2>例</H2>
+
+以下の例は、 <B><A HREF="../man3/qsort.3.html">qsort</A></B>(3)  を使って構造体の配列の並び換えを行った後、 所望の要素を <B>bsearch</B>()
+を使って取得するものである。
+<P>
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+struct mi {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;nr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*name;
+} months[] = {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;1,&nbsp;&quot;jan&quot;&nbsp;},&nbsp;{&nbsp;2,&nbsp;&quot;feb&quot;&nbsp;},&nbsp;{&nbsp;3,&nbsp;&quot;mar&quot;&nbsp;},&nbsp;{&nbsp;4,&nbsp;&quot;apr&quot;&nbsp;},
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;5,&nbsp;&quot;may&quot;&nbsp;},&nbsp;{&nbsp;6,&nbsp;&quot;jun&quot;&nbsp;},&nbsp;{&nbsp;7,&nbsp;&quot;jul&quot;&nbsp;},&nbsp;{&nbsp;8,&nbsp;&quot;aug&quot;&nbsp;},
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;9,&nbsp;&quot;sep&quot;&nbsp;},&nbsp;{10,&nbsp;&quot;oct&quot;&nbsp;},&nbsp;{11,&nbsp;&quot;nov&quot;&nbsp;},&nbsp;{12,&nbsp;&quot;dec&quot;&nbsp;}
+};
+<P>
+#define nr_of_months (sizeof(months)/sizeof(months[0]))
+<P>
+static int
+compmi(const void *m1, const void *m2)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;struct&nbsp;mi&nbsp;*mi1&nbsp;=&nbsp;m1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;struct&nbsp;mi&nbsp;*mi2&nbsp;=&nbsp;m2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;strcmp(mi1-&gt;name,&nbsp;mi2-&gt;name);
+}
+<P>
+int
+main(int argc, char **argv)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;qsort(months,&nbsp;nr_of_months,&nbsp;sizeof(months[0]),&nbsp;compmi);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;1;&nbsp;i&nbsp;&lt;&nbsp;argc;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;mi&nbsp;key;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;mi&nbsp;*res;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;key.name&nbsp;=&nbsp;argv[i];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res&nbsp;=&nbsp;bsearch(&amp;key,&nbsp;months,&nbsp;nr_of_months,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(months[0]),&nbsp;compmi);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(res&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;'%s':&nbsp;unknown&nbsp;month\n&quot;,&nbsp;argv[i]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s:&nbsp;month&nbsp;#%d\n&quot;,&nbsp;res-&gt;name,&nbsp;res-&gt;nr);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/hsearch.3.html">hsearch</A></B>(3), <B><A HREF="../man3/lsearch.3.html">lsearch</A></B>(3), <B><A HREF="../man3/qsort.3.html">qsort</A></B>(3), <B><A HREF="../man3/tsearch.3.html">tsearch</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">例</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:27 GMT, December 05, 2022
+</BODY>
+</HTML>

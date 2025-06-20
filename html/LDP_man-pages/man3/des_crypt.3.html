@@ -1,0 +1,132 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DES_CRYPT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>DES_CRYPT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/des_crypt.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+des_crypt, ecb_crypt, cbc_crypt, des_setparity, DES_FAILED - 高速な DES 暗号化
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/rpc/des_crypt.h">rpc/des_crypt.h</A>&gt;</B>
+
+<B>int ecb_crypt(char *</B><I>key</I><B>, char *</B><I>data</I><B>, unsigned </B><I>datalen</I><B>,</B>
+<B>              unsigned </B><I>mode</I><B>);</B>
+
+<B>int cbc_crypt(char *</B><I>key</I><B>, char *</B><I>data</I><B>, unsigned </B><I>datalen</I><B>,</B>
+<B>              unsigned </B><I>mode</I><B>, char *</B><I>ivec</I><B>);</B>
+
+<B>void des_setparity(char *</B><I>key</I><B>);</B>
+
+<B>int DES_FAILED(int </B><I>status</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>ecb_crypt</B>()  と <B>cbc_crypt</B>()  は NBS DES (Data Encryption Standard,
+データ暗号化規格) を実装している。 これらのルーチンは <B><A HREF="../man3/crypt.3.html">crypt</A></B>(3)  よりも高速でより一般的な目的に使用できる。
+利用可能であれば、これらのルーチンは DES ハードウェアを使用することもできる。 <B>ecb_crypt</B>()  は ECB (Electronic
+Code Book) モードで暗号化する。 このモードでは (個々の) データのブロックを独立して暗号化する <B>cbc_crypt</B>()  は CBC
+(Cipher Block Chaining) モードで暗号化する。 このモードでは連続するブロックを互いに連鎖させて暗号化する。 CBC
+はブロックの挿入・削除・置き換えから保護する。 また平文の規則性が暗号文に現れない。
+<P>
+
+これらのルーチンの使用法を示す。 第 1 引数 <I>key</I> はパリティ付きの 8 バイトの暗号化鍵である。 鍵のパリティを設定するには
+<B>des_setparity</B>()  を使うこと。 DES の場合、鍵のパリティは各バイトの最下位ビットである。 第 2 引数 <I>data</I>
+は暗号化または復号化されるデータを含む。 第 3 引数 <I>datalen</I> は <I>data</I> のバイト長であり、8 の倍数でなければならない。 第
+4 引数 <I>mode</I> はいくつかの値を OR することで作成する。 暗号化の方向 (訳註: 暗号化なのか復号化なのか) を指定するため、
+<B>DES_ENCRYPT</B> または <B>DES_DECRYPT</B> を OR する。 暗号化をソフトウェアで行うかハードウェアで行うかを指定するため、
+<B>DES_HW</B> または <B>DES_SW</B> を OR する。 <B>DES_HW</B> が指定されていて、かつハードウェアがない場合、
+暗号化はソフトウェアで実行されて、ルーチンは <B>DESERR_NOHWDEVICE</B> を返す。 <B>cbc_crypt</B>()  において、引数
+<I>ivec</I> はデータブロックを連鎖させる際の 8 バイトの初期化ベクトルである。 この引数はルーチンから戻るときに次の初期化ベクトルに更新される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<DL COMPACT>
+<DT><B>DESERR_NONE</B><DD>
+エラーなし。
+<DT><B>DESERR_NOHWDEVICE</B><DD>
+暗号化は成功したが、要求されたハードウェアの代わりにソフトウェアで実行された。
+<DT><B>DESERR_HWERROR</B><DD>
+ハードウェアまたはドライバでエラーが発生した。
+<DT><B>DESERR_BADPARAM</B><DD>
+ルーチンへの引数が不正である。
+</DL>
+<P>
+
+
+
+
+
+結果の状態 <I>stat</I> を与えたとき、マクロ <B>DES_FAILED(</B><I>stat</I><B>)</B> が false になるのは、最初の 2
+つだけである。
+<A NAME="lbAF">&nbsp;</A>
+<H2>バージョン</H2>
+
+これらの関数は glibc のバージョン 2.1 で追加された。
+<P>
+
+Because they employ the DES block cipher, which is no longer considered
+secure, <B>ecb_crypt</B>(), <B>ecb_crypt</B>(), <B>crypt_r</B>(), and <B>des_setparity</B>()
+were removed in glibc 2.28.  Applications should switch to a modern
+cryptography library, such as <B>libgcrypt</B>.
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>ecb_crypt</B>(),
+<B>cbc_crypt</B>(),
+<B>des_setparity</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+4.3BSD. POSIX.1 にはない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>des</B>(1), <B><A HREF="../man3/crypt.3.html">crypt</A></B>(3), <B><A HREF="../man3/xcrypt.3.html">xcrypt</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">バージョン</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

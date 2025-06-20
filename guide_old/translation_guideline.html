@@ -1,0 +1,305 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>翻訳の指針 &mdash; Linux JM Guide master ドキュメント</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'master',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Linux JM Guide master ドキュメント" href="index.html" />
+    <link rel="next" title="翻訳作業の流れ" href="translation_procedure.html" />
+    <link rel="prev" title="一般情報" href="basic_info.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="総合索引"
+             accesskey="I">索引</a></li>
+        <li class="right" >
+          <a href="translation_procedure.html" title="翻訳作業の流れ"
+             accesskey="N">次へ</a> |</li>
+        <li class="right" >
+          <a href="basic_info.html" title="一般情報"
+             accesskey="P">前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Linux JM Guide master ドキュメント</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>翻訳の指針<a class="headerlink" href="#id1" title="このヘッドラインへのパーマリンク">¶</a></h1>
+<p>この文章は JM Project における man page 翻訳作業に関する指針です。 翻訳者のみなさんには余計な手間になるとは思いますが、 より良い日本語マニュアルを作成するためにご協力ください。</p>
+<div class="section" id="id2">
+<h2>マニュアル本文のフォーマットについて<a class="headerlink" href="#id2" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>本来のフォーマットや著作権を尊重するために、一次配布フォーマットは roff 形式を採用します。
+また roff での作業が困難である場合には、 その旨を JM-ML まで連絡してください。他に roff 化のボランティアを募集します。</p>
+<p>全体としての文体の統一のため、 特に理由がなければ常体 (「である」調) を用いてください。 マニュアルページの語尾としては、</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>「〜だ。」
+「〜である。」
+「〜する。」
+「〜できる。」
+「〜となる。」
+</pre></div>
+</div>
+<p>などを使用してください。</p>
+<p>句読点は「、」および「。」を使用してください。ただし、英単語や英文の 部分の区切りには「,」「.」を用いてもかまいません。</p>
+</div>
+<div class="section" id="id3">
+<h2>原文のコメント化<a class="headerlink" href="#id3" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>校正作業や改版作業の便宜を図るため、できれば原文をコメントで残しておいてください。
+ただし「原文に元からあったコメント」と区別するため、「.&#8221;O」という形式のコメントとしてください (O はアルファベット o の大文字)。
+登録システムは、リリース版を作成するときに このコメントを自動的に除去します。</p>
+<p>コメント化には以下のような内容の awk スクリプト を用いると良いでしょう。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>#!/usr/bin/awk -f
+{
+        if ($0 ~ /^\.\\&quot;/) {
+                print
+        } else {
+                printf(&quot;.\\\&quot;O %s\n&quot;, $0)
+        }
+}
+</pre></div>
+</div>
+<p>これをオリジナルの roff ファイルに対して</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>awk -f commentate.awk ar.1 &gt; ar.1.draft
+</pre></div>
+</div>
+<p>のように用い、 <code class="docutils literal"><span class="pre">ar.1.draft</span></code> に対して作業をします。</p>
+<p>以上の作業では原文はすべてコメントアウトされてしまいますが、 .TH 行や .TP 行のように、
+そのまま翻訳版にも残しておきたい行もあると思います。
+このような行を元に戻す作業には vi を用いるのが楽でしょう。 vim 系なら作業ディレクトリに</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>map ^T 5xj
+</pre></div>
+</div>
+<p>というような内容の .vimrc ファイルを置いておきます (^T は Ctrl-T です)。
+コメント化した roff ファイルを vi で開き、アンコメントしたい行の先頭で Ctrl-T を打てば、次々に取っていけます。
+失敗した場合は u で undo。</p>
+</div>
+<div class="section" id="id4">
+<h2>著作権表示について<a class="headerlink" href="#id4" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>roff 形式において roff のコメントとして書かれている著作権表示は、英文のまま残してください。
+さらにその後にコメントとして、英文で翻訳者の著作権表示を加えてください。
+翻訳者の権利表示の例を以下に示します。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>.\&quot;
+.\&quot; Japanese Version Copyright (c) 1996 HANATAKA Shinya
+.\&quot;         all rights reserved.
+.\&quot; Translated Wed Nov 20 17:42:39 JST 1996
+.\&quot;         by HANATAKA Shinya
+</pre></div>
+</div>
+<p>本文 (man コマンドの整形結果で見える部分) に著作権表示がある場合には、 それも原文のまま残してください。</p>
+<p>原文に著作権表示が含まれていない場合には、 個別対応になると思いますので JM-ML で相談してください。</p>
+<p>GNU のマニュアルページにはマニュアルページ中に著作権表示のないもの がありますが、その場合、上記の翻訳版著作権に加えて、以下の文をマニュ アルの先頭に付加してください。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>.\&quot;   Copyright (C) 1994-1999 Free Software Foundation, Inc.
+.\&quot;
+.\&quot;   Permission is granted to make and distribute verbatim copies of
+.\&quot;this
+.\&quot;manual provided the copyright notice and this permission notice are
+.\&quot;preserved on all copies.
+.\&quot;
+.\&quot;   Permission is granted to copy and distribute modified versions of
+.\&quot;this manual under the conditions for verbatim copying, provided that
+.\&quot;the entire resulting derived work is distributed under the terms of a
+.\&quot;permission notice identical to this one.
+.\&quot;
+.\&quot;   Permission is granted to copy and distribute translations of this
+.\&quot;manual into another language, under the above conditions for modified
+.\&quot;versions, except that this permission notice may be stated in a
+.\&quot;translation approved by the Foundation.
+.\&quot;
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>特殊用語の翻訳について<a class="headerlink" href="#id5" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>特殊用語の翻訳は以下の方針に従ってください。</p>
+<ul>
+<li><p class="first">コマンド名、関数名、引き数名などは翻訳せず、 アルファベットのままで記述する。</p>
+</li>
+<li><p class="first">英文との相互参照や用語の統一を簡単にするために、 専門用語を翻訳する場合には、 訳語の後ろにかっこつきで原語を併記してください。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>共有メモリ(shared memory)
+</pre></div>
+</div>
+</li>
+<li><p class="first">専門用語は無理に日本語にせずカタカナ表記を使用する。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>× 記述子 (descriptor)
+○ ディスクリプター (descriptor)
+</pre></div>
+</div>
+</li>
+</ul>
+<p>マニュアル間での訳語の統一を行うために、 できれば専門用語について単語リストを作成してください。 単語リストは、それぞれのマニュアルページの頭に 以下のような roffのコメント形式で埋め込んでください。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>.\&quot;WORD:        effective uid           実効ユーザーID
+.\&quot;WORD:        out-of-band             帯域外
+.\&quot;WORD:        physical address        物理アドレス
+.\&quot;WORD:        signal                  シグナル
+</pre></div>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>音引きについて<a class="headerlink" href="#id6" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>片仮名語の語尾の音引き(ー)には以下の方針を用いてください。</p>
+<ul>
+<li><p class="first">既に日本語になっているものについてはそれを用いる。</p>
+</li>
+<li><p class="first">できるだけ原語の発音に近い表現を用いる。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>×メモリー(memory)
+○メモリ(memory)
+</pre></div>
+</div>
+</li>
+<li><p class="first">それ以外の場合に語尾の音引きは省略しない。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>×コンパイラ(compiler)
+○コンパイラー(compiler)
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h2>セクション名について<a class="headerlink" href="#id7" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>セクション名については以下のものを使用してください。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>ACKNOWLEDGEMENTS        謝辞
+ARGUMENTS               引き数
+AUTHOR                  著者 or 作者
+AUTHORS                 著者 or 作者
+BUGS                    バグ
+CAVEATS                 警告
+COMMAND LINE OPTIONS    オプション or コマンドラインオプション
+COMPATIBILITY           互換性
+CONFORMING TO           準拠
+CONFORMS TO             準拠
+COPYING                 著作権
+COPYRIGHT               著作権
+DESCRIPTION             説明
+DIAGNOSTICS             返り値
+ENVIRONMENT             環境変数
+ENVIRONMENT VARIABLES   環境変数
+ERROR                   エラー
+ERRORS                  エラー
+EXAMPLE                 例
+EXAMPLES                例
+EXIT CODES              返り値
+EXTENSION               拡張
+EXTENSIONS              拡張
+FILES                   ファイル
+FLAGS                   フラグ
+HISTORY                 履歴 (or 歴史)
+KEYWORDS                キーワード
+LIMITATIONS             制限
+NAME                    名前
+NOTE                    注意
+NOTES                   注意
+OPTION                  オプション
+OPTIONS                 オプション
+PARAMETERS              引き数
+PORTABILITY             移植性
+RESTRICTIONS            制限
+RETURN VALUE            返り値
+SEE ALSO                関連項目
+SOLICITATION            要請
+STANDARDS               標準 (or 準拠)
+SYNOPSIS                書式
+SYNTAX                  書式
+VERSION                 バージョン
+WARNING                 警告
+WARNINGS                警告
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">目次</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">翻訳の指針</a><ul>
+<li><a class="reference internal" href="#id2">マニュアル本文のフォーマットについて</a></li>
+<li><a class="reference internal" href="#id3">原文のコメント化</a></li>
+<li><a class="reference internal" href="#id4">著作権表示について</a></li>
+<li><a class="reference internal" href="#id5">特殊用語の翻訳について</a></li>
+<li><a class="reference internal" href="#id6">音引きについて</a></li>
+<li><a class="reference internal" href="#id7">セクション名について</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>前のトピックへ</h4>
+  <p class="topless"><a href="basic_info.html"
+                        title="前の章へ">一般情報</a></p>
+  <h4>次のトピックへ</h4>
+  <p class="topless"><a href="translation_procedure.html"
+                        title="次の章へ">翻訳作業の流れ</a></p>
+  <div role="note" aria-label="source link">
+    <h3>このページ</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/translation_guideline.txt"
+            rel="nofollow">ソースコードを表示</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>クイック検索</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="検索" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    モジュール、クラス、または関数名を入力してください
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="総合索引"
+             >索引</a></li>
+        <li class="right" >
+          <a href="translation_procedure.html" title="翻訳作業の流れ"
+             >次へ</a> |</li>
+        <li class="right" >
+          <a href="basic_info.html" title="一般情報"
+             >前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Linux JM Guide master ドキュメント</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016-2021, Linux JM project.
+      このドキュメントは <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5 で生成しました。
+    </div>
+  </body>
+</html>

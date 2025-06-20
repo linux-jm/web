@@ -1,0 +1,298 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DLOPEN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>DLOPEN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 16 May 1995<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/ld.so/release/man3/dlopen.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+dlclose, dlerror, dlopen, dlsym - ダイナミックリンクを行うローダへのプログラミングインターフェース
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</B>
+
+<P>
+<B>void *dlopen (const char *</B><I>filename</I><B>, int </B><I>flag</I><B>);</B>
+
+<BR>
+
+<B>const char *dlerror(void);</B>
+
+<BR>
+
+<B>void *dlsym(void *handle</B><I>, char *symbol</I><B>);</B>
+
+<BR>
+
+<B>int dladdr(void *address</B><I>, Dl_info *dlip</I><B>);</B>
+
+<BR>
+
+<B>int dlclose (void *handle</B><I>);</I>
+
+<P>
+特殊なシンボル:
+<B>_init</B>, <B>_fini</B>. 
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>dlopen</B>
+
+は null 終端文字列
+<I>filename</I>
+
+で指定された名前のファイルをダイナミックライブラリとしてロードし、
+そのダイナミックライブラリへ
+の非透過 (opaque) な「ハンドル」を返す。
+
+<I>filename</I>
+
+が絶対パス (&quot;/&quot; で始まるパス) で<I>ない</I>場合には、ファイル
+は以下の場所から検索される。
+<DL COMPACT><DT><DD>
+<P>
+
+ユーザーの <B>LD_LIBRARY</B> 環境変数で指定された、コロン区切りのディ
+レクトリリスト。
+<P>
+
+<I>/etc/ld.so.cache</I> 中にあるライブラリのリスト。
+<P>
+
+<I>/usr/lib</I>、 次いで <I>/lib</I>。
+</DL>
+
+<P>
+
+<I>filename</I>
+
+が NULL ポインタである場合は、
+返されるハンドルはメインプログラムのものになる。
+<P>
+
+オープンされたライブラリ中での外部参照は、
+そのライブラリの依存リストにあるライブラリか、すでに
+<B>RTLD_GLOBAL</B>
+
+フラグと共にオープンされているライブラリを用いて解決される。
+実行ファイルが &quot;-rdynamic&quot; フラグとともにリンクされている場合は、
+実行ファイル中のグローバルシンボルも、
+ダイナミックにロードされるライブラリへの参照解決に用いられる。
+<P>
+
+<I>flag</I>
+
+は以下のいずれかでなければならない:
+<B>RTLD_LAZY</B>
+
+はダイナミックライブラリのコードが実行される際に
+未定義シンボルを順次解決していくことを示し、
+<B>RTLD_NOW</B>
+
+は
+<B>dlopen</B>
+
+の処理の最後ですべての未定義シンボルを解決し、これができない場合には 
+dlopen が失敗となることを示す。さらに
+<B>RTLD_GLOBAL</B>
+
+を
+<I>flag</I>
+
+に OR 演算させることもできる。この場合には、ライブラリで定義されている
+外部シンボルが、引き続いてロードされる他のライブラリでも有効になる。
+<P>
+
+ライブラリが
+<B>_init</B>
+
+という名前のルーチンをエクスポートしていれば、 dlopen が終了する前にそ
+のコードが実行される。同じライブラリが
+<B>dlopen()</B>
+
+によって二度ロードされた場合には、同じファイルハンドルが返される。
+dl ライブラリはダイナミックファイルハンドルのリンク数を保持している。
+したがってダイナミックライブラリは
+<B>dlclose</B>
+
+が
+<B>dlopen</B>
+
+と同じ回数だけ呼び出されなければアンロードされない。
+<P>
+
+<B>dlopen</B>
+
+は、何らかの理由で失敗すると NULL を返す。
+dl ルーチン (dlopen, dlsym, dlclose) のいずれかで
+最も近い過去に生じたエラーは、
+<B>dlerror()</B>
+
+によって人間に可読な形で表示させることができる。
+<B>dlerror</B>
+
+は初期化された時点、あるいは最後に呼び出された時点からエラーが起こって
+いなければ NULL を返す。 (
+<B>dlerror()</B>
+
+を 2 回続けて呼び出すと、 2 度目のコールでは必ず NULL が返る。)
+<P>
+
+<B>dlsym</B>
+
+は dlopen によって返されたダイナミックライブラリの「ハンドル」と、 
+ヌル文字で終端された文字列のシンボル名を引き数に取り、
+そのシンボルがロードされているアドレスを返す。
+シンボルが見つからない場合には、
+<B>dlsym</B>
+
+は NULL を返す。しかし
+<B>dlsym</B>
+
+のエラーを調べるには、
+<B>dlerror</B>
+
+の結果を変数に保存し、
+それが NULL でないかどうかをチェックするのが正しいやり方である。
+シンボルの値が実際に NULL である場合もあり得るからである。また
+<B>dlerror</B>
+
+の結果を変数に保存しておくことも必要なことである。なぜならもう一度
+<B>dlerror</B>
+
+を呼び出すと、返り値は NULL となってしまうからである。
+<P>
+
+<B>dladdr</B>
+
+は、
+<I>address</I>
+
+で指定されたメモリ位置を所有している共有ライブラリに関する情報を返す。
+<B>dladdr</B>
+
+は成功するとゼロを、失敗すると非ゼロの値を返す。
+<P>
+
+<B>dlclose</B>
+
+はダイナミックライブラリのハンドル
+<I>handle</I>
+
+の参照カウントを 1 減らす。参照カウントが 0 になり、他でロードされてい
+るライブラリによってシンボルが使われていなければ、そのダイナミックライ
+ブラリはアンロードされる。そのダイナミックライブラリによって
+<B>_fini</B>
+
+という名前のルーチンがエクスポートされている場合には、
+ライブラリをアンロードする直前にそのルーチンが呼び出される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>例</H2>
+
+<B>math ライブラリをロードし、2.0 の余弦を表示する。</B>
+
+<DL COMPACT><DT><DD>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;
+
+int main(int argc, char **argv) {
+    void *handle = dlopen (&quot;/lib/libm.so&quot;, RTLD_LAZY);
+    double (*cosine)(double) = dlsym(handle, &quot;cos&quot;);
+    printf (&quot;%f\n&quot;, (*cosine)(2.0));
+    dlclose(handle);
+}
+</PRE>
+
+<P>
+
+このプログラムを &quot;foo.c&quot; に書いたとすると、以下のコマンドでプログラム
+をビルドすることができる。
+<DL COMPACT><DT><DD>
+<P>
+
+gcc -rdynamic -o foo foo.c -ldl
+</DL>
+
+</DL>
+
+<P>
+
+<B>同じことをしているが、すべての段階でエラーチェックを行っている:</B>
+
+<DL COMPACT><DT><DD>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;
+
+int main(int argc, char **argv) {
+    void *handle;
+    double (*cosine)(double);
+    char *error;
+
+    handle = dlopen (&quot;/lib/libm.so&quot;, RTLD_LAZY);
+    if (!handle) {
+        fputs (dlerror(), stderr);
+        exit(1);
+    }
+
+    cosine = dlsym(handle, &quot;cos&quot;);
+    if ((error = dlerror()) != NULL)  {
+        fputs(error, stderr);
+        exit(1);
+    }
+
+    printf (&quot;%f\n&quot;, (*cosine)(2.0));
+    dlclose(handle);
+}
+</PRE>
+
+</DL>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>謝辞</H2>
+
+dlopen インターフェースの標準は Solaris をもとにしている。
+Linux の dlopen の実装は、当初 Eric Youngdale によってなされた。
+このとき Mitch D'Souza, David Engel, Hongjiu Lu, Andreas Schwab らの
+助力があった。
+このマニュアルページは Adam Richter が書いた。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../GNU_binutils/man1/ld.1.html">ld</A></B>(1),
+
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8),
+
+<B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8),
+
+<B><A HREF="../man1/ldd.1.html">ldd</A></B>(1)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">例</A><DD>
+<DT><A HREF="#lbAF">謝辞</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

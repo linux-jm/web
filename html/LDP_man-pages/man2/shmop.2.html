@@ -1,0 +1,434 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SHMOP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SHMOP</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/shmop.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+shmat, shmdt - System V 共有メモリー (shared memory) の操作
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt;</B>
+
+<B>void *shmat(int </B><I>shmid</I><B>, const void *</B><I>shmaddr</I><B>, int </B><I>shmflg</I><B>);</B>
+
+<B>int shmdt(const void *</B><I>shmaddr</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>shmat()</H3>
+
+<B>shmat</B>()  は <I>shmid</I> で指定された System&nbsp;V 共有メモリーセグメント (shared memory segment)
+を コールしたプロセスのアドレス空間に付加 (attach) する。 付加するアドレスは <I>shmaddr</I> に以下のどれかの形式で指定する:
+<DL COMPACT>
+<DT>&bull;<DD>
+<I>shmaddr</I> が NULL ならば、システムはセグメントを付加するための 適切な (使用されていない) ページ境界のアドレスを選択する。
+<DT>&bull;<DD>
+<I>shmaddr</I> が NULL でなく <B>SHM_RND</B> が <I>shmflg</I> に指定されている場合は、 <I>shmaddr</I> を
+<B>SHMLBA</B> の倍数へと切り捨てた (rounding down) のと等しいアドレスへ付加する。
+<DT>&bull;<DD>
+その他の場合は <I>shmaddr</I> は付加を行なうアドレスで、ページ境界を指している必要がある。
+</DL>
+<P>
+
+<B>SHM_RND</B> に加えて、以下のフラグを <I>shmflg</I> ビットマスク引数に指定できる。
+<DL COMPACT>
+<DT><B>SHM_EXEC</B> (Linux 固有; Linux 2.6.9 以降)<DD>
+セグメントの内容を実行できる。 呼び出し元はセグメントに対する実行許可を持っていなければならない。
+<DT><B>SHM_RDONLY</B><DD>
+セグメントを読み込み専用に付加する。 プロセスはそのセグメントへの読み込み許可を持っていなければならない。
+このフラグが指定されなかった場合、そのセグメントは読み込みと書き込みアクセスのために付加され、
+プロセスはそのセグメントに読み込みと書き込みの許可を持っていなければならない。 書き込み専用の共有メモリーセグメントという概念は存在しない。
+<DT><B>SHM_REMAP</B> (Linux 固有)<DD>
+このフラグは、 セグメントのマッピングを既存のマッピングに置き換えることを指示する。 マッピングの範囲は、 <I>shmaddr</I>
+から始まりセグメントのサイズ分だけある (通常 <B>EINVAL</B> エラーは、このアドレス範囲にマッピングが既に存在するために起る)。
+このフラグを指定する場合は、 <I>shmaddr</I> が NULL であってはならない。
+</DL>
+<P>
+
+呼び出したプロセスの <B><A HREF="../man2/brk.2.html">brk</A></B>(2)  の値は付加によって変化しない。 そのセグメントはプロセスが終了 (exit) したら自動的に分離
+(detach) される。 同じセグメントをプロセスのアドレス空間に、読み込み専用および読み書き両用 として付加でき、また複数回付加することもできる。
+<P>
+
+成功した <B>shmat</B>()  コールは共有メモリーセグメントに関連する <I>shmid_ds</I> 構造体 (<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2)  を参照)
+のメンバーを以下のように更新する:
+<DL COMPACT>
+<DT>&bull;<DD>
+<I>shm_atime</I> には現在の時刻を設定する。
+<DT>&bull;<DD>
+<I>shm_lpid</I> には呼び出したプロセスのプロセス ID が設定される。
+<DT>&bull;<DD>
+
+<I>shm_nattch</I> を 1 増加させる。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>shmdt()</H3>
+
+<B>shmdt</B>()  は呼び出したプロセスのアドレス空間から <I>shmaddr</I> で指定されたアドレスに配置された共有メモリーセグメントを分離
+(detach) する。 分離する共有メモリーセグメントは、現在 <I>shmaddr</I> に付加されているものでなければならない。 <I>shmaddr</I>
+は、それを付加した時に <B>shmat</B>()  が返した値に等しくなければならない。
+<P>
+
+成功した <B>shmdt</B>()  コールはその共有メモリーセグメントに関連する <I>shmid_ds</I> 構造体のメンバーを以下のように更新する:
+<DL COMPACT>
+<DT>&bull;<DD>
+<I>shm_dtime</I> には現在の時刻が設定される。
+<DT>&bull;<DD>
+<I>shm_lpid</I> には呼び出したプロセスのプロセス ID が設定される。
+<DT>&bull;<DD>
+<I>shm_nattch</I> を 1 減少させる。 もし 0 になり、削除マークがあった場合は そのセグメントは削除される。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>shmat</B>()  は、成功した場合、 付加された共有メモリーセグメントのアドレスを返す。 エラーの場合、 <I>(void&nbsp;*)&nbsp;-1</I>
+を返し、 <I>errno</I> にエラーの原因を示す値を設定する。
+<P>
+
+<B>shmdt</B>()  は、成功すると 0 を返す。 エラーの場合、-1 を返し、 <I>errno</I> にエラーの原因を示す値を設定する。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>shmat</B>()  が失敗した場合、 <I>errno</I> に以下の値のどれかを設定して返す:
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+The calling process does not have the required permissions for the requested
+attach type, and does not have the <B>CAP_IPC_OWNER</B> capability in the user
+namespace that governs its IPC namespace.
+<DT><B>EIDRM</B><DD>
+<I>shmid</I> が削除 (remove) された識別子 (identifier) を指している。
+<DT><B>EINVAL</B><DD>
+<I>shmid</I> の値が不正である。 <I>shmaddr</I> の値が境界違反 (unaligned) (つまり、ページ境界に合っておらず、
+<B>SHM_RND</B> が指定されていない) または が不正である。 <I>shmaddr</I> へのセグメントの付加に失敗した。 または
+<B>SHM_REMAP</B> が指定されているが、 <I>shmaddr</I> が NULL であった。
+<DT><B>ENOMEM</B><DD>
+ディスクリプター (descriptor) やページテーブルのためのメモリーを 割り当てることができない。
+</DL>
+<P>
+
+<B>shmdt</B>()  が失敗した場合、 <B>EINVAL</B> は以下のようにセットされる:
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+
+<I>shmaddr</I> に付加された共有メモリーセグメントが存在しない。 もしくは、 <I>shmaddr</I> がページ境界に合っていない。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+
+POSIX.1-2001, POSIX.1-2008, SVr4.
+<P>
+
+SVID 3 で (たぶんそれより前だと思うが)  <I>shmaddr</I> 引数の型は <I>char&nbsp;*</I> から <I>const void&nbsp;*</I>
+に、<I>shmat</I>() の返り値の型は <I>char&nbsp;*</I> から <I>void&nbsp;*</I> に変更された。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  した後、子プロセスは付加された共有メモリーセグメントを継承する。
+<P>
+
+<B>exec</B>(2)  した後、全ての付加された共有メモリーセグメントはプロセスから分離される。
+<P>
+
+<B><A HREF="../man2/exit.2.html">exit</A></B>(2)  において、全ての付加された共有メモリーセグメントはプロセスから分離される。
+<P>
+
+共有メモリーセグメントを付加する場合の移植性の高い方法としては、 <I>shmaddr</I> を NULL にして <B>shmat</B>()
+を使用するのがよい。 このような方法で付加される共有メモリーセグメントは、 プロセスが異なれば別のアドレスに付加される、という点に注意すること。
+よって共有メモリー内で管理されるポインターは、 絶対アドレスではなく、 (一般的にはセグメントの開始アドレスからの)
+相対アドレスで作成するべきである。
+<P>
+
+Linux では共有メモリーセグメントに既に削除マークが付けられていても、 その共有メモリーセグメントを付加することができる。 しかし POSIX.1
+ではこのような動作を指定しておらず、 他の多くの実装もこれをサポートしていない。
+<P>
+
+以下のシステムパラメーターは、 <B>shmat</B>()  に影響する:
+<DL COMPACT>
+<DT><B>SHMLBA</B><DD>
+セグメントの下限アドレス倍数 (Segment low boundary address multiple)。 <B>shmat</B>()
+の呼び出しにおいて付加するアドレスを明示的に指定する際、 呼び出し元は指定するアドレスがこの値の倍数になるように保証しなければならない。
+これはいくつかのアーキテクチャーでは必要なことで、 CPU キャッシュの性能を保証するためであったり、 同じセグメントの別の付与を CPU
+キャッシュ内部で一貫して扱えるようにするためだったりする。 <B>SHMLBA</B> は通常はシステムページサイズの倍数である (Linux
+の多くのアーキテクチャーでは <B>SHMLBA</B> はシステムページサイズと同じである)。
+</DL>
+<P>
+
+現在の実装では、プロセスごとの 共有メモリーセグメントの最大数 (<B>SHMSEG</B>)  に関する実装依存の制限はない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+The two programs shown below exchange a string using a shared memory
+segment.  Further details about the programs are given below.  First, we
+show a shell session demonstrating their use.
+<P>
+
+In one terminal window, we run the &quot;reader&quot; program, which creates a System
+V shared memory segment and a System V semaphore set.  The program prints
+out the IDs of the created objects, and then waits for the semaphore to
+change value.
+<P>
+
+
+
+$ <B>./svshm_string_read</B>
+shmid = 1114194; semid = 15
+
+
+<P>
+
+In another terminal window, we run the &quot;writer&quot; program.  The &quot;writer&quot;
+program takes three command-line arguments: the IDs of the shared memory
+segment and semaphore set created by the &quot;reader&quot;, and a string.  It
+attaches the existing shared memory segment, copies the string to the shared
+memory, and modifies the semaphore value.
+<P>
+
+
+
+$ <B>./svshm_string_write 1114194 15 'Hello, world'</B>
+
+
+<P>
+
+Returning to the terminal where the &quot;reader&quot; is running, we see that the
+program has ceased waiting on the semaphore and has printed the string that
+was copied into the shared memory segment by the writer:
+<P>
+
+
+
+Hello, world
+
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>プログラムのソース: svshm_string.h</H3>
+
+The following header file is included by the &quot;reader&quot; and &quot;writer&quot; programs.
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+union semun {                   /* Used in calls to semctl() */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;semid_ds&nbsp;*&nbsp;&nbsp;&nbsp;buf;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;*&nbsp;&nbsp;&nbsp;&nbsp;array;
+#if defined(__linux__)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;seminfo&nbsp;*&nbsp;&nbsp;&nbsp;&nbsp;__buf;
+#endif
+};
+<P>
+#define MEM_SIZE 4096
+
+
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>プログラムのソース: svshm_string_read.c</H3>
+
+The &quot;reader&quot; program creates a shared memory segment and a semaphore set
+containing one semaphore.  It then attaches the shared memory object into
+its address space and initializes the semaphore value to 1.  Finally, the
+program waits for the semaphore value to become 0, and afterwards prints the
+string that has been copied into the shared memory segment by the &quot;writer&quot;.
+<P>
+
+
+
+/* svshm_string_read.c
+<P>
+<BR>&nbsp;&nbsp;&nbsp;Licensed&nbsp;under&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;v2&nbsp;or&nbsp;later.
+*/
+#include &quot;svshm_string.h&quot;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;semid,&nbsp;shmid;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;union&nbsp;semun&nbsp;arg,&nbsp;dummy;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sembuf&nbsp;sop;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*addr;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;shared&nbsp;memory&nbsp;and&nbsp;semaphore&nbsp;set&nbsp;containing&nbsp;one
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;semaphore&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;shmid&nbsp;=&nbsp;shmget(IPC_PRIVATE,&nbsp;MEM_SIZE,&nbsp;IPC_CREAT&nbsp;|&nbsp;0600);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(shmid&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shmget&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;semid&nbsp;=&nbsp;semget(IPC_PRIVATE,&nbsp;1,&nbsp;IPC_CREAT&nbsp;|&nbsp;0600);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(shmid&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shmget&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Attach&nbsp;shared&nbsp;memory&nbsp;into&nbsp;our&nbsp;address&nbsp;space&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr&nbsp;=&nbsp;shmat(shmid,&nbsp;NULL,&nbsp;SHM_RDONLY);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(addr&nbsp;==&nbsp;(void&nbsp;*)&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shmat&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Initialize&nbsp;semaphore&nbsp;0&nbsp;in&nbsp;set&nbsp;with&nbsp;value&nbsp;1&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;arg.val&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(semctl(semid,&nbsp;0,&nbsp;SETVAL,&nbsp;arg)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;semctl&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;shmid&nbsp;=&nbsp;%d;&nbsp;semid&nbsp;=&nbsp;%d\n&quot;,&nbsp;shmid,&nbsp;semid);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;semaphore&nbsp;value&nbsp;to&nbsp;become&nbsp;0&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sop.sem_num&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sop.sem_op&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sop.sem_flg&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(semop(semid,&nbsp;&amp;sop,&nbsp;1)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;semop&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Print&nbsp;the&nbsp;string&nbsp;from&nbsp;shared&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s\n&quot;,&nbsp;addr);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Remove&nbsp;shared&nbsp;memory&nbsp;and&nbsp;semaphore&nbsp;set&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(shmctl(shmid,&nbsp;IPC_RMID,&nbsp;NULL)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shmctl&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(semctl(semid,&nbsp;0,&nbsp;IPC_RMID,&nbsp;dummy)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;semctl&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>プログラムのソース: svshm_string_write.c</H3>
+
+The writer program takes three command-line arguments: the IDs of the shared
+memory segment and semaphore set that have already been created by the
+&quot;reader&quot;, and a string.  It attaches the shared memory segment into its
+address space, and then decrements the semaphore value to 0 in order to
+inform the &quot;reader&quot; that it can now examine the contents of the shared
+memory.
+<P>
+
+
+
+/* svshm_string_write.c
+<P>
+<BR>&nbsp;&nbsp;&nbsp;Licensed&nbsp;under&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;v2&nbsp;or&nbsp;later.
+*/
+#include &quot;svshm_string.h&quot;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;semid,&nbsp;shmid;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sembuf&nbsp;sop;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;len;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;4)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;shmid&nbsp;semid&nbsp;string\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;len&nbsp;=&nbsp;strlen(argv[3])&nbsp;+&nbsp;1;&nbsp;&nbsp;/*&nbsp;+1&nbsp;to&nbsp;include&nbsp;trailing&nbsp;'\0'&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;&gt;&nbsp;MEM_SIZE)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;String&nbsp;is&nbsp;too&nbsp;big!\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Get&nbsp;object&nbsp;IDs&nbsp;from&nbsp;command-line&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;shmid&nbsp;=&nbsp;atoi(argv[1]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;semid&nbsp;=&nbsp;atoi(argv[2]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Attach&nbsp;shared&nbsp;memory&nbsp;into&nbsp;our&nbsp;address&nbsp;space&nbsp;and&nbsp;copy&nbsp;string
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(including&nbsp;trailing&nbsp;null&nbsp;byte)&nbsp;into&nbsp;memory.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr&nbsp;=&nbsp;shmat(shmid,&nbsp;NULL,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(addr&nbsp;==&nbsp;(void&nbsp;*)&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shmat&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memcpy(addr,&nbsp;argv[3],&nbsp;len);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Decrement&nbsp;semaphore&nbsp;to&nbsp;0&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sop.sem_num&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sop.sem_op&nbsp;=&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sop.sem_flg&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(semop(semid,&nbsp;&amp;sop,&nbsp;1)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;semop&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2), <B><A HREF="../man2/shmget.2.html">shmget</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+<B><A HREF="../man7/shm_overview.7.html">shm_overview</A></B>(7), <B>sysvipc</B>(7)
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">shmat()</A><DD>
+<DT><A HREF="#lbAF">shmdt()</A><DD>
+</DL>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DL>
+<DT><A HREF="#lbAL">プログラムのソース: svshm_string.h</A><DD>
+<DT><A HREF="#lbAM">プログラムのソース: svshm_string_read.c</A><DD>
+<DT><A HREF="#lbAN">プログラムのソース: svshm_string_write.c</A><DD>
+</DL>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

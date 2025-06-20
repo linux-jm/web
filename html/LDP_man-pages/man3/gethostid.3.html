@@ -1,0 +1,151 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETHOSTID</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETHOSTID</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/gethostid.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+gethostid, sethostid - 現在のホストの固有の識別子を取得/設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>long gethostid(void);</B>
+<BR>
+
+<B>int sethostid(long </B><I>hostid</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>gethostid</B>():
+<DL COMPACT><DT><DD>
+
+<BR>&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+</DL>
+
+<B>sethostid</B>():
+<PRE>
+    glibc 2.21 以降:
+        _DEFAULT_SOURCE
+    glibc 2.19 と 2.20:
+        _DEFAULT_SOURCE || (_XOPEN_SOURCE &amp;&amp; _XOPEN_SOURCE&nbsp;&lt;&nbsp;500)
+    glibc 2.19 以前:
+        _BSD_SOURCE || (_XOPEN_SOURCE &amp;&amp; _XOPEN_SOURCE&nbsp;&lt;&nbsp;500)
+</PRE>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>gethostid</B>()  と <B>sethostid</B>()  は、それぞれ、現在使用しているホストに固有の 32 ビットの識別子の
+取得/設定を行う。 この 32 ビットの識別子は、現在存在している全ての UNIX システム の中で唯一になるようにすることを意図したものだった。通常は
+<B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)  により返されるローカルマシンの Internet アドレスが代わりに使用され、
+普通は識別子をあえて設定する必要はない。
+<P>
+
+<B>sethostid</B>()  はスーパーユーザーしか使用できない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>gethostid</B>()  は、 <B>sethostid</B>()  によって設定された、現在使用しているホストの 32 ビットの識別子の値を返す。
+<P>
+
+成功すると、 <B>sethostid</B>()  は 0 を返す。 エラーの場合、-1 を返し、 <I>errno</I> にエラーを示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>sethostid</B>()  は以下のエラーで失敗する可能性がある。
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+呼び出し元がホスト ID を保存するのに使用されるファイルへの 書き込み許可を持っていなかった。
+<DT><B>EPERM</B><DD>
+呼び出し元プロセスの実効 UID/GID が対応する実 UID/GID と同じではない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>gethostid</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe hostid env locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>sethostid</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe const:hostid<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+4.2BSD。4.4BSD ではこれらの関数はなくなった。 SVr4 には <B>gethostid</B>()  は含まれているが、
+<B>sethostid</B>()  は含まれていない。
+<P>
+
+POSIX.1-2001 と POSIX.1-2008 では、 <B>gethostid</B>() は規定されているが、 <B>sethostid</B>()
+は規定されていない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+
+glibc の実装では、 <I>hostid</I> はファイル <I>/etc/hostid</I> に保存される (バージョン 2.2 より前の glibc では、
+<I>/var/adm/hostid</I> が使用されていた)。
+<P>
+
+glibc の実装では、ホスト ID を保存したファイルを オープンできなかった場合、 <B>gethostid</B>()  は
+<B><A HREF="../man2/gethostname.2.html">gethostname</A></B>(2)  を使ってホスト名を入手し、そのホスト名を <B><A HREF="../man3/gethostbyname_r.3.html">gethostbyname_r</A></B>(3)  に渡しホストの IPv4
+アドレスを取得して、 その IPv4 アドレスのビット入れ替えを行った値を返す。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+識別子が世界中で一意であることを保証することはできない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/hostid.1.html">hostid</A></B>(1), <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

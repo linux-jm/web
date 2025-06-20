@@ -1,0 +1,152 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TMPNAM</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TMPNAM</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/tmpnam.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+tmpnam, tmpnam_r - 一時ファイルの名前を作成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<B>char *tmpnam(char *</B><I>s</I><B>);</B>
+<B>char *tmpnam_r(char *</B><I>s</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>tmpnam_r</B>()
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>glibc 2.19 以降:<DD>
+_DEFAULT_SOURCE
+<DT>Up to and including glibc 2.19:<DD>
+_BSD_SOURCE || _SVID_SOURCE
+</DL>
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>注意:</B> これらの関数の使用は避けること。代わりに <B><A HREF="../man3/mkstemp.3.html">mkstemp</A></B>(3) か <B><A HREF="../man3/tmpfile.3.html">tmpfile</A></B>(3) を使うこと。
+<P>
+
+<B>tmpnam</B>()  関数は、ファイル名に使える文字列へのポインターを返す。
+ある時点では同じ名前を持つファイルが存在しないファイル名が返されるので、 幼稚なプログラマはこの文字列が一時ファイルのファイル名として
+適していると考えるかもしれない。 引数 <I>s</I> が NULL なら、この名前は内部の静的バッファーに作成され、 次に <B>tmpnam</B>()
+関数が呼び出された時に上書きされる。 <I>s</I> が NULL でなければ、ファイル名は <I>s</I> が指す (少なくとも <I>L_tmpnam</I>
+の長さを持つ) 文字配列にコピーされ、 成功した場合は <I>s</I> が返される。
+<P>
+
+作成されるパス名は、ディレクトリの部分に <I>P_tmpdir</I> が使われる。 (<I>L_tmpnam</I> と <I>P_tmpdir</I> は、以下で説明する
+<B>TMP_MAX</B> 同様 <I>&lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</I> で定義されている。)
+<P>
+
+The <B>tmpnam_r</B>()  function performs the same task as <B>tmpnam</B>(), but
+returns NULL (to indicate an error) if <I>s</I> is NULL.
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+これらの関数は一意な一時ファイル名へのポインターを返す。 一意なファイル名が作成できなかった場合は NULL を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+エラーは定義されていない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>tmpnam</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:tmpnam/!s<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>tmpnam_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>tmpnam</B>(): SVr4, 4.3BSD, C89, C99, POSIX.1-2001.  POSIX.1-2008 は
+<B>tmpnam</B>()  を廃止予定としている。
+<P>
+
+
+<B>tmpnam_r</B>()  is a nonstandard extension that is also available on a few
+other systems.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<B>tmpnam</B>()  関数は最大 <B>TMP_MAX</B> 回まで、呼び出される度に異なる文字列を作成する。 <B>TMP_MAX</B>
+回以上呼び出された場合、その動作は実装依存である。
+<P>
+
+これらの関数は推測が難しい名前を生成するが、それにもかかわらず、パス名が返されてから、プログラムがそのファイルをオープンするまでの間に、別のプログラムが同じパス名で、ファイルを
+<B><A HREF="../man2/open.2.html">open</A></B>(2)  で作成したり、シンボリックリンクを作成したりする可能性がある。 これはセキュリティホールにつながる可能性がある。
+そのような可能性を回避するためには、 <B><A HREF="../man2/open.2.html">open</A></B>(2)  の <B>O_EXCL</B> フラグを使ってパス名をオープンすればよい。 もっといいのは、
+<B><A HREF="../man3/mkstemp.3.html">mkstemp</A></B>(3)  や <B><A HREF="../man3/tmpfile.3.html">tmpfile</A></B>(3)  を使うことである。
+<P>
+
+移植性が必要な、スレッドを使ったアプリケーションでは、 <B>_POSIX_THREADS</B> か
+<B>_POSIX_THREAD_SAFE_FUNCTIONS</B> が定義されている場合に、 <B>tmpnam</B>()  関数を NULL
+引数で呼び出してはならない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+決してこれらの関数を使用しないこと。代わりに <B><A HREF="../man3/mkstemp.3.html">mkstemp</A></B>(3)  か <B><A HREF="../man3/tmpfile.3.html">tmpfile</A></B>(3) を使うこと。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/mkstemp.3.html">mkstemp</A></B>(3), <B><A HREF="../man3/mktemp.3.html">mktemp</A></B>(3), <B><A HREF="../man3/tempnam.3.html">tempnam</A></B>(3), <B><A HREF="../man3/tmpfile.3.html">tmpfile</A></B>(3)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

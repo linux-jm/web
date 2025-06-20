@@ -1,0 +1,258 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MBIND</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MBIND</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/mbind.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mbind - メモリー領域に対してメモリーポリシーを設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/numaif.h">numaif.h</A>&gt;</B>
+
+<B>long mbind(void *</B><I>addr</I><B>, unsigned long </B><I>len</I><B>, int </B><I>mode</I><B>,</B>
+<B>           const unsigned long *</B><I>nodemask</I><B>, unsigned long </B><I>maxnode</I><B>,</B>
+<B>           unsigned </B><I>flags</I><B>);</B>
+
+<I>-lnuma</I> でリンクする。
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>mbind</B>()  は、 <I>addr</I> から始まる長さ <I>len</I> バイトの範囲のメモリーに NUMA メモリーポリシーを設定する。 NUMA
+ポリシーはポリシーモードと 0 個以上のノードから構成される。 メモリーポリシーはどのノードからメモリーを割り当てるかを決定する。
+<P>
+
+<I>addr</I> と <I>len</I> で指定されたメモリー範囲に、 メモリーの「無名」領域 --- <B>MAP_ANONYMOUS</B> 付きの
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  システムコールを使って作成されたメモリー領域 --- や <B>MAP_PRIVATE</B> 付きの <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+を使ってマップされたメモリーマップファイルが含まれている場合、アプリケーションがそのページへの書き込み (データの格納)
+を行った時には指定されたポリシーのみに基づいてページが割り当てられる。無名領域の場合、最初の読み出しアクセスの際には カーネル内の全データが 0
+である共有ページが使用される。 <B>MAP_PRIVATE</B> でマップされたファイルの場合、最初の読み出しアクセスがあると、
+ページ割り当てが発生するきっかけとなったスレッドのメモリポリシーにしたがってページの割り当てが行われる。 ページ割り当てのきっかけとなったスレッドは、
+<B>mbind</B>() を呼び出したスレッドと同じとは限らない。
+<P>
+
+指定されたメモリー範囲内にある <B>MAP_SHARED</B> のマッピングでは指定されたポリシーは無視され、
+ページ割り当てが発生するきっかけとなったスレッドのメモリポリシーに したがってページの割り当てが行われることになる。
+繰り返しになるが、ページ割り当てのきっかけとなったスレッドは、 <B>mbind</B>()  を呼び出したスレッドと同じとは限らない。
+<P>
+
+指定されたメモリー範囲に、 <B><A HREF="../man2/shmget.2.html">shmget</A></B>(2)  システムコールを使って作成されたり、 <B><A HREF="../man2/shmat.2.html">shmat</A></B>(2)  システムコールを使って付加
+(attach) されたりした共有メモリー領域が 含まれる場合、無名メモリー領域や共有メモリー領域に対するページ割り当ては、
+共有メモリーセグメントへポリシーの設定を行ったプロセスがページ割り当て のきっかけとなったかに関わらず、指定されたポリシーにしたがって割り当て
+が行われる。 しかしながら、共有メモリー領域が <B>SHM_HUGETLB</B> フラグを指定して作成された場合には、ヒュージページ (huge page)
+の割り当てが 指定されたポリシーにしたがって行われるのは、その領域に対して <B>mbind</B>()
+を呼び出したプロセスがページ割り当てのきっかけとなった場合のみである。
+<P>
+
+デフォルトでは、 <B>mbind</B>()  は新規のメモリー割り当てに対してのみ効果を持つ。
+ポリシーが設定される前にすでに使用されている範囲内のページに対しては、 ポリシーは影響しない。 このデフォルトの動作は、以下で説明するフラグ
+<B>MPOL_MF_MOVE</B> や <B>MPOL_MF_MOVE_ALL</B> により上書きされる可能性がある。
+<P>
+
+<I>mode</I> 引数には、 <B>MPOL_DEFAULT</B>, <B>MPOL_BIND</B>, <B>MPOL_INTERLEAVE</B>,
+<B>MPOL_PREFERRED</B>, <B>MPOL_LOCAL</B> (詳細は下記参照) のいずれか一つを指定しなければならない。
+<B>MPOL_DEFAULT</B> 以外のポリシーモードの場合、呼び出し元は <I>nodemask</I>
+引数でそのポリシーモードを適用するノードを指定する必要がある。
+<P>
+
+<I>mode</I> 引数には、追加で <I>モードフラグ</I> を含めることもできる。 サポートされている <I>モードフラグ</I> は以下の通りである。
+<DL COMPACT>
+<DT><B>MPOL_F_STATIC_NODES</B> (Linux-2.6.26 以降)<DD>
+空でない <I>nodemask</I> は、物理ノード ID である。 Linux では、そのスレッドが異なる CPU 集合コンテキスト (cpuset
+context)  に移動した場合でも、そのスレッドの現在の CPU 集合コンテキストで 許可されているノード集合が変化した場合でも、
+<I>nodemask</I> をマッピングし直すことはない。
+<DT><B>MPOL_F_RELATIVE_NODES</B> (Linux-2.6.26 以降)<DD>
+空でない <I>nodemask</I> は、そのスレッドの現在の CPU 集合で許可されているノード ID 集合 における相対的なノード ID である。
+</DL>
+<P>
+
+<I>nodemask</I> は、最大で <I>maxnode</I> ビットから構成されるノードのビットマスクを指す。 ビットマスクの大きさは、直近の
+<I>sizeof(unsigned long)</I> の倍数に切り上げられるが、カーネルが使用するのは <I>maxnode</I> 個までのビットだけである。
+NULL 値の <I>nodemask</I> もしくは値が 0 の <I>maxnode</I> はノードの空集合を表す。 <I>maxnode</I> の値が 0 の場合、
+<I>nodemask</I> 引数は無視される。 <I>nodemask</I> が必須の場面では、 <I>nodemask</I> に、オンラインで、そのスレッドの現在の
+CPU 集合コンテキストで 許可されており (<B>MPOL_F_STATIC_NODES</B> モードフラグが指定されていない場合)、メモリーがあるノードが
+少なくとも一つ入っていなければならない。
+<P>
+
+<I>mode</I> 引数には、以下の値のいずれかひとつを含めなければならない。
+<DL COMPACT>
+<DT><B>MPOL_DEFAULT</B><DD>
+このモードはデフォルトではないメモリーポリシーを削除し、 デフォルトの動作に戻すことを指定するものである。 <B>mbind</B>()
+経由で、あるメモリー領域に対して <B>MPOL_DEFAULT</B> が適用された場合、スレッドのメモリポリシーを使用することを意味する。
+スレッドのメモリポリシーは、 <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2)  で変更されているかもしれない。 スレッドのメモリポリシーのモードも
+<B>MPOL_DEFAULT</B> の場合、システム全体のデフォルトポリシーが使用される。 システム全体のデフォルトポリシーでは、割り当てのきっかけとなった
+CPU のノードからページの割り当てを行う。 <B>MPOL_DEFAULT</B> では、引数 <I>nodemask</I> と <I>maxnode</I>
+にノードの空集合を指定しなければならない。
+<DT><B>MPOL_BIND</B><DD>
+
+This mode specifies a strict policy that restricts memory allocation to the
+nodes specified in <I>nodemask</I>.  If <I>nodemask</I> specifies more than one
+node, page allocations will come from the node with sufficient free memory
+that is closest to the node where the allocation takes place.  Pages will
+not be allocated from any node not specified in the IR nodemask .  (Before
+Linux 2.6.26, page allocations came from the node with the lowest numeric
+node ID first, until that node contained no free memory.  Allocations then
+came from the node with the next highest node ID specified in <I>nodemask</I>
+and so forth, until none of the specified nodes contained free memory.)
+<DT><B>MPOL_INTERLEAVE</B><DD>
+このモードは、メモリー割り当てが <I>nodemask</I> に指定されたノード間で交互に行われることを指定するものである。
+このポリシーでは、複数のノードにページを広げて配置し、これらのページへの メモリーアクセスを分散することで、遅延ではなく、帯域を最適化する。
+効果を得るには、メモリー領域をある程度大きくすべきであり、 メモリーアクセスのパターンがかなり均一な場合でも 少なくとも 1&nbsp;MB
+以上にすべきである。 このモードでも、一つのページへのアクセスに関しては 一つのノードのメモリー帯域が上限となることは変わりない。
+<DT><B>MPOL_PREFERRED</B><DD>
+このモードは、割り当て時に優先されるノードを設定する。 カーネルはまず優先ノードにページ割り当てを行おうとし、
+優先ノードに空きメモリーが少ない場合に他のノードに割り当てを行う。 <I>nodemask</I> に複数のノード ID が指定された場合は、
+<I>nodemask</I> 内の最初のノードが優先ノードとして選択される。 引数 <I>nodemask</I>, <I>maxnode</I>
+で空集合が指定された場合は、割り当てのきっかけとなった CPU のノードに メモリー割り当てが行われる。
+<DT><B>MPOL_LOCAL</B> (Linux 3.8 以降)<DD>
+
+
+This mode specifies &quot;local allocation&quot;; the memory is allocated on the node
+of the CPU that triggered the allocation (the &quot;local node&quot;).  The
+<I>nodemask</I> and <I>maxnode</I> arguments must specify the empty set.  If the
+&quot;local node&quot; is low on free memory, the kernel will try to allocate memory
+from other nodes.  The kernel will allocate memory from the &quot;local node&quot;
+whenever memory for this node is available.  If the &quot;local node&quot; is not
+allowed by the thread's current cpuset context, the kernel will try to
+allocate memory from other nodes.  The kernel will allocate memory from the
+&quot;local node&quot; whenever it becomes allowed by the thread's current cpuset
+context.  By contrast, <B>MPOL_DEFAULT</B> reverts to the memory policy of the
+thread (which may be set via <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2)); that policy may be
+something other than &quot;local allocation&quot;.
+</DL>
+<P>
+
+
+
+
+
+<I>flags</I> に <B>MPOL_MF_STRICT</B> が 指定され、 <I>mode</I> が <B>MPOL_DEFAULT</B> でない場合、
+指定されたポリシーに従っていないメモリー領域にページが存在すると、 <B>mbind</B>()  はエラー <B>EIO</B> で失敗する。
+<P>
+
+<I>flags</I> に <B>MPOL_MF_MOVE</B> が指定されると、カーネルはそのメモリー領域内の既存の全てのページを移動し、
+指定されたポリシーに従うようにしようとする。 他のプロセスと共有されているページは移動されない。 <B>MPOL_MF_STRICT</B>
+も指定された場合、移動できなかったページがあると、 <B>mbind</B>()  はエラー <B>EIO</B> で失敗する。
+<P>
+
+
+<I>flags</I> に <B>MPOL_MF_MOVE_ALL</B> が指定されると、カーネルはそのメモリー領域内の既存の全てのページを、
+他のプロセスがページを使用しているかどうかに関わらず移動する。 このフラグを使用するには、呼び出し元のスレッドは特権 (<B>CAP_SYS_NICE</B>)
+を持っていなければならない。 <B>MPOL_MF_STRICT</B> も指定された場合、移動できなかったページがあると、 <B>mbind</B>()  はエラー
+<B>EIO</B> で失敗する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+
+成功すると、 <B>mbind</B>()  は 0 を返す。エラーの場合、-1 を返し、 <I>errno</I> にエラーを示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>nodemask</I> と <I>maxnode</I> で指定されたメモリー領域の一部または全部が、 呼び出し元がアクセス可能なアドレス空間外を指している。
+もしくは <I>addr</I> と <I>len</I> で指定されたメモリー領域にマップされていない部分 (unmapped hole)  があった、
+<DT><B>EINVAL</B><DD>
+
+
+<I>flags</I> や <I>mode</I> に不正な値が指定された。 <I>addr + len</I> が <I>addr</I> より小さい。 <I>addr</I>
+がシステムのページサイズの倍数になっていない。 または <I>mode</I> が <B>MPOL_DEFAULT</B> で <I>nodemask</I>
+に空でない集合が指定された。 <I>mode</I> が <B>MPOL_BIND</B> か <B>MPOL_INTERLEAVE</B> で <I>nodemask</I>
+が空であった。 <I>maxnode</I> がカーネルに適用された上限を超えている。 <I>nodemask</I> に、サポートされている最大ノード ID
+より大きいノードが指定された。 <I>nodemask</I> に、オンラインで、かつそのスレッドの現在の CPU 集合コンテキストで
+許可されているノードが一つも含まれていないか、 メモリーを含むノードが一つも指定されていない。 <I>mode</I> 引数に
+<B>MPOL_F_STATIC_NODES</B> と <B>MPOL_F_RELATIVE_NODES</B> の両方が指定された。
+<DT><B>EIO</B><DD>
+<B>MPOL_MF_STRICT</B> が指定されたが、このポリシーに従っていないノードに すでにページが存在していた。 もしくは
+<B>MPOL_MF_MOVE</B> か <B>MPOL_MF_MOVE_ALL</B> が指定されたが、カーネルが指定された領域内の既存の全てのページを
+移動することができなかった。
+<DT><B>ENOMEM</B><DD>
+利用可能なカーネルメモリーが十分でなかった。
+<DT><B>EPERM</B><DD>
+
+<I>flags</I> 引数に <B>MPOL_MF_MOVE_ALL</B> フラグが含まれているが、呼び出し元が <B>CAP_SYS_NICE</B> 特権を持たない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>mbind</B>()  システムコールはバージョン 2.6.7 で Linux カーネルに追加された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+ライブラリによるサポートについては <B><A HREF="../man7/numa.7.html">numa</A></B>(7)  を参照。
+<P>
+
+NUMA ポリシーは、 <B>MAP_SHARED</B> フラグが指定されてマップされたメモリーマップファイルの領域では サポートされていない。
+<P>
+
+<B>MPOL_DEFAULT</B> モードは、 <B>mbind</B>()  と <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2)  で異なる効果を持つことができる。
+<B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2)  で <B>MPOL_DEFAULT</B> が指定された場合、そのスレッドのメモリポリシーはシステムの
+デフォルトポリシー、すなわちローカルからの割り当て、に戻る。 <B>mbind</B>()  を使ってメモリーのある領域に <B>MPOL_DEFAULT</B>
+が指定された場合、その範囲に対してそれ以降に行われるページの割り当てでは、 <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2)
+で設定したのと同じように、そのスレッドのメモリポリシーが適用される。 これにより、特定のメモリー領域についてだけ明示的なポリシーを削除し、
+デフォルトのポリシーに「戻す」ことができる。 あるメモリー領域に対して「ローカルからの割り当て」を明示的に設定するには、 <I>mode</I> に
+<B>MPOL_LOCAL</B> か <B>MPOL_PREFERRED</B> を指定し、 <I>nodemask</I> に空集合のノードを指定すればよい。 この方法は
+<B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2)  でも通用する。
+<P>
+
+2.6.16 でヒュージページポリシーへの対応が追加された。 インターリーブポリシーがヒュージページのマッピングで効果を持つには、
+ポリシーが適用されるメモリーが数十メガバイト以上である必要がある。
+<P>
+
+
+Linux 5.7 より前では、 <B>MPOL_MF_STRICT</B> はヒュージページのマッピングでは無視されていた。
+<P>
+
+<B>MPOL_MF_MOVE</B> と <B>MPOL_MF_MOVE_ALL</B> は Linux 2.6.16 以降でのみ利用可能である。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/get_mempolicy.2.html">get_mempolicy</A></B>(2), <B><A HREF="../man2/getcpu.2.html">getcpu</A></B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/set_mempolicy.2.html">set_mempolicy</A></B>(2),
+<B><A HREF="../man2/shmat.2.html">shmat</A></B>(2), <B><A HREF="../man2/shmget.2.html">shmget</A></B>(2), <B>numa</B>(3), <B>cpuset</B>(7), <B><A HREF="../man7/numa.7.html">numa</A></B>(7),
+<B>numactl</B>(8)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

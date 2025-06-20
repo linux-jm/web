@@ -1,0 +1,122 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MBRTOWC</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MBRTOWC</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/mbrtowc.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mbrtowc - マルチバイト列をワイド文字に変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/wchar.h">wchar.h</A>&gt;</B>
+
+<B>size_t mbrtowc(wchar_t *</B><I>pwc</I><B>, const char *</B><I>s</I><B>, size_t </B><I>n</I><B>, mbstate_t *</B><I>ps</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+この関数が用いられる場合、通常 <I>s</I> が NULL でなく <I>pwc</I> も NULL で ない。この場合は、 <B>mbrtowc</B>()  関数は
+<I>s</I> から始まる最大 <I>n</I> バイトの マルチバイト文字を検査して、次の完全なマルチバイト文字列を取り出し、 それをワイド文字に変換して
+<I>*pwc</I> に格納する。 同時にシフト状態 <I>*ps</I> を更新する。 変換したワイド文字が L'\0' (ヌルワイド文字)
+でなければ、 <I>s</I> から消費するバイト数を返す。 変換したワイド文字が L'\0' の場合にはシフト状態 <I>*ps</I> を
+初期状態に戻して 0 を返す。
+<P>
+
+<I>s</I> から始まる <I>n</I> バイトが完全なマルチバイト文字を含んでいない 場合には、 <B>mbrtowc</B>()  は <I>(size_t)&nbsp;-2</I>
+を返す。 マルチバイト文字列に冗長なシフトシーケンスが含まれていると、 <I>n</I> &gt;= <I>MB_CUR_MAX</I>
+の時にもこのようなことが起こりえる。
+<P>
+
+<I>s</I> から始まるマルチバイト文字列が、次の完全な文字の前に 不正なマルチバイト列を含んでいる場合には、 <B>mbrtowc</B>()  は
+<I>(size_t)&nbsp;-1</I> を返し、<I>errno</I> に <B>EILSEQ</B> を設定する。 この場合は <I>*ps</I> への影響は未定義である。
+<P>
+
+<I>s</I> が NULL でなく <I>pwc</I> が NULL の場合は <B>mbrtowc</B>()  関数は
+上記と同様に動作するが、変換したワイド文字はメモリーには書き込まれない。
+<P>
+
+puts <I>*ps</I> in the initial state and returns 0.  三番目の場合として <I>s</I> が NULL の場合、
+<I>pwc</I> と <I>n</I> は 無視される。 <I>*ps</I> が表現する変換状態が不完全なマルチバイト文字変換を示している場合は、
+<B>mbrtowc</B>()  関数は <I>(size_t)&nbsp;-1</I> を返し、 <I>errno</I> に <B>EILSEQ</B> をセットし、 <I>*ps</I>
+は未定義状態のままにする。 さもなければ、 <B>mbrtowc</B>()  関数は <I>*ps</I> を初期状態にして 0 を返す。
+<P>
+
+上記の全ての場合において、<I>ps</I> が NULL ならば代わりに <B>mbrtowc</B>() 関数のみが使用する静的で名前のない状態が使用される。
+さもなければ、<I>*ps</I> は有効な <I>mbstate_t</I> オブジェクトで なければならない。 <I>mbstate_t</I> オブジェクトである
+<I>a</I> はゼロで埋めることによって 初期状態に初期化できる。以下に例を示す。
+<P>
+
+
+
+memset(&amp;a, 0, sizeof(a));
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+L'\0' 以外のワイド文字を認識した場合には <B>mbrtowc</B>()  関数は <I>s</I>
+から始まるマルチバイト列から解析したバイト数を返す。 L'\0' ワイド文字を認識した場合には 0 を返す。
+不正なマルチバイト列に遭遇した場合には <I>(size_t)&nbsp;-1</I> を返し、 <I>errno</I> に <B>EILSEQ</B>
+を設定する。完全なマルチバイト文字を 解析できなかった場合には <I>(size_t)&nbsp;-2</I> を返し <I>n</I> を増加させる必要があることを示す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>mbrtowc</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:mbrtowc/!ps<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, C99.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>mbrtowc</B>()  の動作は現在のロケールの <B>LC_CTYPE</B> カテゴリーに依存している。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/mbsinit.3.html">mbsinit</A></B>(3), <B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

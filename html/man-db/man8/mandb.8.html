@@ -1,0 +1,223 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of mandb</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>mandb</H1>
+Section: Manual pager utils (8)<BR>Updated: July 12th, 1995<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/man-db/release/man8/mandb.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mandb - マニュアルページのインデックスキャッシュを作成・更新する。
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>mandb  </B>
+
+[<B>-dqsuc</B>|<B>-h</B>|<B>-V</B>] [<I>manpath</I>]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>mandb</B>
+
+はデータベースのキャッシュ
+<B>index</B>
+
+を初期化したり、手動で更新するときに用いる。通常はこのキャッシュは
+<B>man</B>
+
+によって管理されている。
+キャッシュには、現在のマニュアルページシステムに関する情報が含まれている。
+この情報は man_db ユーティリティ群によって用いられ、速度と機能の向上に
+貢献している。
+<P>
+<B>index</B>
+
+が生成・更新されるとき、
+<B>mandb</B>
+
+は ROFF の .so 命令の間違いや、マニュアルページのファイル名の重複、
+<B>whatis</B>
+
+によって情報を抽出できないマニュアルページなどにたいして警告を発する。
+<P>
+<B>mandb</B>
+
+に、コロンで区切ったパスのリストを与えることもできる。
+これは man_db 設定ファイルの情報から決定された、プログラム
+内部の `global' なマニュアルページ階層検索パスを上書きする。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H3>データベースキャッシュ</H3>
+
+<B>mandb</B>
+
+は以下のデータベース形式のいずれか一つをサポートするように
+コンパイルすることができる。
+<P>
+<TABLE>
+<TR VALIGN=top><TD>名前</TD><TD>形式</TD><TD>非同期</TD><TD>ファイル名<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=4><HR></TD></TR>
+<TR VALIGN=top><TD>Berkeley db</TD><TD>二分木</TD><TD>可</TD><TD><I>index.bt</I><BR></TD></TR>
+<TR VALIGN=top><TD>GNU gdbm v &gt;= 1.6</TD><TD>ハッシュ</TD><TD>可</TD><TD><I>index.db</I><BR></TD></TR>
+<TR VALIGN=top><TD>GNU gdbm v &lt;  1.6</TD><TD>ハッシュ</TD><TD>不可</TD><TD><I>index.db</I><BR></TD></TR>
+<TR VALIGN=top><TD>UNIX ndbm</TD><TD>ハッシュ</TD><TD>不可</TD><TD><I>index.(dir|pag)</I><BR></TD></TR>
+</TABLE>
+
+<P>
+これらのデータベース形式のうち非同期な更新ができるものでは、
+速度は向上するが、予期しない中断が起こったときにデータが壊れるかもしれない。
+このような破壊が起こったときには、
+<B>mandb</B>
+
+を
+<B>-c</B>
+
+オプションをつけて実行し、データベースを再構成しなおす必要が
+あるだろう。
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-d, --debug</B>
+
+<DD>
+デバッグ情報を生成する。
+<DT><B>-q, --quiet</B>
+
+<DD>
+警告を発しない。
+<DT><B>-s, --no-straycats</B>
+
+<DD>
+stray cat (訳注: おそらく対応する roff ソースのない cat ページのこと
+でしょう) を探したり、それに関する情報をデータに追加しようとは試みない。
+
+<DT><B>-c, --create</B>
+
+<DD>
+デフォルトでは、
+<B>mandb</B>
+
+は以前に生成されたデータベースを更新しようとする。データベースが
+存在しない場合には、始めから生成する。
+このオプションを指定すると、
+<B>mandb</B>
+
+は以前のデータベースを消去し、データベースをゼロから再構成する。
+これはデータベースが壊れた場合や、将来データベースの管理方法が
+新しいものに変わったときなどに必要となろう。
+<DT><B>-u, --user-db</B>
+
+<DD>
+ユーザーのデータベースしか生成しない。 `global' なデータベースを作成す
+る権限があっても、こちらは生成しない。
+<DT><B>-h, --help</B>
+
+<DD>
+使用法に関するメッセージを表示して終了する。
+<DT><B>-V, --version</B>
+
+<DD>
+バージョンを表示して終了する。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>診断メッセージ</H2>
+
+データベースの構築中に、以下のような警告メッセージが出力されることがあ
+る。
+<DL COMPACT>
+<DT><B>&lt;filename&gt;: whatis parse for page(sec) failed</B>
+
+<DD>
+&lt;filename&gt; から whatis に必要な行を取り出すのに失敗した。これは通常マ
+ニュアルページの書き方が悪いからであることが多いが、このようなメッセー
+ジが多く出るようであれば、そのシステムには man_db の whatis パーザーと
+互換性のない、非標準的なマニュアルページが含まれている可能性が高い。
+<DT><B>&lt;filename&gt;: is a dangling symlink</B>
+
+<DD>
+&lt;filename&gt; がシンボリックリンクによって参照されているが、存在していな
+い。通常、 &lt;filename&gt; を間違ってリンク対象としてしまっているリンク元に
+関する診断メッセージが同時に表示される。
+<DT><B>&lt;filename&gt;: bad symlink or ROFF `.so' request</B>
+
+<DD>
+&lt;filename&gt; はシンボリックリンクであるか、 ROFF のインクルー
+ド命令を含んでいるが、リンク先・読み込み先のファイルが存在していない。
+<DT><B>&lt;filename&gt;: ignoring bogus filename</B>
+
+<DD>
+&lt;filename&gt; は正しい (あるいは正しくない) マニュアルページであるが、
+名前が正しくない。通常これは、セクション拡張子 &lt;x&gt; のファイルが、
+マニュアルページのセクション &lt;y&gt; に置かれている場合に起こる。
+<DT><B>&lt;filename_mask&gt;: competing extensions</B>
+
+<DD>
+ワイルドカード &lt;filename_mask&gt; がユニークな名前でない。これは通常、同
+じマニュアルページに対して、圧縮されたバージョンとされていないバージョ
+ンが共存している場合に起こる。最新のもの以外は無視される。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/etc/manpath.config</I>
+
+<DD>
+man_db の設定ファイル。
+<DT><I>/usr/man/index.(bt|db|dir|pag)</I>
+
+<DD>
+従来形式の、 global なデータベースキャッシュの
+インデックス。
+<DT><I>/var/catman/index.(bt|db|dir|pag)</I>
+
+<DD>
+新しい (FSSTND 準拠の)、 global なデータベースキャッシュの
+インデックス。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/man.1.html">man</A></B>(1),
+
+<B><A HREF="../man5/manpath.5.html">manpath</A></B>(5),
+
+<B><A HREF="../man8/catman.8.html">catman</A></B>(8)
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>著者</H2>
+
+Wilf. (<A HREF="mailto:G.Wilford@ee.surrey.ac.uk">G.Wilford@ee.surrey.ac.uk</A>)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">データベースキャッシュ</A><DD>
+</DL>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">診断メッセージ</A><DD>
+<DT><A HREF="#lbAH">ファイル</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

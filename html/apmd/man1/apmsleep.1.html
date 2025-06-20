@@ -1,0 +1,176 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RTCSLEEP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RTCSLEEP</H1>
+Section: User Commands  (1)<BR>Updated: sleep in APM suspend/standby mode<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/apmd/release/man1/apmsleep.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+apmsleep - サスペンド/スタンバイモードに入り、後で復帰する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>apmsleep</B>
+
+[-sSnwhVd] [--suspend] [--standby] [--noapm]
+[--wait] [--help]  [--version] [--debug]
+[+]hh:mm
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+コンピュータの中には (特にラップトップには)、
+リアルタイムクロック (RTC) を用いて
+低電力サスペンドモードから DRAM モードに復帰できるタイプのものがある。
+<B>apmsleep</B>
+
+を使うと、RTC の「目覚まし時刻」を設定してから
+システムをサスペンドモード・スタンバイモードにすることができる。
+RTC からの割り込みがあると、コンピュータは目を覚ます。
+このプログラムは、カーネル時刻の不連続な変化 (leap)
+を待つことによってこのイベントを検知し、成功を返して終了する。
+一分以内に時刻の leap がなかったり、何かまずいことがおこったら、
+0 以外の値を返して終了する。
+<P>
+
+復帰時刻の指定には 2 つの形式がある。
+<P>
+
+<B>+hh:mm</B>
+
+は現在の時刻からの相対的なオフセットを指定する。
+コンピュータが復帰するまでには、
+hh 時間と mm 分に加えて何秒かが必要となる。
+<P>
+
+<B>hh:mm</B>
+
+は復帰時刻を 24 時間フォーマットの<B>ローカル</B>時刻で指定する。
+RTC に保存されているのが GMT かそうでないかは気にしなくてよい。
+TZ 環境変数でタイムゾーンを変更していても良い。
+夏時間はこのバージョンでは考慮していないが、将来は対応する予定である。
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-V, --version</B>
+
+<DD>
+<B>ampsleep</B>
+
+プログラムのバージョンを表示してただちに終了する。
+<DT><B>-s, --suspend</B>
+
+<DD>
+可能ならマシンをサスペンドモードにする (デフォルト)。
+作者のラップトップでは、サスペンドモードはメモリ以外のすべての電源を遮断する。
+<DT><B>-S, --standby</B>
+
+<DD>
+可能ならマシンをスタンバイモードにする。
+作者のラップトップでは、スタンバイモードは
+スクリーン・ハードディスク・CPU の電源を遮断する。
+<DT><B>-w, --wait</B>
+
+<DD>
+時刻の leap をいつまでも待ち続ける。
+<DT><B>-n, --noapm</B>
+
+<DD>
+コンピュータをサスペンドさせるときに /usr/bin/apm を呼ばない。
+アラームクロックを有効にして時刻の leap を待つだけ。
+<DT><B>-d, --debug</B>
+
+<DD>
+何が起こっているのか、情報を表示する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>必要となるシステム設定</H2>
+
+<DL COMPACT>
+<DT><B>カーネル</B>
+
+<DD>
+スペシャル・キャラクタ・デバイス /dev/rtc が存在し、
+Linux カーネルを APM と RTC をサポートするように
+コンパイルしておかなければならない
+(CONFIG_RTC と、適切な CONFIG_APM* オプション)。
+<DT><B>BIOS</B>
+
+<DD>
+BIOS 設定で、コンピュータの &quot;suspend to RAM&quot; 機能を
+有効にしておかなければならない。
+&quot;suspend to Disk&quot; は動作しない。
+これはコンピュータの電源を完全に遮断してしまうからである。
+ALARM タイマーは有効にしなくてもよい。これは
+<B>apmsleep</B>
+
+によって有効にされる。ボードによっては、
+サスペンドモードから復帰させる割り込みを選べることもある。
+このようなボードを使っている場合は、キーボード (IRQ 1) と
+RTC (IRQ 8) がその中に含まれているかを確かめておくと良いだろう。
+<DT><B>権限</B>
+
+<DD>
+このプログラムは root 権限で実行するか、 SUID 属性を設定する必要がある
+(<B><A HREF="../../0MultiFileIdx/man1/chmod.1.html">chmod</A></B>(1)
+
+を見よ)。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>apmsleep</B>
+
+はどのイベントがサスペンド状態を終了させたかを検知できない。
+可能性のあるものは、キーボード・マウスへの入力、モデムへの着信、
+RTC からのアラーム、その他あらゆる割り込み、など。
+<P>
+このプログラムは Winbook XL ラップトップ (Pentium) でしかテストされていない。
+あなたのハードウェアでは動作しないかもしれない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>著者</H2>
+
+このプログラムは Peter Englmaier (<A HREF="mailto:ppe@pa.uky.edu">ppe@pa.uky.edu</A>) によって書かれ、
+GNU 一般公共使用許諾のもとで自由に再配布できる。
+このコードは Paul Gortmacher の RTC テスト/例示プログラムを元にしている。
+このプログラムは「完全に無保証」である。現在の管理者は
+Peter Englmaier である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/xapm.1.html">xapm</A></B>(1),
+
+<B><A HREF="../man8/apmd.8.html">apmd</A></B>(8),
+
+<B>rtc.txt</B> (Linux Kernel Documentation)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">必要となるシステム設定</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">著者</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

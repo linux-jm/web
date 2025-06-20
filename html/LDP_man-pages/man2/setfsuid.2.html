@@ -1,0 +1,134 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETFSUID</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SETFSUID</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-05-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/setfsuid.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+setfsuid - ファイルシステムのチェックに用いられるユーザー ID を設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/fsuid.h">sys/fsuid.h</A>&gt;</B>
+<P>
+
+<B>int setfsuid(uid_t </B><I>fsuid</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+On Linux, a process has both a filesystem user ID and an effective user ID.
+The (Linux-specific) filesystem user ID is used for permissions checking
+when accessing filesystem objects, while the effective user ID is used for
+various other kinds of permissions checks (see <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)).
+<P>
+
+Normally, the value of the process's filesystem user ID is the same as the
+value of its effective user ID.  This is so, because whenever a process's
+effective user ID is changed, the kernel also changes the filesystem user ID
+to be the same as the new value of the effective user ID.  A process can
+cause the value of its filesystem user ID to diverge from its effective user
+ID by using <B>setfsuid</B>()  to change its filesystem user ID to the value
+given in <I>fsuid</I>.
+<P>
+
+Explicit calls to <B>setfsuid</B>()  and <B><A HREF="../man2/setfsgid.2.html">setfsgid</A></B>(2)  are (were) usually used
+only by programs such as the Linux NFS server that need to change what user
+and group ID is used for file access without a corresponding change in the
+real and effective user and group IDs.  A change in the normal user IDs for
+a program such as the NFS server is (was) a security hole that can expose it
+to unwanted signals.  (However, this issue is historical; see below.)
+<P>
+
+<B>setfsuid</B>()  は、スーパーユーザーによって呼び出された場合か、 <I>fsuid</I> が呼び出し元の実ユーザーID、実効ユーザーID、
+保存セットユーザーID (saved set-user-ID)、現在のファイルシステムグループ ID の値のいずれかに一致する場合にのみ成功する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功時も失敗時も、 この呼び出しは直前の呼び出し元のファイルシステムユーザー ID の値を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+
+このシステムコールはバージョン 1.2 以降の Linux に存在する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>setfsuid</B>()  は Linux 特有であり、移植を想定したプログラムで使用してはいけない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+このシステムコールが導入された当時、 あるプロセスは同じ実効ユーザー ID を持つ別のプロセスにシグナルを送信できた。 これは、
+特権プロセスがファイルのアクセス許可をチェックするために自身の実効ユーザー ID を変更すると、 同じユーザー ID を持つ別の (非特権)
+プロセスが送信したシグナルを受け取るようになってしまうことを意味する。そのため、 プロセスが、 受け取りたくないシグナルを受信する状態にならずに、
+ファイルのアクセス許可をチェックするために自身のユーザー ID を変更できるように、 ファイルシステムユーザー ID 属性が追加された。 Linux
+2.0 以降では、 シグナルの送信許可の扱いは異なり (<B><A HREF="../man2/kill.2.html">kill</A></B>(2) 参照)、 プロセスは、
+望まないプロセスからシグナルを受信してしまう状態にならずに、 自身の実効ユーザー ID を変更することができる。 したがって、
+<B>setfsuid</B>() は今日では不要であり、 新規のアプリケーションでは使用すべきではない (<B><A HREF="../man2/setfsgid.2.html">setfsgid</A></B>(2) も同様)。
+<P>
+
+元々の Linux の <B>setfsuid</B>() システムコールは
+16 ビットのグループ ID だけに対応していた。
+その後、Linux 2.4 で、32 ビットの ID に対応した
+<B>setfsuid32</B>() が追加された。
+glibc の <B>setfsuid</B>() のラッパー関数は
+カーネルバージョンによるこの違いを吸収している。
+<A NAME="lbAI">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+In glibc 2.15 and earlier, when the wrapper for this system call determines
+that the argument can't be passed to the kernel without integer truncation
+(because the kernel is old and does not support 32-bit user IDs), it will
+return -1 and set <I>errno</I> to <B>EINVAL</B> without attempting the system call.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+いかなる種類のエラーメッセージも返さず、 成功した場合も失敗した場合も呼び出しは同じ値を返すため、
+呼び出しが成功したか失敗したかを直接判定することはできない。 その代わり、 直前の <B>setfsuid</B>() の呼び出しがファイルシステムグループ
+ID を変更したかどうかを判定するために、 呼び出し元はこの後に <I>setfsuid(-1)</I> などを呼び出して返り値を見なければならない
+(<I>setfsuid(-1)</I> は常に失敗する)。 最低でも、失敗した場合は <B>EPERM</B> くらいは返すべきである (呼び出し元には
+<B>CAP_SETUID</B> ケーパビリティがなかったのだから)。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2), <B><A HREF="../man2/setfsgid.2.html">setfsgid</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">バージョン</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

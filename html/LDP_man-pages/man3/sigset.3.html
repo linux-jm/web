@@ -1,0 +1,203 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SIGSET</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SIGSET</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/sigset.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sigset, sighold, sigrelse, sigignore - System V 版シグナル API
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+<P>
+
+<B>typedef void (*sighandler_t)(int);</B>
+<P>
+
+<B>sighandler_t sigset(int </B><I>sig</I><B>, sighandler_t </B><I>disp</I><B>);</B>
+<P>
+
+<B>int sighold(int </B><I>sig</I><B>);</B>
+<P>
+
+<B>int sigrelse(int </B><I>sig</I><B>);</B>
+<P>
+
+<B>int sigignore(int </B><I>sig</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>sigset</B>(), <B>sighold</B>(), <B>sigrelse</B>(), <B>sigignore</B>():
+<BR>
+
+<DL COMPACT><DT><DD>
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらの関数は、昔ながらの System V 版シグナル API を使用しているプログラム に対して互換性のあるインターフェースを glibc
+で提供するものである。 この API は過去のものであり、新しいアプリケーションでは POSIX シグナル API (<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  など) を使用すべきである。
+<P>
+
+関数 <B>sigset</B>()  はシグナル <I>sig</I> のシグナルハンドラーの動作を変更する。 <I>disp</I>
+引数には、シグナルハンドラー関数のアドレスか、 以下の定数のいずれか一つを指定できる。
+<DL COMPACT>
+<DT><B>SIG_DFL</B><DD>
+<I>sig</I> の動作をデフォルトにリセットする。
+<DT><B>SIG_IGN</B><DD>
+<I>sig</I> を無視する。
+<DT><B>SIG_HOLD</B><DD>
+そのプロセスのシグナルマスクに <I>sig</I> を追加するが、 <I>sig</I> の動作は変更しない。
+</DL>
+<P>
+
+<I>disp</I> にシグナルハンドラーのアドレスが指定された場合、 シグナルハンドラーの実行中は、そのプロセスのシグナルマスクに <I>sig</I>
+が追加される。
+<P>
+
+<I>disp</I> に <B>SIG_HOLD</B> 以外の値が指定された場合、 そのプロセスのシグナルマスクから <I>sig</I> が削除される。
+<P>
+
+シグナル <B>SIGKILL</B> と <B>SIGSTOP</B> に対する動作は変更できない。
+<P>
+
+関数 <B>sighold</B>()  は、呼び出し元プロセスのシグナルマスクに <I>sig</I> を追加する。
+<P>
+
+関数 <B>sigrelse</B>()  は、呼び出し元プロセスのシグナルマスクから <I>sig</I> を削除する。
+<P>
+
+関数 <B>sigignore</B>()  は、 <I>sig</I> の動作を <B>SIG_IGN</B> に設定する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>sigset</B>()  は成功すると、 呼び出し前に <I>sig</I> がブロックされていた場合には <B>SIG_HOLD</B> を返し、
+ブロックされていなかった場合には 変更前のそのシグナルの動作を返す。 エラーの場合、 <B>sigset</B>()  は -1 を返し、 <I>errno</I>
+にエラーを示す値をセットする。 但し、以下の「バグ」の節も参照のこと。
+<P>
+
+関数 <B>sighold</B>(), <B>sigrelse</B>(), <B>sigignore</B>()  は成功すると 0 を返す。エラーの場合、-1 を返し、
+<I>errno</I> にエラーを示す値をセットする。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>sigset</B>()  に関しては、 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)  と <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  の「エラー」の節を参照。
+<P>
+
+<B>sighold</B>()  と <B>sigrelse</B>()  に関しては、 <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  の「エラー」の節を参照。
+<P>
+
+<B>sigignore</B>()  に関しては、 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)  の「エラー」の節を参照。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>sigset</B>(),
+<B>sighold</B>(),
+<BR>
+
+<B>sigrelse</B>(),
+<B>sigignore</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+SVr4, POSIX.1-2001, POSIX.1-2008.  これらの関数は廃止予定である。新しいプログラムでは使用しないこと。
+POSIX.1-2008 は、 <B>sighold</B>(), <B>sigignore</B>(), <B><A HREF="../man3/sigpause.3.html">sigpause</A></B>(3), <B>sigrelse</B>(),
+<B>sigset</B>()  を廃止予定としている。 代わりに、 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2),
+<B><A HREF="../man3/pthread_sigmask.3.html">pthread_sigmask</A></B>(3), <B><A HREF="../man2/sigsuspend.2.html">sigsuspend</A></B>(2)  の使用が推奨されている。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+これらの関数は glibc 2.1 で登場した。
+<P>
+
+<I>sighandler_t</I> 型は GNU による拡張であり、この man page で <B>sigset</B>()
+のプロトタイプをより読みやすくするために使われているだけである。
+<P>
+
+関数 <B>sigset</B>()  は信頼性のあるシグナル処理機構を提供する (<I>sa_mask</I> を 0 で <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
+を呼び出したときと同様)。
+<P>
+
+System V では、関数 <B>signal</B>()  が提供する処理機構は信頼性のないものである (<I>sa_mask</I> を
+<I>SA_RESETHAND | SA_NODEFER</I> として <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)  を呼び出したときと同様)。 BSD では、
+<B>signal</B>()  は信頼性のある処理機構を提供する。 POSIX.1-2001 では、 <B>signal</B>()
+のこの点は規定しないままとなっている。 さらなる詳細については <B><A HREF="../man2/signal.2.html">signal</A></B>(2)  を参照。
+<P>
+
+BSD と System V のどちらのシステムでも シグナルを待つために、 <B><A HREF="../man3/sigpause.3.html">sigpause</A></B>(3)  という名前の関数が提供されているが、
+この関数の引数は両方のシステムで異なる。 詳細は <B><A HREF="../man3/sigpause.3.html">sigpause</A></B>(3)  を参照。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+2.2 より前のバージョンの glibc では、 <I>disp</I> に <B>SIG_HOLD</B> 以外の値が指定された場合、 <I>sig</I>
+のブロック解除を行っていなかった。
+<P>
+
+
+2.3.5 以前の全てのバージョンの glibc では、 <B>sigset</B>()  が変更前のシグナルの動作を正しく返さない場合が 2つある。
+一つめは、 <I>disp</I> に <B>SIG_HOLD</B> が指定されると、成功した場合 <B>sigset</B>()  は常に <B>SIG_HOLD</B>
+を返すことである。 正しくは、(シグナルがブロックされていなかった場合には)  変更前のシグナルの動作を返すべきである
+(シグナルがブロックされていた場合には、 <B>SIG_HOLD</B> が返される)。 もう一つは、シグナルが現在ブロックされている場合には、 成功した場合の
+<B>sigset</B>()  の返り値は <B>SIG_HOLD</B> になるべきであるが、実際には 変更前のシグナルの動作が返されることである。 これらの問題は
+glibc 2.5 以降で修正されている。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2), <B><A HREF="../man2/pause.2.html">pause</A></B>(2), <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man2/signal.2.html">signal</A></B>(2), <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2),
+<B><A HREF="../man3/raise.3.html">raise</A></B>(3), <B><A HREF="../man3/sigpause.3.html">sigpause</A></B>(3), <B><A HREF="../man3/sigvec.3.html">sigvec</A></B>(3), <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

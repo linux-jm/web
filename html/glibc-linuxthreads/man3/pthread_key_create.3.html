@@ -1,0 +1,324 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_SPECIFIC</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_SPECIFIC</H1>
+Section: C Library Functions (3)<BR>Updated: LinuxThreads<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/glibc-linuxthreads/release/man3/pthread_key_create.3">roff page</A><HR>
+
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_key_create, pthread_key_delete, pthread_setspecific, pthread_getspecific - スレッド固有データの管理
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<P>
+<B>int pthread_key_create(pthread_key_t *</B><I>key</I><B>, void (*</B><I>destr_function</I><B>) (void *));</B>
+
+<P>
+<B>int pthread_key_delete(pthread_key_t </B><I>key</I><B>);</B>
+
+<P>
+<B>int pthread_setspecific(pthread_key_t </B><I>key</I><B>, const void *</B><I>pointer</I><B>);</B>
+
+<P>
+<B>void * pthread_getspecific(pthread_key_t </B><I>key</I><B>);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+プログラムではスレッドごとに値の異なる
+グローバル変数や静的変数がしばしば必要となる。
+複数のスレッドは 1 つのメモリ空間を共有するため、
+通常の変数ではこれを実現することができない。
+スレッド固有データは、
+この必要性への POSIX スレッドの答えである。
+<P>
+それぞれのスレッドはスレッド固有データ (thread-specific data) 領域、
+略して TSD 領域という
+プライベートなメモリブロックを保有している。
+この領域は TSD キーをインデックスとして管理される。
+TSD 領域では
+<B>void *</B>
+
+型の値を TSD キーに結び付ける。
+TSD キーはすべてのスレッドに共通であるが、
+TSD キーに結び付けられる値はスレッドごとに異なるように
+することができる。
+<P>
+具体的にいえば、 TSD 領域は
+<B>void *</B>
+
+型のポインタの配列として、
+TSD キーはこの配列に対する整数値のインデックスとして、
+TSD キーに結び付けられる値は呼び出しスレッドの対応する配列要素として見える。
+<P>
+スレッドが生成されると、TSD 領域はすべてのキーに対する値が
+<B>NULL</B>
+
+になるよう初期化される。
+<P>
+<B>pthread_key_create</B>
+
+は新しい TSD キーを確保する。
+キーは
+<I>key</I>
+
+で指し示される領域に格納される。
+ある時点で確保できるキーの数には制限があり、
+その最大値は
+<B>PTHREAD_KEYS_MAX</B>
+
+である。
+返されたキーに結び付けられる初期値は、
+その時点で実行されているスレッドすべてにおいて
+<B>NULL</B>
+
+である。
+<P>
+引数
+<I>destr_function</I>
+
+に
+<B>NULL</B>
+
+以外の値を指定することで、
+そのキーに対応するデストラクタ関数を登録することができる。
+スレッドが
+<B>pthread_exit</B>
+
+やキャンセルによって終了すると、
+そのスレッド中でキーに結び付けられた値を引数として関数
+<I>destr_function</I>
+
+が呼び出される。
+値が
+<B>NULL</B>
+
+の場合には関数
+<I>destr_function</I>
+
+は呼び出されない。
+スレッド終了時にデストラクタ関数が呼び出される順序は不定である。
+<P>
+デストラクタ関数が呼び出される前に、
+現在のスレッドにおいてキーに結び付けられる値は
+<B>NULL</B>
+
+になる。
+しかし、デストラクタ関数は
+<B>NULL</B>
+
+以外の値をそのキーやほかのキーに結び付けるかもしれない。
+これを処理するため、
+すべての非
+<B>NULL</B>
+
+の値に対するデストラクタ関数をすべて呼び出したあとに
+デストラクタ関数のある非
+<B>NULL</B>
+
+の値がまだ残っている場合には、
+デストラクタ関数の呼び出し処理は繰り返される。
+LinuxThreads の実装では、
+<B>PTHREAD_DESTRUCTOR_ITERATIONS</B>
+
+回繰り返すと、たとえデストラクタ関数のある非
+<B>NULL</B>
+
+の値が残っていても、
+処理は中止される。LinuxThreads 以外の実装では無限ループに陥るかもしれない。
+<P>
+<B>pthread_key_delete</B>
+
+は TSD キーを解放する。
+その時点で実行中のスレッドでキーに非
+<B>NULL</B>
+
+の値が結び付けられているかどうかをチェックしたり、
+キーに対応するデストラクタ関数を呼び出したりはしない。
+<P>
+<B>pthread_setspecific</B>
+
+は呼び出しスレッドで
+<I>key</I>
+
+に結び付けられる値を、与えられた
+<I>pointer</I>
+
+に変更する。
+<P>
+<B>pthread_getspecific</B>
+
+は呼び出しスレッドでその時点で
+<I>key</I>
+
+に結び付けられている値を返す。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<P>
+<B>pthread_key_create</B>
+
+および
+<B>pthread_key_delete</B>
+
+、
+<B>pthread_setspecific</B>
+
+は成功すると 0 を、失敗すると非 0 のエラーコードを返す。
+成功の場合、
+<B>pthread_key_create</B>
+
+は新しく確保されたキーを
+引数
+<I>key</I>
+
+で指し示される領域に格納する。
+<P>
+<B>pthread_getspecific</B>
+
+は、成功するとキー
+<I>key</I>
+
+に結び付けられた値を、
+エラーの場合には
+<B>NULL</B>
+
+を返す。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>pthread_key_create</B>
+
+はエラーの場合に次のようなエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EAGAIN</B>
+
+<DD>
+<B>PTHREAD_KEYS_MAX</B>
+
+だけのキーがすでに確保されている。
+</DL>
+</DL>
+
+<P>
+<B>pthread_key_delete</B>
+
+および 
+<B>pthread_setspecific</B>
+
+はエラーの場合に次のようなエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+<I>key</I>
+
+は有効な、確保された TSD キーではない。
+</DL>
+</DL>
+
+<P>
+<B>pthread_getspecific</B>
+
+は、
+<I>key</I>
+
+が有効な、確保された TSD キーでない場合には
+<B>NULL</B>
+
+を返す。
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>著者</H2>
+
+Xavier Leroy &lt;<A HREF="mailto:Xavier.Leroy@inria.fr">Xavier.Leroy@inria.fr</A>&gt;
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man3/pthread_create.3.html">pthread_create</A>(3), <A HREF="../man3/pthread_exit.3.html">pthread_exit</A>(3), <A HREF="../man3/pthread_testcancel.3.html">pthread_testcancel</A>(3).
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+<P>
+次のコードでは、100 バイトのスレッド固有の配列を確保し、
+スレッドの終了とともに自動で解放する:
+<P>
+<DL COMPACT><DT><DD>
+<B>
+</B><PRE>
+
+/* スレッド固有バッファのキー */
+static pthread_key_t buffer_key;
+
+/* 1 回限りのキーの初期化 */
+static pthread_once_t buffer_key_once = PTHREAD_ONCE_INIT;
+
+/* スレッド固有のバッファを確保する */
+void buffer_alloc(void)
+{
+  pthread_once(&amp;buffer_key_once, buffer_key_alloc);
+  pthread_setspecific(buffer_key, malloc(100));
+}
+
+/* スレッド固有のバッファを返す */
+char * get_buffer(void)
+{
+  return (char *) pthread_getspecific(buffer_key);
+}
+
+/* キーを確保する */
+static void buffer_key_alloc()
+{
+  pthread_key_create(&amp;buffer_key, buffer_destroy);
+}
+
+/* スレッド固有のバッファを解放する */
+static void buffer_destroy(void * buf)
+{
+  free(buf);
+}
+
+</DL>
+</PRE>
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">著者</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">例</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

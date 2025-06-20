@@ -1,0 +1,170 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SNMP.CONF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SNMP.CONF</H1>
+Section: File Formats (5)<BR>Updated: 28 Aug 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/ucd-snmp/release/man5/snmp_config.5">roff page</A><HR>
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+snmp_config - ucd-snmp アプリケーションの設定法の説明
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+ucd-snmp パッケージはアプリケーションの設定にいろいろな設定ファイルを用いる。
+この man ページは、他の man ページで説明する必要のない、
+設定ファイルの全体的な特徴のみを説明している。
+<A NAME="lbAD">&nbsp;</A>
+<H2>検索されるディレクトリ</H2>
+
+まず第一に、いろいろな場所に設定ファイルを置いて
+読み込ませることができる。
+アプリケーションは、デフォルトでは
+/usr/share/snmp, /usr/lib/snmp, $HOME/.snmp
+という順番で設定ファイルを探す。
+これらのディレクトリ以下にある
+.conf と .local.conf という拡張子のファイルを探す
+(2 番目の拡張子のディレクトリを最後に読み込む)。
+このような方法で、これらの設定ファイルのタイプについて、
+設定ファイルが存在できる 6 つのデフォルトの場所がある。
+<P>
+
+さらに上記のデフォルトの検索パスは、
+環境変数 SNMPCONFPATH を設定して変更できる。
+SNMPCONFPATH には、検索するディレクトリを ':' で区切ったリストで指定する。
+<P>
+
+そして永続的なデータを格納するアプリケーションは、
+設定ファイルを /var/snmp でも検索する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>設定ファイルのタイプ</H2>
+
+各アプリケーションは複数の設定ファイルを使うことができる。
+これら設定ファイルでアプリケーションのいろいろな設定を行う。
+例えば、SNMP エージェント (snmpd) は
+snmpd.conf ファイルと snmp.conf ファイルの両方にある
+設定ディレクティブの内容を解釈できる。
+実際、大部分のアプリケーションが snmp.conf ファイルの内容を解釈できる。
+ただし、ある設定ディレクティブが複数のファイルに存在したときに、
+最初に読まれた設定ファイルでの指定だけが有効となり、
+それ以降に読まれた設定ファイルでの指定は無効になる点に注意すること。
+より詳しい情報を得るためには、
+各設定ファイルタイプについての関連ページを読むこと。
+大部分のアプリケーションはコマンドラインで
+'-H' スイッチをサポートしており、
+各アプリケーションが参照する設定ファイルと
+使用可能なディレクティブをリスト表示する。
+<P>
+
+snmp.conf はアプリケーション群全体に対する
+設定ファイルとして想定されていて、
+全ての snmp アプリケーションの基本的な特性を制御するための
+ディレクティブをサポートしている。
+基本的な特性とはテキスト形式の SNMP mib ファイルの
+操作法や解析方法のことである。
+<A NAME="lbAF">&nbsp;</A>
+<H2>MID ファイルにおける設定タイプの変更</H2>
+
+パーサーが読み込む設定タイプは mib ファイルの中で切り替えることができる。
+このように言われても意味がわからないので、例を示す。
+
+例えば、デフォルトでエージェントのパケットダンプ出力を有効にしたいが、
+(snmpget, snmpwalk, ... といった) 他のアプリケーションでは
+有効にしたくないといった場合である。
+通常、設定ファイルでパケットダンプを有効にするには、
+<P>
+
+<DL COMPACT><DT><DD>
+dumpPacket true
+</DL>
+
+<P>
+
+という行を snmp.conf ファイルに書く必要がある。
+しかしこれでは、全てのアプリケーションでダンプが有効になってしまう。
+そこで代わりに同じ行を snmpd.conf ファイルに書けば、
+snmpd デーモンにのみ適用される。
+ただし、パーサーにこの行を待ち受けるように指示する必要があり、
+特殊タイプの指定トークンを [] セットの中に書き込まなければならない。
+言い換えれば、snmpd.conf ファイルに以下の行を追加することで、
+上記の snmp.conf ディレクティブを書き込めるということである。
+<P>
+
+<DL COMPACT><DT><DD>
+[snmp] dumpPacket true
+</DL>
+
+<P>
+
+この行により、上の行が snmpd.conf ファイルではなく
+snmp.conf ファイルにある場合と同様にパーサーに解析させる。
+
+1 行だけでなく複数の行をパースさせたい場合には、
+特殊トークンのみの行を置くことにより、
+コンテキストスイッチをファイルの残りの部分または
+次のコンテキストスイッチディレクティブが現れるまで適用することができる。
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+# このファイルを snmp.conf トークンとして処理させる:
+[snmp]
+dumpPacket true
+logTimestamp true
+# 元の snmpd.conf トークンに戻る:
+[snmpd]
+rocommunity mypublic
+</DL>
+</PRE><A NAME="lbAG">&nbsp;</A>
+<H2>コメント</H2>
+
+<P>
+
+文字 '#' で始まる設定ファイルの行は、
+コメントとして扱われ、パースされない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>API インタフェース</H2>
+
+<P>
+
+エージェントの mib モジュールやアプリケーションで
+このシステムを利用するための C 言語のコードを書くための情報は、
+read_config(3) の man ページにある。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+read_config(3).
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">検索されるディレクトリ</A><DD>
+<DT><A HREF="#lbAE">設定ファイルのタイプ</A><DD>
+<DT><A HREF="#lbAF">MID ファイルにおける設定タイプの変更</A><DD>
+<DT><A HREF="#lbAG">コメント</A><DD>
+<DT><A HREF="#lbAH">API インタフェース</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:46 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,521 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETADDRINFO_A</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETADDRINFO_A</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getaddrinfo_a.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getaddrinfo_a, gai_suspend, gai_error, gai_cancel - 非同期のネットワークアドレスとサービスの変換
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</B>
+
+<B>int getaddrinfo_a(int </B><I>mode</I><B>, struct gaicb *</B><I>list[]</I><B>,</B>
+<B>                int </B><I>nitems</I><B>, struct sigevent *</B><I>sevp</I><B>);</B>
+
+<B>int gai_suspend(const struct gaicb * const </B><I>list[]</I><B>, int </B><I>nitems</I><B>,</B>
+<B>                const struct timespec *</B><I>timeout</I><B>);</B>
+
+<B>int gai_error(struct gaicb *</B><I>req</I><B>);</B>
+
+<B>int gai_cancel(struct gaicb *</B><I>req</I><B>);</B>
+
+<I>-lanl</I> でリンクする。
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getaddrinfo_a</B>() 関数は <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3) と同じ処理を実行するが、 複数の名前検索を非同期で実行でき、
+検索処理の完了の通知ができる点が異なる。
+<P>
+
+<I>mode</I> 引数は以下の値のいずれかを指定する。
+<DL COMPACT>
+<DT><B>GAI_WAIT</B><DD>
+検索を同期で実行する。 呼び出しは検索が完了するまで停止 (block) する。
+<DT><B>GAI_NOWAIT</B><DD>
+検索を非同期で実行する。 呼び出しは直ちに返り、 要求はバックグラウンドで処理される。 以下の <I>sevp</I> 引数の議論を参照。
+</DL>
+<P>
+
+配列 <I>list</I> は処理すべき検索要求を指定する。 <I>nitems</I> 引数は <I>list</I> の要素数を指定する。
+要求された検索命令は並列に開始される。 <I>list</I> の NULL 要素は無視される。 各要求は以下のように定義された <I>gaicb</I>
+構造体で規定される。
+<P>
+
+
+
+struct gaicb {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ar_name;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ar_service;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;struct&nbsp;addrinfo&nbsp;*ar_request;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ar_result;
+};
+
+
+<P>
+
+この構造体の要素は <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3) の引数に対応している。 したがって、 <I>ar_name</I> はインターネットホストを示す
+<I>node</I> 引数に、 <I>ar_service</I> はサービスを示す <I>service</I> 引数に対応する。 <I>ar_request</I> 要素は、
+返されたソケットアドレス構造体を選択する基準を示す <I>hints</I> 引数に対応する。 最後の <I>ar_request</I> は <I>res</I>
+引数に対応する。 この要素を初期化する必要はなく、この要素は要求が解決されると自動的にセットされる。 最後の 2 つの要素が参照している
+<I>addrinfo</I> 構造体については <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3) に説明がある。
+<P>
+
+<I>mode</I> に <B>GAI_NOWAIT</B> が指定された場合、 解決した要求に関する通知を <I>sevp</I> 引数が指す <I>sigevent</I>
+構造体を使って受け取ることができる。 この構造体の定義と一般的な説明については <B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7) を参照。
+<I>sevp-&gt;sigev_notify</I> フィールドには以下の値を指定できる。
+<DL COMPACT>
+<DT><B>SIGEV_NONE</B><DD>
+通知は行わない。
+<DT><B>SIGEV_SIGNAL</B><DD>
+
+
+検索が完了した際に、 プロセスに対してシグナル <I>sigev_signo</I> を生成する。 一般的な説明は <B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7) を参照。
+<I>siginfo_t</I> 構造体の <I>si_code</I> フィールドには <B>SI_ASYNCNL</B> がセットされる。
+<DT><B>SIGEV_THREAD</B><DD>
+検索が完了した際に、 <I>sigev_notify_function</I> を新しいスレッドの開始関数であるかのように起動する。 詳細は
+<B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7) を参照。
+</DL>
+<P>
+
+<B>SIGEV_SIGNAL</B> と <B>SIGEV_THREAD</B> では、 <I>sevp-&gt;sigev_value.sival_ptr</I> が
+<I>list</I> を指すようにしておくと役立つことがある。
+<P>
+
+<B>gai_suspend</B>() 関数は呼び出し元のスレッドの実行を中断し、 配列 <I>list</I> 内の一つ以上の要求が完了するのを待つ。
+<I>nitems</I> 引数は配列 <I>list</I> の大きさを指定する。 呼び出しは以下のいずれかの状況になるまで停止する。
+<DL COMPACT>
+<DT>*<DD>
+<I>list</I> 内の一つ以上の操作が完了した。
+<DT>*<DD>
+呼び出しが補足されたシグナルに割り込まれた。
+<DT>*<DD>
+<I>timeout</I> で指定された期間が経過した。 この引数は、秒とナノ秒でタイムアウトを指定する (<I>timespec</I> 構造体の詳細は
+<B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2) を参照)。 <I>timeout</I> が NULL の場合、 (上記のイベントのいずれかが発生するまで)
+呼び出しは無限に停止する。
+</DL>
+<P>
+
+どの要求が完了したかは明示的な通知は行われない。 どの要求が完了したかを知るためには、 要求のリストに対して <B>gai_error</B>()
+を繰り返し呼び出す必要がある。
+<P>
+
+<B>gai_error</B>() 関数は要求 <I>req</I> のステータスを返す。 要求がまだ完了していない場合は <B>EAI_INPROGRESS</B> が、
+要求が正常に処理された場合は 0 が、 要求を解決できなかった場合はエラーコードが返される。
+<P>
+
+<B>gai_cancel</B>() 関数は要求 <I>req</I> をキャンセルする。 要求が正常にキャンセルされた場合、 要求のエラーステータスに
+<B>EAI_CANCELED</B> が設定され、 通常の非同期通知が実行される。 要求が現在処理中でキャンセルできない場合もある。 この場合
+<B>gai_cancel</B>() が呼ばれなかったかのように処理が行われる。 <I>req</I> が NULL の場合、
+そのプロセスが行ったすべての処理中の要求をキャンセルしようとする。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>getaddrinfo_a</B>() 関数はすべての要求が正常にキューに追加されると 0 を返す。 または、以下のいずれかの 0
+でないエラーコードを返す。
+<DL COMPACT>
+<DT><B>EAI_AGAIN</B><DD>
+検索要求をキューに入れるために必要なリソースがなかった。 アプリケーションは書く要求のエラーステータスを確認し、
+どの要求が失敗したかを判定することができる。
+<DT><B>EAI_MEMORY</B><DD>
+メモリーが足りない。
+<DT><B>EAI_SYSTEM</B><DD>
+<I>mode</I> が無効である。
+</DL>
+<P>
+
+<B>gai_suspend</B>() 関数はリストの要求の少なくともひとつが完了すると 0 を返す。 それ以外の場合、 以下の 0
+でないエラーコードのいずれかを返す。
+<DL COMPACT>
+<DT><B>EAI_AGAIN</B><DD>
+いずれかの要求が完了する前に指定されたタイムアウト時間が満了した。
+<DT><B>EAI_ALLDONE</B><DD>
+指定された関数には実際には要求がなかった。
+<DT><B>EAI_INTR</B><DD>
+シグナルが関数に割り込んだ。 この割り込みは検索要求が完了したことを示すシグナル通知により起こる場合もある。
+</DL>
+<P>
+
+<B>gai_error</B>() 関数は、 完了していない検索要求に対して <B>EAI_INPROGRESS</B> を返し、 成功で完了した検索に対して 0
+を返す。 <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3) が返すエラーコードのいずれかを返す場合もある。
+要求の完了前に明示的に要求がキャンセルされた場合はエラーコード <B>EAI_CANCELED</B> を返す。
+<P>
+
+<B>gai_cancel</B>() 関数はこれらの値のいずれかを返すことがある。
+<DL COMPACT>
+<DT><B>EAI_CANCELED</B><DD>
+要求は正常にキャンセルされた。
+<DT><B>EAI_NOTCANCELED</B><DD>
+要求はキャンセルされていない。
+<DT><B>EAI_ALLDONE</B><DD>
+要求はすでに完了している。
+</DL>
+<P>
+
+<B><A HREF="../man3/gai_strerror.3.html">gai_strerror</A></B>(3) 関数を使うと、 これらのエラーコードを、 エラーレポートに適した人間が読みやすい文字列に翻訳してくれる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明は <B>attributes</B>(7) を参照のこと。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getaddrinfo_a</B>(),
+<B>gai_suspend</B>(),
+<B>gai_error</B>(),
+<B>gai_cancel</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+これらの関数は GNU 拡張である。 バージョン 2.2.3 で初めて glibc に登場した。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B>getaddrinfo_a</B>() インターフェースは <B><A HREF="../man3/lio_listio.3.html">lio_listio</A></B>(3) インターフェースの後にモデル化された。
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+ここでは二つの例を示す。 一つは複数の要求を同期処理で並行して解決する例で、 もう一つは非同期機能を使った複雑な例である。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>同期型の例</H3>
+
+以下のプログラムは単に複数のホスト名の解決を並行で行う。 <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
+を使って順番にホスト名の解決を行うのに比べて速度が向上する。 このプログラムは以下のように使う。
+<P>
+
+
+
+$ <B>./a.out <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A> enoent.linuxfoundation.org gnu.cz</B>
+<A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A>: 128.30.2.36
+enoent.linuxfoundation.org: Name or service not known
+gnu.cz: 87.236.197.13
+
+
+<P>
+
+プログラムのソースコードは以下のとおりである。
+<P>
+
+
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;gaicb&nbsp;*reqs[argc&nbsp;-&nbsp;1];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;host[NI_MAXHOST];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;*res;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;HOST...\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;argc&nbsp;-&nbsp;1;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reqs[i]&nbsp;=&nbsp;malloc(sizeof(*reqs[0]));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(reqs[i]&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memset(reqs[i],&nbsp;0,&nbsp;sizeof(*reqs[0]));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reqs[i]-&gt;ar_name&nbsp;=&nbsp;argv[i&nbsp;+&nbsp;1];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;getaddrinfo_a(GAI_WAIT,&nbsp;reqs,&nbsp;argc&nbsp;-&nbsp;1,&nbsp;NULL);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;!=&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getaddrinfo_a()&nbsp;failed:&nbsp;%s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gai_strerror(ret));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;argc&nbsp;-&nbsp;1;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s:&nbsp;&quot;,&nbsp;reqs[i]-&gt;ar_name);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;gai_error(reqs[i]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res&nbsp;=&nbsp;reqs[i]-&gt;ar_result;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;getnameinfo(res-&gt;ai_addr,&nbsp;res-&gt;ai_addrlen,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;host,&nbsp;sizeof(host),
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NULL,&nbsp;0,&nbsp;NI_NUMERICHOST);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;!=&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getnameinfo()&nbsp;failed:&nbsp;%s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gai_strerror(ret));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;puts(host);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;puts(gai_strerror(ret));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>非同期型の例</H3>
+
+この例は <B>getaddrinfo_a</B>() の簡単な対話式のフロントエンドである。 通知機能は使っていない。
+<P>
+
+セッションの実行例は以下のようになる。
+<P>
+
+
+
+$ <B>./a.out</B>
+&gt; a <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A> enoent.linuxfoundation.org gnu.cz
+&gt; c 2
+[2] gnu.cz: Request not canceled
+&gt; w 0 1
+[00] <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A>: Finished
+&gt; l
+[00] <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A>: 216.165.129.139
+[01] enoent.linuxfoundation.org: Processing request in progress
+[02] gnu.cz: 87.236.197.13
+&gt; l
+[00] <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A>: 216.165.129.139
+[01] enoent.linuxfoundation.org: Name or service not known
+[02] gnu.cz: 87.236.197.13
+
+
+<P>
+
+プログラムのソースは以下のとおりである。
+<P>
+
+
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+static struct gaicb **reqs = NULL;
+static int nreqs = 0;
+<P>
+static char *
+getcmd(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;static&nbsp;char&nbsp;buf[256];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fputs(&quot;&gt;&nbsp;&quot;,&nbsp;stdout);&nbsp;fflush(stdout);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fgets(buf,&nbsp;sizeof(buf),&nbsp;stdin)&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buf[strlen(buf)&nbsp;-&nbsp;1]&nbsp;==&nbsp;'\n')
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf[strlen(buf)&nbsp;-&nbsp;1]&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;buf;
+}
+<P>
+/* Add requests for specified hostnames */
+static void
+add_requests(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;nreqs_base&nbsp;=&nbsp;nreqs;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*host;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((host&nbsp;=&nbsp;strtok(NULL,&nbsp;&quot;&nbsp;&quot;)))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nreqs++;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reqs&nbsp;=&nbsp;realloc(reqs,&nbsp;sizeof(reqs[0])&nbsp;*&nbsp;nreqs);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reqs[nreqs&nbsp;-&nbsp;1]&nbsp;=&nbsp;calloc(1,&nbsp;sizeof(*reqs[0]));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reqs[nreqs&nbsp;-&nbsp;1]-&gt;ar_name&nbsp;=&nbsp;strdup(host);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Queue&nbsp;nreqs_base..nreqs&nbsp;requests.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;getaddrinfo_a(GAI_NOWAIT,&nbsp;&amp;reqs[nreqs_base],
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nreqs&nbsp;-&nbsp;nreqs_base,&nbsp;NULL);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getaddrinfo_a()&nbsp;failed:&nbsp;%s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gai_strerror(ret));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+<P>
+/* Wait until at least one of specified requests completes */
+static void
+wait_requests(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*id;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret,&nbsp;n;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;gaicb&nbsp;const&nbsp;**wait_reqs&nbsp;=&nbsp;calloc(nreqs,&nbsp;sizeof(*wait_reqs));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;NULL&nbsp;elements&nbsp;are&nbsp;ignored&nbsp;by&nbsp;gai_suspend().&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((id&nbsp;=&nbsp;strtok(NULL,&nbsp;&quot;&nbsp;&quot;))&nbsp;!=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n&nbsp;=&nbsp;atoi(id);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(n&nbsp;&gt;=&nbsp;nreqs)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Bad&nbsp;request&nbsp;number:&nbsp;%s\n&quot;,&nbsp;id);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wait_reqs[n]&nbsp;=&nbsp;reqs[n];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;gai_suspend(wait_reqs,&nbsp;nreqs,&nbsp;NULL);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;gai_suspend():&nbsp;%s\n&quot;,&nbsp;gai_strerror(ret));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;nreqs;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(wait_reqs[i]&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;gai_error(reqs[i]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;EAI_INPROGRESS)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;[%02d]&nbsp;%s:&nbsp;%s\n&quot;,&nbsp;i,&nbsp;reqs[i]-&gt;ar_name,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;==&nbsp;0&nbsp;?&nbsp;&quot;Finished&quot;&nbsp;:&nbsp;gai_strerror(ret));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+<P>
+/* Cancel specified requests */
+static void
+cancel_requests(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*id;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret,&nbsp;n;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((id&nbsp;=&nbsp;strtok(NULL,&nbsp;&quot;&nbsp;&quot;))&nbsp;!=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n&nbsp;=&nbsp;atoi(id);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(n&nbsp;&gt;=&nbsp;nreqs)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Bad&nbsp;request&nbsp;number:&nbsp;%s\n&quot;,&nbsp;id);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;gai_cancel(reqs[n]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;[%s]&nbsp;%s:&nbsp;%s\n&quot;,&nbsp;id,&nbsp;reqs[atoi(id)]-&gt;ar_name,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gai_strerror(ret));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+<P>
+/* List all requests */
+static void
+list_requests(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;host[NI_MAXHOST];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;*res;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;nreqs;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;[%02d]&nbsp;%s:&nbsp;&quot;,&nbsp;i,&nbsp;reqs[i]-&gt;ar_name);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;gai_error(reqs[i]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!ret)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res&nbsp;=&nbsp;reqs[i]-&gt;ar_result;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;getnameinfo(res-&gt;ai_addr,&nbsp;res-&gt;ai_addrlen,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;host,&nbsp;sizeof(host),
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NULL,&nbsp;0,&nbsp;NI_NUMERICHOST);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getnameinfo()&nbsp;failed:&nbsp;%s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gai_strerror(ret));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;puts(host);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;puts(gai_strerror(ret));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*cmdline;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*cmd;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((cmdline&nbsp;=&nbsp;getcmd())&nbsp;!=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmd&nbsp;=&nbsp;strtok(cmdline,&nbsp;&quot;&nbsp;&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cmd&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list_requests();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(cmd[0])&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'a':
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_requests();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'w':
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wait_requests();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'c':
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cancel_requests();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'l':
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list_requests();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Bad&nbsp;command:&nbsp;%c\n&quot;,&nbsp;cmd[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3), <B><A HREF="../man3/inet.3.html">inet</A></B>(3), <B><A HREF="../man3/lio_listio.3.html">lio_listio</A></B>(3), <B><A HREF="../man7/hostname.7.html">hostname</A></B>(7), <B><A HREF="../man7/ip.7.html">ip</A></B>(7),
+<B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">例</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">同期型の例</A><DD>
+<DT><A HREF="#lbAK">非同期型の例</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

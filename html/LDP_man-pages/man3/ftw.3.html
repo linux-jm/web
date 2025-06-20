@@ -1,0 +1,369 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FTW</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FTW</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/ftw.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ftw, nftw - ファイルツリーを歩きまわる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/ftw.h">ftw.h</A>&gt;</B>
+
+<B>int nftw(const char *</B><I>dirpath</I><B>,</B>
+<B>        int (*</B><I>fn</I><B>) (const char *</B><I>fpath</I><B>, const struct stat *</B><I>sb</I><B>,</B>
+<B>                   int </B><I>typeflag</I><B>, struct FTW *</B><I>ftwbuf</I><B>),</B>
+<B>        int </B><I>nopenfd</I><B>, int </B><I>flags</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/ftw.h">ftw.h</A>&gt;</B>
+
+<B>int ftw(const char *</B><I>dirpath</I><B>,</B>
+<B>        int (*</B><I>fn</I><B>) (const char *</B><I>fpath</I><B>, const struct stat *</B><I>sb</I><B>,</B>
+<B>                   int </B><I>typeflag</I><B>),</B>
+<B>        int </B><I>nopenfd</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>nftw</B>(): _XOPEN_SOURCE &gt;= 500
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>nftw</B>()  walks through the directory tree that is located under the
+directory <I>dirpath</I>, and calls <I>fn</I>() once for each entry in the tree.  By
+default, directories are handled before the files and subdirectories they
+contain (preorder traversal).
+<P>
+
+To avoid using up all of the calling process's file descriptors, <I>nopenfd</I>
+specifies the maximum number of directories that <B>nftw</B>()  will hold open
+simultaneously.  When the search depth exceeds this, <B>nftw</B>()  will become
+slower because directories have to be closed and reopened.  <B>nftw</B>()  uses
+at most one file descriptor for each level in the directory tree.
+<P>
+
+For each entry found in the tree, <B>nftw</B>()  calls <I>fn</I>() with four
+arguments: <I>fpath</I>, <I>sb</I>, <I>typeflag</I>, and <I>ftwbuf</I>.  <I>fpath</I> is the
+pathname of the entry, and is expressed either as a pathname relative to the
+calling process's current working directory at the time of the call to
+<B>nftw</B>(), if <I>dirpath</I> was expressed as a relative pathname, or as an
+absolute pathname, if <I>dirpath</I> was expressed as an absolute pathname.
+<I>sb</I> is a pointer to the <I>stat</I> structure returned by a call to <B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+for <I>fpath</I>.
+<P>
+
+The <I>typeflag</I> argument passed to <I>fn</I>()  is an integer that has one of
+the following values:
+<DL COMPACT>
+<DT><B>FTW_F</B><DD>
+<I>fpath</I> が通常のファイルである
+<DT><B>FTW_D</B><DD>
+<I>fpath</I> がディレクトリである
+<DT><B>FTW_DNR</B><DD>
+<I>fpath</I> が読み込みできないディレクトリである
+<DT><B>FTW_DP</B><DD>
+<I>fpath</I> がディレクトリで、かつ <I>flags</I> で <B>FTW_DEPTH</B> が指定されていた (<B>FTW_DEPTH</B> が
+<I>flags</I> に指定されていなかった場合、 ディレクトリに対しては常に <I>typeflag</I> が <B>FTW_D</B> で <I>fn</I>()
+が呼び出される)。 <I>fpath</I> 配下のファイルとサブディレクトリは全て処理が終わっている。
+<DT><B>FTW_NS</B><DD>
+The <B><A HREF="../man2/stat.2.html">stat</A></B>(2)  call failed on <I>fpath</I>, which is not a symbolic link.  The
+probable cause for this is that the caller had read permission on the parent
+directory, so that the filename <I>fpath</I> could be seen, but did not have
+execute permission, so that the file could not be reached for <B><A HREF="../man2/stat.2.html">stat</A></B>(2).
+The contents of the buffer pointed to by <I>sb</I> are undefined.
+<DT><B>FTW_SL</B><DD>
+
+
+
+
+
+
+
+<I>fpath</I> がシンボリックリンクで、かつ <B>FTW_PHYS</B> が <I>flags</I> に セットされていた。
+<DT><B>FTW_SLN</B><DD>
+<I>fpath</I> is a symbolic link pointing to a nonexistent file.  (This occurs
+only if <B>FTW_PHYS</B> is not set.)  In this case the <I>sb</I> argument passed to
+<I>fn</I>()  contains information returned by performing <B><A HREF="../man2/lstat.2.html">lstat</A></B>(2)  on the
+&quot;dangling&quot; symbolic link.  (But see BUGS.)
+</DL>
+<P>
+
+The fourth argument (<I>ftwbuf</I>)  that <B>nftw</B>()  supplies when calling
+<I>fn</I>()  is a pointer to a structure of type <I>FTW</I>:
+<P>
+
+
+
+struct FTW {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;base;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;level;
+};
+
+
+<P>
+
+<I>base</I> は、ファイル名 (basename 要素) の、 <I>fpath</I> で渡されるパス名の中でのオフセットである。 <I>level</I>
+はディレクトリツリーでの <I>fpath</I> の深さを示す。深さはディレクトリツリーのトップ (root) からの 相対値である (<I>dirpath</I>
+は深さ 0 である)。
+<P>
+
+ツリーの探索を止めたい場合は、 <I>fn</I>()  が 0 以外の値を返せば良い (この値は <B>nftw</B>()  自身の戻り値となる)。
+それ以外の場合は <B>nftw</B>()  はツリー全体の探索を続け、すべてのツリーを探索し終えたところで 0 を返す。探索中に (<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+の失敗などの) エラーが起こると -1 を返す。
+<P>
+
+<B>nftw</B>()  は動的なデータ構造を用いるので、ツリー探索を安全に中断する唯一の方法は 0 以外の値を <I>fn</I>()
+の返り値とすることである。割り込みを扱うには、 例えば発生した割り込みをマークしておいて、 0 以外の値を返すようにする
+シグナルによりメモリーリークを起こさずに探索を終了できるようにするには、 シグナルハンドラーで <I>fn</I>()
+がチェックするグローバルなフラグをセットするようにすればよい。 プログラムを終了させる場合以外は、 <B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)  を使用しないこと。
+<P>
+
+The <I>flags</I> argument of <B>nftw</B>()  is formed by ORing zero or more of the
+following flags:
+<DL COMPACT>
+<DT><B>FTW_ACTIONRETVAL</B> (glibc 2.3.3 以降)<DD>
+このフラグは glibc 固有である。 このフラグをセットすると、 <B>nftw</B>()  の <I>fn</I>()  の返り値の扱いが変わる。 <I>fn</I>()
+は以下の値のいずれか一つを返す必要がある。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>FTW_CONTINUE</B><DD>
+<B>nftw</B>()  は通常通り処理を続ける。
+<DT><B>FTW_SKIP_SIBLINGS</B><DD>
+
+
+
+<I>fn</I>()  がこの値を返した場合、処理中のエントリーの兄弟 (同じ階層のエントリー)
+の処理はスキップされ、親ディレクトリで続きの処理が行われる。
+<DT><B>FTW_SKIP_SUBTREE</B><DD>
+<I>fn</I>()  が呼び出されたエントリーがディレクトリ (<I>typeflag</I> が <B>FTW_D</B>)  の場合に、この値を返すと <I>fn</I>()
+の引数として渡されたディレクトリ内のエントリーの処理が行われなくなる。 <B>nftw</B>()  は処理中のディレクトリの兄弟 (同じ階層のエントリー)
+から処理を続ける。
+<DT><B>FTW_STOP</B><DD>
+<B>nftw ()</B> は、返り値 <B>FTW_STOP</B> ですぐに復帰する。
+</DL>
+<P>
+
+他の返り値は将来新しい動作に対応付けられる可能性がある。 <I>fn</I>()  は上記のリストにある値以外を返さないようにすべきである。
+<P>
+
+<I>&lt;<A HREF="file:///usr/include/ftw.h">ftw.h</A>&gt;</I> で <B>FTW_ACTIONRETVAL</B> の定義が有効にするためには、
+(「どの」ヘッダーファイルをインクルードするよりも前に)  機能検査マクロ <B>_GNU_SOURCE</B> を定義しなければならない。
+</DL>
+
+<DT><B>FTW_CHDIR</B><DD>
+セットされると、ディレクトリの内容を処理する前に そのディレクトリに <B><A HREF="../man2/chdir.2.html">chdir</A></B>(2)  する。このフラグは、 <I>fpath</I>
+が属すディレクトリで何らかの動作を実行する必要がある場合に 便利である。
+(このフラグを指定しても <I>fn</I> の <I>fpath</I> 引数で渡されるパス名には影響しない。)
+<DT><B>FTW_DEPTH</B><DD>
+セットされると、帰りがけ順探索 (post-order traversal) を行う。 つまり、ディレクトリそのものを引数とした <I>fn</I>()
+呼出しは、そのディレクトリに含まれるファイルとサブディレクトリに 対する処理の「後で」行われる
+(デフォルトでは、ディレクトリ自身の処理はディレクトリ内のエントリー より「前に」行なわれる)。
+<DT><B>FTW_MOUNT</B><DD>
+セットされると、同じファイルシステムの中だけを探索対象とする (つまり、マウントポイントをまたぐことはない)。
+<DT><B>FTW_PHYS</B><DD>
+セットされると、シンボリックリンクを辿らない (おそらくこちらが 通常望ましい動作だろう)。セットされていないとシンボリックリンクを
+辿るが、同じファイルが二回報告されることはない。
+<DT><DD>
+<B>FTW_PHYS</B> がセットされずに <B>FTW_DEPTH</B> がセットされると、自分自身に対するシンボリックリンクを配下に持つ
+ディレクトリに対して <I>fn</I>()  が呼び出されることは決してない。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>ftw()</H3>
+
+<B>ftw</B>()  is an older function that offers a subset of the functionality of
+<B>nftw</B>().  The notable differences are as follows:
+<DL COMPACT>
+<DT>*<DD>
+<B>ftw</B>()  has no <I>flags</I> argument.  It behaves the same as when <B>nftw</B>()
+is called with <I>flags</I> specified as zero.
+<DT>*<DD>
+The callback function, <I>fn</I>(), is not supplied with a fourth argument.
+<DT>*<DD>
+The range of values that is passed via the <I>typeflag</I> argument supplied to
+<I>fn</I>()  is smaller: just <B>FTW_F</B>, <B>FTW_D</B>, <B>FTW_DNR</B>, <B>FTW_NS</B>, and
+(possibly)  <B>FTW_SL</B>.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+これらの関数は、成功すると 0 を、エラーが発生すると -1 を返す。
+<P>
+
+<I>fn</I>()  が 0 以外を返した場合、ディレクトリツリーの探索を終了し、 <I>fn</I>()  が返した値を <B>ftw</B>()  や
+<B>nftw</B>()  の結果として返す。
+<P>
+
+<B>nftw</B>()  が <B>FTW_ACTIONRETVAL</B> フラグ付きで呼ばれた場合、ツリーの探索を終了させるために <I>fn</I>()
+が使用できる、非 0 の値は <B>FTW_STOP</B> だけであり、 この値は <B>nftw</B>()  の返り値として返される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>nftw</B>() は バージョン 2.1 以降の glibc で利用できる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>nftw</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe cwd<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>ftw</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4, SUSv1.  POSIX.1-2008 は <B>ftw</B>()
+を廃止予定としている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+POSIX.1-2008 notes that the results are unspecified if <I>fn</I> does not
+preserve the current working directory.
+<P>
+
+<B>nftw</B>()  関数と、 <B>ftw</B>()  における <B>FTW_SL</B> は、SUSv1 で導入された。
+<P>
+
+In some implementations (e.g., glibc), <B>ftw</B>()  will never use <B>FTW_SL</B>,
+on other systems <B>FTW_SL</B> occurs only for symbolic links that do not point
+to an existing file, and again on other systems <B>ftw</B>()  will use <B>FTW_SL</B>
+for each symbolic link.  If <I>fpath</I> is a symbolic link and <B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+failed, POSIX.1-2008 states that it is undefined whether <B>FTW_NS</B> or
+<B>FTW_SL</B> is passed in <I>typeflag</I>.  For predictable results, use <B>nftw</B>().
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+
+According to POSIX.1-2008, when the <I>typeflag</I> argument passed to <I>fn</I>()
+contains <B>FTW_SLN</B>, the buffer pointed to by <I>sb</I> should contain
+information about the dangling symbolic link (obtained by calling
+<B><A HREF="../man2/lstat.2.html">lstat</A></B>(2)  on the link).  Early glibc versions correctly followed the
+POSIX specification on this point.  However, as a result of a regression
+introduced in glibc 2.4, the contents of the buffer pointed to by <I>sb</I> were
+undefined when <B>FTW_SLN</B> is passed in <I>typeflag</I>.  (More precisely, the
+contents of the buffer were left unchanged in this case.)  This regression
+was eventually fixed in glibc 2.30, so that the glibc implementation (once
+more) follows the POSIX specification.
+<A NAME="lbAL">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは、一つ目のコマンドライン引数を名前に持つパス以下の ディレクトリツリーを探索する。引数が指定されなかった場合は、
+カレントディレクトリ以下を探索する。 各々のファイルについて様々の情報が表示される。 二番目のコマンドライン引数に文字を指定することで、
+<B>nftw</B>()  を呼び出す際に <I>flags</I> 引数に渡す値を制御することができる。
+<A NAME="lbAM">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#define _XOPEN_SOURCE 500
+#include &lt;<A HREF="file:///usr/include/ftw.h">ftw.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
+<P>
+static int
+display_info(const char *fpath, const struct stat *sb,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tflag,&nbsp;struct&nbsp;FTW&nbsp;*ftwbuf)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%-3s&nbsp;%2d&nbsp;&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tflag&nbsp;==&nbsp;FTW_D)&nbsp;?&nbsp;&nbsp;&nbsp;&quot;d&quot;&nbsp;&nbsp;&nbsp;:&nbsp;(tflag&nbsp;==&nbsp;FTW_DNR)&nbsp;?&nbsp;&quot;dnr&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tflag&nbsp;==&nbsp;FTW_DP)&nbsp;?&nbsp;&nbsp;&quot;dp&quot;&nbsp;&nbsp;:&nbsp;(tflag&nbsp;==&nbsp;FTW_F)&nbsp;?&nbsp;&nbsp;&nbsp;&quot;f&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tflag&nbsp;==&nbsp;FTW_NS)&nbsp;?&nbsp;&nbsp;&quot;ns&quot;&nbsp;&nbsp;:&nbsp;(tflag&nbsp;==&nbsp;FTW_SL)&nbsp;?&nbsp;&nbsp;&quot;sl&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tflag&nbsp;==&nbsp;FTW_SLN)&nbsp;?&nbsp;&quot;sln&quot;&nbsp;:&nbsp;&quot;???&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ftwbuf-&gt;level);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(tflag&nbsp;==&nbsp;FTW_NS)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;-------&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%7jd&quot;,&nbsp;(intmax_t)&nbsp;sb-&gt;st_size);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;%-40s&nbsp;%d&nbsp;%s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fpath,&nbsp;ftwbuf-&gt;base,&nbsp;fpath&nbsp;+&nbsp;ftwbuf-&gt;base);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;To&nbsp;tell&nbsp;nftw()&nbsp;to&nbsp;continue&nbsp;*/
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;flags&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;2&nbsp;&amp;&amp;&nbsp;strchr(argv[2],&nbsp;'d')&nbsp;!=&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flags&nbsp;|=&nbsp;FTW_DEPTH;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;2&nbsp;&amp;&amp;&nbsp;strchr(argv[2],&nbsp;'p')&nbsp;!=&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flags&nbsp;|=&nbsp;FTW_PHYS;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nftw((argc&nbsp;&lt;&nbsp;2)&nbsp;?&nbsp;&quot;.&quot;&nbsp;:&nbsp;argv[1],&nbsp;display_info,&nbsp;20,&nbsp;flags)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;nftw&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2), <B><A HREF="../man3/fts.3.html">fts</A></B>(3), <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3)
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">ftw()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">例</A><DD>
+<DL>
+<DT><A HREF="#lbAM">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,761 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SNMPD.CONF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SNMPD.CONF</H1>
+Section: File Formats (5)<BR>Updated: 28 Aug 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/ucd-snmp/release/man5/snmpd.conf.5">roff page</A><HR>
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+/usr/share/snmp/snmpd.conf - ucd-snmp SNMP エージェントの設定ファイル
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<B>snmpd.conf</B>
+
+は ucd-smnp SNMP エージェントの操作法を定義する設定ファイルである。
+このファイルは下記の「ディレクティブ」セクションにある
+任意のディレクティブを含むことができる。
+エージェントが mib エントリを操作したり表示したりするためには、
+このファイルは必要ない。
+<A NAME="lbAD">&nbsp;</A>
+<H2>最初にお読みください</H2>
+
+最初に man ページ <A HREF="../man5/snmp_config.5.html">snmp_config</A>(5) を読んでおくこと。
+ここには ucd-snmp ファイルの操作法・場所・
+互いにどのように動作するかが書かれている。
+<P>
+
+さらに、
+<I>snmpconf</I>
+
+アプリケーション (perl スクリプト) にざっと目を通すのもよいかもしれない。
+このアプリケーションはユーザーに情報を提示して
+snmpd.conf ファイルの作成を助けてくれる。
+試してみなさい。本当に。さあ、今すぐに。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>snmpconf -g basic_setup<DD>
+</DL>
+</DL>
+
+<P>
+
+で始められます。
+<A NAME="lbAE">&nbsp;</A>
+<H2>拡張可能 MIB</H2>
+
+<P>
+
+ucd-snmp SNMP エージェントは、
+mib ツリーの 1.3.6.1.4.1.2021 セクションに対してクェリーを行い、
+多くの情報を表示する。
+このセクションの各 mib には以下のテーブルエントリがある。
+<DL COMPACT>
+<DT>.1 -- index<DD>
+以下にリストされた「ディレクティブ」に対するテーブルのインデックス番号。
+<DT>.2 -- name<DD>
+指定されたテーブルエントリの名前。
+これは他と重ならない方が良いが、重なっても構わない。
+<DT>.100 -- errorFlag<DD>
+このテーブルエントリにエラーが見つかった場合に、
+整数 1 または 0 を返すフラグ。
+<DT>.101 -- errorMsg<DD>
+上記の errorFlag を引き起こすエラーを説明する「表示文字列」。
+
+<DT>.102 -- errorFix<DD>
+このエントリが SNMPset から整数 1 で、
+かつ上で定義されている errorFlag が 1 の場合、
+上記のテーブルエントリ名を引き数として
+プログラムやスクリプトが実行される。
+
+実行されるプログラムはコンパイル時に config.h ファイルで設定される。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>ディレクティブ</H3>
+
+<DL COMPACT>
+<DT>proc NAME<DD>
+<DT>proc NAME MAX<DD>
+<DT>proc NAME MAX MIN<DD>
+<DT><DD>
+NAME という名前のプロセスが
+エージェントのマシンで稼働しているかをチェックする。
+NAME という名前のプログラムが
+&quot;/bin/ps -e&quot; で表示されるプロセステーブルにない場合、
+エラーフラグ (1) と説明のメッセージが
+mib コラムの 1.3.6.1.4.1.2021.2.1.100 と
+1.3.6.1.4.1.2021.2.1.101 に (それぞれ) 渡される。
+<DT><DD>
+MAX と MIN が指定されない場合、MAX は
+<B>infinity</B>
+
+(無限大) で MIN は 1 であると仮定される。
+<DT><DD>
+MAX は指定されているが、MIN は指定されていない場合、
+MIN は 0 であると仮定される。
+<DT>procfix NAME PROG ARGS<DD>
+このディレクティブは、NAME で指定されたプロセスで発生したエラーを
+修正するためのコマンドを登録する。
+NAME で指定されたプログラムに対して 1.3.6.1.4.1.2021.2.1.102 が
+整数値 1 に設定された場合、このコマンドが呼び出される。
+呼び出されるプログラムのデフォルトは、コンパイル時の値であり、
+config.h ファイルの PROCFIXCMD で定義される。
+<DT>exec NAME PROG ARGS<DD>
+<DT>exec MIBNUM NAME PROG ARGS<DD>
+<DT><DD>
+MIBNUM が指定されない場合、
+エージェントは PROG という名前のプログラムを引き数 ARGS を付けて実行し、
+プログラム PROG の終了ステータスと標準出力の 1 行目を返す。
+これらはそれぞれ mib コラムの 1.3.6.1.4.1.2021.8.1.100 と
+1.3.6.1.4.1.2021.8.1.101 の値をクェリーしたものである。
+標準出力の 1 行目以降は暗黙の内に省略される。
+<DT><DD>
+MIBNUM が指定された場合も、上と同じように動作するが、
+終了ステータスを MIBNUM.100.0 に返し、
+標準出力全体を mib テーブル内のテーブル MIBNUM.101 に返す。
+このとき MIBNUM.101 mib には標準出力への出力全体が入り、
+1 つの mib テーブルエントリには出力の 1 行分が入る
+(つまり、出力の第 1 行は MIBNUM.101.1、
+第 2 行は MIBNUM.101.2、... となる)。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>注意:<DD>
+MIBNUM はドット区切りの整数値表記でなければならない。
+(.1.3.6.1... の代わりに) &quot;.iso.org.dod.internet...&quot; のように
+指定することはできない。
+<DT>注意:<DD>
+エージェントは最初のクェリーを行った後、
+実行したプログラムの終了ステータスと標準出力を 30 秒間キャッシュする。
+これによりその後のテーブルのクェリーのスピードが上がり、
+情報の一貫性が管理できる。
+このキャッシュは 1.3.6.1.4.1.2021.100.VERCLEARCACHE を
+整数 (1) に設定する snmp-set 要求により消去される。
+</DL>
+</DL>
+
+<DT>execfix NAME PROG ARGS<DD>
+このディレクティブは NAME で指定された
+実行プログラムまたはシェルスクリプトで発生した
+エラーを修正するためのコマンドを登録する。
+NAME で指定したエントリに対して
+1.3.6.1.4.1.2021.8.1.102 が整数値 1 に設定されると、
+このコマンドが呼び出される。
+呼び出されるプログラムのデフォルトは、コンパイル時の値であり、
+config.h ファイルの EXECFIXCMD で定義される。
+<DT>disk PATH<DD>
+<DT>disk PATH [ MINSPACE | MINPERCENT% ]<DD>
+<DT><DD>
+PATH にマウントされたディスクの使用可能なディスク容量をチェックする。
+ディスク容量が MINSPACE (kB) より少ない場合、
+または % 記号を指定して MINPERCENT (%) より少ない場合、
+または DEFDISKMINIMUMSPACE (kB) が指定されていない場合、
+1.3.6.1.4.1.2021.9.1.100 mib テーブルの関連するエントリが (1) に設定され、
+エラーを説明するメッセージが
+1.3.6.1.4.1.2021.9.1.101 のクェリーによって返される。
+<DT>load MAX1<DD>
+<DT>load MAX1 MAX5<DD>
+<DT>load MAX1 MAX5 MAX15<DD>
+<DT><DD>
+マシンの平均負荷をチェックし、
+1 分間・5 分間・15 分間の平均がそれぞれの最大値を超えている場合は、
+1.3.6.1.4.1.2021.10.1.100 と 1.3.6.1.4.1.2021.10.1.101 をクェリーして、
+エラーフラグ (1) とテキスト文字列のエラーメッセージを返す。
+MAX1, MAX5, MAX15 の値のうち指定されていないものは、
+デフォルトの DEFMAXLOADAVE になる。
+<DT>file FILE [MAXSIZE]<DD>
+ファイルサイズを監視し、(キロバイトで) 指定されたサイズを
+超えてないかをチェックする。
+MAXSIZE が指定されていない場合のデフォルトは無限大になり、
+エラーを報告せずにサイズのみを監視する。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>エラー</H3>
+
+<P>
+
+上記の情報を取得するためのエラーは、
+1.3.6.1.4.1.2021.101.1.100 フラグと
+1.3.6.1.4.1.2021.101.1.101 テキスト文字列をクェリーして表示される。
+<A NAME="lbAH">&nbsp;</A>
+<H2>AGENTX サブエージェント</H2>
+
+snmp マスターエージェントで AgentX サポートを有効にするためには、
+snmpd.conf ファイルに以下のような行を書き込めばよい:
+<DL COMPACT>
+<DT>master agentx<DD>
+このサポートはまだ実験的なもので、製品版のシステムでは使用すべきではない。
+詳細は README.agentx を参照すること。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>SMUX サブエージェント</H2>
+
+<I>gated</I>
+
+のような SMUX ベースのサブエージェントを有効にするためには、
+以下のように
+<I>smuxpeer</I>
+
+設定エントリを使えばよい:
+<DL COMPACT>
+<DT>smuxpeer OID PASS<DD>
+<I>gated</I>
+
+についての実際のエントリは
+<I>smuxpeer .1.3.6.1.4.1.4.1.3 secret</I>
+
+のようになる。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>動的読み込み可能モジュール</H2>
+
+エージェントが UCD-DLMOD-MIB のサポートを組み込んでいる場合、
+エージェント MIB モジュールを
+起動時に <I>dlmod</I> ディレクティブを使って動的にロードしたり、
+実行中に UCD-DLMOD-MIB を使って動的にロードすることができる。
+以下のディレクティブは、モジュール名プレフィックスが NAME である
+共有オブジェクトモジュールファイル PATH をロードする。
+<DL COMPACT>
+<DT>dlmod NAME PATH<DD>
+<DT><DD>
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>アクセス制御</H2>
+
+snmpd は RFC 2275 で規定されている
+View-Based Access Control Model (vacm) をサポートしている。
+このため、snmpd は設定ファイルにある
+<I>com2sec</I>, <I>group</I>, <I>access</I>, <I>view</I> 
+というキーワードを認識する。
+また簡単に使用するためのラッパーディレクティブ
+<I>rocommunity</I>, <I>rwcommunity</I>, 
+<I>rouser</I>, <I>rwuser</I> も認識する。
+<DL COMPACT>
+<DT>rocommunity COMMUNITY [SOURCE] [OID]<DD>
+<DT>rwcommunity COMMUNITY [SOURCE] [OID]<DD>
+これらディレクティブは読み込みしかできないコミュニティと
+読み書きできるコミュニティを作成し、
+エージェントにアクセスするために使用する。
+これらは以下の <I>com2sec</I>, <I>group</I>, 
+<I>access</I>, <I>view</I> ディレクティブ行を簡単に使うための方法である。
+これらは効率的ではなく、グループが作成されないために
+テーブルが幾分大きくなる。
+言い換えれば、複雑な状態を設定する場合には使用してはならない、
+ということである。
+<DT><DD>
+SOURCE のフォーマットは、以下の <I>com2sec</I> ディレクティブセクションで
+説明されているトークンと同じである。
+OID トークンは、コミュニティのアクセスを、
+指定された OID 以下のものだけに制限する。
+<DT>rouser USER [noauth|auth|priv] [OID]<DD>
+<DT>rwuser USER [noauth|auth|priv] [OID]<DD>
+SNMPv3 USM ユーザーを VACM アクセス設定テーブルに作成する。
+これもまた、<I>com2sec</I>, <I>group</I>, <I>access</I>, <I>view</I> 
+ディレクティブを組み合わせて使用した方が効率的 (かつ強力) である。
+<DT><DD>
+ユーザーが使用しなければならない認証とプライバシーの最低レベルを
+最初のトークンで指定する (デフォルトは &quot;auth&quot; である)。
+OID パラメータは、そのユーザーのアクセスを、
+指定された OID 以下のものだけに制限する。
+<DT>com2sec NAME SOURCE COMMUNITY<DD>
+このディレクティブはソース (SOURCE) とコミュニティ (COMMUNITY) のペアから
+セキュリティ名 (NAME) へのマッピングを指定する。
+SOURCE はホスト名・サブネット・<I>&quot;default&quot;</I> である。
+サブネットは IP/MASK または IP/BITS で指定できる。
+入ってくるパケットにマッチするソースとコミュニティの組み合わせが選択される。
+<DT>group NAME MODEL SECURITY<DD>
+このディレクティブはセキュリティモデル (MODEL) と
+セキュリティ名 (SECURITY) のペアから
+グループ名 (NAME) へのマッピングを定義する。
+MODEL は <I>v1</I>, <I>v2c</I>, <I>usm</I> のいずれか 1 つである。
+<DT>access NAME CONTEXT MODEL LEVEL PREFX READ WRITE NOTIFY<DD>
+access ディレクティブはグループセキュリティと
+モデルセキュリティのレベルを、あるビュー (view) にマップする。
+MODEL は <I>any</I>, <I>v1</I>, <I>v2c</I>, <I>usm</I> のいずれか 1 つである。
+LEVEL は <I>noauth</I>, <I>auth</I>, <I>priv</I> のいずれか 1 つである。
+PREFX は入ってくる pdu の内容に対する
+CONTEXT のマッチの方法を指定するもので、
+<I>exact</I> または <I>prefix</I> である。
+READ, WRITE, NOTIFY はビューに対応するアクセス方法を指定するのに使われる。
+v1 または v2c のアクセスでは、LEVEL は noauth、
+CONTEXT は空文字列である。
+<DT>view NAME TYPE SUBTREE [MASK]<DD>
+このディレクティブは指定した名前のビュー (view) を定義する。
+TYPE は <I>included</I> または <I>excluded</I> である。
+MASK は 16 進数で表した 8 ビットを
+'.' または ':' で区切ってリストにしたものである。
+MASK が指定されていない場合のデフォルトは &quot;ff&quot; である。
+<DT><DD>
+マスクを使用する理由は、比較的簡単に
+テーブルの 1 つの行 (row) へのアクセスを制御することにある。
+例えば、ISP ではそれぞれの顧客に対して
+顧客ごとのインタフェースにアクセスさせたいと考えるかもしれない:
+<DT><DD>
+<PRE>
+view cust1 included interfaces.ifTable.ifEntry.ifIndex.1 ff.a0
+view cust2 included interfaces.ifTable.ifEntry.ifIndex.2 ff.a0
+<DT><DD>(interfaces.ifTable.ifEntry.ifIndex.1 == .1.3.6.1.2.1.2.2.1.1.1 で
+ff.a0 == 11111111.10100000 である。
+これは行インデックスをうまい具合いにカバーして含んでいるが、
+行フィールドの変更をユーザーに許可している。)
+<DT>VACM の例:<DD>#       sec.name  source          community
+com2sec local     localhost       private
+com2sec mynet     10.10.10.0/24   public
+com2sec public    default         public
+
+#             sec.model  sec.name
+group mygroup v1         mynet
+group mygroup v2c        mynet
+group mygroup usm        mynet
+group local   v1         local
+group local   v2c        local
+group local   usm        local
+group public  v1         public
+group public  v2c        public
+group public  usm        public
+
+#           incl/excl subtree                          mask
+view all    included  .1                               80
+view system included  system                           fe
+view mib2   included  .iso.org.dod.internet.mgmt.mib-2 fc
+
+#              context sec.model sec.level prefix read   write notify
+access mygroup &quot;&quot;      any       noauth    exact  mib2   none  none
+access public  &quot;&quot;      any       noauth    exact  system none  none
+access local   &quot;&quot;      any       noauth    exact  all    all   all
+<DT>デフォルトの VACM モデル<DD>最初の状態でのエージェントのデフォルトの設定は、
+機能的には以下のエントリと等価である:
+com2sec public  default public
+group   public  v1      public
+group   public  v2c     public
+group   public  usm     public
+view    all     included        .1
+access  public  &quot;&quot;      any     noauth  exact   all     none    none
+</DL>
+</PRE><A NAME="lbAL">&nbsp;</A>
+<H2>SNMPv3 設定</H2>
+
+<P>
+
+<DL COMPACT>
+<DT>engineID STRING<DD>
+snmpd エージェントが SNMPv3 メッセージに応答するためには
+engineID を設定する必要がある。
+設定ファイルにこの行があれば、STRING から engineID を設定する。
+engineID のデフォルト値は、マシンのホスト名に対して見つかる
+最初の IP アドレスに設定される。
+<DT>createUser username (MD5|SHA) authpassphrase [DES] [privpassphrase]<DD>
+このディレクティブは、他の場所にある通常の設定ファイルではなく、
+&quot;/var/ucd-snmp&quot;/snmpd.conf ファイルに書くべきである。
+その理由は、情報がこのファイルから読み込まれた後、
+この行が削除され (ユーザーのマスターパスワードの格納場所から消去されて)、
+この行から得られるキーに置き換えられるためである。
+このキーはローカルなキーであり、
+盗まれたとしても他のエージェントにアクセスするのには使えない。
+しかしパスワードが盗まれた場合は、他のエージェントにアクセスできる。
+<DT><DD>
+MD5 と SHA は使用される認証タイプであるが、
+SHA を使用するためにはインストールされている openssl を使って
+パッケージを作成しなければならない。
+現在のところプライバシープロトコルがサポートされているのは DES のみである。
+プライバシーパスフレーズが指定されていない場合、
+認証パスフレーズと同じであると仮定される。
+上で説明した VACM アクセス制御テーブルに入れなければ、
+作成したユーザーの使い道がない点に注意すること。
+<DT><DD>
+警告: パスフレーズは少なくとも 8 文字である。
+<DT><DD>
+<I>snmpusm</I>
+
+コマンドを用いれば、実行中に SNMPv3 ユーザーを作成することができる。
+<DT><DD>
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H2>システム情報の設定</H2>
+
+<DL COMPACT>
+<DT>syslocation STRING<DD>
+<DT>syscontact STRING<DD>
+<DT>sysname STRING<DD>
+エージェントが置かれているシステムの場所 (location)・
+連絡先 (contact)・名前 (name) を設定する。
+この情報は mibII ツリーの 'system' グループに設定される。
+通常、これらのオブジェクト (sysLocation.0, sysContact.0 and sysName.0) は
+読み書き可能である。
+ただし、これらのオブジェクトの値に適切なトークンを付加して指定すれば、
+そのオブジェクトを読み込みのみにすることができ、
+オブジェクトの値を設定しようとしたときに
+notWritable エラーレスポンスを返すようにできる。
+<DT>sysservices NUMBER<DD>
+system.sysServices.0 オブジェクトの値を設定する。
+ホストの場合は、72 がよい。
+<DT>agentaddress [(udp|tcp):]port[@address][,...]<DD>
+デフォルトの 161 番ポートではなく、
+指定したソケットのリストでエージェントのリストを作成する。
+複数のポートをコンマで区切って指定できる。
+トランスポート名 (&quot;udp&quot; または &quot;tcp&quot;)・コロン・ポート名のようにして、
+トランスポート名を指定できる。
+特定のインタフェースにバインドするために、
+アドレスを指定することができる。
+例えば
+<I>agentaddress 161,tcp:161,<A HREF="mailto:9161@localhost">9161@localhost</A></I>
+
+のように指定すれば、エージェントに対して、
+全てのアドレスの udp ポート 161・全てのアドレスの tcp ポート 161・
+localhost のアドレスに関連づけられた
+インタフェースの udp ポート 9161 を監視 (listen) させることができる。
+<I>-T</I>
+
+フラグを用いれば、
+使用するデフォルトのトランスポートマッピングを変更することができる
+(上記の例では、デフォルトのトランスポートマッピングは
+<I>udp</I>
+
+である)。
+<DT>agentgroup groupid<DD>
+ポートをオープンした後で、グループ ID を指定した値に変更する。
+groupid はグループ名またはグループ番号である。
+グループ番号の場合は '#' で始める。
+例えば
+<I>agentgroup snmp</I>
+
+の場合は、エージェントを snmp グループで動作させる。
+<I>agentgroup #10</I>
+
+の場合は、エージェントをグループ ID 10 番で動作させる。
+<DT>agentuser uid<DD>
+ポートをオープンした後で、ユーザー ID を指定した値に変更する。
+userid はユーザー名またはユーザー番号である。
+ユーザー番号の場合は '#' で始める。
+例えば
+<I>agentuser snmp</I>
+
+の場合は、エージェントをユーザー snmp で動作させる。
+<I>agentuser #10</I>
+
+の場合は、エージェントをユーザー ID 10 番で動作させる。
+<DT>interface NAME TYPE SPEED<DD>
+エージェントがタイプやスピードの推測に失敗したインタフェースに対して、
+このディレクティブで追加の情報を提供することができる。
+TYPE は IANAifType-MIB で指定されるタイプである。
+<DT>ignoredisk STRING<DD>
+使用可能なディスクデバイスをスキャンする場合、
+エージェントは使用可能なディスクデバイスをオープンするときに
+ブロックを行うことがある。
+これによってデバイスツリーを辿っているときにタイムアウトが起るかもしれない。
+次に辿ったときにタイムアウトになるかもしれないし、
+毎回タイムアウトになるかもしれない。
+<DT><DD>
+このような現象が起った場合は、このディレクティブを追加し、
+チェックしない (つまりオープンしない) 全てのデバイスを指定する。
+設定ファイルにこのディレクティブを 1 つ以上の指定して、
+オープンしない全てのデバイスを書き込む。
+bourne シェルの文法の似たワイルドカードを使って、
+デバイスを指定することもできる (下記の例を参照すること)。
+<DT><DD>
+<B>注意:</B>
+
+全てのシステムでスキャンされるデバイスのリストは、
+ソース (host/hr_disk.c) を見て、
+OS タイプに対応した Add_HR_Disk_entry() コールをチェックすること。
+<DT><DD>
+例:
+<DT><DD>
+ignoredisk /dev/rdsk/c0t2d0
+<DT><DD>
+このディレクティブは、
+デバイス /dev/rdsk/c0t2d0 をスキャンさせないようにする。
+<DT><DD>
+ignoredisk /dev/rdsk/c0t[!6]d0
+<DT><DD>
+このディレクティブは /dev/rdsk/c0t6d0 を除く /dev/rdsk/c0tXd0 の
+全てのデバイスをスキャンさせないようにする。 
+多くのシステムで同様なディレクティブとしては以下のものがある:
+<DT><DD>
+ignoredisk /dev/rdsk/c0t[0-57-9a-f]d0
+<DT><DD>
+ignoredisk /dev/rdsk/c1*
+<DT><DD>
+このディレクティブは、/dev/rdsk/c1 で始まる名前のデバイスを
+全てスキャンさせないようにする。
+<DT><DD>
+ignoredisk /dev/rdsk/c?t0d0
+<DT><DD>
+このディレクティブは、デバイス /dev/rdsk/cXt0d0 ('X' は任意の文字) を
+全てスキャンさせないようにする。
+<DT><DD>
+どのディレクティブにおいても、
+このようなワイルドカード表現を 2 つ以上使うことできる。
+<DT>authtrapenable NUMBER<DD>
+authtrapenable を 1 に設定すると、
+認証の失敗が起った場合にトラップを生成する。
+デフォルトの値は disabled(2) である。
+通常これに対応するオブジェクト
+(snmpEnableAuthenTraps.0) は読み書き可能であるが、
+このトークンを使って値を設定すると読み込みだけになり、
+オブジェクトの値を設定しようとした場合には
+notWritable エラーレスポンスを返す。
+<DT>trapcommunity STRING<DD>
+このコマンドはトラップを送るときに使う
+デフォルトのコミュニティ文字列を定義する。
+このコマンドはコミュニティ文字列を使う以下の 3 つのコマンドより
+前に使用しなければならない点に注意すること。
+<DT>trapsink HOST [COMMUNITY [PORT]]<DD>
+<DT>trap2sink HOST [COMMUNITY [PORT]]<DD>
+<DT>informsink HOST [COMMUNITY [PORT]]<DD>
+これらのコマンドはトラップを受信する (通知を送る先の) ホストを定義する。
+このデーモンは起動時に Cold Start トラップを送る。
+有効になっている場合は、認証が失敗したときにもトラップを送る。
+<I>trapsink</I>, <I>trap2sink</I>, <I>informsink</I> 行を複数指定すれば、
+複数の送信先を指定することができる。
+<I>trap2sink</I> は SNMPv2 トラップを送るのに使う。
+<I>informsink</I> は通知を発行するのに使う。
+COMMUNITY が指定されていない場合、
+以前に <I>trapcommunity</I> ディレクティブで指定した文字列が使われる。
+PORT が指定されていない場合、
+良く知られている SNMP トラップポート (162) が使われる。
+<DT>trapsess [SNMPCMD_ARGS] HOST [COMMUNITY]<DD>
+これはより基本的なトラップ設定トークンで、
+任意のトラップ送信先タイプと任意の SNMP バージョンを指定できる。
+<I>SNMPCMD ARGS</I>
+
+として渡される引き数のより詳しい情報は、
+<I>snmpcmd(1)</I>
+
+の man ページを参照すること。
+ここで挙げた引き数に加えて、特別な引き数 <I>-Ci</I> があり、
+unacknowledged トラップではなく通知を使用することを指定する。
+(この引き数を指定するには、
+バージョン番号 v2c または v3 を指定する必要がある)。
+</DL>
+<A NAME="lbAN">&nbsp;</A>
+<H2>プロキシのサポート</H2>
+
+<DL COMPACT>
+<DT>proxy [SNMPCMD ARGS] HOST OID [REMOTEOID]<DD>
+<B>警告:</B>
+
+この機能はサポートはβ版である。
+<DT><DD>
+このトークンは受信した OID 以下の任意のリクエストを HOST に中継して渡す。
+通常はローカルの OID ツリーを新しい  REMOTEOID という場所に変更する。
+HOST で認証されるためには、適切な
+<I>SNMPCMD ARGS</I>
+
+のセットを使わなければならない。
+詳細は snmpcmd の man ページを参照すること。
+<DT><DD>
+例:
+<DT><DD>
+proxy -v 1 -c public remotehost .1.3.6.1.4.1.2021
+<DT><DD>
+proxy -v 3 -l noAuthNoPriv -u user remotehost .1.3.6.1.3.10 .1.3.6.1.2.1.1
+</DL>
+<A NAME="lbAO">&nbsp;</A>
+<H2>パススルー制御</H2>
+
+<DL COMPACT>
+<DT>pass MIBOID EXEC<DD>
+MIBOID の全制御を EXEC プログラムに渡す。
+EXEC プログラムは以下の 3 つのうちの 1 つの方法で呼び出す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>EXEC -g MIBOID<DD>
+<DT>EXEC -n MIBOID<DD>
+<DT><DD>
+これらの呼び出しは SNMP get と getnext リクエストにマッチする。
+EXEC プログラムは渡された引き数を受け取り、
+レスポンスを標準出力に返すと仮定されている。
+<DT><DD>
+標準出力の 1 行目は返り値の mib OID である。
+2 行目は返される値の TYPE である。
+TYPE はテキスト文字列
+<B>string</B>, <B>integer</B>, <B>unsigned</B>, <B>objectid</B>, 
+
+<B>timeticks</B>, <B>ipaddress</B>, <B>counter</B>, <B>gauge</B>
+
+のうちの 1 つである。
+標準出力の 3 行目は返された TYPE に対応する VALUE である。
+<DT><DD>
+例えば .1.3.6.1.4.100 へリクエストが送られたときに
+スクリプトが整数値 &quot;42&quot; を返す場合、
+スクリプトは以下の 3 行を返さなければならない:
+<BR>
+
+<DL COMPACT><DT><DD>
+<BR>&nbsp;&nbsp;.1.3.6.1.4.100
+<BR>
+
+<BR>&nbsp;&nbsp;integer
+<BR>
+
+<BR>&nbsp;&nbsp;42
+</DL>
+
+<DT><DD>
+end-of-mib 条件や不正なリクエスが原因で、
+スクリプトが応答できないことを表すには、
+単純に exit して標準出力に何も返さなければよい。
+SNMP NO-SUCH-NAME レスポンスに対応する snmp エラーが生成される。
+<DT>EXEC -s MIBOID TYPE VALUE<DD>
+<DT><DD>
+SNMP set リクエストを送るには、上の方法を用いる。
+EXEC プログラムに渡される TYPE は、テキスト文字列
+<B>integer</B>, <B>counter</B>, <B>gauge</B>, <B>timeticks</B>, 
+
+<B>ipaddress</B>, <B>objid</B>, <B>string</B>
+
+のうちの 1 つである。
+これらは次の引き数で渡される VALUE のタイプを表す。
+<DT><DD>
+標準出力に何も返さなかった場合は、set が成功したものと仮定する。
+それ以外の場合としては、エラーを示すために
+<B>not-writable</B>
+
+または
+<B>wrong-type</B>
+
+のいずれかの文字列を返すことがあり、
+適当なエラーレスポンスが生成される。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>注意:<DD>
+デフォルトでは、ユーザーのスクリプトで
+write (つまり snmpset) が許可されるコミュニティは、
+&quot;private&quot; コミュニティと
+上で説明した &quot;community&quot; トークンで別に定義した
+コミュニティ #2 のみである。
+どのコミュニティに書き込みアクセスを許可するかは、
+ソースファイル snmplib/snmp_impl.h の
+RWRITE 定義で制御できる。
+</DL>
+</DL>
+
+</DL>
+</DL>
+
+<DT><DD>
+(snmpd.conf における) 例:
+<DT><DD>
+pass .1.3.6.1.4.1.2021.255 /path/to/local/passtest
+
+<DT>pass_persist MIBOID EXEC<DD>
+MIBOID の全ての制御を EXEC プログラムに渡す。
+pass と似ているが、EXEC プログラムは
+最初のリクエストに返答した後も稼働し続ける。
+<DT><DD>
+初期化の際には、EXEC に対して標準入力から文字列 &quot;PING\n&quot; が渡され、
+標準出力に &quot;PONG\n&quot; を表示して返答する。
+<DT><DD>
+get または getnext リクエストを送るには、
+EXEC プログラムにコマンド (get または getnext) と
+mib OID という 2 行を渡す。
+EXEC プログラムは、mib OID・返される VALUE の TYPE・
+返された TYPE に対応する VALUE という 3 行を返す。
+<DT><DD>
+例えば、.1.3.6.1.4.100 の値をリクエストする場合は、
+標準入力に以下の 2 行を渡す。
+<BR>
+
+<DL COMPACT><DT><DD>
+<BR>&nbsp;&nbsp;get
+<BR>
+
+<BR>&nbsp;&nbsp;.1.3.6.1.4.100&nbsp;&nbsp;
+</DL>
+
+<DT><DD>
+値、つまり 42 を返すために、スクリプトは以下のような書き出しを行う:
+<BR>
+
+<DL COMPACT><DT><DD>
+<BR>&nbsp;&nbsp;.1.3.6.1.4.100
+<BR>
+
+<BR>&nbsp;&nbsp;integer
+<BR>
+
+<BR>&nbsp;&nbsp;42
+</DL>
+
+<DT><DD>
+end-of-mib 条件または不正なリクエストが原因で、
+スクリプトがリクエストに応答できないことを表すには、
+標準出力に &quot;NONE\n&quot; を書き出す。
+<DT><DD>
+(snmpd.conf における) 例:
+<DT><DD>
+pass_persist .1.3.6.1.4.1.2021.255 /path/to/local/pass_persisttest
+
+</DL>
+<A NAME="lbAP">&nbsp;</A>
+<H2>例</H2>
+
+上記の情報が実際の例でどのように使われているかについては、
+ソースのトップディレクトリにある EXAMPLE.CONF ファイルを参照すること。
+<A NAME="lbAQ">&nbsp;</A>
+<H2>snmpd.conf と snmpd.local.conf の再読み込み</H2>
+
+ucd-snmp エージェントは設定ファイルを再読み込みさせることが可能である。
+以下の 2 つのうちの 1 つを実行すればよい:
+<DL COMPACT>
+<DT>1.<DD>
+snmpset で UCD-SNMP-MIB::versionUpdateConfig.0
+(.1.3.6.1.4.1.2021.100.11.0) を整数 (1) に設定する。
+<DT>2.<DD>
+snmpd エージェントプロセスに &quot;kill -HUP&quot; シグナルを送る。
+</DL>
+<A NAME="lbAR">&nbsp;</A>
+<H2>ファイル</H2>
+
+/usr/share/snmp/snmpd.conf
+<A NAME="lbAS">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man1/snmpconf.1.html">snmpconf</A>(1), <A HREF="../man5/snmp.conf.5.html">snmp.conf</A>(5), <A HREF="../man5/snmp_config.5.html">snmp_config</A>(5), snmpd(1), EXAMPLE.conf, read_config(3).
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">最初にお読みください</A><DD>
+<DT><A HREF="#lbAE">拡張可能 MIB</A><DD>
+<DL>
+<DT><A HREF="#lbAF">ディレクティブ</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+</DL>
+<DT><A HREF="#lbAH">AGENTX サブエージェント</A><DD>
+<DT><A HREF="#lbAI">SMUX サブエージェント</A><DD>
+<DT><A HREF="#lbAJ">動的読み込み可能モジュール</A><DD>
+<DT><A HREF="#lbAK">アクセス制御</A><DD>
+<DT><A HREF="#lbAL">SNMPv3 設定</A><DD>
+<DT><A HREF="#lbAM">システム情報の設定</A><DD>
+<DT><A HREF="#lbAN">プロキシのサポート</A><DD>
+<DT><A HREF="#lbAO">パススルー制御</A><DD>
+<DT><A HREF="#lbAP">例</A><DD>
+<DT><A HREF="#lbAQ">snmpd.conf と snmpd.local.conf の再読み込み</A><DD>
+<DT><A HREF="#lbAR">ファイル</A><DD>
+<DT><A HREF="#lbAS">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:46 GMT, December 05, 2022
+</BODY>
+</HTML>

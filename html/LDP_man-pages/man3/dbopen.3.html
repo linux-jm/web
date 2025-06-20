@@ -1,0 +1,330 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DBOPEN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>DBOPEN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/dbopen.3">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+dbopen - データベースアクセスメソッド
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
+
+<B>DB *dbopen(const char *</B><I>file</I><B>, int </B><I>flags</I><B>, int </B><I>mode</I><B>, DBTYPE </B><I>type</I><B>,</B>
+<B>           const void *</B><I>openinfo</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>大事な注意</I>:
+このページは、バージョン 2.1 までの glibc が提供するインターフェースに
+ついて説明している。バージョン 2.2 以降の glibc では、もはやこれらの
+インターフェースは提供されていない。おそらく、このページではなく、
+<I>libdb</I> ライブラリが提供する API をお探しなのだろう。
+<P>
+
+<B>dbopen</B>()  はデータベースファイルに対するライブラリインターフェースである。 サポートされているファイルフォーマットは btree,
+hash, UNIX ファイルに指向したフォーマット, の 3 つである。 btree フォーマットは、ソートされたバランスツリー構造である。
+hashed フォーマットは、拡張可能な動的 hash スキームである。 フラットファイル (flat-file) フォーマットは、
+固定長/可変長のレコードからなるバイトストリームファイルである。 それぞれのフォーマットと、ファイルフォーマットに特有の情報は
+それぞれ対応するマニュアルページ <B><A HREF="../man3/btree.3.html">btree</A></B>(3), <B><A HREF="../man3/hash.3.html">hash</A></B>(3), <B><A HREF="../man3/recno.3.html">recno</A></B>(3)  に詳細に記述されている。
+<P>
+
+<B>dbopen</B>()  は <I>file</I> を読み込み (読み書き) するためにオープンする。 <I>file</I> 引数を NULL にすれば、
+ディスク上に保存したくないファイルを作ることもできる。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<I>flags</I> と <I>mode</I> 引数は <B><A HREF="../man2/open.2.html">open</A></B>(2)  ルーチンで指定するのと同様である。ただし 意味を持つフラグは
+<B>O_CREAT</B>, <B>O_EXCL</B>, <B>O_EXLOCK</B>, <B>O_NONBLOCK</B>, <B>O_RDONLY</B>, <B>O_RDWR</B>,
+<B>O_SHLOCK</B>, <B>O_TRUNC</B> だけである。 (注意: <B>O_WRONLY</B> でデータベースファイルを開く事は出来ない)
+<P>
+
+<I>type</I> 引数は <I>DBTYPE</I> 型である (インクルードファイル <I>&lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;</I> で定義されている)。
+<B>DB_BTREE</B>, <B>DB_HASH</B>, <B>DB_RECNO</B> のいずれかをセットできる。
+<P>
+
+<I>openinfo</I> 引数はアクセスメソッドに固有な構造体へのポインターである。 それぞれの構造体に関しては各アクセスメソッドの
+マニュアルページに記述されている。 <I>openinfo</I> が NULL の場合、それぞれのアクセスメソッドとシステムとに適合した
+デフォルトが用いられる。
+<P>
+
+<B>dbopen</B>()  は、成功した場合 <I>DB</I> 構造体へのポインターを、エラーの場合 NULL を返す。 <I>DB</I> 構造体は
+<I>&lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;</I> インクルードファイルの中で定義されており、 少なくとも以下のようなフィールドを持っている。
+<P>
+
+
+
+typedef struct {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;DBTYPE&nbsp;type;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;(*close)(const&nbsp;DB&nbsp;*db);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;(*del)(const&nbsp;DB&nbsp;*db,&nbsp;const&nbsp;DBT&nbsp;*key,&nbsp;unsigned&nbsp;int&nbsp;flags);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;(*fd)(const&nbsp;DB&nbsp;*db);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;(*get)(const&nbsp;DB&nbsp;*db,&nbsp;DBT&nbsp;*key,&nbsp;DBT&nbsp;*data,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;flags);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;(*put)(const&nbsp;DB&nbsp;*db,&nbsp;DBT&nbsp;*key,&nbsp;const&nbsp;DBT&nbsp;*data,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;flags);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;(*sync)(const&nbsp;DB&nbsp;*db,&nbsp;unsigned&nbsp;int&nbsp;flags);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;(*seq)(const&nbsp;DB&nbsp;*db,&nbsp;DBT&nbsp;*key,&nbsp;DBT&nbsp;*data,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;flags);
+} DB;
+
+
+<P>
+
+各要素には、データベースのタイプと、 様々な動作をする関数のセットが記述されている。 これらの関数は <B>dbopen</B>()
+によって返される構造体へのポインターを引数にとる。 キー/データ構造体へのポインターやフラグ値を取るものもある。
+<DL COMPACT>
+<DT><I>type</I><DD>
+用いられているアクセスメソッド (とファイルフォーマット) の型。
+<DT><I>close</I><DD>
+キャッシュされた情報をディスクに掃きだすためのルーチンへのポインター。 割り当てられたリソースを解放し、利用したファイル(群)をクローズする。
+キー/データ対がメモリーにキャッシュされている場合、 <I>close</I> や <I>sync</I>
+関数での同期に失敗すると、情報に矛盾が生じるか情報を失う可能性がある。 <I>close</I> ルーチンはエラーの場合 -1 を返し (<I>errno</I>
+をセットする)、成功すると 0 を返す。
+<DT><I>del</I><DD>
+データベースからキー/データ対を削除するルーチンへのポインター。
+<DT><DD>
+<I>flag</I> 引数は次の値がセットできる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>R_CURSOR</B><DD>
+カーソル (cursor) が参照しているレコードを削除する。 カーソルは前もって初期化されていなくてはならない。
+</DL>
+</DL>
+
+<DT><DD>
+<I>delete</I> ルーチンはエラーの場合 -1 を返し (<I>errno</I> をセットする)、成功すると 0 を返す。また指定の <I>key</I>
+がファイル中に無い場合 1 を返す。
+<DT><I>fd</I><DD>
+用いているデータベースのファイルディスクリプターを返すルーチン へのポインター。 同じファイル名 <I>file</I> で <B>dbopen</B>()
+を呼び出した全てのプロセスに対して、 そのファイルを示す単一のファイルディスクリプターが返される。 このファイルディスクリプターはロック関数
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  と <B><A HREF="../man2/flock.2.html">flock</A></B>(2)  への引数として安全に使用できる。 このファイルディスクリプターは、必ずしもアクセスメソッドで
+用いられているファイルのいずれかに関連づけられていなくても良い。 メモリー内のデータベースにはファイルディスクリプターは無い。 <I>fd</I>
+ルーチンはエラーの場合 -1 を返し (<I>errno</I> をセットする)、成功するとファイルディスクリプターを返す。
+<DT><I>get</I><DD>
+データベースからキーを用いてデータを取り出すための ルーチンへのポインター。 指定した <I>key</I> に関連づけられたデータのアドレスと長さが
+<I>data</I> が参照する構造体に返される。 <I>get</I> ルーチンはエラーの場合 -1 を返し (<I>errno</I> をセットする)、成功すると 0
+を返す。また <I>key</I> がファイル中に無い場合 1 を返す。
+<DT><I>put</I><DD>
+キー/データ対をデータベースに納めるルーチンへのポインター。
+<DT><DD>
+<I>flag</I> 引数には次の値のうちのどれか一つがセットできる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>R_CURSOR</B><DD>
+カーソルが参照しているキー/データ対を置き換える。 カーソルは前もって初期化されている必要がある。
+<DT><B>R_IAFTER</B><DD>
+<I>key</I> で参照されるデータの直後に、 新しいキー/データ対を作ってデータを追加する。 追加されたキー/データ対のレコード番号は <I>key</I>
+構造体に返される。 (<B>DB_RECNO</B> アクセス方法でのみ使える。)
+<DT><B>R_IBEFORE</B><DD>
+<I>key</I> で参照されるデータの直前に、 新しいキー/データ対を作ってデータを挿入する。 追加されたキー/データ対のレコード番号は <I>key</I>
+構造体に返される。 (<B>DB_RECNO</B> アクセスメソッドでのみ使える。)
+<DT><B>R_NOOVERWRITE</B><DD>
+キーがあらかじめ存在しない場合に限り、新しいキー/データ対をいれる。
+<DT><B>R_SETCURSOR</B><DD>
+キー/データ対を納め、それを指すようにカーソル位置をセットあるいは初期 化する。 (<B>DB_BTREE</B> と <B>DB_RECNO</B>
+アクセスメソッドでのみ使える。)
+</DL>
+</DL>
+
+<DT><DD>
+<B>R_SETCURSOR</B> は <B>DB_BTREE</B> と <B>DB_RECNO</B> アクセスメソッドでしか利用できない。 なぜなら
+<B>R_SETCURSOR</B> を用いるには、変更される事の無い固有の順序をキー が持っていなければならないからである。
+<DT><DD>
+<B>R_IAFTER</B> と <B>R_IBEFORE</B> は <B>DB_RECNO</B> アクセスメソッドでしか利用できない。
+これらを実現するには、アクセスメソッドが 新しいキーを作れなければならないからである。 これが成立するのは、例えば、順序づけらた独立なレコード番号が
+キーになっているような場合だけである。
+<DT><DD>
+<I>put</I> ルーチンのデフォルトの動作は、新しいキー/データ対を 既に存在するキーを置き換える事て格納する動作である。
+<DT><DD>
+<I>put</I> ルーチンはエラーの場合 -1 を返し (<I>errno</I> をセットする)、成功すると 0 を返す。また <I>flag</I> に
+<B>R_NOOVERWRITE</B> がセットされていてキーが既に存在する場合 1 を返す。
+<DT><I>seq</I><DD>
+データベースからシーケンシャルにデータを取り出すための ルーチンへのポインター。 キーのアドレスと長さが <I>key</I>
+が参照する構造体に返される。データのアドレスと長さが <I>data</I> が参照する構造体に返される。
+<DT><DD>
+シーケンシャルなキー/データ対の取得はいつでも行える。また 「カーソル」の位置は <I>del</I>, <I>get</I>, <I>put</I>, <I>sync</I>
+ルーチンの呼び出しには影響されない。 シーケンシャルなスキャンの途中に行われたデータベースへの変更は
+スキャンに反映される。すなわち、カーソルの後ろに挿入されたレコードは 返されないが、カーソルの前に挿入されたレコードは返される。
+<DT><DD>
+フラグ値には<B>必ず</B>以下に示すうちの どれか一つをセットしなければならない。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>R_CURSOR</B><DD>
+指定したキーに関連づけられたデータが返される。 <I>get</I> ルーチンとの違いは、カーソルがキーの位置にセットあるいは 初期化される点である。 (注意:
+<B>DB_BTREE</B> アクセス方法では、返されたキーが 必ずしも指定したキーに正しくマッチしないかもしれない。
+返されたキーは、指定されたキーに等しいかより大きいもののうち 最小のものになる (部分キーマッチか範囲検索が許可されている場合)。)
+<DT><B>R_FIRST</B><DD>
+データベースの最初のキー/データ対が返される。 カーソルはそれを参照するようにセットまたは初期化される。
+<DT><B>R_LAST</B><DD>
+データベースの最後のキー/データ対が返される。カーソルはそれを参照する ようにセットまたは初期化される。 (<B>DB_BTREE</B> と
+<B>DB_RECNO</B> アクセスメソッドだけで使える。)
+<DT><B>R_NEXT</B><DD>
+カーソル直後のキー/データ対を取得する。 カーソルがセットされていない場合は <B>R_FIRST</B> フラグと同じ。
+<DT><B>R_PREV</B><DD>
+カーソル直前のキー/データ対を取得する。 カーソルがセットされていない場合は <B>R_LAST</B> フラグと同じ。 (<B>DB_BTREE</B> と
+<B>DB_RECNO</B> アクセスメソッドだけで使える。)
+</DL>
+</DL>
+
+<DT><DD>
+<B>R_LAST</B> と <B>R_PREV</B> は、 <B>DB_BTREE</B> と <B>DB_RECNO</B> アクセス方法でしか使えない。 なぜなら
+<B>R_SETCURSOR</B> を用いるには、変更される事の無い固有の順序をキーが持っていなければならないからである。
+<DT><DD>
+<I>seq</I> ルーチンはエラーの場合 -1 を返し (<I>errno</I> をセットする)、 成功の場合 0 を返す。
+指定したキーやカレントキーよりも大きい/小さいキー/データ対がない場合は 1 を返す。 <B>DB_RECNO</B> アクセスメソッドを使っていて、
+かつデータベースファイルが文字型のスペシャルファイルで、 完成しているキー/データ対が無い場合には、 <I>seq</I> ルーチンは 2 を返す。
+<DT><I>sync</I><DD>
+キャッシュされた情報をディスクに掃き出すルーチンへのポインター。 データベースがメモリーの中だけにある場合、 <I>sync</I>
+ルーチンは何の効果もなく常に成功する。
+<DT><DD>
+flag には以下の値がセットできる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>R_RECNOSYNC</B><DD>
+<B>DB_RECNO</B> アクセスメソッドを使っている場合に このフラグをセットすると、 recno ファイルそのものにではなく、 そのベースになっている
+btree ファイルに sync が行われる。 (詳細は <B><A HREF="../man3/recno.3.html">recno</A></B>(3)  マニュアルページで <I>bfname</I>
+フィールドを説明している部分を参照のこと。)
+</DL>
+</DL>
+
+<DT><DD>
+<I>sync</I> ルーチンはエラーの場合 -1 を返し (<I>errno</I> をセットする)、成功すると 0 を返す。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>キー/データ対</H3>
+
+全てのファイルタイプにおいて、 キー/データ対をベースにしてアクセスが行われる。 キーとデータのいずれも、次のデータ構造で記述される。
+<P>
+
+
+
+typedef struct {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;*data;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;size;
+} DBT;
+
+
+<P>
+
+<I>DBT</I> 構造体の各要素は次のように定義されている。
+<DL COMPACT>
+<DT><I>data</I><DD>
+バイト文字列へのポインター。
+<DT><I>size</I><DD>
+バイト文字列の長さ。
+</DL>
+<P>
+
+キーとデータのバイト文字列は、 基本的には無制限の長さの文字列を参照できるが、 しかしいずれも使用可能なメモリーに収まっていなくてはならない。
+アクセスメソッドはバイト文字列のアラインメントについては 何も保証していない事に注意すること。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>dbopen</B>()  ルーチンは失敗するとライブラリルーチン <B><A HREF="../man2/open.2.html">open</A></B>(2)  と <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  で指定されているエラーに応じた
+<I>errno</I> をセットする。あるいは以下をセットする。
+<DL COMPACT>
+<DT><B>[EFTYPE]</B><DD>
+ファイルが正しくフォーマットされていない。
+<DT><B>EINVAL</B><DD>
+指定したパラメーター (ハッシュ関数、バイト埋めなど) が現在のファイル仕様
+に合っていない、パラメーターが関数にとって無意味 (例えば、あらかじめ初期
+化しないでカーソルを使うとか)、ファイルとソフトウェアのバージョンが
+合っていない。
+</DL>
+<P>
+
+<I>close</I> ルーチンは失敗するとライブラリルーチン <B><A HREF="../man2/close.2.html">close</A></B>(2), <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2),
+<B><A HREF="../man3/free.3.html">free</A></B>(3), <B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)  で指定されているエラーに応じた <I>errno</I> をセットする。
+<P>
+
+<I>del</I>, <I>get</I>, <I>put</I>, <I>seq</I> ルーチンは失敗するとライブラリルーチン <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2),
+<B><A HREF="../man3/free.3.html">free</A></B>(3), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  で指定されているエラーに応じた <I>errno</I> をセットする。
+<P>
+
+<I>fd</I> ルーチンはメモリー内データベースに対し失敗すると <I>errno</I> に <B>ENOENT</B> をセットする。
+<P>
+
+<I>sync</I> ルーチンは失敗するとライブラリルーチン <B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)  で指定されているエラーに応じた <I>errno</I> をセットする。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+typedef <I>DBT</I> は ``data base thang''の略語であるが、これが使われているのは、
+まだ使われていない妥当な名前が思い付かなかったためである。
+<P>
+
+ファイルディスクリプターを使ったやりとりはひどい代物であり、 将来のバージョンでは削除されるだろう。
+<P>
+
+どのアクセスメソッドも、同時アクセス、ロック、トランザクション の仕組みは備えていない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/btree.3.html">btree</A></B>(3), <B><A HREF="../man3/hash.3.html">hash</A></B>(3), <B><A HREF="../man3/mpool.3.html">mpool</A></B>(3), <B><A HREF="../man3/recno.3.html">recno</A></B>(3)
+<P>
+
+<I>LIBTP: Portable, Modular Transactions for UNIX</I>, Margo Seltzer, Michael
+Olson, USENIX proceedings, Winter 1992.
+<A NAME="lbAI">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">キー/データ対</A><DD>
+</DL>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

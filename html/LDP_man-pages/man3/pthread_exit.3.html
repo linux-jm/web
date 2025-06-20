@@ -1,0 +1,132 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_EXIT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_EXIT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/pthread_exit.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_exit - 呼び出したスレッドを終了する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<B>void pthread_exit(void *</B><I>retval</I><B>);</B>
+
+<I>-pthread</I> でコンパイルしてリンクする。
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pthread_exit</B>() 関数は、呼び出したスレッドを終了し、 <I>retval</I> 経由で値を返す。この値は (そのスレッドが join
+可能な場合に) <B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3) を呼び出した同じプロセス内の別のスレッドが参照できる値と同じである。
+<P>
+
+<B><A HREF="../man3/pthread_cleanup_push.3.html">pthread_cleanup_push</A></B>(3) で設定されたクリーンアップハンドラーのうち、まだ pop (取り出されていない) ハンドラーを
+(push されたのと逆の順序で)
+取り出して実行する。そのスレッドがスレッド固有のデータを持っている場合は、クリーンアップハンドラーが実行された後に、スレッド固有のデータに対応するデストラクタ
+(destructor) 関数が呼び出される (呼び出し順序は規定されていない)。
+<P>
+
+スレッドが終了する際に、プロセスの共有リソース (例えば、mutex、状態変数 (condition
+variables)、セマフォ、ファイルディスクリプター) は解放されない。 <B><A HREF="../man3/atexit.3.html">atexit</A></B>(3) を使って登録された関数は呼び出されない。
+<P>
+
+プロセスの最後のスレッドが終了すると、そのプロセスは、終了ステータス 0 で <B><A HREF="../man3/exit.3.html">exit</A></B>(3)
+を呼び出した場合と全く同じように終了する。したがって、プロセスの共有リソースは解放され、<B><A HREF="../man3/atexit.3.html">atexit</A></B>(3) を使って登録された関数が呼び出される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+この関数は呼び出し側には返らない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+この関数は常に成功する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>pthread_exit</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+メインスレッド以外のスレッドの開始関数 (start function) がreturn を
+行うと、暗黙のうちに <B>pthread_exit</B>() が呼び出され、
+関数の返り値がスレッドの終了ステータスとして使用される。
+<P>
+
+他のスレッドが実行を継続できるように、メインスレッドは <B><A HREF="../man3/exit.3.html">exit</A></B>(3) では
+なく <B>pthread_exit</B>() を呼び出して終了すべきである。
+<P>
+
+<I>retval</I> が指す値は、呼び出したスレッドのスタックに置くべきではない。
+呼び出したスレッドが終了した後は、そのスタックの内容が不定となるから
+である。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+
+現在のところ、停止 (stop) されたスレッドグループを、すでに終了した
+(dead) スレッドグループリーダーで <B><A HREF="../man2/wait.2.html">wait</A></B>(2) する場合の、
+カーネル実装の論理には制限がある。
+この制限は、すでにスレッドグループリーダーが <B>pthread_exit</B>() を
+呼び出しているようなフォアグラウンドプロセスにストップシグナルが送信
+された場合に、端末がロックされてしまう、といった問題として表に見える
+場合がある。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3), <B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,625 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_ATTR_INIT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_ATTR_INIT</H1>
+Section: C Library Functions (3)<BR>Updated: LinuxThreads<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/glibc-linuxthreads/release/man3/pthread_attr_init.3">roff page</A><HR>
+
+<P>
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_attr_init, pthread_attr_destroy, pthread_attr_setdetachstate, pthread_attr_getdetachstate, 
+pthread_attr_setschedparam, pthread_attr_getschedparam, pthread_attr_setschedpolicy, pthread_attr_getschedpolicy, 
+pthread_attr_setinheritsched, pthread_attr_getinheritsched, pthread_attr_setscope, pthread_attr_getscope 
+- スレッド生成時の属性
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<P>
+<B>int pthread_attr_init(pthread_attr_t *</B><I>attr</I><B>);</B>
+
+<P>
+<B>int pthread_attr_destroy(pthread_attr_t *</B><I>attr</I><B>);</B>
+
+<P>
+<B>int pthread_attr_setdetachstate(pthread_attr_t *</B><I>attr</I><B>, int </B><I>detachstate</I><B>);</B>
+
+<P>
+<B>int pthread_attr_getdetachstate(const pthread_attr_t *</B><I>attr</I><B>, int *</B><I>detachstate</I><B>);</B>
+
+<P>
+<B>int pthread_attr_setschedpolicy(pthread_attr_t *</B><I>attr</I><B>, int </B><I>policy</I><B>);</B>
+
+<P>
+<B>int pthread_attr_getschedpolicy(const pthread_attr_t *</B><I>attr</I><B>, int *</B><I>policy</I><B>);</B>
+
+<P>
+<B>int pthread_attr_setschedparam(pthread_attr_t *</B><I>attr</I><B>, const struct sched_param *</B><I>param</I><B>);</B>
+
+<P>
+<B>int pthread_attr_getschedparam(const pthread_attr_t *</B><I>attr</I><B>, struct sched_param *</B><I>param</I><B>);</B>
+
+<P>
+<B>int pthread_attr_setinheritsched(pthread_attr_t *</B><I>attr</I><B>, int </B><I>inherit</I><B>);</B>
+
+<P>
+<B>int pthread_attr_getinheritsched(const pthread_attr_t *</B><I>attr</I><B>, int *</B><I>inherit</I><B>);</B>
+
+<P>
+<B>int pthread_attr_setscope(pthread_attr_t *</B><I>attr</I><B>, int </B><I>scope</I><B>);</B>
+
+<P>
+<B>int pthread_attr_getscope(const pthread_attr_t *</B><I>attr</I><B>, int *</B><I>scope</I><B>);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+スレッドの属性を設定するには、
+<B>pthread_attr_t</B>
+
+型のスレッド属性オブジェクト
+<I>attr</I>
+
+に値を格納し、
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3)
+
+の第 2 引数として渡せばよい。
+<B>NULL</B>
+
+を渡すことは、
+すべての属性がデフォルトに設定されたスレッド属性オブジェクトを
+渡すのと同等である。
+<P>
+<B>pthread_attr_init</B>
+
+はスレッド属性オブジェクト
+<I>attr</I>
+
+を初期化して、各属性のデフォルトの値を格納する。
+( 各属性のデフォルト値は下を参照のこと。 )
+<P>
+それぞれの属性
+<I>attrname</I>
+
+( 全属性のリストは下を参照のこと ) は、
+関数
+<B>pthread_attr_set</B><I>attrname</I>
+
+で個別に設定したり、
+<B>pthread_attr_get</B><I>attrname</I>
+
+で個別に取得したりすることが可能である。
+<P>
+<B>pthread_attr_destroy</B>
+
+はスレッド属性オブジェクトを破壊する。
+破壊したオブジェクトは、再初期化するまでは
+再び使用してはならない。
+<B>pthread_attr_destroy</B>
+
+は LinuxThreads の実装では何もしない。
+<P>
+属性オブジェクトは新しいスレッドを生成するときにだけ参照される。
+複数のスレッドの生成に同じ属性オブジェクトを使用することもできる。
+<B>pthread_create</B>
+
+の呼び出しの後に属性オブジェクトを変更しても、
+すでに生成されたスレッドの属性は変化しない。
+<P>
+次のようなスレッド属性に対応している:
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H3>detachstate (デタッチ状態)</H3>
+
+<P>
+スレッドが合流可能な状態で生成される (
+<B>PTHREAD_CREATE_JOINABLE</B>)
+
+か、デタッチ状態で生成される (
+<B>PTHREAD_CREATE_DETACHED</B>)
+
+かを制御する。
+<P>
+デフォルト値: 
+<B>PTHREAD_CREATE_JOINABLE</B>
+
+。
+<P>
+合流可能な状態の場合、
+別のスレッドが
+<B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3)
+
+を呼び出すことによって、そのスレッドの終了に同期して
+終了コードを取得することができる。
+しかし、スレッドの資源の一部はスレッドが終了した後も
+確保されたまま残り、
+別のスレッドがそのスレッドに対して
+<B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3)
+
+を呼び出したときに限って解放される。
+<P>
+デタッチ状態の場合、スレッドの資源は終了した時に直ちに解放される。
+しかし、
+<B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3)
+
+を使用してスレッドの終了に同期することはできない。
+<P>
+合流可能な状態で生成されたスレッドは、
+<B><A HREF="../man3/pthread_detach.3.html">pthread_detach</A></B>(3)
+
+を呼び出してデタッチスレッドに変更することができる。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H3>schedpolicy (スケジューリングポリシー)</H3>
+
+<P>
+スレッドのスケジューリングポリシーを選択する。
+とりうる値は
+<B>SCHED_OTHER</B>
+
+(通常の、リアルタイムでないスケジューリング) 、
+<B>SCHED_RR</B>
+
+(ラウンドロビン方式のリアルタイムスケジューリング) 、
+<B>SCHED_FIFO</B>
+
+(先入れ先出し (FIFO) 方式のリアルタイムスケジューリング) のいずれかである。
+スケジューリングポリシーに関するさらなる情報については
+<B>sched_setpolicy</B>(2)
+
+を参照のこと。
+<P>
+デフォルト値:
+<B>SCHED_OTHER</B>
+
+。
+<P>
+リアルタイムスケジューリングポリシーである
+<B>SCHED_RR</B>
+
+と
+<B>SCHED_FIFO</B>
+
+は、スーパーユーザ権限のプロセスに限って使用できる。
+<P>
+スレッドのスケジューリングポリシーは、
+生成後に
+<B><A HREF="../man3/pthread_setschedparam.3.html">pthread_setschedparam</A></B>(3)
+
+を用いて変更することができる。
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H3>schedparam (スケジューリングパラメータ)</H3>
+
+<P>
+スレッドのスケジューリングパラメータ (特に、スケジューリング優先度) を
+指定する。
+スケジューリングパラメータに関するさらなる情報については
+<B><A HREF="../../LDP_man-pages/man2/sched_setparam.2.html">sched_setparam</A></B>(2)
+
+を参照のこと。
+<P>
+デフォルト値: 優先度は 0 。
+<P>
+この属性はスケジューリングポリシーが
+<B>SCHED_OTHER</B>
+
+の時には意味を持たず、
+リアルタイムポリシー
+<B>SCHED_RR</B>
+
+と
+<B>SCHED_FIFO</B>
+
+に対してのみ有効である。
+<P>
+スレッドのスケジューリング優先度は、
+生成後に
+<B><A HREF="../man3/pthread_setschedparam.3.html">pthread_setschedparam</A></B>(3)
+
+を用いて変更することができる。
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H3>inheritsched (スケジューリングの継承)</H3>
+
+<P>
+新しく生成されるスレッドの
+スケジューリングポリシーとスケジューリングパラメータが
+属性
+<I>schedpolicy</I>
+
+および
+<I>schedparam</I>
+
+の値で決定される (
+<B>PTHREAD_EXPLICIT_SCHED</B>)
+
+か、親スレッドから継承される (
+<B>PTHREAD_INHERIT_SCHED</B>)
+
+かを指定する。
+<P>
+デフォルト値: 
+<B>PTHREAD_EXPLICIT_SCHED</B>
+
+。
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H3>scope (スコープ)</H3>
+
+<P>
+生成されるスレッドのスケジューリング競争スコープを定義する。
+LinuxThreads の実装で唯一対応している値は
+<B>PTHREAD_SCOPE_SYSTEM</B>
+
+で、
+スレッドは同じ計算機で実行中のすべてのプロセスと CPU 時間を取り合う。
+詳しくいえば、スレッドの優先度は計算機上の他のすべてのプロセスの優先度と
+同列のものと解釈される。
+POSIX 標準で規定されるもう 1 つの値
+<B>PTHREAD_SCOPE_PROCESS</B>
+
+は、
+スケジューリングの競争は実行中のプロセス中のスレッド間だけで
+起こることを意味する。
+すなわち、スレッドの優先度はプロセス中の他のスレッドの優先度と
+同列のものと解釈され、他のプロセスの優先度とは関わりがない。
+LinuxThreads は
+<B>PTHREAD_SCOPE_PROCESS</B>
+
+に対応していない。
+<P>
+デフォルト値: 
+<B>PTHREAD_SCOPE_SYSTEM</B>
+
+。
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>返り値</H2>
+
+<P>
+すべての関数は成功すると 0 を返し、
+エラーならば非 0 のエラーコードを返す。
+成功の場合、
+関数群
+<B>pthread_attr_get</B><I>attrname</I>
+
+は属性
+<I>attrname</I>
+
+の現在の値を第 2 引数で指し示される領域に格納する。
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>エラー</H2>
+
+<P>
+関数
+<B>pthread_attr_setdetachstate</B>
+
+はエラーの場合、次のようなエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+指定された
+<I>detachstate</I>
+
+が
+<B>PTHREAD_CREATE_JOINABLE</B>
+
+および
+<B>PTHREAD_CREATE_DETACHED</B>
+
+のいずれでもない。
+</DL>
+</DL>
+
+<P>
+関数
+<B>pthread_attr_setschedparam</B>
+
+はエラーの場合、次のようなエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+<I>param</I>
+
+で指定された優先度が
+現在の
+<I>attr</I>
+
+のスケジューリングポリシーに対する許容範囲 (
+<B>SCHED_FIFO</B>
+
+および
+<B>SCHED_RR</B>
+
+の場合は 1 から 99 まで、
+<B>SCHED_OTHER</B>
+
+の場合は 0 のみ )
+を超えている。
+</DL>
+</DL>
+
+<P>
+関数
+<B>pthread_attr_setschedpolicy</B>
+
+はエラーの場合次のようなエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+指定された
+<I>policy</I>
+
+が
+<B>SCHED_OTHER</B>
+
+および
+<B>SCHED_FIFO</B>
+
+、
+<B>SCHED_RR</B>
+
+のいずれでもない
+<P>
+<DT><B>ENOTSUP</B>
+
+<DD>
+<I>policy</I>
+
+が
+<B>SCHED_FIFO</B>
+
+または
+<B>SCHED_RR</B>
+
+であって、呼び出しプロセスの実効ユーザがスーパーユーザではない。
+</DL>
+</DL>
+
+<P>
+関数
+<B>pthread_attr_setinheritsched</B>
+
+はエラーの場合次のようなエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+指定された
+<I>inherit</I>
+
+が
+<B>PTHREAD_INHERIT_SCHED</B>
+
+および
+<B>PTHREAD_EXPLICIT_SCHED</B>
+
+のいずれでもない。
+</DL>
+</DL>
+
+<P>
+関数
+<B>pthread_attr_setscope</B>
+
+はエラーの場合次のようなエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+指定された
+<I>scope</I>
+
+が
+<B>PTHREAD_SCOPE_SYSTEM</B>
+
+および
+<B>PTHREAD_SCOPE_PROCESS</B>
+
+のいずれでもない。
+<P>
+<DT><B>ENOTSUP</B>
+
+<DD>
+指定された
+<I>scope</I>
+
+が
+<B>PTHREAD_SCOPE_PROCESS</B>
+
+(未対応) である。
+</DL>
+</DL>
+
+<P>
+<A NAME="lbAL">&nbsp;</A>
+<H2>著者</H2>
+
+Xavier Leroy &lt;<A HREF="mailto:Xavier.Leroy@inria.fr">Xavier.Leroy@inria.fr</A>&gt;
+<P>
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3),
+
+<B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3),
+
+<B><A HREF="../man3/pthread_detach.3.html">pthread_detach</A></B>(3),
+
+<B><A HREF="../man3/pthread_setschedparam.3.html">pthread_setschedparam</A></B>(3).
+
+<P>
+[訳注] glibc-linuxthreads の最新のドキュメントは Texinfo形式で提供されている。
+以下は glibc-linuxthreads-2.3.1 の Texinfo ファイルからの引用で、
+「説明」に追記されている。
+glibc-linuxthreads-2.1 以降 guardsize および stackaddr 、 stacksize が、
+glibc-linuxthreads-2.2 以降 stack が追加された。
+<P>
+<B>int pthread_attr_setstackaddr(pthread_attr_t *</B><I>attr</I><B>, void *</B><I>stackaddr</I><B>);</B>
+
+<P>
+<B>int pthread_attr_getstackaddr(const pthread_attr_t *</B><I>attr</I><B>, void **</B><I>stackaddr</I><B>);</B>
+
+<P>
+<A NAME="lbAN">&nbsp;</A>
+<H3>stackaddr (スタックアドレス)</H3>
+
+アプリケーション管理スタックのアドレスを指定する。
+スタックのサイズは
+<B>PTHREAD_STACK_MIN</B>
+
+以上でなければならない。
+<P>
+<B>int pthread_attr_setstacksize(pthread_attr_t *</B><I>attr</I><B>, size_t </B><I>stacksize);</I>
+
+<P>
+<B>int pthread_attr_getstacksize(const pthread_attr_t *</B><I>attr</I><B>, size_t *</B><I>stacksize</I><B>);</B>
+
+<P>
+<A NAME="lbAO">&nbsp;</A>
+<H3>stacksize (スタックサイズ)</H3>
+
+スレッドに対して確保されるスタックのサイズを変更する。
+最小スタックサイズが指定した値に設定される。単位はバイトである。
+<P>
+指定した値がシステムの最大スタックサイズを超える場合、
+または
+<B>PTHREAD_STACK_MIN</B>
+
+よりも小さい場合、
+<B>pthread_attr_setstacksize</B>
+
+は失敗し、
+<B>EINVAL</B>
+
+を返す。
+<P>
+<B>int pthread_attr_setstack(pthread_attr_t *</B><I>attr</I><B>, void *</B><I>stackaddr</I><B>, size_t </B><I>stacksize</I><B>);</B>
+
+<P>
+<B>int pthread_attr_getstack(const pthread_attr_t *</B><I>attr</I><B>, void **</B><I>stackaddr</I><B>, size_t *</B><I>stacksize</I><B>);</B>
+
+<P>
+<A NAME="lbAP">&nbsp;</A>
+<H3>stack (スタック)</H3>
+
+生成されるスレッドに用いられるアプリケーション管理スタックの
+アドレスとサイズの両方を指定する。
+メモリ領域のベースを
+<I>stackaddr</I>
+
+に、メモリ領域のサイズをバイト単位で
+<I>stacksize</I>
+
+に指定する。
+<P>
+<I>stacksize</I>
+
+の値が
+<B>PTHREAD_STACK_MIN</B>
+
+よりも小さいか、
+システムの最大スタックサイズを超える場合、
+または
+<I>stackaddr</I>
+
+の値が適切なアライメントでない場合、
+<B>pthread_attr_setstack</B>
+
+は失敗し、
+<B>EINVAL</B>
+
+を返す。
+<P>
+<B>int pthread_attr_setguardsize(pthread_attr_t *</B><I>attr</I><B>, size_t </B><I>guardsize</I><B>);</B>
+
+<P>
+<B>int pthread_attr_getguardsize(const pthread_attr_t *</B><I>attr</I><B>, size_t *</B><I>guardsize</I><B>);</B>
+
+<P>
+<A NAME="lbAQ">&nbsp;</A>
+<H3>guardsize (保護サイズ)</H3>
+
+スレッドのスタックの保護領域の最小のサイズをバイト単位で変更する。
+デフォルトのサイズは 1 ページである。
+この値が設定された場合、指定した値以上の最も近いページサイズに丸められる。
+この値が 0 に設定された場合、このスレッドには保護領域は作成されない。
+保護領域として確保された領域は、スタックオーバーフローを検出するのに
+用いられる。したがって、大きな構造体の領域をスタック内に確保する場合、
+スタックオーバーフローを検出するためにはそれよりも
+大きい保護領域を指定する必要がある。
+<P>
+スレッドが独自のスタックを使用している場合(
+<I>stackaddr</I>
+
+属性が設定されている場合) 、
+<I>guardsize</I>
+
+属性は無視される。
+<P>
+指定した値が
+<I>stacksize</I>
+
+を超える場合、
+<B>pthread_attr_setguardsize</B>
+
+は失敗し、
+<B>EINVAL</B>
+
+を返す。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">detachstate (デタッチ状態)</A><DD>
+<DT><A HREF="#lbAF">schedpolicy (スケジューリングポリシー)</A><DD>
+<DT><A HREF="#lbAG">schedparam (スケジューリングパラメータ)</A><DD>
+<DT><A HREF="#lbAH">inheritsched (スケジューリングの継承)</A><DD>
+<DT><A HREF="#lbAI">scope (スコープ)</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">返り値</A><DD>
+<DT><A HREF="#lbAK">エラー</A><DD>
+<DT><A HREF="#lbAL">著者</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DL>
+<DT><A HREF="#lbAN">stackaddr (スタックアドレス)</A><DD>
+<DT><A HREF="#lbAO">stacksize (スタックサイズ)</A><DD>
+<DT><A HREF="#lbAP">stack (スタック)</A><DD>
+<DT><A HREF="#lbAQ">guardsize (保護サイズ)</A><DD>
+</DL>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

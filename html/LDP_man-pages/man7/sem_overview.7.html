@@ -1,0 +1,135 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SEM_OVERVIEW</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SEM_OVERVIEW</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/sem_overview.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sem_overview - POSIX セマフォの概要
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+POSIX セマフォを使用すると、プロセスやスレッド間でその動作を 同期させることができる。
+<P>
+
+セマフォは整数であり、その値は決して 0 未満になることは許されない。 セマフォに対してできる操作は 2 つである: セマフォ値を 1 増やす
+(<B><A HREF="../man3/sem_post.3.html">sem_post</A></B>(3)); セマフォ値を 1 減らす (<B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3))。 セマフォの値がすでに 0 の場合、セマフォ値が 0
+より大きくなるまで <B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3)  操作は停止 (block) する。
+<P>
+
+POSIX セマフォには、名前付きセマフォ (named semaphore) と 名前なしセマフォ (unnamed semaphore) の
+2つの形がある。
+<DL COMPACT>
+<DT><B>名前付きセマフォ</B><DD>
+
+
+
+
+
+
+
+
+
+名前付きセマフォは <I>/somename</I> という形式の名前で識別される。 その名前は、最大で <B>NAME_MAX</B><I>-4</I> (すなわち 251)
+文字のヌル終端された文字列で、 スラッシュで始まり、スラッシュ以外の文字が 1 文字以上続く形式である。 <B><A HREF="../man3/sem_open.3.html">sem_open</A></B>(3)
+に同じ名前を渡すことにより、2 つのプロセス間で同じ名前のセマフォ に対し操作を行うことができる。
+<DT><DD>
+<B><A HREF="../man3/sem_open.3.html">sem_open</A></B>(3)  関数は、新しい名前付きセマフォを作成するか、既に存在する名前付き セマフォをオープンする。 セマフォをオープンした後は、
+<B><A HREF="../man3/sem_post.3.html">sem_post</A></B>(3)  と <B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3)  を使ってセマフォを操作できる。 プロセスがセマフォの使用を終えた際は、
+<B><A HREF="../man3/sem_close.3.html">sem_close</A></B>(3)  を使ってセマフォをクローズできる。 あるセマフォをどのプロセスも使用しなくなると、 <B><A HREF="../man3/sem_unlink.3.html">sem_unlink</A></B>(3)
+を使ってそのセマフォをシステムから削除することができる。
+<DT><B>名前なしセマフォ (メモリーベースセマフォ)</B><DD>
+名前なしセマフォは名前を持たない。その代わり、セマフォは、 複数スレッド間で共有されるメモリー領域、もしくは複数プロセス間で
+共有されたメモリー領域に置かれる (前者を <I>スレッド共有セマフォ (thread-shared semaphore)</I>、 後者を
+<I>プロセス共有セマフォ (process-shared semaphore)</I>
+と呼ぶ)。スレッド共有セマフォは、同じプロセス内のスレッド間で共有される メモリー領域、例えば大域変数 (global variable)
+に配置される。 プロセス共有セマフォは、共有メモリー領域 (例えば、 <B><A HREF="../man2/shmget.2.html">shmget</A></B>(2)  を使って作成できる System V
+共有メモリーセグメントや <B><A HREF="../man3/shm_open.3.html">shm_open</A></B>(3)  を使って作成できる POSIX 共有メモリーオブジェクト)  内に配置しなければならない。
+<DT><DD>
+名前なしセマフォは、使用する前に <B><A HREF="../man3/sem_init.3.html">sem_init</A></B>(3)  を使って初期化しなければならない。 セマフォは <B><A HREF="../man3/sem_post.3.html">sem_post</A></B>(3)  と
+<B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3)  を使って操作できる。 セマフォがもはや必要なくなったときや、 セマフォが置かれているメモリーを解放する前には、
+<B><A HREF="../man3/sem_destroy.3.html">sem_destroy</A></B>(3)  を使ってセマフォを破棄すべきである。
+</DL>
+<P>
+
+この節の残りでは、POSIX セマフォの Linux の実装の詳細 について説明する。
+<A NAME="lbAD">&nbsp;</A>
+<H3>Versions</H3>
+
+バージョン 2.6 より前のカーネルでは、Linux は 名前なしのスレッド共有セマフォのみをサポートしていた。 Linux 2.6 と NPTL
+スレッド実装を提供している glibc が入った システムでは、POSIX セマフォの完全な実装が提供される。
+<A NAME="lbAE">&nbsp;</A>
+<H3>持続性</H3>
+
+POSIX 名前付きセマフォはカーネル内で保持される。 <B><A HREF="../man3/sem_unlink.3.html">sem_unlink</A></B>(3)  で削除されなければ、セマフォは
+システムがシャットダウンされるまで存在し続ける。
+<A NAME="lbAF">&nbsp;</A>
+<H3>リンク</H3>
+
+POSIX セマフォ API を使用したプログラムは <I>cc -pthread</I> でコンパイルし、リアルタイムライブラリ <I>librt</I>
+とリンクしなければならない。
+<A NAME="lbAG">&nbsp;</A>
+<H3>ファイルシステム経由での名前付きセマフォへのアクセス</H3>
+
+Linux では、名前付きセマフォは仮想ファイルシステム (virtual file system) 内に <B>sem.</B><I>somename</I>
+という形の名前で作成される。仮想ファイルシステムは通常 <I>/dev/shm</I> 以下にマウントされる。 (これが、セマフォの名前の文字数の上限が
+<B>NAME_MAX</B> ではなく <B>NAME_MAX</B><I>-4</I> となっている理由である。)
+<P>
+
+Linux 2.6.19 以降では、このディレクトリ配下のファイルに対して ACL を
+設定でき、オブジェクトへの許可をユーザー単位、グループ単位で制御することが できる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+System V セマフォ (<B><A HREF="../man2/semget.2.html">semget</A></B>(2), <B><A HREF="../man2/semop.2.html">semop</A></B>(2)  など) は古いセマフォ API である。 POSIX セマフォは
+System V よりも 簡単で、うまく設計されたインターフェースを提供している。 一方で、POSIX セマフォは System V セマフォと比べると
+利用できるシステムが少ない (特に、古いシステムでは少ない)。
+<A NAME="lbAI">&nbsp;</A>
+<H2>例</H2>
+
+各種の POSIX セマフォ関数を使用した例が <B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3)  に記載されている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/sem_close.3.html">sem_close</A></B>(3), <B><A HREF="../man3/sem_destroy.3.html">sem_destroy</A></B>(3), <B><A HREF="../man3/sem_getvalue.3.html">sem_getvalue</A></B>(3), <B><A HREF="../man3/sem_init.3.html">sem_init</A></B>(3),
+<B><A HREF="../man3/sem_open.3.html">sem_open</A></B>(3), <B><A HREF="../man3/sem_post.3.html">sem_post</A></B>(3), <B><A HREF="../man3/sem_unlink.3.html">sem_unlink</A></B>(3), <B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3),
+<B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7), <B><A HREF="../man7/shm_overview.7.html">shm_overview</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">Versions</A><DD>
+<DT><A HREF="#lbAE">持続性</A><DD>
+<DT><A HREF="#lbAF">リンク</A><DD>
+<DT><A HREF="#lbAG">ファイルシステム経由での名前付きセマフォへのアクセス</A><DD>
+</DL>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">例</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

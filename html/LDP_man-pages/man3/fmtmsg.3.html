@@ -1,0 +1,316 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FMTMSG</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FMTMSG</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/fmtmsg.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fmtmsg - 整形されたエラーメッセージを表示する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/fmtmsg.h">fmtmsg.h</A>&gt;</B>
+
+<B>int fmtmsg(long </B><I>classification</I><B>, const char *</B><I>label</I><B>,</B>
+<B>           int </B><I>severity</I><B>, const char *</B><I>text</I><B>,</B>
+<B>           const char *</B><I>action</I><B>, const char *</B><I>tag</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+この関数は、引数で記述されたメッセージを、 <I>classification</I> 引数で指定されたデバイス上に表示する。 <I>stderr</I>
+に書き出されるメッセージのフォーマットは、 <B>MSGVERB</B> 環境変数に依存する。
+<P>
+
+<I>label</I> 引数はメッセージの発生源を識別する。 この文字列はコロンで区切られた 2 つの部分から構成されていなければならない。 1 つ目の部分は
+10 文字以内でなければならず、 2 つ目の部分は 14 文字以内でなければならない。
+<P>
+
+<I>text</I> 引数にはエラー条件を記述する。
+<P>
+
+<I>action</I> 引数にはエラーから回復するために利用可能なステップを記述する。 これが表示される場合、&quot;TO FIX: &quot; が前に付く。
+<P>
+
+<I>tag</I> 引数はより多くの情報を見つけるためのオンラインドキュメントへの参照である。 これは <I>label</I>
+値とユニークな識別番号を含んでいるべきである。
+<A NAME="lbAE">&nbsp;</A>
+<H3>ダミー引数</H3>
+
+各引数にはダミーの値を入れることができる。 ダミーの <I>classification</I> 値 <B>MM_NULLMC</B> (0L)
+は出力を何も指定しない。そのため何も表示されない。 ダミーの <I>severity</I> 値 <B>NO_SEV</B> (0) は重大度 (severity)
+が与えられていないことを表す。 値 <B>MM_NULLLBL</B>, <B>MM_NULLTXT</B>, <B>MM_NULLACT</B>, <B>MM_NULLTAG</B>
+は <I>((char&nbsp;*)&nbsp;0)</I> と空文字列の別名であり、 <B>MM_NULLSEV</B> は <B>NO_SEV</B> の別名である。
+<A NAME="lbAF">&nbsp;</A>
+<H3>classification 引数</H3>
+
+<I>classification</I> 引数は 4 種類の情報を記述する値の和である。
+<P>
+
+最初の値は出力チャンネルを定義する。
+<DL COMPACT>
+<DT><B>MM_PRINT</B><DD>
+<I>stderr</I> に出力する。
+<DT><B>MM_CONSOLE</B><DD>
+システムコンソールに出力する。
+<DT><B>MM_PRINT | MM_CONSOLE</B><DD>
+両方に出力する。
+</DL>
+<P>
+
+2 番目の値はエラーの発生源である:
+<DL COMPACT>
+<DT><B>MM_HARD</B><DD>
+ハードウェアエラーが起こった。
+<DT><B>MM_FIRM</B><DD>
+ファームウェアエラーが起こった。
+<DT><B>MM_SOFT</B><DD>
+ソフトウェアエラーが起こった。
+</DL>
+<P>
+
+3 番目の値は問題の検知を行ったものをエンコードする:
+<DL COMPACT>
+<DT><B>MM_APPL</B><DD>
+アプリケーションによって検知された。
+<DT><B>MM_UTIL</B><DD>
+ユーティリティによって検知された。
+<DT><B>MM_OPSYS</B><DD>
+オペレーティングシステムによって検知された。
+</DL>
+<P>
+
+4 番目の値は問題の重大度を表す:
+<DL COMPACT>
+<DT><B>MM_RECOVER</B><DD>
+回復可能なエラーである。
+<DT><B>MM_NRECOV</B><DD>
+回復不可能なエラーである。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>severity 引数</H3>
+
+<I>severity</I> 引数は以下の 1 つの値をとることができる。
+<DL COMPACT>
+<DT><B>MM_NOSEV</B><DD>
+重大度は表示されない。
+<DT><B>MM_HALT</B><DD>
+この値は HALT として表示される。
+<DT><B>MM_ERROR</B><DD>
+この値は ERROR として表示される。
+<DT><B>MM_WARNING</B><DD>
+この値は WARNING として表示される。
+<DT><B>MM_INFO</B><DD>
+この値は INFO として表示される。
+</DL>
+<P>
+
+数値の場合は 0 から 4 である。 <B><A HREF="../man3/addseverity.3.html">addseverity</A></B>(3)  または環境変数 <B>SEV_LEVEL</B>
+を使うことにより、表示するレベルと文字列を更に追加できる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>返り値</H2>
+
+関数は 4 つの値を返す:
+<DL COMPACT>
+<DT><B>MM_OK</B><DD>
+全てがうまくいった。
+<DT><B>MM_NOTOK</B><DD>
+完全に失敗した。
+<DT><B>MM_NOMSG</B><DD>
+<I>stderr</I> に書き込むときにエラーが起こった。
+<DT><B>MM_NOCON</B><DD>
+コンソールに書き込むときにエラーが起こった。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>環境変数</H2>
+
+環境変数 <B>MSGVERB</B> (&quot;message verbosity&quot;) は <I>stderr</I> への出力の一部を抑制するのに使うことができる。
+(コンソールへの出力には影響しない。)  この変数が定義されて、NULL でなく、 コロンで区切られた有効なキーワードのリストである場合、
+キーワードに対応するメッセージの一部のみが表示される。 有効なキーワードは &quot;label&quot;, &quot;severity&quot;, &quot;text&quot;, &quot;action&quot;,
+&quot;tag&quot; である。
+<P>
+
+環境変数 <B>SEV_LEVEL</B> は新しい重大度レベルを導入するのに使用できる。 デフォルトでは、上記の 5 つの重大度レベルのみが利用可能である。
+他の数値の場合、 <B>fmtmsg</B>()  は何も表示しない。 <B>fmtmsg</B>()  を初めて呼び出す前に、ユーザーが <B>SEV_LEVEL</B> を
+<P>
+
+<DL COMPACT><DT><DD>
+SEV_LEVEL=[description[:description[:...]]]
+</DL>
+
+<P>
+
+のような形式でプロセスの環境に設定すると、 <B>fmtmsg</B>()  は (標準のレベル 0-4 に加えて) level
+に指定された値も受け付け、 そのようなレベルの問題が発生すると指定された printstring を表示する。 各 description は
+<P>
+
+<DL COMPACT><DT><DD>
+severity-keyword,level,printstring
+</DL>
+
+<P>
+
+という形式である。
+<P>
+
+severity-keyword 部は <B>fmtmsg</B>()  に使用されないが、存在しなければならない。 level
+部は数値を文字列で表したものである。 数値は 4 より大きい値でなければならない。 この値は <B>fmtmsg</B>()  の severity
+引数で使用されなければならず、この重大度を選択する。 前もって宣言された重大度を上書きすることはできない。 printstring は、
+この重大度のメッセージが <B>fmtmsg</B>()  によって生成された場合に表示される文字列である。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>fmtmsg</B>()  は、バージョン 2.1 以降の glibc で提供されている。
+<A NAME="lbAK">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>fmtmsg</B>()
+</TD><TD>Thread safety</TD><TD>
+glibc &gt;= 2.16: MT-Safe
+<BR>
+
+glibc &lt; 2.16: MT-Unsafe
+<BR></TD></TR>
+</TABLE>
+
+<P>
+
+glibc 2.16 より前のバージョンでは、 <B>fmtmsg</B>() 関数は、 保護されていない静的な変数を使うため、 スレッドセーフではない。
+<P>
+
+
+glibc 2.16 以降では、 <B>fmtmsg</B>() 関数はロックを使って静的な変数を保護しており、 スレッドセーフである。
+<A NAME="lbAL">&nbsp;</A>
+<H2>準拠</H2>
+
+関数 <B>fmtmsg</B>()  と <B><A HREF="../man3/addseverity.3.html">addseverity</A></B>(3)  と環境変数 <B>MSGVERB</B> と <B>SEV_LEVEL</B> は
+System V に由来している。
+<P>
+
+関数 <B>fmtmsg</B>() と環境変数 <B>MSGVERB</B> は POSIX.1-2001 と POSIX.1-2008 に規定されている。
+<A NAME="lbAM">&nbsp;</A>
+<H2>注意</H2>
+
+System V と UnixWare の man ページには、 「これらの関数は &quot;pfmt() と addsev()&quot; または &quot;pfmt(),
+vpfmt(), lfmt(), vlfmt()&quot; で置き換えられており、 将来は削除される予定である」と書かれている。
+<A NAME="lbAN">&nbsp;</A>
+<H2>例</H2>
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/fmtmsg.h">fmtmsg.h</A>&gt;
+<P>
+int
+main(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;class&nbsp;=&nbsp;MM_PRINT&nbsp;|&nbsp;MM_SOFT&nbsp;|&nbsp;MM_OPSYS&nbsp;|&nbsp;MM_RECOVER;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;err;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;err&nbsp;=&nbsp;fmtmsg(class,&nbsp;&quot;util-linux:mount&quot;,&nbsp;MM_ERROR,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;unknown&nbsp;mount&nbsp;option&quot;,&nbsp;&quot;See&nbsp;<A HREF="../../util-linux/man8/mount.8.html">mount</A>(8).&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;util-linux:mount:017&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(err)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;MM_OK:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;MM_NOTOK:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Nothing&nbsp;printed\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;MM_NOMSG:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Nothing&nbsp;printed&nbsp;to&nbsp;stderr\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;MM_NOCON:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;No&nbsp;console&nbsp;output\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;default:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Unknown&nbsp;error&nbsp;from&nbsp;fmtmsg()\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<P>
+
+出力は
+<P>
+
+
+
+util-linux:mount: ERROR: unknown mount option
+TO FIX: See <A HREF="../../util-linux/man8/mount.8.html">mount</A>(8).  util-linux:mount:017
+
+
+<P>
+
+のようになり、
+<P>
+
+
+
+MSGVERB=text:action; export MSGVERB
+
+
+<P>
+
+を実行すると、次のようになる。
+<P>
+
+
+
+unknown mount option
+TO FIX: See <A HREF="../../util-linux/man8/mount.8.html">mount</A>(8).
+
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/addseverity.3.html">addseverity</A></B>(3), <B><A HREF="../man3/perror.3.html">perror</A></B>(3)
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">ダミー引数</A><DD>
+<DT><A HREF="#lbAF">classification 引数</A><DD>
+<DT><A HREF="#lbAG">severity 引数</A><DD>
+</DL>
+<DT><A HREF="#lbAH">返り値</A><DD>
+<DT><A HREF="#lbAI">環境変数</A><DD>
+<DT><A HREF="#lbAJ">バージョン</A><DD>
+<DT><A HREF="#lbAK">属性</A><DD>
+<DT><A HREF="#lbAL">準拠</A><DD>
+<DT><A HREF="#lbAM">注意</A><DD>
+<DT><A HREF="#lbAN">例</A><DD>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,139 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of EPOLL_CREATE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>EPOLL_CREATE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/epoll_create.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+epoll_create, epoll_create1 - epoll ファイルディスクリプターをオープンする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/epoll.h">sys/epoll.h</A>&gt;</B>
+
+<B>int epoll_create(int </B><I>size</I><B>);</B>
+<B>int epoll_create1(int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>epoll_create</B>() は新規の <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7) インスタンスを作成する。
+Linux 2.6.8 以降では、<I>size</I> 引数は無視されるが、 0 より大きな値で
+なければならない。「注意」を参照。
+<P>
+
+<B>epoll_create</B>()  は、新しい epoll インスタンスを参照するファイルディスクリプターを返す。
+このファイルディスクリプターは、その後の <B>epoll</B> インターフェースの呼び出しに使われる。 もう必要でなくなった場合は、
+<B>epoll_create</B>()  で返されたファイルディスクリプターは <B><A HREF="../man2/close.2.html">close</A></B>(2)  を使ってクローズされるべきである。 ある
+epoll インスタンスを参照する全てのファイルディスクリプターがクローズされると、 カーネルはそのインスタンスを破壊して、対応するリソースを解放し、
+再使用できるようにする。
+<A NAME="lbAE">&nbsp;</A>
+<H3>epoll_create1()</H3>
+
+<B>epoll_create1</B>()  は、 <I>flags</I> が 0 の場合、現在では使われていない <I>size</I> 引数がなくなっている点を除けば
+<B>epoll_create</B>()  と同じである。 <I>flags</I> に以下の値をビット毎の論理和 (OR) で指定することで、
+異なる動作をさせることができる。
+<DL COMPACT>
+<DT><B>EPOLL_CLOEXEC</B><DD>
+新しいファイルディスクリプターに対して close-on-exec (<B>FD_CLOEXEC</B>)  フラグをセットする。
+このフラグが役に立つ理由については、 <B><A HREF="../man2/open.2.html">open</A></B>(2)  の <B>O_CLOEXEC</B> フラグの説明を参照のこと。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、これらのシステムコールはファイルディスクリプター (非負の整数) を返す。 エラーの場合、-1 を返し、 <I>errno</I>
+にエラーを示す値を設定する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>size</I> が正でない。
+<DT><B>EINVAL</B><DD>
+(<B>epoll_create1</B>())  <I>flags</I> に無効な値が指定された。
+<DT><B>EMFILE</B><DD>
+<I>/proc/sys/fs/epoll/max_user_instances</I> によって指定されている、epoll
+インスタンスのユーザー単位の制限に達した。 更なる詳細については <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  を参照のこと。
+<DT><B>EMFILE</B><DD>
+The per-process limit on the number of open file descriptors has been
+reached.
+<DT><B>ENFILE</B><DD>
+The system-wide limit on the total number of open files has been reached.
+<DT><B>ENOMEM</B><DD>
+カーネルオブジェクトを作成するのに十分なメモリーがなかった。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>epoll_create</B>() はカーネル 2.6 で追加された。
+ライブラリによるサポートは glibc バージョン 2.3.2 以降で提供されている。
+<P>
+
+
+
+<B>epoll_create1</B>() はカーネル 2.6.27 で追加された。
+ライブラリによるサポートは glibc バージョン 2.9 以降で提供されている。
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>epoll_create</B>() は Linux 独自である。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+初期の <B>epoll_create</B>() の実装では、<I>size</I> 引数は、呼び出し元が <B>epoll</B>
+インスタンスに追加しようとするファイルディスクリプター数をカーネルに教えるのに
+使われていた。カーネルはこの情報をイベントの情報を格納する内部データ構造に最
+初に割り当てる大きさを決める際のヒントとして使用していた (<I>size</I> で渡された
+ヒントよりも使用量が大きくなった場合には、必要に応じてカーネルは追加で領域を
+割り当てる)。
+<P>
+現在では、このヒントはもはや必要なくなっている (カーネルはヒントなしで必要な
+データ構造のサイズを動的に変更する) が、今も <I>size</I> には 0 より大きい値を
+指定しなければならない。これは、<B>epoll</B> を使うアプリケーションが古いカーネル
+で実行される際の後方互換性を保証するためである。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/close.2.html">close</A></B>(2), <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2), <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">epoll_create1()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

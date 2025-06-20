@@ -1,0 +1,283 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of REGEX</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>REGEX</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/regex.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+regcomp, regexec, regerror, regfree - POSIX regex 関数
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/regex.h">regex.h</A>&gt;</B>
+
+<B>int regcomp(regex_t *</B><I>preg</I><B>, const char *</B><I>regex</I><B>, int </B><I>cflags</I><B>);</B>
+
+<B>int regexec(const regex_t *</B><I>preg</I><B>, const char *</B><I>string</I><B>, size_t </B><I>nmatch</I><B>,</B>
+<B>            regmatch_t </B><I>pmatch[]</I><B>, int </B><I>eflags</I><B>);</B>
+
+<B>size_t regerror(int </B><I>errcode</I><B>, const regex_t *</B><I>preg</I><B>, char *</B><I>errbuf</I><B>,</B>
+<B>                size_t </B><I>errbuf_size</I><B>);</B>
+
+<B>void regfree(regex_t *</B><I>preg</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>POSIX regex コンパイル</H3>
+
+<B>regcomp</B>()  は、正規表現をコンパイルして、 <B>regexec</B>()  での検索処理に適合する形態にする。
+<P>
+
+<B>regcomp</B>()  はパターンを記憶するバッファーへのポインター <I>preg</I>、 ヌル文字で終端された文字列 <I>regex</I>、
+そしてコンパイルの形式を決めるためのフラグ <I>cflag</I> を引数に伴う。
+<P>
+
+全ての正規表現検索は、コンパイルされたパターンによって行わなければならない。 よって、 <B>regexec</B>()  に指定するのは、必ず
+(<B>regcomp</B>()  によってコンパイルされた) パターンバッファーへのアドレスでなければならない。
+<P>
+
+<I>cflags</I> には、以下に示す定数のうち 0 個以上をビットごとの OR (bitwise-or) で指定する。
+<DL COMPACT>
+<DT><B>REG_EXTENDED</B><DD>
+<I>regex</I> に <B>POSIX</B> 拡張正規表現を使用する。もしこのフラグが設定されない場合、 <B>POSIX</B> 標準正規表現が使われる。
+<DT><B>REG_ICASE</B><DD>
+大文字小文字の違いを無視する。このフラグを指定してコンパイルされた パターンバッファーを用いて <B>regexec</B>()
+関数を呼び出すと、大文字小文字の区別を付けずに検索が行われる。
+<DT><B>REG_NOSUB</B><DD>
+マッチの場所を報告しない。渡されたパターンバッファーがこのフラグを設定してコンパイルされていた場合、 <B>regexec</B>() の引数
+<I>nmatch</I>, <I>pmatch</I> が無視される。
+<DT><B>REG_NEWLINE</B><DD>
+全ての文字にマッチするオペレータに改行をマッチさせない。
+<DT><DD>
+改行を含まない非マッチング文字リスト (<B>[^...]</B>)  に改行をマッチさせない。
+<DT><DD>
+<B>regexec</B>()  の実行時に指定するフラグ <I>eflags</I> に <B>REG_NOTBOL</B>
+を含むかどうかにかかわらず、行頭にマッチするオペレータ (<B>^</B>)  を改行直後の空文字列にマッチさせる。
+<DT><DD>
+<I>eflags</I> に <B>REG_NOTEOL</B> を含むかどうかにかかわらず、行末にマッチするオペレータ (<B>$</B>)
+を改行直前の空文字列にマッチさせる。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>POSIX regex マッチング</H3>
+
+<B>regexec</B>()  は、 プリコンパイルされたパターンバッファー <I>preg</I> をヌル文字で終端された文字列にマッチさせる。
+<I>nmatch</I> と <I>pmatch</I> はマッチングの位置に関する情報を取得するのに用いられる。 <I>eflags</I> には、以下のフラグのうち 0
+個以上をビットごとの <B>OR</B> (bitwise-<B>or</B>) で指定する。
+<DL COMPACT>
+<DT><B>REG_NOTBOL</B><DD>
+行頭にマッチするオペレータは、必ずマッチに失敗する (コンパイル時のフラグ <B>REG_NEWLINE</B> の項目も参照)。
+このフラグは、複数行にまたがる文字列を <B>regexec</B>()  で検索する際に、文字列の先頭を行の先頭として解釈させない場合に用いる。
+<DT><B>REG_NOTEOL</B><DD>
+行末にマッチするオペレータは、必ずマッチに失敗する (コンパイル時のフラグ <B>REG_NEWLINE</B> の項目も参照)。
+<DT><B>REG_STARTEND</B><DD>
+Use <I>pmatch[0]</I> on the input string, starting at byte <I>pmatch[0].rm_so</I>
+and ending before byte <I>pmatch[0].rm_eo</I>.  This allows matching embedded
+NUL bytes and avoids a <B><A HREF="../man3/strlen.3.html">strlen</A></B>(3)  on large strings.  It does not use
+<I>nmatch</I> on input, and does not change <B>REG_NOTBOL</B> or <B>REG_NEWLINE</B>
+processing.  This flag is a BSD extension, not present in POSIX.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>バイトオフセット</H3>
+
+パターンバッファーのコンパイル時に <B>REG_NOSUB</B> が設定されない場合は、マッチング位置情報を得ることができる。 <I>pmatch</I>
+は、少なくとも <I>nmatch</I> の大きさを持つように指定しなければならない。 <B>regexec</B>()
+の実行によって、それらに部分文字列マッチング位置情報が代入される。 <I>i</I> 番目の括弧で始まる部分正規表現のオフセットは <I>pmatch[i]</I>
+に格納される。正規表現全体のマッチアドレスは <I>pmatch[0]</I> に格納される。 (<I>N</I> 個の部分正規表現のマッチのオフセットを返すためには、
+<I>nmatch</I> は最低限 <I>N+1</I> でなければならない点に注意すること。) 未使用の構造体要素には -1 が値として代入される。
+<P>
+
+<I>pmatch</I> の型である <I>regmatch_t</I> 構造体は、 <I>&lt;<A HREF="file:///usr/include/regex.h">regex.h</A>&gt;</I> 内で定義される。
+<P>
+
+
+
+typedef struct {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;regoff_t&nbsp;rm_so;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;regoff_t&nbsp;rm_eo;
+} regmatch_t;
+
+
+<P>
+
+構造体要素 <I>rm_so</I> の値が -1 でない場合、それは文字列内での次の最大のマッチング部分の開始 オフセット位置を示す。それに対し、構造体要素
+<I>rm_eo</I> はマッチング部分の終了オフセット位置を示し、 マッチング部分の直後の文字のオフセット位置が使用される。
+<A NAME="lbAH">&nbsp;</A>
+<H3>POSIX エラーレポート</H3>
+
+<B>regerror</B>()  は、 <B>regcomp</B>()  と <B>regexec</B>()
+の実行によって得られるエラーコードから、エラーメッセージ文字列を 得るのに用いられる。
+<P>
+
+<B>regerror</B>()  はエラーコード <I>errcode</I>、 パターンバッファー <I>preg</I>、 文字列バッファーへのポインター
+<I>errbuf</I>、 文字列バッファーのサイズ <I>errbuf_size</I> を引数にとる。
+この関数は、ヌル文字で終端されたエラーメッセージ文字列を格納するのに必要な <I>errbuf</I> のサイズを返す。もし <I>errbuf</I> と
+<I>errbuf_size</I> の両方が非 0 値であれば、 <I>errbuf</I> には最初の <I>errbuf_size - 1</I>
+文字分にエラーメッセージと終端のヌルバイト ('\0')  が収まるように代入される。
+<A NAME="lbAI">&nbsp;</A>
+<H3>POSIX パターンバッファー解放</H3>
+
+引数にコンパイルされたパターンバッファー <I>preg</I> を与えて <B>regfree</B>()  を呼び出すと、 <B>regcomp</B>()
+によるコンパイル時にパターンバッファーに割り当てられたメモリーが解放される。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>regcomp</B>()  は、コンパイルの成功時には 0 を返し、失敗時にはエラーコードを返す。
+<P>
+
+<B>regexec</B>()  は、マッチングの成功時には 0 を返し、失敗時には <B>REG_NOMATCH</B> を返す。
+<A NAME="lbAK">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>regcomp</B>()  は以下のエラーを返す。
+<DL COMPACT>
+<DT><B>REG_BADBR</B><DD>
+無効な後方参照オペレータの使用。
+<DT><B>REG_BADPAT</B><DD>
+グループやリストなどの、パターンオペレータの無効な使用。
+<DT><B>REG_BADRPT</B><DD>
+'*' が最初の文字としてくるような、無効な繰り返しオペレータの使用。
+<DT><B>REG_EBRACE</B><DD>
+インターバルオペレータ <B>{}</B> (brace interval operators) が閉じていない。
+<DT><B>REG_EBRACK</B><DD>
+リストオペレータ <B>[]</B> (bracket list operators) が閉じていない。
+<DT><B>REG_ECOLLATE</B><DD>
+照合順序の要素 (collating element) として有効ではない。 (訳注) 詳細は <B><A HREF="../man7/regex.7.html">regex</A></B>(7)  を参照。
+<DT><B>REG_ECTYPE</B><DD>
+未知のキャラクタークラス名。
+<DT><B>REG_EEND</B><DD>
+未定義エラー。これは POSIX.2 には定義されていない。
+<DT><B>REG_EESCAPE</B><DD>
+正規表現がバックスラッシュで終っている。
+<DT><B>REG_EPAREN</B><DD>
+グループオペレータ <B>()</B> (parenthesis group operators) が閉じていない。
+<DT><B>REG_ERANGE</B><DD>
+無効な範囲オペレータの使用。 例えば、範囲の終了位置が開始位置よりも前にあるような場合。
+<DT><B>REG_ESIZE</B><DD>
+正規表現のコンパイルに、64&nbsp;Kb 以上のパターンバッファーが必要。 これは POSIX.2 には定義されていない。
+<DT><B>REG_ESPACE</B><DD>
+regex ルーチンがメモリーを使いはたしている。
+<DT><B>REG_ESUBREG</B><DD>
+サブエクスプレッション \<B>(...\</B>)  (subexpression) への無効な後方参照。
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>regcomp</B>(),
+<B>regexec</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>regerror</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe env<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>regfree</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAN">&nbsp;</A>
+<H2>例</H2>
+
+
+#include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/regex.h">regex.h</A>&gt;
+<P>
+#define ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr)[0]))
+<P>
+static const char *const str =
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;1)&nbsp;John&nbsp;Driverhacker;\n2)&nbsp;John&nbsp;Doe;\n3)&nbsp;John&nbsp;Foo;\n&quot;;
+static const char *const re = &quot;John.*o&quot;;
+<P>
+int main(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;static&nbsp;const&nbsp;char&nbsp;*s&nbsp;=&nbsp;str;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;regex_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;regex;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;regmatch_t&nbsp;&nbsp;pmatch[1];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;regoff_t&nbsp;&nbsp;&nbsp;&nbsp;off,&nbsp;len;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(regcomp(&amp;regex,&nbsp;re,&nbsp;REG_NEWLINE))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;String&nbsp;=&nbsp;\&quot;%s\&quot;\n&quot;,&nbsp;str);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Matches:\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(regexec(&amp;regex,&nbsp;s,&nbsp;ARRAY_SIZE(pmatch),&nbsp;pmatch,&nbsp;0))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;off&nbsp;=&nbsp;pmatch[0].rm_so&nbsp;+&nbsp;(s&nbsp;-&nbsp;str);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;len&nbsp;=&nbsp;pmatch[0].rm_eo&nbsp;-&nbsp;pmatch[0].rm_so;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;#%d:\n&quot;,&nbsp;i);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;offset&nbsp;=&nbsp;%jd;&nbsp;length&nbsp;=&nbsp;%jd\n&quot;,&nbsp;(intmax_t)&nbsp;off,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(intmax_t)&nbsp;len);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;substring&nbsp;=&nbsp;\&quot;%.*s\&quot;\n&quot;,&nbsp;len,&nbsp;s&nbsp;+&nbsp;pmatch[0].rm_so);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;+=&nbsp;pmatch[0].rm_eo;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../GNU_grep/man1/grep.1.html">grep</A></B>(1), <B><A HREF="../man7/regex.7.html">regex</A></B>(7)
+<P>
+
+glibc マニュアルのセクション <I>Regular Expressions</I>
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">POSIX regex コンパイル</A><DD>
+<DT><A HREF="#lbAF">POSIX regex マッチング</A><DD>
+<DT><A HREF="#lbAG">バイトオフセット</A><DD>
+<DT><A HREF="#lbAH">POSIX エラーレポート</A><DD>
+<DT><A HREF="#lbAI">POSIX パターンバッファー解放</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">返り値</A><DD>
+<DT><A HREF="#lbAK">エラー</A><DD>
+<DT><A HREF="#lbAL">属性</A><DD>
+<DT><A HREF="#lbAM">準拠</A><DD>
+<DT><A HREF="#lbAN">例</A><DD>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

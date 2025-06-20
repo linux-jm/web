@@ -1,0 +1,183 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SIGWAITINFO</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SIGWAITINFO</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/sigwaitinfo.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sigwaitinfo, sigtimedwait, rt_sigtimedwait - キューに入れられたシグナルを同期して待つ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+
+<B>int sigwaitinfo(const sigset_t *</B><I>set</I><B>, siginfo_t *</B><I>info</I><B>);</B>
+
+<B>int sigtimedwait(const sigset_t *</B><I>set</I><B>, siginfo_t *</B><I>info</I><B>,</B>
+<B>                 const struct timespec *</B><I>timeout</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>sigwaitinfo</B>(), <B>sigtimedwait</B>(): _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;199309L
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>sigwaitinfo</B>()  は <I>set</I> のうちのどれかのシグナルが処理待ちになるまで、 呼び出しスレッドの実行を一時停止する
+(呼び出しスレッドに対して <I>set</I> のうちのどれかのシグナルが既に待機中 (pending) である場合、 <B>sigwaitinfo</B>()
+はすぐに戻る)。
+<P>
+
+<B>sigwaitinfo</B>()  はそのシグナルを待機中のシグナルの集合から削除し、関数の結果としてシグナル番号を返す。 <I>info</I> 引数が
+NULL でない場合、配送されたシグナルの情報が入った <I>siginfo_t</I> 型 (<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)  を参照) の構造体を
+<I>info</I> が指すバッファーに入れて返す。
+<P>
+
+呼び出し元に対して <I>set</I> の複数のシグナルが処理待ちの場合、 <B>sigwaitinfo</B>()
+で取得するシグナルは通常の順序決定ルールに基づいて決定される。 詳細は <B><A HREF="../man7/signal.7.html">signal</A></B>(7) を参照のこと。
+<P>
+
+<B>sigtimedwait</B>() は、 <B>sigwaitinfo</B>() と次の点を除いて全く同じように動作する。この関数にはもう 1 つの引数
+<I>timeout</I>
+があり、シグナル待ちでスレッドが一時停止する時間を指定することができる(この時間はシステムクロックの粒度に切り上げられ、カーネルのスケジューリング遅延により少しだけ長くなる可能性がある)。この引数の型は以下のとおりである:
+<P>
+
+
+
+struct timespec {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;秒&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;&nbsp;tv_nsec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ナノ秒&nbsp;*/
+}
+
+
+<P>
+
+この構造体の 2 つのフィールドがともに 0 の場合、ポーリングが行われる: <B>sigtimedwait</B>()  は、呼び出し側プロセスに対して
+待機しているシグナルの情報を返して戻るか、 <I>set</I> のうちのどのシグナルも待機していない場合はエラーを返して戻る。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 <B>sigwaitinfo</B>()  と <B>sigtimedwait</B>()  はシグナル番号 (すなわち 0 より大きい数) を返す。
+失敗した場合、2 つの関数は -1 を返し、 <I>errno</I> はエラーを表す値に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+<I>set</I> のうちのどのシグナルも <B>sigtimedwait</B>()  に指定された <I>timeout</I> の期間内に処理待ちにならなかった。
+<DT><B>EINTR</B><DD>
+シグナル待ちがシグナルハンドラーによって中断 (interrupt) された (このハンドラーは <I>set</I> にあるシグナル以外のものである)。
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EINVAL</B><DD>
+<I>timeout</I> が不正である。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+通常の使用法では、呼び出し側プロセスはこれらの関数より先に <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)  の呼び出すことにより <I>set</I>
+に含まれるシグナルをブロックし (そのためにこれらのシグナルがこの後に続く <B>sigwaitinfo</B>()  や <B>sigtimedwait</B>()
+の呼び出しの間に処理待ちになった場合には、デフォルトの動作は行われず)、 これらのシグナルに対するハンドラーは設定しない。
+マルチスレッドプログラムでは、 <B>sigwaitinfo</B>()  や <B>sigtimedwait</B>()
+を呼び出したスレッド以外のスレッドで、そのシグナルがデフォルトの動作に基いて処理されないように、全てのスレッドで該当シグナルをブロックすべきである。
+<P>
+
+指定されたスレッドに対する処理待ちのシグナルの集合は、 そのスレッド自体宛ての処理待ちのシグナル集合と、プロセス全体宛ての
+処理待ちのシグナル集合をあわせたものである (<B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照)。
+<P>
+
+<B>SIGKILL</B> と <B>SIGSTOP</B> を待とうとした場合、黙って無視される。
+<P>
+
+一つのプロセス内の複数のスレッドが <B>sigwaitinfo</B>()  や <B>sigtimedwait</B>()  で同じシグナルを待って停止した場合、
+プロセス全体宛てのシグナルが処理待ちになると、複数のスレッドのうち一つだけが 実際にそのシグナルを受信することになる。
+どのスレッドがシグナルを受信するかは決まっていない。
+<P>
+
+<B>sigwaitinfo</B>()  or <B>sigtimedwait</B>(), can't be used to receive signals
+that are synchronously generated, such as the <B>SIGSEGV</B> signal that results
+from accessing an invalid memory address or the <B>SIGFPE</B> signal that
+results from an arithmetic error.  Such signals can be caught only via
+signal handler.
+<P>
+
+
+POSIX では <B>sigtimedwait</B>()  の引数 <I>timeout</I> の値を NULL にした場合の意味を未定義としている。
+<B>sigwaitinfo</B>()  を呼び出したのと同じ意味としてもよいことになっており、 実際 Linux ではこのように動作する。
+<A NAME="lbAI">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+Linux では、 <B>sigwaitinfo</B>()  は <B>sigtimedwait</B>()  を用いて実装されたライブラリ関数である。
+<P>
+
+The glibc wrapper functions for <B>sigwaitinfo</B>()  and <B>sigtimedwait</B>()
+silently ignore attempts to wait for the two real-time signals that are used
+internally by the NPTL threading implementation.  See <B>nptl</B>(7)  for
+details.
+<P>
+
+
+The original Linux system call was named <B>sigtimedwait</B>().  However, with
+the addition of real-time signals in Linux 2.2, the fixed-size, 32-bit
+<I>sigset_t</I> type supported by that system call was no longer fit for
+purpose.  Consequently, a new system call, <B>rt_sigtimedwait</B>(), was added
+to support an enlarged <I>sigset_t</I> type.  The new system call takes a fourth
+argument, <I>size_t sigsetsize</I>, which specifies the size in bytes of the
+signal set in <I>set</I>.  This argument is currently required to have the value
+<I>sizeof(sigset_t)</I> (or the error <B>EINVAL</B> results).  The glibc
+<B>sigtimedwait</B>()  wrapper function hides these details from us,
+transparently calling <B>rt_sigtimedwait</B>()  when the kernel provides it.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2), <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man2/signal.2.html">signal</A></B>(2), <B><A HREF="../man2/signalfd.2.html">signalfd</A></B>(2), <B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2),
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2), <B><A HREF="../man3/sigqueue.3.html">sigqueue</A></B>(3), <B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3), <B><A HREF="../man3/sigwait.3.html">sigwait</A></B>(3),
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7), <B><A HREF="../man7/time.7.html">time</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

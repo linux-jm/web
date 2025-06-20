@@ -1,0 +1,763 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of INOTIFY</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>INOTIFY</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/inotify.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+inotify - ファイルシステムイベントを監視する
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<I>inotify</I> API はファイルシステムイベントを監視するための機構を提供する。 inotify
+は個々のファイルやディレクトリを監視するのに使える。 ディレクトリを監視する場合、inotify はディレクトリ自身と
+ディレクトリ内のファイルのイベントを返す。
+<P>
+
+この API では以下のシステムコールが使用される。
+<DL COMPACT>
+<DT>*<DD>
+<B><A HREF="../man2/inotify_init.2.html">inotify_init</A></B>(2)  は inotify インスタンスを作成し、inotify インスタンスを参照する
+ファイルディスクリプターを返す。 より新しい <B><A HREF="../man2/inotify_init1.2.html">inotify_init1</A></B>(2)  も <B><A HREF="../man2/inotify_init.2.html">inotify_init</A></B>(2)  と同様だが、
+こちらにはいくつかの追加の機能を利用するための <I>flags</I> 引数がある。
+<DT>*<DD>
+<B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)  は inotify インスタンスに関連づけられた「監視対象 (watch) リスト」を操作する。
+監視対象リストの各アイテム (&quot;watch&quot;) は、 ファイルまたはディレクトリのパス名と、 そのパス名で参照されるファイルに対して
+カーネルが監視する複数のイベントの集合を指定する。 <B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)
+は新しい監視アイテムの作成や既存の監視対象の変更ができる。 各監視対象は一意の「監視対象ディスクリプター」を持つ。 これは監視対象を作成したときに
+<B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)  から返される整数である。
+<DT>*<DD>
+監視しているファイルやディレクトリでイベントが起こると、 それらのイベントはアプリケーションから inotify ファイルディスクリプターから
+<B><A HREF="../man2/read.2.html">read</A></B>(2) を使って構造化データとして読み出すことができる (下記参照)。
+<DT>*<DD>
+<B><A HREF="../man2/inotify_rm_watch.2.html">inotify_rm_watch</A></B>(2)  は inotify の監視対象リストからアイテムを削除する。
+<DT>*<DD>
+inotify インスタンスを指している 全てのファイルディスクリプターが (<B><A HREF="../man2/close.2.html">close</A></B>(2) を使って) クローズされた場合、
+その下層にあるオブジェクトとそのリソースは、 カーネルで再利用するために解放される。 関連が切られた監視対象は自動的に解放される。
+</DL>
+<P>
+
+注意深くプログラミングすることで、 アプリケーションは inotify
+を使ってファイルシステムオブジェクトの集合の状態を効率的に監視しキャッシュしておくことができる。
+しかしながら、ロバストなアプリケーションでは、監視ロジックのバグや以下に説明があるような種類の競合条件によりファイルシステムの状態とキャッシュが一致しない状態になることがあるという事実も考慮に入れておくべきである。
+おそらく何らかの一貫性のチェックを行い、不一致が検出された場合にはキャッシュを再構築するのが懸命だろう。
+<A NAME="lbAD">&nbsp;</A>
+<H3>inotify ファイルディスクリプターからのイベントの読み出し</H3>
+
+どのようなイベントが起こっていたかを知るには、 アプリケーションで inotify ファイルディスクリプターを <B><A HREF="../man2/read.2.html">read</A></B>(2)  すればよい。
+これまでに何もイベントが起こっていない場合、 停止 (blocking) モードのファイルディスクリプターであれば、 少なくとも 1
+つのイベントが起こるまで <B><A HREF="../man2/read.2.html">read</A></B>(2)  は停止する (シグナルにより割り込まれなかった場合。
+シグナルによる割り込みがあった場合、呼び出しはエラー <B>EINTR</B> で失敗する。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照)。
+<P>
+
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  が成功すると、以下の構造体を 1 つ以上含むバッファーが返される:
+<P>
+
+
+
+
+
+
+
+struct inotify_event {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;監視対象ディスクリプター&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;mask;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;イベントを示すマスク&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;cookie;&nbsp;&nbsp;&nbsp;/*&nbsp;関連するイベント群を関連づける
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;一意なクッキー&nbsp;(<A HREF="../man2/rename.2.html">rename</A>(2)&nbsp;用)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;len;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;'name'&nbsp;フィールドのサイズ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name[];&nbsp;&nbsp;&nbsp;/*&nbsp;ヌルで終端された任意の名前&nbsp;*/
+};
+
+
+<P>
+
+<I>wd</I> はイベント発生の監視対象を指定する。 これは、前もって行われた <B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)
+呼び出しで返された監視対象ディスクリプターのうちの 1 つである。
+<P>
+
+<I>mask</I> には発生したイベント (下記参照) を記述するためのビットが含まれる。
+<P>
+
+<I>cookie</I> は関連するイベントを関連づけるための一意な整数である。
+現在のところ、この値は rename イベントに対してのみ使われており、
+結果のペアである <B>IN_MOVED_FROM</B> と <B>IN_MOVED_TO</B> イベントを
+アプリケーションで関連づけることができる。
+他のイベント種別の場合には、 <I>cookie</I> は 0 に設定する。
+<P>
+
+<I>name</I> フィールドは監視しているディレクトリ内のファイルに対して イベントが返される場合のためにだけ存在する。
+監視するディレクトリ内のファイル名を表す。 このファイル名はヌルで終端され、 その後の読み込みで適切なアドレス境界に調整するために、 さらにヌルバイト
+('\0') が含まれる場合もある。
+<P>
+
+<I>len</I> フィールドはヌルバイトを含む <I>name</I> の全てのバイト数を表す。
+よって、 <I>inotify_event</I> 構造体のサイズは
+<I>sizeof(struct inotify_event)+len</I> である。
+<P>
+
+<B><A HREF="../man2/read.2.html">read</A></B>(2) に渡されたバッファーが小さすぎて次のイベントに関する情報を返せ
+ない場合の動作はカーネルのバージョンにより異なる。 2.6.21 より前のカー
+ネルでは、 <B><A HREF="../man2/read.2.html">read</A></B>(2) は 0 を返す。 2.6.21 以降のカーネルでは、
+<B><A HREF="../man2/read.2.html">read</A></B>(2) はエラー <B>EINVAL</B> で失敗する。
+バッファーサイズとして
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sizeof(struct&nbsp;inotify_event)&nbsp;+&nbsp;NAME_MAX&nbsp;+&nbsp;1
+<P>
+
+を指定すれば、少なくとも 1 イベントで読み出しを行うには十分である。
+<A NAME="lbAE">&nbsp;</A>
+<H3>inotify イベント</H3>
+
+<B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)  の <I>mask</I> 引数と、inotify ファイル構造体を <B><A HREF="../man2/read.2.html">read</A></B>(2)
+したときに返される <I>inotify_event</I> 構造体の <I>mask</I> フィールドは、ともに inotify イベントを識別するための
+ビットマスクである。 以下のビットが <B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)  を呼ぶときの <I>mask</I> に指定可能であり、
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  で返される <I>mask</I> フィールドで返される:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>IN_ACCESS</B> (+)<DD>
+(<B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/execve.2.html">execve</A></B>(2) などで) ファイルがアクセスされた。
+<DT><B>IN_ATTRIB</B> (*)<DD>
+
+
+
+
+メタデータが変更された。 メタデータとは、例えば、アクセス許可 (<B><A HREF="../man2/chmod.2.html">chmod</A></B>(2))、タイムスタンプ (<B><A HREF="../man2/utimensat.2.html">utimensat</A></B>(2)
+など)、拡張属性 (<B><A HREF="../man2/setxattr.2.html">setxattr</A></B>(2))、 リンクカウント (Linux 2.6.25 以降; <B><A HREF="../man2/link.2.html">link</A></B>(2) のリンク先や
+<B><A HREF="../man2/unlink.2.html">unlink</A></B>(2) など)、ユーザー/グループ ID (<B><A HREF="../man2/chown.2.html">chown</A></B>(2) など) などである。
+<DT><B>IN_CLOSE_WRITE</B> (+)<DD>
+書き込みのためにオープンされたファイルがクローズされた。
+<DT><B>IN_CLOSE_NOWRITE</B> (*)<DD>
+書き込み用としてはオープンされていないファイルやディレクトリがクローズされた。
+<DT><B>IN_CREATE</B> (+)<DD>
+監視対象ディレクトリ内でファイルやディレクトリが作成された (<B><A HREF="../man2/open.2.html">open</A></B>(2)  <B>O_CREAT</B>, <B><A HREF="../man2/mkdir.2.html">mkdir</A></B>(2),
+<B><A HREF="../man2/link.2.html">link</A></B>(2), <B><A HREF="../man2/symlink.2.html">symlink</A></B>(2), UNIX ドメインソケットに対する <B><A HREF="../man2/bind.2.html">bind</A></B>(2) など)。
+<DT><B>IN_DELETE</B> (+)<DD>
+監視対象ディレクトリ内でファイルやディレクトリが削除された。
+<DT><B>IN_DELETE_SELF</B><DD>
+監視対象のファイルやディレクトリ自身が削除あれた。 (このイベントはオブジェクトが別のファイルシステムに移動された場合にも発生する。 <B><A HREF="../../0MultiFileIdx/man1/mv.1.html">mv</A></B>(1)
+は実際には別のファイルシステムにファイルをコピーした後、元のファイルシステムからそのファイルを削除するからである。) また、
+結果的に監視ディスクリプターに対して <B>IN_IGNORED</B> イベントも生成される。
+<DT><B>IN_MODIFY</B> (+)<DD>
+ファイルが変更された (<B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man2/truncate.2.html">truncate</A></B>(2) など)。
+<DT><B>IN_MOVE_SELF</B><DD>
+監視対象のディレクトリまたはファイル自身が移動された。
+<DT><B>IN_MOVED_FROM</B> (+)<DD>
+ファイル名の変更を行った際に変更前のファイル名が含まれるディレクトリに対して生成される。
+<DT><B>IN_MOVED_TO</B> (+)<DD>
+ファイル名の変更を行った際に新しいファイル名が含まれるディレクトリに対して生成される。
+<DT><B>IN_OPEN</B> (*)<DD>
+ファイルやディレクトリがオープンされた。
+</DL>
+</DL>
+
+<P>
+
+Inotify monitoring is inode-based: when monitoring a file (but not when
+monitoring the directory containing a file), an event can be generated for
+activity on any link to the file (in the same or a different directory).
+<P>
+
+ディレクトリを監視する場合:
+<DL COMPACT>
+<DT>*<DD>
+上記でアスタリスク (*) が付いたイベントは、 ディレクトリ自身とディレクトリ内のオブジェクトのどちらに対しても発生する。
+<DT>*<DD>
+上記でプラス記号 (+) が付いたイベントは、 ディレクトリ内のオブジェクトに対してのみ発生する (ディレクトリ自身に対しては発生しない)。
+</DL>
+<P>
+
+<I>Note</I>: when monitoring a directory, events are not generated for the files
+inside the directory when the events are performed via a pathname (i.e., a
+link)  that lies outside the monitored directory.
+<P>
+
+監視対象のディレクトリ内のオブジェクトに対してイベントが発生した場合、 <I>inotify_event</I> 構造体で返される <I>name</I>
+フィールドは、ディレクトリ内のファイル名を表す。
+<P>
+
+<B>IN_ALL_EVENTS</B> マクロは上記のイベント全てのマスクとして定義される。 このマクロは <B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)
+を呼び出すときの <I>mask</I> 引数として使える。
+<P>
+
+以下の 2 つの便利なマクロが定義されている。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>IN_MOVE</B><DD>
+<B>IN_MOVED_FROM | IN_MOVED_TO</B> と等価。
+<DT><B>IN_CLOSE</B><DD>
+<B>IN_CLOSE_WRITE | IN_CLOSE_NOWRITE</B> と等価。
+</DL>
+</DL>
+
+<P>
+
+その他にも以下のビットを <B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)  を呼ぶときの <I>mask</I> に指定できる:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>IN_DONT_FOLLOW</B> (Linux 2.6.15 以降)<DD>
+<I>pathname</I> がシンボリックリンクである場合に辿らない。 (Linux 2.6.15 以降)
+<DT><B>IN_EXCL_UNLINK</B> (Linux 2.6.36 以降)<DD>
+
+デフォルトでは、あるディレクトリの子ファイルに関するイベントを監視 (watch) した際、ディレクトリからその子ファイルが削除 (unlink)
+された場合であってもその子ファイルに対してイベントが生成される。このことは、アプリケーションによってはあまり興味のないイベントが大量に発生することにつながる
+(例えば、<I>/tmp</I> を監視している場合、たくさんのアプリケーションが、すぐにその名前が削除される一時ファイルをそのディレクトリに作成する)。
+<B>IN_EXCL_UNLINK</B>
+を指定するとこのデフォルトの動作を変更でき、監視対象のディレクトリから子ファイルが削除された後に子ファイルに関するイベントが生成されなくなる。
+<DT><B>IN_MASK_ADD</B><DD>
+If a watch instance already exists for the filesystem object corresponding
+to <I>pathname</I>, add (OR) the events in <I>mask</I> to the watch mask (instead of
+replacing the mask); the error <B>EINVAL</B> results if <B>IN_MASK_CREATE</B> is
+also specified.
+<DT><B>IN_ONESHOT</B><DD>
+<I>pathname</I> に対応するファイルシステムオブジェクトを 1 イベントについてだけ監視し、 イベントが発生したら監視対象リストから削除する。
+<DT><B>IN_ONLYDIR</B> (Linux 2.6.15 以降)<DD>
+Watch <I>pathname</I> only if it is a directory; the error <B>ENOTDIR</B> results if
+<I>pathname</I> is not a directory.  Using this flag provides an application
+with a race-free way of ensuring that the monitored object is a directory.
+<DT><B>IN_MASK_CREATE</B> (Linux 4.18 以降)<DD>
+Watch <I>pathname</I> only if it does not already have a watch associated with
+it; the error <B>EEXIST</B> results if <I>pathname</I> is already being watched.
+<DT><DD>
+Using this flag provides an application with a way of ensuring that new
+watches do not modify existing ones.  This is useful because multiple paths
+may refer to the same inode, and multiple calls to <B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)
+without this flag may clobber existing watch masks.
+</DL>
+</DL>
+
+<P>
+
+以下のビットが <B><A HREF="../man2/read.2.html">read</A></B>(2)  で返される <I>mask</I> フィールドに設定される:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>IN_IGNORED</B><DD>
+監視対象が (<B><A HREF="../man2/inotify_rm_watch.2.html">inotify_rm_watch</A></B>(2) により) 明示的に 削除された。もしくは (ファイルの削除、またはファイル
+システムのアンマウントにより) 自動的に削除された。「バグ」も参照のこと。
+<DT><B>IN_ISDIR</B><DD>
+このイベントの対象がディレクトリである。
+<DT><B>IN_Q_OVERFLOW</B><DD>
+イベントキューが溢れた (このイベントの場合、<I>wd</I> は -1 である)。
+<DT><B>IN_UNMOUNT</B><DD>
+監視対象オブジェクトを含むファイルシステムがアンマウントされた。さらに、この監視対象ディスクリプターに対して <B>IN_IGNORED</B>
+イベントが生成される。
+</DL>
+</DL>
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>例</H3>
+
+アプリケーションがディレクトリ <I>dir</I> とファイル <I>dir/myfile</I> のすべてのイベントを監視しているとする。 以下に、これらの 2
+つのオブジェクトに対して生成されるイベントの例を示す。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>fd = open(&quot;dir/myfile&quot;, O_RDWR);<DD>
+<I>dir</I> と <I>dir/myfile</I> の両方に対して <B>IN_OPEN</B> イベントが生成される。
+<DT>read(fd, buf, count);<DD>
+<I>dir</I> と <I>dir/myfile</I> の両方に対して <B>IN_ACCESS</B> イベントが生成される
+<DT>write(fd, buf, count);<DD>
+<I>dir</I> と <I>dir/myfile</I> の両方に対して <B>IN_MODIFY</B> イベントが生成される
+<DT>fchmod(fd, mode);<DD>
+<I>dir</I> と <I>dir/myfile</I> の両方に対して <B>IN_ATTRIB</B> イベントが生成される
+<DT>close(fd);<DD>
+<I>dir</I> と <I>dir/myfile</I> の両方に対して <B>IN_CLOSE_WRITE</B> イベントが生成される
+</DL>
+</DL>
+
+<P>
+
+アプリケーションがディレクトリ <I>dir1</I> と <I>dir2</I>、およびファイル <I>dir1/myfile</I> を監視しているとする。
+以下に生成されるイベントの例を示す。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>link(&quot;dir1/myfile&quot;, &quot;dir2/new&quot;);<DD>
+<I>myfile</I> に対して <B>IN_ATTRIB</B> イベントが生成され、 <I>dir2</I> に対して <B>IN_CREATE</B> イベントが生成される。
+<DT>rename(&quot;dir1/myfile&quot;, &quot;dir2/myfile&quot;);<DD>
+<I>dir1</I> に対してイベント <B>IN_MOVED_FROM</B> が、 <I>dir2</I> に対してイベント <B>IN_MOVED_TO</B> が、
+<I>myfile</I> に対してイベント <B>IN_MOVE_SELF</B> が生成される。この際 イベント <B>IN_MOVED_FROM</B> と
+<B>IN_MOVED_TO</B> は同じ <I>cookie</I> 値を持つ。
+</DL>
+</DL>
+
+<P>
+
+<I>dir1/xx</I> と <I>dir2/yy</I> は同じファイルを参照するリンクで (他のリンクはないものとする)、 アプリケーションは <I>dir1</I>,
+<I>dir2</I>, <I>dir1/xx</I>, <I>dir2/yy</I> を監視しているものとする。
+以下に示す順序で下記の呼び出しを実行すると、以下のイベントが生成される。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>unlink(&quot;dir2/yy&quot;);<DD>
+<I>xx</I> に対して <B>IN_ATTRIB</B> イベントが生成され (リンク数が変化したため)、 <I>dir2</I> に対して <B>IN_DELETE</B>
+イベントが生成される。
+<DT>unlink(&quot;dir1/xx&quot;);<DD>
+<I>xx</I> に対してイベント <B>IN_ATTRIB</B>, <B>IN_DELETE_SELF</B>, <B>IN_IGNORED</B> が生成され、 <I>dir1</I>
+に対して <B>IN_DELETE</B> イベントが生成される。
+</DL>
+</DL>
+
+<P>
+
+アプリケーションがディレクトリ <I>dir</I> と (空の) ディレクトリ <I>dir/subdir</I> を監視しているものとする。
+以下に生成されるイベントの例を示す。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>mkdir(&quot;dir/new&quot;, mode);<DD>
+<I>dir</I> に対して <B>IN_CREATE | IN_ISDIR</B> イベントが生成される。
+<DT>rmdir(&quot;dir/subdir&quot;);<DD>
+<I>subdir</I> に対してイベント <B>IN_DELETE_SELF</B> と <B>IN_IGNORED</B> が生成され、 <I>dir</I> に対して
+<B>IN_DELETE | IN_ISDIR</B> イベントが生成される。
+</DL>
+</DL>
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>/proc インターフェース</H3>
+
+以下のインターフェースは、inotify で消費される カーネルメモリーの総量を制限するのに使用できる:
+<DL COMPACT>
+<DT><I>/proc/sys/fs/inotify/max_queued_events</I><DD>
+このファイルの値は、アプリケーションが <B><A HREF="../man2/inotify_init.2.html">inotify_init</A></B>(2)  を呼び出すときに使用され、対応する inotify インスタンスについて
+キューに入れられるイベントの数の上限を設定する。 この制限を超えたイベントは破棄されるが、 <B>IN_Q_OVERFLOW</B> イベントが常に生成される。
+<DT><I>/proc/sys/fs/inotify/max_user_instances</I><DD>
+1 つの実ユーザー ID に対して生成できる inotify インスタンスの数の上限を指定する。
+<DT><I>/proc/sys/fs/inotify/max_user_watches</I><DD>
+作成可能な監視対象の数の実 UID 単位の上限を指定する。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+inotify は 2.6.13 の Linux カーネルに組込まれた。 これに必要なライブラリのインターフェースは、 glibc のバージョン 2.4
+に追加された (<B>IN_DONT_FOLLOW</B>, <B>IN_MASK_ADD</B>, <B>IN_ONLYDIR</B> は glibc バージョン 2.5
+で追加された)。
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+inotify API は Linux 独自のものである。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+inotify ファイルディスクリプターは <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  を使って監視できる。
+イベントがある場合、ファイルディスクリプターは読み込み可能と通知する。
+<P>
+
+Linux 2.6.25 以降では、シグナル駆動 (signal-driven) I/O の通知が inotify
+ファイルディスクリプターについて利用可能である。 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  に書かれている (<B>O_ASYNC</B> フラグを設定するための)
+<B>F_SETFL</B>, <B>F_SETOWN</B>, <B>F_SETSIG</B> の議論を参照のこと。 シグナルハンドラーに渡される <I>siginfo_t</I>
+構造体は、以下のフィールドが設定される (<I>siginfo_t</I> は <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)  で説明されている)。 <I>si_fd</I> には
+inotify ファイルディスクリプター番号が、 <I>si_signo</I> にはシグナル番号が、 <I>si_code</I> には <B>POLL_IN</B> が、
+<I>si_band</I> には <B>POLLIN</B> が設定される。
+<P>
+
+inotify ファイルディスクリプターに対して 連続して生成される出力 inotify イベントが同一の場合 (<I>wd</I>, <I>mask</I>,
+<I>cookie</I>, <I>name</I> が等しい場合)、 前のイベントがまだ読み込まれていなければ、 連続するイベントが 1 つのイベントにまとめられる
+(ただし「バグ」の節も参照のこと)。 これによりイベントキューに必要なカーネルメモリー量が減るが、
+これはまたアプリケーションがファイルイベント数を信頼性を持って数えるのに inotify を使用できないということでもある。
+<P>
+
+inotify ファイルディスクリプターの読み込みで返されるイベントは、 順序付けられたキューになる。
+従って、たとえば、あるディレクトリの名前を別の名前に変更した場合、 inotify ファイルディスクリプターについての正しい順番で
+イベントが生成されることが保証される。
+<P>
+
+The set of watch descriptors that is being monitored via an inotify file
+descriptor can be viewed via the entry for the inotify file descriptor in
+the process's <I>/proc/[pid]/fdinfo</I> directory.  See <B><A HREF="../man5/proc.5.html">proc</A></B>(5)  for further
+details.  The <B>FIONREAD</B> <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  returns the number of bytes available
+to read from an inotify file descriptor.
+<A NAME="lbAK">&nbsp;</A>
+<H3>制限と警告</H3>
+
+inotify API では、inotify イベントが発生するきっかけとなったユーザーやプロセスに関する情報は提供されない。とりわけ、inotify
+経由でイベントを監視しているプロセスが、自分自身がきっかけとなったイベントと他のプロセスがきっかけとなったイベントを区別する簡単な手段はない。
+<P>
+
+inotify は、ファイルシステム API 経由でユーザー空間プログラムがきっかけとなったイベントだけを報告する。 結果として、 inotify
+はネットワークファイルシステムで発生したリモートのイベントを捉えることはできない
+(このようなイベントを捉えるにはアプリケーションはファイルシステムをポーリングする必要がある)。 さらに、 <I>/proc</I>, <I>/sys</I>,
+<I>/dev/pts</I> といったいくつかの疑似ファイルシステムは inotify で監視することができない。
+<P>
+
+inotify API は <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/msync.2.html">msync</A></B>(2), <B><A HREF="../man2/munmap.2.html">munmap</A></B>(2)
+により起こったファイルのアクセスと変更を報告しない。
+<P>
+
+inotify API では影響が受けるファイルをファイル名で特定する。
+しかしながら、アプリケーションが inotify イベントを処理する時点では、
+そのファイル名がすでに削除されたり変更されたりしている可能性がある。
+<P>
+
+inotify API では監視対象ディスクリプターを通してイベントが区別される。 (必要であれば)
+監視対象ディスクリプターとパス名のマッピングをキャッシュしておくのはアプリケーションの役目である。
+ディレクトリの名前変更の場合、キャッシュしている複数のパス名に影響がある点に注意すること。
+<P>
+
+inotify によるディレクトリの監視は再帰的に行われない: あるディレクトリ以下の
+サブディレクトリを監視する場合、 監視対象を追加で作成しなければならない。
+大きなディレクトリツリーの場合には、この作業にかなり時間がかかることがある。
+<P>
+
+ディレクトリツリー全体を監視していて、 そのツリー内に新しいサブディレクトリが作成されるか、
+既存のディレクトリが名前が変更されそのツリー内に移動した場合、 新しいサブディレクトリに対する watch を作成するまでに、 新しいファイル
+(やサブディレクトリ) がそのサブディレクトリ内にすでに作成されている場合がある点に注意すること。 したがって、watch
+を追加した直後にサブディレクトリの内容をスキャンしたいと思う場合もあるだろう (必要ならそのサブディレクトリ内のサブディレクトリに対する watch
+も再帰的に追加することもあるだろう)。
+<P>
+
+イベントキューはオーバーフローする場合があることに注意すること。 この場合、イベントは失なわれる。 ロバスト性が求められるアプリケーションでは、
+イベントが失なわれる可能性も含めて適切に処理を行うべきである。
+例えば、アプリケーション内のキャッシュの一部分または全てを再構築する必要があるかもしれない。 (単純だが、おそらくコストがかかる方法は、 inotify
+ファイルディスクリプターをクローズし、 キャッシュを空にし、 新しい inotify ファイルディスクリプターを作成し、
+監視しているオブジェクトの監視対象ディスクリプターとキャッシュエントリーの再作成を行う方法である。)
+<P>
+
+
+If a filesystem is mounted on top of a monitored directory, no event is
+generated, and no events are generated for objects immediately under the new
+mount point.  If the filesystem is subsequently unmounted, events will
+subsequently be generated for the directory and the objects it contains.
+<A NAME="lbAL">&nbsp;</A>
+<H3>rename() イベントの取り扱い</H3>
+
+上述の通り、 <B><A HREF="../man2/rename.2.html">rename</A></B>(2) により生成される <B>IN_MOVED_FROM</B> と <B>IN_MOVED_TO</B> イベントの組は、共有される
+cookie 値によって対応を取ることができる。 しかし、対応を取る場合にはいくつか難しい点がある。
+<P>
+
+これらの 2 つのイベントは、 inotify ファイルディスクリプターから読み出しを行った場合に、通常はイベントストリーム内で連続している。
+しかしながら、連続していることは保証されていない。 複数のプロセスが監視対象オブジェクトでイベントを発生させた場合、 (めったに起こらないことだが)
+イベント <B>IN_MOVED_FROM</B> と <B>IN_MOVED_TO</B> の間に任意の数の他のイベントがはさまる可能性がある。
+さらに、対となるイベントがアトミックにキューに挿入されることも保証されていない。 <B>IN_MOVED_FROM</B> が現れたが
+<B>IN_MOVED_TO</B> は現れていないという短い期間がありえるということだ。
+<P>
+
+したがって、 <B><A HREF="../man2/rename.2.html">rename</A></B>(2) により生成された <B>IN_MOVED_FROM</B> と <B>IN_MOVED_TO</B>
+のイベントの組の対応を取るのは本質的に難しいことである (監視対象のディレクトリの外へオブジェクトの rename が行われた場合には
+<B>IN_MOVED_TO</B> イベントは存在しさえしないことを忘れてはならない)。 (イベントは常に連続しているとの仮定を置くといった)
+発見的な方法を使うと、ほとんどの場合でイベントの組をうまく見つけることができるが、 いくつかの場合に見逃すことが避けられず、 アプリケーションが
+<B>IN_MOVED_FROM</B> と <B>IN_MOVED_TO</B> イベントが無関係だとみなしてしまう可能性がある。
+結果的に、監視対象ディスクリプターが破棄され再作成された場合、これらの監視対象ディスクリプターは、処理待ちイベントの監視対象ディスクリプターと一貫性のないものになってしまう
+(inotify ファイルディスクリプターの再作成とキャッシュの再構成はこの状況に対処するのに有用な方法なのだが)。
+<P>
+
+また、アプリケーションは、 <B>IN_MOVED_FROM</B> イベントが今行った <B><A HREF="../man2/read.2.html">read</A></B>(2)
+の呼び出しで返されたバッファーのちょうど一番最後のイベントで、 <B>IN_MOVED_TO</B> イベントは次の <B><A HREF="../man2/read.2.html">read</A></B>(2)
+を行わないと取得できない可能性も考慮に入れる必要がある。 2 つ目の <B><A HREF="../man2/read.2.html">read</A></B>(2) は (短い) タイムアウトで行うべきである。 これは、
+<B>IN_MOVED_FROM</B>-<B>IN_MOVED_TO</B> のイベントペアのキューへの挿入はアトミックではなく、 また <B>IN_MOVED_TO</B>
+イベントが全く発生しない可能性もあるという事実を考慮に入れておく必要があるからである。
+<A NAME="lbAM">&nbsp;</A>
+<H2>バグ</H2>
+
+
+Before Linux 3.19, <B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2)  did not create any inotify events.
+Since Linux 3.19, calls to <B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2)  generate <B>IN_MODIFY</B> events.
+<P>
+
+
+
+
+2.6.16 以前のカーネルでは <B>IN_ONESHOT</B> <I>mask</I> フラグが働かない。
+<P>
+
+元々は設計/実装時の意図通り、 イベントが一つ発生し watch が削除された際に <B>IN_ONESHOT</B> フラグでは <B>IN_IGNORED</B>
+イベントが発生しなかった。 しかし、 別の変更での意図していなかった影響により、 Linux 2.6.36 以降では、 この場合に
+<B>IN_IGNORED</B> イベントが生成される。
+<P>
+
+
+カーネル 2.6.25 より前では、 連続する同一のイベントを一つにまとめることを意図したコード (古い方のイベントがまだ読み込まれていない場合に、
+最新の 2 つのイベントを一つにまとめられる可能性がある) が、 最新のイベントが「最も古い」読み込まれていないイベントとまとめられるか
+をチェックするようになっていた。
+<P>
+
+
+<B><A HREF="../man2/inotify_rm_watch.2.html">inotify_rm_watch</A></B>(2) の呼び出しにより監視対象ディスクリプターが削除された場合
+(なお、監視対象ファイルの削除や監視対象ファイルが含まれるファイルシステムのアンマウントによっても監視対象ディスクリプターは削除される)、
+この監視対象ディスクリプター関連の処理待ちの未読み出しイベントは、 読み出し可能なままとなる。 監視対象ディスクリプターは
+<B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2) によって後で割り当てられるため、 カーネルは利用可能な監視対象ディスクリプターの範囲 (0 から
+<B>INT_MAX</B>) から昇順にサイクリックに割り当てを行う。未使用の監視対象ディスクリプターを割り当てる際、 その監視対象ディスクリプター番号に
+inotify キューで処理待ちの未読み出しイベントがあるかの確認は行われない。 したがって、監視対象ディスクリプターが再割り当てされた際に、
+その監視対象ディスクリプターの一つ前の使用時に発生した処理待ちの未読み出しイベントが存在するということが起こりうる。
+その結果、アプリケーションはこれらのイベントを読み出す可能性があり、
+これらのイベントが新しく再利用された監視対象ディスクリプターに関連付けられたファイルに属するものかを解釈する必要が出て来る。
+実際のところ、このバグを踏む可能性は極めて低い。 それは、このバグを踏むためには、アプリケーションが <B>INT_MAX</B>
+個の監視対象ディスクリプターが一周させて、 キューに未読み出しイベントが残っている監視対象ディスクリプターを解放し、
+その監視対象ディスクリプターを再利用する必要があるからである。 この理由と、実世界のアプリケーションで発生したというバグ報告がないことから、 Linux
+3.15 時点では、この計算上は起こりうるバグを取り除くためのカーネルの変更は行われていない。
+<A NAME="lbAN">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは inotify API の使用例を示したものである。 コマンドライン引数で渡されたディレクトリに印を付け、 タイプが
+<B>IN_OPEN</B>, <B>IN_CLOSE_NOWRITE</B> <B>IN_CLOSE_WRITE</B> のイベントを待つ。
+<P>
+
+以下は、 ファイル <I>/home/user/temp/foo</I> を編集し、 ディレクトリ <I>/tmp</I> の一覧表示を行った場合の出力である。
+対象のファイルとディレクトリがオープンされる前に、イベント <B>IN_OPEN</B> が発生している。 対象ファイルがクローズされた後にイベント
+<B>IN_CLOSE_WRITE</B> が発生している。 対象ディレクトリがクローズされた後にイベント <B>IN_CLOSE_NOWRITE</B>
+が発生している。 ユーザーが ENTER キーを押すると、プログラムの実行は終了する。
+<A NAME="lbAO">&nbsp;</A>
+<H3>出力例</H3>
+
+
+
+$ <B>./a.out /tmp /home/user/temp</B>
+Press enter key to terminate.
+Listening for events.
+IN_OPEN: /home/user/temp/foo [file]
+IN_CLOSE_WRITE: /home/user/temp/foo [file]
+IN_OPEN: /tmp/ [directory]
+IN_CLOSE_NOWRITE: /tmp/ [directory]
+<P>
+Listening for events stopped.
+
+
+<A NAME="lbAP">&nbsp;</A>
+<H3>プログラムソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/poll.h">poll.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/inotify.h">sys/inotify.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+/* Read all available inotify events from the file descriptor 'fd'.
+<BR>&nbsp;&nbsp;&nbsp;wd&nbsp;is&nbsp;the&nbsp;table&nbsp;of&nbsp;watch&nbsp;descriptors&nbsp;for&nbsp;the&nbsp;directories&nbsp;in&nbsp;argv.
+<BR>&nbsp;&nbsp;&nbsp;argc&nbsp;is&nbsp;the&nbsp;length&nbsp;of&nbsp;wd&nbsp;and&nbsp;argv.
+<BR>&nbsp;&nbsp;&nbsp;argv&nbsp;is&nbsp;the&nbsp;list&nbsp;of&nbsp;watched&nbsp;directories.
+<BR>&nbsp;&nbsp;&nbsp;Entry&nbsp;0&nbsp;of&nbsp;wd&nbsp;and&nbsp;argv&nbsp;is&nbsp;unused.&nbsp;*/
+<P>
+static void
+handle_events(int fd, int *wd, int argc, char* argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Some&nbsp;systems&nbsp;cannot&nbsp;read&nbsp;integer&nbsp;variables&nbsp;if&nbsp;they&nbsp;are&nbsp;not
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;properly&nbsp;aligned.&nbsp;On&nbsp;other&nbsp;systems,&nbsp;incorrect&nbsp;alignment&nbsp;may
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decrease&nbsp;performance.&nbsp;Hence,&nbsp;the&nbsp;buffer&nbsp;used&nbsp;for&nbsp;reading&nbsp;from
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;inotify&nbsp;file&nbsp;descriptor&nbsp;should&nbsp;have&nbsp;the&nbsp;same&nbsp;alignment&nbsp;as
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;inotify_event.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[4096]
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__attribute__&nbsp;((aligned(__alignof__(struct&nbsp;inotify_event))));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;struct&nbsp;inotify_event&nbsp;*event;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;len;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Loop&nbsp;while&nbsp;events&nbsp;can&nbsp;be&nbsp;read&nbsp;from&nbsp;inotify&nbsp;file&nbsp;descriptor.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Read&nbsp;some&nbsp;events.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;len&nbsp;=&nbsp;read(fd,&nbsp;buf,&nbsp;sizeof(buf));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;==&nbsp;-1&nbsp;&amp;&amp;&nbsp;errno&nbsp;!=&nbsp;EAGAIN)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;read&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;If&nbsp;the&nbsp;nonblocking&nbsp;read()&nbsp;found&nbsp;no&nbsp;events&nbsp;to&nbsp;read,&nbsp;then
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it&nbsp;returns&nbsp;-1&nbsp;with&nbsp;errno&nbsp;set&nbsp;to&nbsp;EAGAIN.&nbsp;In&nbsp;that&nbsp;case,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;we&nbsp;exit&nbsp;the&nbsp;loop.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;&lt;=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;バッファー内の全イベントを処理する&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(char&nbsp;*ptr&nbsp;=&nbsp;buf;&nbsp;ptr&nbsp;&lt;&nbsp;buf&nbsp;+&nbsp;len;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ptr&nbsp;+=&nbsp;sizeof(struct&nbsp;inotify_event)&nbsp;+&nbsp;event-&gt;len)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event&nbsp;=&nbsp;(const&nbsp;struct&nbsp;inotify_event&nbsp;*)&nbsp;ptr;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Print&nbsp;event&nbsp;type&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(event-&gt;mask&nbsp;&amp;&nbsp;IN_OPEN)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;IN_OPEN:&nbsp;&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(event-&gt;mask&nbsp;&amp;&nbsp;IN_CLOSE_NOWRITE)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;IN_CLOSE_NOWRITE:&nbsp;&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(event-&gt;mask&nbsp;&amp;&nbsp;IN_CLOSE_WRITE)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;IN_CLOSE_WRITE:&nbsp;&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Print&nbsp;the&nbsp;name&nbsp;of&nbsp;the&nbsp;watched&nbsp;directory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;1;&nbsp;i&nbsp;&lt;&nbsp;argc;&nbsp;++i)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(wd[i]&nbsp;==&nbsp;event-&gt;wd)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s/&quot;,&nbsp;argv[i]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Print&nbsp;the&nbsp;name&nbsp;of&nbsp;the&nbsp;file&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(event-&gt;len)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s&quot;,&nbsp;event-&gt;name);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Print&nbsp;type&nbsp;of&nbsp;filesystem&nbsp;object&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(event-&gt;mask&nbsp;&amp;&nbsp;IN_ISDIR)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;[directory]\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;[file]\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+<P>
+int
+main(int argc, char* argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd,&nbsp;i,&nbsp;poll_num;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;*wd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nfds_t&nbsp;nfds;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;pollfd&nbsp;fds[2];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Usage:&nbsp;%s&nbsp;PATH&nbsp;[PATH&nbsp;...]\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Press&nbsp;ENTER&nbsp;key&nbsp;to&nbsp;terminate.\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;the&nbsp;file&nbsp;descriptor&nbsp;for&nbsp;accessing&nbsp;the&nbsp;inotify&nbsp;API&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;inotify_init1(IN_NONBLOCK);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;inotify_init1&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allocate&nbsp;memory&nbsp;for&nbsp;watch&nbsp;descriptors&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;wd&nbsp;=&nbsp;calloc(argc,&nbsp;sizeof(int));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(wd&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;calloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Mark&nbsp;directories&nbsp;for&nbsp;events
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;file&nbsp;was&nbsp;opened
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;file&nbsp;was&nbsp;closed&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(i&nbsp;=&nbsp;1;&nbsp;i&nbsp;&lt;&nbsp;argc;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wd[i]&nbsp;=&nbsp;inotify_add_watch(fd,&nbsp;argv[i],
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN_OPEN&nbsp;|&nbsp;IN_CLOSE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(wd[i]&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Cannot&nbsp;watch&nbsp;'%s':&nbsp;%s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[i],&nbsp;strerror(errno));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ポーリングの準備&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nfds&nbsp;=&nbsp;2;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;コンソールの入力&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fds[0].fd&nbsp;=&nbsp;STDIN_FILENO;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fds[0].events&nbsp;=&nbsp;POLLIN;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Inotify&nbsp;input&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fds[1].fd&nbsp;=&nbsp;fd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fds[1].events&nbsp;=&nbsp;POLLIN;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;events&nbsp;and/or&nbsp;terminal&nbsp;input&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Listening&nbsp;for&nbsp;events.\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poll_num&nbsp;=&nbsp;poll(fds,&nbsp;nfds,&nbsp;-1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(poll_num&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errno&nbsp;==&nbsp;EINTR)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;poll&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(poll_num&nbsp;&gt;&nbsp;0)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fds[0].revents&nbsp;&amp;&nbsp;POLLIN)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Console&nbsp;input&nbsp;is&nbsp;available.&nbsp;Empty&nbsp;stdin&nbsp;and&nbsp;quit&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(read(STDIN_FILENO,&nbsp;&amp;buf,&nbsp;1)&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf&nbsp;!=&nbsp;'\n')
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fds[1].revents&nbsp;&amp;&nbsp;POLLIN)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Inotify&nbsp;events&nbsp;are&nbsp;available&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_events(fd,&nbsp;wd,&nbsp;argc,&nbsp;argv);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Listening&nbsp;for&nbsp;events&nbsp;stopped.\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Close&nbsp;inotify&nbsp;file&nbsp;descriptor&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;close(fd);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(wd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAQ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>inotifywait</B>(1), <B>inotifywatch</B>(1), <B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2),
+<B><A HREF="../man2/inotify_init.2.html">inotify_init</A></B>(2), <B><A HREF="../man2/inotify_init1.2.html">inotify_init1</A></B>(2), <B><A HREF="../man2/inotify_rm_watch.2.html">inotify_rm_watch</A></B>(2), <B><A HREF="../man2/read.2.html">read</A></B>(2),
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2), <B><A HREF="../man7/fanotify.7.html">fanotify</A></B>(7)
+<P>
+
+Linux カーネルソース内の <I>Documentation/filesystems/inotify.txt</I>
+<A NAME="lbAR">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">inotify ファイルディスクリプターからのイベントの読み出し</A><DD>
+<DT><A HREF="#lbAE">inotify イベント</A><DD>
+<DT><A HREF="#lbAF">例</A><DD>
+<DT><A HREF="#lbAG">/proc インターフェース</A><DD>
+</DL>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAK">制限と警告</A><DD>
+<DT><A HREF="#lbAL">rename() イベントの取り扱い</A><DD>
+</DL>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">例</A><DD>
+<DL>
+<DT><A HREF="#lbAO">出力例</A><DD>
+<DT><A HREF="#lbAP">プログラムソース</A><DD>
+</DL>
+<DT><A HREF="#lbAQ">関連項目</A><DD>
+<DT><A HREF="#lbAR">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

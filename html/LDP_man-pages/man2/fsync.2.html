@@ -1,0 +1,158 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FSYNC</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FSYNC</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/fsync.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+fsync - メモリー上にあるファイルの内容をストレージデバイス上のものと同期させる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>int fsync(int </B><I>fd</I><B>);</B>
+<P>
+
+<B>int fdatasync(int </B><I>fd</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>fsync</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;2.16&nbsp;以降:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No&nbsp;feature&nbsp;test&nbsp;macros&nbsp;need&nbsp;be&nbsp;defined
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.15&nbsp;以前:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_XOPEN_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;since&nbsp;glibc&nbsp;2.8:&nbsp;*/&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+<BR>
+
+<BR>&nbsp;<B>fdatasync</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;199309L&nbsp;||&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>fsync</B>()  transfers (&quot;flushes&quot;) all modified in-core data of (i.e.,
+modified buffer cache pages for) the file referred to by the file descriptor
+<I>fd</I> to the disk device (or other permanent storage device) so that all
+changed information can be retrieved even if the system crashes or is
+rebooted.  This includes writing through or flushing a disk cache if
+present.  The call blocks until the device reports that the transfer has
+completed.
+<P>
+
+As well as flushing the file data, <B>fsync</B>()  also flushes the metadata
+information associated with the file (see <B>inode</B>(7)).
+<P>
+
+<B>fsync</B>()  の呼び出しは、ファイルが存在しているディレクトリのエントリーがディスクへ 書き込まれたことを保証するわけではない。
+保証するためには明示的にそのディレクトリのファイルディスクリプターに対しても <B>fsync</B>()  する必要がある。
+<P>
+
+<B>fdatasync</B>()  は <B>fsync</B>()  と同様であるが、メタデータの扱いが異なる。 <B>fdatasync</B>()
+は、それ以降のデータ読み込みを正しく扱うためにそのメタデータが必要に ならない限り、変更されたメタデータをフラッシュしない。 例えば、 st_atime
+や st_mtime (それぞれ最終アクセス時刻、最終修正時刻; <B>inode</B>(7) 参照) の変更はフラッシュを必要としない。
+なぜならこれらはそれ以降のデータ読み込みを正しく扱うために 必要ではないからである。 一方、ファイルサイズ (<B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2)  では
+<I>st_size</I>)  の変更はメタデータのフラッシュが必要である。
+<P>
+
+<B>fdatasync</B>()  の狙いは、全てのメタデータをディスクと同期する必要のない アプリケーションに対して、ディスクアクセスを減らすことである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、これらのシステムコールはゼロを返す。 エラーの場合、-1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>fd</I> が有効なオープンされたディスクリプターでない。
+<DT><B>EIO</B><DD>
+
+An error occurred during synchronization.  This error may relate to data
+written to some other file descriptor on the same file.  Since Linux 4.13,
+errors from write-back will be reported to all file descriptors that might
+have written the data which triggered the error.  Some filesystems (e.g.,
+NFS) keep close track of which data came through which file descriptor, and
+give more precise reporting.  Other filesystems (e.g., most local
+filesystems) will report errors to all file descriptors that were open on
+the file when the error was recorded.
+<DT><B>ENOSPC</B><DD>
+Disk space was exhausted while synchronizing.
+<DT><B>EROFS</B>, <B>EINVAL</B><DD>
+<I>fd</I> が同期操作をサポートしてない特殊なファイル (パイプ、FIFO、ソケットなど) を参照している。
+<DT><B>ENOSPC</B>, <B>EDQUOT</B><DD>
+<I>fd</I> is bound to a file on NFS or another filesystem which does not
+allocate space at the time of a <B><A HREF="../man2/write.2.html">write</A></B>(2)  system call, and some previous
+write failed due to insufficient storage space.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+<BR>&nbsp;POSIX.1-2001,&nbsp;POSIX.1-2008,&nbsp;4.3BSD.
+<P>
+
+
+
+
+<B>fdatasync</B>()  が利用可能な POSIX システムでは、 <B>_POSIX_SYNCHRONIZED_IO</B> が
+<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> で 0 より大きな値に定義される (<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)  参照)。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+(Linux はそうではないが) いくつかの UNIX システムでは
+<I>fd</I> が<I>書き込み可能な</I>ファイルディスクリプターでなければならない。
+<P>
+
+Linux 2.2 以前では、 <B>fdatasync</B>()  は <B>fsync</B>()  と等価であり、性能面でのメリットはない。
+<P>
+
+古いカーネルやあまり使われていないファイルシステムの <B>fsync</B>()
+の実装では、ディスクキャッシュをフラッシュする方法が分からない場合がある。そのような場合には、安全に操作が行われることを保証するため、<B><A HREF="../../hdparm/man8/hdparm.8.html">hdparm</A></B>(8)
+や <B>sdparm</B>(8) を使ってディスクキャッシュを無効にする必要がある。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../../0MultiFileIdx/man1/sync.1.html">sync</A></B>(1),&nbsp;<B><A HREF="../man2/bdflush.2.html">bdflush</A></B>(2),&nbsp;<B><A HREF="../man2/open.2.html">open</A></B>(2),&nbsp;<B><A HREF="../man2/posix_fadvise.2.html">posix_fadvise</A></B>(2),&nbsp;<B><A HREF="../man2/pwritev.2.html">pwritev</A></B>(2),
+<B><A HREF="../man2/sync.2.html">sync</A></B>(2), <B><A HREF="../man2/sync_file_range.2.html">sync_file_range</A></B>(2), <B><A HREF="../man3/fflush.3.html">fflush</A></B>(3), <B><A HREF="../man3/fileno.3.html">fileno</A></B>(3), <B><A HREF="../../hdparm/man8/hdparm.8.html">hdparm</A></B>(8),
+<B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

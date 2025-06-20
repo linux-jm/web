@@ -1,0 +1,320 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 8.3 join: 共通のフィールドに基づいて行を結合する</title>
+
+<meta name="description" content="GNU Coreutils: 8.3 join: 共通のフィールドに基づいて行を結合する">
+<meta name="keywords" content="GNU Coreutils: 8.3 join: 共通のフィールドに基づいて行を結合する">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="join-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_56.html#paste-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_58.html#Operating-on-characters" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_54.html#Operating-on-fields" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_54.html#Operating-on-fields" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_58.html#Operating-on-characters" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="join_003a-Gong-Tong-nohuirudoniJi-duiteXing-woJie-He-suru"></a>
+<h2 class="section">8.3 <code>join</code>: 共通のフィールドに基づいて行を結合する</h2>
+
+<a name="index-join"></a>
+<a name="index-common-field_002c-joining-on"></a>
+
+<p><code>join</code> は、二つの入力ファイルを対象に、同一の共通フィールド
+(join field) を持つことで「対」になっている各行を、
+1 行にまとめて、標準出力に書き出す。
+</p>
+<p>書式:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">join [<var>option</var>]&hellip; <var>file1</var> <var>file2</var>
+</pre></td></tr></table>
+
+<p><var>file1</var> と <var>file2</var> の片方は &lsquo;<samp>-</samp>&rsquo;、すなわち標準入力であってもよい
+(両方とも標準入力は不可)。<var>file1</var> と <var>file2</var> は、
+共通フィールドに基づいてソートされているべきである。
+</p>
+<a name="index-LC_005fCOLLATE-3"></a>
+<p>通常、ソート順は、<code>LC_COLLATE</code> のロケールが規定している照合順序である。
+&lsquo;<samp>-t</samp>&rsquo; オプションが指定されていない場合は、両ファイルについて並び方を比較する際、
+<code>sort -b</code> の場合と同様に、共通フィールドの先頭にある空白が無視される。
+また、&lsquo;<samp>--ignore-case</samp>&rsquo; が指定されている場合は、
+<code>sort -f</code> と同様、共通フィールドでアルファベットの大文字と小文字は区別されない。
+</p>
+<p><code>sort</code> の出力を <code>join</code> に渡すなら、<code>sort</code> と
+<code>join</code> が使用するロケールやオプションは首尾一貫していなければならない。
+&lsquo;<samp>sort -k 1b,1</samp>&rsquo; のようなコマンドを使用すれば、
+デフォルトの共通フィールドに基づいて、ファイルをソートすることができる。
+しかし、ロケール、共通フィールド、区切り記号、比較オプションなどにデフォルト以外のものを使用する場合は、
+<code>join</code> と <code>sort</code> の間で矛盾が起きないように、そうしたものを選択しなければならないのだ。
+&lsquo;<samp>join -t ''</samp>&rsquo; が指定された場合は、行全体が共通フィールドとして考慮の対象になるが、
+これは、sort のデフォルトの動作に対応している。
+</p>
+<p>入力のすべての行が対になっている場合は、GNU による拡張が利用できる。
+この場合、並んでいる順番は、対になる二つのフィールドが同じであると判断されるならば、どんな順番でもよい。
+ただし、並び方の比較を上述のように行ったとき、二つのフィールドが同じだと判断される場合であり、
+その場合のみである。例を挙げよう。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ cat file1
+a a1
+c c1
+b b1
+$ cat file2
+a a2
+c c2
+b b2
+$ join file1 file2
+a a1 a2
+c c1 c2
+b b1 b2
+</pre></td></tr></table>
+
+<p>&lsquo;<samp>--check-order</samp>&rsquo; を指定した場合、入力がソートされていないと、
+エラーメッセージを出して、実行を中断する。&lsquo;<samp>--nocheck-order</samp>&rsquo;
+オプションを指定した場合は、入力がソートされていなくても、エラーメッセージを出すことはない。
+どちらのオプションも指定されていない場合に、入力がソートされていないとの診断を下すのは、
+片方の入力ファイルにもう一方と対にならない行が見つかったときだけであり、
+それも入力ファイルのどちらも空ではなく、中身を持っているときだけである。
+入力ファイルがソートされていないと診断すると、<code>join</code>
+は 0 以外のステータスで終了する (従って、そうした出力は使用するべきではない)。
+</p>
+<p>入力ファイルがきちんとソートされていず、しかも、対にならない行を含む場合に、
+&lsquo;<samp>--nocheck-order</samp>&rsquo; を指定して、そうしたファイルを <code>join</code>
+で無理矢理処理しても、何か特定の結果をもたらすことは保証できない。
+おそらく出力は、期待に添わないものになるだろう。
+</p>
+<p>デフォルトの動作は次のようになっている。
+</p><ul>
+<li> 共通フィールド (join field) は、各行の最初のフィールドである。
+</li><li> 入力の各フィールドは、1 個以上の空白 (スペースやタブ) で区切られる。
+行頭の空白は無視される。
+</li><li> 出力の各フィールドは、1 個のスペースで区切られる。
+</li><li> 各出力行の構成は、共通フィールド、<var>file1</var> の残りのフィールド、
+<var>file2</var> の残りのフィールドの順になる。
+</li></ul>
+
+<p>このプログラムでは以下のオプションが使用できる。参照: <a href="coreutils-ja_2.html#Common-options">共通オプション</a>.
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>-a <var>file-number</var></samp>&rsquo;</dt>
+<dd><a name="index-_002da-3"></a>
+<p><var>file-number</var> (&lsquo;<samp>1</samp>&rsquo; か &lsquo;<samp>2</samp>&rsquo;) のファイルに、もう一方のファイルと対にならない行がある場合、
+通常の出力のほかに、その行も表示する。
+</p>
+</dd>
+<dt> &lsquo;<samp>--check-order</samp>&rsquo;</dt>
+<dd><p>入力ファイルのどちらかの内容がきちんとソートされていないと、
+エラーメッセージを出して、実行に失敗する。
+</p>
+</dd>
+<dt> &lsquo;<samp>--nocheck-order</samp>&rsquo;</dt>
+<dd><p>入力ファイルの内容がソートされた順番になっているかどうかを、
+どちらのファイルについてもチェックしない。これが、デフォルトである。
+</p>
+</dd>
+<dt> &lsquo;<samp>-e <var>string</var></samp>&rsquo;</dt>
+<dd><a name="index-_002de-3"></a>
+<p>入力では欠けているフィールドを、出力では <var>string</var> で補う。
+すなわち、オプション &lsquo;<samp>-1</samp>&rsquo;, &lsquo;<samp>-2</samp>&rsquo;, &lsquo;<samp>-j</samp>&rsquo;, &lsquo;<samp>-o</samp>&rsquo;
+などを指定したときに、欠けているフィールドがそれに当たる。
+</p>
+</dd>
+<dt> &lsquo;<samp>--header</samp>&rsquo;</dt>
+<dd><a name="index-_002d_002dheader-1"></a>
+<p>各入力ファイルの最初の行をヘッダ行と見なす。ヘッダ行も結合され、
+最初の出力行として表示される。&lsquo;<samp>-o</samp>&rsquo; を使って、出力フォーマットを指定している場合は、
+ヘッダ行もそのフォーマットに従って出力される。
+ヘッダ行は、&lsquo;<samp>--check-order</samp>&rsquo; が指定されていても、並び順のチェックを受けない。
+なお、両ファイルのヘッダ行がマッチしない場合は、
+一番目のファイルのヘッダ・フィールドが使用される。
+</p>
+</dd>
+<dt> &lsquo;<samp>-i</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--ignore-case</samp>&rsquo;</dt>
+<dd><a name="index-_002di-8"></a>
+<a name="index-_002d_002dignore_002dcase-3"></a>
+<p>キーを比較する際、アルファベットの大文字小文字を区別しない。
+このオプションを使用するときは、
+両方の入力ファイルの行が、同じように大文字小文字を区別せず並んでいなければならない。
+そうした順番で並べるには、&lsquo;<samp>sort -f</samp>&rsquo; を使えばよい。
+</p>
+</dd>
+<dt> &lsquo;<samp>-1 <var>field</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d1-1"></a>
+<p>ファイル 1 では <var>field</var> 番目のフィールドを共通フィールドとする
+(<var>field</var> は正の整数)。
+</p>
+</dd>
+<dt> &lsquo;<samp>-2 <var>field</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d2-1"></a>
+<p>ファイル 2 では <var>field</var> 番目のフィールドを共通フィールドとする
+(<var>field</var> は正の整数)。
+</p>
+</dd>
+<dt> &lsquo;<samp>-j <var>field</var></samp>&rsquo;</dt>
+<dd><p>&lsquo;<samp>-1 <var>field</var> -2 <var>field</var></samp>&rsquo; と等価。
+</p>
+</dd>
+<dt> &lsquo;<samp>-o <var>field-list</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>-o auto</samp>&rsquo;</dt>
+<dd><p>キーワードの &lsquo;<samp>auto</samp>&rsquo; が指定されると、
+<code>join</code> は各ファイルの最初の行を元にして、出力フォーマットを推測する。
+それは、デフォルトの出力フォーマットとほぼ同じだが、
+それだけでなく、各行に必ず同数のフィールドを出力するようにする。
+また、欠けているフィールドがあれば、&lsquo;<samp>-e</samp>&rsquo; オプションの指定する文字列で補う。
+余分なフィールドは除去する。
+</p>
+<p>&lsquo;<samp>auto</samp>&rsquo; が指定されていない場合は、<var>field-list</var> のフォーマットに従って、
+各出力行を構成する。<var>field-list</var> の各要素は、&lsquo;<samp>0</samp>&rsquo; 一文字か、<var>m.n</var>
+という形を取る。ここで、<var>m</var> はファイル番号 (<var>file-number</var>) であり、&lsquo;<samp>1</samp>&rsquo;
+か &lsquo;<samp>2</samp>&rsquo; である。<var>n</var> はフィールド番号であり、正の整数である。
+</p>
+<p>&lsquo;<samp>0</samp>&rsquo; というフィールド指定は、共通フィールドを指している。ほとんどの場合、
+&lsquo;<samp>0</samp>&rsquo; というフィールド指定と同じことが、共通フィールドを明示的に
+<var>m.n</var> で示すことでも、実現できるだろう。しかしながら、(&lsquo;<samp>-a</samp>&rsquo;
+オプションなり &lsquo;<samp>-v</samp>&rsquo; オプションなりを使用して)、対にならない行を表示する場合、
+対にならない行が両方のファイルに存在すると、<var>field-list</var> で <var>m.n</var>
+をどう使おうとも、共通フィールドを指定できないのだ。<code>join</code>
+で共通フィールドの指定が常に可能になるように、POSIX は &lsquo;<samp>0</samp>&rsquo;
+というフィールド指定法を考案したのである。
+</p>
+<p><var>field-list</var> の各要素は、コンマ、または空白で区切られる。
+区切りに空白を使用するときは、シェルによって解釈されないように、
+たいていの場合引用符で囲む必要がある。たとえば、コマンド &lsquo;<samp>join -o 1.2,2.2</samp>&rsquo;
+と &lsquo;<samp>join -o '1.2 2.2'</samp>&rsquo; は、同じ動作になる。
+</p>
+<p><var>field-list</var> の指定は、すべての出力行に適用される。これは、&lsquo;<samp>-a</samp>&rsquo; や
+&lsquo;<samp>-v</samp>&rsquo; オプションによって出力されるものにも当てはまる。
+</p>
+</dd>
+<dt> &lsquo;<samp>-t <var>char</var></samp>&rsquo;</dt>
+<dd><p>入出力のフィールドの区切りに、文字 <var>char</var> を使用する。
+<var>char</var> は、入力ファイルに現れる一つ一つが、有意なものとして扱われる。
+&lsquo;<samp>sort -t <var>char</var></samp>&rsquo; を &lsquo;<samp>-b</samp>&rsquo; なしで実行すれば、
+このオプションに対応する順序に行を並べることができる。
+&lsquo;<samp>join -t ''</samp>&rsquo; を指定すると、行全体が共通フィールドとして考慮の対象になり、
+これは sort のデフォルトの動作に対応している。
+&lsquo;<samp>-t '\0'</samp>&rsquo; を指定すると、ASCII NUL 文字がフィールドの区切りに使用される。
+</p>
+</dd>
+<dt> &lsquo;<samp>-v <var>file-number</var></samp>&rsquo;</dt>
+<dd><p>通常の出力はせず、<var>file-number</var> (&lsquo;<samp>1</samp>&rsquo; か &lsquo;<samp>2</samp>&rsquo; である)
+のファイルに存在する、対にならない各行を表示する。
+</p>
+</dd>
+<dt> &lsquo;<samp>-z</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--zero-terminated</samp>&rsquo;</dt>
+<dd><a name="index-_002dz-9"></a>
+<a name="index-_002d_002dzero_002dterminated-8"></a>
+<a name="index-process-zero_002dterminated-items-8"></a>
+<p>項目の区切りに、改行 (ASCII LF) ではなく、ゼロバイトを使用する。
+すなわち、入力を ASCII NUL で分離された項目として扱い、出力する各項目の末尾に
+ASCII NUL を付加する。このオプションは、&lsquo;<samp>perl -0</samp>&rsquo;,
+&lsquo;<samp>find -print0</samp>&rsquo;, &lsquo;<samp>xargs -0</samp>&rsquo; などと組み合わせて使用すると、
+便利なことがある。そうしたコマンドでも、わがままなファイル名を
+(空白などの特殊文字を含んでいる場合でも) きちんと確実に処理するために、
+同様なことをしているのである。 &lsquo;<samp>-z</samp>&rsquo; オプションを使用した場合、改行文字はフィールド・セパレータ扱いになる。
+</p>
+</dd>
+</dl>
+
+<p>終了ステータス 0 は成功を示し、0 以外の値は失敗を示す。
+</p>
+
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_56.html#paste-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_58.html#Operating-on-characters" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_54.html#Operating-on-fields" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_54.html#Operating-on-fields" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_58.html#Operating-on-characters" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

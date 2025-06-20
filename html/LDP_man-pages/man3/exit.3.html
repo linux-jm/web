@@ -1,0 +1,160 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of EXIT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>EXIT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-02-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/exit.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+exit - プロセスの正常終了
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>void exit(int </B><I>status</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>exit</B>() 関数は、プロセスを正常に終了させ、 <I>status</I> の最下位バイト (つまり <I>status &amp; 0xFF</I>)
+を親プロセスへ返す (<B><A HREF="../man2/wait.2.html">wait</A></B>(2) を参照)。
+<P>
+
+<B><A HREF="../man3/atexit.3.html">atexit</A></B>(3)  や <B><A HREF="../man3/on_exit.3.html">on_exit</A></B>(3)  によって 登録された全ての関数は、それらが登録された順番と逆順にコールされる。
+(登録された関数の中で <B><A HREF="../man3/atexit.3.html">atexit</A></B>(3)  or <B><A HREF="../man3/on_exit.3.html">on_exit</A></B>(3)  を使って exit
+処理中に実行される追加の関数を登録することができる; 新規に登録された関数は、この後で実行される関数リストの先頭に 追加される。)
+これらの関数の一つが返らなかった場合 (例えば、その関数が <B><A HREF="../man2/_exit.2.html">_exit</A></B>(2)  を呼び出したり、シグナルで自分自身を kill した場合)、
+残りの関数はどれも呼び出されず、それ以降の exit 処理 (特に <B><A HREF="../man3/stdio.3.html">stdio</A></B>(3)  ストリームのフラッシュなど) は中止される。 ある関数が
+<B><A HREF="../man3/atexit.3.html">atexit</A></B>(3)  や <B><A HREF="../man3/on_exit.3.html">on_exit</A></B>(3)  を使って複数回登録されていた場合、 その関数は登録されたのと同じ回数だけ呼び出される。
+<P>
+
+オープン中の <B><A HREF="../man3/stdio.3.html">stdio</A></B>(3)  ストリームは全てフラッシュされて、クローズされる。 <B><A HREF="../man3/tmpfile.3.html">tmpfile</A></B>(3)
+によって作成されたファイルは削除される。
+<P>
+
+C 標準では <B>EXIT_SUCCESS</B> と <B>EXIT_FAILURE</B> という 2つの定数が
+定義されている。それぞれ正常終了と異常終了を示すもので、 <B>exit</B>()  として渡すことができる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>exit</B>()  関数は返らない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>exit</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:exit<BR></TD></TR>
+</TABLE>
+
+<P>
+
+<B>exit</B>() 関数は保護されていないグローバル変数を使用しているため、スレッドセーフではない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, C89, C99, SVr4, 4.3BSD.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B><A HREF="../man3/atexit.3.html">atexit</A></B>(3)  や <B><A HREF="../man3/on_exit.3.html">on_exit</A></B>(3)  を使って登録された関数の中で <B>exit</B>() か <B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)
+が呼び出された場合、 動作は未定義である。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2) を呼び出すと、 <B><A HREF="../man3/atexit.3.html">atexit</A></B>(3) や <B><A HREF="../man3/on_exit.3.html">on_exit</A></B>(3)
+を使って登録された関数が削除される点に注意すること。
+<P>
+
+<B>EXIT_SUCCESS</B> と <B>EXIT_FAILURE</B> を使うと、0 や (1 や -1 といった) 0 以外の値を使うのに比べて
+(UNIX 以外の環境に) 移植するのがいくらか簡単になる。 特に VMS は別の方式を用いている。
+<P>
+
+BSD は終了コードを標準化しようとしている (GNU C ライブラリなどのいくつかの C ライブラリもこれを採用している);
+<I>&lt;<A HREF="file:///usr/include/sysexits.h">sysexits.h</A>&gt;</I> を参照すること。
+<P>
+
+After <B>exit</B>(), the exit status must be transmitted to the parent process.
+There are three cases:
+<DL COMPACT>
+<DT>&bull;<DD>
+If the parent has set <B>SA_NOCLDWAIT</B>, or has set the <B>SIGCHLD</B> handler to
+<B>SIG_IGN</B>, the status is discarded and the child dies immediately.
+<DT>&bull;<DD>
+If the parent was waiting on the child, it is notified of the exit status
+and the child dies immediately.
+<DT>&bull;<DD>
+Otherwise, the child becomes a &quot;zombie&quot; process: most of the process
+resources are recycled, but a slot containing minimal information about the
+child process (termination status, resource usage statistics) is retained in
+process table.  This allows the parent to subsequently use <B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+(or similar) to learn the termination status of the child; at that point the
+zombie process slot is released.
+</DL>
+<P>
+
+
+<B>SIGCHLD</B> シグナルのサポートが実装されている場合、 このシグナルは親プロセスに送られる。 親プロセスが <B>SA_NOCLDWAIT</B>
+を設定した場合、 <B>SIGCHLD</B> シグナルが送られるかどうかは定義されていない。
+<A NAME="lbAI">&nbsp;</A>
+<H3>Signals sent to other processes</H3>
+
+終了するプロセスがセッションのリーダーで、 そのプロセスの制御端末がそのセッションの制御端末である場合、
+この制御端末のフォアグラウンドプロセスグループにある 各プロセスに <B>SIGHUP</B> シグナルが送られ、端末がセッションから切り離される。
+これにより新しい制御プロセスを取得することができる。
+<P>
+
+プロセスが終了することにより、プロセスグループが孤立して、 そのグループのメンバーのうちのどれかが停止した場合、 プロセスグループの各プロセスに対して
+<B>SIGHUP</B> シグナルが送られ、続いて <B>SIGCONT</B> シグナルが送られる。 孤立した (orphaned) プロセスグループの説明は
+<B><A HREF="../man2/setpgid.2.html">setpgid</A></B>(2)  を参照。
+<P>
+
+Except in the above cases, where the signalled processes may be children of
+the terminating process, termination of a process does <I>not</I> in general
+cause a signal to be sent to children of that process.  However, a process
+can use the <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)  <B>PR_SET_PDEATHSIG</B> operation to arrange that it
+receives a signal if its parent terminates.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2), <B>get_robust_list</B>(2), <B><A HREF="../man2/setpgid.2.html">setpgid</A></B>(2), <B><A HREF="../man2/wait.2.html">wait</A></B>(2), <B><A HREF="../man3/atexit.3.html">atexit</A></B>(3),
+<B><A HREF="../man3/on_exit.3.html">on_exit</A></B>(3), <B><A HREF="../man3/tmpfile.3.html">tmpfile</A></B>(3)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">Signals sent to other processes</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

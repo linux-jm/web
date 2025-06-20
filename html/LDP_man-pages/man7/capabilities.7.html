@@ -1,0 +1,795 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CAPABILITIES</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>CAPABILITIES</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2015-02-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/capabilities.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+capabilities - Linux のケーパビリティ (capability) の概要
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+権限のチェックを行う観点から見ると、伝統的な UNIX の実装では プロセスは二つのカテゴリーに分類できる: <I>特権</I> プロセス (実効ユーザーID
+が 0 のプロセス。ユーザーID 0 は スーパーユーザーや root と呼ばれる) と <I>非特権</I> プロセス (実効ユーザーID が 0
+以外のプロセス) である。 非特権プロセスでは、プロセスの資格情報 (通常は、実効UID 、実効GID と追加のグループリスト)
+に基づく権限チェックが行われるのに対し、 特権プロセスでは全てのカーネルの権限チェックがバイパスされる。
+<P>
+
+バージョン 2.2 以降の Linux では、 これまでスーパーユーザーに結び付けられてきた権限を、
+いくつかのグループに分割している。これらのグループは <I>ケーパビリティ</I>(capability)
+と呼ばれ、グループ毎に独立に有効、無効を設定できる。 ケーパビリティはスレッド単位の属性である。
+<A NAME="lbAD">&nbsp;</A>
+<H3>ケーパビリティのリスト</H3>
+
+以下のリストは、 Linux で実装されているケーパビリティと 各ケーパビリティが許可する操作と動作をまとめたものである。
+<DL COMPACT>
+<DT><B>CAP_AUDIT_CONTROL</B> (Linux 2.6.11 以降)<DD>
+カーネル監査 (audit) の有効無効の切り替え、 監査のフィルタルールの変更、 監査の状況やフィルタルールの取得ができる。
+<DT><B>CAP_AUDIT_READ</B> (Linux 3.16 以降)<DD>
+
+
+マルチキャスト netlink ソケット経由で監査ログの読み出しができる。
+<DT><B>CAP_AUDIT_WRITE</B> (Linux 2.6.11 以降)<DD>
+カーネル監査のログにレコードを書き込む。
+<DT><B>CAP_BLOCK_SUSPEND</B> (Linux 3.5 以降)<DD>
+システムのサスペンドをブロックできる機能を使用する (<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  <B>EPOLLWAKEUP</B>,
+<I>/proc/sys/wake_lock</I>)。
+<DT><B>CAP_CHOWN</B><DD>
+ファイルの UID とGID を任意に変更する (<B><A HREF="../man2/chown.2.html">chown</A></B>(2)  参照)。
+<DT><B>CAP_DAC_OVERRIDE</B><DD>
+ファイルの読み出し、書き込み、実行の権限チェックをバイパスする (DAC は &quot;discretionary access control
+(任意のアクセス制御)&quot; の略である)。
+<DT><B>CAP_DAC_READ_SEARCH</B><DD>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+ファイルの読み出し権限のチェックとディレクトリの読み出しと実行 の権限チェックをバイパスする。
+<DT>*<DD>
+<B><A HREF="../man2/open_by_handle_at.2.html">open_by_handle_at</A></B>(2) を起動する。
+</DL>
+</DL>
+
+
+<P>
+<DT><B>CAP_FOWNER</B><DD>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+通常、プロセスのファイルシステム UID がファイルの UID に一致することが 要求される操作 (例えば <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
+<B><A HREF="../man2/utime.2.html">utime</A></B>(2))  における権限チェックをバイパスする。 但し、 <B>CAP_DAC_OVERRIDE</B> か
+<B>CAP_DAC_READ_SEARCH</B> によりチェックが行われる操作は除く。
+<DT>*<DD>
+任意のファイルに対して拡張ファイル属性を設定する (<B><A HREF="../../e2fsprogs/man1/chattr.1.html">chattr</A></B>(1)  参照)。
+<DT>*<DD>
+任意のファイルに対してアクセス制御リスト (ACL) を設定する。
+<DT>*<DD>
+ファイルの削除の際にディレクトリのスティッキービットを無視する。
+<DT>*<DD>
+<B><A HREF="../man2/open.2.html">open</A></B>(2)  や <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  で任意のファイルに対して <B>O_NOATIME</B> を指定する。
+</DL>
+</DL>
+
+
+<DT><B>CAP_FSETID</B><DD>
+ファイルが変更されたときに set-user-ID とset-group-ID の許可ビットをクリア しない。呼び出し元プロセスのファイルシステム
+GID と追加の GID のいずれとも GID が一致しないファイルに対して set-group-ID ビットを設定する。
+<DT><B>CAP_IPC_LOCK</B><DD>
+
+
+メモリーのロック (<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2), <B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2))  を行う。
+<DT><B>CAP_IPC_OWNER</B><DD>
+System V IPC オブジェクトに対する操作に関して権限チェックをバイパスする。
+<DT><B>CAP_KILL</B><DD>
+
+
+
+
+
+シグナルを送信する際に権限チェックをバイパスする (<B><A HREF="../man2/kill.2.html">kill</A></B>(2)  参照)。これには <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  の <B>KDSIGACCEPT</B>
+操作の使用も含まれる。
+<DT><B>CAP_LEASE</B> (Linux 2.4 以降)<DD>
+任意のファイルに対して ファイルリースを設定する (<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  参照)。
+<DT><B>CAP_LINUX_IMMUTABLE</B><DD>
+
+inode フラグ <B>FS_APPEND_FL</B> と <B>FS_IMMUTABLE_FL</B> を設定する (<B><A HREF="../../e2fsprogs/man1/chattr.1.html">chattr</A></B>(1)  参照)。
+<DT><B>CAP_MAC_ADMIN</B> (Linux 2.6.25 以降)<DD>
+強制アクセス制御 (MAC) を上書きする。 Smack Linux Security Module (LSM) 用に実装されている。
+<DT><B>CAP_MAC_OVERRIDE</B> (Linux 2.6.25 以降)<DD>
+MAC の設定や状態を変更する。 Smack LSM 用に実装されている。
+<DT><B>CAP_MKNOD</B> (Linux 2.4 以降)<DD>
+(Linux 2.4 以降)  <B><A HREF="../man2/mknod.2.html">mknod</A></B>(2)  を使用してスペシャルファイルを作成する。
+<DT><B>CAP_NET_ADMIN</B><DD>
+各種のネットワーク関係の操作を実行する:
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+インターフェースの設定
+<DT>*<DD>
+IP のファイアウォール、マスカレード、アカウンティング
+<DT>*<DD>
+ルーティングテーブルの変更
+<DT>*<DD>
+透過的プロキシでの任意のアドレスの割り当て (bind)
+<DT>*<DD>
+サービス種別 (type-of-service; TOS) のセット
+<DT>*<DD>
+ドライバの統計情報のクリア
+<DT>*<DD>
+promiscuous モードをセットする
+<DT>*<DD>
+マルチキャストを有効にする
+<DT>*<DD>
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2) を使って以下のソケットオプションを設定する:
+<B>SO_DEBUG</B>, <B>SO_MARK</B>,
+<B>SO_PRIORITY</B> (優先度を 0 から 6 以外に設定する場合),
+<B>SO_RCVBUFFORCE</B>, and <B>SO_SNDBUFFORCE</B>
+</DL>
+</DL>
+
+
+<DT><B>CAP_NET_BIND_SERVICE</B><DD>
+インターネットドメインの特権ポート (ポート番号が 1024 番未満)  をバインドできる。
+<DT><B>CAP_NET_BROADCAST</B><DD>
+(未使用) ソケットのブロードキャストと、マルチキャストの待ち受けを行う。
+<DT><B>CAP_NET_RAW</B><DD>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+RAW ソケットと PACKET ソケットを使用する。
+<DT>*<DD>
+透過的プロキシでの任意のアドレスの割り当て (bind)
+</DL>
+</DL>
+
+
+
+<DT><B>CAP_SETGID</B><DD>
+プロセスの GID と追加の GID リストに対する任意の操作を行う。 UNIX ドメインソケット経由でソケットの資格情報 (credential)
+を渡す際に 偽の GID を渡すことができる。 ユーザー名前空間にグループ ID マッピングを書き込むことができる
+(<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7) 参照)。
+<DT><B>CAP_SETFCAP</B> (Linux 2.6.24 以降)<DD>
+ファイルケーパビリティを設定する。
+<DT><B>CAP_SETPCAP</B><DD>
+ファイルケーパビリティがサポートされていない場合: 呼び出し元が許可されているケーパビリティセットに含まれる任意のケーパビリティを、
+他のプロセスに付与したり、削除したりできる。 (カーネルがファイルケーパビリティをサポートしている場合、 <B>CAP_SETPCAP</B>
+はこの役割を持たない。 なぜなら、ファイルケーパビリティをサポートしているカーネルでは <B>CAP_SETPCAP</B> は全く別の意味を持つからである。)
+<P>
+ファイルケーパビリティがサポートされている場合: 呼び出し元スレッドのバウンディングセットの任意のケーパビリティを
+自身の継承可能ケーパビリティセットに追加できる。 (<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)  <B>PR_CAPBSET_DROP</B> を使って)
+バウンディングセットからケーパビリティを削除できる。 <I>securebits</I> フラグを変更できる。
+<DT><B>CAP_SETUID</B><DD>
+
+プロセスの UID に対する任意の操作 (<B><A HREF="../man2/setuid.2.html">setuid</A></B>(2), <B><A HREF="../man2/setreuid.2.html">setreuid</A></B>(2), <B><A HREF="../man2/setresuid.2.html">setresuid</A></B>(2),
+<B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2))  を行う。 UNIX ドメインソケット経由でソケットの資格情報 (credential) を渡す際に 偽の UID
+を渡すことができる。 ユーザー名前空間にユーザー ID マッピングを書き込むことができる (<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7) 参照)。
+<DT><B>CAP_SYS_ADMIN</B><DD>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+以下のシステム管理用の操作を実行する: <B>quotactl</B>(2), <B><A HREF="../man2/mount.2.html">mount</A></B>(2), <B><A HREF="../man2/umount.2.html">umount</A></B>(2), <B><A HREF="../man2/swapon.2.html">swapon</A></B>(2),
+<B><A HREF="../man2/swapoff.2.html">swapoff</A></B>(2), <B><A HREF="../man2/sethostname.2.html">sethostname</A></B>(2), <B><A HREF="../man2/setdomainname.2.html">setdomainname</A></B>(2).
+<DT>*<DD>
+特権が必要な <B><A HREF="../man2/syslog.2.html">syslog</A></B>(2) の操作を実行する
+(Linux 2.6.37 以降では、このような操作を許可するには
+<B>CAP_SYSLOG</B> を使うべきである)
+<DT>*<DD>
+<B>VM86_REQUEST_IRQ</B> <B><A HREF="../man2/vm86.2.html">vm86</A></B>(2) コマンドを実行する。
+<DT>*<DD>
+任意の System V IPC オブジェクトに対する <B>IPC_SET</B> と <B>IPC_RMID</B> 操作を実行する。
+<DT>*<DD>
+<B>RLIMIT_NPROC</B> リソース制限を上書きする。
+<DT>*<DD>
+拡張属性 <I>trusted</I> と <I>security</I> に対する操作を実行する (<B>attr</B>(5)  参照)。
+<DT>*<DD>
+<B><A HREF="../man2/lookup_dcookie.2.html">lookup_dcookie</A></B>(2)  を呼び出す。
+<DT>*<DD>
+<B><A HREF="../man2/ioprio_set.2.html">ioprio_set</A></B>(2)  を使って I/O スケジューリングクラス <B>IOPRIO_CLASS_RT</B>,
+<B>IOPRIO_CLASS_IDLE</B> を割り当てる (<B>IOPRIO_CLASS_IDLE</B> は Linux 2.6.25
+より前のバージョンのみ)。
+<DT>*<DD>
+UNIX ドメインソケットでソケットの資格情報 (credential) を渡す際に偽の UID を渡す。
+<DT>*<DD>
+ファイルをオープンするシステムコール (例えば <B><A HREF="../man2/accept.2.html">accept</A></B>(2), <B><A HREF="../man2/execve.2.html">execve</A></B>(2), <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man2/pipe.2.html">pipe</A></B>(2))
+でシステム全体でオープンできるファイル数の上限 <I>/proc/sys/fs/file-max</I> を超過する。
+<DT>*<DD>
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2) と <B><A HREF="../man2/unshare.2.html">unshare</A></B>(2) で新しい名前空間を作成する <B>CLONE_*</B> フラグを利用する (ただし、 Linux
+3.8 以降では、ユーザー名前空間の作成にどのケーパビリティも必要としない)。
+<DT>*<DD>
+<B>perf_event_open</B>(2) を呼び出す。
+<DT>*<DD>
+特権が必要な <I>perf</I> イベントの情報にアクセスする。
+<DT>*<DD>
+<B><A HREF="../man2/setns.2.html">setns</A></B>(2) を呼び出す (<I>target</I> 名前空間での <B>CAP_SYS_ADMIN</B> が必要)。
+<DT>*<DD>
+<B><A HREF="../man2/fanotify_init.2.html">fanotify_init</A></B>(2) を呼び出す。
+<DT>*<DD>
+<B>keyctl</B>(2)  の <B>KEYCTL_CHOWN</B> と <B>KEYCTL_SETPERM</B> 操作を実行する。
+<DT>*<DD>
+<B><A HREF="../man2/madvise.2.html">madvise</A></B>(2)  の <B>MADV_HWPOISON</B> 操作を実行する。
+<DT>*<DD>
+<B>TIOCSTI</B> <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) を使って、
+呼び出し元の制御端末以外の端末の入力キューに文字を挿入する。
+<DT>*<DD>
+廃止予定の <B><A HREF="../man2/nfsservctl.2.html">nfsservctl</A></B>(2) システムコールを使用する。
+<DT>*<DD>
+廃止予定の <B><A HREF="../man2/bdflush.2.html">bdflush</A></B>(2) システムコールを使用する。
+<DT>*<DD>
+特権が必要なブロックデバイスに対する各種の <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) 操作を
+実行する。
+<DT>*<DD>
+特権が必要なファイルシステムに対する各種の <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) 操作を
+実行する。
+<DT>*<DD>
+多くのデバイスドライバに対する管理命令を実行する。
+</DL>
+</DL>
+
+
+<DT><B>CAP_SYS_BOOT</B><DD>
+<B><A HREF="../man2/reboot.2.html">reboot</A></B>(2)  と <B><A HREF="../man2/kexec_load.2.html">kexec_load</A></B>(2)  を呼び出す。
+<DT><B>CAP_SYS_CHROOT</B><DD>
+<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2).  を呼び出す。
+<DT><B>CAP_SYS_MODULE</B><DD>
+カーネルモジュールのロード、アンロードを行う (<B><A HREF="../man2/init_module.2.html">init_module</A></B>(2)  と <B><A HREF="../man2/delete_module.2.html">delete_module</A></B>(2)  を参照のこと)。
+バージョン 2.6.25 より前のカーネルで、 システム全体のケーパビリティバウンディングセット (capability bounding set)
+からケーパビリティを外す。
+<DT><B>CAP_SYS_NICE</B><DD>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+プロセスの nice 値の引き上げ (<B><A HREF="../man2/nice.2.html">nice</A></B>(2), <B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2))  や、任意のプロセスの nice 値の変更を行う。
+<DT>*<DD>
+呼び出し元プロセスに対するリアルタイムスケジューリングポリシーと、 任意のプロセスに対するスケジューリングポリシーと優先度を設定する
+(<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2), <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2), <B>shed_setattr</B>(2))。
+<DT>*<DD>
+任意のプロセスに対する CPU affinity を設定できる (<B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2))。
+<DT>*<DD>
+任意のプロセスに対して I/O スケジューリングクラスと優先度を設定できる (<B><A HREF="../man2/ioprio_set.2.html">ioprio_set</A></B>(2))。
+<DT>*<DD>
+
+
+
+
+
+<B><A HREF="../man2/migrate_pages.2.html">migrate_pages</A></B>(2)  を任意のプロセスに適用し、プロセスを任意のノードに移動する。
+<DT>*<DD>
+<B><A HREF="../man2/move_pages.2.html">move_pages</A></B>(2)  を任意のプロセスに対して行う。
+<DT>*<DD>
+<B><A HREF="../man2/mbind.2.html">mbind</A></B>(2)  と <B><A HREF="../man2/move_pages.2.html">move_pages</A></B>(2)  で <B>MPOL_MF_MOVE_ALL</B> フラグを使用する。
+</DL>
+</DL>
+
+
+<DT><B>CAP_SYS_PACCT</B><DD>
+<B><A HREF="../man2/acct.2.html">acct</A></B>(2)  を呼び出す。
+<DT><B>CAP_SYS_PTRACE</B><DD>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+<B>ptrace</B>(2)  を使って任意のプロセスをトレースする。
+<DT>*<DD>
+<B>get_robust_list</B>(2)  を任意のプロセスに対して行う。
+<DT>*<DD>
+<B><A HREF="../man2/process_vm_readv.2.html">process_vm_readv</A></B>(2) と <B><A HREF="../man2/process_vm_writev.2.html">process_vm_writev</A></B>(2)
+を使って任意のプロセスのメモリーとの間でデータの送受信を行う。
+<DT>*<DD>
+<B><A HREF="../man2/kcmp.2.html">kcmp</A></B>(2) を使ってプロセス内部を調査する。
+</DL>
+</DL>
+
+
+<DT><B>CAP_SYS_RAWIO</B><DD>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+I/O ポート操作を実行する (<B><A HREF="../man2/iopl.2.html">iopl</A></B>(2)、 <B><A HREF="../man2/ioperm.2.html">ioperm</A></B>(2))。
+<DT>*<DD>
+<I>/proc/kcore</I> にアクセスする。
+<DT>*<DD>
+<B>FIBMAP</B> <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) 操作を使用する。
+<DT>*<DD>
+x86 モデルに固有のレジスター (MSR レジスター群、 <B><A HREF="../man4/msr.4.html">msr</A></B>(4) 参照) にアクセスするためのデバイスをオープンする。
+<DT>*<DD>
+<I>/proc/sys/vm/mmap_min_addr</I> を更新する。
+<DT>*<DD>
+<I>/proc/sys/vm/mmap_min_addr</I> で指定された値よりも小さなアドレスにメモリーマッピングを作成する。
+<DT>*<DD>
+<I>/proc/bus/pci</I> にあるファイルをマップする。
+<DT>*<DD>
+<I>/dev/mem</I> や <I>/dev/kmem</I> をオープンする。
+<DT>*<DD>
+各種の SCSI デバイスコマンドを実行する。
+<DT>*<DD>
+<B>hpsa</B>(4) デバイスや <B>cciss</B>(4) デバイスの特定の操作を実行する。
+<DT>*<DD>
+他のデバイスに対して各種のデバイス固有命令を実行する。
+</DL>
+</DL>
+
+
+<DT><B>CAP_SYS_RESOURCE</B><DD>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+ext2 ファイルシステム上の予約されている領域を使用する。
+<DT>*<DD>
+ext3 のジャーナル機能を制御する <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  を使用する。
+<DT>*<DD>
+ディスク quota の上限を上書きする。
+<DT>*<DD>
+リソース上限を増やす (<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2))。
+<DT>*<DD>
+<B>RLIMIT_NPROC</B> リソース制限を上書きする。
+<DT>*<DD>
+コンソール割り当てにおいてコンソールの最大数を上書きする。
+<DT>*<DD>
+キーマップの最大数を上書きする。
+<DT>*<DD>
+リアルタイムクロックから秒間 64 回を越える回数の割り当てが許可する。
+<DT>*<DD>
+メッセージキューに関する上限 <I>msg_qbytes</I> を
+<I>/proc/sys/kernel/msgmnb</I> に指定されている上限よりも大きく設定する
+(<B><A HREF="../man2/msgop.2.html">msgop</A></B>(2) と <B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2) 参照)。
+<DT>*<DD>
+<B>F_SETPIPE_SZ</B> <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2) を使ってパイプの容量を設定する際に
+上限 <I>/proc/sys/fs/pipe-size-max</I> を上書きする。
+<DT>*<DD>
+<I>/proc/sys/fs/pipe-max-size</I> に指定されている上限を超えてパイプの容量
+を増やすのに <B>F_SETPIPE_SZ</B> を使用する。
+<DT>*<DD>
+POSIX メッセージキューを作成する際に、
+上限 <I>/proc/sys/fs/mqueue/queues_max</I> を上書きする
+(<B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7) 参照)。
+<DT>*<DD>
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2) <B>PR_SET_MM</B> 操作を使用する。
+<DT>*<DD>
+<B>CAP_SYS_RESOURCE</B> を持ったプロセスによって最後に設定された値よりも小さな値を <I>/proc/PID/oom_score_adj</I>
+に設定する。
+</DL>
+</DL>
+
+
+<DT><B>CAP_SYS_TIME</B><DD>
+システムクロックを変更する (<B><A HREF="../man2/settimeofday.2.html">settimeofday</A></B>(2), <B><A HREF="../man2/stime.2.html">stime</A></B>(2), <B><A HREF="../man2/adjtimex.2.html">adjtimex</A></B>(2))。 リアルタイム
+(ハードウェア) クロックを変更する。
+<DT><B>CAP_SYS_TTY_CONFIG</B><DD>
+<B><A HREF="../man2/vhangup.2.html">vhangup</A></B>(2) を使用する。
+特権が必要な仮想端末に関する各種の <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) 操作を利用できる。
+<DT><B>CAP_SYSLOG</B> (Linux 2.6.37 以降)<DD>
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>*<DD>
+特権が必要な <B><A HREF="../man2/syslog.2.html">syslog</A></B>(2) 操作を実行できる。
+どの操作が特権が必要かについての情報は <B><A HREF="../man2/syslog.2.html">syslog</A></B>(2) を参照。
+<DT>*<DD>
+<I>/proc/sys/kernel/kptr_restrict</I> の値が 1 の場合、 <I>/proc</I>
+や他のインターフェース経由で公開されているカーネルアドレスを参照する (<B><A HREF="../man5/proc.5.html">proc</A></B>(5) の <I>kptr_restrict</I> の議論を参照)。
+
+</DL>
+</DL>
+
+<DT><B>CAP_WAKE_ALARM</B> (Linux 3.0 以降)<DD>
+
+システムを起こすトリガーを有効にする (タイマー <B>CLOCK_REALTIME_ALARM</B>
+や <B>CLOCK_BOOTTIME_ALARM</B> を設定する)。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>過去と現在の実装</H3>
+
+完全な形のケーパビリティを実装するには、以下の要件を満たす必要がある：
+<DL COMPACT>
+<DT>1.<DD>
+全ての特権操作について、カーネルはそのスレッドの実効ケーパビリティセットに 必要なケーパビリティがあるかを確認する。
+<DT>2.<DD>
+カーネルで、あるスレッドのケーパビリティセットを変更したり、 取得したりできるシステムコールが提供される。
+<DT>3.<DD>
+ファイルシステムが、実行可能ファイルにケーパビリティを付与でき、ファイル 実行時にそのケーパビリティをプロセスが取得できるような機能をサポートする。
+</DL>
+<P>
+
+
+カーネル 2.6.24 より前では、最初の 2つの要件のみが満たされている。 カーネル 2.6.24 以降では、3つの要件すべてが満たされている。
+<A NAME="lbAF">&nbsp;</A>
+<H3>スレッドケーパビリティセット</H3>
+
+各スレッドは以下の 3種類のケーパビリティセットを持つ。各々のケーパビリティセットは 上記のケーパビリティの組み合わせである
+(全てのケーパビリティが無効でもよい)。
+<DL COMPACT>
+<DT><I>許可 (permitted)</I>:<DD>
+そのスレッドが持つことになっている実効ケーパビリティの 限定的なスーパーセットである。 これは、実効ケーパビリティセットに <B>CAP_SETPCAP</B>
+ケーパビリティを持っていないスレッドが継承可能ケーパビリティセットに 追加可能なケーパビリティの限定的なスーパーセットでもある。
+<P>
+許可ケーパビリティセットから削除してしまったケーパビリティは、 (set-user-ID-root プログラムか、
+そのケーパビリティをファイルケーパビリティで許可しているプログラムを <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  しない限りは) もう一度獲得することはできない。
+<DT><I>継承可能 (inheritable)</I>:<DD>
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  を前後で保持されるケーパビリティセットである。 この仕組みを使うことで、あるプロセスが <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+を行う際に新しいプログラムの許可ケーパビリティセットとして 割り当てるケーパビリティを指定することができる。
+<DT><I>実効 (effective)</I>:<DD>
+カーネルがスレッドの権限 (permission) をチェックするときに 使用するケーパビリティセットである。
+</DL>
+<P>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  で作成される子プロセスは、親のケーパビリティセットのコピーを継承する。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+中のケーパビリティの扱いについては下記を参照のこと。
+<P>
+
+<B><A HREF="../man2/capset.2.html">capset</A></B>(2)  を使うと、プロセスは自分自身のケーパビリティセット を操作することができる (下記参照)。
+<P>
+
+
+
+Linux 3.2 以降では、 ファイル <I>/proc/sys/kernel/cap_last_cap</I> で、
+実行中のカーネルでサポートされているケーパビリティの最大値を参照できる。 この情報を使って、
+ケーパビリティセットに設定される可能性がある最上位ビットを判定することができる。
+<A NAME="lbAG">&nbsp;</A>
+<H3>ファイルケーパビリティ</H3>
+
+カーネル 2.6.24 以降では、 <B>setcap</B>(8)  を使って実行ファイルにケーパビリティセットを対応付けることができる。
+ファイルケーパビリティセットは <I>security.capability</I> という名前の拡張属性に保存される (<B><A HREF="../man2/setxattr.2.html">setxattr</A></B>(2)
+参照)。この拡張属性への書き込みには <B>CAP_SETFCAP</B> ケーパビリティが必要である。
+ファイルケーパビリティセットとスレッドのケーパビリティセットの両方が 考慮され、 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+後のスレッドのケーパビリティセットが決定される。
+<P>
+3 つのファイルケーパビリティセットが定義されている。
+<DL COMPACT>
+<DT><I>許可 (Permitted)</I> (以前の<I>強制 (Forced)</I>):<DD>
+スレッドの継承可能ケーパビリティに関わらず、そのスレッドに自動的に 認められるケーパビリティ。
+<DT><I>継承可能 (Inheritable)</I> (以前の <I>許容 (Allowed)</I>):<DD>
+このセットと、スレッドの継承可能ケーパビリティセットとの 論理積 (AND) がとられ、 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+の後にそのスレッドの許可ケーパビリティセットで有効となる 継承可能ケーパビリティが決定される。
+<DT><I>実効 (effective)</I>:<DD>
+これは集合ではなく、1 ビットの情報である。 このビットがセットされていると、 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+実行中に、そのスレッドの新しい許可ケーパビリティが全て 実効ケーパビリティ集合においてもセットされる。 このビットがセットされていない場合、
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  後には新しい許可ケーパビリティのどれも新しい実効ケーパビリティ集合 にセットされない。
+<P>
+
+ファイルの実効ケーパビリティビットを有効にするというのは、 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+実行時に、ファイルの許可ケーパビリティと継承ケーパビリティに対応するものが スレッドの許可ケーパビリティセットとしてセットされるが、
+これが実効ケーパビリティセットにもセットされるということである (ケーパビリティの変換ルールは下記参照)。
+したがって、ファイルにケーパビリティを割り当てる際 (<B>setcap</B>(8), <B>cap_set_file</B>(3),
+<B>cap_set_fd</B>(3))、 いずれかのケーパビリティに対して実効フラグを有効と指定する場合、
+許可フラグや継承可能フラグを有効にした他の全てのケーパビリティ についても実効フラグを有効と指定しなければならない。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>execve() 中のケーパビリティの変換</H3>
+
+<P>
+
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  実行時に、カーネルはプロセスの新しいケーパビリティを次の アルゴリズムを用いて計算する：
+
+<PRE>
+
+P'(permitted) = (P(inheritable) &amp; F(inheritable)) |
+                (F(permitted) &amp; cap_bset)
+
+P'(effective) = F(effective) ? P'(permitted) : 0
+
+P'(inheritable) = P(inheritable)    [つまり、変更されない]
+
+</PRE>
+
+
+各変数の意味は以下の通り:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>P<DD>
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  前のスレッドのケーパビリティセットの値
+<DT>P'<DD>
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  後のスレッドのケーパビリティセットの値
+<DT>F<DD>
+ファイルケーパビリティセットの値
+<DT>cap_bset<DD>
+ケーパビリティバウンディングセットの値 (下記参照)
+</DL>
+</DL>
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>ケーパビリティと、ルートによるプログラムの実行</H3>
+
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  時に、ケーパビリティセットを使って、全ての権限を持った <I>root</I> を実現するには、以下のようにする。
+<DL COMPACT>
+<DT>1.<DD>
+set-user-ID-root プログラムが実行される場合、 またはプロセスの実ユーザー ID が 0 (root) の場合、
+ファイルの継承可能セットと許可セットを全て 1 (全てのケーパビリティが有効) に定義する。
+<DT>2.<DD>
+set-user-ID-root プログラムが実行される場合、 ファイルの実効ケーパビリティビットを 1 (enabled) に定義する。
+</DL>
+<P>
+
+
+
+
+上記のルールにケーパビリティ変換を適用した結果をまとめると、 プロセスが set-user-ID-root プログラムを <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+する場合、または実効 UID が 0 のプロセスがプログラムを <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  する場合、許可と実効のケーパビリティセットの全ケーパビリティ
+(正確には、ケーパビリティバウンディングセットによるマスクで除外されるもの 以外の全てのケーパビリティ) を取得するということである。
+これにより、伝統的な UNIX システムと同じ振る舞いができるようになっている。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>ケーパビリティバウンディングセット</H3>
+
+ケーパビリティバウンディングセット (capability bounding set) は、 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+時に獲得できるケーパビリティを制限するために使われる セキュリティ機構である。 バウンディングセットは以下のように使用される。
+<DL COMPACT>
+<DT>*<DD>
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  実行時に、ケーパビリティバウンディングセットと ファイルの許可ケーパビリティセットの論理積 (AND) を取ったものが、
+そのスレッドの許可ケーパビリティセットに割り当てられる。 つまり、ケーパビリティバウンディングセットは、
+実行ファイルが認めている許可ケーパビリティに対して 制限を課す働きをする。
+<DT>*<DD>
+(Linux 2.6.25 以降)  ケーパビリティバウンディングセットは、スレッドが <B><A HREF="../man2/capset.2.html">capset</A></B>(2)
+により自身の継承可能セットに追加可能なケーパビリティの母集団を 制限する役割を持つ。
+スレッドに許可されたケーパビリティであっても、バウンディングセットに 含まれていなければ、スレッドはそのケーパビリティは自身の継承可能セットに
+追加できず、その結果、継承可能セットにそのケーパビリティを含むファイルを <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+する場合、そのケーパビリティを許可セットに持ち続けることができない、 ということである。
+</DL>
+<P>
+
+バウンディングセットがマスクを行うのは、継承可能ケーパビリティではなく、 ファイルの許可ケーパビリティのマスクを行う点に注意すること。
+あるスレッドの継承可能セットにそのスレッドのバウンディングセットに 存在しないケーパビリティが含まれている場合、そのスレッドは、
+継承可能セットに含まれるケーパビリティを持つファイルを実行することにより、 許可セットに含まれるケーパビリティも獲得できるということである。
+<P>
+
+カーネルのバージョンにより、ケーパビリティバウンディングセットは システム共通の属性の場合と、プロセス単位の属性の場合がある。
+<P>
+
+<B>Linux 2.6.25 より前のケーパビリティバウンディングセット</B>
+<P>
+
+2.6.25 より前のカーネルでは、ケーパビリティバウンディングセットは システム共通の属性で、システム上の全てのスレッドに適用される。
+バウンディングセットは <I>/proc/sys/kernel/cap-bound</I> ファイル経由で参照できる。
+(間違えやすいが、このビットマスク形式のパラメーターは、 <I>/proc/sys/kernel/cap-bound</I>
+では符号付きの十進数で表現される。)
+<P>
+<B>init</B> プロセスだけがケーパビリティバウンディングセットで ケーパビリティをセットすることができる。 それ以外では、スーパーユーザー
+(より正確には、 <B>CAP_SYS_MODULE</B> ケーパビリティを持ったプログラム) が、
+ケーパビリティバウンディングセットのケーパビリティのクリアが できるだけである。
+<P>
+通常のシステムでは、ケーパビリティバウンディングセットは、 <B>CAP_SETPCAP</B> が無効になっている。 この制限を取り去るには
+(取り去るのは危険!)、 <I>include/linux/capability.h</I> 内の <B>CAP_INIT_EFF_SET</B>
+の定義を修正し、カーネルを再構築する必要がある。
+<P>
+
+システム共通のケーパビリティバウンディングセット機能は、 カーネル 2.2.11 以降で Linux に追加された。
+<P>
+
+<B>Linux 2.6.25 以降のケーパビリティバウンディングセット</B>
+<P>
+
+Linux 2.6.25 以降では、 「ケーパビリティバウンディングセット」はスレッド単位の属性である
+(システム共通のケーパビリティバウンディングセットはもはや存在しない)。
+<P>
+バウンディングセットは <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  時にはスレッドの親プロセスから継承され、 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  の前後では保持される。
+<P>
+スレッドが <B>CAP_SETPCAP</B> ケーパビリティを持っている場合、そのスレッドは <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)  の
+<B>PR_CAPBSET_DROP</B> 操作を使って自身のケーパビリティバウンディングセットから ケーパビリティを削除することができる。
+いったんケーパビリティをバウンディングセットから削除してしまうと、 スレッドはそのケーパビリティを再度セットすることはできない。 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+の <B>PR_CAPBSET_READ</B> 操作を使うことで、スレッドがあるケーパビリティが自身のバウンディングセット
+に含まれているかを知ることができる。
+<P>
+バウンディングセットからのケーパビリティの削除がサポートされるのは、
+カーネルのコンパイル時にファイルケーパビリティが有効になっている場合
+だけである。Linux 2.6.33 より前のカーネルでは、ファイルケーパビリティは
+設定オプション <B>CONFIG_SECURITY_FILE_CAPABILITIES</B> で切り替えられる追加の
+機能であった。Linux 2.6.33 以降では、この設定オプションは削除され、
+ファイルケーパビリティは常にカーネルに組込まれるようになった。
+ファイルケーパビリティがカーネルにコンパイル時に組み込まれている場合、
+(全てのプロセスの先祖である) <I>init</I> プロセスはバウンディングセットで
+全てのケーパビリティが セットされた状態で開始する。ファイルケーパビリティ
+が有効になっていない場合には、 <I>init</I> はバウンディングセットで
+<B>CAP_SETPCAP</B> 以外の全てのケーパビリティがセットされた状態で開始する。
+このようになっているのは、 <B>CAP_SETPCAP</B> ケーパビリティがファイルケー
+パビリティがサポートされていない場合には 違った意味を持つからである。
+<P>
+
+
+バウンディングセットからケーパビリティを削除しても、 スレッドの継承可能セットからはそのケーパビリティは削除されない。
+しかしながら、バウンディングセットからの削除により、 この先そのケーパビリティをスレッドの継承可能セットに追加すること はできなくなる。
+<A NAME="lbAK">&nbsp;</A>
+<H3>ユーザー ID 変更のケーパビリティへの影響</H3>
+
+ユーザー ID が 0 と 0 以外の間で変化する際の振る舞いを従来と同じにするため、 スレッドの実 UID、実効 UID、保存
+set-user-ID、ファイルシステム UID が (<B><A HREF="../man2/setuid.2.html">setuid</A></B>(2), <B><A HREF="../man2/setresuid.2.html">setresuid</A></B>(2)  などを使って)
+変更された際に、カーネルはそのスレッドのケーパビリティセットに 以下の変更を行う:
+<DL COMPACT>
+<DT>1.<DD>
+UID の変更前には実 UID、実効 UID、保存 set-user-ID のうち 少なくとも一つが 0 で、変更後に実 UID、実効 UID、保存
+set-user-ID が すべて 0 以外の値になった場合、許可と実効のケーパビリティセットの 全ケーパビリティをクリアする。
+<DT>2.<DD>
+実効 UID が 0 から 0 以外に変更された場合、 実効ケーパビリティセットの全ケーパビリティをクリアする。
+<DT>3.<DD>
+実効 UID が 0 以外から 0 に変更された場合、 許可ケーパビリティセットの内容を実効ケーパビリティセットにコピーする。
+<DT>4.<DD>
+ファイルシステム UID が 0 から 0 以外に変更された場合 (<B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2)
+参照)、実効ケーパビリティセットの以下のケーパビリティがクリアされる: <B>CAP_CHOWN</B>, <B>CAP_DAC_OVERRIDE</B>,
+<B>CAP_DAC_READ_SEARCH</B>, <B>CAP_FOWNER</B>, <B>CAP_FSETID</B>, <B>CAP_LINUX_IMMUTABLE</B>
+(Linux 2.6.30 以降), <B>CAP_MAC_OVERRIDE</B>, <B>CAP_MKNOD</B> (Linux 2.6.30 以降)。
+ファイルシステム UID が 0 以外から 0 に変更された場合、 上記のケーパビリティのうち許可ケーパビリティセットで有効になっているものが
+実効ケーパビリティセットで有効にされる。
+</DL>
+<P>
+
+
+各種 UID のうち少なくとも一つが 0 であるスレッドが、 その UID の全てが 0 以外になったときに許可ケーパビリティセットが
+クリアされないようにしたい場合には、 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)  の <B>PR_SET_KEEPCAPS</B> 操作を使えばよい。
+<A NAME="lbAL">&nbsp;</A>
+<H3>プログラムでケーパビリティセットを調整する</H3>
+
+各スレッドは、 <B><A HREF="../man2/capget.2.html">capget</A></B>(2)  や <B><A HREF="../man2/capset.2.html">capset</A></B>(2)  を使って、自身のケーパビリティセットを取得したり変更したりできる。
+ただし、これを行うには、 <I>libcap</I> パッケージで提供されている <B>cap_get_proc</B>(3)  や
+<B>cap_set_proc</B>(3)  を使うのが望ましい。 スレッドのケーパビリティセットの変更には以下のルールが適用される。
+<DL COMPACT>
+<DT>1.<DD>
+呼び出し側が <B>CAP_SETPCAP</B> ケーパビリティを持っていない場合、新しい継承可能セットは、 既存の継承可能セットと許可セットの積集合
+(AND) の部分集合で なければならない。
+<DT>2.<DD>
+(Linux 2.6.25 以降)  新しい継承可能セットは、既存の継承可能セットとケーパビリティ バウンディングセットの積集合 (AND)
+の部分集合でなければならない。
+<DT>3.<DD>
+新しい許可セットは、既存の許可セットの部分集合でなければならない (つまり、そのスレッドが現在持っていない許可ケーパビリティを
+獲得することはできない)。
+<DT>4.<DD>
+新しい実効ケーパビリティセットは新しい許可ケーパビリティセットの 部分集合になっていなければならない。
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H3>securebits フラグ: ケーパビリティだけの環境を構築する</H3>
+
+
+
+
+カーネル 2.6.26 以降で、 ファイルケーパビリティが有効になったカーネルでは、 スレッド単位の <I>securebits</I>
+フラグが実装されており、このフラグを使うと UID 0 (<I>root</I>)  に対するケーパビリティの特別扱いを無効することができる。
+以下のようなフラグがある。
+<DL COMPACT>
+<DT><B>SECBIT_KEEP_CAPS</B><DD>
+このフラグをセットされている場合、UID が 0 のスレッドの UID が 0 以外の値に
+切り替わる際に、そのスレッドはケーパビリティを維持することができる。 このフラグがセットされていない場合には、UID が 0 から 0 以外の値に
+切り替わると、そのスレッドは全てのケーパビリティを失う。 このフラグは <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  時には全てクリアされる (このフラグは、以前の
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)  の <B>PR_SET_KEEPCAPS</B> 操作と同じ機能を提供するものである)。
+<DT><B>SECBIT_NO_SETUID_FIXUP</B><DD>
+このフラグをセットすると、スレッドの実効 UID とファイルシステム UID が 0 と 0 以外の間で切り替わった場合に、
+カーネルはケーパビリティセットの調整を行わなくなる (「ユーザー ID 変更のケーパビリティへの影響」の節を参照)。
+<DT><B>SECBIT_NOROOT</B><DD>
+このビットがセットされている場合、 set-user-ID-root プログラムの実行時や、 実効 UID か 実 UID が 0 のプロセスが
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  を呼び出した時に、カーネルはケーパビリティを許可しない (「ケーパビリティと、ルートによるプログラムの実行」の節を参照)。
+</DL>
+<P>
+
+上記の &quot;base&quot; フラグの各々には対応する &quot;locked&quot; フラグが存在する。 いずれの &quot;locked&quot;
+フラグも一度セットされると戻すことはできず、 それ以降は対応する &quot;base&quot; フラグを変更することができなくなる。 &quot;locked&quot; フラグは
+<B>SECBIT_KEEP_CAPS_LOCKED</B>, <B>SECBIT_NO_SETUID_FIXUP_LOCKED</B>,
+<B>SECBIT_NOROOT_LOCKED</B> という名前である。
+<P>
+
+<I>securebits</I> フラグは、 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)  の操作 <B>PR_SET_SECUREBITS</B> や
+<B>PR_GET_SECUREBITS</B> を使うことで変更したり取得したりできる。 フラグを変更するには <B>CAP_SETPCAP</B>
+ケーパビリティが必要である。
+<P>
+<I>securebits</I> フラグは子プロセスに継承される。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2) においては、
+<B>SECBIT_KEEP_CAPS</B> が常にクリアされる以外は、全てのフラグが保持される。
+<P>
+アプリケーションは、以下の呼び出しを行うことにより、 自分自身および子孫となるプロセス全てに対して、
+必要なファイルケーパビリティを持ったプログラムを実行しない限り、 対応するケーパビリティを獲得できないような状況に閉じこめることができる。
+
+<PRE>
+
+prctl(PR_SET_SECUREBITS,
+        SECBIT_KEEP_CAPS_LOCKED |
+        SECBIT_NO_SETUID_FIXUP |
+        SECBIT_NO_SETUID_FIXUP_LOCKED |
+        SECBIT_NOROOT |
+        SECBIT_NOROOT_LOCKED);
+</PRE>
+
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>ユーザー名前空間との相互作用</H3>
+
+ケーパリビティとユーザー名前空間の相互の影響に関する議論は <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7) を参照。
+<A NAME="lbAO">&nbsp;</A>
+<H2>準拠</H2>
+
+<P>
+
+ケーパビリティに関する標準はないが、 Linux のケーパビリティは廃案になった POSIX.1e 草案に基づいて実装されている。
+
+
+を参照。
+<A NAME="lbAP">&nbsp;</A>
+<H2>注意</H2>
+
+カーネル 2.5.27 以降、ケーパビリティは選択式のカーネルコンポーネント となっており、カーネル設定オプション
+<B>CONFIG_SECURITY_CAPABILITIES</B> により有効/無効を切り替えることができる。
+<P>
+
+<I>/proc/PID/task/TID/status</I> ファイルを使うと、スレッドのケーパビリティセットを見ることができる。
+<I>/proc/PID/status</I> ファイルには、プロセスのメインスレッドのケーパビリティセットが表示される。 Linux 3.8 より前では、
+これらのケーパビリティセットの表示で、 存在しないケーパビリティはすべて有効 (1) として表示される。 Linux 3.8 以降では、
+存在しないケーパビリティはすべて無効 (0) として表示される。 (<B>CAP_LAST_CAP</B>
+より大きい値を持つケーパビリティが存在しないケーパビリティである)。
+<P>
+<I>libcap</I> パッケージは、ケーパビリティを設定・取得するための ルーチン群を提供している。これらのインターフェースは、 <B><A HREF="../man2/capset.2.html">capset</A></B>(2)
+と <B><A HREF="../man2/capget.2.html">capget</A></B>(2)  が提供するインターフェースと比べて、より使いやすく、変更される可能性が少ない。 このパッケージでは、
+<B>setcap</B>(8), <B>getcap</B>(8)  というプログラムも提供されている。 パッケージは以下で入手できる。
+<BR>
+
+
+
+<P>
+バージョン 2.6.24 より前、およびファイルケーパビリティが 有効になっていない2.6.24 以降のカーネルでは、 <B>CAP_SETPCAP</B>
+ケーパビリティを持ったスレッドは自分以外のスレッドの ケーパビリティを操作できる。 しかしながら、これは理論的に可能というだけである。
+以下のいずれかの場合においても、どのスレッドも <B>CAP_SETPCAP</B> ケーパビリティを持つことはないからである。
+<DL COMPACT>
+<DT>*<DD>
+2.6.25 より前の実装では、システム共通のケーパビリティバウンディングセット <I>/proc/sys/kernel/cap-bound</I>
+ではこのケーパビリティは常に無効になっており、 ソースを変更してカーネルを再コンパイルしない限り、 これを変更することはできない。
+<DT>*<DD>
+現在の実装ではファイルケーパビリティが無効になっている場合、 プロセス毎のバウンディングセットからこのケーパビリティを抜いて <B>init</B>
+は開始され、 システム上で生成される他の全てのプロセスでこのバウンディングセットが 継承される。
+</DL>
+<A NAME="lbAQ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>capsh</B>(1), <B>setpriv</B>(2), <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2), <B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2), <B>cap_clear</B>(3),
+<B>cap_copy_ext</B>(3), <B>cap_from_text</B>(3), <B>cap_get_file</B>(3),
+<B>cap_get_proc</B>(3), <B>cap_init</B>(3), <B>capgetp</B>(3), <B>capsetp</B>(3),
+<B>libcap</B>(3), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7), <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7),
+<B>getcap</B>(8), <B>setcap</B>(8)
+<P>
+
+Linux カーネルソース内の <I>include/linux/capability.h</I>
+<A NAME="lbAR">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">ケーパビリティのリスト</A><DD>
+<DT><A HREF="#lbAE">過去と現在の実装</A><DD>
+<DT><A HREF="#lbAF">スレッドケーパビリティセット</A><DD>
+<DT><A HREF="#lbAG">ファイルケーパビリティ</A><DD>
+<DT><A HREF="#lbAH">execve() 中のケーパビリティの変換</A><DD>
+<DT><A HREF="#lbAI">ケーパビリティと、ルートによるプログラムの実行</A><DD>
+<DT><A HREF="#lbAJ">ケーパビリティバウンディングセット</A><DD>
+<DT><A HREF="#lbAK">ユーザー ID 変更のケーパビリティへの影響</A><DD>
+<DT><A HREF="#lbAL">プログラムでケーパビリティセットを調整する</A><DD>
+<DT><A HREF="#lbAM">securebits フラグ: ケーパビリティだけの環境を構築する</A><DD>
+<DT><A HREF="#lbAN">ユーザー名前空間との相互作用</A><DD>
+</DL>
+<DT><A HREF="#lbAO">準拠</A><DD>
+<DT><A HREF="#lbAP">注意</A><DD>
+<DT><A HREF="#lbAQ">関連項目</A><DD>
+<DT><A HREF="#lbAR">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:27 GMT, December 05, 2022
+</BODY>
+</HTML>

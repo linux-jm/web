@@ -1,0 +1,137 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LOGIN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LOGIN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/login.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+login, logout - utmp と wtmp エントリーを書き込む
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;</B>
+<P>
+
+<B>void login(const struct utmp *</B><I>ut</I><B>);</B>
+<P>
+
+<B>int logout(const char *</B><I>ut_line</I><B>);</B>
+<P>
+
+<I>-lutil</I> でリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+utmp ファイルは現在システムを使用しているユーザーを記録する。 wtmp ファイルはすべてのログインとログアウトを記録する。 <B><A HREF="../man5/utmp.5.html">utmp</A></B>(5)
+を参照すること。
+<P>
+
+関数 <B>login</B>()  は与えられた <I>struct utmp</I> <I>ut</I> を utmp と wtmp ファイルの両方に書き込む。
+<P>
+
+関数 <B>logout</B>()  は utmp ファイルにあるエントリーをクリアする。
+<A NAME="lbAE">&nbsp;</A>
+<H3>GNU 版の詳細</H3>
+
+より正確には、 <B>login</B>()  は引数 <I>ut</I> 構造体をとり、(もし存在するならば) フィールド <I>ut-&gt;ut_type</I> を
+<B>USER_PROCESS</B> という値にし、(もし存在するならば) フィールド <I>ut-&gt;ut_pid</I> を呼び出し元プロセスのプロセス
+ID の値にする。 次にフィールド <I>ut-&gt;ut_line</I> の値を設定しようとする。
+この関数は、標準入力・標準出力・標準エラー出力の中から端末である最初のものをとり、対応するパス名から先頭の <I>/dev/</I> を引いたものを
+このフィールドに格納して、この構造体を utmp ファイルに書き込む。 一方、端末名が見つからない場合は、このフィールドは &quot;???&quot; とされて、
+この構造体は utmp ファイルに書き込まれない。 その後にこの構造体は wtmp ファイルに書き込まれる。
+<P>
+
+<B>logout</B>()  関数は utmp ファイルから <I>ut_line</I> 引数にマッチするエントリーを探す。 レコードが見つかった場合、
+<I>ut_name</I> と <I>ut_host</I> フィールドをクリアして、 <I>ut_tv</I> タイムスタンプフィールドを更新し、 (もし存在するならば)
+<I>ut_type</I> フィールドを <B>DEAD_PROCESS</B> に更新する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+エントリーをデータベースに書き込むのに成功した場合、 <B>logout</B>()  関数は 1 を返す。 またエラーが起こった場合、0 を返す。
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/var/run/utmp</I><DD>
+ユーザーアカウントデータベース。 <I>&lt;<A HREF="file:///usr/include/paths.h">paths.h</A>&gt;</I> における <B>_PATH_UTMP</B> で設定されている。
+<DT><I>/var/log/wtmp</I><DD>
+ユーザーアカウントログファイル。 <I>&lt;<A HREF="file:///usr/include/paths.h">paths.h</A>&gt;</I> における <B>_PATH_WTMP</B> で設定されている。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>login</B>(),
+<BR>
+
+<B>logout</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:utent
+<BR>
+
+sig:ALRM timer
+<BR></TD></TR>
+</TABLE>
+
+<P>
+In the above table, <I>utent</I> in <I>race:utent</I> signifies that if any of the
+functions <B><A HREF="../man3/setutent.3.html">setutent</A></B>(3), <B><A HREF="../man3/getutent.3.html">getutent</A></B>(3), or <B><A HREF="../man3/endutent.3.html">endutent</A></B>(3)  are used in
+parallel in different threads of a program, then data races could occur.
+<B>login</B>()  and <B>logout</B>()  calls those functions, so we use race:utent to
+remind users.
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1 にはない。 BSD 系に存在する。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<I>struct utmp</I> のメンバ <I>ut_user</I> は、BSD では <I>ut_name</I> という名前である点に注意すること。 そのため
+<I>ut_name</I> は <I>&lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;</I> において <I>ut_user</I> のエイリアスとして定義されている。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/getutent.3.html">getutent</A></B>(3), <B><A HREF="../man5/utmp.5.html">utmp</A></B>(5)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">GNU 版の詳細</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

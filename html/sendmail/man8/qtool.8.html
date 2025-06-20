@@ -1,0 +1,245 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of QTOOL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>QTOOL</H1>
+Section: Maintenance Commands (8)<BR>Updated: $Date: 2000/12/15 19:50:41 $<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/sendmail/release/man8/qtool.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+qtool
+- sendmail のキューを操作する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>qtool.pl</B>
+
+[options]
+
+target_directory source [source ...]
+<P>
+
+<B>qtool.pl [-d|-b]</B>
+
+[options]
+
+source [source ...]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>qtool</B>
+
+は sendmail が使用するキューファイルをキューディレクトリ間で移動する。
+sendmail と同じロック機構を使うので、
+sendmail が稼働している間も安全に使用できる。
+<P>
+
+オプションが指定されていない場合、
+<B>qtool</B>
+
+は <I>source</I> で指定された全てのキューファイルを
+ディレクトリ <I>target_directory</I> に移動する。
+<I>source</I> は、キュー制御ファイル・キューファイルの ID・
+キューディレクトリのどれでもよい。
+<P>
+
+-d オプションが指定された場合、qtool は source で指定されたメッセージを
+移動ではなく削除する。
+<P>
+
+-b オプションが指定された場合、選択されたメッセージは
+-OTimeout.queuereturn=now オプションをつけた sendmail を実行することにより
+バウンスされる (送信者に送り返される)。 
+<A NAME="lbAE">&nbsp;</A>
+<H3>オプション</H3>
+
+<DL COMPACT>
+<DT><B>-b</B><DD>
+source で指定された全てのメッセージをバウンスする。
+メッセージはすぐにバウンスされる。
+メッセージの配送を試みない。
+<DT><B>-C</B> configfile<DD>
+sendmail の設定ファイルを指定する。
+デフォルトは /etc/mail/sendmail.cf である。
+<DT><B>-d</B><DD>
+source で指定された全てのメッセージを削除する。
+<DT><B>-e</B> <I>perl_expression</I><DD>
+<I>source</I> で指定されたキューファイルについて、
+<I>perl_expression</I> を評価する。
+<I>perl_expression</I> が真と評価された場合、そのキューファイルは移動される。
+<I>perl_expression</I> の詳細については、下記を参照すること。
+<DT><B>-s</B> <I>seconds</I><DD>
+<I>source</I> で指定されたキューファイルのうち
+修正時刻が <I>seconds</I> 秒より前のものだけを移動する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>Perl 表現</H3>
+
+このプログラムでは Perl 表現を使うことができる。
+Perl 表現の中では、キューに入れられたメッセージのデータだけでなく、
+制御ファイルのフィールドの内容を含むハッシュにもアクセスできる。
+ハッシュは <I>%msg</I> という名前である。
+フィールドに複数の値がある ('Recipient' のような) 場合、
+値は配列として返される。
+値が 1 つの場合、値はスカラーで返される。
+ハッシュ <I>%msg</I> を使って、以下の値にアクセスすることができる。
+<DL COMPACT>
+<DT><B>auth</B><DD>
+AUTH= パラメータ。
+<DT><B>body_type</B><DD>
+ボディタイプ (<B>8BITMIME</B>, <B>7BIT</B>, または未定義)。
+<DT><B>body_last_mod_time</B><DD>
+ボディが最後に修正された時刻。紀元年 (epoch) から秒数で表す。
+<DT><B>body_size</B><DD>
+ボディファイルのサイズ (バイト単位)。
+<DT><B>charset</B><DD>
+文字セット (将来使用するためにある)。
+<DT><B>content-length</B><DD>
+Content-Length: ヘッダー値 (Solaris の sendmail のみ)。
+<DT><B>controlling_user</B><DD>
+制御しているユーザー。
+<DT><B>control_last_mod_time</B><DD>
+制御ファイルが最後に修正された時刻。紀元年 (epoch) から秒数で表す。
+<DT><B>control_size</B><DD>
+制御ファイルのサイズ (バイト単位)。
+<DT><B>creation_time</B><DD>
+制御ファイルが生成された時刻。
+<DT><B>data_file_name</B><DD>
+データファイル名 (使わない方が良い)。
+<DT><B>envid</B><DD>
+ESMTP で送られてきたオリジナルのエンベロープの ID。
+<DT><B>error_recipient</B><DD>
+エラーの場合の受信者 (使わない方が良い)。
+<DT><B>flags</B><DD>
+以下の値を持つことできる文字配列。
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>w<DD>
+警告メッセージが送信された。
+<DT>r<DD>
+エラー応答、または DSN。
+<DT>8<DD>
+ボディに 8 ビットのデータがある。
+<DT>b<DD>
+Bcc: ヘッダーを削除する。
+<DT>d<DD>
+エンベロープに DSN RET= パラメータがある。
+<DT>n<DD>
+ボディを返さない。
+
+</DL>
+</DL>
+
+<DT><B>headers</B><DD>
+これは Perl のハッシュで、rfc822 フィールド名をキー、
+rfc822 フィールド値を値にしている。
+フィールドに 1 つしか値がない場合、値は文字列として返される。
+('Received' のように) フィールドに 2 つ以上の値がある場合、
+値は文字列のリストとして返される。
+<DT><B>inode_number</B><DD>
+データ (ボディ) ファイルの i ノード番号。
+<DT><B>next_delivery_time</B><DD>
+次の配送が試みられる最も早い時刻。
+<DT><B>num_delivery_attempts</B><DD>
+配送を試みた回数。
+<DT><B>macro</B><DD>
+定義されたマクロ。
+<DT><B>message</B><DD>
+エンベロープ状態のメッセージ。
+<DT><B>original_recipient</B><DD>
+本来の受信者 (ORCPT= パラメータ)。
+<DT><B>priority</B><DD>
+変更されたメッセージの優先度。
+<DT><B>recipient</B><DD>
+コロンと受信者名が後に続く文字フラグの配列。フラグを以下に示す。
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>N<DD>
+NOTIFY= パラメータがある。
+<DT>S<DD>
+要求した DSN が成功した。
+<DT>F<DD>
+要求した DSN が失敗した。
+<DT>D<DD>
+要求した DSN が遅れている。
+<DT>P<DD>
+(alias または forward で展開される前の) 元々のアドレス。
+
+</DL>
+</DL>
+
+<DT><B>sender</B><DD>
+送信者。
+<DT><B>version</B><DD>
+制御ファイルのバージョン。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>例</H2>
+
+<DL COMPACT>
+<DT><B>qtool.pl q2 q1</B><DD>
+キューディレクトリ q1 にあるキューファイルを
+キューディレクトリ q2 に移動する。
+<DT><B>qtool.pl q2 q1/d6CLQh100847</B><DD>
+キューディレクトリ q1 にある ID が d6CLQh100847 のメッセージを
+キューディレクトリ q2 に移動する。
+<DT><B>qtool.pl q2 q1/qfd6CLQh100847</B><DD>
+キューディレクトリ q1 にある ID が d6CLQh100847 のメッセージを
+キューディレクトリ q2 に移動する。
+<DT><B>qtool.pl -e '$msg{num_delivery_attempts} == 3' /q2 /q1</B><DD>
+今までに 3 回配送が試みられた全てのキューファイルを
+キューディレクトリ q1 から q2 に移動する。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+sendmail 8.12 では、メッセージの qf ファイルと df ファイルを
+別々のキューに格納することができる。
+この場合、qtool には df ファイルのパス名ではなく、
+qf ファイルのパス名を指定しなければならない。
+安全のため、絶対に qtool に df ファイルのパス名を指定してはならない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man8/sendmail.8.html">sendmail</A>(8)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>履歴</H2>
+
+<B>qtool</B>
+
+コマンドは
+sendmail 8.10
+で登場した。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">Perl 表現</A><DD>
+</DL>
+<DT><A HREF="#lbAG">例</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">履歴</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

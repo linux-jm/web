@@ -1,0 +1,175 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CHROOT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>CHROOT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/chroot.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+chroot - ルートディレクトリを変更する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>int chroot(const char *</B><I>path</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>chroot</B>():
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>glibc 2.2.2 以降:<DD>
+<PRE>
+_XOPEN_SOURCE &amp;&amp; ! (_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L)
+    || /* glibc 2.20 以降: */ _DEFAULT_SOURCE
+    || /* Glibc 2.19 以前: */ _BSD_SOURCE
+</PRE>
+
+<DT>glibc 2.2.2 より前: なし<DD>
+
+</DL>
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>chroot</B>()  は、呼び出し元プロセスのルートディレクトリを <I>path</I> で指定されたディレクトリに変更する。 このディレクトリ以下が
+<I>/</I> から始まるパス名として使われる。 このルートディレクトリは呼び出し元のプロセスの全ての子プロセスに受け継がれる。
+<P>
+
+特権プロセス (Linux では、そのプロセスのユーザー名前空間で <B>CAP_SYS_CHROOT</B> ケーパビリティを持つプロセス) のみが
+<B>chroot</B>()  を呼び出すことができる。
+<P>
+
+This call changes an ingredient in the pathname resolution process and does
+nothing else.  In particular, it is not intended to be used for any kind of
+security purpose, neither to fully sandbox a process nor to restrict
+filesystem system calls.  In the past, <B>chroot</B>()  has been used by daemons
+to restrict themselves prior to passing paths supplied by untrusted users to
+system calls such as <B><A HREF="../man2/open.2.html">open</A></B>(2).  However, if a folder is moved out of the
+chroot directory, an attacker can exploit that to get out of the chroot
+directory as well.  The easiest way to do that is to <B><A HREF="../man2/chdir.2.html">chdir</A></B>(2)  to the
+to-be-moved directory, wait for it to be moved out, then open a path like
+../../../etc/passwd.
+<P>
+
+
+
+A slightly trickier variation also works under some circumstances if
+<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2)  is not permitted.  If a daemon allows a &quot;chroot directory&quot; to
+be specified, that usually means that if you want to prevent remote users
+from accessing files outside the chroot directory, you must ensure that
+folders are never moved out of it.
+<P>
+
+このコールは現在の作業ディレクトリ (working directory) を変更しない。 そのため、このコールの後に '<I>.</I>' が
+'<I>/</I>' を 根とするツリーの外になる場合がある。 特に、スーパーユーザーは以下のようにすることで &quot;chroot jail&quot;
+から逃げ出せてしまう。
+<P>
+
+
+
+mkdir foo; chroot foo; cd ..
+
+
+<P>
+
+このコールはオープンファイルディスクリプターをクローズしないので、 このようなファイルディスクリプターは chroot ツリーの外にある
+ファイルにアクセスできる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+ファイルシステムによっては他のエラーが返される事がある。 一般的なエラーを以下に挙げる:
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+
+
+パス名の構成要素に検索許可がない (<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)  も見よ)。
+<DT><B>EFAULT</B><DD>
+<I>path</I> がアクセスできるアドレス空間外を指している。
+<DT><B>EIO</B><DD>
+I/O エラーが発生した。
+<DT><B>ELOOP</B><DD>
+<I>path</I> を解決する際に遭遇したシンボリックリンクが多過ぎる。
+<DT><B>ENAMETOOLONG</B><DD>
+<I>path</I> が長過ぎる。
+<DT><B>ENOENT</B><DD>
+ファイルが存在しない。
+<DT><B>ENOMEM</B><DD>
+カーネルに十分なメモリーがない。
+<DT><B>ENOTDIR</B><DD>
+<I>path</I> の構成要素がディレクトリではない。
+<DT><B>EPERM</B><DD>
+呼び出し側に十分な特権がない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+SVr4, 4.4BSD, SUSv2 (但し、SUSv2 では過去の名残とされている)。 この関数は POSIX.1-2001 にはない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  で作成された子プロセスは、 親プロセスのルートディレクトリを継承する。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+の場合も、ルートディレクトリは変更されない。
+<P>
+
+The magic symbolic link, <I>/proc/[pid]/root</I>, can be used to discover a
+process's root directory; see <B><A HREF="../man5/proc.5.html">proc</A></B>(5)  for details.
+<P>
+
+FreeBSD にはより強力な <B>jail</B>()  システムコールがある。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/chroot.1.html">chroot</A></B>(1), <B><A HREF="../man2/chdir.2.html">chdir</A></B>(2), <B><A HREF="../man2/pivot_root.2.html">pivot_root</A></B>(2), <B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7),
+<B>switch_root</B>(8)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:27 GMT, December 05, 2022
+</BODY>
+</HTML>

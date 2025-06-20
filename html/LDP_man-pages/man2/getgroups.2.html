@@ -1,0 +1,191 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETGROUPS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETGROUPS</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/getgroups.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getgroups, setgroups - 補助グループ ID のリストを取得/設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>int getgroups(int </B><I>size</I><B>, gid_t </B><I>list</I><B>[]);</B>
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</B>
+<P>
+
+<B>int setgroups(size_t </B><I>size</I><B>, const gid_t *</B><I>list</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>setgroups</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.19:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.19&nbsp;and&nbsp;earlier:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getgroups</B>()  は呼び出し元プロセスの補助グループ (supplementary group) ID を <I>list</I> に返す。
+<I>size</I> 引数には、 <I>list</I> により参照されるバッファーに格納できる要素の最大数を設定すべきである。 呼び出し元プロセスが <I>size</I>
+個より多くの補助グループのメンバの場合には、エラーとなる。
+<P>
+
+この関数を呼び出したプロセスの実効グループ ID が、 返されるリストに含まれるかどうかは規定されていない (したがって、アプリケーションは
+<B><A HREF="../man2/getegid.2.html">getegid</A></B>(2) を呼び出し、その結果の値を追加・削除すべきである)。
+<P>
+
+<I>size</I> が 0 ならば、 <I>list</I> は修正されないが、そのプロセスの補助グループ ID の合計数が返される。 これを使うことで、それ以降の
+<B>getgroups</B>()  の呼び出しで必要となる動的割り当てバッファー <I>list</I> のサイズを、呼び出し元が決定することができる。
+<P>
+
+<B>setgroups</B>()  sets the supplementary group IDs for the calling process.
+Appropriate privileges are required (see the description of the <B>EPERM</B>
+error, below).  The <I>size</I> argument specifies the number of supplementary
+group IDs in the buffer pointed to by <I>list</I>.  A process can drop all of
+its supplementary groups with the call:
+<P>
+
+
+
+setgroups(0, NULL);
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>getgroups</B>()  は、成功すると補助グループ ID の数を返す。 エラーの場合 -1 を返し、 <I>errno</I> を適切に設定する。
+<P>
+
+<B>setgroups</B>()  は、成功すると 0 を返す。 エラーの場合 -1 を返し、 <I>errno</I> を適切に設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>list</I> が不正なアドレスである。
+</DL>
+<P>
+
+<B>getgroups</B>()  は、上記に加えて以下のエラーで失敗する可能性がある。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>size</I> が補助グループ ID の数より小さいが 0 でない。
+</DL>
+<P>
+
+<B>setgroups</B>()  は、上記に加えて以下のエラーで失敗する可能性がある。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>size</I> が <B>NGROUPS_MAX</B> より大きい (<B>NGROUPS_MAX</B> は Linux 2.6.4 より前では 32、Linux
+2.6.4 以降では 65536)。
+<DT><B>ENOMEM</B><DD>
+メモリー不足。
+<DT><B>EPERM</B><DD>
+The calling process has insufficient privilege (the caller does not have the
+<B>CAP_SETGID</B> capability in the user namespace in which it resides).
+<DT><B>EPERM</B> (Linux 3.19 以降)<DD>
+The use of <B>setgroups</B>()  is denied in this user namespace.  See the
+description of <I>/proc/[pid]/setgroups</I> in <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>getgroups</B>(): SVr4, 4.3BSD, POSIX.1-2001, POSIX.1-2008.
+<P>
+
+<B>setgroups</B>(): SVr4, 4.3BSD.  Since <B>setgroups</B>()  requires privilege, it
+is not covered by POSIX.1.
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+プロセスは、実効グループ ID に加え、最大 <B>NGROUPS_MAX</B> までの補助グループ ID を持つことができる。 定数
+<B>NGROUPS_MAX</B> は <I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I> で定義されている。 補助グループ ID の集合は親プロセスから継承され、
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  の前後で保持される。
+<P>
+
+補助グループ ID の最大数は、実行時に <B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)  を使って以下のようにして調べることができる:
+<P>
+
+
+
+long ngroups_max;
+ngroups_max = sysconf(_SC_NGROUPS_MAX);
+
+
+<P>
+
+<B>getgroups</B>() の返り値の最大値は、この値より大きくなることはない。 Linux 2.6.4 以降では、補助グループ ID の最大数も
+Linux 固有の読み込み専用のファイル <I>/proc/sys/kernel/ngroups_max</I> 経由で公開されている。
+<P>
+
+
+元々の Linux の <B>getgroups</B>() システムコールは 16 ビットのグループ ID だけ
+に対応していた。その後、Linux 2.4 で、32 ビットの ID に対応した
+<B>getgroups</B>() が追加された。glibc の <B>getgroups</B> のラッパー関数はカーネル
+バージョンによるこの違いを吸収している。
+<A NAME="lbAI">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+At the kernel level, user IDs and group IDs are a per-thread attribute.
+However, POSIX requires that all threads in a process share the same
+credentials.  The NPTL threading implementation handles the POSIX
+requirements by providing wrapper functions for the various system calls
+that change process UIDs and GIDs.  These wrapper functions (including the
+one for <B>setgroups</B>())  employ a signal-based technique to ensure that when
+one thread changes credentials, all of the other threads in the process also
+change their credentials.  For details, see <B>nptl</B>(7).
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/getgid.2.html">getgid</A></B>(2), <B><A HREF="../man2/setgid.2.html">setgid</A></B>(2), <B><A HREF="../man3/getgrouplist.3.html">getgrouplist</A></B>(3), <B><A HREF="../man3/group_member.3.html">group_member</A></B>(3),
+<B><A HREF="../man3/initgroups.3.html">initgroups</A></B>(3), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

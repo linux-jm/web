@@ -1,0 +1,379 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DLOPEN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>DLOPEN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2014-10-02<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/dlopen.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+dlclose, dlerror, dlopen, dlsym - 動的リンクを行うローダーへの プログラミングインターフェース
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</B>
+<P>
+<B>void *dlopen(const char *</B><I>filename</I><B>, int </B><I>flag</I><B>);</B>
+<P>
+<B>char *dlerror(void);</B>
+<P>
+<B>void *dlsym(void *</B><I>handle</I><B>, const char *</B><I>symbol</I><B>);</B>
+<P>
+<B>int dlclose(void *</B><I>handle</I><B>);</B>
+<P>
+<I>-ldl</I> でリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>dlopen</B>(), <B>dlsym</B>(), <B>dlclose</B>(), <B>dlerror</B>()  の 4つの関数は、動的リンク (dynamic
+linking) を行うローダーへの インターフェースを実装したものである。
+<A NAME="lbAE">&nbsp;</A>
+<H3>dlerror()</H3>
+
+関数 <B>dlerror</B>()  は、前回 <B>dlerror</B>()  が呼び出された後に、 <B>dlopen</B>(), <B>dlsym</B>(),
+<B>dlclose</B>()  のいずれかで最後に発生したエラーについての説明メッセージを返す。
+初期化後または前回呼び出された後で、エラーが発生していなければ NULL を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H3>dlopen()</H3>
+
+関数 <B>dlopen</B>()  は、ヌル終端された文字列 <I>filename</I> で指定されたファイル名の動的ライブラリ (dynamic
+library) をロードし、 その動的ライブラリへの内部「ハンドル」を返す。 <I>filename</I> が NULL
+の場合、メインプログラムへのハンドルが返される。 <I>filename</I> がスラッシュ (&quot;/&quot;)
+を含む場合、(相対か絶対かの)パス名として解釈される。 それ以外の場合、動的リンカーは以下の手順でライブラリを検索する (詳細は <B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)
+を参照):
+<DL COMPACT>
+<DT>o<DD>
+(ELF のみ) 呼び出し元プログラムの実行ファイルに DT_RPATH タグが含まれており、 DT_RUNPATH
+タグが含まれていない場合、DT_RPATH タグに書かれている ディレクトリリストを検索する。
+<DT>o<DD>
+プログラムの開始時に環境変数 <B>LD_LIBRARY_PATH</B> にコロン区切りのディレクトリのリストが定義されていれば、
+この環境変数に定義されたディレクトリが検索される (セキュリティ上の理由で、この変数は set-UID や set-GID された
+プログラムの場合は無視される)。
+<DT>o<DD>
+(ELF のみ) 呼び出し元プログラムの実行ファイルに DT_RUNPATH タグが含まれて
+いる場合、そのタグに書かれているディレクトリリストを検索する。
+<DT>o<DD>
+キャッシュファイル <I>/etc/ld.so.cache</I> の中に <I>filename</I> のエントリーが入っているかをチェックする
+(<B>/etc/ld.so.cache</B> は <B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8)  によって管理されている)。
+<DT>o<DD>
+ディレクトリ <I>/lib</I> と <I>/usr/lib</I> をこの順番で検索する。
+</DL>
+<P>
+
+そのライブラリが他の共有ライブラリに依存している場合は、 依存しているライブラリも動的リンカーが同じ検索ルールに基づいて 自動的にロードする
+(それらのライブラリにさらに依存関係がある場合などは この処理は再帰的に行われる)。
+<P>
+
+<I>flag</I> には以下の 2 つの値のいずれかを含めなければならない:
+<DL COMPACT>
+<DT><B>RTLD_LAZY</B><DD>
+lazy binding (手抜きなシンボルの結び付け) が行う。 シンボルの解決はそのシンボルを参照するコードが実行されるときにのみ
+行われる。シンボルが一度も参照されなかった場合には、そのシンボルは 解決されないままとなる。 (lazy binding
+は関数参照についてのみ実施される; 変数への参照は常に ライブラリがロードされた時点で直ちに解決される。)
+<DT><B>RTLD_NOW</B><DD>
+この値が指定されるか、環境変数 <B>LD_BIND_NOW</B> に空でない文字列が設定された場合、 ライブラリ中の未定義のシンボルを全て解決してから
+<B>dlopen</B>()  は復帰する。解決できなかったときにはエラーが返される。
+</DL>
+<P>
+
+以下の値のうち 0 個以上を論理和 (OR) の形で <I>flag</I> に追加することもできる:
+<DL COMPACT>
+<DT><B>RTLD_GLOBAL</B><DD>
+このライブラリで定義されているシンボルが、これより後でロードされる ライブラリのシンボル解決で利用できるようになる。
+<DT><B>RTLD_LOCAL</B><DD>
+このフラグは <B>RTLD_GLOBAL</B> の反対の意味であり、どちらのフラグも指定されなかった場合は こちらがデフォルトとなる。
+このライブラリで定義されているシンボルは、これより後でロードされる ライブラリでのシンボル参照で利用できない。
+<DT><B>RTLD_NODELETE</B> (glibc 2.2 以降)<DD>
+
+<B>dlclose</B>()  中にそのライブラリをアンロードしない。 そのため、同じライブラリをこれ以降に <B>dlopen</B>()
+で再度ロードした場合に、ライブラリ内の静的変数は再初期化されない。 このフラグは POSIX.1-2001 では規定されていない。
+<DT><B>RTLD_NOLOAD</B> (glibc 2.2 以降)<DD>
+
+
+そのライブラリをロードしない。 このフラグはそのライブラリがすでに組み込まれているかを検査するのに 利用できる (<B>dlopen</B>()
+は、ライブラリが組み込まれていなければ NULL を返し、 すでに組み込まれていればそのライブラリのハンドルを返す)。
+また、すでにロードされているライブラリのフラグを昇格させるのにも 利用できる。例えば、過去に <B>RTLD_LOCAL</B> でロードしたライブラリを
+<B>RTLD_NOLOAD&nbsp;|&nbsp;RTLD_GLOBAL</B> で再オープンすることができる。 このフラグは POSIX.1-2001
+では規定されていない。
+<DT><B>RTLD_DEEPBIND</B> (glibc 2.3.4 以降)<DD>
+
+
+このライブラリ内のシンボルの参照領域をグローバル領域よりも前に配置する。 つまり、内蔵型のライブラリでは、すでにロードされたライブラリに含まれる
+同じ名前のグローバルなシンボルよりも自ライブラリ内のシンボルが優先して 使われる。 このフラグは POSIX.1-2001 では規定されていない。
+</DL>
+<P>
+
+<I>filename</I> が NULL である場合は、 返されるハンドルはメインプログラムのものになる。 このハンドルが <B>dlsym</B>()
+に渡されると、シンボルの検索は、メインプログラム内、 プログラムの起動時にロードされる全ての共有ライブラリ、 <B>dlopen</B>()  によって
+<B>RTLD_GLOBAL</B> フラグ付きでロードされた全ての共有ライブラリ、の順序で行われる。
+<P>
+
+オープンされたライブラリ中での外部参照は、 そのライブラリの依存リストにあるライブラリか、 <B>RTLD_GLOBAL</B>
+フラグ付きで既にオープンされているライブラリを使って解決される。 実行ファイルが &quot;-rdynamic&quot; フラグ (&quot;--export-dynamic&quot;
+も同義)  付きでリンクされている場合は、実行ファイル中のグローバルシンボルも、 動的にロードされるライブラリ内の参照解決に用いられる。
+<P>
+
+同じライブラリが <B>dlopen</B>()  によって再度ロードされた場合には、同じライブラリハンドルが返される。 dl
+ライブラリはライブラリハンドルのリンク数を管理している。 したがって動的ライブラリは <B>dlclose</B>()  が <B>dlopen</B>()
+と同じ回数だけ呼び出されない限りアンロードされない。 <B>_init</B>()  ルーチンは一度だけ呼び出される (<B>_init</B>()
+が存在する場合のみ)。 <B>RTLD_NOW</B> が指定されて <B>dlopen</B>()  が呼び出された場合、 <B>RTLD_LAZY</B>
+で以前にロードされたライブラリのシンボル解決が実行されることがある。
+<P>
+
+<B>dlopen</B>()  は、何らかの理由で失敗すると NULL を返す。
+<A NAME="lbAG">&nbsp;</A>
+<H3>dlsym()</H3>
+
+関数 <B>dlsym</B>()  は、 <B>dlopen</B>()  が返した動的ライブラリの「ハンドル」と、 NULL
+終端されたシンボル名の文字列を引き数に取り、 そのシンボルがロードされたメモリーのアドレスを返す。
+シンボルが、指定されたライブラリと、指定されたライブラリがロードされる際に <B>dlopen</B>()
+が自動的にロードしてライブラリのいずれにも見つからない場合には、 <B>dlsym</B>()  は NULL を返す (<B>dlsym</B>()
+による検索は、これらのライブラリの依存関係のツリーを先頭から 辿って行われる)。 実際にはシンボルの値自体が NULL になることもある (そのため、
+<B>dlsym</B>()  の返り値が NULL であったとしても必ずしもエラーという訳ではない)。 エラーかどうかを確認する正しい方法は以下の通りである:
+<B>dlerror</B>()  を呼び出して以前のエラー状態をクリアしてから、 <B>dlsym</B>()  を呼び出す。その後でもう一度
+<B>dlerror</B>()  を呼び出して、 <B>dlerror</B>()  の返り値を変数に保存し、保存した値が NULL であるか判定する。
+<P>
+
+<B>RTLD_DEFAULT</B> と <B>RTLD_NEXT</B> という二つの特別な擬似ハンドルがある。 <B>RTLD_DEFAULT</B>
+は、デフォルトのライブラリ検索順序にしたがって、 検索対象のシンボルが最初に現れるところを探す。 <B>RTLD_NEXT</B>
+は、ライブラリ検索順序の中で現在のライブラリ以降で最初に 関数が現れるところを探す。この機能を使うことで、別の共有ライブラリの
+関数へのラッパーを提供することができる。
+<A NAME="lbAH">&nbsp;</A>
+<H3>dlclose()</H3>
+
+関数 <B>dlclose</B>()  は動的ライブラリのハンドル <I>handle</I> の参照カウントを 1 減らす。参照カウントが 0
+になり、ロードされている 他のライブラリからそのライブラリ内のシンボルが使われていなければ、 その動的ライブラリをアンロードする。
+<P>
+
+関数 <B>dlclose</B>()  は、成功した場合は 0 を返し、エラーの場合 0 以外を返す。
+<A NAME="lbAI">&nbsp;</A>
+<H3>廃止されたシンボル _init() と _fini()</H3>
+
+リンカーは <B>_init</B> と <B>_fini</B> を特別なシンボルと解釈する。 ある動的ライブラリで <B>_init</B>()
+という名前のルーチンがエクスポートされていれば、 そのコードは、ライブラリのロード後、かつ <B>dlopen</B>()  が復帰する前に実行される。
+その動的ライブラリで <B>_fini</B>()  という名前のルーチンがエクスポートされていれば、
+ライブラリがアンロードされる直前にそのルーチンが呼び出される。 システムの起動ファイルに対するリンクを避ける必要がある場合、 <B><A HREF="../../GNU_gcc/man1/gcc.1.html">gcc</A></B>(1)
+のコマンドラインに <I>-nostartfiles</I> オプションを指定すればよい。
+<P>
+
+
+
+このルーチンや、gcc のオプション <B>-nostartfiles</B> や <B>-nostdlib</B> は使用しないことを推奨する。
+これらを使うと、望ましくない動作をすることがある。 なぜなら、(特別な措置が行われない限り) これらの constructor/destructor
+ルーチンは実行されないからである。
+<P>
+
+代わりに、ライブラリは <B>__attribute__((constructor))</B> や <B>__attribute__((destructor))</B>
+の関数属性を使って必要なルーチンをエクスポートするのがよい。 これらについては gcc の info ページを参照のこと。 constructor
+ルーチンは <B>dlopen</B>()  が復帰する前に実行され、 destructor ルーチンは <B>dlclose</B>()  が復帰する前に実行される。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>GNU での拡張: dladdr() と dlvsym()</H3>
+
+glibc では POSIX には記載されていない関数が 2つ追加されている。 プロトタイプは以下の通りである。
+<P>
+<PRE>
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</B>
+
+<B>int dladdr(void *</B><I>addr</I><B>, Dl_info *</B><I>info</I><B>);</B>
+
+<B>void *dlvsym(void *</B><I>handle</I><B>, char *</B><I>symbol</I><B>, char *</B><I>version</I><B>);</B>
+</PRE>
+
+<P>
+
+関数 <B>dladdr</B>()  は、関数のポインターを引き数にとり、関数の名前と関数が定義されている ファイルの解決を試みる。情報は
+<I>Dl_info</I> 構造体に格納される。
+<P>
+
+<PRE>
+typedef struct {
+    const char *dli_fname;  /* Pathname of shared object that
+                               contains address */
+    void       *dli_fbase;  /* Address at which shared object
+                               is loaded */
+    const char *dli_sname;  /* Name of symbol whose definition
+                               overlaps <I>addr</I> */
+    void       *dli_saddr;  /* Exact address of symbol named
+                               in <I>dli_sname</I> */
+} Dl_info;
+</PRE>
+
+
+<P>
+
+<I>addr</I> にマッチするシンボルが見つからなかった場合、 <I>dli_sname</I> と <I>dli_saddr</I> は NULL にセットされる。
+<P>
+
+<B>dladdr</B>()  は、エラー時には 0 を返し、成功した場合は 0 以外を返す。
+<P>
+
+関数 <B>dlvsym</B>()  は <B>dlsym</B>()  と同じ動作をするが、バージョンの文字列を渡す引き数が 追加されている点が異なる
+(<B>dlvsym</B>()  はバージョン 2.1 以降の glibc で提供されている)。
+<A NAME="lbAK">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2003 には <B>dlclose</B>(), <B>dlerror</B>(), <B>dlopen</B>(), <B>dlsym</B>().
+の記載がある。
+<A NAME="lbAL">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+
+
+
+
+
+
+
+シンボル <B>RTLD_DEFAULT</B> と <B>RTLD_NEXT</B> は <I>&lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</I> で定義されており、
+<I>&lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</I> のインクルード前に <B>_GNU_SOURCE</B> が定義されている場合のみ有効となる。
+<P>
+glibc 2.2.3 以降では、 <B><A HREF="../man3/atexit.3.html">atexit</A></B>(3)  を使って、ライブラリがアンロードされる際に自動的に呼び出される 終了ハンドラー
+(exit handler) を登録することができる。
+<A NAME="lbAM">&nbsp;</A>
+<H3>歴史</H3>
+
+dlopen インターフェースの標準は SunOS をもとにしている。 SunOS には <B>dladdr</B>()  もあったが、 <B>dlvsym</B>()
+はなかった。
+<A NAME="lbAN">&nbsp;</A>
+<H2>バグ</H2>
+
+時として、 <B>dladdr</B>()  に渡した関数ポインターは驚くような値になることがある。 いくつかのアーキテクチャー (特に i386 と
+x86_64) では、 引き数として使用した関数が動的リンクライブラリで定義されるもので あったとしても、 <I>dli_fname</I> と
+<I>dli_fbase</I> が <B>dladdr</B>()  を呼び出したオブジェクトを参照した状態で終わっていることがある。
+<P>
+
+問題は、関数ポインターの解決は今なおコンパイル時に行われるが、 そのポインターは元のオブジェクトの <I>plt</I> (Procedure Linkage
+Table) セクションを指しているだけだという点にある (オブジェクト自体は、ダイナミックリンカーによってシンボルの解決が行われた後に、
+関数の呼び出しを行う)。 これに対処する方法としては、 コードを position-independent でコンパイルするという方法がある。
+そうすると、コンパイラはコンパイル時にポインターを用意することができず、 今日の <B><A HREF="../../GNU_gcc/man1/gcc.1.html">gcc</A></B>(1)  では、実行時に <B>dladdr</B>()
+に関数ポインターを渡す前に、 <I>got</I> (Global Offset Table) から最終的なシンボルのアドレスをロードするだけの
+コードが生成される。
+<A NAME="lbAO">&nbsp;</A>
+<H2>例</H2>
+
+math ライブラリをロードし、2.0 の余弦を表示する
+<PRE>
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;
+
+int
+main(int argc, char **argv)
+{
+    void *handle;
+    double (*cosine)(double);
+    char *error;
+
+    handle = dlopen(&quot;libm.so&quot;, RTLD_LAZY);
+    if (!handle) {
+        fprintf(stderr, &quot;%s\n&quot;, dlerror());
+        exit(EXIT_FAILURE);
+    }
+
+    dlerror();    /* Clear any existing error */
+
+    cosine = (double (*)(double)) dlsym(handle, &quot;cos&quot;);
+
+    /* ISO の C 標準によれば、上のような、関数ポインターと 'void *' 間の
+       キャストを行った場合に得られる結果は不定である。
+       POSIX.1-2003 と POSIX.1-2008 では、この状況は認められており、
+       以下のようなワークアラウンドが提案されている。
+
+           *(void **) (&amp;cosine) = dlsym(handle, &quot;cos&quot;);
+
+       この (ぶかっこうな) キャストは ISO の C 標準に従っており、
+       コンパイラの警告を避けることができる。
+
+       POSIX.1-2008 の 2013 Technical Corrigendum (別名 POSIX.1-2013)
+       では、 POSIX に準拠する実装では 'void *' から関数ポインターへの
+       キャストをサポートすることが要求されるようになり、状況が改善
+       された。にもかかわらず、('-pedantic' オプションを指定した gcc
+       などの) いくつかのコンパイラは、このプログラムで使用されている
+       キャストについて文句を言うのだ。
+
+    error = dlerror();
+    if (error != NULL) {
+        fprintf(stderr, &quot;%s\n&quot;, error);
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;%f\n&quot;, (*cosine)(2.0));
+    dlclose(handle);
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<P>
+
+このプログラムを &quot;foo.c&quot; に書いたとすると、以下のコマンドでプログラムを ビルドできる。
+
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gcc&nbsp;-rdynamic&nbsp;-o&nbsp;foo&nbsp;foo.c&nbsp;-ldl
+
+<P>
+
+<B>_init</B>()  と <B>_fini</B>()  をエクスポートするライブラリの場合は 以下のようにしてコンパイルする必要がある。 例として
+<I>bar.c</I> をコンパイルする場合:
+
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gcc&nbsp;-shared&nbsp;-nostartfiles&nbsp;-o&nbsp;bar&nbsp;bar.c
+
+<A NAME="lbAP">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../GNU_binutils/man1/ld.1.html">ld</A></B>(1), <B><A HREF="../man1/ldd.1.html">ldd</A></B>(1), <B><A HREF="../man1/pldd.1.html">pldd</A></B>(1), <B><A HREF="../man3/dl_iterate_phdr.3.html">dl_iterate_phdr</A></B>(3), <B>rtld-audit</B>(7),
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8), <B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8)
+<P>
+ld.so info pages, gcc info pages, ld info pages
+<A NAME="lbAQ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">dlerror()</A><DD>
+<DT><A HREF="#lbAF">dlopen()</A><DD>
+<DT><A HREF="#lbAG">dlsym()</A><DD>
+<DT><A HREF="#lbAH">dlclose()</A><DD>
+<DT><A HREF="#lbAI">廃止されたシンボル _init() と _fini()</A><DD>
+<DT><A HREF="#lbAJ">GNU での拡張: dladdr() と dlvsym()</A><DD>
+</DL>
+<DT><A HREF="#lbAK">準拠</A><DD>
+<DT><A HREF="#lbAL">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAM">歴史</A><DD>
+</DL>
+<DT><A HREF="#lbAN">バグ</A><DD>
+<DT><A HREF="#lbAO">例</A><DD>
+<DT><A HREF="#lbAP">関連項目</A><DD>
+<DT><A HREF="#lbAQ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

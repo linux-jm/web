@@ -1,0 +1,327 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GROFF_OUT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>GROFF_OUT</H1>
+Section: File Formats (5)<BR>Updated: 26 April 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_groff/contrib/man5/groff_out.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+groff_out - groff の中間出力フォーマット
+<A NAME="lbAC">&nbsp;</A>
+<H2>解説</H2>
+
+このマニュアルページは、GNU troff の出力フォーマットについて記述します。
+GNU troff が使用する出力フォーマットは、
+UNIX のデバイス非依存 troff が使用するものと似ています。
+ここでは両者の差のみを記述します。
+<P>
+
+<B>s</B>
+
+コマンドへの引数はスケールドポイントです (これは
+<I>ポイント/</I>n
+
+を意味します。
+<I>n</I>
+
+は DESC ファイル中の
+<B>sizescale</B>
+
+コマンドへの引数です)。
+<B>x&nbsp;Height</B>
+
+コマンドへの引数もまたスケールドポイントです。
+<P>
+
+最初の 3 つの出力コマンドは次のようになっていなければなりません:
+<DL COMPACT>
+<DT><DD>
+<B>x&nbsp;T&nbsp;</B><I>device</I>
+
+<BR>
+
+<B>x&nbsp;res&nbsp;</B><I>n&nbsp;h&nbsp;v</I>
+
+<BR>
+
+<B>x init</B>
+
+</DL>
+<P>
+
+DESC ファイル中に
+<B>tcommand</B>
+
+行が存在する場合には、troff は以下の 2 つのコマンドを使用します。
+<DL COMPACT>
+<DT><B>t</B><I>xxx</I>
+
+<DD>
+<I>xxx</I>
+
+は、任意の文字のシーケンスであり、空白または改行を終端とします;
+最初の文字を現在位置で印字し、
+現在の水平位置を最初の文字の幅だけ増加させます。
+続けて、同じ処理を各文字に対して実行します。
+文字の幅は、フォントファイルにおいて与えられたものを
+現在のポイントサイズに応じて適切にスケーリングしてから、
+水平解像度の倍数となるように丸めます。
+特殊文字はこのコマンドでは印字できません。
+<DT><B>u</B><I>n&nbsp;xxx</I>
+
+<DD>
+<B>t</B>
+
+コマンドと同様ですが、各文字の印字後に現在の水平位置に加えられるものが、
+文字幅と
+<I>n</I>
+
+の和である点が違います。
+</DL>
+<P>
+
+単一文字は 8 ビット目がセットされていてもかまわないことに注意してください。
+これはフォント名や特殊文字名にもあてはまります。
+<P>
+
+文字名やフォント名は任意の長さが許されます;
+ドライバはこれらの長さが 2 文字のみであると仮定してはなりません。
+<P>
+
+文字を印字する時、その文字は常に現在のフォント中に存在します。
+デバイス非依存 troff とは異なり、
+ドライバがスペシャルフォントから文字を探す必要はありません。
+<P>
+
+<B>x</B>
+
+デバイス制御コマンドが、拡張されました。
+<DL COMPACT>
+<DT><B>x u </B><I>n</I><DD>
+<I>n</I>
+
+が~1 の場合、空白の下線付けを開始します。
+<I>n</I>
+
+が~0 の場合、空白の下線付けを停止します。
+これは、nroff モードの
+<B>cu</B>
+
+リクエストで必要であり、他の場合には無視されます。
+</DL>
+<P>
+
+<B>D</B>
+
+描画コマンドは拡張されています。
+<B>-n</B>
+
+オプション指定時には、GNU pic はこれらの拡張を使用しません。
+<DL COMPACT>
+<DT><B>Df </B><I>n</I>\n<DD>
+オブジェクトの塗り潰しに使用する陰影を
+<I>n</I>
+
+に設定します; ここで
+<I>n</I>
+
+は 0 から 1000 の範囲の整数である必要があり、0 は白の塗り潰しを、
+1000 は黒の塗り潰しを、
+そしてそれらの間の値は中間の陰影を意味します。
+この設定は、円の塗り潰し、楕円の塗り潰し、多角形の塗り潰しにのみ適用されます。
+デフォルトでは 1000 が使用されます。
+塗り潰しオブジェクトが色を持つ場合、
+その色でそのオブジェクトの下の全てのものを完全に隠します。
+1000 より大きい値や 0 より小さい値も使用される可能性があります:
+これらの値を指定すると、
+現在線やテキストで使用している陰影で塗り潰すことを意味します。
+通常はこれは黒ですが、
+ドライバによってはこれを変更する手段を提供するものがあります。
+<DT><B>DC </B><I>d</I>\n<DD>
+現在位置を最左端とする、半径
+<I>d</I>
+
+の塗り潰された円を描画します。
+<DT><B>DE </B><I>dx dy</I>\n<DD>
+現在位置を最左端とする、水平半径
+<I>dx</I>
+
+垂直半径
+<I>dy</I>
+
+の塗り潰された楕円を描画します。
+
+delim $$
+
+<DT><B>Dp</B> $dx sub 1$ $dy sub 1$ $dx sub 2$ $dy sub 2$ $...$ $dx sub n$ $dy sub n$\n<DD>
+$i = 1 ,..., n+1$ に対し、
+<I>i</I>
+
+番目の頂点を現在位置
+$+ sum from j=1 to i-1 ( dx sub j , dy sub j )$
+とする多角形を描画します。
+今のところ、GNU pic のみがこのコマンドを使用し、三角形と矩形を生成します。
+<DT><B>DP</B> $dx sub 1$ $dy sub 1$ $dx sub 2$ $dy sub 2$ $...$ $dx sub n$ $dy sub n$\n<DD>
+<B>Dp</B>
+
+と同様ですが、多角形の外形のみの描画でなく、塗り潰しも行います。
+<DT><B>Dt </B><I>n</I>\n<DD>
+現在の線の太さを
+<I>n</I>
+
+マシン単位に設定します。
+伝統的に UNIX troff ドライバは、
+現在のポイントサイズに比例する線の太さを使用します;
+<B>Dt</B>
+
+コマンドが指定されない場合や、
+<B>Dt</B>
+
+コマンドに負の
+<I>n</I>
+
+が指定された場合は、ドライバはこの方法を使用する必要があります。
+<I>n</I>
+
+に 0 を指定すると、利用可能な最小の線の太さを選択します。
+</DL>
+<P>
+
+これらのコマンドを実行した後、
+現在位置をどのように変更するのかという問題が生じます。
+GNU pic が生成するコードはこの問題に依存しませんので、
+これはたいして重要ではありません。
+<DL COMPACT>
+<DT><DD>
+<B>\D&#180;</B><I>c</I> $x sub 1$ $y sub 1$ $x sub 2$ $y sub 2$ $...$ $x sub n$ $y sub n$&#180;
+</DL>
+<P>
+
+の形式、ただし
+<I>c</I>
+
+は
+<B>c</B>,
+
+<B>e</B>,
+
+<B>l</B>,
+
+<B>a</B>,
+
+<B>~</B>
+
+のいずれでもない描画コマンドが与えられた時、
+UNIX troff は各 $x sub i$ を水平の単位で扱い、$y sub i$ を垂直の単位で扱い、
+描画されるオブジェクトの幅は $sum from i=1 to n x sub i$ であり、
+高さは $sum from i=1 to n y sub i$ であると仮定します。
+(高さに関する仮定は、このような
+<B>D</B>
+
+コマンドを \w エスケープシーケンス中で使用した後、
+<B>st</B>
+
+レジスタおよび
+<B>sb</B>
+
+レジスタを検査することにより確認できます。)
+この規則は全てのオリジナルの描画コマンドにあてはまりますが、
+<B>De</B>
+
+は例外です。
+<B>Df</B>,
+
+<B>Dt</B>
+
+コマンドや、影響は少ないですが
+<B>DE</B>
+
+コマンドにおいて、たとえ醜い結果となったとしても、
+GNU troff もまた互換性のためにこの規則に従います。
+それゆえ、
+<DL COMPACT>
+<DT><DD>
+<B>D</B><I>c</I> $x sub 1$ $y sub 1$ $x sub 2$ $y sub 2$ $...$ $x sub n$ $y sub n$\n
+</DL>
+<P>
+
+の形式の
+<B>D</B>
+
+コマンドを実行した後は、現在位置は
+$( sum from i=1 to n x sub i , sum from i=1 to n y sub i )$
+だけ増えます。
+<P>
+
+<B>x&nbsp;X</B>
+
+コマンドへの引数に改行を含めることを許すという、
+継続に関する取り決めがあります:
+<B>x&nbsp;X</B>
+
+コマンドへの引数を出力する時、GNU troff は
+引数中の
+<B>+</B>
+
+文字付きの改行を辿ります
+(通常は改行で引数全体が終端されます);
+それゆえ、
+<B>x&nbsp;X</B>
+
+コマンドを含む行の次行が
+<B>+</B>
+
+で開始する場合には、
+<B>x&nbsp;X</B>
+
+コマンドを含む行の終端となっている改行は
+<B>x&nbsp;X</B>
+
+コマンドへの引数の一部として扱い、
+<B>+</B>
+
+を無視し、行の
+<B>+</B>
+
+に続く部分を
+<B>x&nbsp;X</B>
+
+コマンドに続く行の部分として扱います。
+<A NAME="lbAD">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man5/groff_font.5.html">groff_font</A></B>(5)
+
+
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">解説</A><DD>
+<DT><A HREF="#lbAD">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:24 GMT, December 05, 2022
+</BODY>
+</HTML>

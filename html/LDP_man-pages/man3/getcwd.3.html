@@ -1,0 +1,241 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETCWD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETCWD</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2018-04-30<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getcwd.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getcwd, getwd, get_current_dir_name - カレントワーキングディレクトリ名の取得
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>char *getcwd(char *</B><I>buf</I><B>, size_t </B><I>size</I><B>);</B>
+
+<B>char *getwd(char *</B><I>buf</I><B>);</B>
+
+<B>char *get_current_dir_name(void);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>get_current_dir_name</B>():
+<DL COMPACT><DT><DD>
+_GNU_SOURCE
+</DL>
+
+<P>
+
+<B>getwd</B>():
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>glibc 2.12 以降:<DD>
+<PRE>
+(_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500) &amp;&amp; ! (_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L)
+    || /* Glibc 2.19 以降: */ _DEFAULT_SOURCE
+    || /* Glibc 2.19 以前: */ _BSD_SOURCE
+</PRE>
+
+<DT>glibc 2.12 より前:<DD>
+
+<BR>&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+
+</DL>
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらの関数は、呼び出したプロセスのカレントワーキングディレクトリの 絶対パス名 (absolute pathname) が入った文字列を返す。
+返される文字列はヌルで終端される。 パス名は関数の結果として返され、引数 <I>buf</I> がある場合は <I>buf</I> 経由でも返される。
+<P>
+
+<B>getcwd</B>()  関数はカレントワーキングディレクトリの絶対パス名を <I>buf</I> で示された <I>size</I> 長の配列にコピーする。
+<P>
+
+終端のヌルバイトも含めた、カレントワーキングディレクトリの 絶対パス名の長さが <I>size</I> バイトを超えている場合は、返り値として NULL が返り
+<I>errno</I> に <B>ERANGE</B> がセットされる。 アプリケーションはこのエラーをチェックし、
+必要に応じてより長いバッファーを用意すべきである。
+<P>
+
+POSIX.1-2001 標準の拡張として、 glibc では <I>buf</I> が NULL の場合、 <B>getcwd</B>()  は必要なバッファーを
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  を用いて動的に割り当てる。 この場合、 <I>size</I> が 0 の場合を除き、バッファーの長さは <I>size</I> となる。
+<I>size</I> が 0 の場合には必要な大きさが確保される。 呼び出し側で、返されたバッファーを <B><A HREF="../man3/free.3.html">free</A></B>(3)  すべきである。
+<P>
+
+<B>get_current_dir_name</B>()  はカレントワーキングディレクトリの絶対パス名を収めるのに 十分な大きさの配列を
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  で獲得する。環境変数 <B>PWD</B> が設定されておりその値が正しければ、その値が返される。
+呼び出し側で、返されたバッファーを <B><A HREF="../man3/free.3.html">free</A></B>(3)  すべきである。
+<P>
+
+<B>getwd</B>()  は <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  によるメモリー獲得を一切行なわない。 <I>buf</I> 引数は少なくとも <B>PATH_MAX</B>
+バイトの長さを持つ配列へのポインターである必要がある。 終端のヌルバイトも含めた、カレントワーキングディレクトリの 絶対パス名の長さが
+<B>PATH_MAX</B> バイトを超えている場合、 NULL が返され、 <I>errno</I> に <B>ENAMETOOLONG</B> が設定される。
+(システムによっては、 <B>PATH_MAX</B> は必ずしもコンパイル時に決まる定数ではない点に注意すること。
+また、ファイルシステムに依存する場合もある。 <B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3)  を参照。)  移植性とセキュリティ上の理由から、 <B>getwd</B>()
+の利用は推奨されない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、これらの関数はカレントワーキングディレクトリの絶対パス名 が入った文字列へのポインターを返す。 <B>getcwd</B>()  と
+<B>getwd</B>()  の場合、返り値は <I>buf</I> と同じ値になる。
+<P>
+
+失敗した場合、これらの関数は NULL を返し、 <I>errno</I> にエラーを示す値を設定する。 <I>buf</I> が指す配列の内容は未定義である。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+ファイル名の構成要素に対する読み込みあるいは検索の権限がない。
+<DT><B>EFAULT</B><DD>
+<I>buf</I> が不正なアドレスを指している。
+<DT><B>EINVAL</B><DD>
+<I>size</I> 引数が 0 かつ、 <I>buf</I> 引数がヌルポインターでない。
+<DT><B>EINVAL</B><DD>
+<B>getwd</B>(): <I>buf</I> が NULL である。
+<DT><B>ENAMETOOLONG</B><DD>
+<B>getwd</B>(): 絶対パス名が入ったヌル終端された文字列の長さが <B>PATH_MAX</B> バイトを超えている。
+<DT><B>ENOENT</B><DD>
+カレントワーキングディレクトリが削除されている。
+<DT><B>ENOMEM</B><DD>
+メモリー不足。
+<DT><B>ERANGE</B><DD>
+<I>size</I> 引数の値がワーキングディレクトリの絶対パス名の長さより小さい。 長さには文字列の終端バイトも含まれる。
+より大きい配列を確保してもう一度実行する必要がある。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<BR>&nbsp;<B>getcwd</B>(),
+<B>getwd</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+<TR VALIGN=top><TD>
+<BR>&nbsp;<B>get_current_dir_name</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe env<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>getcwd</B>()  は POSIX.1-2001 に準拠している。 POSIX.1-2001 は、 <I>buf</I> が NULL の場合の
+<B>getcwd</B>()  の動作を規定しないままとしている。
+<P>
+
+<B>getwd</B>()  は POSIX.1-2001 に存在しているが、「過去の名残(LEGACY)」とされている。 POSIX.1-2008 では、
+<B>getwd</B>()  の仕様が削除されている。 代わりに <B>getcwd</B>()  を使うこと。 POSIX.1-2001 は <B>getwd</B>()
+に関するエラーを定義していない。
+<P>
+
+<B>get_current_dir_name</B>()  は GNU 拡張である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+Under Linux, these functions make use of the <B>getcwd</B>()  system call
+(available since Linux 2.1.92).  On older systems they would query
+<I>/proc/self/cwd</I>.  If both system call and proc filesystem are missing, a
+generic implementation is called.  Only in that case can these calls fail
+under Linux with <B>EACCES</B>.
+<P>
+
+
+これらの関数はしばしばカレントワーキングディレクトリの位置を保存し、 後で戻ってくるために利用される。
+未使用のファイルディスクリプターが十分ある場合は、 現在のディレクトリ (&quot;.&quot;) を開いて <B><A HREF="../man2/fchdir.2.html">fchdir</A></B>(2)
+を呼び出すほうが普通は高速で信頼性がある。 特に Linux 以外のプラットフォームの場合はそうである。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+
+On Linux, the kernel provides a <B>getcwd</B>()  system call, which the
+functions described in this page will use if possible.  The system call
+takes the same arguments as the library function of the same name, but is
+limited to returning at most <B>PATH_MAX</B> bytes.  (Before Linux 3.12, the
+limit on the size of the returned pathname was the system page size.  On
+many architectures, <B>PATH_MAX</B> and the system page size are both 4096
+bytes, but a few architectures have a larger page size.)  If the length of
+the pathname of the current working directory exceeds this limit, then the
+system call fails with the error <B>ENAMETOOLONG</B>.  In this case, the library
+functions fall back to a (slower) alternative implementation that returns
+the full pathname.
+<P>
+
+
+Following a change in Linux 2.6.36, the pathname returned by the <B>getcwd</B>()
+system call will be prefixed with the string &quot;(unreachable)&quot; if the current
+directory is not below the root directory of the current process (e.g.,
+because the process set a new filesystem root using <B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)  without
+changing its current directory into the new root).  Such behavior can also
+be caused by an unprivileged user by changing the current directory into
+another mount namespace.  When dealing with pathname from untrusted sources,
+callers of the functions described in this page should consider checking
+whether the returned pathname starts with '/' or '(' to avoid
+misinterpreting an unreachable path as a relative pathname.
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+Since the Linux 2.6.36 change that added &quot;(unreachable)&quot; in the
+circumstances described above, the glibc implementation of <B>getcwd</B>()  has
+failed to conform to POSIX and returned a relative pathname when the API
+contract requires an absolute pathname.  With glibc 2.27 onwards this is
+corrected; calling <B>getcwd</B>()  from such a pathname will now result in
+failure with <B>ENOENT</B>.
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../../0MultiFileIdx/man1/pwd.1.html">pwd</A></B>(1),&nbsp;<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2),&nbsp;<B><A HREF="../man2/fchdir.2.html">fchdir</A></B>(2),&nbsp;<B><A HREF="../man2/open.2.html">open</A></B>(2),&nbsp;<B><A HREF="../man2/unlink.2.html">unlink</A></B>(2),&nbsp;<B><A HREF="../man3/free.3.html">free</A></B>(3),
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,145 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of REMAP_FILE_PAGES</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>REMAP_FILE_PAGES</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/remap_file_pages.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+remap_file_pages - 非線形ファイルマッピングを作成する。
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+
+<B>int remap_file_pages(void *</B><I>addr</I><B>, size_t </B><I>size</I><B>, int </B><I>prot</I><B>,</B>
+<B>                     size_t </B><I>pgoff</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+
+
+<B>Note</B>: this system call was marked as deprecated starting with Linux
+3.16.  In Linux 4.0, the implementation was replaced by a slower in-kernel
+emulation.  Those few applications that use this system call should consider
+migrating to alternatives.  This change was made because the kernel code for
+this system call was complex, and it is believed to be little used or
+perhaps even completely unused.  While it had some use cases in database
+applications on 32-bit systems, those use cases don't exist on 64-bit
+systems.
+<P>
+
+<B>remap_file_pages</B>()  システムコールは非線形なマッピング、 つまりファイルのページがメモリー上で連続しない順番でマップされる
+マッピングを作成するために使われる。 <B>remap_file_pages</B>()  を使う方が <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+を繰り返して使うより優れている点は、 前者の方法ではカーネルが VMA (Virtual Memory Area, 仮想メモリー領域)
+データ構造体を追加で作成する必要がないことである。
+<P>
+
+非線形マッピングを作成するためには、 以下のようなステップを実行する:
+<DL COMPACT>
+<DT>1.<DD>
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  を使い、マッピングを作成する (このマッピングは最初は線形である)。 このマッピングは <B>MAP_SHARED</B>
+フラグを指定して作成されなければならない。
+<DT>2.<DD>
+<B>remap_file_pages</B>()  を 1 回以上呼び出して、 マッピングのページとファイルのページの対応関係を再構成する。
+ファイルの同じページをマッピング領域の複数の場所に マップすることが可能である。
+</DL>
+<P>
+
+<I>pgoff</I> と <I>size</I> 引数は、マッピング内で再配置されるファイルの領域を指定する。 <I>pgoff</I>
+はファイルオフセットであり、単位はシステムのページサイズである。 <I>size</I> は領域の長さであり、単位はバイトである。
+<P>
+
+<I>addr</I> 引数は 2 つの目的で使われる。 第 1 の目的は、この引数によって再編成したいページの マッピングを識別することである。 よって
+<I>addr</I> は <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  の呼び出しで過去にマップされた領域内のアドレスでなければならない。 第 2 の目的は、 <I>pgoff</I> と
+<I>size</I> で識別されるファイルページが置かれる予定のアドレスを、 <I>addr</I> によって指定することである。
+<P>
+
+
+
+
+<I>addr</I> と <I>size</I> に指定する値は、システムのページサイズの倍数とすべきである。 それ以外の場合、カーネルは「両方」の値を
+最も近いページサイズの倍数へ「切り下げる」。
+<P>
+
+<I>prot</I> 引数は 0 に指定されなければならない。
+<P>
+
+<I>flags</I> 引数は <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  のものと同じ意味であるが、 <B>MAP_NONBLOCK</B> 以外の全てのフラグは無視される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 <B>remap_file_pages</B>()  は 0 を返す。 エラーの場合、-1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>addr</I> が <B>MAP_SHARED</B> フラグを指定して作成された有効なマッピングを参照していない。
+<DT><B>EINVAL</B><DD>
+
+<I>addr</I>, <I>size</I>, <I>prot</I>, <I>pgoff</I> のいずれかが不正である。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>remap_file_pages</B>()  システムコールは Linux 2.5.46 で登場した。 glibc でのサポートは glibc
+バージョン 2.3.3 で追加された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>remap_file_pages</B>()  システムコールは Linux 固有のものである。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+
+Linux 2.6.23 以降、 <B>remap_file_pages</B>() は <B>tmpfs</B>(5), hugetlbfs, ramfs
+などのインメモリーファイルシステム上にのみ非線形マッピングを作成する。 裏にデータストアを持つファイルシステム上では、
+<B>remap_file_pages</B>() は、 ファイルのどの部分がどのアドレスにマッピングされているかの調整が、 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+を使った場合ほど効率的ではない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/mmap2.2.html">mmap2</A></B>(2), <B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2), <B><A HREF="../man2/mremap.2.html">mremap</A></B>(2),
+<B><A HREF="../man2/msync.2.html">msync</A></B>(2)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

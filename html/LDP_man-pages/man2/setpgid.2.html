@@ -1,0 +1,228 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETPGID</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SETPGID</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/setpgid.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+setpgid, getpgid, setpgrp, getpgrp - プロセスグループの設定/取得を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>int setpgid(pid_t </B><I>pid</I><B>, pid_t </B><I>pgid</I><B>);</B>
+<BR>
+
+<B>pid_t getpgid(pid_t </B><I>pid</I><B>);</B>
+<P>
+
+<B>pid_t getpgrp(void);</B> /* POSIX.1 version */
+<BR>
+
+<B>pid_t getpgrp(pid_t </B><I>pid</I><B>);</B> /* BSD version */
+<P>
+
+<B>int setpgrp(void);</B> /* System V version */
+<BR>
+
+<B>int setpgrp(pid_t </B><I>pid</I><B>, pid_t </B><I>pgid</I><B>);</B> /* BSD version */
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>getpgid</B>():
+<DL COMPACT><DT><DD>
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.12&nbsp;以降:&nbsp;*/&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+</DL>
+
+<P>
+
+<B>setpgrp</B>() (POSIX.1):
+<PRE>
+    _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+        || /* glibc 2.19 以降: */ _DEFAULT_SOURCE
+        || /* glibc 2.19 以前: */ _SVID_SOURCE
+</PRE>
+
+<P>
+
+<B>setpgrp</B>()&nbsp;(BSD), <B>getpgrp</B>()&nbsp;(BSD):
+<PRE>
+    [これらは glibc 2.19 より前でのみ利用可能]
+    _BSD_SOURCE &amp;&amp;
+        !&nbsp;(_POSIX_SOURCE || _POSIX_C_SOURCE || _XOPEN_SOURCE ||
+            _GNU_SOURCE || _SVID_SOURCE)
+</PRE>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらのインターフェースすべてが Linux で利用可能で、 これらを使ってプロセスのプロセスグループ ID (PGID) の 取得や設定ができる。
+推奨の、POSIX.1 で規定された方法では、 <B>getpgrp</B>(void)  で呼び出し元プロセスの PGID を取得し、
+<B>setpgid</B>()  で設定する。
+<P>
+
+<B>setpgid</B>()  は <I>pid</I> で指定したプロセスの PGID に <I>pgid</I> を設定する。 <I>pid</I>
+がゼロならば、呼び出し元プロセスのプロセス ID が pid として使用される。 <I>pgid</I> がゼロならば、 <I>pid</I> で指定されたプロセスの
+PGID がそのプロセスのプロセス ID と 同じに設定される。 <B>setpgid</B>()  をプロセスをあるプロセスグループから別のグループへ
+移動するために使用する場合は (一部のシェルはパイプラインを生成 する時にこれを行う)、両方のプロセスグループは同じセッションの 一部でなければならない
+(<B><A HREF="../man2/setsid.2.html">setsid</A></B>(2)  と <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)  参照)。この場合は <I>pgid</I> は参加すべき既存の
+プロセスグループを指定し、そのセッション ID は参加するプロセスの セッション ID に一致しなければならない。
+<P>
+
+POSIX.1 バージョンの <B>getpgrp</B>()  は引数を一つもとらず、 呼び出し元プロセスの PGID を返す。
+<P>
+
+<B>getpgid</B>()  は <I>pid</I> で指定されたプロセスの PGID を返す。 <I>pid</I> がゼロならば、呼び出し元プロセスのプロセス ID
+が pid として使用される。 (呼び出し元プロセス以外のプロセスの PGID の取得が必要になることは めったになく、呼び出し元プロセスの PGID
+を取得するには POSIX.1 バージョンの <B>getpgrp</B>()  を使うのが望ましい。)
+<P>
+
+System&nbsp;V バージョンの <B>setpgrp</B>()  は引数を一つもとらず、 <I>setpgid(0,&nbsp;0)</I> と等価である。
+<P>
+
+BSD 仕様の <B>setpgrp</B>()  は <I>pid</I> と <I>pgid</I> を引数にとり、 以下を呼び出すラッパー関数である。
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;setpgid(pid,&nbsp;pgid)
+<P>
+
+
+
+
+glibc 2.19 以降、 BSD 固有の <B>setpgrp</B>() 関数はもはや <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> では公開されない。
+この関数の呼び出しは上記の <B>setpgid</B>() の呼び出しで置き換えるべきである。
+<P>
+
+BSD 仕様の <B>getpgrp</B>()  は <I>pid</I> だけを引数にとり、 以下を呼び出すラッパー関数である。
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;getpgid(pid)
+<P>
+
+glibc 2.19 以降、 BSD 固有の <B>getpgrp</B>() 関数はもはや <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> では公開されない。
+この関数の呼び出しは、引数を取らない POSIX.1 の <B>getpgrp</B>() の呼び出し (呼び出し元の PGID
+を取得する目的の場合)、もしくは上記の <B>getpgid</B>() の呼び出しで置き換えるべきである。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>setpgid</B>()  と <B>setpgrp</B>()  は成功した場合、ゼロを返す。エラーの場合は -1 を返し、 <I>errno</I>
+が適切に設定される。
+<P>
+
+POSIX.1 バージョンの <B>getpgrp</B>()  は常に呼び出しプロセスの PGID を返す。
+<P>
+
+<B>getpgid</B>()  と BSD 仕様の <B>getpgrp</B>()  は成功した場合プロセスグループを返す。 エラーの場合は -1 を返し、
+<I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+呼び出し元プロセスの子プロセスのプロセスグループ ID を変更しようとしたが、 すでにその子プロセスは <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  を実行していた。
+(<B>setpgid</B>(), <B>setpgrp</B>())
+<DT><B>EINVAL</B><DD>
+<I>pgid</I> が 0 より小さい。 (<B>setpgid</B>(), <B>setpgrp</B>())
+<DT><B>EPERM</B><DD>
+プロセスを異なるセッションのプロセスグループに移動させようとした。 または呼び出し元プロセスの子プロセスのプロセスグループ ID を変更しようと
+したが、その子プロセスは別のセッションだった。 またはセッションリーダーのプロセスグループ ID を変更しようとした。 (<B>setpgid</B>(),
+<B>setpgrp</B>())
+<DT><B>ESRCH</B><DD>
+<B>getpgid</B>()  の場合: <I>pid</I> がどのプロセスにも一致しない。 <B>setpgid</B>()  の場合: <I>pid</I>
+が呼び出し元のプロセスではなく、呼び出し元のプロセスの子プロセスでもない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>setpgid</B>()  と、引数なしバージョンの <B>getpgrp</B>()  は POSIX.1-2001 に準拠している。
+<P>
+
+POSIX.1-2001 は、 <B>getpgid</B>()  と、引数なしバージョンの <B>setpgrp</B>()  も規定している。
+POSIX.1-2008 は、この <B>setpgrp</B>()  の仕様を廃止予定としている。
+<P>
+
+引数 1 個バージョンの <B>getpgrp</B>()  と引数 2 個バージョンの <B>setpgrp</B>()  は 4.2BSD に由来し、
+POSIX.1 では規定されていない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)  で作成された子プロセスは、親プロセスの PGID を継承する。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  の前後で PGID は保存される。
+<P>
+
+各プロセスグループはセッションのメンバーであり、各プロセスは そのプロセスグループが所属しているセッションのメンバーである
+(<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7) 参照)。
+<P>
+
+セッションは制御端末 (controlling terminal) を持つことができる。 いつでも、セッションに所属するプロセスグループの一つ (だけ)
+が 端末のフォアグランドのプロセスグループになることができ、 残りのプロセスグループはバックグラウンドになる。 端末からシグナルが生成された場合
+(例えば、中断キーを叩いて <B>SIGINT</B> が生成されるなど)、そのシグナルはフォアグラウンドのプロセスグループ に送られる
+(シグナルを生成する文字の説明は <B><A HREF="../man3/termios.3.html">termios</A></B>(3)  を参照)。 フォアグラウンドのプロセスグループだけが端末からの <B><A HREF="../man2/read.2.html">read</A></B>(2)
+ができる。 バックグラウンドのプロセスグループが端末からの <B><A HREF="../man2/read.2.html">read</A></B>(2)  を行おうとした場合、そのプロセスグループにはシグナル
+<B>SIGTTIN</B> が送られ、そのプロセスグループは一時停止 (suspend) する。 関数 <B><A HREF="../man3/tcgetpgrp.3.html">tcgetpgrp</A></B>(3)  と
+<B><A HREF="../man3/tcsetpgrp.3.html">tcsetpgrp</A></B>(3)  を使うと、制御端末のフォアグラウンドのプロセスグループを 取得/設定できる。
+<P>
+
+<B>setpgid</B>()  と <B>getpgrp</B>()  は、 <B><A HREF="../../GNU_bash/man1/bash.1.html">bash</A></B>(1)  のようなプログラムで、シェルのジョブ制御 (job
+control) の実装のための プロセスグループを作成するのに使われる。
+<P>
+
+
+プロセスの終了によってプロセスグループが孤児 (orphaned) になった際に、
+その新たに孤児になったプロセスグループに停止しているメンバーがいれば、 その孤児になったプロセスグループに属す全てのプロセスに <B>SIGHUP</B>
+シグナルに続けて <B>SIGCONT</B> シグナルが送られる。 孤児になった (orphaned) プロセスグループとは、
+そのプロセスグループの全てのメンバーについて、メンバーの親プロセスが、 親プロセス自身もそのプロセスグループのメンバーか、
+別のセッションに属すプロセスグループのメンバーのいずれかであるような、 プロセスグループのことである。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/getuid.2.html">getuid</A></B>(2), <B><A HREF="../man2/setsid.2.html">setsid</A></B>(2), <B><A HREF="../man3/tcgetpgrp.3.html">tcgetpgrp</A></B>(3), <B><A HREF="../man3/tcsetpgrp.3.html">tcsetpgrp</A></B>(3), <B><A HREF="../man3/termios.3.html">termios</A></B>(3),
+<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

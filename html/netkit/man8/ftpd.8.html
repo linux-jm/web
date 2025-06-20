@@ -1,0 +1,813 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FTPD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FTPD</H1>
+Section: Maintenance Commands (8)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/netkit/release/man8/ftpd.8">roff page</A><HR>
+<BR>BSD mandoc<BR>
+Linux NetKit (0.17)
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<B>ftpd</B>
+
+ - インターネットファイル転送プロトコルサーバ
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>ftpd</B>
+
+[-<B>AdDhlMPSU</B>
+
+]
+
+[-<B>T </B><I>maxtimeout</I>
+
+
+
+]
+
+[-<B>t </B><I>timeout</I>
+
+
+
+]
+
+[-<B>u </B><I>mask</I>
+
+
+
+]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>ftpd</B>
+
+はインターネットファイル転送プロトコルサーバプロセスである。
+このサーバは
+<B>TCP</B>
+
+プロトコルを用いて、
+``ftp''
+
+サービスの仕様で指定されたポートを listen する。
+<A HREF="../../LDP_man-pages/man5/services.5.html">services</A>(5)
+
+
+を参照すること。
+<P>
+
+使用可能なオプションは以下の通りである:
+<DL COMPACT>
+<P>
+
+<DT><B>-A</B>
+
+
+<DD>
+匿名 ftp 接続、または
+/etc/ftpchroot
+
+にリストされたアカウントによる接続のみを許可する。
+他の接続は拒否される。
+<DT><B>-d</B>
+
+
+<DD>
+デバッグ情報が LOG_FTP を使って syslog に書き込まれる。
+<DT><B>-D</B>
+
+
+<DD>
+このオプションが設定されると、
+<B>ftpd</B>
+
+は制御端末を切り離してデーモンとなり、FTP ポートへの接続を受け付け、
+接続を処理するために子プロセスを fork する。
+この方式は
+<B>ftpd</B>
+
+を
+<A HREF="../man8/inetd.8.html">inetd</A>(8)
+
+
+から起動するよりオーバーヘッドが少ないため、
+処理量の多いサーバで負荷を低減するのに役立つ。
+<DT><B>-h</B>
+
+
+<DD>
+サーバがパッシブ接続のために大きい番号の範囲にあるデータポートを使う。
+この範囲は &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt; にある
+<B>IPPORT_HIFIRSTAUTO</B>
+
+と
+<B>IPPORT_HILASTAUTO</B>
+
+で定義される。
+Ox では、この値はそれぞれ 49152 と 65535 に設定される。
+
+<DT><B>-l</B>
+
+
+<DD>
+成功または失敗した各
+<A HREF="../man1/ftp.1.html">ftp</A>(1)
+
+
+セッションを syslog の LOG_FTP ファシリティ (facility) を用いてログに記録する。
+このオプションを 2 つ指定すると、
+retrieve (get), store (put), append,
+delete, make directory, remove directory, rename の各操作、 
+およびそれらの引き数として指定されたファイル名についてもログに記録する。
+<DT><B>-M</B>
+
+
+<DD>
+複数ホームモードを有効にする。
+匿名ファイル転送のために単に
+~ftp
+
+を使うのではなく、接続されたクライアントの IP アドレスから
+完全なドメイン名付きのホスト名にマッチする
+~ftp
+
+内部にあるディレクトリを使う。
+<DT><B>-p</B>
+
+
+<DD>
+パッシブモード ftp 接続を無効にする。
+大きな番号のポートでの接続を拒否する
+ファイアーウォールの後ろにいる場合に役立つ。
+多くの ftp クライアントは始めにパッシブモードを試み、
+クライアントが接続するのに指定したポートへの接続を拒否する
+サーバに対して常にうまく対応する訳ではない。
+<DT><B>-P</B>
+
+
+<DD>
+正式なポート番号や接続を初期化する PORT コマンドの
+正式なアドレスの使用を許可する。
+デフォルトでは、
+<A HREF="../man8/ftpd.8.html">ftpd</A>(8)
+
+
+は RFC を守っていないので、
+PORT コマンドを予約されていないポート番号で行わせたり、
+接続元のアドレスが同じアドレスである必要がある。
+これにより、ローカルマシンと他のローカルマシンに対して
+&quot;FTP バウンス攻撃&quot; を防止することができる。
+<DT><B>-S</B>
+
+
+<DD>
+このオプションが設定されると、
+<B>ftpd</B>
+
+は、ファイル
+/var/log/ftpd
+
+がある場合、このファイルに全ての匿名ファイル転送についてログを記録する。
+<DT><B>-U</B>
+
+
+<DD>
+同時に起こる各
+<A HREF="../man1/ftp.1.html">ftp</A>(1)
+
+
+セッションは、ファイル
+/var/run/utmp
+
+にログが記録され、
+<A HREF="../../0MultiFileIdx/man1/who.1.html">who</A>(1)
+
+
+のようなコマンドに見えるようにされる。
+このオプションは現在のところサポートされておらず、
+常に何も表示せずに失敗する。
+<DT><B>-T</B>
+
+
+<DD>
+クライアントが他のタイムアウト時間をリクエストできる。
+タイムアウトの最長時間は、
+-<B>T</B>
+
+オプションを使って
+<I>timeout</I>
+
+秒に設定することができる。
+デフォルトのタイムアウト時間は 2 時間である。
+<DT><B>-t</B>
+
+
+<DD>
+無活動タイムアウト時間を
+<I>timeout</I>
+
+秒に設定する
+(デフォルトは 15 分である)。
+<DT><B>-u</B>
+
+
+<DD>
+デフォルトの umask を 027 から
+<I>mask</I>
+
+に変更する。
+</DL>
+<P>
+
+<P>
+
+ファイル
+/etc/nologin
+
+は ftp アクセスを不可にするために使われる。
+このファイルが存在すると、
+<B></B>
+
+
+はそのファイル内容を表示して終了する。
+ファイル
+/etc/ftpwelcome
+
+が存在する場合、
+<B></B>
+
+
+は
+``ready''
+
+メッセージを表示する前に、
+そのファイルの内容を表示する。
+/etc/motd
+
+が存在する場合、
+<B></B>
+
+
+はログインが成功した後、そのファイルの内容を表示する。
+ディレクトリに
+.message
+
+ファイルが存在する場合、
+<B></B>
+
+
+そのディレクトリに入ったときに、このファイルの内容を表示する。
+<P>
+
+ftp サーバは現在のところ以下の ftp リクエストをサポートしている。
+リクエストの文字の大文字小文字は無視される。
+<DL COMPACT>
+<P>
+
+<DT><B>リクエスト Ta </B>説明
+
+
+<DD>
+<DT><B>ABOR Ta </B>直前のコマンドを中断 (abort) する
+
+
+<DD>
+<DT><B>ACCT Ta </B>アカウントを指定する (無視される)
+
+
+<DD>
+<DT><B>ALLO Ta </B>(空の) ストレージを確保する
+
+
+<DD>
+<DT><B>APPE Ta </B>ファイルを追加する
+
+
+<DD>
+<DT><B>CDUP Ta </B>カレントワーキングディレクトリの親ディレクトリを変更する
+
+
+<DD>
+<DT><B>CWD Ta </B>ワーキングディレクトリを変更する
+
+
+<DD>
+<DT><B>DELE Ta </B>ファイルを削除する
+
+
+<DD>
+<DT><B>HELP Ta </B>ヘルプ情報を表示する
+
+
+<DD>
+<DT><B>LIST Ta </B>ディレクトリ中のファイルのリストを表示する (``<B>ls -lgA</B>
+
+''
+
+)
+
+
+
+
+<DD>
+<DT><B>MKD Ta </B>ディレクトリを作成する
+
+
+<DD>
+<DT><B>MDTM Ta </B>ファイルの最終修正時刻を表示する
+
+
+<DD>
+<DT><B>MODE Ta </B>データ転送モードを <I>mode に指定する</I>
+
+
+
+
+<DD>
+<DT><B>NLST Ta </B>ディレクトリ中のファイル名リストを表示する
+
+
+<DD>
+<DT><B>NOOP Ta </B>何もしない
+
+
+<DD>
+<DT><B>PASS Ta </B>パスワードを指定する
+
+
+<DD>
+<DT><B>PASV Ta </B>サーバからサーバへの転送の準備をする
+
+
+<DD>
+<DT><B>PORT Ta </B>データ接続ポートを指定する
+
+
+<DD>
+<DT><B>PWD Ta </B>カレントワーキングディレクトリの名前を表示する
+
+
+<DD>
+<DT><B>QUIT Ta </B>セッションを終了する
+
+
+<DD>
+<DT><B>REST Ta </B>不完全だった転送を再開する
+
+
+<DD>
+<DT><B>RETR Ta </B>ファイルを取得する
+
+
+<DD>
+<DT><B>RMD Ta </B>ディレクトリを削除する
+
+
+<DD>
+<DT><B>RNFR Ta </B>名前変更前のファイル名を指定する
+
+
+<DD>
+<DT><B>RNTO Ta </B>名前変更後のファイル名を指定する
+
+
+<DD>
+<DT><B>SITE Ta </B>標準でないコマンド (次のセクションを参照すること)
+
+
+<DD>
+<DT><B>SIZE Ta </B>ファイルのサイズを返す
+
+
+<DD>
+<DT><B>STAT Ta </B>サーバのステータスを返す
+
+
+<DD>
+<DT><B>STOR Ta </B>ファイルを格納する
+
+
+<DD>
+<DT><B>STOU Ta </B>ファイルを他のものと重複のない名前で格納する
+
+
+<DD>
+<DT><B>STRU Ta </B>データ転送構造を <I>structure に指定する</I>
+
+
+
+
+<DD>
+<DT><B>SYST Ta </B>サーバシステムのオペレーティングシステムのタイプを表示する
+
+
+<DD>
+<DT><B>TYPE Ta </B>データ転送タイプを <I>type に指定する</I>
+
+
+
+
+<DD>
+<DT><B>USER Ta </B>ユーザー名を指定する
+
+
+<DD>
+<DT><B>XCUP Ta </B>カレントワーキングディレクトリの親ディレクトリを変更する (反対される)
+
+
+<DD>
+<DT><B>XCWD Ta </B>ワーキングディレクトリを変更する (反対される)
+
+
+<DD>
+<DT><B>XMKD Ta </B>ディレクトリを作成する (反対される)
+
+
+<DD>
+<DT><B>XPWD Ta </B>カレントワーキングディレクトリの名前を表示する (反対される)
+
+
+<DD>
+<DT><B>XRMD Ta </B>ディレクトリを削除する (反対される)
+
+
+<DD>
+</DL>
+<P>
+
+<P>
+
+以下の標準でないコマンドや
+<B>UNIX</B>
+
+特有のコマンドは、
+SITE リクエストを使うことでサポートされる。
+<P>
+
+<DL COMPACT>
+<P>
+
+<DT><B>リクエスト Ta </B><B>説明</B>
+
+
+
+
+
+
+<DD>
+<DT><B>UMASK Ta </B>umask を変更する。例 ``SITE UMASK 002''
+
+
+<DD>
+<DT><B>IDLE Ta </B>アイドルタイマを設定する。例 ``SITE IDLE 60''
+
+
+<DD>
+<DT><B>CHMOD Ta </B>ファイルのモードを指定する。例 ``SITE CHMOD 755 filename''
+
+
+<DD>
+<DT><B>HELP Ta </B>ヘルプ情報を表示する。
+
+
+<DD>
+</DL>
+<P>
+
+<P>
+
+インターネット RFC 959 で規定されている
+他の ftp リクエストも認識されるが、
+今のところ実装されてはいない。
+MDTM と SIZE は RFC 959 で規定されていないが、
+次に改訂される FTP RFC には登場するだろう。
+<P>
+
+ftp サーバがアクティブなファイル転送プロセスを中断 (abort) するのは、
+ABOR コマンドの前に、
+Telnet &quot;Interrupt Process&quot; (IP) シグナルや
+Telnet &quot;Synch&quot; シグナルが
+Telnet  ストリーム内にある場合だけである。
+これはインターネット RFC 959 に記述されている。
+データ転送中に STAT コマンドを受け取り、
+その前に Telnet IP や Synch があった場合、
+転送ステータスが返される。
+<P>
+
+<B>ftpd</B>
+
+は、
+csh(1)
+
+
+で使われている
+``ファイル名展開''
+
+による変換に基づいて、ファイル名を解釈する。
+これにより、ユーザーはメタキャラクタ
+``<B>*?[]{}~</B>
+
+''
+
+を利用できる。
+<P>
+
+<B>ftpd</B>
+
+は 5 つのルールに従ってユーザーの認証をする。
+<P>
+
+<OL><P>
+
+<LI>
+
+ログイン名はパスワードデータベース
+
+/etc/passwd
+
+になければならず、
+空のパスワードであってはならない。
+この場合、あらゆるファイル転送に先だって、
+クライアントからパスワードが提供されなければならない。
+ユーザーが S/Key のキーを持っている場合、
+USER コマンドが成功した際の応答が S/Key チャレンジに含めて送られる。
+クライアントは、それに対して PASS コマンドを使って応答する際に、
+通常のパスワードと S/Key のワンタイムパスワードの
+どちらをつけて応答するかを選択できる。
+サーバはどちらのタイプのパスワードを受け取ったかを自動的に判定し、
+それに応じて認証を試みる。
+S/Key 認証についての詳細は
+skey(1)
+
+
+を参照すること。
+S/Key は Bellcore 社の商標である。
+<LI>
+
+ログイン名はファイル
+/etc/ftpusers
+
+にあってはならない。
+<LI>
+
+ユーザーは
+<A HREF="../../LDP_man-pages/man3/getusershell.3.html">getusershell</A>(3)
+
+
+が返す標準のシェルを持っていなければならない。
+<LI>
+
+ユーザー名がファイル
+/etc/ftpchroot
+
+にある場合、
+``anonymous''
+
+アカウントや
+``ftp''
+
+アカウントの場合 (次の項目を参照) と同様に、
+セッションのルートディレクトリは
+<A HREF="../../LDP_man-pages/man2/chroot.2.html">chroot</A>(2)
+
+
+によってユーザーのログインディレクトリに変更される。
+しかし、この場合でもユーザーはパスワードを与える必要がある。
+この特徴は、完全に匿名なアカウントと完全な特権のあるアカウントの
+妥協的な利用を意図している。
+このアカウントは匿名アカウントとして設定されていなければならない。
+<LI>
+
+ユーザー名が
+``anonymous''
+
+または
+``ftp''
+
+である場合、
+匿名 ftp アカウントがパスワードファイルで (ユーザー
+``ftp''
+
+として) 提供されていなければならない。
+この場合、ユーザーはどのようなパスワードを指定してもログインが許可される
+(慣例として、ユーザーの email アドレスがパスワードとして使われる)。
+</OL><P>
+
+<P>
+
+最後のケースでは、
+<B>ftpd</B>
+
+は、クライアントのアクセス権を制限するために、特別な評価を行う。
+サーバは
+``ftp''
+
+ユーザのホームディレクトリに対して
+<A HREF="../../LDP_man-pages/man2/chroot.2.html">chroot</A>(2)
+
+
+を実行する。
+システムのセキュリティが侵害されないためには、
+``ftp''
+
+サブツリーを以下の規則に従って慎重に構築することを推奨する:
+<DL COMPACT>
+<P>
+
+<DT><B>~ftp
+
+</B>
+<DD>
+ホームディレクトリを
+``root''
+
+の所有とし、誰も書き込みできないように (モードを 555 に) すること。
+<DT><B>~ftp/bin
+
+</B>
+<DD>
+このディレクトリを
+``root''
+
+の所有とし、誰も書き込みできないように (モードを 511 に) すること。
+
+
+
+
+
+このディレクトリは必要で、
+少なくとも静的にリンクされた
+<A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A>(1)
+
+
+のコピーがなければならない。
+このディレクトリにあるプログラムのモードは、
+111 (実行属性のみ) でなければならない。
+<DT><B>~ftp/etc
+
+</B>
+<DD>
+このディレクトリを
+``root''
+
+の所有とし、誰も書き込みできないように (モードを 511 に) すること。
+ls
+
+
+コマンドが所有者を数字ではなく名前で表示できるようにするために、
+ファイル
+
+
+
+<A HREF="../../0MultiFileIdx/man5/passwd.5.html">passwd</A>(5)
+
+
+と
+<A HREF="../../LDP_man-pages/man5/group.5.html">group</A>(5)
+
+
+が必要である。
+
+passwd
+
+のパスワードフィールドは使用されないので、
+実際のパスワードを入れてはならない。
+ファイル
+motd
+
+が存在すると、ログイン成功後、その内容が表示される。
+このファイルはモードが 444 でなければならない。
+<DT><B>~ftp/pub
+
+</B>
+<DD>
+このディレクトリのモードを 555 とし、
+``root''
+
+の所有とすること。
+このディレクトリには、伝統的に、ダウンロードのための
+公開アクセス可能なファイルが格納される。
+</DL>
+<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<P>
+
+<DT><B>/etc/ftpusers
+
+</B>
+<DD>
+歓迎されない/制限を受けるユーザーのリスト。
+<DT><B>/etc/ftpchroot
+
+</B>
+<DD>
+chroot しなければならない一般ユーザーのリスト。
+<DT><B>/etc/ftpwelcome
+
+</B>
+<DD>
+歓迎のメッセージ。
+<DT><B>/etc/motd
+
+</B>
+<DD>
+ログイン後の歓迎のメッセージ。
+<DT><B>/etc/nologin
+
+</B>
+<DD>
+表示されて、アクセスが拒否される。
+<DT><B>/var/run/utmp
+
+</B>
+<DD>
+システム上のユーザーのリスト。
+<DT><B>/var/log/ftpd
+
+</B>
+<DD>
+匿名ファイル転送のログファイル。
+</DL>
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man1/ftp.1.html">ftp</A>(1),
+
+
+skey(1),
+
+
+<A HREF="../../0MultiFileIdx/man1/who.1.html">who</A>(1),
+
+
+<A HREF="../../LDP_man-pages/man3/getusershell.3.html">getusershell</A>(3),
+
+
+<A HREF="../man5/ftpusers.5.html">ftpusers</A>(5),
+
+
+<A HREF="../../sysklogd/man8/syslogd.8.html">syslogd</A>(8)
+
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+特権ポート番号を用いてソケットを作成するために、
+サーバはスーパーユーザーとして実行しなければならない。
+サーバーはログインしたユーザーの実行ユーザー ID を管理する (使う)。
+そして、アドレスをソケットにバインドする場合にのみ、
+スーパーユーザーに戻る (その権限を使う)。
+考えられるセキュリティホールについては、かなり綿密に調べたが、
+それでも不完全かもしれない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>履歴</H2>
+
+<B></B>
+
+
+コマンドは
+BSD 4.2
+で登場した。
+<A NAME="lbAI">&nbsp;</A>
+<H2>翻訳者謝辞</H2>
+
+この man ページの翻訳にあたり、
+FreeBSD jpman project &lt;<A HREF="http://www.jp.freebsd.org/man-jp/">http://www.jp.freebsd.org/man-jp/</A>&gt;
+による翻訳を参考にさせていただいた。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">ファイル</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">履歴</A><DD>
+<DT><A HREF="#lbAI">翻訳者謝辞</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:40 GMT, December 05, 2022
+</BODY>
+</HTML>

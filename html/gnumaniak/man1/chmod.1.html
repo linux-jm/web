@@ -1,0 +1,277 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CHMOD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>CHMOD</H1>
+Section: User Commands  (1)<BR>Updated: 18 June 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/gnumaniak/release/man1/chmod.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+chmod - ファイルのアクセス権を変更する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>chmod [</B><I>options</I><B>] </B><I>mode file...</I>
+
+<P>
+POSIX オプション:
+<B>[-R]</B>
+
+<P>
+GNU オプション (簡略形式):
+<B>[-cfvR] [--reference=</B><I>file</I><B>]</B>
+
+<B>[--help] [--version] [--]</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>chmod</B>
+
+コマンドは指定したそれぞれの
+<I>file</I>
+
+のアクセス権を
+<I>mode</I>
+
+により変更する。変更方法をシンボルで表現するか、もしくは変更後の
+アクセス権を表すビットパターンを 8 進数で表現したもののいずれかを
+使うことができる。
+<P>
+
+シンボルモードでアクセス権を変更する場合の引数の書式は
+<BR>
+
+`[ugoa...][[+-=][rwxXstugo...]...][,...]' である。
+<P>
+
+シンボルモードで引数にアクセス権の変更を複数指定する場合にはコンマで区切る。
+シンボルモードでアクセス権を変更するそれぞれの表現は 0 個もしくは複数の文字 `ugoa' で始まる;
+これらがファイルに対するどのユーザーのアクセス権を変更するかを決める: ファイルの所有者 (u)、
+ファイルと同じグループに属しているが所有者ではない (訳注: 以後グループと表記) (g)、
+所有者でもなく、そのファイルと同じグループにも属していない (訳注: 以後その他と表記) (o)、
+もしくは全ユーザー (a) を表している。つまり `a' は `ugo' と同じである。
+もしこれらのいずれも指定されない場合、`a' が指定されたのと同じ結果となるが、umask に設定された
+ビット位置は変化しない。
+<P>
+
+`+' 演算子は各々のファイルの現状のアクセス権に、選択したアクセス権を加える; `-'
+は削除する; そして `=' は指定したアクセス権だけがそのファイルのアクセス権となる。
+<P>
+
+文字 `rwxXstugo' は影響を与えるユーザーに対する新しいアクセス権を選択する: 読取り (r)、
+書き込み (w)、実行 (またはディレクトリに対するアクセス) (x)、ファイルがディレクトリかもしくは
+あるユーザーに対してすでに実行アクセス権が設定されている場合のみ実行 (X)、実行時にユーザー
+もしくはグループ IDを設定する (s)、sticky bit (t)、そのファイルの所有者での現在のアクセス権
+は (u)、そのファイルのグループでの現在のアクセス権は (g)、そのファイルのその他のユーザーでの現在
+のアクセス権は (o) で表される。
+(従って、`chmod g-s file' は set-group-ID (sgid) ビットを削除する。
+`chmod ug+s file' は suid そして sgid ビットの両方を設定するが、
+`chmod o+s file' は何もしない。)
+<P>
+
+POSIX では `sticky bit' について記述していない。
+その名前は本来の意味から来ている:
+プログラムコードをスワップ上に維持する。
+最近は、ディレクトリに設定されている場合、ファイルの所有者とディレクトリの所有者だけが
+そのディレクトリからファイルを削除できることを意味する。
+(全ユーザーが書き込みアクセス権を持つ /tmp のようなディレクトリでこれはごく普通に使われている。)
+<P>
+
+<B>chmod</B>
+
+コマンドがシンボリックリンクのアクセス権を変更することは決してない。なぜなら、
+<B>chmod</B>
+
+システムコールはシンボリックリンクのアクセス権を変更することができないからである。
+シンボリックリンクのアクセス権は決して使われることがないため、このことは問題ではない。
+しかし、
+<B>chmod</B>
+
+コマンドは引数にシンボリックリンクが指定された場合、各々についてそれが指しているファイルの
+アクセス権を変更する。それに対して、
+<B>chmod</B>
+
+コマンドは再帰的にディレクトリを移動しながら処理している時に見つけたシンボリックリンク
+は無視する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>POSIX オプション</H2>
+
+<DL COMPACT>
+<DT><B>-R</B>
+
+<DD>
+ディレクトリやそこに含まれるもののアクセス権を再帰的に変更する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>GNU オプション</H2>
+
+<DL COMPACT>
+<DT><B>-c, --changes</B>
+
+<DD>
+実際にアクセス権の変更があった
+<I>file</I>
+
+それぞれについての動作を詳細に表示する。
+<DT><B>-f, --silent, --quiet</B>
+
+<DD>
+アクセス権を変更できなかったファイルについてのエラーメッセージを出力しない。
+<DT><B>-v, --verbose</B>
+
+<DD>
+全ての
+<I>file</I>
+
+について変更した、もしくはしなかったという動作を詳細に表示する。
+<DT><B>-R, --recursive</B>
+
+<DD>
+ディレクトリやそこに含まれるもののアクセス権を再帰的に変更する。
+<DT><B>--reference=</B><I>file</I>
+
+<DD>
+明示的に <I>mode</I> を指示する代わりに、参照用に指定した <I>file</I> のグループを使う。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>GNU 標準オプション</H2>
+
+<DL COMPACT>
+<DT><B>--help</B>
+
+<DD>
+標準出力に使用方法のメッセージを出力して正常終了する。
+<DT><B>--version</B>
+
+<DD>
+標準出力にバージョン情報を出力して正常終了する。
+<DT><B>--</B>
+
+<DD>
+オプションリストを終了する。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>数値モード</H2>
+
+ファイルのアクセス権は内部的に 16 ビットの整数で保持されている。
+シンボルでアクセス権を指定する代わりに、 
+これから変更するアクセス権の内部表現に対応した
+8 進数 (基数 8) を使って指定することができる。
+この数値は常に 8 進数として扱われる;
+C 言語のように数値の先頭に 0 を付加する必要はない。
+mode に 0055 と指定するのと 55 と指定するのは同じである。
+数値モードによる指定は、シンボルモードで指定するより大抵の場合短くすむが、
+アクセス権を絶対値で指定する。
+mode の各数字により、以下で示すようなアクセス権のグループを選択する。
+左側の省略された数値は 0 として扱われる。
+アクセス権を組み合わせるには、
+各数字の OR をとるか各数字を合計すればよい。
+<DL COMPACT>
+<DT>特別なアクセス権<DD>
+<BR>
+
+1000 プログラムコードをスワップに維持
+<BR>
+
+2000 実行時にグループ ID を設定
+<BR>
+
+4000 実行時にユーザー ID を設定
+<DT>同じ UID のユーザー (u+)<DD>
+<BR>
+
+100 実行
+<BR>
+
+200 書き込み
+<BR>
+
+400 読み込み
+<DT>同じグループ (g+)<DD>
+<BR>
+
+10 実行
+<BR>
+
+20 書き込み
+<BR>
+
+40 読み込み
+<DT>その他のユーザー (o+)<DD>
+<BR>
+
+1 実行
+<BR>
+
+2 書き込み
+<BR>
+
+4 読み込み
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>環境変数</H2>
+
+変数 LANG, LC_ALL, LC_CTYPE, LC_MESSAGES が通常の意味を持つ。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX 1003.2 では -R オプションのみが必須である。その他のオプションを使用すると
+互換性がないかもしれない。この標準では 't' の許可ビットについて説明していない。
+この標準では <B>chmod</B> が suid や sgid ビットのクリアもしくは設定の拒絶での
+一貫性を維持するべきかどうかについてをとり決めていない。たとえば、すべての実行ビットが
+クリアされる場合に <B>chmod</B> が `s' ビットをどうするかまったくとり決めていない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>非標準モード</H2>
+
+ここまでのところでディレクトリに対する `t' ビットの使い方を説明した。
+いろいろなシステムでは、他の意味のないモードビットの組合せに特別な意味を与えている。
+特に、Linux は System V 系 (System V Interface Definition (SVID) Version 3 を
+参照) に倣って、グループ実行許可を持たないファイルの sgid ビットに、
+そのファイルが強制ロック (mandatory locking) の対象であることを示させている。
+詳細については
+<I>/usr/src/linux/Documentation/mandatory.txt</I>
+
+ファイルを参照。
+<A NAME="lbAL">&nbsp;</A>
+<H2>注意</H2>
+
+このページでは fileutils-4.1 パッケージでの
+<B>chmod</B>
+
+コマンドについて説明している。
+その他のバージョンでは少し違いがあるかもしれない。
+修正や追加は <A HREF="mailto:aeb@cwi.nl">aeb@cwi.nl</A>, <A HREF="mailto:aw@mail1.bet1.puv.fi">aw@mail1.bet1.puv.fi</A>, <A HREF="mailto:ragnar@ragnar-hojland.com">ragnar@ragnar-hojland.com</A>
+宛てにメールで連絡してほしい。
+プログラムのバグについては <A HREF="mailto:bug-fileutils@gnu.org">bug-fileutils@gnu.org</A> へ報告してほしい。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">POSIX オプション</A><DD>
+<DT><A HREF="#lbAF">GNU オプション</A><DD>
+<DT><A HREF="#lbAG">GNU 標準オプション</A><DD>
+<DT><A HREF="#lbAH">数値モード</A><DD>
+<DT><A HREF="#lbAI">環境変数</A><DD>
+<DT><A HREF="#lbAJ">準拠</A><DD>
+<DT><A HREF="#lbAK">非標準モード</A><DD>
+<DT><A HREF="#lbAL">注意</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

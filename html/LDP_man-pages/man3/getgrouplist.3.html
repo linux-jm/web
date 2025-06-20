@@ -1,0 +1,204 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETGROUPLIST</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETGROUPLIST</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getgrouplist.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getgrouplist - ユーザーが所属するグループのリストを取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</B>
+<P>
+
+<B>int getgrouplist(const char *</B><I>user</I><B>, gid_t </B><I>group</I><B>,</B>
+<BR>
+
+<B> gid_t *</B><I>groups</I><B>, int *</B><I>ngroups</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>getgrouplist</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以降:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以前:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getgrouplist</B>()  関数は、グループデータベース (<B><A HREF="../man5/group.5.html">group</A></B>(5)  参照) を調べて、 <I>user</I>
+が所属するグループのリストを取得する。 見つかったグループのうち最大 <I>*ngroups</I> 個のグループが、配列 <I>groups</I>
+に格納されて返される。
+<P>
+
+引数 <I>group</I> がグループデータベースに <I>user</I> が所属するグループがなかった場合、 <B>getgrouplist</B>()
+が返すグループのリストに引数 <I>group</I> も追加される。 通常は、この引数にはユーザー <I>user</I> のパスワードレコードに書かれているグループ
+ID を指定する。
+<P>
+
+引数 <I>ngroups</I> は、値渡しと結果の両方に使用される引数 (value-result argument) であり、 リターン時には、常に
+<I>group</I> も含めた <I>user</I> が所属するグループ数が格納される。 この値は <I>groups</I>
+に格納されたグループ数より大きくなる可能性がある。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<I>user</I> が所属しているグループ数が <I>*ngroups</I> 以下の場合、 <I>*ngroups</I> の値が返される。
+<P>
+
+指定されたユーザーが <I>*ngroups</I> より多くのグループに所属している場合、 <B>getgrouplist</B>()  は -1 を返す。
+この場合、 <I>*ngroups</I> で返される値を使って、バッファーのサイズを変更してから、 <B>getgrouplist</B>()
+をもう一度呼び出すことができる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>バージョン</H2>
+
+この関数は glibc 2.2.4 から存在する。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getgrouplist</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+この関数は非標準である。ほとんどの BSD に存在する。
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+バージョン 2.3.3 より前の glibc では、 この関数の実装にはバッファーオーバーフローのバグがあり、 <I>user</I> が所属するグループ数が
+<I>*ngroups</I> より多い場合であっても、 <I>user</I> が所属するグループの全リストを配列 <I>groups</I> に格納してしまう。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは、一つ目のコマンドライン引数で指定された名前のユーザー が所属するグループのリストを表示する。 二番目のコマンドライン引数には、
+<B>getgrouplist</B>()  に渡す <I>ngroups</I> の値を指定する。
+以下のシェルのセッションはこのプログラムの使用例を示したものである。
+<P>
+
+
+
+$<B> ./a.out cecilia 0</B>
+getgrouplist() returned -1; ngroups = 3
+$<B> ./a.out cecilia 3</B>
+ngroups = 3
+16 (dialout)
+33 (video)
+100 (users)
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ngroups;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;passwd&nbsp;*pw;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;group&nbsp;*gr;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;3)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;user&gt;&nbsp;&lt;ngroups&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ngroups&nbsp;=&nbsp;atoi(argv[2]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;*groups&nbsp;=&nbsp;malloc(sizeof(*groups)&nbsp;*&nbsp;ngroups);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(groups&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Fetch&nbsp;passwd&nbsp;structure&nbsp;(contains&nbsp;first&nbsp;group&nbsp;ID&nbsp;for&nbsp;user)&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pw&nbsp;=&nbsp;getpwnam(argv[1]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pw&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;getpwnam&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Retrieve&nbsp;group&nbsp;list&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(getgrouplist(argv[1],&nbsp;pw-&gt;pw_gid,&nbsp;groups,&nbsp;&amp;ngroups)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getgrouplist()&nbsp;returned&nbsp;-1;&nbsp;ngroups&nbsp;=&nbsp;%d\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ngroups);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Display&nbsp;list&nbsp;of&nbsp;retrieved&nbsp;groups,&nbsp;along&nbsp;with&nbsp;group&nbsp;names&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;ngroups&nbsp;=&nbsp;%d\n&quot;,&nbsp;ngroups);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;ngroups;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%d&quot;,&nbsp;groups[j]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gr&nbsp;=&nbsp;getgrgid(groups[j]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(gr&nbsp;!=&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;(%s)&quot;,&nbsp;gr-&gt;gr_name);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/getgroups.2.html">getgroups</A></B>(2), <B><A HREF="../man2/setgroups.2.html">setgroups</A></B>(2), <B><A HREF="../man3/getgrent.3.html">getgrent</A></B>(3), <B><A HREF="../man3/group_member.3.html">group_member</A></B>(3),
+<B><A HREF="../man5/group.5.html">group</A></B>(5), <B><A HREF="../man5/passwd.5.html">passwd</A></B>(5)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">バージョン</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DL>
+<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

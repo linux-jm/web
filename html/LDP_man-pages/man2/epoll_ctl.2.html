@@ -1,0 +1,196 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of EPOLL_CTL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>EPOLL_CTL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/epoll_ctl.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+epoll_ctl - epoll ディスクリプターのインターフェースを操作する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/epoll.h">sys/epoll.h</A>&gt;</B>
+<P>
+<B>int epoll_ctl(int </B><I>epfd</I><B>, int </B><I>op</I><B>, int </B><I>fd</I><B>, struct
+epoll_event *</B><I>event</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+このシステムコールは、ファイルディスクリプター <I>epfd</I> が参照する <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+インスタンスに対する操作を行う。 対象のファイルディスクリプター <I>fd</I> に対して、
+操作 <I>op</I> の実行が要求される。
+<P>
+<I>op</I> 引き数に指定できる有効な値は以下の通りである。
+<DL COMPACT>
+<DT><B>EPOLL_CTL_ADD</B><DD>
+対象のファイルディスクリプター <I>fd</I> をファイルディスクリプター <I>epfd</I> が参照する <B>epoll</B> インスタンスに登録し、イベント
+<I>event</I> を <I>fd</I> に結び付けられた内部ファイルに関連付ける。
+<DT><B>EPOLL_CTL_MOD</B><DD>
+イベント <I>event</I> を対象のファイルディスクリプター <I>fd</I> に関連付けるように変更する。
+<DT><B>EPOLL_CTL_DEL</B><DD>
+対象のファイルディスクリプター <I>fd</I> を <I>epfd</I> が参照する <B>epoll</B> インスタンスから削除する。 <I>event</I>
+引き数は無視されるので、NULL にすることもできる (但し、下記の「バグ」を参照)。
+</DL>
+<P>
+
+<I>event</I> 引き数は、ファイルディスクリプター <I>fd</I> にリンクされたオブジェクトを表す。 <I>struct epoll_event</I>
+は以下のように定義される。
+<P>
+
+<PRE>
+typedef union epoll_data {
+    void        *ptr;
+    int          fd;
+    uint32_t     u32;
+    uint64_t     u64;
+} epoll_data_t;
+
+struct epoll_event {
+    uint32_t     events;      /* epoll イベント */
+    epoll_data_t data;        /* ユーザーデータ変数 */
+};
+</PRE>
+
+
+<P>
+<I>events</I> メンバは、以下のような使用可能なイベントタイプを使って構成された ビットセットである。
+<DL COMPACT>
+<DT><B>EPOLLIN</B><DD>
+関連付けられたファイルに対して、 <B><A HREF="../man2/read.2.html">read</A></B>(2)  操作が可能である。
+<DT><B>EPOLLOUT</B><DD>
+関連付けられたファイルに対して、 <B><A HREF="../man2/write.2.html">write</A></B>(2)  操作が可能である。
+<DT><B>EPOLLRDHUP&quot;</B>(Linux<B>2.6.17</B>以降)&quot;<DD>
+ストリームソケットの他端が、コネクションの close 、 またはコネクションの書き込み側の shutdown を行った。
+(このフラグを使うと、エッジトリガーの監視を行う場合に、 通信のもう一端が閉じられたことを検知するコードを 非常に簡潔に書くことができる。)
+<DT><B>EPOLLPRI</B><DD>
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  操作が可能な緊急 (urgent) データがある。
+<DT><B>EPOLLERR</B><DD>
+関連付けられたファイルディスクリプターにエラー条件が起こった。 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  は常にこのイベントを待つので、 <I>events</I>
+に設定する必要はない。
+<DT><B>EPOLLHUP</B><DD>
+関連付けられたファイルディスクリプターにハングアップが起こった。 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  は常にこのイベントを待つので、 <I>events</I>
+に設定する必要はない。
+<DT><B>EPOLLET</B><DD>
+関連付けられたファイルディスクリプターに エッジトリガー動作 (Edge Triggered behavior) を設定する。 <B>epoll</B>
+のデフォルトの動作は、レベルトリガー (Level Triggered) である。 エッジトリガーとレベルトリガーによるイベント分配機構 (event
+distribution architectures) についての詳細な情報は、 <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  を参照すること。
+<DT><B>EPOLLONESHOT</B> (Linux 2.6.2 以降)<DD>
+関連付けられたファイルディスクリプターに 一撃動作 (One-Shot behavior) を設定する。 これはイベントが
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  によって引き出された後、 関連付けられたファイルディスクリプターが内部的に破棄され、 <B>epoll</B>
+インターフェースによってイベントが報告されなくなることを意味する。 新しいイベントマスクでファイルディスクリプターを再度有効にするためには、
+<B>epoll_ctl</B>()  に <B>EPOLL_CTL_MOD</B> を指定して呼び出さなければならない。 <I>op</I>
+引き数に指定できる有効な値は、以下の通り:
+<DT><B>EPOLLWAKEUP</B> (Linux 3.5 以降)<DD>
+
+<B>EPOLLONESHOT</B> と <B>EPOLLET</B> がクリアされており、 プロセスが <B>CAP_BLOCK_SUSPEND</B>
+ケーパビリティを持っている場合、 イベントが処理待ちか処理中かにかかわらず、必ずシステムが &quot;suspend&quot; や &quot;hibernate&quot;
+に入らないようにすること。 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2) の呼び出しが返った時点から、 同じ <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+ファイルディスクリプターに対して <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2) が次に呼び出されるか、 そのファイルディスクリプターが閉じられるか、
+イベントファイルディスクリプターが <B>EPOLL_CTL_DEL</B> で削除されるか、 <B>EPOLL_CTL_MOD</B>
+でイベントファイルディスクリプターの <B>EPOLLWAKEUP</B> がクリアされるか、 のいずれかになるまで、イベントは「処理中」であるとみなされる。
+「バグ」の節も参照のこと。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、 <B>epoll_ctl</B>()  は 0 を返す。 エラーが起こった場合、 <B>epoll_ctl</B>()  は -1 を返し、
+<I>errno</I> を適切に設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>epfd</I> か <I>fd</I> が有効なファイルディスクリプターでない。
+<DT><B>EEXIST</B><DD>
+<I>op</I> が <B>EPOLL_CTL_ADD</B> であり、かつ与えられたファイルディスクリプター <I>fd</I> がこの epoll
+インスタンスに既に登録されている。
+<DT><B>EINVAL</B><DD>
+<I>epfd</I> が <B>epoll</B> ファイルディスクリプターでない。 または <I>fd</I> が <I>epfd</I> と同一である。 または要求された操作
+<I>op</I> がこのインターフェースでサポートされていない。
+<DT><B>ENOENT</B><DD>
+<I>op</I> が <B>EPOLL_CTL_MOD</B> または <B>EPOLL_CTL_DEL</B> で、かつ <I>fd</I> がこの epoll
+インスタンスに登録されていない。
+<DT><B>ENOMEM</B><DD>
+要求された <I>op</I> 制御操作を扱うのに十分なメモリーがない。
+<DT><B>ENOSPC</B><DD>
+epoll インスタンスに新しいファイルディスクリプターを登録 (<B>EPOLL_CTL_ADD</B>)  しようとした際に、
+<I>/proc/sys/fs/epoll/max_user_watches</I> で決まる上限に達した。 詳細は <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  を参照。
+<DT><B>EPERM</B><DD>
+対象ファイル <I>fd</I> が <B>epoll</B> に対応していない。 このエラーは <I>fd</I>
+が例えば通常ファイルやディレクトリを参照している場合にも起こり得る。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+
+<B>epoll_ctl</B>()  はカーネル 2.6 で追加された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>epoll_ctl</B>()  は Linux 独自である。
+ライブラリによるサポートは glibc バージョン 2.3.2 以降で提供されている。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<B>epoll</B> インターフェースは、 <B><A HREF="../man2/poll.2.html">poll</A></B>(2)  に対応している全てのファイルディスクリプターに対応している。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+Linux 2.6.9 より前では、 <B>EPOLL_CTL_DEL</B> 操作の際、引き数 <I>event</I> に (たとえ無視される場合であっても)
+NULL でないポインターを渡す必要があった。 カーネル 2.6.9 以降では、 <B>EPOLL_CTL_DEL</B> を使う際に <I>event</I> に
+NULL を指定できるようになっている。 2.6.9 より前のカーネルへの移植性が必要なアプリケーションでは、 <I>event</I> に NULL
+でないポインターを指定すべきである。
+<P>
+
+
+<I>flags</I> に <B>EPOLLWAKEUP</B> が指定されたが、呼び出し元が <B>CAP_BLOCK_SUSPEND</B>
+ケーパビリティを持っていない場合、 <B>EPOLLWAKEUP</B> フラグは <I>黙って無視される</I>。 元の実装では <I>flags</I>
+引き数に対する正当性チェックが実行されていないため、 この残念な動作は必要である。 また、 呼び出し元が <B>CAP_BLOCK_SUSPEND</B>
+ケーパビリティを持っていなかった場合に呼び出しを失敗させるようにチェックを <B>EPOLLWAKEUP</B> に追加すると、
+少なくともひとつは動かなくなる既存のユーザー空間アプリケーションがあった。 そのアプリケーションはたまたま (しかも意味もなく)
+このビットを指定していた。 したがって、信頼性が求められるアプリケーションでは、 <B>EPOLLWAKEUP</B> フラグを使おうする場合には
+<B>CAP_BLOCK_SUSPEND</B> ケーパビリティを持っているかも確認するようにすべきである。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2), <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

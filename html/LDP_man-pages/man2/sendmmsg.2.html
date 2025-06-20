@@ -1,0 +1,217 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SENDMMSG</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SENDMMSG</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/sendmmsg.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sendmmsg - 複数のメッセージをソケットへ送信する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<B>int sendmmsg(int </B><I>sockfd</I><B>, struct mmsghdr *</B><I>msgvec</I><B>, unsigned int </B><I>vlen</I><B>,</B>
+<B>             int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+<B>sendmmsg</B>() システムコールは <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2) の拡張で、
+このシステムコールを使うと一度の呼び出しでソケットに複数のメッセージを送信できる (アプリケーションによっては性能上のメリットがある)。
+<P>
+
+<I>sockfd</I> 引数は、 データを送信するソケットのファイルディスクリプターである。
+<P>
+
+<I>msgvec</I> 引数は <I>mmsghdr</I> 構造体の配列である。 この配列の大きさは <I>vlen</I> で指定する。
+<P>
+
+<I>mmsghdr</I> 構造体は <I>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</I> で次のように定義されている。
+<P>
+
+
+
+struct mmsghdr {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;msghdr&nbsp;msg_hdr;&nbsp;&nbsp;/*&nbsp;メッセージヘッダー&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;msg_len;&nbsp;&nbsp;/*&nbsp;送信されたバイト数&nbsp;*/
+};
+
+
+<P>
+
+<I>msg_hdr</I> フィールドは、 <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2) で説明されている <I>msghdr</I> 構造体である。 <I>msg_len</I>
+フィールドは <I>msg_hdr</I> から送信されたメッセージのバイト数を返すのに使用される。 この値は <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)
+をこのヘッダーに対して呼び出した場合の返り値と同じである。
+<P>
+
+<I>flags</I> 引数には複数のフラグを論理和 (OR) で指定できる。フラグは <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2) と同じである。
+<P>
+
+停止 (blocking) モードの <B>sendmmsg</B>() の呼び出しは、 <I>vlen</I> 個のメッセージが送信されるまで停止する。 非停止
+(nonblocking) モードの呼び出しでは、 送信できるだけのメッセージ (最大で <I>vlen</I> 個) を送信し、 すぐに返る。
+<P>
+
+<B>sendmmsg</B>() が返った際には、 <I>msgvec</I> の送信が行われた要素の <I>msg_len</I> フィールドは、対応する
+<I>msg_hdr</I> から送信されたバイト数が入っている。 呼び出しの返り値は、更新された <I>msgvec</I> の要素数である。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>sendmmsg</B>() は <I>msgvec</I> から送信されたメッセージ数を返す。 返り値が <I>vlen</I> よりも小さい場合、
+呼び出した側では再度 <B>sendmmsg</B> を呼び出して残りのメッセージを送信することができる。
+<P>
+
+エラーの場合、 -1 を返し、 <I>errno</I> にエラーを示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+
+
+
+
+
+
+
+
+エラーは <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2) と同じである。 エラーが返されるのは、 データグラムが全く送信できなかった場合のみである。「バグ」も参照のこと。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>sendmmsg</B>() システムコールは Linux 3.0 で追加された。 glibc でのサポートはバージョン 2.14 で追加された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>sendmmsg</B>() は Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+
+
+
+
+
+
+
+<I>vlen</I> に指定できる値の最大値は <B>UIO_MAXIOV</B> (1024) である。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+If an error occurs after at least one message has been sent, the call
+succeeds, and returns the number of messages sent.  The error code is lost.
+The caller can retry the transmission, starting at the first failed message,
+but there is no guarantee that, if an error is returned, it will be the same
+as the one that was lost on the previous call.
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+以下の例では、 <B>sendmmsg</B>() を使って、 一度のシステムコールで、 <I>onetwo</I> と <I>three</I> を二つの別々の UDP
+データグラムで送信する。 一つ目のデータグラムの内容は、二つのバッファーから取得される。
+<P>
+
+
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/netinet/ip.h">netinet/ip.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
+<P>
+int
+main(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sockfd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_in&nbsp;addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;mmsghdr&nbsp;msg[2];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;iovec&nbsp;msg1[2],&nbsp;msg2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;retval;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sockfd&nbsp;=&nbsp;socket(AF_INET,&nbsp;SOCK_DGRAM,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sockfd&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;socket()&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_family&nbsp;=&nbsp;AF_INET;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_addr.s_addr&nbsp;=&nbsp;htonl(INADDR_LOOPBACK);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_port&nbsp;=&nbsp;htons(1234);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(connect(sockfd,&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;addr,&nbsp;sizeof(addr))&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;connect()&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(msg1,&nbsp;0,&nbsp;sizeof(msg1));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg1[0].iov_base&nbsp;=&nbsp;&quot;one&quot;;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg1[0].iov_len&nbsp;=&nbsp;3;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg1[1].iov_base&nbsp;=&nbsp;&quot;two&quot;;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg1[1].iov_len&nbsp;=&nbsp;3;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;msg2,&nbsp;0,&nbsp;sizeof(msg2));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg2.iov_base&nbsp;=&nbsp;&quot;three&quot;;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg2.iov_len&nbsp;=&nbsp;5;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(msg,&nbsp;0,&nbsp;sizeof(msg));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg[0].msg_hdr.msg_iov&nbsp;=&nbsp;msg1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg[0].msg_hdr.msg_iovlen&nbsp;=&nbsp;2;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg[1].msg_hdr.msg_iov&nbsp;=&nbsp;&amp;msg2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg[1].msg_hdr.msg_iovlen&nbsp;=&nbsp;1;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;retval&nbsp;=&nbsp;sendmmsg(sockfd,&nbsp;msg,&nbsp;2,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(retval&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;sendmmsg()&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%d&nbsp;messages&nbsp;sent\n&quot;,&nbsp;retval);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(0);
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/recvmmsg.2.html">recvmmsg</A></B>(2), <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2), <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man7/socket.7.html">socket</A></B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

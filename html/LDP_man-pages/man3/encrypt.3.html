@@ -1,0 +1,219 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ENCRYPT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ENCRYPT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/encrypt.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+encrypt, setkey, encrypt_r, setkey_r - 64 ビットのメッセージを暗号化する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _XOPEN_SOURCE</B>       /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>void encrypt(char </B><I>block</I><B>[64], int </B><I>edflag</I><B>);</B>
+
+<B>#define _XOPEN_SOURCE</B>       /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>void setkey(const char *</B><I>key</I><B>);</B>
+
+ <B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/crypt.h">crypt.h</A>&gt;</B>
+
+<B>void setkey_r(const char *</B><I>key</I><B>, struct crypt_data *</B><I>data</I><B>);</B>
+<B>void encrypt_r(char *</B><I>block</I><B>, int </B><I>edflag</I><B>, struct crypt_data *</B><I>data</I><B>);</B>
+</PRE>
+
+<P>
+
+これらの関数は <I>-lcrypt</I> でリンクする必要がある。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらの関数は、64 ビットのメッセージの暗号化と復号化を行う。 <B>setkey</B>()  関数は <B>encrypt</B>()
+によって使われる暗号鍵を設定する。 ここで使われる引数 <I>key</I> は 64 バイトの配列であり、各バイトは数値 1 または 0 である。
+n=8*i-1 に対するバイト key[n] は無視されるので、 有効な暗号鍵の長さは 56 ビットになる。
+<P>
+
+<B>encrypt</B>()  関数は、 <I>edflag</I> が 0 の場合は暗号化し、1 が渡された場合は復号化するというように、
+渡されたバッファーを変更する。 引数 <I>key</I> と同様に、 <I>block</I> はエンコードされた実際の値を表現するビットの配列である。
+結果はこの同じ配列を使って返される。
+<P>
+
+これら 2 つの関数はリエントラント (reentrant) ではない。 つまり暗号鍵データは静的な領域に保存される。 関数 <B>setkey_r</B>()
+と <B>encrypt_r</B>()  はリエントラントなバージョンである。 これらの関数は暗号鍵データを保持するために以下のような構造体を使う。
+<P>
+
+
+
+struct crypt_data {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;keysched[16&nbsp;*&nbsp;8];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;sb0[32768];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;sb1[32768];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;sb2[32768];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;sb3[32768];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;crypt_3_buf[14];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;current_salt[2];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;current_saltbits;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;direction;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;initialized;
+};
+
+
+<P>
+
+<B>setkey_r</B>()  を呼び出す前には、 <I>data-&gt;initialized</I> を 0 に設定すること。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+これらの関数は、なにも値を返さない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+上記の関数を呼び出す前に <I>errno</I> を 0 に設定すること。 成功した場合、この値は変更されない。
+<DL COMPACT>
+<DT><B>ENOSYS</B><DD>
+(例えば以前のアメリカ合衆国輸出規制などにより)  この関数が提供されていない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+Because they employ the DES block cipher, which is no longer considered
+secure, <B>crypt</B>(), <B>crypt_r</B>(), <B>setkey</B>(), and <B>setkey_r</B>()  were
+removed in glibc 2.28.  Applications should switch to a modern cryptography
+library, such as <B>libgcrypt</B>.
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>encrypt</B>(),
+<B>setkey</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:crypt<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>encrypt_r</B>(),
+<B>setkey_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>encrypt</B>(), <B>setkey</B>(): POSIX.1-2001, POSIX.1-2008, SUS, SVr4.
+<P>
+
+関数 <B>encrypt_r</B>() と <B>setkey_r</B>() は GNU による拡張である。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>Availability in glibc</H3>
+
+<B><A HREF="../man3/crypt.3.html">crypt</A></B>(3) を参照。
+<A NAME="lbAL">&nbsp;</A>
+<H3>Features in glibc</H3>
+
+glibc 2.2 では、これらの関数は DES アルゴリズムを使う。
+<A NAME="lbAM">&nbsp;</A>
+<H2>例</H2>
+
+
+#define _XOPEN_SOURCE
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/crypt.h">crypt.h</A>&gt;
+<P>
+<BR>&nbsp;int
+main(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;key[64];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;orig[9]&nbsp;=&nbsp;&quot;eggplant&quot;;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[64];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;txt[9];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;64;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;key[i]&nbsp;=&nbsp;rand()&nbsp;&amp;&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;8;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;8;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf[i&nbsp;*&nbsp;8&nbsp;+&nbsp;j]&nbsp;=&nbsp;orig[i]&nbsp;&gt;&gt;&nbsp;j&nbsp;&amp;&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setkey(key);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Before&nbsp;encrypting:&nbsp;%s\n&quot;,&nbsp;orig);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;encrypt(buf,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;8;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0,&nbsp;txt[i]&nbsp;=&nbsp;'\0';&nbsp;j&nbsp;&lt;&nbsp;8;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;txt[i]&nbsp;|=&nbsp;buf[i&nbsp;*&nbsp;8&nbsp;+&nbsp;j]&nbsp;&lt;&lt;&nbsp;j;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;txt[8]&nbsp;=&nbsp;'\0';
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;After&nbsp;encrypting:&nbsp;&nbsp;%s\n&quot;,&nbsp;txt);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;encrypt(buf,&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;8;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0,&nbsp;txt[i]&nbsp;=&nbsp;'\0';&nbsp;j&nbsp;&lt;&nbsp;8;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;txt[i]&nbsp;|=&nbsp;buf[i&nbsp;*&nbsp;8&nbsp;+&nbsp;j]&nbsp;&lt;&lt;&nbsp;j;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;txt[8]&nbsp;=&nbsp;'\0';
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;After&nbsp;decrypting:&nbsp;&nbsp;%s\n&quot;,&nbsp;txt);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+<B><A HREF="../man3/cbc_crypt.3.html">cbc_crypt</A></B>(3), <B><A HREF="../man3/crypt.3.html">crypt</A></B>(3), <B><A HREF="../man3/ecb_crypt.3.html">ecb_crypt</A></B>(3)
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAK">Availability in glibc</A><DD>
+<DT><A HREF="#lbAL">Features in glibc</A><DD>
+</DL>
+<DT><A HREF="#lbAM">例</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

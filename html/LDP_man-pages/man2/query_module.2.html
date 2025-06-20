@@ -1,0 +1,165 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of QUERY_MODULE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>QUERY_MODULE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/query_module.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+query_module - モジュールに関連する各種の情報をカーネルに問い合わせる
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/linux/module.h">linux/module.h</A>&gt;</B>
+
+<B>int query_module(const char *</B><I>name</I><B>, int </B><I>which</I><B>, void *</B><I>buf</I><B>,</B>
+<B>                 size_t </B><I>bufsize</I><B>, size_t *</B><I>ret</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>注意</I>: このシステムコールの宣言は glibc のヘッダーでは提供されていない。「注意」を参照。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>注意</I>: このシステムコールが存在するのは、カーネル 2.6 より前の Linux だけである。
+<P>
+
+<B>query_module</B>()  は、ローダーブルモジュールに関する情報をカーネルに問い合わせる。 情報は <I>buf</I>
+が指し示すバッファーに格納されて返される。 呼び出し元は <I>buf</I> のサイズを <I>bufsize</I> に指定しなければならない。
+得られる情報の正確な意味とフォーマットは、 <I>which</I> でどの操作を指定するかによって異なる。 現在ロードされているモジュールを特定するために
+<I>name</I> を必要とする操作があれば、 カーネル固有であることを示す NULL を指定できる操作もある。
+<P>
+
+<I>which</I> には以下の値を指定できる:
+<DL COMPACT>
+<DT><B>0</B><DD>
+カーネルが <B>query_module</B>()  をサポートしている場合、成功を返す。 このシステムコールが利用可能かを調べるために使われる。
+<DT><B>QM_MODULES</B><DD>
+
+ロードされている全てのモジュールの名前を返す。 バッファーには、ヌル終端された文字列が順に入る。 返されるバッファー <I>ret</I>
+にはモジュールの数が設定される。
+<DT><B>QM_DEPS</B><DD>
+
+指定されたモジュールが使用している全モジュールの名前を返す。 バッファーには、ヌル終端された文字列が順に入る。 返されるバッファー <I>ret</I>
+にはモジュールの数が設定される。
+<DT><B>QM_REFS</B><DD>
+
+指定されたモジュールを使用している全モジュールの名前を返す。 これは <B>QM_DEPS</B> と逆の機能である。
+バッファーには、ヌル終端された文字列が順に入る。 返されるバッファー <I>ret</I> にはモジュールの数が設定される。
+<DT><B>QM_SYMBOLS</B><DD>
+
+カーネルまたは指定されたモジュールがエクスポートしているシンボルと 値を返す。 バッファーのデータは、
+以下の構造体の配列にヌル終端された文字列が続く形となる。
+<DT><DD>
+
+
+struct module_symbol {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;value;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;name;
+};
+
+
+<DT><DD>
+<I>name</I> の値は、 <I>buf</I> の先頭からの文字列までのオフセット文字数である。 <I>ret</I> にはシンボルの数が設定される。
+<DT><B>QM_INFO</B><DD>
+指定されたモジュールに関する様々な情報を返す。 出力バッファーのフォーマットは以下の形式となる:
+<DT><DD>
+
+
+struct module_info {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;address;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;size;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;flags;
+};
+
+
+<DT><DD>
+<I>address</I> はそのモジュールが配置されているカーネル空間上のアドレス、 <I>size</I> はそのモジュールのバイト単位のサイズ、
+<I>flags</I> は <B>MOD_RUNNING</B>, <B>MOD_AUTOCLEAN</B> 等のマスクであり、そのモジュールの現在の状態を示す (Linux
+カーネルのソースファイル <I>include/linux/module.h</I> を参照)。 <I>ret</I> には <I>module_info</I>
+構造体のサイズが設定される。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功の場合 0 が返される。エラーの場合 -1 が返され、 <I>errno</I> に適切な値が設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+<I>name</I>, <I>buf</I>, <I>ret</I> の少なくとも一つが、プログラムがアクセスできる アドレス空間の外部であった。
+<DT><B>EINVAL</B><DD>
+
+<I>which</I> が不正である。あるいは <I>name</I> が NULL だが (NULL は &quot;カーネル&quot; を示す)、 <I>which</I>
+で指定された値との組み合わせは許可されていない。
+<DT><B>ENOENT</B><DD>
+<I>name</I> という名前のモジュールが存在しない。
+<DT><B>ENOSPC</B><DD>
+与えられたバッファーの大きさが小さすぎる。 <I>ret</I> には最小限必要なバッファーのサイズが設定される。
+<DT><B>ENOSYS</B><DD>
+<B>query_module</B>() はこのバージョンのカーネルではサポートされていない (例えば、カーネルのバージョンが 2.6 以降)。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+このシステムコールが存在するのはカーネル 2.4 までの Linux だけである。 Linux 2.6 では削除された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>query_module</B>()  は Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+以前 <B>query_module</B>() で得られた情報のいくつかは、 <I>/proc/modules</I>, <I>/proc/kallsyms</I> および
+<I>/sys/module</I> ディレクトリ内のファイルから取得できる。
+<P>
+
+<B>query_module</B>() システムコールは glibc ではサポートされていない。 glibc ヘッダーでは宣言は提供されていないが、
+歴史の紆余曲折を経て glibc はこのシステムコールに対する ABI を公開していない。
+したがって、このシステムコールを利用するには、自分のコードの中で手動でインターフェースを宣言すればよい。 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
+を使ってシステムコールを起動できる。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/create_module.2.html">create_module</A></B>(2), <B><A HREF="../man2/delete_module.2.html">delete_module</A></B>(2), <B><A HREF="../man2/get_kernel_syms.2.html">get_kernel_syms</A></B>(2),
+<B><A HREF="../man2/init_module.2.html">init_module</A></B>(2), <B><A HREF="../../0MultiFileIdx/man8/lsmod.8.html">lsmod</A></B>(8), <B><A HREF="../../0MultiFileIdx/man8/modinfo.8.html">modinfo</A></B>(8)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

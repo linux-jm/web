@@ -1,0 +1,212 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_JOIN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_JOIN</H1>
+Section: C Library Functions (3)<BR>Updated: LinuxThreads<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/glibc-linuxthreads/release/man3/pthread_join.3">roff page</A><HR>
+
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_join - 別のスレッドの終了を待つ
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<P>
+<B>int pthread_join(pthread_t </B><I>th</I><B>, void **</B><I>thread_return</I><B>);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pthread_join</B>
+
+は、
+呼び出しスレッドの実行を停止し、
+<I>th</I>
+
+で指定したスレッドが
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)
+
+を呼び出して終了するか、取り消しされて終了するのを待つ。
+<P>
+<I>thread_return</I>
+
+が
+<B>NULL</B>
+
+でないときには、
+<I>th</I>
+
+の返り値が
+<I>thread_return</I>
+
+で指し示される領域に格納される。
+<I>th</I>
+
+の返り値は、
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)
+
+に与えられた引数、または
+<B>PTHREAD_CANCELED</B>(
+
+<I>th</I>
+
+が取り消しされた場合 ) である。
+<P>
+合流 (join) されるスレッド
+<B>th</B>
+
+は、合流可能 (joinable) な状態でなければならない。
+すなわち、
+<B><A HREF="../man3/pthread_detach.3.html">pthread_detach</A></B>(3)
+
+を使用してデタッチ (detach) されていたり、
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3)
+
+で属性
+<B>PTHREAD_CREATE_DETACHED</B>
+
+を与えられていたりしてはならない。
+<P>
+合流可能なスレッドが終了しても、
+別のスレッドがそのスレッドに対して
+<B>pthread_join</B>
+
+を呼び出すまでは、
+そのメモリ資源 (スレッドディスクリプタとスタック) は解放されない。
+したがって、メモリリークを防ぐためには、
+合流可能なスレッドそれぞれに対して
+<B>pthread_join</B>
+
+を 1 回ずつ呼び出さなければならない。
+<P>
+あるスレッドの終了を待つことができるスレッドは高々 1 つである。
+すでに別のスレッドが終了を待っているスレッド
+<I>th</I>
+
+に対して
+<B>pthread_join</B>
+
+を呼び出した場合、エラーが返る。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>取り消し</H2>
+
+<P>
+<B>pthread_join</B>
+
+は取り消しポイントである。
+スレッドが
+<B>pthread_join</B>
+
+で停止しているときに取り消しされると、
+直ちに実行が再開されて
+スレッド
+<I>th</I>
+
+が終了するのを待つことなく取り消しが実行される。
+取り消しが
+<B>pthread_join</B>
+
+で起こった場合には、
+スレッド
+<I>th</I>
+
+は合流されずに残ることになる。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、
+<I>th</I>
+
+の返り値が
+<I>thread_return</I>
+
+で指し示された領域に格納され、0 が返る。
+エラーの場合、非 0 のエラーコードが返る。
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>ESRCH</B>
+
+<DD>
+<I>th</I>
+
+で指定された ID に対応するスレッドが見つからなかった。
+<DT><B>EINVAL</B>
+
+<DD>
+<I>th</I>
+
+で指定されたスレッドはすでにデタッチされている。
+<DT><B>EINVAL</B>
+
+<DD>
+すでに別のスレッドがスレッド
+<I>th</I>
+
+の終了を待っている。
+<DT><B>EDEADLK</B>
+
+<DD>
+引数
+<I>th</I>
+
+が呼び出しスレッドを指している。
+<P>
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>著者</H2>
+
+Xavier Leroy &lt;<A HREF="mailto:Xavier.Leroy@inria.fr">Xavier.Leroy@inria.fr</A>&gt;
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3),
+
+<B><A HREF="../man3/pthread_detach.3.html">pthread_detach</A></B>(3),
+
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3),
+
+<B><A HREF="../man3/pthread_attr_setdetachstate.3.html">pthread_attr_setdetachstate</A></B>(3),
+
+<B><A HREF="../man3/pthread_cleanup_push.3.html">pthread_cleanup_push</A></B>(3),
+
+<B><A HREF="../man3/pthread_key_create.3.html">pthread_key_create</A></B>(3).
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">取り消し</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">著者</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

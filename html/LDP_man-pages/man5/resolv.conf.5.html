@@ -1,0 +1,257 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RESOLV.CONF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RESOLV.CONF</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man5/resolv.conf.5">roff page</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+resolv.conf - レゾルバ設定ファイル
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/etc/resolv.conf</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+The <I>resolver</I> is a set of routines in the C library that provide access to
+the Internet Domain Name System (DNS).  The resolver configuration file
+contains information that is read by the resolver routines the first time
+they are invoked by a process.  The file is designed to be human readable
+and contains a list of keywords with values that provide various types of
+resolver information.  The configuration file is considered a trusted source
+of DNS information; see the <B>trust-ad</B> option below for details.
+<P>
+
+If this file does not exist, only the name server on the local machine will
+be queried, and the search list contains the local domain name determined
+from the hostname.
+<P>
+
+この状態を変更するための設定オプションには、以下のようなものがある。
+<DL COMPACT>
+<DT><B>nameserver</B> ネームサーバの IP アドレス<DD>
+レゾルバが問い合わせをするネームサーバのインターネットアドレス。 アドレスには IPv4 アドレスか IPv6 アドレスを指定する。 IPv4
+アドレスはドット表記で、 IPv6 アドレスは RFC 2373 で定められたコロン表記 (おそらくドット表記も可) で指定する。 このキーワード 1
+つごとに 1 台づつ、 <B>MAXNS</B> 台 (現状では 3 台、<I>&lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;</I> を参照)
+までのネームサーバをリストできる。 複数のサーバが指定された場合、レゾルバライブラリは リストされた順に問い合わせを行う。 <B>nameserver</B>
+エントリーがない場合、 デフォルトではローカルマシン上のネームサーバが使われる。 (ここで使われるアルゴリズムは以下のようなものである。
+はじめにネームサーバに問い合わせを試みる。 この問い合わせがタイムアウトになった場合、 次のネームサーバに問い合わせを試みる。
+これをネームサーバがなくなるまで続ける。 それでも応答がない場合は、リトライ最大回数に達するまで 全てのネームサーバに問い合わせを繰り返す。)
+<DT><B>search</B> ホスト名ルックアップのための検索リスト<DD>
+By default, the search list contains one entry, the local domain name.  It
+is determined from the local hostname returned by <B><A HREF="../man2/gethostname.2.html">gethostname</A></B>(2); the
+local domain name is taken to be everything after the first '.'.
+Finally, if the hostname does not contain a '.', the root domain is
+assumed as the local domain name.
+<DT><DD>
+
+
+
+
+
+
+
+
+
+
+
+これを変更するには、<I>search</I> キーワードの後に 希望するドメイン検索パスをスペースまたはタブで区切ってリストすればよい。 ドットの数が
+<I>ndots</I> (デフォルトでは 1) より少ないレゾルバの問い合わせは、 一致するものが見つかるまで検索パスの各要素を順に使って試す。
+複数のサブドメインを持つ環境では、 第三者による攻撃 (man-in-the-middle attack) と ルート DNS
+サーバへの不必要なトラフィックを避けるために、 以下の <B>options ndots:</B><I>n</I> を読んでほしい。
+このプロセスは遅く、リストされたドメインがローカルのものでない場合、 多大なネットワークトラフィックを発生させることに注意すること。
+さらに、これらのドメインのいずれかひとつにでも適切なサーバがない場合、 問い合わせがタイムアウトになる点にも注意すること。
+<DT><DD>
+If there are multiple <B>search</B> directives, only the search list from the
+last instance is used.
+<DT><DD>
+
+In glibc 2.25 and earlier, the search list is limited to six domains with a
+total of 256 characters.  Since glibc 2.26, the search list is unlimited.
+<DT><DD>
+The <B>domain</B> directive is an obsolete name for the <B>search</B> directive that
+handles one search list entry only.
+<DT><B>sortlist</B><DD>
+このオプションを使うと、 <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)  で返されるアドレスをソートさせることができる。 sortlist は IP
+アドレスとネットマスクのペアで指定される。 ネットマスクは省略可能であり、 デフォルトではネットに対するデフォルトのネットマスクである。 IP
+アドレスとオプションのネットマスクのペアはスラッシュで区切る。 最大 10 組のペアを指定できる。 以下に例を示す。
+<DT><DD>
+
+sortlist 130.155.160.0/255.255.240.0 130.155.0.0
+
+<DT><B>options</B><DD>
+options により、レゾルバの内部変数を変更することができる。 書式は以下の通りである。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><DD>
+<B>options</B> <I>option</I> <I>...</I>
+</DL>
+<P>
+
+ここで <I>option</I> は次のうちのいずれかである。
+<DL COMPACT>
+<DT><B>debug</B><DD>
+
+<B>RES_DEBUG</B> を <I>_res.options</I> にセットする (glibc
+がデバッグを有効にしてコンパイルされている場合にのみ有効である; <B><A HREF="../man3/resolver.3.html">resolver</A></B>(3) を参照)。
+<DT><B>ndots:</B><I>n</I><DD>
+
+「<I>最初の完全な名前での問い合わせ</I>が実行される前に、 <B><A HREF="../man3/res_query.3.html">res_query</A></B>(3)  (<B><A HREF="../man3/resolver.3.html">resolver</A></B>(3)  を参照)
+に与えられる名前に含まれているべきドットの数の閾値」を設定する。 <I>n</I> のデフォルトは 1 である。
+これは、名前にドットがある場合、<I>search list</I> の要素が付加される前に、
+その名前が完全な名前として最初に試されるということを意味している。 このオプションの値の上限は 15 であり、黙ってこの値まで切り詰められる。
+<DT><B>timeout:</B><I>n</I><DD>
+
+Sets the amount of time the resolver will wait for a response from a remote
+name server before retrying the query via a different name server.  This may
+<B>not</B> be the total time taken by any resolver API call and there is no
+guarantee that a single resolver API call maps to a single timeout.
+Measured in seconds, the default is <B>RES_TIMEOUT</B> (currently 5, see
+<I>&lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;</I>).  The value for this option is silently capped to 30.
+<DT><B>attempts:</B><I>n</I><DD>
+「レゾルバが諦めて呼び出し元のアプリケーションにエラーを返すまでに、 ネームサーバに問い合わせを行う回数」を設定する。 デフォルトは
+<B>RES_DFLRETRY</B> 回である (現状では 2 回、<I>&lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;</I> を参照)。 このオプションの値の上限は 5
+であり、黙ってこの値まで切り詰められる。
+<DT><B>rotate</B><DD>
+
+<I>_res.options</I> に RES_ROTATE を設定する。リストされているネームサーバから選ぶときに、ラウンドロビン
+(round-robin)
+選択を行わせる。リストされている全てのサーバで問い合わせの負荷を分散する効果があり、最初にリストされたサーバに全てのクライアントが毎回最初に問い合わせを行うわけではなくなる。
+<DT><B>no-check-names</B><DD>
+
+<I>_res.options</I> に <B>RES_NOCHECKNAME</B> を設定する。 入ってくるホスト名とメールアドレスに、 アンダースコア
+(_)・ASCII 以外の文字・制御文字といった 不正な文字が含まれていないかを調べる 最近の BIND のチェックを無効にする。
+<DT><B>inet6</B><DD>
+
+
+Sets <B>RES_USE_INET6</B> in <I>_res.options</I>.  This has the effect of trying an
+AAAA query before an A query inside the <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)  function, and
+of mapping IPv4 responses in IPv6 &quot;tunneled form&quot; if no AAAA records are
+found but an A record set exists.  Since glibc 2.25, this option is
+deprecated; applications should use <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3), rather than
+<B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3).
+<DT><B>ip6-bytestring</B> (glibc 2.3.4 から 2.24 まで)<DD>
+Sets <B>RES_USEBSTRING</B> in <I>_res.options</I>.  This causes reverse IPv6 lookups
+to be made using the bit-label format described in RFC&nbsp;2673; if this option
+is not set (which is the default), then nibble format is used.  This option
+was removed in glibc 2.25, since it relied on a backward-incompatible DNS
+extension that was never deployed on the Internet.
+<DT><B>ip6-dotint</B>/<B>no-ip6-dotint</B> (glibc 2.3.4 から 2.24 まで)<DD>
+Clear/set <B>RES_NOIP6DOTINT</B> in <I>_res.options</I>.  When this option is clear
+(<B>ip6-dotint</B>), reverse IPv6 lookups are made in the (deprecated)
+<I>ip6.int</I> zone; when this option is set (<B>no-ip6-dotint</B>), reverse IPv6
+lookups are made in the <I>ip6.arpa</I> zone by default.  These options are
+available in glibc versions up to 2.24, where <B>no-ip6-dotint</B> is the
+default.  Since <B>ip6-dotint</B> support long ago ceased to be available on the
+Internet, these options were removed in glibc 2.25.
+<DT><B>edns0</B> (glibc 2.6 以降)<DD>
+<I>_res.options</I> に <B>RES_USE_EDNSO</B> をセットする。これにより、RFC&nbsp;2671 で規定されている DNS
+拡張のサポートが有効になる。
+<DT><B>single-request</B> (glibc 2.10 以降)<DD>
+<I>_res.options</I> に <B>RES_SNGLKUP</B> をセットする。
+glibc バージョン 2.9 以降では、 glibc はデフォルトでは
+IPv4 と IPv6 の検索を並行して実行する。
+アプライアンス DNS サーバの中には、このような問い合わせを
+適切に処理できず、検索要求がタイムアウトになってしまう。
+このオプションをセットすると、このデフォルトの動作が無効になり、
+glibc は IPv6 と IPv4 の検索を順番に実行するようになる
+(名前解決処理が若干遅くなるというデメリットがある)。
+<DT><B>single-request-reopen</B> (glibc 2.9 以降)<DD>
+<I>_res.options</I> に <B>RES_SNGLKUPREOP</B> をセットする。リゾルバは同じソケットを使って A レコードと AAAA
+レコードの検索要求を行う。 いくつかのハードウェアは実装が間違っており、応答を一つしか返さない。 この状況になると、クライアントシステムは 2
+番目の応答を待ち続けてしまう。 このオプションを有効にすると、この動作が変更され、 同じポートからの 2 つの検索要求が正しく処理されなかった場合、 2
+番目の検索要求を送信する前にソケットをクローズし 新しいソケットをオープンするようになる。
+<DT><B>no-tld-query</B> (glibc 2.14 以降)<DD>
+RES_NOTLDQUERY を <I>_res.options</I> にセットする。 このオプションを設定すると、 <B>res_nsearch</B>()
+が完全なドメイン名ではない名前のトップレベルドメイン (TLD) としての検索を行わなくなる。 これにより、localhost
+に検索リストの要素をつけるのではなく、``localhost'' を TLD として設定しているようなサイトでは問題が起こる可能性がある。
+RES_DEFNAMES も RES_DNSRCH もセットされていない場合には、このオプションは効果はない。
+<DT><B>use-vc</B> (glibc 2.14 以降)<DD>
+
+Sets <B>RES_USEVC</B> in <I>_res.options</I>.  This option forces the use of TCP for
+DNS resolutions.
+<DT><B>no-reload</B> (glibc 2.26 以降)<DD>
+Sets <B>RES_NORELOAD</B> in <I>_res.options</I>.  This option disables automatic
+reloading of a changed configuration file.
+<DT><B>trust-ad</B> (glibc 2.31 以降)<DD>
+
+Sets <B>RES_TRUSTAD</B> in <I>_res.options</I>.  This option controls the AD bit
+behavior of the stub resolver.  If a validating resolver sets the AD bit in
+a response, it indicates that the data in the response was verified
+according to the DNSSEC protocol.  In order to rely on the AD bit, the local
+system has to trust both the DNSSEC-validating resolver and the network path
+to it, which is why an explicit opt-in is required.  If the <B>trust-ad</B>
+option is active, the stub resolver sets the AD bit in outgoing DNS queries
+(to enable AD bit support), and preserves the AD bit in responses.  Without
+this option, the AD bit is not set in queries, and it is always removed from
+responses before they are returned to the application.  This means that
+applications can trust the AD bit in responses if the <B>trust-ad</B> option has
+been set correctly.
+<DT><DD>
+In glibc version 2.30 and earlier, the AD is not set automatically in
+queries, and is passed through unchanged to applications in responses.
+</DL>
+</DL>
+
+</DL>
+<P>
+
+システムの <I>resolv.conf</I> ファイルにある <I>search</I> キーワードは、 スペースで区切った検索ドメインのリストを 環境変数
+<B>LOCALDOMAIN</B> に設定することにより、各プロセス毎に上書きすることができる。
+<P>
+
+システムの <I>resolv.conf</I> ファイルにある <I>options</I> キーワードは、 上の <B>options</B> セクションで説明したように、
+スペースで区切ったレゾルバオプションのリストを 環境変数 <B>RES_OPTIONS</B> に設定することにより、各プロセス毎に修正することができる。
+<P>
+
+キーワードと値は同じ行に書かなければならない。 また、(<B>nameserver</B> のような) キーワードが行の先頭になければならない。
+値はキーワードの後にスペースで区切って続ける。
+<P>
+
+セミコロン (;) かハッシュ文字 (#) で始まる行はコメントとして扱われる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/etc/resolv.conf</I>, <I>&lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;</I>
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3), <B><A HREF="../man3/resolver.3.html">resolver</A></B>(3), <B><A HREF="../man5/host.conf.5.html">host.conf</A></B>(5), <B><A HREF="../man5/hosts.5.html">hosts</A></B>(5),
+<B><A HREF="../man5/nsswitch.conf.5.html">nsswitch.conf</A></B>(5), <B><A HREF="../man7/hostname.7.html">hostname</A></B>(7), <B><A HREF="../../bind/man8/named.8.html">named</A></B>(8)
+<P>
+
+BIND のネームサーバオペレーションガイド
+<A NAME="lbAG">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">ファイル</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

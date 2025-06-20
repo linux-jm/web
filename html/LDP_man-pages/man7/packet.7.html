@@ -1,0 +1,461 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PACKET</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PACKET</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/packet.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+packet - デバイスレベルのパケットインターフェース
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/linux/if_packet.h">linux/if_packet.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/net/ethernet.h">net/ethernet.h</A>&gt; /* L2 プロトコル */</B>
+
+<B>packet_socket = socket(AF_PACKET, int </B><I>socket_type</I><B>, int </B><I>protocol</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+packet ソケットは、デバイスドライバ (OSI レイヤ 2) レベルで 生のパケット (raw packet) を送受信するために用いられる。
+packet ソケットを使うと、ユーザー空間で物理層の上に プロトコルモジュールを実装することができる。
+<P>
+
+<I>socket_type</I> には <B>SOCK_RAW</B> と <B>SOCK_DGRAM</B> のいずれかを指定する。 <B>SOCK_RAW</B>
+はリンクレベルヘッダーを含む raw パケットを、 <B>SOCK_DGRAM</B> はリンクレベルヘッダーが削除された加工済みパケットを示す。
+リンクレベルヘッダー情報は <I>sockaddr_ll</I> 構造体で共通のフォーマットで入手できる。 <I>protocol</I> には IEEE 802.3
+プロトコル番号を ネットワークバイトオーダーで指定する。 指定できるプロトコルのリストは、インクルードファイル
+<I>&lt;<A HREF="file:///usr/include/linux/if_ether.h">linux/if_ether.h</A>&gt;</I> を参照。プロトコルを <B>htons(ETH_P_ALL)</B>
+にすると、全てのプロトコルが受信される。 外部から来たパケットのうち指定したプロトコルのものは、
+カーネルに実装されているプロトコルに渡される前の段階で、 packet ソケットに渡される。
+<P>
+
+In order to create a packet socket, a process must have the <B>CAP_NET_RAW</B>
+capability in the user namespace that governs its network namespace.
+<P>
+
+<B>SOCK_RAW</B> パケットでは、パケットをデバイスドライバと受け渡しする際、 パケットデータに変更が行われることはない。
+パケットの受信時には、アドレスの解析だけは行われ、 標準的な <I>sockaddr_ll</I>
+アドレス構造体に渡される。パケットの送信時には、ユーザーが指定する バッファーに物理層のヘッダーが含まれている必要がある。
+パケットはそのまま修正を受けずに、行き先アドレスから決定される インターフェースのネットワークドライバにキューイングされる。
+デバイスドライバによっては、他のヘッダーを常に追加するものもある。 <B>SOCK_RAW</B> は Linux 2.0 の obosolete な
+<B>AF_INET/SOCK_PACKET</B> と似ているが、互換性があるわけではない。
+<P>
+
+<B>SOCK_DGRAM</B> はやや高位のレベルで動作する。物理ヘッダーは、パケットがユーザーに 渡される前に削除される。 <B>SOCK_DGRAM</B> の
+packet ソケットを通して送られるパケットは、 <I>sockaddr_ll</I>
+の行き先アドレスの情報に基づき、適切な物理層のヘッダーが付加されてから、 キューに送られる。
+<P>
+
+By default, all packets of the specified protocol type are passed to a
+packet socket.  To get packets only from a specific interface use <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
+specifying an address in a <I>struct sockaddr_ll</I> to bind the packet socket
+to an interface.  Fields used for binding are <I>sll_family</I> (should be
+<B>AF_PACKET</B>), <I>sll_protocol</I>, and <I>sll_ifindex</I>.
+<P>
+
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2)  操作は packet ソケットではサポートされていない。
+<P>
+
+<B>MSG_TRUNC</B> フラグが <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2), <B><A HREF="../man2/recv.2.html">recv</A></B>(2), <B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2)  に渡されると、
+(バッファーサイズより大きかったとしても) 常に実際に通信された パケットの長さが返される。
+<A NAME="lbAE">&nbsp;</A>
+<H3>アドレスのタイプ</H3>
+
+<I>sockaddr_ll</I> 構造体はデバイスに依存しない物理層のアドレスである。
+<P>
+
+
+
+struct sockaddr_ll {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;sll_family;&nbsp;&nbsp;&nbsp;/*&nbsp;常に&nbsp;AF_PACKET&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;sll_protocol;&nbsp;/*&nbsp;物理層のプロトコル&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sll_ifindex;&nbsp;&nbsp;/*&nbsp;インターフェース番号&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;sll_hatype;&nbsp;&nbsp;&nbsp;/*&nbsp;ARP&nbsp;ハードウェア種別&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;sll_pkttype;&nbsp;&nbsp;/*&nbsp;パケット種別&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;sll_halen;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;アドレスの長さ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;sll_addr[8];&nbsp;&nbsp;/*&nbsp;物理層のアドレス&nbsp;*/
+};
+
+
+<P>
+
+この構造体のフィールドは以下の通りである。
+<DL COMPACT>
+<DT>*<DD>
+<I>sll_protocol</I> is the standard ethernet protocol type in network byte order
+as defined in the <I>&lt;<A HREF="file:///usr/include/linux/if_ether.h">linux/if_ether.h</A>&gt;</I> include file.  It defaults
+to the socket's protocol.
+<DT>*<DD>
+<I>sll_ifindex</I> is the interface index of the interface (see
+<B><A HREF="../man7/netdevice.7.html">netdevice</A></B>(7)); 0 matches any interface (only permitted for binding).
+<I>sll_hatype</I> is an ARP type as defined in the <I>&lt;<A HREF="file:///usr/include/linux/if_arp.h">linux/if_arp.h</A>&gt;</I>
+include file.
+<DT>*<DD>
+<I>sll_pkttype</I> contains the packet type.  Valid types are <B>PACKET_HOST</B> for
+a packet addressed to the local host, <B>PACKET_BROADCAST</B> for a
+physical-layer broadcast packet, <B>PACKET_MULTICAST</B> for a packet sent to a
+physical-layer multicast address, <B>PACKET_OTHERHOST</B> for a packet to some
+other host that has been caught by a device driver in promiscuous mode, and
+<B>PACKET_OUTGOING</B> for a packet originating from the local host that is
+looped back to a packet socket.  These types make sense only for receiving.
+<DT>*<DD>
+<I>sll_addr</I> and <I>sll_halen</I> contain the physical-layer (e.g., IEEE 802.3)
+address and its length.  The exact interpretation depends on the device.
+</DL>
+<P>
+
+パケットを送る場合は、 <I>sll_family</I>, <I>sll_addr</I>, <I>sll_halen</I>, <I>sll_ifindex</I>,
+<I>sll_protocol</I> を指定すれば十分である。 その他のフィールドは 0 にしておくべきである。 <I>sll_hatype</I> と
+<I>sll_pkttype</I> には受信したパケットの情報が設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H3>ソケットオプション</H3>
+
+パケットソケットのオプションは、レベル <B>SOL_PACKET</B> を指定して <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2) を呼び出すことで設定できる。
+<DL COMPACT>
+<DT><B>PACKET_ADD_MEMBERSHIP</B><DD>
+
+<DT><B>PACKET_DROP_MEMBERSHIP</B><DD>
+
+packet ソケットは、物理層のマルチキャストや 無差別モード (promiscuous mode) を設定して使うことができる。
+<B>PACKET_ADD_MEMBERSHIP</B> はバインドを追加し、 <B>PACKET_DROP_MEMBERSHIP</B>
+はバインドを削除する。これらはいずれも <I>packet_mreq</I> 構造体を引数に取る。
+<DT><DD>
+
+
+struct packet_mreq {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mr_ifindex;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;インターフェース番号&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;mr_type;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;動作&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;mr_alen;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;アドレスの長さ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;mr_address[8];&nbsp;/*&nbsp;物理層のアドレス&nbsp;*/
+};
+
+
+<DT><DD>
+<I>mr_ifindex</I> は、ステータスを変更したいインターフェースの インターフェース番号である。 <I>mr_type</I>
+フィールドは実行する動作を指定する: <B>PACKET_MR_PROMISC</B> は、共有している媒体からの全てのパケットを受信できるようにする
+(しばしば &quot;無差別モード (promiscuous mode)&quot; と呼ばれる)。 <B>PACKET_MR_MULTICAST</B> は、そのソケットを、
+<I>mr_address</I> と <I>mr_alen</I> で指定される物理層のマルチキャストブループにバインドする。
+<B>PACKET_MR_ALLMULTI</B> は socket を up にして、そのインターフェースに到達したすべての
+マルチキャストパケットを受信できるようにする。
+<DT><DD>
+昔からある ioctl だけでなく、 <B>SIOCSIFFLAGS</B>, <B>SIOCADDMULTI</B>, <B>SIOCDELMULTI</B>
+を同じ目的に用いることができる。
+<DT><B>PACKET_AUXDATA</B> (Linux 2.6.21 以降)<DD>
+
+ブール値のオプションを有効すると、 パケットソケットは、パケットと一緒にメタデータ構造体を <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2) コントロールフィールドで渡す。
+この構造体は <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3) を使って読むことができる。 定義は以下の通りである。
+<DT><DD>
+
+
+
+struct tpacket_auxdata {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;tp_status;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;tp_len;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;packet&nbsp;length&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;tp_snaplen;&nbsp;&nbsp;/*&nbsp;captured&nbsp;length&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u16&nbsp;tp_mac;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u16&nbsp;tp_net;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u16&nbsp;tp_vlan_tci;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u16&nbsp;tp_vlan_tpid;&nbsp;/*&nbsp;Since&nbsp;Linux&nbsp;3.14;&nbsp;earlier,&nbsp;these
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;were&nbsp;unused&nbsp;padding&nbsp;bytes&nbsp;*/
+};
+
+
+<DT><B>PACKET_FANOUT</B> (Linux 3.1 以降)<DD>
+
+スレッドにまたがって処理をスケールさせるため、 パケットソケットはファンアウトグループを構成することができる。 このモードでは、
+マッチしたそれぞれのパケットはグループ内のいずれか一つのソケットにだけキューイングされる。 ソケットをファンアウトグループに参加させるには、 レベル
+<B>SOL_PACKET</B> でオプション <B>PACKET_FANOUT</B> を指定して <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2) を呼び出す。
+ネットワーク名前空間毎に最大 65536 個の独立したグループを持つことができる。 整数のオプション値の先頭 16 ビットに ID
+をエンコードすることで、 ソケットはグループを選択する。 あるグループへの最初のパケットソケットの参加があった時点で、
+グループは暗黙のうちに作成される。 既存のグループへの参加が成功するためには、 それ以降にそのグループに参加しようとするパケットソケットは、
+プロトコロ、 デバイス設定、ファンアウトモード、フラグが同じである必要がある (下記参照)。 パケットソケットがファンアウトグループから抜けるのは、
+そのソケットをクローズした場合だけである。 ファンアウトグループは最後のソケットがクローズした場合に削除される。
+<DT><DD>
+Fanout supports multiple algorithms to spread traffic between sockets, as
+follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+The default mode, <B>PACKET_FANOUT_HASH</B>, sends packets from the same flow to
+the same socket to maintain per-flow ordering.  For each packet, it chooses
+a socket by taking the packet flow hash modulo the number of sockets in the
+group, where a flow hash is a hash over network-layer address and optional
+transport-layer port fields.
+<DT>*<DD>
+The load-balance mode <B>PACKET_FANOUT_LB</B> implements a round-robin
+algorithm.
+<DT>*<DD>
+<B>PACKET_FANOUT_CPU</B> selects the socket based on the CPU that the packet
+arrived on.
+<DT>*<DD>
+<B>PACKET_FANOUT_ROLLOVER</B> processes all data on a single socket, moving to
+the next when one becomes backlogged.
+<DT>*<DD>
+<B>PACKET_FANOUT_RND</B> selects the socket using a pseudo-random number
+generator.
+<DT>*<DD>
+
+<B>PACKET_FANOUT_QM</B> (available since Linux 3.14)  selects the socket using
+the recorded queue_mapping of the received skb.
+</DL>
+</DL>
+
+<DT><DD>
+ファンアウトモードでは追加のオプションがある。 IP フラグメンテーションが起こると、
+同じフローのパケットのフローハッシュが異なるハッシュを持つことになる。 フラグ <B>PACKET_FANOUT_FLAG_DEFRAG</B>
+をセットすると、 パケットはファンアウトを行う前にフラグメント再構築が行われるようになり、 フラグメントがあった場合でも順序が維持される。
+ファンアウトモードとオプションは、 整数のオプション値の下位 16 ビットで指定される。 フラグ
+<B>PACKET_FANOUT_FLAG_ROLLOVER</B> を指定すると、 バックアップ戦略としてロールオーバー方式が有効になる。
+元のファンアウトアルゴリズムが backlog ソケットを選択していれば、 パケットは次の利用可能なソケットにロールオーバーされる。
+<DT><B>PACKET_LOSS</B> (<B>PACKET_TX_RING</B> で使用)<DD>
+送信リングで不正な形式のパケットに遭遇した場合、 デフォルトではそのリングの <I>tp_status</I> を
+<B>TP_STATUS_WRONG_FORMAT</B> に戻し、その送信を直ちに中止する。
+不正な形式のパケットにより、そのパケット自身とその以降にキューに入れられたパケットの送信がブロックされる。形式エラーを修正し、関連する
+<I>tp_status</I> を <B>TP_STATUS_SEND_REQUEST</B> に設定し直し、<B><A HREF="../man2/send.2.html">send</A></B>(2)
+を使って送信処理を再開しなければならない。 しかしながら、 <B>PACKET_LOSS</B> がセットされている場合、
+不正な形式のパケットはすべてスキップされ、 その送信リングの <I>tp_status</I> は <B>TP_STATUS_AVAILABLE</B>
+に設定し直され、送信処理は継続される。
+<DT><B>PACKET_RESERVE</B> (<B>PACKET_RX_RING</B> で使用)<DD>
+デフォルトでは、パケット受信リングはメタデータ構造体とアライメント用のパディングの直後にパケットを書き込む。
+この整数オプションを設定すると、パケットの前に追加で領域が予約される。
+<DT><B>PACKET_RX_RING</B><DD>
+非同期でのパケット受信用のメモリーマップされたリングバッファーを作成する。 パケットソケットはアプリケーションのアドレス空間に連続する領域を確保し、
+そこにパケットスロットの配列を構成し、 (最大 <I>tp_snaplen</I> 個の) パケットを順にスロットにコピーする。 各パケットの前には
+<I>tpacket_auxdata</I> に似たメタデータ構造体が置かれる。
+プロトコルフィールドには、データの、メタデータヘッダーの先頭からのオフセットが入る。 <I>tp_net</I> にはネットワーク層へのオフセットが格納される。
+パケットソケットが <B>SOCK_DGRAM</B> 型の場合、 <I>tp_mac</I> も同じである。 <B>SOCK_RAW</B> 型の場合、 <I>tp_net</I>
+にはリンク層のフレームへのオフセットが入る。 パケットソケットとアプリケーションは <I>tp_status</I> フィールドを通してリングの先頭
+(head) と末尾 (tail) の情報を受け渡す。 パケットソケットは <I>tp_status</I> が <B>TP_STATUS_KERNEL</B>
+のすべてのスロットを所有しており、 スロットにデータが入ると、
+パケットソケットはそのスロットのステータスをアプリケーションに所有権を渡す状態に変更する。 通常の動作では、 新しい <I>tp_status</I>
+で少なくとも <B>TP_STATUS_USER</B> ビットがセットされていれば、 受信されたパケットが格納されたことを示している。
+アプリケーションがパケットの処理を終えると、アプリケーションはそのスロットの <B>tp_status</B> を <B>TP_STATUS_KERNEL</B>
+に設定し、そのスロットの所有権をソケットに返す。
+<DT><DD>
+パケットソケットは、複数バージョンのパケットリングを実装している。 実装の詳細は Linux カーネルソースツリーの
+<I>Documentation/networking/packet_mmap.txt</I> で説明されている。
+<DT><B>PACKET_STATISTICS</B><DD>
+パケットソケットの統計情報を次の構造体形式で取得する。
+<DT><DD>
+
+
+struct tpacket_stats {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;tp_packets;&nbsp;&nbsp;/*&nbsp;総パケット数&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;tp_drops;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ドロップパケット数&nbsp;*/
+};
+
+
+<DT><DD>
+統計情報を取得すると、内部カウンターはリセットされる。 <B>TPACKET_V3</B> のリングを使う場合には、統計情報構造体は違うものになる。
+<DT><B>PACKET_TIMESTAMP</B> (<B>PACKET_RX_RING</B> で使用; Linux 2.6.36 以降)<DD>
+
+パケット受信リングでは常にタイムスタンプがメタデータヘッダーに格納される。
+デフォルトでは、タイムスタンプはパケットがリングにコピーされた時点で生成されるソフトウェアによるタイムスタンプである。
+この整数オプションによりタイムスタンプの種類を選択できる。 デフォルト以外では、 Linux カーネルソースツリーの
+<I>Documentation/networking/timestamping.rst</I> に説明がある 2
+種類のハードウェアフォーマットがサポートされている。
+<DT><B>PACKET_TX_RING</B> (Linux 2.6.31 以降)<DD>
+
+パケット送信用のメモリーマップされたリングバッファーを作成する。 このオプションは <B>PACKET_RX_RING</B> と同様で、同じ引数を取る。
+アプリケーションは <I>tp_status</I> が <B>TP_STATUS_AVAILABLE</B> のスロットにパケットを書き込み、
+<I>tp_status</I> を <B>TP_STATUS_SEND_REQUEST</B> に変更することでそのパケットの送信を予約する。
+パケットの送信準備ができたら、アプリケーションは続けて <B><A HREF="../man2/send.2.html">send</A></B>(2) 系のシステムコールを呼び出す。 システムコールの引数 <I>buf</I> と
+<I>len</I> は無視される。 <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2) や <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2) を使ってアドレスが渡された場合、
+ソケットのデフォルト値ではなくそのアドレスが使用される。 送信に成功すると、ソケットはそのスロットの <I>tp_status</I> を
+<B>TP_STATUS_AVAILABLE</B> に戻す。 エラーの場合、 <B>PACKET_LOSS</B> がセットされていなければ、
+直ちに送信を中断しエラーを上げる。
+<DT><B>PACKET_VERSION</B> (<B>PACKET_RX_RING</B> で使用; Linux 2.6.27 以降)<DD>
+
+デフォルトでは、 <B>PACKET_RX_RING</B> は <B>TPACKET_V1</B>
+のパケット受信リングを作成する。別のバージョンのリングを作成するには、そのリングを作成する前に希望するバージョンが使われるようにこの整数オプションを設定すること。
+<DT><B>PACKET_QDISC_BYPASS</B> (Linux 3.14 以降)<DD>
+
+デフォルトでは、パケットはカーネルの qdisc (トラフィック制御) レイヤー経由で渡される。 これは大半のユースケースに合っている。
+ネットワークに対して可能な限りパケットを送信する (例えば pkggen と同様の方法で負荷対象のデバイスを試験する)
+のにパケットソケットを使うトラフィック生成アプライアンスでは、この整数オプションを 1 に設定することで qdisc レイヤーを飛ばすことができる。
+qdisc レイヤーでのパケットバッファーが行われなくなるという副作用がある。 これにより、
+ネットワークデバイスの送信キューの使用量が高い場合にパケット廃棄が起きやすくなる。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>ioctl</H3>
+
+
+<B>SIOCGSTAMP</B> を用いると、最後に受信したパケットのタイムスタンプを得ることができる。 引数は <I>struct timeval</I>
+型の変数である。
+<P>
+
+さらに、 <B><A HREF="../man7/netdevice.7.html">netdevice</A></B>(7)  および <B><A HREF="../man7/socket.7.html">socket</A></B>(7)  で定義されている標準の ioctl はいずれも packet
+ソケットに指定可能である。
+<A NAME="lbAH">&nbsp;</A>
+<H3>エラー処理</H3>
+
+packet ソケットは、パケットをデバイスドライバに渡すときに 起きたエラーしか処理しない。遅延エラー (pending error)
+に関する概念は持っていない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EADDRNOTAVAIL</B><DD>
+不明なマルチキャストグループアドレスが渡された。
+<DT><B>EFAULT</B><DD>
+ユーザーが渡したメモリーアドレスが不正。
+<DT><B>EINVAL</B><DD>
+引数が不正。
+<DT><B>EMSGSIZE</B><DD>
+パケットがインターフェースの MTU より大きい。
+<DT><B>ENETDOWN</B><DD>
+インターフェースが up でない。
+<DT><B>ENOBUFS</B><DD>
+パケットに割り当てるメモリーが足りない。
+<DT><B>ENODEV</B><DD>
+デバイス名が不明。あるいはインターフェースアドレスで指定された インターフェースインデックスが不明。
+<DT><B>ENOENT</B><DD>
+パケットを一つも受信していない。
+<DT><B>ENOTCONN</B><DD>
+インターフェースアドレスが渡されなかった。
+<DT><B>ENXIO</B><DD>
+インターフェースアドレスに不正なインターフェースインデックスが含まれている。
+<DT><B>EPERM</B><DD>
+この操作を行うのに必要な権限をユーザーが持っていない。
+</DL>
+<P>
+
+上記以外のエラーが、低レベルのドライバで生成されることがある。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>AF_PACKET</B> は Linux 2.2 の新機能である。これより古いバージョンの Linux では <B>SOCK_PACKET</B>
+のみをサポートしていた。
+<P>
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+移植性の必要なプログラムでは、 <B>pcap</B>(3)  経由で <B>AF_PACKET</B> を用いることをお薦めする。ただし、この方法では
+<B>AF_PACKET</B> の機能すべてを利用することはできない。
+<P>
+
+<B>SOCK_DGRAM</B> packet ソケットは、IEEE 802.3 フレームの IEEE 802.2 LLC ヘッダーの
+生成や解析を行おうとしない。 <B>ETH_P_802_3</B> が送信プロトコルに指定されると、カーネルは 802.3 フレームを 生成して length
+フィールドに書き込む。 完全に準拠したパケットを得るためにはユーザーが LLC ヘッダーを 与える必要がある。到着した 802.3 パケットでは、
+DSAP/SSAP protocol の各フィールドは多重化 (multiplex) されていない。 代わりにこれらは LLC ヘッダーが前置された
+<B>ETH_P_802_2</B> プロトコルとして与えられる。したがって、 <B>ETH_P_802_3</B> にバインドすることはできない。かわりに
+<B>ETH_P_802_2</B> にバインドし、自分自身でプロトコルの多重化を行うこと。 送信のデフォルトは、プロトコルフィールドを持つ 標準の
+Ethernet DIX encapsulation である。
+<P>
+
+packet ソケットは入出力の firewall chain に影響をうけない。
+<A NAME="lbAL">&nbsp;</A>
+<H3>移植性</H3>
+
+In Linux 2.0, the only way to get a packet socket was with the call:
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;socket(AF_INET,&nbsp;SOCK_PACKET,&nbsp;protocol)
+<P>
+
+This is still supported, but deprecated and strongly discouraged.  The main
+difference between the two methods is that <B>SOCK_PACKET</B> uses the old
+<I>struct sockaddr_pkt</I> to specify an interface, which doesn't provide
+physical-layer independence.
+<P>
+
+
+
+struct sockaddr_pkt {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;spkt_family;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;spkt_device[14];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;spkt_protocol;
+};
+
+
+<P>
+
+<I>spkt_family</I> はデバイスのタイプ、 <I>spkt_protocol</I> は <I>&lt;<A HREF="file:///usr/include/sys/if_ether.h">sys/if_ether.h</A>&gt;</I>
+で定義されている IEEE 802.3 プロトコルタイプ、 <I>spkt_device</I> はデバイスの名前をヌル終端された文字列で与えたもの (例:
+eth0) である。
+<P>
+
+この構造体は obsolete であり、 新しくコードを書く時には用いるべきでない。
+<A NAME="lbAM">&nbsp;</A>
+<H2>バグ</H2>
+
+IEEE 802.2/803.3 の LLC の扱い方は、バグと考えても良いだろう。
+<P>
+
+ソケットフィルターについて記載されていない。
+<P>
+
+
+
+
+
+<B>MSG_TRUNC</B> <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)  拡張は非常にまずい対処であり、制御メッセージで置き換えるべきである。 今のところ
+<B>SOCK_DGRAM</B> 経由でパケットについていた宛先アドレスを得る方法がない。
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B>pcap</B>(3), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/ip.7.html">ip</A></B>(7), <B><A HREF="../man7/raw.7.html">raw</A></B>(7),
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7)
+<P>
+
+標準 IP Ethernet encapsulation に関しては RFC&nbsp;894 を、 IEEE 802.3 IP encapsulation
+に関しては RFC&nbsp;1700 を参照。
+<P>
+
+物理層のプロトコルに関する記述は <I>&lt;<A HREF="file:///usr/include/linux/if_ether.h">linux/if_ether.h</A>&gt;</I> インクルードファイルにある。
+<P>
+
+Linux カーネルのソースツリー。 <I>Documentation/networking/filter.rst</I> には Berkeley Packet
+Filters をパケットソケットにどのように適用するかの説明がある。
+<I>/tools/testing/selftests/net/psock_tpacket.c</I> には、 <B>PACKET_RX_RING</B> と
+<B>PACKET_TX_RING</B> の利用可能なすべてのバージョンのサンプルソースコードがある。
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">アドレスのタイプ</A><DD>
+<DT><A HREF="#lbAF">ソケットオプション</A><DD>
+<DT><A HREF="#lbAG">ioctl</A><DD>
+<DT><A HREF="#lbAH">エラー処理</A><DD>
+</DL>
+<DT><A HREF="#lbAI">エラー</A><DD>
+<DT><A HREF="#lbAJ">バージョン</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAL">移植性</A><DD>
+</DL>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

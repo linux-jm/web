@@ -1,0 +1,214 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DUP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>DUP</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/dup.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+dup, dup2, dup3 - ファイルディスクリプターを複製する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int dup(int </B><I>oldfd</I><B>);</B>
+<B>int dup2(int </B><I>oldfd</I><B>, int </B><I>newfd</I><B>);</B>
+
+<B>#define _GNU_SOURCE</B>             /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>              /* 定数 O_* の定義の取得 */
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int dup3(int </B><I>oldfd</I><B>, int </B><I>newfd</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>dup</B>() システムコールは、 ファイルディスクリプター <I>oldfd</I> のコピーを作成し、 最も小さい番号の未使用のファイルディスクリプターを
+新しいディスクリプターとして使用する。
+<P>
+
+成功が返された場合には、 古いファイルディスクリプターと新しいファイルディスクリプターは 互いに可換なものとして使うことができる。
+2つのファイルディスクリプターは同じファイル記述 (description)  (<B><A HREF="../man2/open.2.html">open</A></B>(2)  参照)
+を参照しており、したがってファイルオフセットやファイル状態フラグが 共有される。例えば、一方のファイルディスクリプターに対して <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)
+を使ってファイルオフセットを変更した場合、もう一方のファイルディスクリプターの オフセットも変化する。
+<P>
+
+
+2つのファイルディスクリプターはファイルディスクリプターフラグ (close-on-exec flag)  を共有しない。複製されたディスクリプターの
+close-on-exec flag (<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  参照) は off となる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>dup2()</H3>
+
+<B>dup2</B>() システムコールは <B>dup</B>() と同じ処理を実行するが、
+番号が最も小さい未使用のファイルディスクリプターを使用する代わりに、
+<I>newfd</I> で指定されたファイルディスクリプター番号を使用する。
+ファイルディスクリプター <I>newfd</I> が以前にオープンされていた場合には、
+黙ってそのファイルディスクリプターをクローズしてから再利用する。
+<P>
+
+ファイルディスクリプター <I>newfd</I> をクローズして再利用する処理は
+<I>アトミック(不可分)に</I>実行される。これは重要な点である。 なぜなら、
+等価な機能を <B><A HREF="../man2/close.2.html">close</A></B>(2) と <B>dup</B>() を使って実装しようとすると、
+2 つの処理の間に <I>newfd</I> が再利用されてしまうという、
+競合状態にさらされることになるからだ。
+このような再利用が起こるのは、
+メインプログラムがファイルディスクリプターを割り当てる
+シグナルハンドラーにより割り込まれたり、並行動作するスレッドが
+ファイルディスクリプターを割り当てたりすることがあるからだ。
+<P>
+
+以下の点について注意すること:
+<DL COMPACT>
+<DT>*<DD>
+<I>oldfd</I> が有効なファイルディスクリプターでない場合、その呼び出しは失敗し、 <I>newfd</I> はクローズされない。
+<DT>*<DD>
+
+<I>oldfd</I> が有効なファイルディスクリプターで、 <I>newfd</I> が <I>oldfd</I> と同じ値の場合、 <B>dup2</B>()  は何もせず、
+<I>newfd</I> を返す。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>dup3()</H3>
+
+<B>dup3</B>()  は <B>dup2</B>()  と同じだが、以下の点が異なる。
+<DL COMPACT>
+<DT>*<DD>
+呼び出し元が、新しいファイルディスクリプターに対して close-on-exec フラグを強制的に設定することができる。 これを行うには、
+<I>flags</I> に <B>O_CLOEXEC</B> を指定する。 このフラグが役に立つ理由については、 <B><A HREF="../man2/open.2.html">open</A></B>(2)  の <B>O_CLOEXEC</B>
+フラグの説明を参照のこと。
+<DT>*<DD>
+
+
+
+<I>oldfd</I> が <I>newfd</I> と同じ場合、 <B>dup3</B>()  は <B>EINVAL</B> エラーで失敗する。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、これらのシステムコールは新しいファイルディスクリプターを返す。 エラーの場合、-1 を返し、 <I>errno</I> を適切に設定する。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>oldfd</I> がオープンされたファイルディスクリプターではない。
+<DT><B>EBADF</B><DD>
+<I>newfd</I> がファイルディスクリプターとして許可されている範囲ではない (<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2) の <B>RLIMIT_NOFILE</B>
+の議論を参照)。
+<DT><B>EBUSY</B><DD>
+(Linux のみ)  <B><A HREF="../man2/open.2.html">open</A></B>(2)  や <B>dup</B>()  との競合状態の場合に、 <B>dup2</B>()  や <B>dup3</B>()
+はこのエラーを返すかもしれない。
+<DT><B>EINTR</B><DD>
+<B>dup2</B>()  や <B>dup3</B>()  の呼び出しがシグナルにより割り込まれた。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EINVAL</B><DD>
+(<B>dup3</B>())  <I>flags</I> に無効な値が入っている。
+<DT><B>EINVAL</B><DD>
+(<B>dup3</B>()) <I>oldfd</I> が <I>newfd</I> と同じであった。
+<DT><B>EMFILE</B><DD>
+The per-process limit on the number of open file descriptors has been
+reached (see the discussion of <B>RLIMIT_NOFILE</B> in <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)).
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>dup3</B>()  はバージョン 2.6.27 で Linux に追加された。 glibc によるサポートはバージョン 2.9 以降で利用できる。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>dup</B>(), <B>dup2</B>(): POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.
+<P>
+
+
+
+
+<B>dup3</B>()  は Linux 固有である。
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+<I>newfd</I> が範囲を超えた時に返されるエラーは、 <B>dup2</B>()  と <B>fcntl(</B>..., <B>F_DUPFD</B>, ...<B>)</B>
+では異っている。 <B>dup2</B>()  が <B>F_DUPFD</B> と同じように <B>EINVAL</B> を返すシステムもある。
+<P>
+
+<I>newfd</I> がオープンされていた場合、
+<B><A HREF="../man2/close.2.html">close</A></B>(2) 時に報告されることになるエラーはすべて失われる。
+これが心配で、シングルスレッドかつシグナルハンドラーで
+ファイルディスクリプターを割り当てるようなプログラムでない場合には、
+正しい方法は <B>dup2</B>() を呼び出す前に
+<I>newfd</I> をクローズ「しない」ことである。
+なぜなら、上で説明した競合状況があるからである。
+代わりに、以下のようなコードが使用できることだろう。
+<P>
+
+
+
+/* あとで close() エラーをチェックするのに使用できる
+<BR>&nbsp;&nbsp;&nbsp;ように&nbsp;'newfd'&nbsp;の複製を取得する。&nbsp;EBADF&nbsp;エラーは
+<BR>&nbsp;&nbsp;&nbsp;'newfd'&nbsp;がオープンされていないことを意味する。&nbsp;*/
+<P>
+tmpfd = dup(newfd);
+if (tmpfd == -1 &amp;&amp; errno != EBADF) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;予期しない&nbsp;dup()&nbsp;のエラーを処理する&nbsp;*/
+}
+<P>
+/* アトミックに 'oldfd' を 'newfd' に複製する */
+<P>
+if (dup2(oldfd, newfd) == -1) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;dup2()&nbsp;のエラーを処理する&nbsp;*/
+}
+<P>
+/* ここでもともと 'newfd' で参照されていたファイルの
+<BR>&nbsp;&nbsp;&nbsp;close()&nbsp;エラーをチェックする&nbsp;*/
+<P>
+if (tmpfd != -1) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(close(tmpfd)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;close&nbsp;からのエラーを処理する&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/close.2.html">close</A></B>(2), <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2), <B><A HREF="../man2/open.2.html">open</A></B>(2), <B>pidfd_getfd</B>(2)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">dup2()</A><DD>
+<DT><A HREF="#lbAF">dup3()</A><DD>
+</DL>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
+<DT><A HREF="#lbAJ">準拠</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

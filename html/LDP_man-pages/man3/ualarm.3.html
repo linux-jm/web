@@ -1,0 +1,149 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UALARM</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>UALARM</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/ualarm.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ualarm - 指定したマイクロ秒後にシグナルを送る予定をする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>useconds_t ualarm(useconds_t </B><I>usecs</I><B>, useconds_t </B><I>interval</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>ualarm</B>():
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>glibc 2.12 以降:<DD>
+<PRE>
+(_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500) &amp;&amp; ! (_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L)
+    || /* Glibc 2.19 以降: */ _DEFAULT_SOURCE
+    || /* Glibc 2.19 以前: */ _BSD_SOURCE
+</PRE>
+
+<DT>glibc 2.12 より前:<DD>
+
+<BR>&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+
+</DL>
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>ualarm</B>()  関数は、呼び出し元のプロセスに対して <I>usecs</I> マイクロ秒 (以上) 後に <B>SIGALRM</B> シグナルを送る。
+遅れはシステムの活性度・呼び出しの処理時間・ システムタイマーの粒度によって長くなるかもしれない。
+<P>
+
+捕捉または無視されない限り、 <B>SIGALRM</B> シグナルはプロセスを終了させる。
+<P>
+
+<I>interval</I> 引数が 0 でない場合、最初の <B>SIGALRM</B> シグナルの後、 さらに <I>interval</I> マイクロ秒毎に
+SIGALRM シグナルが送られる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+この関数は、過去に設定された alarm の残りマイクロ秒数を返す。 実行中の alarm がない場合は 0 を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINTR</B><DD>
+シグナルによって中断された。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
+<DT><B>EINVAL</B><DD>
+<I>usecs</I> または <I>interval</I> が 1000000 未満でない (これがエラーとして扱われるシステムの場合)。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<BR>&nbsp;<B>ualarm</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+4.3BSD, POSIX.1-2001.  POSIX.1-2001 では <B>ualarm</B>()  は過去のものとされている。
+POSIX.1-2008 では、 <B>ualarm</B>()  の仕様が削除されている。 4.3BSD, SUSv2, POSIX
+はエラーを定義していない。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+
+POSIX.1-2001 では、 <I>usecs</I> 引数が 0 の場合、何が起こるかは規定されていない。 Linux (やおそらく他ほとんどのシステム)
+では、 <I>usecs</I> 引数が 0 の場合、処理待ちのアラームがキャンセルされる。
+<P>
+
+<I>useconds_t</I> 型は [0,1000000] の範囲の整数を保持できる符号なし整数型である。 もともとの BSD での実装や、バージョン
+2.1 より前の glibc では、 <B>ualarm</B>()  の引数の型は <I>unsigned int</I> であった。 プログラム中に明示的に
+<I>useconds_t</I> と書かない方が、移植性が高くなる。
+<P>
+
+この関数と <B><A HREF="../man2/alarm.2.html">alarm</A></B>(2), <B><A HREF="../man3/sleep.3.html">sleep</A></B>(3), <B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2), <B><A HREF="../man2/setitimer.2.html">setitimer</A></B>(2),
+<B>timer_create</B>(2), <B><A HREF="../man2/timer_delete.2.html">timer_delete</A></B>(2), <B>timer_getoverrun</B>(2),
+<B>timer_gettime</B>(2), <B>timer_settime</B>(2), <B><A HREF="../man3/usleep.3.html">usleep</A></B>(3)
+のような他のタイマー関数との相互作用は規定されていない。
+<P>
+
+この関数は廃止予定である。 代わりに <B><A HREF="../man2/setitimer.2.html">setitimer</A></B>(2)  もしくは POSIX インターバルタイマー
+(<B>timer_create</B>(2)  など) を使うこと。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/alarm.2.html">alarm</A></B>(2), <B><A HREF="../man2/getitimer.2.html">getitimer</A></B>(2), <B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2),
+<B><A HREF="../man2/setitimer.2.html">setitimer</A></B>(2), <B><A HREF="../man3/usleep.3.html">usleep</A></B>(3), <B><A HREF="../man7/time.7.html">time</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

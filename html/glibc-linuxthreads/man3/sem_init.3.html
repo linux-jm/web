@@ -1,0 +1,335 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SEMAPHORES</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SEMAPHORES</H1>
+Section: C Library Functions (3)<BR>Updated: LinuxThreads<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/glibc-linuxthreads/release/man3/sem_init.3">roff page</A><HR>
+
+<P>
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sem_init, sem_wait, sem_trywait, sem_post, sem_getvalue, sem_destroy - セマフォの操作
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/semaphore.h">semaphore.h</A>&gt;</B>
+
+<P>
+<B>int sem_init(sem_t *</B><I>sem</I><B>, int </B><I>pshared</I><B>, unsigned int </B><I>value</I><B>);</B>
+
+<P>
+<B>int sem_wait(sem_t * </B><I>sem</I><B>);</B>
+
+<P>
+<B>int sem_trywait(sem_t * </B><I>sem</I><B>);</B>
+
+<P>
+<B>int sem_post(sem_t * </B><I>sem</I><B>);</B>
+
+<P>
+<B>int sem_getvalue(sem_t * </B><I>sem</I><B>, int * </B><I>sval</I><B>);</B>
+
+<P>
+<B>int sem_destroy(sem_t * </B><I>sem</I><B>);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+このマニュアルページは POSIX 1003.1b のセマフォについて記述しており、
+<B>ipc</B>(5)
+
+や
+<B><A HREF="../../LDP_man-pages/man2/semctl.2.html">semctl</A></B>(2)
+
+、
+<B><A HREF="../../LDP_man-pages/man2/semop.2.html">semop</A></B>(2)
+
+に記述されている SystemV セマフォと混同してはならない。
+<P>
+セマフォはスレッド間で共有される資源を管理するためのカウンタである。
+セマフォに関する基本的な操作は次の 2 つである:
+カウンタを一息で 1 だけ増加させることと、
+カウンタが 0 でなくなるまで待ったあと一息で 1 だけ減少させることである。
+<P>
+<B>sem_init</B>
+
+は
+<I>sem</I>
+
+で指定されるセマフォオブジェクトを初期化する。
+セマフォに結び付けられるカウントは
+<I>value</I>
+
+に初期化される。
+引数
+<I>pshared</I>
+
+はセマフォが現在のプロセスだけで有効 (
+<I>pshared</I>
+
+が 0) か複数のプロセスで共有される (
+<I>pshared</I>
+
+が非 0) かを指定する。LinuxThreads は現在のところ
+プロセス間共有セマフォはサポートしていない。
+そのため、
+<I>pshared</I>
+
+が 0 でない場合は、
+<B>sem_init</B>
+
+は常にエラー
+<B>ENOSYS</B>
+
+を返す。
+<P>
+<B>sem_wait</B>
+
+は、
+<I>sem</I>
+
+で指定されるセマフォのカウントが非 0 になるまで
+呼び出しスレッドの実行を停止する。
+そしてセマフォカウントを一息で 1 だけ減少させる。
+<P>
+<B>sem_trywait</B>
+
+はブロックをともなわない
+<B>sem_wait</B>
+
+である。
+<I>sem</I>
+
+で指定されるセマフォのカウントが非 0 の場合には
+一息でカウントが 1 だけ減少されて
+<B>sem_trywait</B>
+
+は直ちに 0 を返す。
+セマフォカウントが 0 の場合には
+<B>sem_trywait</B>
+
+は直ちにエラー
+<B>EAGAIN</B>
+
+を返す。
+<P>
+<B>sem_post</B>
+
+は
+<I>sem</I>
+
+で指定されるセマフォのカウントを一息で 1 だけ増加させる。
+この関数は決してブロックすることはなく、
+非同期シグナルハンドラの中でも安全に使用することができる。
+<P>
+<B>sem_getvalue</B>
+
+は
+<I>sval</I>
+
+で指し示される領域に
+セマフォ
+<I>sem</I>
+
+の現在のカウントを格納する。
+<P>
+<B>sem_destroy</B>
+
+はセマフォオブジェクトを破壊し、
+セマフォオブジェクトが保持していた資源を解放する。
+<B>sem_destroy</B>
+
+が呼び出されるときにそのセマフォを獲得待ちしている
+スレッドがあってはならない。
+LinuxThreads の実装では、
+セマフォオブジェクトは何も資源を保持しないため、
+<B>sem_destroy</B>
+
+はそのスレッドを獲得待ちしているスレッドがないことを
+チェックする以外に何もしない。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>取り消し</H2>
+
+<P>
+<B>sem_wait</B>
+
+は取り消しポイントである。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>非同期シグナルの安全性</H2>
+
+<P>
+不可分の比較交換命令 (compare-and-swap) をサポートしている
+CPU (Intel 486 や Pentium およびその後継、
+Alpha 、 PowerPC 、 MIPS II 、 Motorola 68k) では、
+関数
+<B>sem_post</B>
+
+は非同期シグナルに対して安全であり、
+そのためシグナルハンドラから呼び出すことが可能である。
+<B>sem_post</B>
+
+は、非同期シグナルに対して安全な、
+POSIX スレッドで提供される唯一のスレッド同期関数である。
+<P>
+Intel 386 と Sparc においては、
+現時点の LinuxThreads の実装では
+<B>sem_post</B>
+
+は非同期シグナルに対して安全でない。
+これは必要な不可分命令が存在しないからである。
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+<P>
+関数
+<B>sem_wait</B>
+
+および
+<B>sem_getvalue</B>
+
+は常に 0 を返す。
+他のセマフォ関数はすべて、
+成功すると 0 を返し、
+エラーならば -1 を返してエラーコードを
+<B>errno</B>
+
+に格納する。
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<P>
+関数
+<B>sem_init</B>
+
+はエラーの場合に次のようなエラーコードを
+<B>errno</B>
+
+に格納する。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+<I>value</I>
+
+がカウンタの最大値
+<B>SEM_VALUE_MAX</B>
+
+を超えている。
+<DT><B>ENOSYS</B>
+
+<DD>
+<I>pshared</I>
+
+が 0 でない。
+</DL>
+</DL>
+
+<P>
+関数
+<B>sem_trywait</B>
+
+はエラーの場合に次のようなエラーコードを
+<B>errno</B>
+
+に格納する。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EAGAIN</B>
+
+<DD>
+現時点のセマフォカウントが 0 である。
+</DL>
+</DL>
+
+<P>
+関数
+<B>sem_post</B>
+
+はエラーの場合に次のようなエラーコードを
+<B>errno</B>
+
+に格納する。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>ERANGE</B>
+
+<DD>
+カウンタを増加すると、セマフォの値が
+<B>SEM_VALUE_MAX</B>
+
+を超えてしまう
+(この場合、セマフォカウントは変更されない) 。
+</DL>
+</DL>
+
+<P>
+関数
+<B>sem_destroy</B>
+
+はエラーの場合に次のようなエラーコードを
+<B>errno</B>
+
+に格納する:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EBUSY</B>
+
+<DD>
+指定したセマフォの獲得待ちでブロックされているスレッドがある。
+</DL>
+</DL>
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+Xavier Leroy &lt;<A HREF="mailto:Xavier.Leroy@inria.fr">Xavier.Leroy@inria.fr</A>&gt;
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連事項</H2>
+
+<B><A HREF="../man3/pthread_mutex_init.3.html">pthread_mutex_init</A></B>(3),
+
+<B><A HREF="../man3/pthread_cond_init.3.html">pthread_cond_init</A></B>(3),
+
+<B><A HREF="../man3/pthread_cancel.3.html">pthread_cancel</A></B>(3),
+
+<B>ipc</B>(5).
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">取り消し</A><DD>
+<DT><A HREF="#lbAF">非同期シグナルの安全性</A><DD>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+<DT><A HREF="#lbAJ">関連事項</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

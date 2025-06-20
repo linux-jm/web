@@ -1,0 +1,287 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of NAMESPACES</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>NAMESPACES</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2014-09-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/namespaces.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+namespaces - Linux 名前空間の概要
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+名前空間は、 グローバルシステムリソースを抽象化層で覆うことで、 名前空間内のプロセスに対して、
+自分たちが専用の分離されたグローバルリソースを持っているかのように見せる仕組みである。 グローバルリソースへの変更は、
+名前空間のメンバーである他のプロセスには見えるが、 それ以外のプロセスには見えない。 名前空間の一つの利用方法はコンテナーの実装である。
+<P>
+Linux では以下の名前空間が提供される。
+<TABLE>
+<TR VALIGN=top><TD><B>名前空間</B></TD><TD><B>定数</B></TD><TD><B>分離対象</B><BR></TD></TR>
+<TR VALIGN=top><TD>IPC</TD><TD><B>CLONE_NEWIPC</B></TD><TD>System V IPC, POSIX メッセージキュー<BR></TD></TR>
+<TR VALIGN=top><TD>Network</TD><TD><B>CLONE_NEWNET</B></TD><TD>ネットワークデバイス、スタック、ポートなど<BR></TD></TR>
+<TR VALIGN=top><TD>Mount</TD><TD><B>CLONE_NEWNS</B></TD><TD>マウントポイント<BR></TD></TR>
+<TR VALIGN=top><TD>PID</TD><TD><B>CLONE_NEWPID</B></TD><TD>プロセス ID<BR></TD></TR>
+<TR VALIGN=top><TD>User</TD><TD><B>CLONE_NEWUSER</B></TD><TD>ユーザー ID とグループ ID<BR></TD></TR>
+<TR VALIGN=top><TD>UTS</TD><TD><B>CLONE_NEWUTS</B></TD><TD>ホスト名と NIS ドメイン名<BR></TD></TR>
+</TABLE>
+
+<P>
+
+
+
+このページでは、各種の名前空間と関連する <I>/proc</I> ファイルの説明と、名前空間とともに動作する API の概要を紹介する。
+<A NAME="lbAD">&nbsp;</A>
+<H3>名前空間 API</H3>
+
+後で説明する種々の <I>/proc</I> ファイル以外に、名前空間 API として以下のシステムコールがある。
+<DL COMPACT>
+<DT><B><A HREF="../man2/clone.2.html">clone</A></B>(2)<DD>
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2) システムコールは新しいプロセスを作成する。 呼び出し時に <I>flags</I> 引き数で以下のリストにある
+<B>CLONE_NEW*</B> のフラグを一つ以上指定すると、 各フラグに対応する新しい名前空間が作成され、 子プロセスはこれらの名前空間のメンバーになる。
+(このシステムコールは名前空間とは関係のない機能も多数実装している。)
+<DT><B><A HREF="../man2/setns.2.html">setns</A></B>(2)<DD>
+<B><A HREF="../man2/setns.2.html">setns</A></B>(2) システムコールを使うと、呼び出したプロセスを既存の名前空間に参加させることができる。 参加する名前空間は、 以下で説明する
+<I>/proc/[pid]/ns</I> ファイルのいずれか一つを参照するファイルディスクリプターを使って指定する。
+<DT><B><A HREF="../man2/unshare.2.html">unshare</A></B>(2)<DD>
+<B><A HREF="../man2/unshare.2.html">unshare</A></B>(2) システムコールは、 呼び出したプロセスを新しい名前空間に移動する。 呼び出し時の <I>flags</I>
+引き数に以下のリストにある <B>CLONE_NEW*</B> フラグを一つ以上指定すると、 各フラグに対応する新しい名前空間が作成され、
+呼び出したプロセスがこれらの名前空間のメンバーになる。 (このシステムコールは名前空間とは関係のない機能も多数実装している。)
+</DL>
+<P>
+
+
+
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2) と <B><A HREF="../man2/unshare.2.html">unshare</A></B>(2) を使った新しい名前空間の作成のほとんどの場合で <B>CAP_SYS_ADMIN</B>
+ケーパビリティが必要である。 ユーザー名前空間は例外で、 Linux 3.8 以降ではユーザー名前空間を作成するのに特権が不要である。
+<A NAME="lbAE">&nbsp;</A>
+<H3>/proc/[pid]/ns/ ディレクトリ</H3>
+
+
+各プロセスには <I>/proc/[pid]/ns/</I> サブディレクトリがあり、 このサブディレクトリには <B><A HREF="../man2/setns.2.html">setns</A></B>(2)
+での操作がサポートされている名前空間単位にエントリーが存在する。
+<P>
+
+<PRE>
+$ <B>ls -l /proc/$$/ns</B>
+total 0
+lrwxrwxrwx. 1 mtk mtk 0 Jan 14 01:20 ipc -&gt; ipc:[4026531839]
+lrwxrwxrwx. 1 mtk mtk 0 Jan 14 01:20 mnt -&gt; mnt:[4026531840]
+lrwxrwxrwx. 1 mtk mtk 0 Jan 14 01:20 net -&gt; net:[4026531956]
+lrwxrwxrwx. 1 mtk mtk 0 Jan 14 01:20 pid -&gt; pid:[4026531836]
+lrwxrwxrwx. 1 mtk mtk 0 Jan 14 01:20 user -&gt; user:[4026531837]
+lrwxrwxrwx. 1 mtk mtk 0 Jan 14 01:20 uts -&gt; uts:[4026531838]
+</PRE>
+
+
+<P>
+このディレクトリ内のファイルのいずれかをファイルシステムの他のどこかにバインドマウント (<B><A HREF="../man2/mount.2.html">mount</A></B>(2) 参照) することで、
+その名前空間のすべてのプロセスが終了した場合でも、 <I>pid</I> で指定したプロセスの対応する名前空間を保持することができる。
+<P>
+このディレクトリ内のファイルのいずれか (またはこれらのファイルのいずれかにバインドマウントされたファイル) をオープンすると、 <I>pid</I>
+で指定されたプロセスの対応する名前空間に対するファイルハンドルが返される。 このファイルディスクリプターがオープンされている限り、
+その名前空間のすべてのプロセスが終了した場合であっても、 その名前空間は存在し続ける。 このファイルディスクリプターは <B><A HREF="../man2/setns.2.html">setns</A></B>(2)
+に渡すことができる。
+<P>
+Linux 3.7 以前では、これらのファイルはハードリンクとして見えていた。 Linux 3.8 以降では、これらはシンボリックリンクとして見える。
+2 つのプロセスが同じ名前空間に所属している場合、 これらのプロセスの <I>/proc/[pid]/ns/xxx</I> シンボリックリンクの inode
+番号は同じになる。 アプリケーションは、 <B><A HREF="../man2/stat.2.html">stat</A></B>(2) が返す <I>stat.st_ino</I> フィールドを使ってこれを確認することができる。
+シンボリックリンクの内容は、 以下の例にあるように、名前空間種別と inode 番号を含む文字列である。
+<P>
+
+<PRE>
+$ <B>readlink /proc/$$/ns/uts</B>
+uts:[4026531838]
+</PRE>
+
+
+<P>
+このサブディレクトリのファイルは以下のとおりである。
+<DL COMPACT>
+<DT><I>/proc/[pid]/ns/ipc</I> (Linux 3.0 以降)<DD>
+このファイルはそのプロセスの IPC 名前空間の操作用である。
+<DT><I>/proc/[pid]/ns/mnt</I> (Linux 3.8 以降)<DD>
+このファイルはそのプロセスのマウント名前空間の操作用である。
+<DT><I>/proc/[pid]/ns/net</I> (Linux 3.0 以降)<DD>
+このファイルはそのプロセスのネットワーク名前空間の操作用である。
+<DT><I>/proc/[pid]/ns/pid</I> (Linux 3.8 以降)<DD>
+このファイルはそのプロセスの PID 名前空間の操作用である。
+<DT><I>/proc/[pid]/ns/user</I> (Linux 3.8 以降)<DD>
+このファイルはそのプロセスのユーザー名前空間の操作用である。
+<DT><I>/proc/[pid]/ns/uts</I> (Linux 3.0 以降)<DD>
+
+
+
+このファイルはそのプロセスの UTS 名前空間の操作用である。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>IPC 名前空間 (CLONE_NEWIPC)</H3>
+
+
+
+IPC 名前空間は、 特定の IPC リソース、すなわち、System V IPC オブジェクト (<B>svipc</B>(7) 参照)、(Linux
+2.6.30 以降では) POSIX メッセージキュー (<B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7) 参照) を分離する。 これらの IPC
+機構に共通の特徴は、 IPC オブジェクトがファイルシステムのパス名以外の方法で識別されるという点である。
+<P>
+各 IPC 名前空間はそれぞれ、 独自の System V IPC 識別子の集合と独自の POSIX メッセージキューファイルシステムを持つ。 IPC
+名前空間に作成されたオブジェクトは、 その名前空間のメンバーの他のすべてのプロセスにも見えるが、 他の IPC 名前空間のプロセスには見えない。
+<P>
+以下の <I>/proc</I> インターフェースは各 IPC 名前空間で別のものとなる。
+<DL COMPACT>
+<DT>*<DD>
+<I>/proc/sys/fs/mqueue</I> の POSIX メッセージキューインターフェース。
+<DT>*<DD>
+<I>/proc/sys/kernel</I> の System V IPC インターフェース。 すなわち、 <I>msgmax</I>, <I>msgmnb</I>,
+<I>msgmni</I>, <I>sem</I>, <I>shmall</I>, <I>shmmax</I>, <I>shmmni</I>, <I>shm_rmid_forced</I>。
+<DT>*<DD>
+<I>/proc/sysvipc</I> の System V IPC インターフェース。
+</DL>
+<P>
+
+IPC 名前空間が破棄されたときに (すなわち、その名前空間のメンバーの最後のプロセスが終了したときに)、 その名前空間内のすべての IPC
+オブジェクトが自動的に破棄される。
+<P>
+
+
+
+IPC 名前空間を使用するには、設定 <B>CONFIG_IPC_NS</B> が有効になったカーネルが必要である。
+<A NAME="lbAG">&nbsp;</A>
+<H3>ネットワーク名前空間 (CLONE_NEWNET)</H3>
+
+
+ネットワーク名前空間は、 ネットワークに関連するシステムリソースの分離を提供する。 分離されるリソースは、 ネットワークデバイス、 IPv4 と
+IPv6 のプロトコルスタック、 IP ルーティングテーブル、 ファイアウォール、 <I>/proc/net</I> ディレクトリ、
+<I>/sys/class/net</I> ディレクトリ、 (ソケットの) ポート番号などである。 物理ネットワークデバイスは 1
+つのネットワーク名前空間にのみ属すことができる。 仮想ネットワークデバイス (&quot;veth&quot;) ペアは、
+ネットワーク名前空間間のトンネルを作成するのに使うことができるパイプ風の抽象概念で、
+別の名前空間に属す物理ネットワークデバイスへのブリッジを作成するのに使用できる。
+<P>
+ネットワーク名前空間が解放されたときに (すなわち、その名前空間の最後のプロセスがしゅうりょうしたときに)、
+その名前空間に属していた物理ネットワークデバイスは初期ネットワーク名前空間に戻される (プロセスの親プロセスに戻されるわけではない)。
+<P>
+
+
+
+ネットワーク名前空間を使用するには、設定 <B>CONFIG_NET_NS</B> が有効になったカーネルが必要である。
+<A NAME="lbAH">&nbsp;</A>
+<H3>マウント名前空間 (CLONE_NEWNS)</H3>
+
+マウント名前空間はファイルシステムのマウントポイントの集合を分離する。
+つまり、別のマウント名前空間のプロセスには別のファイルシステム階層が見えるということである。 マウント名前空間内のマウントの集合は
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2) と <B><A HREF="../man2/umount.2.html">umount</A></B>(2) で変更される。
+<P>
+<I>/proc/[pid]/mounts</I> ファイル (Linux 2.4.19 以降に存在) は、
+そのプロセスのマウント名前空間で現在マウントされている全ファイルシステムの一覧を表示する。 このファイルのフォーマットは <B><A HREF="../../util-linux/man5/fstab.5.html">fstab</A></B>(5)
+に記載されている。 カーネルバージョン 2.6.15 以降では、このファイルをポーリングすることができる。
+すなわち、このファイルを読み出し用にオープンした後、 このファイルの変化 (ファイルシステムのマウントやアンマウント) が発生すると、
+<B><A HREF="../man2/select.2.html">select</A></B>(2) はファイルディスクリプターが読み出し可能になったと印を付け、 <B><A HREF="../man2/poll.2.html">poll</A></B>(2) や <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+はファイルがエラー状態になったかのように印を付ける。
+<P>
+<I>/proc/[pid]/mountstats</I> ファイル (Linux 2.6.17 以降に存在) は、 そのプロセスのマウントポイントに関する情報
+(統計情報、設定情報) を公開する。 このファイルはプロセスの所有者だけが読み出し可能である。 このファイルの各行は以下の形式である。
+<DL COMPACT><DT><DD>
+
+<PRE>
+
+device /dev/sda7 mounted on /home with fstype ext3 [statistics]
+(       1      )            ( 2 )             (3 ) (4)
+</PRE>
+
+
+<P>
+各行のフィールドは以下のとおりである。
+<DL COMPACT>
+<DT>(1)<DD>
+マウントされているデバイス名 (もしくは、対応するデバイスがない場合は &quot;nodevice&quot;)。
+<DT>(2)<DD>
+ファイルシステムツリー内のマウントポイント。
+<DT>(3)<DD>
+ファイルシステム種別
+<DT>(4)<DD>
+統計情報と設定情報。 オプションフィールドである。 現在のところ (Linux 2.6.26 時点)、NFS
+ファイルシステムだけがこのフィールドで情報を公開している。
+</DL>
+</DL>
+
+
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>PID 名前空間 (CLONE_NEWPID)</H3>
+
+
+
+
+<B><A HREF="../man7/pid_namespaces.7.html">pid_namespaces</A></B>(7) 参照。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>ユーザー名前空間 (CLONE_NEWUSER)</H3>
+
+
+
+
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7) 参照。
+<A NAME="lbAK">&nbsp;</A>
+<H3>UTS 名前空間 (CLONE_NEWUTS)</H3>
+
+UTS 名前空間は、 ホスト名と NIS ドメイン名の 2 つのシステム識別子を分離する。 これらの識別子は <B><A HREF="../man2/sethostname.2.html">sethostname</A></B>(2) と
+<B><A HREF="../man2/setdomainname.2.html">setdomainname</A></B>(2) を使って設定でき、 <B><A HREF="../man2/uname.2.html">uname</A></B>(2), <B><A HREF="../man2/gethostname.2.html">gethostname</A></B>(2),
+<B><A HREF="../man2/getdomainname.2.html">getdomainname</A></B>(2) を使って取得できる。
+<P>
+UTS 名前空間を使用するには、設定 <B>CONFIG_UTS_NS</B> が有効になったカーネルが必要である。
+<A NAME="lbAL">&nbsp;</A>
+<H2>準拠</H2>
+
+名前空間は Linux 独自の機能である。
+<A NAME="lbAM">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7) 参照。
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>nsenter</B>(1), <B><A HREF="../../GNU_coreutils/man1/readlink.1.html">readlink</A></B>(1), <B>unshare</B>(1), <B><A HREF="../man2/clone.2.html">clone</A></B>(2), <B><A HREF="../man2/setns.2.html">setns</A></B>(2),
+<B><A HREF="../man2/unshare.2.html">unshare</A></B>(2), <B><A HREF="../man5/proc.5.html">proc</A></B>(5), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+<B><A HREF="../man7/pid_namespaces.7.html">pid_namespaces</A></B>(7), <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7), <B>switch_root</B>(8)
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">名前空間 API</A><DD>
+<DT><A HREF="#lbAE">/proc/[pid]/ns/ ディレクトリ</A><DD>
+<DT><A HREF="#lbAF">IPC 名前空間 (CLONE_NEWIPC)</A><DD>
+<DT><A HREF="#lbAG">ネットワーク名前空間 (CLONE_NEWNET)</A><DD>
+<DT><A HREF="#lbAH">マウント名前空間 (CLONE_NEWNS)</A><DD>
+<DT><A HREF="#lbAI">PID 名前空間 (CLONE_NEWPID)</A><DD>
+<DT><A HREF="#lbAJ">ユーザー名前空間 (CLONE_NEWUSER)</A><DD>
+<DT><A HREF="#lbAK">UTS 名前空間 (CLONE_NEWUTS)</A><DD>
+</DL>
+<DT><A HREF="#lbAL">準拠</A><DD>
+<DT><A HREF="#lbAM">例</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

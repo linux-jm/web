@@ -1,0 +1,451 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 工具 (tools) を組み合わせる</title>
+
+<meta name="description" content="GNU Coreutils: 工具 (tools) を組み合わせる">
+<meta name="keywords" content="GNU Coreutils: 工具 (tools) を組み合わせる">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="Putting-the-tools-together"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_216.html#The-uniq-command" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_218.html#About-the-translation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_210.html#Opening-the-software-toolbox" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_210.html#Opening-the-software-toolbox" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_218.html#About-the-translation" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="Gong-Ju--_0028tools_0029-woZu-miHe-waseru"></a>
+<h2 class="unnumberedsec">工具 (tools) を組み合わせる</h2>
+
+<p>さて、大規模な ISP のサーバーシステムがあって、何十人ものユーザがログインしているとしよう。
+経営側がシステム管理者に、ログインしているユーザのソートしたリストを生成するプログラムを書くことを求めている。
+しかも、あるユーザが多重ログインをしていても、その人の名前は出力に
+1 回だけ現れればよいという条件がある。
+</p>
+<p>システム管理者は腰を据えてシステムのマニュアル類に取り組み、そうした作業を実行する
+C のプログラムを書くこともできるだろう。そのためには、たぶん数百行のコードが必要であり、
+プログラムを書いて、テストして、デバッグするには、2 時間ぐらいかかるはずだ。
+それに対して、ソフトウェアの道具箱に精通しているシステム管理者なら、
+C のプログラムを書く代わりに、ログインしているユーザのリストを生成するところから始めることができる。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ who | cut -c1-8
+-| arnold
+-| miriam
+-| bill
+-| arnold
+</pre></td></tr></table>
+
+<p>次に、リストをソートする。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ who | cut -c1-8 | sort
+-| arnold
+-| arnold
+-| bill
+-| miriam
+</pre></td></tr></table>
+
+<p>最後に、ソートしたリストを <code>uniq</code> に渡して、重複を除く。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ who | cut -c1-8 | sort | uniq
+-| arnold
+-| bill
+-| miriam
+</pre></td></tr></table>
+
+<p>実を言うと、<code>sort</code> コマンドには &lsquo;<samp>-u</samp>&rsquo; というオプションがあって、<code>uniq</code>
+がやることをやってくれる。しかし、<code>uniq</code> にはほかの働きもあり、そちらは
+&lsquo;<samp>sort -u</samp>&rsquo; で代用することができない。
+</p>
+<p>システム管理者が、以下のように、このパイプラインをシェルスクリプトにしておけば、
+システムのすべてのユーザが利用できるようになる
+(&lsquo;<samp>#</samp>&rsquo; はシステム管理者、すなわち <code>root</code> のプロンプトだ)。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example"># cat &gt; /usr/local/bin/listusers
+who | cut -c1-8 | sort | uniq
+^D
+# chmod +x /usr/local/bin/listusers
+</pre></td></tr></table>
+
+<p>ここには、心に留めておくべき重要なことが四つある。
+まず第一に、1 行のコマンドラインにたった四つのプログラムを書くことで、システム管理者は約
+2 時間分の仕事をしないで済ますことができた。それだけではない。シェルのパイプラインは、
+C のプログラムを使った場合と比べても、ほぼ同じくらい効率がよく、
+プログラマの労働時間という点から見ると、ずっとずっと効率がよい。
+人間の労働時間はコンピュータの時間よりはるかに高価であり、
+「何もかもやるには、いつだって時間が足りない」現代社会では、プログラマの時間を
+2 時間も節約するのは、馬鹿にできない成果だ。
+</p>
+<p>二番目に、ツールを組み合わせることで、個々のプログラムの作者が想像もしなかったような、
+ある特定の目的のための仕事をやってのけることができる。
+これも、強調しておくべき重要なことである。
+</p>
+<p>第三に、ここでやって見せたように、段階を追ってパイプラインを構成するのも有益な方法だ。
+そうすれば、パイプラインの段階ごとにデータを目で見ることができるので、
+ツール類を間違いなく適切に使っているという自信を得ることができる。
+</p>
+<p>最後に、実行したパイプラインをシェルスクリプトにまとめておけば、他のユーザがそのコマンドを使うことができる。
+彼らのために作成した手の込んだコマンドの配管工事を、彼らは憶える必要すらないのだ。
+どうやって実行するかという点から見ると、シェルスクリプトもコンパイルされたプログラムも見分けが付かないのである。
+</p>
+<p>ここまでは準備運動だ。続いて、もっと複雑なパイプラインをもう二つご覧に入れよう。
+そのためには、工具をもう二つ紹介する必要がある。
+</p>
+<p>一つ目は <code>tr</code> コマンドだ。&ldquo;transliterate (翻字する、字を置き換える)&rdquo;
+の意味である。 <code>tr</code> コマンドは、一字一字処理して行くというやり方で、
+文字を置き換える (参照: <a href="coreutils-ja_59.html#tr-invocation"><code>tr</code>: 文字の置換、圧縮、削除を行う</a>)。
+通常、このコマンドを使用するのは、大文字を小文字に変換するといったことのためである。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ echo ThIs ExAmPlE HaS MIXED case! | tr '[:upper:]' '[:lower:]'
+-| this example has mixed case!
+</pre></td></tr></table>
+
+<p>役に立ちそうなオプションがいくつかある。
+</p>
+<dl compact="compact">
+<dt> <code>-c</code></dt>
+<dd><p>リストされた文字の補集合を動作対象にする。
+言い換えると、指定された集合に存在しない文字に対して操作が行われる。
+</p>
+</dd>
+<dt> <code>-d</code></dt>
+<dd><p>一つ目の集合にある文字を出力から削除する。
+</p>
+</dd>
+<dt> <code>-s</code></dt>
+<dd><p>出力中の連続する同一文字を、ただの 1 文字に圧縮する。
+</p></dd>
+</dl>
+
+<p>すぐ後で、この三つのオプションをすべて使うことになる。
+</p>
+<p>紹介するもう一つのコマンドは、<code>comm</code> だ。
+<code>comm</code> コマンドは、二つのソートされた入力ファイルを入力データとして受け取り、
+両ファイルの各行を三つの列に分けて表示する。
+出力される列は、一番目のファイルにのみ存在する行、二番目のファイルにのみ存在する行、
+両方のファイルに存在する行の順番である。&lsquo;<samp>-1</samp>&rsquo;, &lsquo;<samp>-2</samp>&rsquo;, &lsquo;<samp>-3</samp>&rsquo;
+というコマンドライン・オプションを付けると、対応する列を表示しないようになる。
+(これは直感的ではないので、ちょっとした慣れが必要だ。参照: <a href="coreutils-ja_45.html#comm-invocation"><code>comm</code>: ソート済みの二つのファイルを一行づつ比較する</a>)
+例を挙げよう。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ cat f1
+-| 11111
+-| 22222
+-| 33333
+-| 44444
+$ cat f2
+-| 00000
+-| 22222
+-| 33333
+-| 55555
+$ comm f1 f2
+-|         00000
+-| 11111
+-|                 22222
+-|                 33333
+-| 44444
+-|         55555
+</pre></td></tr></table>
+
+<p>ファイル名を &lsquo;<tt>-</tt>&rsquo; にすると、<code>comm</code> は通常ファイルではなく、標準入力を読み込む。
+</p>
+<p>これで、気の利いたパイプラインを組み立てる準備ができた。
+最初に作るアプリケーションは、単語の出現頻度カウンターである。
+これは、ある特定の単語を使いすぎていないかどうか、文書の作成者が判断するとき、役に立つ。
+</p>
+<p>最初のステップは、入力ファイル中のすべての文字を大文字か小文字のどちらかに統一することである。
+&ldquo;The&rdquo; と &ldquo;the&rdquo; は、頻度計算にとって同じ単語だ。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ tr '[:upper:]' '[:lower:]' &lt; whats.gnu | ...
+</pre></td></tr></table>
+
+<p>次のステップは、句読点を除去することだ。
+引用符の付いている単語と付いていない単語も同じものとして扱った方がよいだろう。
+それならば、句読点類をすっぱり取り除いてしまうのが、一番簡単だ。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">$ tr '[:upper:]' '[:lower:]' &lt; whats.gnu | tr -cd '[:alnum:]_ \n' | ...
+</pre></td></tr></table>
+
+<p>二番目の <code>tr</code> コマンドは、リストされた文字の補集合を操作対象にしている。
+すなわち、アルファベットのすべての文字、数字、アンダースコア、空白以外を対象にするわけだ。
+&lsquo;<samp>\n</samp>&rsquo; は改行文字のことであり、これもそのまま残さなければならない。
+(実用に供するスクリプトでは、ついでに ASCII タブ文字も残した方がよいだろう。)
+</p>
+<p>この時点で、空白 (訳注: 改行を含む) で区切られた単語からなるデータができていることになる。
+単語には、英数字 (それにアンダースコア) しか含まれていない。
+次のステップは、データをバラして、1 行 1 単語になるようにすることだ。
+そうすれば、すぐ後で見るように、出現回数の計算がずっと楽になる。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">$ tr '[:upper:]' '[:lower:]' &lt; whats.gnu | tr -cd '[:alnum:]_ \n' |
+&gt; tr -s ' ' '\n' | ...
+</pre></td></tr></table>
+
+<p>このコマンドは、空白を改行に変える。&lsquo;<samp>-s</samp>&rsquo; オプションが付いているので、
+出力中の連続する改行文字はたった 1 個に圧縮され、空行が取り除かれることになる。
+(なお、2 行目行頭の &lsquo;<samp>&gt;</samp>&rsquo; という記号は、シェルの二次プロンプトである。
+シェルがユーザに、コマンドがまだ最後まで打ち込まれていないと知らせるとき、これが表示される。)
+</p>
+<p>今や、1 行 1 単語からなるデータが手元にある。句読点は含まれず、すべて小文字だ。
+これで、各単語の出現回数を数える準備が整った。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">$ tr '[:upper:]' '[:lower:]' &lt; whats.gnu | tr -cd '[:alnum:]_ \n' |
+&gt; tr -s ' ' '\n' | sort | uniq -c | ...
+</pre></td></tr></table>
+
+<p>この時点で、データはたぶんこんなふうになっているだろう。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">     60 a
+      2 able
+      6 about
+      1 above
+      2 accomplish
+      1 acquire
+      1 actually
+      2 additional
+</pre></td></tr></table>
+
+<p>なんと、出力が出現回数ではなく、単語によってソートされている！
+こちらとしては、最も頻繁に使われる単語ほど先に表示したいのにだ。
+幸いなことに、それは簡単に実現できる。<code>sort</code> のオプションをもう二つ使うだけでよい。
+</p>
+<dl compact="compact">
+<dt> <code>-n</code></dt>
+<dd><p>文字としてではなく、数値としてソートする。
+</p>
+</dd>
+<dt> <code>-r</code></dt>
+<dd><p>逆順にソートする。
+</p></dd>
+</dl>
+
+<p>最終的なパイプラインは次のようになる。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">$ tr '[:upper:]' '[:lower:]' &lt; whats.gnu | tr -cd '[:alnum:]_ \n' |
+&gt; tr -s ' ' '\n' | sort | uniq -c | sort -n -r
+-|    156 the
+-|     60 a
+-|     58 to
+-|     51 of
+-|     51 and
+&hellip;
+</pre></td></tr></table>
+
+<p>ふう、憶えることがどっさり！ うん、でもね、同じ原則を応用してるだけなんだよ。
+たった 2 行、6 個のコマンドで (実際には、長い 1 行を便宜上 2 行に分割しているだけだが)
+興味深く有用な作業をするプログラムが出来上がった。それも、同じこことする
+C のプログラムを書くよりもずっと短い時間でだ。
+</p>
+<p>上記のパイプラインをちょっといじるだけで、なんと、簡単なスペルチェッカーが出来てしまう。
+ある単語の綴りが正しいかどうかを判断するには、辞書で調べさえすればよい。
+その単語が辞書になければ、綴りを間違えている可能性が高いわけだ。
+そこで、とりあえず、辞書が必要になる。辞書の在り処は、慣例からすると
+&lsquo;<tt>/usr/dict/words</tt>&rsquo; だ (現在では &lsquo;<tt>/usr/share/dict/words</tt>&rsquo;
+かもしれない)。筆者の GNU/Linux システムでは
+<a name="DOCF5" href="coreutils-ja_fot.html#FOOT5">(5)</a>、それはソートされた 45,402 語からなる辞書である。
+</p>
+<p>それでは、自分の作ったファイルをどうやって辞書と比べるのか？
+前の例と同様、ソートした単語のリストを 1 行 1 語の形式で生成する。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">$ tr '[:upper:]' '[:lower:]' &lt; whats.gnu | tr -cd '[:alnum:]_ \n' |
+&gt; tr -s ' ' '\n' | sort -u | ...
+</pre></td></tr></table>
+
+<p>必要なのは、辞書にない単語のリストだけだ。そこで、<code>comm</code> の出番になる。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">$ tr '[:upper:]' '[:lower:]' &lt; whats.gnu | tr -cd '[:alnum:]_ \n' |
+&gt; tr -s ' ' '\n' | sort -u |
+&gt; comm -23 - /usr/dict/words
+</pre></td></tr></table>
+
+<p>&lsquo;<samp>-2</samp>&rsquo; と &lsquo;<samp>-3</samp>&rsquo; のオプションを使うと、辞書 (2 番目のファイル)
+にしかない行と、両方のファイルにある行が排除される。1 番目のファイル
+(標準入力、すなわち、自分が使った単語のリストだ) にしかない行は、辞書に存在しない単語だ。
+そうした単語は、綴りを間違えている可能性がかなり高いわけである。
+ご覧に入れたこのパイプラインは、Unix における本格的なスペルチェッカーへの最初の一歩だったのである。
+</p>
+<p>他にも一言述べておくべきツールがいくつかある。
+</p>
+<dl compact="compact">
+<dt> <code>grep</code></dt>
+<dd><p>ファイルを調べて、正規表現にマッチするテキストを検索する。
+</p>
+</dd>
+<dt> <code>wc</code></dt>
+<dd><p>行数、単語数、文字数を計算する。
+</p>
+</dd>
+<dt> <code>tee</code></dt>
+<dd><p>データが流れるパイプのための T 字管。データをファイルと標準出力にコピーする。
+</p>
+</dd>
+<dt> <code>sed</code></dt>
+<dd><p>ストリーム・エディタ。上級ツール。
+</p>
+</dd>
+<dt> <code>awk</code></dt>
+<dd><p>データ処理用の言語。これも上級ツール。
+</p></dd>
+</dl>
+
+<p>ソフトウェア工具論が取り入れたものに、次のちょっとしたアドバイスもある。「骨の折れる部分は、他の奴にやらせろ」。
+すなわち、ある道具を選んで、必要なことの大部分をやらせ、それから、その結果に手を加えて、こちらの望む形にする、ということである。
+</p>
+<p>要約しておこう。
+</p>
+<ol>
+<li>
+個々のプログラムは、一つの仕事をきちんとやってのければよい。それ以上でもそれ以下でもない。
+
+</li><li>
+プログラムを適切な配管工事で組み合わせると、全体が部分の総和以上になる結果が生じる。
+作者が想像もしなかったようなプログラムの新しい使用法が見つかることもある。
+
+</li><li>
+プログラムは決して余計なヘッダや追加情報を出力すべきではない。
+そうしたものもパイプラインの先へ送られてしまうかもしれないからだ。
+(これは、これまでに言及しなかったが、重要なことだ。)
+
+</li><li>
+骨の折れる部分は、他の奴にやらせろ。
+
+</li><li>
+自分の道具箱をよく知れ！ 個々のプログラムを適切に使え。適切なツールがなかったら、それを作れ。
+</li></ol>
+
+<p>これを執筆している時点で、ここで取り上げたプログラムはすべて次の
+URL から手に入れることができる。<br>
+<a href="http://ftp.gnu.org/old-gnu/textutils/textutils-1.22.tar.gz">http://ftp.gnu.org/old-gnu/textutils/textutils-1.22.tar.gz</a> <br>
+もっと新しいバージョンは以下の場所にある。<br>
+<a href="http://ftp.gnu.org/gnu/coreutils">http://ftp.gnu.org/gnu/coreutils</a>
+</p>
+<p>この記事で筆者が述べたことに、新しいことは何もない。
+ソフトウェアは工具だという思想が最初に紹介されたのは、Brian Kernighan と P.J. Plauger
+による <cite>Software Tools</cite> という本の中だった (Addison-Wesley, ISBN
+0-201-03669-X)。ソフトウェア工具の書き方と使い方を教えるこの本は、1976
+年に執筆され、<code>ratfor</code> (RATional FORtran) という名前の FORTRAN
+のプリプロセッサを使用している。その当時、C は今ほどありふれてはいず、FORTRAN
+がそうだったのだ。最後の章では、<code>ratfor</code> を FORTRAN に変換するプロセッサを
+<code>ratfor</code> で書いて見せている。<code>ratfor</code> は C にとてもよく似ているので、
+C を御存じの方なら、コードを追うのに何の苦労もないことだろう。
+(訳注: <cite>Software Tools</cite> の翻訳は「ソフトウェア作法」という題で
+1981 年に出版されている。木村泉 訳、共立出版)
+</p>
+<p>1981 年に本は改訂され、<cite>Software Tools in Pascal</cite>
+という形でも手に入るようになった (Addison-Wesley, ISBN 0-201-10342-7)。
+どちらの本も現在でも入手可能であり、プログラマなら、一読の価値が十分にある。
+この 2 冊の本が筆者のプログラミングに対する見方を大きく変えてくれたことに、疑いの余地はない。
+</p>
+<p>両方の本にあるプログラムは、Brian Kernighan のホームページから手に入れることができる
+(<a href="http://cm.bell-labs.com/who/bwk">http://cm.bell-labs.com/who/bwk</a>)。Software Tools Users Group
+という活動的なグループが長年に渡って存在し、そのメンバーがオリジナルの <code>ratfor</code>
+プログラムを、FORTRAN コンパイラを持っているほとんどすべてのコンピュータ・システムに移植していた。
+だが、1980 年代の中頃に Unix が大学を越えて浸透し出すにつれて、グループの人気は衰えて行った。
+</p>
+<p>現在では GNU のコードをはじめ、Unix クローンのプログラムがどんどん作られており、
+上記のプログラムはほとんど関心を持たれていない。
+それに、現代の C のバージョンの方がはるかに効率がよく、できることも上記のプログラムよりずっと多くなっている。
+それでも、よいプログラミング・スタイルのお手本として、
+また、今でも価値がある考え方を熱心に説いている点において、
+この 2 冊の本は肩を並べるものがない。筆者としては、大いにお薦めする次第だ。
+</p>
+<p>謝辞: ソフトウェア工具の最初の道具鍛冶である、Bell 研究所の Brian
+Kernighan 氏に、この記事を読んでチェックしてくださったことについて、
+心からお礼を申し上げる。
+</p>
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_216.html#The-uniq-command" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_218.html#About-the-translation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_210.html#Opening-the-software-toolbox" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_210.html#Opening-the-software-toolbox" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_218.html#About-the-translation" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

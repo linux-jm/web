@@ -1,0 +1,140 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of READDIR_R</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>READDIR_R</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/readdir_r.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+readdir_r - ディレクトリを読み込む
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/dirent.h">dirent.h</A>&gt;</B>
+
+<B>int readdir_r(DIR *</B><I>dirp</I><B>, struct dirent *</B><I>entry</I><B>, struct dirent **</B><I>result</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+
+<P>
+
+<B>readdir_r</B>():
+<DL COMPACT><DT><DD>
+_POSIX_C_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以前:&nbsp;*/&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+この関数は非推奨である。代わりに <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3) を使用すること。
+<P>
+
+<B>readdir_r</B>() 関数は <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3) のリエントラント版として導入された。この関数はディレクトリストリーム <I>dirp</I>
+から次のディレクトリエントリーを読み込み、 <I>entry</I> が指す呼び出し元が割り当てたバッファーにそのエントリーを格納して返す。 <I>dirent</I>
+構造体の詳細は <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3) を参照。
+<P>
+
+結果を返すバッファへのポインターが <I>*result</I> に格納される。ディレクトリストリームの末尾に達した場合は、NULL が代わりに
+<I>*result</I> で返される。
+<P>
+
+アプリケーションでは <B>readdir_r</B>() の代わりに <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3) を使用することを推奨する。さらに、glibc 2.24
+以降では <B>readdir_r</B>() は非推奨となっている。理由は以下の通りである。
+<DL COMPACT>
+<DT>*<DD>
+<B>NAME_MAX</B> が未定義のシステムでは、 <B>readdir_r</B>()
+の呼び出しは安全ではない。このインターフェースでは、呼び出し元がディレクトリエントリーを返す際に使用されるバッファの長さを指定することができないからである。
+<DT>*<DD>
+いくつかのシステムでは、 <B>readdir_r</B>() は非常に長い名前のディレクトリエントリーを読み込むことができない。 glibc
+の実装ではこのような名前に遭遇した場合、 <B>readdir_r</B>() は <I>最後のディレクトリエントリーを読み込んだ後</I> エラー
+<B>ENAMETOOLONG</B> で失敗する。他のいくつかのシステムでは、 <B>readdir_r</B>() が成功ステータスを返しても、返された
+<I>d_name</I> フィールドがヌル終端されていなかったり、文字列が途中までで切り詰められていたりすることがある。
+<DT>*<DD>
+現在の POSIX.1 標準 (POSIX.1-2008) では、 <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3)
+がスレッドセーフであることは求められていない。しかしながら、最近の実装 (glibc による実装も含む) では、異なるディレクトリストリームに対する
+<B><A HREF="../man3/readdir.3.html">readdir</A></B>(3) の同時並行の呼び出しはスレッドセーフである。したがって、マルチスレッドプログラムにおいて <B>readdir_r</B>()
+の使用は不要である。複数のスレッドが同じディレクトリストリームから読み込みを行う必要がある場合も、上記で挙げた理由から、非推奨の
+<B>readdir_r</B>() 関数を使用するよりも、外部同期を用いた <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3) を使う方が推奨される。
+<DT>*<DD>
+
+
+POSIX.1 の将来のバージョンでは、 <B>readdir_r</B>() は廃止予定 (obsolete) となり、 <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3)
+は異なるディレクトリストリームに対して同時に使用された際にスレッドセーフであることが必須となる予定である。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>readdir_r</B>()  関数は 0 を返す。 エラーの場合、(「エラー」の節のリストに載っている) 正のエラー番号を返す。
+ディレクトリストリームの末尾に達した場合、 <B>readdir_r</B>()  は返り値として 0 を返し、 <I>*result</I> に NULL
+を格納する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+ディレクトリストリームディスクリプター <I>dirp</I> が無効である。
+<DT><B>ENAMETOOLONG</B><DD>
+読み込むには名前が長過ぎるディレクトリエントリーに遭遇した。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>readdir_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/readdir.3.html">readdir</A></B>(3)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

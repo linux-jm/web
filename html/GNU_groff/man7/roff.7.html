@@ -1,0 +1,785 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ROFF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>ROFF</H1>
+Section: Environments, Tables, and Troff Macros (7)<BR>Updated: 6 August 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_groff/contrib/man7/roff.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+roff - roff 清書システムの調査
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>解説</H2>
+
+
+<I>roff</I>
+
+とは清書プログラム群の一般名称です。
+<I>troff</I>,
+
+<I>nroff</I>,
+
+<I>groff</I>
+
+などの名前で知られています。
+<P>
+
+roff 清書システムは、整形用言語、マクロパッケージ、
+プリプロセッサ、出力デバイス用ポストプロセッサ、
+ユーザ用フロントエンドプログラム、そして変換ツールから
+構成されています。
+<P>
+
+今日、最も一般的な roff システムはフリーソフトウェアでの
+実装である
+<I>groff</I>
+
+(`GNU&nbsp;roff')
+です。groff より前の実装は「古典」 (1973 年まで遡ります)
+と呼ぶことにします。
+<P>
+
+<I>groff</I>
+
+は、古典である祖先のシステムと下位互換性がありますが、数多くの
+拡張がされており、今もなお進化し続けています。
+ほとんどすべての計算機システムで利用できるため、今日では事実上の
+roff 標準となっています。
+<P>
+
+その古さにもかかわらず、roff は今日でも広く使用されています。
+例えば、UNIX システムのマニュアルページ
+(<I>man</I>ページ<I>)</I>
+
+は roff で書かれています。
+テキストデバイスに対する roff 出力は、いまだに並ぶもののないほど優れて
+います。グラフィカルな出力も他のフリーの清書プログラムと同等の品質を
+持っていますし、ものによっては商用システムのものよりも優れているときも
+あります。
+<P>
+
+このドキュメントでは概要のみを示し、詳細なドキュメントについては
+ポインタを示します。
+<P>
+このドキュメントは維持されておらず、時代遅れになっている可能性が
+あります。正確なドキュメントが必要なら groff info ファイルを
+参照してください。これには詳細で現実に即した正確なリファレンス情報が
+含まれています。
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>整形用言語</H2>
+
+
+<I>roff</I>
+
+システム用の言語を指す 3 つの用語があります。
+<I>troff 言語</I>
+
+は、
+<I>roff</I>
+
+の古典的な部分に重点を置くときに使われます。
+<I>groff 言語</I>
+
+は GNU 拡張を含んでおり、それに対して
+<I>roff 言語</I>
+
+は一般的な用語です。
+<P>
+
+<I>groff 言語</I>
+
+のすべての部分について記述されたドキュメントの一次情報源は
+groff info ファイルです。
+<B><A HREF="../man7/groff.7.html">groff</A></B>(7)
+
+マニュアルページでは、定義済みの言語要素すべてについて
+簡潔な説明をしています。
+<P>
+
+roff を使用したドキュメントは、普通のテキストファイルを整形用
+要素で修飾したものです。
+マクロパッケージの 1 つを使って高品質のドキュメントを書くのは
+とても簡単なことです。
+マクロパッケージは高水準プログラミング言語のようなものであり、
+それに対して素の roff 言語は C やアセンブラのような低水準言語に
+たとえられます。
+<P>
+
+roff 言語は低水準のリクエスト、マクロ定義、エスケープシーケンス、
+文字列変数、数値レジスタまたはサイズレジスタ、そして C のような
+制御構造を提供する完全なプログラミング言語です。
+
+<P>
+
+この言語の要素についていくらか説明が必要でしょう。
+リクエストは、C, C++ のようなプログラミング言語によって定義された
+基本的な整形用コマンドです。それに対して、マクロは roff 言語で
+記述された整形用コマンドです。
+ドキュメントの著者は、リクエストとマクロを使う際の違いに
+気づくことはないでしょう。どちらもドット
+
+
+
+
+.
+
+
+
+始まりの単独行で記述されます。
+ただし、望むならば、ユーザは独自のマクロを定義できます。
+<P>
+
+エスケープシーケンスはインライン要素で、バックスラッシュ
+
+
+
+
+\
+
+
+
+で始まります。これらはさまざまな機能を実装するのに
+使われます。それには、
+
+
+
+
+(
+
+
+
+を用いた非 ASCII 文字の挿入、
+
+
+
+
+*
+
+
+
+を用いた文字列の内容の挿入、
+
+
+
+
+n
+
+
+
+を用いたレジスタ変数の挿入、
+
+
+
+
+f
+
+
+
+を用いたフォントの変更、
+
+
+
+
+&quot;
+
+
+
+を用いた文中のコメント、
+
+
+
+
+\
+
+
+
+のような特殊な制御文字のエスケープ、
+その他多くの機能が含まれます。
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>フォーマッタ</H2>
+
+
+フォーマッタは groff ドキュメントを解析し、それを特殊なデバイスに合った
+形式に変換するためのフロントエンドプログラムです。
+古典的な
+<I>roff</I>
+
+にはフォーマッタが 2 つあります。
+<B>nroff</B>
+
+がテキストデバイス用で、
+<B>troff</B>
+
+がグラフィカルデバイス用です。
+<P>
+
+これらのプログラムは
+<I>groff</I>
+
+実装でもまだ存在しますが、通常は
+<B>groff</B>
+
+と呼ばれるプログラムを通してアクセスされます。
+これによって、古くからの機能を 1 つのプログラムに結合し、拡張
+できるのです。
+groff には多くのコマンドラインオプションがあります。その大部分が
+<B>troff</B>
+
+からもらい受けたものです。
+このオプションの密林から逃れるべく、ユーザフレンドリなユーティリティ
+<B>grog</B>
+
+(`groff guess' からとられた名前です) が作成されました。
+これは、どの引数を使うべきかを、ドキュメントから推測して、適切な
+コマンドラインを表示します。
+完璧なものではありませんが、取り掛かりには良いでしょう。
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>プリプロセッサ</H2>
+
+
+groff でもまだ利用可能な古典的プリプロセッサです。
+<DL COMPACT><DT><DD>
+<P>
+
+
+<DL COMPACT>
+<DT><I>eqn</I>
+
+<DD>
+数式を埋め込むためのものです。
+<DT><I>grap</I>
+
+<DD>
+グラフィカル要素を構成するためのものです (このプリプロセッサは
+groff と一緒にはついてきません。追加パッケージです)。
+<DT><I>grn</I>
+
+<DD>
+gremlin 図を埋め込むためのものです。
+<DT><I>pic</I>
+
+<DD>
+図を作成するためのものです。
+<DT><I>refer</I>
+
+<DD>
+参考文献の参照用です。
+<DT><I>soelim</I>
+
+<DD>
+他の roff ファイルを埋め込むためのものです。
+<DT><I>tbl</I>
+
+<DD>
+長方形のテーブル用です。
+
+</DL>
+</DL>
+
+<P>
+
+これらのプリプロセッサはそれぞれ独自の言語を定義しており、
+プリプロセッサに通されると、roff コードに変換されます。
+ですので、これらの言語で書かれた部分は roff ドキュメントに
+埋め込んであっても良いのです。
+こうした拡張ドキュメントは、実際のフォーマッタにかけられる前に、
+対応する 1 つ以上のプリプロセッサに通されます。
+<P>
+
+プリプロセッサプログラムは、プリプロセッサ用に
+限定されているドキュメントの部分を抽出し、変換します。
+プリプロセッサは、
+それらのプログラム名を使った UNIX パイプラインで呼び出すことも、
+もしくは groff オプションで自動的に呼び出すこともできます。
+<P>
+
+<CENTER><TABLE BORDER><TR><TD><TABLE>
+<TR VALIGN=top><TD ALIGN=center>プリプロセッサ</TD><TD ALIGN=center>groff オプション<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR><HR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center>eqn</TD><TD ALIGN=center>-e<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center>grap</TD><TD ALIGN=center>-G<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center>grn</TD><TD ALIGN=center>-g<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center>pic</TD><TD ALIGN=center>-p<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center>refer</TD><TD ALIGN=center>-R<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center>tbl</TD><TD ALIGN=center>-r<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center>soelim</TD><TD ALIGN=center>-s<BR></TD></TR>
+</TABLE></TABLE></CENTER>
+
+<P>
+
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>マクロパッケージ</H2>
+
+
+マクロパッケージは、ある特殊な種類のドキュメントを簡便な方法で
+フォーマットするのに適したマクロの集合です。
+マクロパッケージによって、roff の使い勝手が格段に良くなります。
+パッケージのマクロ定義は、
+<I>name</I><B>.tmac</B>
+
+(または
+<B>tmac.</B><I>name</I>) と呼ばれるファイルに保管されています。ここで、
+<I>name</I>
+
+はこのパッケージに対する roff 内部での名称です。
+すべての tmac ファイルは、
+1 つあるいは少数のディレクトリ中の標準の場所に保管されています。
+<P>
+
+ドキュメントが使用するマクロパッケージは、
+フォーマッタのコマンドラインオプション
+
+
+
+
+-m
+
+
+
+で指定し、例えば
+
+
+
+
+troff&nbsp;-m
+
+
+
+
+
+
+
+name
+
+
+
+や
+
+
+
+
+groff&nbsp;-m
+
+
+
+
+
+
+
+name
+
+
+
+とします。
+マクロパッケージの命名およびその置き場所についての一般的な詳細は
+<B><A HREF="../man5/groff_tmac.5.html">groff_tmac</A></B>(5)
+
+にあります。
+<P>
+
+古くからある有名なマクロパッケージは
+<I>man</I>,
+
+<I>mandoc</I>,
+
+<I>mdoc</I>
+
+がマニュアルページ用、そして
+<I>me</I>,
+
+<I>ms</I>,
+
+<I>mm</I>
+
+が書籍、記事、そして手紙用です。
+これらのコレクションのほかにも、groff はさまざまな用途の
+新しいマクロパッケージを提供しており、その数は増加しています。
+例えば、他のファイル形式を統合したり変換したりするものです。
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>ファイル名の拡張子</H2>
+
+
+マニュアルページ (man ページ) はファイル名の拡張子として
+セクション番号をとります。例えば、このドキュメントのファイル名は
+<I>roff.7</I>
+
+です。つまり、このドキュメントはマニュアルページの
+
+
+
+
+section 7
+
+
+
+に保存されているということです。
+<P>
+
+古典的なマクロパッケージは、パッケージ名を拡張子にとります。
+例えば、
+<I>me</I>
+
+マクロパッケージを使ったドキュメントは
+<I>file.</I><B>me</B>
+
+となり、
+<I>mm</I>
+
+マクロパッケージに対しては
+<I>file.</I><B>mm</B>
+
+、
+<I>ms</I>
+
+マクロパッケージに対しては
+<I>file.</I><B>ms</B>
+
+、
+<I>pic</I>
+
+ファイルに対しては
+<I>file.</I><B>pic</B>
+
+といった具合です。
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>編集方法</H2>
+
+
+ほとんどのテキストエディタは roff を使ったドキュメントの編集を
+サポートしています。特に使い勝手が良いのが、Emacs エディタ
+とその仲間での
+<B>nroff-mode</B>
+
+です。
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>環境変数</H2>
+
+
+<DL COMPACT>
+<DT><FONT SIZE="-1"><B>GROFF_TMAC_PATH</B>
+
+</FONT>
+<DD>
+コロン区切りの検索ディレクトリリストです。
+<B><A HREF="../man5/groff_tmac.5.html">groff_tmac</A></B>(5)
+
+を参照してください。
+<DT><FONT SIZE="-1"><B>GROFF_TYPESETTER</B>
+
+</FONT>
+<DD>
+デフォルトのデバイスです。
+<DT><FONT SIZE="-1"><B>GROFF_FONT_PATH</B>
+
+</FONT>
+<DD>
+<B>dev</B><I>name</I>
+
+コロン区切りの検索ディレクトリリストです。
+<B>troff</B>
+
+は、
+
+
+
+
+-F
+
+
+
+コマンドオプションで与えられたディレクトリを先に検索します。
+次に、
+<B>GROFF_FONT_PATH</B>
+
+を探します。
+最後に、標準ディレクトリ
+(<B>/usr/share/groff_font</B>)
+
+を探します。
+
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+
+デフォルトでは、
+<I>groff</I>
+
+は全データファイルを
+<I>/usr/share/groff_font</I>
+
+のサブディレクトリと
+<I>/usr/share/tmac</I>
+
+へインストールされます
+(例外はシステム固有のマクロパッケージへのラッパファイルであり、これらは
+<I>/usr/share/tmac</I>
+
+にインストールされます)。
+この場所は、システムによっては異なるかもしれません。
+以降、前者を
+<I>&lt;groff_font_dir&gt;</I>
+
+として、後者を
+<I>&lt;groff_macro_dir&gt;</I>
+
+として表現します。
+<P>
+
+<DL COMPACT>
+<DT><I>&lt;groff_macro_dir&gt;</I><B>/troffrc</B>
+
+<DD>
+troff 用の初期化ファイル
+<DT><I>&lt;groff_macro_dir&gt;</I><B>/</B><I>name</I><B>.tmac</B>
+
+<DD>
+
+<BR>
+
+
+<DT>
+
+<I>&lt;groff_macro_dir&gt;</I><B>/tmac.</B><I>name</I>
+
+マクロファイル
+<DT><I>&lt;groff_font_dir&gt;</I><B>/dev</B><I>name</I><B>/DESC</B>
+
+<DD>
+<I>name</I>
+
+デバイス記述ファイル
+<DT><I>&lt;groff_font_dir&gt;</I><B>/dev</B><I>name</I><B>/</B><I>F</I>
+
+<DD>
+<I>name</I>
+
+デバイスの
+<I>F</I>
+
+フォント用のフォントファイル
+</DL>
+<P>
+
+最後に、ローカルのマクロディレクトリ
+<I>/usr/share/tmac</I>
+
+は、サイト固有のマクロとパッケージ用に提供されます。
+デフォルトでは、メインのマクロディレクトリの前にここが検索されます。
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>バグ</H2>
+
+
+<DD>groff ドキュメントは現在も発展途上です。
+ドキュメント間で一時的に小さな食い違いが生じる可能性があります。
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>作者</H2>
+
+
+このドキュメントは groff すなわち GNU roff 配布物の一部です。
+Bernd Warken &lt;<A HREF="mailto:bwarken@mayn.de">bwarken@mayn.de</A>&gt; が書きました。
+<P>
+
+このドキュメントは FDL (GNU Free Documentation License) バージョン 1.1
+以降の条項のもとに配布されています。FDL のコピーをシステム上に
+持っているはずです。また、これはオンライン
+<DL COMPACT><DT><DD>
+<P>
+
+<I>&lt;<A HREF="http://www.gnu.org/copyleft/fdl.html">http://www.gnu.org/copyleft/fdl.html</A>&gt;</I>
+
+</DL>
+
+でも入手可能です。
+
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+主な情報源は、
+<I>groff</I>
+
+<B><A HREF="../../GNU_texinfo/man1/info.1.html">info</A></B>(1)
+
+ファイルです。
+<P>
+
+定義済みの
+<I>groff</I>
+
+言語要素についても
+<B><A HREF="../man7/groff.7.html">groff</A></B>(7)
+
+マニュアルページに記載があります。
+<P>
+
+フォーマッタおよびそのラッパについては
+<B><A HREF="../man1/groff.1.html">groff</A></B>(1),
+
+<B><A HREF="../man1/grog.1.html">grog</A></B>(1),
+
+<B><A HREF="../man1/nroff.1.html">nroff</A></B>(1),
+
+<B><A HREF="../man1/troff.1.html">troff</A></B>(1)
+
+に記載があります。
+<P>
+
+出力デバイス用のポストプロセッサについては
+<B><A HREF="../man1/grodvi.1.html">grodvi</A></B>(1),
+
+<B><A HREF="../man1/grohtml.1.html">grohtml</A></B>(1),
+
+<B><A HREF="../man1/grolbp.1.html">grolbp</A></B>(1),
+
+<B><A HREF="../man1/grolj4.1.html">grolj4</A></B>(1),
+
+<B><A HREF="../man1/grops.1.html">grops</A></B>(1),
+
+<B><A HREF="../man1/grotty.1.html">grotty</A></B>(1)
+
+に記載があります。
+<P>
+
+標準プリプロセッサについては
+<B><A HREF="../man1/eqn.1.html">eqn</A></B>(1),
+
+<B><A HREF="../man1/grn.1.html">grn</A></B>(1),
+
+<B>grap</B>(1),
+
+<B><A HREF="../man1/pic.1.html">pic</A></B>(1),
+
+<B><A HREF="../man1/refer.1.html">refer</A></B>(1),
+
+<B><A HREF="../man1/soelim.1.html">soelim</A></B>(1),
+
+<B><A HREF="../man1/tbl.1.html">tbl</A></B>(1)
+
+に記載があります。
+<P>
+
+マクロパッケージについてのマニュアルページには
+<B><A HREF="../man5/groff_tmac.5.html">groff_tmac</A></B>(5),
+
+<B><A HREF="../man7/groff_man.7.html">groff_man</A></B>(7),
+
+<B>groff_markup</B>(7),
+
+<B><A HREF="../man7/groff_mdoc.7.html">groff_mdoc</A></B>(7),
+
+<B>groff_mdoc.samples</B>(7),
+
+<B><A HREF="../man7/groff_me.7.html">groff_me</A></B>(7),
+
+<B><A HREF="../man7/groff_mm.7.html">groff_mm</A></B>(7),
+
+<B>groff_mmroff</B>(7),
+
+<B><A HREF="../man7/groff_ms.7.html">groff_ms</A></B>(7)
+
+が含まれています。
+<P>
+
+次のようなユーティリティが利用できます:
+<B><A HREF="../man1/addftinfo.1.html">addftinfo</A></B>(1),
+
+<B>afmtodif</B>(1),
+
+<B><A HREF="../man1/hpftodit.1.html">hpftodit</A></B>(1),
+
+<B><A HREF="../man1/indxbib.1.html">indxbib</A></B>(1),
+
+<B><A HREF="../man1/lookbib.1.html">lookbib</A></B>(1),
+
+<B><A HREF="../man1/pfbtops.1.html">pfbtops</A></B>(1),
+
+<B><A HREF="../man1/tfmtodit.1.html">tfmtodit</A></B>(1),
+
+<B>gxditview</B>(1)
+
+です。
+<P>
+
+<I>roff</I>
+
+システムの GNU 実装についての詳細は
+<B><A HREF="../man7/groff_char.7.html">groff_char</A></B>(7),
+
+<B>groff_font</B>(7),
+
+<B>groff_out</B>(7)
+
+および groff ソース配布物のメインディレクトリ内の
+<I>README</I>
+
+ファイルを参照してください。
+<I>groff</I>
+
+開発グループとの連絡の取り方や参加の仕方についての
+詳細も載っています。
+<P>
+
+古典的な
+
+ドキュメントは今でもオンラインで入手可能です。
+特に有益なのが、かのフリーである UNIX 7 用のベル研オリジナルの
+会報です。これは
+<I><A HREF="http://cm.bell-labs.com/cm/cs/cstr.html">http://cm.bell-labs.com/cm/cs/cstr.html</A></I>
+
+にあります。そして、故 Richard S. Stevens のコレクションが
+<I><A HREF="http://www.kohala.com/start/troff/">http://www.kohala.com/start/troff/</A></I>
+
+にあります。
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">解説</A><DD>
+<DT><A HREF="#lbAD">整形用言語</A><DD>
+<DT><A HREF="#lbAE">フォーマッタ</A><DD>
+<DT><A HREF="#lbAF">プリプロセッサ</A><DD>
+<DT><A HREF="#lbAG">マクロパッケージ</A><DD>
+<DT><A HREF="#lbAH">ファイル名の拡張子</A><DD>
+<DT><A HREF="#lbAI">編集方法</A><DD>
+<DT><A HREF="#lbAJ">環境変数</A><DD>
+<DT><A HREF="#lbAK">関連ファイル</A><DD>
+<DT><A HREF="#lbAL">バグ</A><DD>
+<DT><A HREF="#lbAM">作者</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:24 GMT, December 05, 2022
+</BODY>
+</HTML>

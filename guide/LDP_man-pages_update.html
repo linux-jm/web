@@ -1,0 +1,369 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>LDP man-pages 管理ガイド &mdash; Linux JM Guide master ドキュメント</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'master',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Linux JM Guide master ドキュメント" href="index.html" />
+    <link rel="next" title="GNU coreutils 管理ガイド" href="GNU_coreutils_update.html" />
+    <link rel="prev" title="翻訳手順チートシート" href="sysadmin/transproc_cheatsheet.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="総合索引"
+             accesskey="I">索引</a></li>
+        <li class="right" >
+          <a href="GNU_coreutils_update.html" title="GNU coreutils 管理ガイド"
+             accesskey="N">次へ</a> |</li>
+        <li class="right" >
+          <a href="sysadmin/transproc_cheatsheet.html" title="翻訳手順チートシート"
+             accesskey="P">前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Linux JM Guide master ドキュメント</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ldp-man-pages">
+<span id="ldp-original-update"></span><h1>LDP man-pages 管理ガイド<a class="headerlink" href="#ldp-man-pages" title="このヘッドラインへのパーマリンク">¶</a></h1>
+<p>ここでは、原文の更新方法について説明する。</p>
+<p>手順は以下の通り。</p>
+<ol class="arabic simple">
+<li>po4a 環境の更新</li>
+<li>原文の更新作業</li>
+<li>単純な fuzzy の更新</li>
+</ol>
+<div class="section" id="id1">
+<h2>0. 事前準備<a class="headerlink" href="#id1" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p><a class="reference internal" href="LDP_man-pages.html#ldp-preparation"><span>準備</span></a> を参照してください。</p>
+<p>Git リポジトリの LDP_man-pages 以下はきれいな状態にした状態で始めること。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> <span class="nb">cd</span> manual/LDP_man-pages
+<span class="gp">$</span> make clean
+<span class="gp">$</span> git status
+</pre></div>
+</div>
+</div>
+<div class="section" id="po4a">
+<h2>1. po4a 環境の更新<a class="headerlink" href="#po4a" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>ここでは、新しいバージョンの LDP man-pages が po4a で正常に行えることの
+確認までを行う。</p>
+<p>LDP man-pages のバージョン番号を更新する。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> vi Makefile
+
+<span class="go">(一番上のバージョン番号を更新する)</span>
+<span class="gp">#</span> Upstream version
+<span class="go">V = 3.79</span>
+
+<span class="go">(必要に応じてダウンロード用の URL を調整)</span>
+<span class="go">man-pages-$(V).tar.xz:</span>
+<span class="go">        wget https://mirrors.edge.kernel.org/pub/linux/docs/man-pages/$@</span>
+</pre></div>
+</div>
+<p>配布されている LDP man-pages の原文に対して
+ローカルの workaround を適用するファイル <code class="docutils literal"><span class="pre">workaround.patch</span></code> を削除しておく。
+最新版の LDP man-pages には不要であったり、適用できない可能性があるため。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> rm -f workaround.patch
+</pre></div>
+</div>
+<p>以下のコマンドを実行すると、指定された LDP man-pages がダウンロードされ、
+po4a による POT/PO ファイルへの変換の準備が行われる。
+<code class="docutils literal"><span class="pre">build/C</span></code> 以下に用意されたファイルが po4a による変換で使用される。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> make setup
+</pre></div>
+</div>
+<p>以下のコマンドで、削除されたページの反映を行う。
+削除されたページがある場合は、 <code class="docutils literal"><span class="pre">po4a/*/*.cfg</span></code> の該当ページに対応する
+エントリーがコメントアウトされる。
+コメントアウトされたエントリーは不要なので、手動で削除する。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> make disable-removed
+</pre></div>
+</div>
+<p>以下のコマンドを実行し、追加されたページを確認する。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> make print-new-files
+</pre></div>
+</div>
+<p>追加されたページがあれば、標準出力に <code class="docutils literal"><span class="pre">po4a/*/*.cfg</span></code> に追加する内容が
+表示される。ページの内容を確認し、関連が深い po4a cfg ファイルに追加する。
+明確な基準はないが、 追加ページの SEE ALSO などを見て、関連性を判断する。</p>
+<p>以下のコマンドを実行し、po4a による変換が行えるかを確認する。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> make translate
+</pre></div>
+</div>
+<p>po4a が対応している書式が含まれていてエラーが表示される場合がある。
+その場合は <a class="reference internal" href="#po4a-error"><span>po4a で変換エラーが出た場合の対処</span></a> を参考にして対処する。</p>
+<p>上記の作業が一通り終わったら、再度最初に戻して動作確認を行う。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> make clean
+<span class="gp">$</span> make setup
+<span class="gp">$</span> make print-new-files
+<span class="gp">$</span> make disable-removed
+<span class="gp">$</span> make translate
+</pre></div>
+</div>
+<p>これで po4a 環境の更新は終了です。
+更新があるはずなので、ここで一度コミットしておくとよい。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> git status
+<span class="gp">$</span> git add ....
+<span class="gp">$</span> git commit
+</pre></div>
+</div>
+<div class="section" id="po4a-error">
+<span id="id2"></span><h3>po4a で変換エラーが出た場合の対処<a class="headerlink" href="#po4a-error" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<p>po4a が対応している書式が含まれていてエラーが表示される場合がある。
+その場合は po4a のマニュアル (<code class="docutils literal"><span class="pre">man</span> <span class="pre">po4a</span></code>) や <code class="docutils literal"><span class="pre">Locale::Po4a::Man</span></code>
+(<code class="docutils literal"><span class="pre">perldoc</span> <span class="pre">Locale::Po4a::Man</span></code>) を見て対処方法を検討する。</p>
+<p>例えば、 LDP man-pages 5.10 の tzfile.5 では以下のようなエラーが出たので、
+<code class="docutils literal"><span class="pre">Locale::Po4a::Man</span></code> を参考にして <code class="docutils literal"><span class="pre">po4a/time/time.cfg</span></code> の <code class="docutils literal"><span class="pre">tzfile.5</span></code>
+のエントリーに <code class="docutils literal"><span class="pre">opt</span></code> 設定を追加した。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> make
+<span class="go">...</span>
+<span class="go">po4a -k 100 --variable langs=&#39;&#39; --previous --srcdir . --destdir . po4a/time/time.cfg</span>
+<span class="go">build/C/man5/tzfile.5:10: (po4a::man)</span>
+<span class="go">    This page uses conditionals with &#39;.ie&#39;. Since po4a is not a real groff parser, this is not supported.</span>
+
+<span class="go">build/C/man5/tzfile.5:34: (po4a::man)</span>
+<span class="go">    Unknown macro &#39;.q &quot;TZif&quot;&#39;. Remove it from the document, or refer to the Locale::Po4a::Man manpage to see how po4a can handle new macros.</span>
+</pre></div>
+</div>
+<div class="literal-block-wrapper container" id="po4a-time-time-cfg">
+<div class="code-block-caption"><span class="caption-text">po4a/time/time.cfg</span><a class="headerlink" href="#po4a-time-time-cfg" title="このコードへのパーマリンク">¶</a></div>
+<div class="highlight-ini"><div class="highlight"><pre><span></span>[type: man] build/C/man5/tzfile.5 \
+     $lang:build/$lang/man5/tzfile.5 \
+<span class="hll">     opt:&quot;-o groff_code=verbatim -o inline=UR,UE,q&quot; \
+</span>     add_$lang:?@po4a/add_$lang/lists/local-pre.list \
+</pre></div>
+</div>
+</div>
+<p>po4a のオプションでは対応できず、翻訳上も必要な場合は、
+原文の roff ファイルを変更する手もある。
+その場合は <code class="docutils literal"><span class="pre">build/C/manN/xxxx.N</span></code> を直接変更し、変更後の内容を確認する。
+変更内容は <code class="docutils literal"><span class="pre">workaround.patch</span></code> に反映する
+(<code class="docutils literal"><span class="pre">diff</span> <span class="pre">-u</span> <span class="pre">man-pages/manN/xxxx.N</span> <span class="pre">build/C/manN/xxxx.N</span></code> の出力)。</p>
+<p>なお、 <code class="docutils literal"><span class="pre">.\</span></code> で始まる行がある場合は以下のようなメッセージが表示されるが、
+JM ではコメント行は翻訳していないので、無視してよい。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">This file contains the line &#39;.\&quot; autogenerated headers with the name &quot;__NR__llseek&quot; (i.e., &quot;_llseek&quot;).&#39;. You should translate the source file, but continuing anyway.</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>2. 原文の更新作業<a class="headerlink" href="#id3" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">manual/LDP_man-pages</span></code> で以下のコマンドを実行する。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> make upgrade
+</pre></div>
+</div>
+<p>このコマンドでは、以下の作業が行われる。</p>
+<ol class="arabic simple">
+<li>[make jm-setup]<ul>
+<li>最新版の man-pages の tarball がダウンロードされる。</li>
+<li>tarball が <code class="docutils literal"><span class="pre">man-pages</span></code> ディレクトリに展開される。</li>
+<li>po4a 作業用の source lang が <code class="docutils literal"><span class="pre">build/C</span></code> として用意される。<ul>
+<li>実際にコンテンツがあるファイルが <code class="docutils literal"><span class="pre">build/C/man?</span></code> 以下に
+<code class="docutils literal"><span class="pre">man-pages</span></code> 以下からコピーされる。</li>
+<li><code class="docutils literal"><span class="pre">workaround.patch</span></code> がある場合には <code class="docutils literal"><span class="pre">build/C/</span></code> 以下のファイルに
+適用される。</li>
+<li>リンクファイルは <code class="docutils literal"><span class="pre">build/C/link</span></code> に一覧が作成される。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>新しい原文を <code class="docutils literal"><span class="pre">original</span></code> 以下にコピーする。</li>
+<li><code class="docutils literal"><span class="pre">original</span></code> 以下を git で stage する。</li>
+</ol>
+<div class="admonition warning">
+<p class="first admonition-title">警告</p>
+<p class="last">git のバージョンによっては <code class="docutils literal"><span class="pre">git2upd</span></code> が期待通り動作しない場合があるため、
+以下の 4. 以降は現在 Makefile でコメントアウトしている。
+<a class="reference internal" href="upstream_update.html"><em>オリジナル更新方法</em></a> の <code class="docutils literal"><span class="pre">git2upd</span></code> に関する注意を考慮した上で、
+以下を手動で実行すること。</p>
+</div>
+<ol class="arabic" start="4">
+<li><p class="first"><code class="docutils literal"><span class="pre">translation_list</span></code> の更新</p>
+<p>LDP man-pages の翻訳は、翻訳が完了していない状態でも英語混じりで公開する
+ことにしていて、かつ翻訳の進捗状況は <code class="docutils literal"><span class="pre">untrans.html</span></code> で確認できるので、
+<code class="docutils literal"><span class="pre">translation_list</span></code> では翻訳ステータスの更新はせず、バージョン番号を
+更新するだけになっている。バージョン番号はページ公開時に参照されるので
+更新が必要。この点は他のマニュアルと異なるので注意。</p>
+</li>
+<li><p class="first">POT/PO の更新</p>
+<p><code class="docutils literal"><span class="pre">po4a/&lt;category&gt;/po/</span></code> 以下の <code class="docutils literal"><span class="pre">&lt;category&gt;.pot</span></code> (POT ファイル) と
+<code class="docutils literal"><span class="pre">ja.po</span></code> が更新される。</p>
+</li>
+<li><p class="first">翻訳統計情報の更新</p>
+</li>
+<li><p class="first">Git commit</p>
+<p>この段階のコミットにより、とりあえず原文更新直後の状態が
+一度コミットされることになる。</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>git add translation_list
+git commit -m &quot;LDP: Update original to LDP N.MM&quot;
+git add po4a/ stats/ untrans.html
+git commit -m &quot;LDP: Update POT and ja.po to LDP N.MM&quot;
+</pre></div>
+</div>
+</li>
+</ol>
+<p>上記の処理が <code class="docutils literal"><span class="pre">make</span> <span class="pre">upgrade</span></code> の中で行われる。</p>
+</div>
+<div class="section" id="fuzzy">
+<h2>3. 単純な fuzzy の更新<a class="headerlink" href="#fuzzy" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<p>COLOPHON が更新されているので、fuzzy が少なくとも一つできる。
+ja.po で fuzzy を探してバージョンを更新する。</p>
+<p>COLOPHON 以外でも、翻訳に直接関係ないマイナーな更新があれば、
+この段階で修正してしまってもよい。
+量が多ければ個々の翻訳更新作業の中で行えばよい。</p>
+<p>以下では、 PO ファイル更新後に、ドラフトページの生成と翻訳統計を
+更新している。内容を確認後、コミットを行う。分かりやすさとファイルの量を
+考慮し、ドラフトページとそれ以外を分けてコミットしている。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> make
+<span class="gp">$</span> git add -u po4a/ stats/ untrans.html
+<span class="gp">$</span> git commit -m <span class="s2">&quot;LDP: Update the version to N.MM in PO files&quot;</span>
+
+<span class="gp">$</span> git add draft/
+<span class="gp">$</span> git commit -m <span class="s2">&quot;LDP: Update draft pages based on LDP N.MM release&quot;</span>
+</pre></div>
+</div>
+<p>公開用のリリースページも一気に更新してしまう場合は以下も実行する。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> make release
+<span class="gp">$</span> git add release/
+<span class="gp">$</span> git add -u translation_list
+<span class="gp">$</span> git commit -m <span class="s2">&quot;LDP: Update release pages based on LDP N.MM release&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="perkamon">
+<h2>perkamon について<a class="headerlink" href="#perkamon" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">注釈</p>
+<p class="last">このセクションの内容は過去の覚書です。
+perkamon の Makefile の内容は manual/LDP_man-pages/Makefile に統合されました。</p>
+</div>
+<p>perkamon は LDP man-pages の po4a への変換を支援するスクリプトです。</p>
+<p>po4a で翻訳する際に、オプション、変換ルール、対象となるファイルなどを
+po4a の cfg (<a class="reference external" href="https://osdn.net/projects/linuxjm/scm/git/jm/blobs/master/manual/LDP_man-pages/po4a/aio/aio.cfg">具体例</a>)
+として書いておいて、以下のような形で一括で変換することができます。</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> po4a -k <span class="m">80</span>  --variable <span class="nv">langs</span><span class="o">=</span><span class="s1">&#39;ja&#39;</span> --previous --srcdir . --destdir .  po4a/wchar/wchar.cfg
+</pre></div>
+</div>
+<p>perkamon がやっていることは、以下の通り。</p>
+<ul class="simple">
+<li>この po4a cfg ファイル群を提供
+po4a cfg を使った翻訳生成用の Makefile の提供
+(make translate や make translate-aio などで翻訳できるようにする)</li>
+<li>LDP man-pages から po ファイルへの変換の前作業
+例えば、 link ファイルの除外など。</li>
+<li>LDP man-pages 更新時の po4a cfg 更新の helper script の提供
+(make disable-removed や make print-new-files)</li>
+<li>po4a cfg の中で、翻訳時に追加する header や footer の定義なども含まれている。
+(JM では昔の copyright や翻訳履歴を生成した man に入れるのに使っている)</li>
+</ul>
+<p>JM の LDP_man-pages リポジトリの Makefile は perkamon の wrapper になっている。
+perkamon のフォルダーで直接作業するのは LDP man-pages のバージョンを更新する
+ときのみ。</p>
+<p>perkamon という別ディレクトリになっているのは、 LDP man-pages の po4a での管理を
+始めた当初、フランス語の翻訳チームがかなり積極的に新しい LDP man-pages に追従
+しており、po4a cfg の更新とかもいつの間にか行われていて、JM 側はそれを利用する
+だけ、というメリットがあったためです。</p>
+<p>ツール群が perkamon という別ディレクトリになっているため、
+LDP_man-pages/Makefile では symlink を作成するなど手順が煩雑になっている点は
+あります。 perkamon ディレクトリも含めて、JM のリポジトリに取り込んだ現在では、
+もう少し単純化できるかもしれませんが、そこはみなさんの判断にお任せします。</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">目次</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">LDP man-pages 管理ガイド</a><ul>
+<li><a class="reference internal" href="#id1">0. 事前準備</a></li>
+<li><a class="reference internal" href="#po4a">1. po4a 環境の更新</a><ul>
+<li><a class="reference internal" href="#po4a-error">po4a で変換エラーが出た場合の対処</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id3">2. 原文の更新作業</a></li>
+<li><a class="reference internal" href="#fuzzy">3. 単純な fuzzy の更新</a></li>
+<li><a class="reference internal" href="#perkamon">perkamon について</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>前のトピックへ</h4>
+  <p class="topless"><a href="sysadmin/transproc_cheatsheet.html"
+                        title="前の章へ">翻訳手順チートシート</a></p>
+  <h4>次のトピックへ</h4>
+  <p class="topless"><a href="GNU_coreutils_update.html"
+                        title="次の章へ">GNU coreutils 管理ガイド</a></p>
+  <div role="note" aria-label="source link">
+    <h3>このページ</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/LDP_man-pages_update.txt"
+            rel="nofollow">ソースコードを表示</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>クイック検索</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="検索" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    モジュール、クラス、または関数名を入力してください
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="総合索引"
+             >索引</a></li>
+        <li class="right" >
+          <a href="GNU_coreutils_update.html" title="GNU coreutils 管理ガイド"
+             >次へ</a> |</li>
+        <li class="right" >
+          <a href="sysadmin/transproc_cheatsheet.html" title="翻訳手順チートシート"
+             >前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Linux JM Guide master ドキュメント</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016-2021, Linux JM project.
+      このドキュメントは <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5 で生成しました。
+    </div>
+  </body>
+</html>

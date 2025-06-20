@@ -1,0 +1,119 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RENICE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RENICE</H1>
+Section: User Commands (1)<BR>Updated: July 2014<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/util-linux/release/man1/renice.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+renice - 動作中のプロセスの優先度を変更する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>renice</B> [<B>-n</B>] <I>priority</I> [<B>-g</B>|<B>-p</B>|<B>-u</B>] <I>identifier</I>...
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>renice</B> は、動作中のプロセス (複数指定可) のスケジューリング優先度を変更する。
+1 番目の引き数は、使用したい優先度 (<I>priority</I>)
+である。それ以外の引き数は、プロセス ID (デフォルト)、プロセスグループ ID、ユーザ ID、
+ユーザ名と見なされる。プロセスグループを <B>renice</B>
+の対象にすると、そのプロセスグループに属するすべてのプロセスのスケジューリング優先度が変更される。
+ユーザを対象にした場合は、そのユーザが所有するすべてのプロセスのスケジューリング優先度が変更される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-n</B>,<B> --priority </B><I>priority</I><DD>
+プロセス、プロセスグループ、もしくはユーザに対して使用したいスケジューリング優先度
+<I>priotity</I> を指定する。<B>-n</B> や <B>--priotity</B>
+オプションの使用は任意だが、使用するなら、最初の引き数にしなければならない
+(訳注: 実質的な最初の引き数は、常に優先度であり、その前に <B>-n</B> や
+<B>--priority</B> を付けるか、付けないかは自由だということ)。
+<DT><B>-g</B>, <B>--pgrp</B><DD>
+後に続く引き数群をプロセスグループ ID と見なす。
+<DT><B>-p</B>, <B>--pid</B><DD>
+後に続く引き数群をプロセス ID と見なす (デフォルト)。
+<DT><B>-u</B>, <B>--user</B><DD>
+後に続く引き数群をユーザー名、または UID と見なす。
+<DT><B>-V</B>,<B> --version</B><DD>
+バージョン情報を表示して終了する。
+<DT><B>-h</B>,<B> --help</B><DD>
+ヘルプを表示して終了する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/etc/passwd</I><DD>
+ユーザ名とユーザ ID を対応させている。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+スーパーユーザ以外のユーザが変更できるのは、自分が所有するプロセスの優先度だけである。
+それだけではない。非特権ユーザは、``nice 値'' を増やす (言い換えれば、優先度を下げる)
+ことしかできず、そうした変更を元に戻すことすらできない。ただし、(Linux 2.6.12
+以降で) ユーザが適切な ``nice''
+リソースリミットを持っている場合は、そのかぎりではない
+(<B>ulimit</B>(1p), <B><A HREF="../../LDP_man-pages/man2/getrlimit.2.html">getrlimit</A></B>(2) を参照)。
+<P>
+スーパーユーザは、どんなプロセスの優先度でも変更できるし、優先度を -20 から 19
+の範囲のどんな値にも設定することができる。有用な優先度には次のものがある。19
+(この優先度を与えられたプロセスが動作するのは、
+動作しようとする他のプロセスがシステム中に存在しないときだけになる)、0
+(基本となるスケジューリング優先度)、負の数 (動作がきわめて速くなる)。
+<A NAME="lbAH">&nbsp;</A>
+<H2>歴史</H2>
+
+<B>renice</B> コマンドが初登場したのは、4.0BSD　だった。
+<A NAME="lbAI">&nbsp;</A>
+<H2>用例</H2>
+
+次のコマンドを使うと、PID が 987 と 32 のプロセス、及び daemon と root
+ユーザの所有するすべてのプロセスの優先度を変更することになる。
+<DL COMPACT>
+<DT><B>renice +1 987 -u daemon root -p 32</B><DD>
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/nice.1.html">nice</A></B>(1), <B>chrt</B>(1), <B><A HREF="../../LDP_man-pages/man2/getpriority.2.html">getpriority</A></B>(2), <B><A HREF="../../LDP_man-pages/man2/setpriority.2.html">setpriority</A></B>(2),
+<B><A HREF="../../LDP_man-pages/man7/credentials.7.html">credentials</A></B>(7), <B><A HREF="../../LDP_man-pages/man7/sched.7.html">sched</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>入手方法</H2>
+
+この renice コマンドは、util-linux パッケージの一部であり、Linux Kernel Archive
+&lt;<A HREF="https://www.kernel.org/pub/linux/utils/util-linux/">https://www.kernel.org/pub/linux/utils/util-linux/</A>&gt;
+から入手できる。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DT><A HREF="#lbAH">歴史</A><DD>
+<DT><A HREF="#lbAI">用例</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">入手方法</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:50 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,242 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FINGERD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>FINGERD</H1>
+Section: Maintenance Commands (8)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/netkit/release/man8/fingerd.8">roff page</A><HR>
+<BR>BSD mandoc<BR>
+Linux NetKit (0.17)
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<B>fingerd</B>
+
+ - リモートユーザー情報のサーバ
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>fingerd</B>
+
+[-<B>wulf</B>
+
+]
+
+[-<B>pL </B><I>path</I>
+
+
+
+]
+
+[-<B>t </B><I>timeout</I>
+
+
+
+]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>fingerd</B>
+
+は、多くのネットワークサイトの
+``finger''
+
+プログラムのインターフェースを提供する
+<I>RFC1196</I>
+に基づく簡単なデーモンである。
+このプログラムは、ある時点でのシステムと特定の人物の両方について、
+親しみやすく人が読みやすい状態レポートを返す。
+<P>
+
+-<B>w</B>
+
+オプションが指定されると、
+<B>fingerd</B>
+
+が実行されているシステムの (稼働時間、
+オペレーティングシステムの名前・リリース番号といった)
+いくつかの情報を表示する
+``Welcome to ...''
+
+というバーナーをリモートユーザーに表示する。
+このバーナーはクラッカーにとって有用となりえる情報を与えるので、
+セキュリティ上のリスクと考えるサイトもあるかもしれない。
+<P>
+
+-<B>u</B>
+
+オプションが指定されると、
+``finger @host''
+
+という形式のリクエストは拒否される。
+<P>
+
+-<B>l</B>
+
+オプションが指定されると、リクエストされたという情報がログに記録される。
+このオプションは、ユーザーのプライバシーの侵害になるかもしれないので、
+複数のユーザーが使う計算機では使用すべきでない。
+<P>
+
+-<B>f</B>
+
+オプションが指定されると、
+finger のフォワード (<A HREF="mailto:user@host1">user@host1</A>@host2) が許可される。
+ファイアーウォールの後ろにある計算機に対しては役に立つが、
+セキュリティやリソースの点から考えると、賢明ではないかもしれない。
+<P>
+
+-<B>p</B>
+
+オプションを使うと、fingerd が
+``finger''
+
+プログラムを見つけるために、別な場所を指定することが可能になる。
+-<B>L</B>
+
+オプションと等価である。
+<P>
+
+-<B>t</B>
+
+オプションにより、接続を閉じる前にリクエストを待つ時間を指定する。
+値が 0 の場合は、永久に待ち続ける。
+デフォルトは 60 秒である。
+<P>
+
+fingerd のオプションは
+/etc/inetd.conf
+
+で指定すべきである。
+<P>
+
+finger プロトコルは、大部分がコマンド引き数の指定で構成されている。
+``スーパーサーバ''
+
+である
+<A HREF="../man8/inetd.8.html">inetd</A>(8)
+
+
+は、79 番ポートで受け取った
+<B>TCP</B>
+
+リクエストに対して、
+<B>fingerd</B>
+
+を実行する。
+一度接続されると、
+<B>fingerd</B>
+
+は
+Aq Tn CRLF
+
+で終端されている 1 行を読み込む。
+この行は
+<A HREF="../man1/finger.1.html">finger</A>(1)
+
+
+に渡される。
+fingerd は、出力が終るとすぐに接続を閉じる。
+<P>
+
+行が空行の場合 (つまり
+Aq Tn CRLF
+
+だけが送られた場合)、
+finger
+
+
+は、
+``デフォルトの''
+
+報告 (その時点でシステムにログインしている全員のリスト) を返す。
+この機能は、
+-<B>u</B>
+
+オプションを使うと無効にされる。
+<P>
+
+(例えば
+eric Aq <B>CRLF</B>
+
+
+
+
+
+のように) ユーザー名が指定されると、
+そのユーザーがログインしているか否かに係わらず、
+指定した特定のユーザーについてのみ詳細な情報をリストする。
+コマンドラインで指定できる
+``名前''
+
+は
+``ログイン名''
+
+と
+``ユーザー名''
+
+のどちらでもよい。
+名前が曖昧な場合は、マッチするもの全てについての情報が返される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man1/finger.1.html">finger</A>(1),
+
+
+<A HREF="../man8/inetd.8.html">inetd</A>(8)
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>制限</H2>
+
+サーバに対して、
+<B>TIP</B>
+
+や、それと同じくらいに見識の狭い
+<B>TELNET プロトコル</B>
+
+
+
+を使ったユーザープログラムで接続すると、
+サーバーにオプションネゴシエーションを送る意味のない試みをすることになり、
+不正なコマンドライン解釈を行わせることになる。
+<A NAME="lbAG">&nbsp;</A>
+<H2>履歴</H2>
+
+finger デーモンは
+BSD 4.3
+で登場した。
+<A NAME="lbAH">&nbsp;</A>
+<H2>翻訳者謝辞</H2>
+
+この man ページの翻訳にあたり、
+FreeBSD jpman project &lt;<A HREF="http://www.jp.freebsd.org/man-jp/">http://www.jp.freebsd.org/man-jp/</A>&gt;
+による翻訳を参考にさせていただいた。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">関連項目</A><DD>
+<DT><A HREF="#lbAF">制限</A><DD>
+<DT><A HREF="#lbAG">履歴</A><DD>
+<DT><A HREF="#lbAH">翻訳者謝辞</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:40 GMT, December 05, 2022
+</BODY>
+</HTML>

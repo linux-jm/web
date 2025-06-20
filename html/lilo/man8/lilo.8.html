@@ -1,0 +1,468 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LILO</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LILO</H1>
+Section: Maintenance Commands (8)<BR>Updated: 31 Oct 2001<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/lilo/release/man8/lilo.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+lilo - ブートローダ をインストールする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+主な使い方:
+<P>
+
+<B> /sbin/lilo</B>
+
+- ブートローダをインストールする
+<P>
+
+他の使い方:
+<P>
+
+<B> /sbin/lilo -q</B>
+
+- マップを調べる
+<BR>
+
+<B> /sbin/lilo -R</B>
+
+- 次回のリブートでデフォルトとなるコマンドラインパラメータを設定する
+<BR>
+
+<B> /sbin/lilo -I</B>
+
+- 現在のカーネルのパス名を調べる
+<BR>
+
+<B> /sbin/lilo -A</B>
+
+- パーティションをアクティブにする / アクティブなパーティションを表示する
+<BR>
+
+<B> /sbin/lilo -M [-z]</B>
+
+- デバイスのマスタブートレコードを書き込む
+- またはデバイスシリアル番号を消去する
+<BR>
+
+<B> /sbin/lilo -T</B>
+
+指定したトピックについて詳細を表示する
+<BR>
+
+<B> /sbin/lilo {-u|-U}</B>
+
+- lilo をアンインストールする
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+<B>lilo </B>
+
+は、次回ブート時に有効となるブートローダをインストールする。 
+以下のオプションがある。
+<P>
+
+<DL COMPACT>
+<DT><B>-A </B><I>master-device [ N ]</I>
+
+<DD>
+デバイス
+<I>master-device</I>
+
+(例えば &quot;/dev/hda&quot;) にあるアクティブなパーティションを調べる。
+1 〜 4 の範囲の数字を付けて指定すると、
+<I>master-device</I>
+
+にある指定されたパーティションがアクティブにされる。
+<DT><B>-b </B><I>bootdev</I>
+
+<DD>
+ブートデバイスを指定する。
+つまり、ブートローダをインストールする場所を指定する。
+&quot;-b /dev/hda&quot; はマスターブートレコードを指定する。
+&quot;-b /dev/sdb5&quot; は二つ目の SCSI ディスクの最初の拡張パーティションを指定する。
+<DT><B>-c</B>
+
+<DD>
+マップの圧縮を有効にする。
+これにより、隣り合ったセクタからの read リクエストがひとまとめになり、
+ブートのスピードが上がる (特にフロッピーの場合)。
+<DT><B>-C </B><I>config-file</I>
+
+<DD>
+<B>lilo</B>
+
+はデフォルトでは設定を指定されたファイルから読み込む。
+このオプションはデフォルトの設定ファイル
+<I>/etc/lilo.conf</I>
+
+以外を用いる場合に使う。
+<DT><B>-d </B><I>delay</I>
+
+<DD>
+自動的に最初のイメージをブートするまでの
+遅延時間を 1/10 秒単位で指定する (20 = 2 秒である)。
+Shift, Alt, Ctrl, ScrollLock, CapsLock などで
+自動ブートプロセスを中断するための余裕を与える。
+中断されると `boot:' というプロンプトが表示される。
+このスイッチは設定ファイル config-file に
+<I>prompt</I>
+
+がある場合は上書きされる。
+<DT><B>-D </B><I>label</I>
+
+<DD>
+ブート時にリストの最初に現れるデフォルトカーネルの代わりに、
+指定されたラベルのカーネルを使用する。
+<DT><B>-f </B><I>disk-tab</I>
+
+<DD>
+ディスクジオメトリパラメータファイルを指定する (デフォルトは
+<I>/etc/disktab</I>)。
+
+<DT><B>-g</B>
+
+<DD>
+sector/head/cylinder (ジオメトリ) ディスクアドレスを生成する。
+cylinders は 1023 までに制限される。
+古いバージョンの LILO と互換性があるようにする。
+<DT><B>-i </B><I>boot-loader</I>
+
+<DD>
+ブートローダとして使うファイルを指定する (デフォルトは
+<I>/boot/boot.b</I>)。
+
+<DT><B>-I </B><I>label</I><B> [i|r]</B>
+
+<DD>
+スタートアップ後に、環境変数 BOOT_IMAGE または
+仮想ファイル`/proc/cmdline' で実行したカーネルのラベルが
+参照できるようする。
+このコマンドは一致したカーネルファイルまたは
+初期ラムディスクファイルのパス名を表示する
+(それぞれ &quot;i&quot; または &quot;r&quot; オプションで指定する)。
+<DT><B>-l</B>
+
+<DD>
+sector/head/cylinder アドレスの代わりに、
+24 ビット linear sector アドレスを生成する。
+<DT><B>-L</B>
+
+<DD>
+C:H:S アドレスではなく、32 ビット論理ブロックアドレス (LBA) を生成する。
+これにより、1024 シリンダ以上あるディスクの
+全てのパーティションにアクセスできる。
+<DT><B>-m </B><I>map-file</I>
+
+<DD>
+デフォルトのマップファイルの代わりに指定されたファイルを使用する。
+<DT><B>-M </B><I>master-device [ mbr-file ]</I>
+
+<DD>
+<I>master-device</I>
+
+で指定されたデバイスのマスタブートレコード (MBR) をインストールする。
+第 2 引き数でファイルを指定しない限り、
+デフォルトでは新しい MBR は &quot;/boot/mbr.b&quot; からコピーされる。
+<I>master-device</I>
+
+のプライマリパーティションテーブルは配置されない。
+デバイスシリアル番号がない場合は、生成して MBR に書き込む。
+<DT><B>-p</B>
+
+<DD>
+設定ファイルにおいて
+<B> </B>
+
+で指定されている全てのパスワードを対話的に入力させる。
+<DT><B>-P </B><I>{fix|ignore}</I>
+
+<DD>
+linear アドレスと  sector/head/cylinder アドレスが一致しなくなったなどの
+「異常」の見つかったパーティションテーブルを修復もしくは無視する。
+<DT><B>-q</B>
+
+<DD>
+現在のマップファイルの内容を表示する。
+<B>lilo</B>
+
+はデフォルトで
+<I>/boot/map </I>
+
+を使用する。このファイルにはブート可能な (複数の) カーネルの名前と
+その場所が入っている。
+このオプションはその中にあるカーネルの名前を表示する。
+<B>-v</B> オプションを使うとインストールしたブートローダに関する
+より詳しい情報が得られる。
+<DT><B>-r </B><I>root-directory</I>
+
+<DD>
+操作を行う前に、
+<I>chroot</I> でルートディレクトリを変更する。
+新しいルートディレクトリは
+<I>/dev</I>
+
+ディレクトリを含まなければならず、
+<I>/boot</I>
+
+ディレクトリが必要な場合もある。
+さらに
+<I>/etc/lilo.conf</I>
+
+ファイルが必要な場合もある。
+<P>
+シェルスクリプト
+<I>mkbootdisk</I>
+
+でブート可能なフロッピーを作成するときに使われる。
+<DT><B>-R </B><I>command line</I>
+
+<DD>
+このオプションは次回ブート時に使用されるデフォルトのコマンドを
+設定する。ブートローダは次回ブート後この設定を破棄する。
+設定されたコマンドが有効なのは一回限りである。
+典型的な使用法はリブートスクリプトの中で、`shutdown -r' を行う前などである。
+引き数なしで使うと、コマンドライン <I>lock</I>-ed や <I>fallback</I> が
+キャンセルされる。 
+<DT><B>-s </B><I>save-file</I>
+
+<DD>
+<B>lilo</B>
+
+がブートセクターを上書きするとき、以前の内容を保存するのにデフォルトでは
+<I>/boot/boot.NNNN</I>
+
+を使用する。
+NNNN が何になるかはデバイスに依存する。
+このオプションは、その代わりにブートセクタを保存するファイル名を指定する
+(または、<B>-u</B> オプションと共に指定し、ブートセクタを復旧するファイル名を
+指定する)。
+<DT><B>-S </B><I>save-file</I>
+
+<DD>
+通常、
+<B>lilo</B>
+
+は既にあるセーブファイルを上書きしないが、このオプションを指定すると
+上書きされる。
+<DT><B>-t </B>
+
+<DD>
+テストを行う。ブートセクターやマップファイルは書換えない。
+これを <B>-v</B> と共に指定すると、
+<B>lilo</B>
+
+が何を行うかを確認できる。
+<DT><B>-T </B><I>option</I>
+
+<DD>
+システム情報を表示する。
+そのうちいくつかはシステム BIOS からの情報である。
+これは問題のあるシステムを LILO 診断フロッピーで起動するよりも便利である。
+<I>option</I>
+
+は以下のうちひとつである。
+<DT><DD>
+<PRE>
+   help  - 使用可能な診断のリストを表示する。
+   ChRul - CHANGE-RULES で指定されているパーティション
+           タイプを表示する。
+   EBDA  - 拡張 BIOS データエリア情報の一覧を表示する。
+   geom=&lt;drive&gt; BIOS ドライブのドライブジオメトリを表示する。
+           例: geom=0x80
+   geom  - 全てのドライブのドライブジオメトリの一覧を表示する。
+   table=&lt;drive&gt; プライマリパーティションテーブルを表示する。
+           例: table=/dev/sda
+   video - ブートローダが使用可能なグラフィックモードを表示する。
+</PRE>
+
+<DT><B>-u </B><I>[device-name]</I>
+
+<DD>
+保存されたブートセクタをコピーして <I>lilo</I> をアンインストールする。
+
+<I>device-name</I> は指定しなくてもよい。
+その際タイムスタンプをチェックする。
+<DT><B>-U </B><I>[device-name]</I>
+
+<DD>
+上のオプションと同様だがタイムスタンプをチェックしない。
+<DT><B>-v</B>
+
+<DD>
+より多くの情報を出力する。一つまたは複数の <B>-v</B> オプションを
+与えることで lilo が出力する情報がより多くなる。
+または、<B>-v</B> <I>n</I> (n=1..5) の形で
+詳細度レベルを '<I>n</I>' にできる。
+<DT><B>-V</B>
+
+<DD>
+バージョン番号を表示する。
+<DT><B>-w</B>
+
+<DD>
+警告メッセージを表示させない。
+<DT><B>-x </B><I>option</I>
+
+<DD>
+RAID インストールの場合のみ。
+option は
+<I>none</I>,
+
+<I>auto</I>,
+
+<I>mbr-only</I>
+
+のいずれか、もしくはその他のブートデバイスを
+コンマで区切ってリストにしたものである
+(リストに空白を入れてはならない)。
+<DT><B>-z</B>
+
+<DD>
+-M スイッチとともに使用すると、デバイスシリアル番号を消去する。
+通常は次のようなやり方で、新しいデバイスシリアル番号を生成するのに使われる:
+<PRE>
+     lilo -z -M /dev/hda
+     lilo -M /dev/hda
+</PRE>
+
+<BR>
+
+</DL>
+<P>
+
+左のコマンドラインオプションは、右の設定ファイルでのキーワードと
+同じ意味である。
+<DL COMPACT>
+<DT><DD>
+<TABLE>
+<TR VALIGN=top><TD>-b bootdev</TD><TD>boot=bootdev<BR></TD></TR>
+<TR VALIGN=top><TD>-c</TD><TD>compact<BR></TD></TR>
+<TR VALIGN=top><TD>-d dsec</TD><TD>delay=dsec<BR></TD></TR>
+<TR VALIGN=top><TD>-D label</TD><TD>default=label<BR></TD></TR>
+<TR VALIGN=top><TD>-i boot-loader</TD><TD>install=boot-loader<BR></TD></TR>
+<TR VALIGN=top><TD>-f file</TD><TD>disktab=file<BR></TD></TR>
+<TR VALIGN=top><TD>-g</TD><TD>geometric<BR></TD></TR>
+<TR VALIGN=top><TD>-l</TD><TD>linear<BR></TD></TR>
+<TR VALIGN=top><TD>-L</TD><TD>lba32<BR></TD></TR>
+<TR VALIGN=top><TD>-m mapfile</TD><TD>map=mapfile<BR></TD></TR>
+<TR VALIGN=top><TD>-P fix</TD><TD>fix-table<BR></TD></TR>
+<TR VALIGN=top><TD>-P ignore</TD><TD>ignore-table<BR></TD></TR>
+<TR VALIGN=top><TD>-s file</TD><TD>backup=file<BR></TD></TR>
+<TR VALIGN=top><TD>-S file</TD><TD>force-backup=file<BR></TD></TR>
+<TR VALIGN=top><TD>-v [N]</TD><TD>verbose=level<BR></TD></TR>
+</TABLE>
+
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>ブートオプション</H2>
+
+ここで説明するオプションは、カーネルイメージがブートされるときに
+コマンドラインで指定することができる。
+特に記述がなければ、
+これらのオプションは LILO によって処理され、
+カーネルに渡されるコマンドラインから削除される。
+<P>
+
+<DL COMPACT>
+<DT><B>lock</B>
+
+<DD>
+'lilo.conf' で 'lock' が指定されたときのように、
+コマンドラインをロックする。
+<DT><B>mem=###[,K,M]</B>
+
+<DD>
+システムの最大メモリをバイト・キロバイト・メガバイト単位で指定する。
+このオプションはコマンドラインから削除されず、常にカーネルに渡される。
+<DT><B>nobd</B>
+
+<DD>
+BIOS データを収集させない。
+このオプションは、
+(以下のように) 行の終りに &quot;s&quot; を表示してハングアップするような、
+IBM 非互換の BIOS で使用するために予約されている。
+<PRE>
+     Loading.........s
+</PRE>
+
+<DT><B>vga=[ASK,EXT,EXTENDED,NORMAL]</B>
+
+<DD>
+カーネルのスタートアップ時のデフォルトのビデオモードを上書きする。
+<BR>
+
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>非互換性</H2>
+
+<B>lilo</B>
+
+を 2.2.x カーネルから導入された
+<I>reiserfs</I>
+
+と用いるときには、ファイルシステムを 'notail' オプションでマウントしないと
+問題が生じることが知られている。
+この非互換性は reiserfs 3.6.18 と lilo 21.6 で解決されている。
+<P>
+バージョン 22.0 の最初の頃、RAID インストールでは
+ブートレコードを RAID パーティションに書き込んでいた。
+修復時に RAID セットをブート可能とするために、
+条件つきで MBR への書き込みを行ってもよいはずだが、
+実際にはすべてのデフォルト動作を変更されてしまう。
+以前のバージョンと同じアクションは、
+`-x mbr-only' スイッチを使って実行できる。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+設定ファイルのオプション `backup' と `force-backup' は、
+RAID インストールではいまのところ正しく実装されていない。
+デフォルトのブートレコードのバックアップ機構はうまく動作するようなので、
+そちらを使うべきである。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../../util-linux/man8/fdisk.8.html">fdisk</A>(8), <A HREF="../man5/lilo.conf.5.html">lilo.conf</A>(5), <A HREF="../man8/mkrescue.8.html">mkrescue</A>(8), mkinitrd(8).
+<P>
+lilo のディストリビューションには多くのドキュメントが含まれている。
+(lilo 22.1)
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+Werner Almesberger &lt;<A HREF="mailto:almesber@lrc.epfl.ch">almesber@lrc.epfl.ch</A>&gt; (ver.21 以前)
+<BR>
+
+John Coffman &lt;<A HREF="mailto:johninsd@san.rr.com">johninsd@san.rr.com</A>&gt; (ver.21.2 以降)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">ブートオプション</A><DD>
+<DT><A HREF="#lbAF">非互換性</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

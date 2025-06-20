@@ -1,0 +1,148 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of WAVELAN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>WAVELAN</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated:  2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man4/wavelan.4">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+wavelan - AT&amp;T GIS WaveLAN ISA デバイスドライバ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>insmod wavelan_cs.o [io=</B><I>B,B..</I><B>] [ irq=</B><I>I,I..</I><B>]
+[name=</B><I>N,N..</I><B>]</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>このドライバーは時代遅れである</B>: このドライバーはカーネル 2.6.35 で削除された。
+<P>
+
+<B>wavelan</B> は、NCR / AT&amp;T / Lucent の <B>WaveLan ISA</B> と Digital(DEC) の
+<B>RoamAbout DS</B> というワイアレスイーサネット (wireless ethernet) アダプターのための
+ローレベルデバイスドライバである。このドライバはモジュールとしても、また、 カーネルに組み込んだ形でも利用できる。また、どちらの場合でも、複数カード
+(最大 4 枚まで) をサポートし、明示的にデバイスの名前を指定しない限り (これに関しては、下を見よ)、発見されたそれぞれのカードには、利用可能な
+次のイーサネットデバイス(eth0..eth#)が割り当てられる。このデバイス名は MAC アドレス、NWID、カードによって利用される周波数とともに
+カーネルログファイルに報告される。
+<A NAME="lbAE">&nbsp;</A>
+<H3>パラメーター</H3>
+
+このセクションのパラメーターは、モジュールとして使用する場合 に適用され、 <B><A HREF="../../0MultiFileIdx/man8/insmod.8.html">insmod</A></B>(8)  のコマンドライン引数として用いる。
+カーネルにドライバが含まれている場合は、 <I>ether=IRQ,IO,NAME</I> という形式のパラメーターをカーネルコマンドラインに渡す。
+<DL COMPACT>
+<DT><B>io</B><DD>
+wavelan カードを検出する時にどこのベースアドレスをサーチするかという リストを指定する (カードが利用するベースアドレスはカードのディップ
+スイッチで設定する)。もし io アドレスが指定されなければドライバは 0x390 と 0x3E0
+をスキャンする(このアドレスは他のハードと衝突することも考えられる)。
+<DT><B>irq</B><DD>
+それぞれの wavelan カードが利用する IRQ のリストをセットする (この値は 将来的な利用のために永続的ストレージに保存される)。
+<DT><B>name</B><DD>
+それぞれの wavelan カードデバイスに (<B><A HREF="../../net-tools/man8/ifconfig.8.html">ifconfig</A></B>(8) が利用する) 名前のリストをセットする。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>ワイアレス拡張 (Wireless Extentions)</H3>
+
+ワイアレス拡張の操作には <B>iwconfig</B>(8)  を使う。
+<A NAME="lbAG">&nbsp;</A>
+<H3>NWID (or ドメイン)</H3>
+
+ネットワーク IDを [<I>0</I> から <I>FFFF</I>] に設定するか、 [<I>off</I>] その利用を無効にする。 NWID
+はカードの永続的ストレージエリア (Permanent Strage Area) に 格納されるので、NWID
+はドライバが呼び出されるたびに再利用できる。
+<A NAME="lbAH">&nbsp;</A>
+<H3>周波数とチャネル</H3>
+
+2.4&nbsp;GHz 2.00 ハードウェアでは、10 の定義済みのチャネル (<I>2.412</I> <I>2.422, 2.425, 2.4305,
+2.432, 2.442, 2.452, 2.460, 2.462</I> <I>2.484</I>)
+のうちの一つを指定するか、その数値を直接指定することによって周波数を設定 することができる。 周波数は直後に変更され、また、その変更は恒久的である。
+どの周波数が利用できるかということは、(その国の) 法律に依存する…
+<A NAME="lbAI">&nbsp;</A>
+<H3>統計スパイ (Statics spy)</H3>
+
+(8 つまでの) MAC アドレスのリストをドライバに設定して、 それぞれのリンクの品質を得る (<B>iwspy</B>(8)  を参照)。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>/proc/net/wireless</H3>
+
+<I>status</I> はモデムから報告されたステータスである。 <I>link quality</I>
+は通信中の(直接拡散スペクトラム通信方式における)変調の品質を報告する [最大 = 16]。 <I>Level</I> と <I>Noise</I>
+は信号レベルとノイズのレベルを参照する [最大 = 64]。 <I>暗号化されていて廃棄されたパケット(crypt discarded packet)</I>
+と <I>それ以外の廃棄されたパケット(misc discarded packet)</I> のカウンターは実装されていない。
+<A NAME="lbAK">&nbsp;</A>
+<H3>ドライバ固有の IOCTL (private ioctl)</H3>
+
+<B>iwpriv</B>(8)  をドライバ固有の ioctl の操作のために利用できる。
+<A NAME="lbAL">&nbsp;</A>
+<H3>品質とレベルの閾値 (quality and level threshold)</H3>
+
+モデムで使われる品質とレベルの閾値 (そのレベルを下回ったパケットは 破棄される) を定義することができる。
+<A NAME="lbAM">&nbsp;</A>
+<H3>ヒストグラム (Histogram)</H3>
+
+この機能により、 シグナルレベル区間の数の設定と、設定したそれぞれの区間での 受信パケット数をカウントすることができる。
+この分布はシグナルレベルの最瀕値標準偏差の計算に役立つだろう。
+<A NAME="lbAN">&nbsp;</A>
+<H3>特定のドライバでの注意</H3>
+
+このドライバはいくつかの <B>NCR/AT&amp;T/Lucent ではない</B> Wavelan カードの検出に失敗するだろう。
+これがあなたの持っているカードで起こった場合 、そのカードの検出処理をどのように加えればいいかと いうことについてソースコードを確認する必要がある。
+<P>
+
+
+
+
+
+
+
+
+
+
+ここまでで述べてきた機能のうちのいくつかは、選択可能である。 ドライバの先頭部分のフラグを変更してコンパイルしなおすことによって、
+その機能を無効にすることも可能である。
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>wavelan_cs</B>(4), <B><A HREF="../../net-tools/man8/ifconfig.8.html">ifconfig</A></B>(8), <B><A HREF="../../0MultiFileIdx/man8/insmod.8.html">insmod</A></B>(8), <B>iwconfig</B>(8),
+<B>iwpriv</B>(8), <B>iwspy</B>(8)
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">パラメーター</A><DD>
+<DT><A HREF="#lbAF">ワイアレス拡張 (Wireless Extentions)</A><DD>
+<DT><A HREF="#lbAG">NWID (or ドメイン)</A><DD>
+<DT><A HREF="#lbAH">周波数とチャネル</A><DD>
+<DT><A HREF="#lbAI">統計スパイ (Statics spy)</A><DD>
+<DT><A HREF="#lbAJ">/proc/net/wireless</A><DD>
+<DT><A HREF="#lbAK">ドライバ固有の IOCTL (private ioctl)</A><DD>
+<DT><A HREF="#lbAL">品質とレベルの閾値 (quality and level threshold)</A><DD>
+<DT><A HREF="#lbAM">ヒストグラム (Histogram)</A><DD>
+<DT><A HREF="#lbAN">特定のドライバでの注意</A><DD>
+</DL>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

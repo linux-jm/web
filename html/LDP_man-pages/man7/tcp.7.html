@@ -1,0 +1,839 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TCP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TCP</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/tcp.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+tcp - TCP プロトコル
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/netinet/tcp.h">netinet/tcp.h</A>&gt;</B>
+<P>
+
+<B>tcp_socket = socket(AF_INET, SOCK_STREAM, 0);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これは RFC&nbsp;793, RFC&nbsp;1122, RFC&nbsp;2001 で定義されている TCP プロトコルを NewReno 拡張と SACK
+拡張を含めて実装したものである。 TCP は、 <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  上の二つのソケット間に、信頼性の高い、ストリーム指向の全二重
+(full-duplex) 通信を提供する。 v4 と v6 の両方のバージョンの <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  に対応している。 TCP
+は、データが順序を守って到着すること、途中で失われたパケットが 再送されることを保証する。また、パケット単位にチェックサムを
+生成、検査することで、転送エラーを検知する。 TCP はレコード境界 (record boundary) を保存しない。
+<P>
+
+新しく生成されたばかりの TCP ソケットは、 リモートアドレスかローカルアドレスがなく、 したがって詳細が完全に指定された状態ではない。 外部への
+TCP 接続を生成するには、 <B><A HREF="../man2/connect.2.html">connect</A></B>(2)  を用いてもう一方の TCP ソケットへの接続を確立する。
+外部からの新たな接続を受けるには、まず <B><A HREF="../man2/bind.2.html">bind</A></B>(2)  でソケットをローカルなアドレスとポートに結びつけ、次に <B><A HREF="../man2/listen.2.html">listen</A></B>(2)
+を呼んでソケットを接続待ち受け状態にする。 その後、到着した接続要求に対して <B><A HREF="../man2/accept.2.html">accept</A></B>(2)  を用い、ソケットを新しく生成する。
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2)  または <B><A HREF="../man2/connect.2.html">connect</A></B>(2)  のコールが成功したソケットは、詳細が完全に指定された状態となり、
+データのやりとりが可能となる。接続待ち受け状態の (listening) ソケットや、 接続 (connect)
+されていないソケットを通してデータをやりとりすることはできない。
+<P>
+
+Linux は RFC&nbsp;1323 の TCP high performance 拡張をサポートしている。 これには、Protection
+Against Wrapped Sequence Numbers (PAWS)、 ウィンドウスケーリング、タイムスタンプなどが含まれている。
+ウィンドウスケーリングを利用すると、遅延または帯域の大きな接続で、 (64&nbsp;K 以上の) 巨大な TCP ウィンドウを用いることが可能となる。
+これを用いるには、送受信のバッファーサイズを大きくしなければならない。 システム全体に対するバッファーサイズの変更は、ファイル
+<I>/proc/sys/net/ipv4/tcp_wmem</I> と <I>/proc/sys/net/ipv4/tcp_rmem</I>
+を用いて行うことができる。 また、個々のソケットのみを大きくしたい場合には、 <B>SO_SNDBUF</B> や <B>SO_RCVBUF</B>
+ソケットオプションを用いて <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  コールを用いて設定すればよい。
+<P>
+
+<B>SO_SNDBUF</B> や <B>SO_RCVBUF</B> のメカニズムで宣言されるソケットバッファーの最大サイズは、ファイル
+<I>/proc/sys/net/core/rmem_max</I> や <I>/proc/sys/net/core/wmem_max</I>
+で指定されたシステムとしての制限値を超えることはできない。 TCP は実際には <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+コールが要求したバッファーサイズの二倍を割り当てる。 そのため、この後で <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  コールを行うと、
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  で要求したバッファーサイズとは異なる値が返る。 TCP
+はこの余分な空間を、管理目的やカーネル内部の構造体に用いている。 <I>/proc</I> ファイルの値は、これらを反映し、実際の TCP
+ウィンドウよりも大きな値となる。 各接続におけるソケットのバッファーサイズ変更を有効にするには、 <B><A HREF="../man2/listen.2.html">listen</A></B>(2)  や
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2)  コールの前に設定しなければならない。 より詳しい情報は <B><A HREF="../man7/socket.7.html">socket</A></B>(7)  を見よ。
+<P>
+
+TCP は緊急データ (urgent data) をサポートしている。緊急データは 何らかの重要なメッセージがデータストリームに含まれていること、
+そのデータをできるだけ早く処理すべきこと、を受信者に伝えるために用いられる。 緊急データを送るには、 <B><A HREF="../man2/send.2.html">send</A></B>(2)  に <B>MSG_OOB</B>
+オプションを指定する。 緊急データを受信すると、カーネルは <B>SIGURG</B> シグナルを送信する。送信先は <B>SIOCSPGRP</B> や
+<B>FIOSETOWN</B> ioctl (や POSIX.1 で規定されている <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  <B>F_SETOWN</B> 操作)
+を用いてそのソケットの「所有者」として設定された プロセスかプロセスグループである。 <B>SO_OOBINLINE</B>
+ソケットオプションが有効になっていると、緊急データは 通常のデータストリームの中に混ぜて送られる (プログラムは下記の <B>SIOCATMARK</B>
+ioctl を使って緊急データの場所を調べることができる)。 無効になっている場合には、 <B><A HREF="../man2/recv.2.html">recv</A></B>(2)  や <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)  で
+<B>MSG_OOB</B> フラグがセットされているときにのみ、緊急データを受信できる。
+<P>
+
+When out-of-band data is present, <B><A HREF="../man2/select.2.html">select</A></B>(2)  indicates the file
+descriptor as having an exceptional condition and <I>poll (2)</I> indicates a
+<B>POLLPRI</B> event.
+<P>
+
+Linux 2.4 では多くの変更がなされ、 スループットとスケーリングが向上し、機能も高まった。 これらの機能には、ゼロコピー
+<B><A HREF="../man2/sendfile.2.html">sendfile</A></B>(2)、 Explicit Congestion Notification、 TIME_WAIT ソケットの新しい管理法、
+keep-alive ソケットオプション、 Duplicate SACK 拡張のサポートなどがある。
+<A NAME="lbAE">&nbsp;</A>
+<H3>アドレスのフォーマット</H3>
+
+TCP は IP の上層に構築されている (<B><A HREF="../man7/ip.7.html">ip</A></B>(7)  を参照)。 <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  に定義されているアドレスフォーマットは TCP
+にも適用される。 TCP は point-to-point の通信だけをサポートする。 ブロードキャストやマルチキャストはサポートしない。
+<A NAME="lbAF">&nbsp;</A>
+<H3>/proc インターフェース</H3>
+
+システム全体に対する TCP パラメーターの設定には、 <I>/proc/sys/net/ipv4/</I> ディレクトリ内のファイルによりアクセスできる。
+さらに、IP に関連する <I>/proc</I> インターフェースのほとんどは TCP についても適用される。 <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  を参照のこと。
+<I>Boolean</I> は整数値で、 0 以外の値 (&quot;true&quot;) は対応するオプションが有効、 0 値 (&quot;false&quot;)
+は無効、であることを意味する。
+<DL COMPACT>
+<DT><I>tcp_abc</I> (Integer; default: 0; Linux 2.6.15 から 3.8 まで)<DD>
+
+
+
+RFC 3465 で定義されている Appropriate Byte Count (ABC) を制御する。 ABC は、部分的な ACK
+に応じた輻輳ウィンドウ (<I>cwnd</I>)  の増加をより緩やかにする方法である。 以下の値を指定できる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>0<DD>
+ACK を受信する毎に <I>cwnd</I> を増やす (ABC なし)。
+<DT>1<DD>
+フルサイズのセグメントの ACK を受信する毎に <I>cwnd</I> を増やす。
+<DT>2<DD>
+ACK が遅延 ACK (delayed acknowledgment) を相殺するための 2 セグメントに 対する ACK の場合に、 <I>cwnd</I>
+を 2 増やすことができる。
+</DL>
+</DL>
+
+<DT><I>tcp_abort_on_overflow</I> (ブール値; デフォルト: 無効; Linux 2.4 以降)<DD>
+
+接続を待ち受けているサービスが遅すぎて、受信についていけない場合に、 接続をリセットできるようにする。
+これを用いると、バーストによってオーバーフローが起こったときに、 接続を回復できるようになる。このオプションを用いるのは、
+受信デーモンを高速化できない場合に「限定する」こと。 このオプションを用いると、そのサーバに接続しているクライアント にとっては害になることがある。
+<DT><I>tcp_adv_win_scale</I> (integer; default: 2; Linux 2.4 以降)<DD>
+
+バッファーリングのオーバーヘッドの計算方法を、 <I>tcp_adv_win_scale</I> が正の場合は
+<I>bytes/2^tcp_adv_win_scale</I> に、 <I>tcp_adv_win_scale</I> が負か 0 の場合は
+<I>bytes-bytes/2^(-tcp_adv_win_scale)</I> とする。
+<DT><DD>
+ソケットの受信バッファー空間はアプリケーションとカーネルで共有される。 TCP はバッファーの一部を TCP ウィンドウとして管理し、
+これを受信ウィンドウとして接続の他端に通知する。 空間の残りは「アプリケーション」バッファーとして用いられ、
+スケジューリングやアプリケーションの遅延からネットワークを隔離する。 <I>tcp_adv_win_scale</I> のデフォルト値は 2 であり、
+この場合アプリケーションバッファーは全体の 1/4 になる。
+<DT><I>tcp_allowed_congestion_control</I> (String; default: see text; Linux 2.4.20 以降)<DD>
+
+非特権プロセスで利用できる輻輳制御アルゴリズムの選択肢を表示/設定する (<B>TCP_CONGESTION</B> ソケットオプションの説明を参照のこと)。
+このリストの要素はホワイトスペースで区切られ、改行文字で終端される。 このリストは
+<I>tcp_available_congestion_control</I> で表示されるリストの部分集合となる。 このリストのデフォルト値は、&quot;reno&quot;
+と <I>tcp_congestion_control</I> のデフォルト設定をあわせたものとなる。
+<DT><I>tcp_autocorking</I> (ブール値; デフォルト: 有効; Linux 3.14 以降)<DD>
+
+
+このオプションを有効にすると、 送信総パケット数を減らすため、 カーネルは小さな write (連続する <B><A HREF="../man2/write.2.html">write</A></B>(2) や
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2) の呼び出し) を可能な限り結合しようとする。 パケットの結合が行われるのは、そのフローの前のパケットが少なくとも一つは
+qdisc キューかデバイスの送信キューで送信待ちの場合である。 このオプションが有効な場合でも <B>TCP_CORK</B>
+オプションを使うことができ、アプリケーションがソケットの「コルク解除」(送信待ち状態の解除)
+をいつどのように行えばよいか分かっている場合には、最適な動作をさせることができる。
+<DT><I>tcp_available_congestion_control</I> (String; read-only; Linux 2.4.20 以降)<DD>
+
+登録されている輻輳制御アルゴリズムのリストを表示する。 このリストの要素はホワイトスペースで区切られ、改行文字で終端される。
+このリストに載っているものだけが、 <I>tcp_allowed_congestion_control</I> に表示される。
+他の輻輳制御アルゴリズムがモジュールとして利用可能だが、 モジュールがロードされていないこともある。
+<DT><I>tcp_app_win</I> (integer; default: 31; Linux 2.4 以降)<DD>
+
+この変数は、TCP ウィンドウの何バイト分を バッファーリングのオーバーヘッド用に予約するかを指定する。
+<DT><DD>
+
+
+そのウィンドウの <I>window/2^tcp_app_win</I> と mss の大きいほう (バイト単位)
+がアプリケーションバッファーとして予約される。 0 を指定すると一切予約領域を取らない。
+<DT><I>tcp_base_mss</I> (Integer; default: 512; Linux 2.6.17 以降)<DD>
+
+
+パケット化レイヤの Path MTU discovery (MTU probing) で、 <I>search_low</I> の初期値と使用される値。 MTU
+probing が有効な場合、この値はその接続の MSS の初期値となる。
+<DT><I>tcp_bic</I> (ブール値; デフォルト: 無効; Linux 2.4.27/2.6.6 から 2.6.13 まで)<DD>
+
+
+BIC TCP 輻輳制御アルゴリズムを有効にする。 BIC-TCP は送信側のみの変更で、 スケーラビリティと TCP 親和性
+(friendliness) の両方を提供しつつ、 大きなウィンドウの下での線形な RTT 公平性を保証するものである。 このプロトコルでは
+additive increase (追加的な増加) と binary search increase (二分探索増加) といわれる二つの仕組みを
+組み合わせている。輻輳ウィンドウが大きいときは、増分の大きい additive increase により、スケーラビリティを確保しながら 線形な RTT
+公平性を保証する。 輻輳ウィンドウが小さいときには binary search increase により TCP 親和性を達成している。
+<DT><I>tcp_bic_low_window</I> (integer; default: 14; Linux 2.4.27/2.6.6 以降 2.6.13 まで)<DD>
+
+
+BIC TCP が輻輳ウィンドウの調整を開始する閾値ウィンドウ (パケット単位)  を設定する。この閾値を下回る場合、BIC TCP はデフォルトの
+TCP Reno と 同じ動作をする。
+<DT><I>tcp_bic_fast_convergence</I> (ブール値; デフォルト: 有効; Linux 2.4.27/2.6.6 以降 2.6.13 まで)<DD>
+BIC TCP が輻輳ウィンドウの変化により速く反応するようにする。 同じコネクションを共有する二つのフローが一つにまとまるのを
+より速く行うようにする。
+<DT><I>tcp_congestion_control</I> (String; default: 説明参照; Linux 2.4.13 以降)<DD>
+
+新規の接続で使用されるデフォルトの輻輳制御アルゴリズムを設定する。 &quot;reno&quot; アルゴリズムは常に利用可能だが、
+カーネル設定次第では別の選択肢が利用できることもある。 このファイルのデフォルト値はカーネル設定の一つとして設定される。
+<DT><I>tcp_dma_copybreak</I> (integer; default: 4096; Linux 2.6.24 以降)<DD>
+システムに DMA コピーエンジンが存在し、カーネルで <B>CONFIG_NET_DMA</B> オプションが有効になっている場合に、 DMA
+コピーエンジンにオフロードされるソケットの読み込みサイズの下限値 (バイト単位)。
+<DT><I>tcp_dsack</I> (ブール値; デフォルト: 有効; Linux 2.4 以降)<DD>
+
+RFC&nbsp;2883 の TCP Duplicate SACK のサポートを有効にする。
+<DT><I>tcp_ecn</I> (integer; default: see below; Linux 2.4 以降)<DD>
+
+RFC&nbsp;3168 Explicit Congestion Notification を有効にする。
+<DT><DD>
+このファイルは以下のいずれかの値を取ることができる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>0<DD>
+Disable ECN.  Neither initiate nor accept ECN.  This was the default up to
+and including Linux 2.6.30.
+<DT>1<DD>
+Enable ECN when requested by incoming connections and also request ECN on
+outgoing connection attempts.
+<DT>2<DD>
+
+Enable ECN when requested by incoming connections, but do not request ECN on
+outgoing connections.  This value is supported, and is the default, since
+Linux 2.6.31.
+</DL>
+</DL>
+
+<DT><DD>
+When enabled, connectivity to some destinations could be affected due to
+older, misbehaving middle boxes along the path, causing connections to be
+dropped.  However, to facilitate and encourage deployment with option 1, and
+to work around such buggy equipment, the <B>tcp_ecn_fallback</B> option has been
+introduced.
+<DT><I>tcp_ecn_fallback</I> (ブール値; デフォルト: 有効; Linux 4.1 以降)<DD>
+
+Enable RFC&nbsp;3168, Section 6.1.1.1. fallback.  When enabled, outgoing
+ECN-setup SYNs that time out within the normal SYN retransmission timeout
+will be resent with CWR and ECE cleared.
+<DT><I>tcp_fack</I> (ブール値; デフォルト: 有効; Linux 2.2 以降)<DD>
+
+TCP Forward Acknowledgement のサポートを有効にする。
+<DT><I>tcp_fin_timeout</I> (integer; default: 60; Linux 2.2 以降)<DD>
+
+
+
+ソケットを強制的にクローズする前に、 最後の FIN パケットを待つ時間を秒単位で指定する。 これは厳密には TCP の仕様を満たしていないが、 DoS
+攻撃 (denial of service attack) から身を守るために必要である。 Linux 2.2 ではデフォルト値は 180 であった。
+<DT><I>tcp_frto</I> (integer; default: 下記参照; Linux 2.4.21/2.6 以降)<DD>
+
+F-RTO を有効にする。F-RTO は TCP 再送タイムアウト (RTO) からの 復旧性能を向上させたアルゴリズムである。
+この機能は無線環境で特に効果を発揮する。 無線環境では、通常は、中間ルーターの輻輳ではなくランダムな無線の干渉 によりパケットロスが発生する。 詳細は
+RFC&nbsp;4138 を参照。
+<DT><DD>
+このファイルは以下のいずれかの値を取ることができる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>0<DD>
+Disabled.  This was the default up to and including Linux 2.6.23.
+<DT>1<DD>
+基本版の F-RTO アルゴリズムを有効にする。
+<DT>2<DD>
+
+Enable SACK-enhanced F-RTO if flow uses SACK.  The basic version can be used
+also when SACK is in use though in that case scenario(s) exists where F-RTO
+interacts badly with the packet counting of the SACK-enabled TCP flow.  This
+value is the default since Linux 2.6.24.
+</DL>
+</DL>
+
+<DT><DD>
+Linu 2.6.22 より前では、このパラメーターはブール値であり、 上記の 0 と 1 のみをサポートしていた。
+<DT><I>tcp_frto_response</I> (integer; default: 0; Linux 2.6.22 以降)<DD>
+F-RTO が TCP 再送タイムアウトが偽物だと検出した場合 (つまり、TCP がもっと長い再送タイムアウトを設定していれば
+タイムアウトが避けられた場合)、 次にどうするかに関して選択肢がいくつかある。 以下の値を選択できる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>0<DD>
+レートを元の半分にする。 滑らかで、保守的な反応を行い、RTT 1回分の時間後に 輻輳ウィンドウ (<I>cwnd</I>)  とスロースタートの閾値
+(<I>ssthresh</I>)  が半分になる。
+<DT>1<DD>
+非常に保守的な反応。このオプションの使用は推奨されない。 反応が正しかった場合であっても、Linux TCP の他の部分と
+うまく連携できないからである。 <I>cwnd</I> と <I>ssthresh</I> は直ちに半分にされる。
+<DT>2<DD>
+積極的な反応。 不要と判明した輻輳制御の測定情報を取り消す (TCP がもっと注意深く扱うべき再送が失われる可能性を無視する)。 。 <I>cwnd</I> と
+<I>ssthresh</I> はタイムアウト前の値に戻される。
+</DL>
+</DL>
+
+<DT><I>tcp_keepalive_intvl</I> (integer; default: 75; Linux 2.4 以降)<DD>
+
+TCP keep-alive のプローブを送る間隔 (秒単位)。
+<DT><I>tcp_keepalive_probes</I> (integer; default: 9; Linux 2.2 以降)<DD>
+
+TCP keep-alive プローブの最大回数。 この回数だけ試しても接続先から反応が得られない場合は、 あきらめて接続を切断する。
+<DT><I>tcp_keepalive_time</I> (integer; default: 7200; Linux 2.2 以降)<DD>
+
+接続がアイドル状態になってから、keep-alive プローブを送信するまでの時間を秒単位で指定する。 <B>SO_KEEPALIVE</B>
+ソケットオプションが有効になっている場合のみ keep-alive は送信される。 デフォルト値は 7200 秒 (2 時間)。 keep-alive
+が有効になっている場合、 さらにおよそ 11 分 (75 秒間隔の 9 プローブ分)  経過するとアイドル状態の接続は終了させられる。
+<DT><DD>
+
+
+下層にある接続追跡機構やアプリケーションでのタイムアウトは、 もっとずっと短いかもしれない。
+<DT><I>tcp_low_latency</I> (Boolean; default: disabled; since Linux 2.4.21/2.6; obsolete since Linux 4.14)<DD>
+
+
+If enabled, the TCP stack makes decisions that prefer lower latency as
+opposed to higher throughput.  It this option is disabled, then higher
+throughput is preferred.  An example of an application where this default
+should be changed would be a Beowulf compute cluster.  Since Linux 4.14,
+this file still exists, but its value is ignored.
+<DT><I>tcp_max_orphans</I> (integer; default: see below; Linux 2.4 以降)<DD>
+
+システムが許容する、 orphan な (どのユーザーファイルハンドルにもアタッチされていない)  TCP ソケットの最大数。
+この数を越えると、orphan な接続はリセットされ、警告が表示される。 この制限が存在するのは、単純な使用不能 (denial-of-service)
+攻撃を 防ぐために過ぎない。この値を小さくすることは推奨しない。 ネットワークの条件によっては、この数値を大きくしないといけないかもしれないが、
+orphan なソケットひとつあたり 64&nbsp;K 程度のスワップ不可能なメモリーを消費することも注意せよ。 デフォルトの初期値はカーネルパラメーターの
+NR_FILE と等しい。 この初期デフォルト値はシステムのメモリーに応じて調整される。
+<DT><I>tcp_max_syn_backlog</I> (integer; default: 下記参照; Linux 2.2 以降)<DD>
+
+The maximum number of queued connection requests which have still not
+received an acknowledgement from the connecting client.  If this number is
+exceeded, the kernel will begin dropping requests.  The default value of 256
+is increased to 1024 when the memory present in the system is adequate or
+greater (&gt;= 128&nbsp;MB), and reduced to 128 for those systems with very low
+memory (&lt;= 32&nbsp;MB).
+<DT><DD>
+
+Prior to Linux 2.6.20, it was recommended that if this needed to be
+increased above 1024, the size of the SYNACK hash table (<B>TCP_SYNQ_HSIZE</B>)
+in <I>include/net/tcp.h</I> should be modified to keep
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;TCP_SYNQ_HSIZE&nbsp;*&nbsp;16&nbsp;&lt;=&nbsp;tcp_max_syn_backlog
+<DT><DD>
+and the kernel should be recompiled.  In Linux 2.6.20, the fixed sized
+<B>TCP_SYNQ_HSIZE</B> was removed in favor of dynamic sizing.
+<DT><I>tcp_max_tw_buckets</I> (integer; default: 下記参照; Linux 2.4 以降)<DD>
+
+システムが許容する TIME_WAIT 状態にあるソケットの最大数。 この制限が存在するのは、 単純な使用不能 (denial-of-service)
+攻撃を防ぐために過ぎない。 デフォルト値は NR_FILE*2 で、システムのメモリーに応じて調整される。
+この数値を越えると、そのようなソケットはクローズされ、警告が表示される。
+<DT><I>tcp_moderate_rcvbuf</I> (ブール値; デフォルト: 有効; Linux 2.4.17/2.6.7 以降)<DD>
+
+有効にすると、TCP は受信バッファーの自動調整を行う。 具体的には、 (<I>tcp_rmem[2]</I> を超えない範囲で)
+バッファーの大きさを自動的に変化させ、 その経路で最大のスループットを達成するのに必要な大きさに合わせようとする。
+<DT><I>tcp_mem</I> (Linux 2.4 以降)<DD>
+
+これは 3 つの整数 [low, pressure, high] からなるベクトル値である。 これらは TCP
+がメモリー使用量を追跡するために用いられる (使用量はシステムのページサイズ単位で計測される)。
+デフォルトはブート時に利用できるメモリーの量から計算される。 (実際には、TCP は <I>low memory</I> のみを使用する。値は
+32ビットシステムでは約 900 メガバイトに制限される。 64 ビットシステムではこの制限はない。)
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>low</I><DD>
+TCP は、グローバルにアロケートしたページがこの数値以下の場合は、 メモリーアロケーションを調整しない。
+<DT><I>pressure</I><DD>
+TCP がアロケートしたメモリーがこの数値分のページ数を越えると、 TCP はメモリー消費を抑えるようになる。 アロケートしたページ数が <I>low</I>
+以下になると、このメモリー圧迫状態から脱する。
+<DT><I>high</I><DD>
+TCP がグローバルに割り当てるページ数の最大値。 この値はカーネルによって課されるあらゆる制限よりも優先される。
+</DL>
+</DL>
+
+<DT><I>tcp_mtu_probing</I> (integer; default: 0; Linux 2.6.17 以降)<DD>
+
+このパラメーターは、TCP のパケット化レイヤの Path MTU discovery を制御する。 このファイルには以下の値を設定できる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>0<DD>
+無効にする。
+<DT>1<DD>
+デフォルトでは無効だが、ICMP ブラックホールが検出された場合は有効にする。
+<DT>2<DD>
+常に有効にする。 MSS の初期値として <I>tcp_base_mss</I> が使用される。
+</DL>
+</DL>
+
+<DT><I>tcp_no_metrics_save</I> (ブール値; デフォルト: 無効; Linux 2.6.6 以降)<DD>
+
+デフォルトでは、TCP は接続クローズ時に各種の接続パラメーターを ルートキャッシュ (route cache)
+に保存し、近い将来に接続が確立された際に これらの情報を初期状態として使用できるようになっている。 通常は、これにより全体として性能が向上するが、
+時として性能の劣化を引き起こすこともある。 <I>tcp_no_metrics_save</I> を有効にすると、TCP
+は接続クローズ時に接続パラメーターをキャッシュ しなくなる。
+<DT><I>tcp_orphan_retries</I> (integer; default: 8; Linux 2.4 以降)<DD>
+
+こちらからクローズした接続について、 先方をプローブする最大試行数。
+<DT><I>tcp_reordering</I> (integer; default: 3; Linux 2.4 以降)<DD>
+
+TCP パケットストリームでパケット順序の逆転が発生しただけであり、 パケットロスが起こったとはみなさない、パケット数の最大値。
+この値を超えてパケットの順序逆転が起こると、パケットロスが生じたと みなし、slow start に入る。 この数値は変更しないほうが良い。
+これは、接続中のパケットの並び替えによって生じる 不必要な速度低下や再送を最小化するように設計された、 パケット並び替え (packet
+reordering) の検知メトリックなのである。
+<DT><I>tcp_retrans_collapse</I> (ブール値; デフォルト: 有効; Linux 2.2 以降)<DD>
+
+再送の際にフルサイズのパケットを送ろうとする。
+<DT><I>tcp_retries1</I> (integer; default: 3; Linux 2.2 以降)<DD>
+
+普通に確立されている接続上に、 TCP がネットワーク層を巻き込まずに再送を試みる回数。 再送がこの回数を越えると、まず最初に、
+新しい再送を送る前に可能ならネットワーク層に経路を更新させる。 デフォルトは RFC が指定している最少数である 3。
+<DT><I>tcp_retries2</I> (integer; default: 15; Linux 2.2 以降)<DD>
+
+確立状態の接続に、この回数 TCP パケットの再送信を 行なってもだめな場合はあきらめる。 デフォルト値は 15 で、これは
+(再送のタイムアウトに依存するが)  およそ 13〜30 分程度の期間に対応する。 RFC&nbsp;1122 は最小の限界を 100 秒と置いているが、
+これはたいていの場合には短すぎると思われる。
+<DT><I>tcp_rfc1337</I> (ブール値; デフォルト: 無効; Linux 2.2 以降)<DD>
+
+TCP の動作を RFC&nbsp;1337 に準拠させる。 無効にすると、TIME_WAIT 状態のときに RST が受信された場合、 TIME_WAIT
+期間の終了を待たずにそのソケットを直ちにクローズする。
+<DT><I>tcp_rmem</I> (Linux 2.4 以降)<DD>
+
+これは 3 つの整数 [min, default, max] からなるベクトル値である。 これらは TCP
+が受信バッファーサイズを調整するために用いられる。 TCP は、システムで利用できるメモリーに応じて、 受信バッファーのサイズをこれらの変数の範囲で
+以下に示すデフォルトから動的に調整する。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>min</I><DD>
+各 TCP ソケットが用いる受信バッファーの最小サイズ。 デフォルト値はシステムのページサイズである (Linux 2.4 では、デフォルト値は 4&nbsp;K バイトで、 メモリーの少ないシステムでは <B>PAGE_SIZE</B> バイトに減らされる)。 この値は、メモリー圧迫モードにおいても、
+このサイズの割り当てが成功することを保証するために用いられる。 これは、 <B>SO_RCVBUF</B>
+を用いてソケットの最低受信バッファーサイズを宣言する際には用いられない。
+<DT><I>default</I><DD>
+TCP ソケットの受信バッファーのデフォルトサイズ。 この値は、すべてのプロトコルに対して定義されている、
+ジェネリックなグローバルのデフォルトバッファーサイズ <I>net.core.rmem_default</I> より優先される。 デフォルト値は 87380
+バイトである (Linux 2.4 では、メモリーの少ないシステムの場合 43689 まで減らされる)。 大きな受信バッファーサイズが必要な場合は、
+この値を増やすべきである (すべてのソケットに影響する)。 大きな TCP ウィンドウを用いるには、
+<I>net.ipv4.tcp_window_scaling</I> を有効にしておかなければならない (デフォルトは有効)。
+<DT><I>max</I><DD>
+各 TCP ソケットで用いる受信バッファーの最大サイズ。 この値よりもグローバルの <I>net.core.rmem_max</I> が優先される。 これは、
+<B>SO_RCVBUF</B> を用いてソケットの受信バッファーサイズ制限を宣言する際には用いられない。 デフォルト値は以下の式で計算される。
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;max(87380,&nbsp;min(4&nbsp;MB,&nbsp;<I>tcp_mem</I>[1]*PAGE_SIZE/128))
+<DT><DD>
+(Linux 2.4 では、デフォルト値は 87380*2 バイトで、 メモリーの少ないシステムでは 87380 まで減らされる。)
+</DL>
+</DL>
+
+<DT><I>tcp_sack</I> (ブール値; デフォルト: 有効; Linux 2.2 以降)<DD>
+
+RFC&nbsp;2018 の TCP Selective Acknowledgements を有効にする。
+<DT><I>tcp_slow_start_after_idle</I> (ブール値; デフォルト: 有効; Linux 2.6.18 以降)<DD>
+
+有効にすると、RFC 2861 の動作が行われ、 アイドル時間経過後に輻輳ウィンドウをタイムアウトさせる。 アイドル時間は現在の RTO
+(再送タイムアウト) で定義される。 無効にすると、輻輳ウィンドウはアイドル時間経過後もタイムアウトされない。
+<DT><I>tcp_stdurg</I> (ブール値; デフォルト: 無効; Linux 2.2 以降)<DD>
+
+
+
+
+このオプションを有効にすると、 TCP 緊急ポインター (urgent-pointer)  フィールドを RFC&nbsp;1122 に従った解釈を行う。
+この解釈に従うと、緊急ポインターは緊急データの最後のバイトを指す。 このオプションを無効にすると、緊急ポインターの解釈が BSD 互換の方法で
+行われる: 緊急ポインターは緊急データの後の最初のバイトを指す。 このオプションを有効にすると、相互運用性に問題が生じるかもしれない。
+<DT><I>tcp_syn_retries</I> (integer; default: 6; Linux 2.2 以降)<DD>
+
+
+The maximum number of times initial SYNs for an active TCP connection
+attempt will be retransmitted.  This value should not be higher than 255.
+The default value is 6, which corresponds to retrying for up to
+approximately 127 seconds.  Before Linux 3.7, the default value was 5, which
+(in conjunction with calculation based on other kernel parameters)
+corresponded to approximately 180 seconds.
+<DT><I>tcp_synack_retries</I> (integer; default: 5; Linux 2.2 以降)<DD>
+
+passive な TCP 接続の SYN/ACK セグメントで再送を試みる最大数。 この数値は 255 よりも大きくすべきではない。
+<DT><I>tcp_syncookies</I> (integer; default: 1; Linux 2.2 以降)<DD>
+
+Enable TCP syncookies.  The kernel must be compiled with
+<B>CONFIG_SYN_COOKIES</B>.  The syncookies feature attempts to protect a socket
+from a SYN flood attack.  This should be used as a last resort, if at all.
+This is a violation of the TCP protocol, and conflicts with other areas of
+TCP such as TCP extensions.  It can cause problems for clients and relays.
+It is not recommended as a tuning mechanism for heavily loaded servers to
+help with overloaded or misconfigured conditions.  For recommended
+alternatives see <I>tcp_max_syn_backlog</I>, <I>tcp_synack_retries</I>, and
+<I>tcp_abort_on_overflow</I>.  Set to one of the following values:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>0<DD>
+Disable TCP syncookies.
+<DT>1<DD>
+Send out syncookies when the syn backlog queue of a socket overflows.
+<DT>2<DD>
+
+(since Linux 3.12)  Send out syncookies unconditionally.  This can be useful
+for network testing.
+</DL>
+</DL>
+
+<DT><I>tcp_timestamps</I> (integer; default: 1; Linux 2.2 以降)<DD>
+
+Set to one of the following values to enable or disable RFC&nbsp;1323 TCP
+timestamps:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>0<DD>
+timestamps を有効にする。
+<DT>1<DD>
+Enable timestamps as defined in RFC1323 and use random offset for each
+connection rather than only using the current time.
+<DT>2<DD>
+
+As for the value 1, but without random offsets.  Setting <I>tcp_timestamps</I>
+to this value is meaningful since Linux 4.10.
+</DL>
+</DL>
+
+<DT><I>tcp_tso_win_divisor</I> (integer; default: 3; Linux 2.6.9 以降)<DD>
+このパラメーターは、一つの TCP Segmentation Offload (TSO) フレームで 消費できる輻輳ウィンドウの割合 (パーセント)
+を制御する。 バースト性と、どれだけ大きな TSO フレームを構築するかのはトレードオフであり、 このパラメーターはその度合いを設定する。
+<DT><I>tcp_tw_recycle</I> (ブール値; デフォルト: 無効; Linux 2.4 以降 4.11 まで)<DD>
+
+
+
+
+Enable fast recycling of TIME_WAIT sockets.  Enabling this option is not
+recommended as the remote IP may not use monotonically increasing timestamps
+(devices behind NAT, devices with per-connection timestamp offsets).  See
+RFC 1323 (PAWS) and RFC 6191.
+<DT><I>tcp_tw_reuse</I> (ブール値; デフォルト: 無効; Linux 2.4.19/2.6 以降)<DD>
+
+
+
+プロトコルの面から見て問題ない場合に新規コネクションに TIME_WAIT 状態のソケットを再利用することを許可する。技術的に詳しい人の助言や
+要請なしにこのオプションを変更すべきではない。
+<DT><I>tcp_vegas_cong_avoid</I> (ブール値; デフォルト: 無効; Linux 2.2 から 2.6.13 まで)<DD>
+
+
+
+TCP Vegas 輻輳制御アルゴリズムを有効にする。 TCP Vegas は帯域を推測することで輻輳の起こり始めを予想するように TCP
+の送信側のみに変更を加えたものである。 TCP Vegas は輻輳ウィンドウを修正することで、送信レートを調整する。 TCP Vegas は TCP
+Reno と比べてパケットロスは少ないが、 TCP Reno ほど積極的な挙動はしない。
+<DT><I>tcp_westwood</I> (ブール値; デフォルト: 無効; Linux 2.4.26/2.6.3 から 2.6.13 まで)<DD>
+TCP Westwood+ 輻輳制御アルゴリズムを有効にする。 TCP Westwood+ は TCP 輻輳制御の性能を最適化するように TCP
+Reno の プロトコルスタックの送信側のみに修正を加えたものである。 輻輳が起こった後で、輻輳ウィンドウや slow start の閾値を
+通信両端間の帯域の推測に基づいて設定する。 この推測を使って、TCP Westwood+ は輻輳が発生した時に使っていた 帯域を考慮に入れた slow
+start の閾値と輻輳ウィンドウを設定する。 TCP Westwood+ は、有線ネットワークにおける TCP Reno の公平性
+(fairness) と、無線リンクでのスループットを大きく向上する。
+<DT><I>tcp_window_scaling</I> (ブール値; デフォルト: 有効; Linux 2.2 以降)<DD>
+
+RFC&nbsp;1323 の TCP ウィンドウスケーリングを有効にする。 この機能を用いると、接続先が対応していれば、 TCP 接続で大きな (64&nbsp;K
+以上の) ウィンドウが使えるようになる。 通常は TCP ヘッダーのウインドウ長フィールドは 16 ビットなので、 ウィンドウサイズは 64&nbsp;K
+バイト以下に限られる。 もっと大きなウィンドウを使いたい場合は、 アプリケーションはソケットバッファーのサイズを増やして、
+ウィンドウスケーリングのオプションを利用すればよい。 <I>tcp_window_scaling</I> を無効にしていると、 TCP
+は他端との接続設定の際に、 ウィンドウスケーリングのネゴシエーションを行なわない。
+<DT><I>tcp_wmem</I> (Linux 2.4 以降)<DD>
+
+これは 3 つの整数 [min, default, max] からなるベクトル値である。 これらは TCP
+が送信バッファーサイズを調整するために用いられる。 TCP は、システムで利用できるメモリーに応じて、送信バッファーのサイズを
+これらの変数の範囲で以下に示すデフォルトから動的に調整する。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>min</I><DD>
+各 TCP ソケットが用いる送信バッファーの最小サイズ。 デフォルト値はシステムのページサイズである (Linux 2.4 では、デフォルト値は 4&nbsp;K である)。 この値は、メモリー圧迫モードにおいても、 このサイズ以下の割り当てが成功することを保証するために用いられる。 これは、
+<B>SO_SNDBUF</B> を用いてソケットの最低送信バッファーサイズを宣言する際には用いられない。
+<DT><I>default</I><DD>
+
+TCP ソケットの送信バッファーのデフォルトサイズ。 この値は、すべてのプロトコルに対して定義されている、
+ジェネリックなグローバルのデフォルトバッファーサイズ <I>/proc/sys/net/core/wmem_default</I> より優先される。
+デフォルト値は 16&nbsp;K バイトである。 大きな送信バッファーサイズが必要な場合は、 この値を増やすべきである (すべてのソケットに影響する)。
+大きな TCP ウィンドウを用いるには、 <I>/proc/sys/net/ipv4/tcp_window_scaling</I> を 0 以外の値
+(デフォルト値) にしておかなければならない。
+<DT><I>max</I><DD>
+各 TCP ソケットで用いる送信バッファーの最大サイズ。 この値よりも <I>/proc/sys/net/core/wmem_max</I> が優先される。
+これは <B>SO_SNDBUF</B> を用いてソケットの送信バッファーサイズ制限を宣言する際には用いられない。 デフォルト値は以下の式で計算される。
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;max(65536,&nbsp;min(4&nbsp;MB,&nbsp;<I>tcp_mem</I>[1]*PAGE_SIZE/128))
+<DT><DD>
+(Linux 2.4 では、デフォルト値は 128&nbsp;K バイトで、 メモリーの少ないシステムでは 64&nbsp;K にまで減らされる。)
+</DL>
+</DL>
+
+<DT><I>tcp_workaround_signed_windows</I> (ブール値; デフォルト: 無効; Linux 2.6.26 以降)<DD>
+有効にすると、ウィンドウスケーリングオプションを受信しないのは、 接続相手の TCP が壊れていると考え、ウィンドウを符号付きの量とみなす。
+無効にすると、接続相手からウィンドウスケーリングオプションを受信しなかった 場合であっても、接続相手の TCP が壊れているとはみなさない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>ソケットオプション</H3>
+
+
+TCP ソケットのオプションは、 オプションレベル引数に <I>IPPROTO_TCP</I> を指定した <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  で設定でき、
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  で取得できる。 注釈がない限り、 <I>optval</I> は <I>int</I> へのポインターである。 さらに、ほとんどの
+<B>IPPROTO_IP</B> ソケットオプションも TCP ソケットに対して有効である。詳細は <B><A HREF="../man7/ip.7.html">ip</A></B>(7)  を見よ。
+<P>
+
+Following is a list of TCP-specific socket options.  For details of some
+other socket options that are also applicable for TCP sockets, see
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7).
+<DL COMPACT>
+<DT><B>TCP_CONGESTION</B> (Linux 2.6.13 以降)<DD>
+
+
+このオプションの引数は文字列である。 このオプションを使うと、呼び出し元がソケット単位に使用する TCP 輻輳制御アルゴリズムを設定することができる。
+非特権プロセスが使用できるアルゴリズムは (上述の) <I>tcp_allowed_congestion_control</I>
+で設定されたものだけに制限される。 特権プロセス (<B>CAP_NET_ADMIN</B>) は任意の輻輳制御アルゴリズムを選択することができる (上記の
+<B>tcp_available_congestion_control</B> の説明を参照)。
+<DT><B>TCP_CORK</B> (Linux 2.2 以降)<DD>
+
+セットされると、 partial フレームを送信しない。 このオプションが解除されると、 キューイングされた partial フレームが送られる。これは
+<B><A HREF="../man2/sendfile.2.html">sendfile</A></B>(2)  を呼ぶ前にヘッダーを前置したり、 スループットを最適化したい場合に便利である。 現在の実装では、 <B>TCP_CORK</B>
+で出力を抑えることができる時間の上限は 200 ミリ秒である。 この上限に達すると、キューイングされたデータは自動的に送信される。 Linux
+2.5.71 以降においてのみ、このオプションを <B>TCP_NODELAY</B> と同時に用いることができる。
+移植性の必要なプログラムではこのオプションを用いるべきではない。
+<DT><B>TCP_DEFER_ACCEPT</B> (Linux 2.4 以降)<DD>
+
+
+
+
+これを用いると、リスナはデータがソケットに到着した時のみ目覚めるようになる。 整数値 (秒) をとり、 TCP
+が接続を完了しようと試みる回数を制限できる。 移植性の必要なプログラムではこのオプションを用いるべきではない。
+<DT><B>TCP_INFO</B> (Linux 2.4 以降)<DD>
+このソケットの情報を収集するのに用いる。 カーネルは <I>/usr/include/linux/tcp.h</I> ファイルで定義されている <I>struct
+tcp_info</I> を返す。 移植性の必要なプログラムではこのオプションを用いるべきではない。
+<DT><B>TCP_KEEPCNT</B> (Linux 2.4 以降)<DD>
+
+接続を落とす前に TCP が試みる keepalive プローブの最大回数。 移植性の必要なプログラムではこのオプションを用いるべきではない。
+<DT><B>TCP_KEEPIDLE</B> (Linux 2.4 以降)<DD>
+
+この時間 (秒単位) を越えて接続がアイドル状態に留まっていると、 このソケットに <B>SO_KEEPALIVE</B>
+ソケットオプションが設定されている場合、 TCP は keepalive プローブを送りはじめる。
+移植性の必要なプログラムではこのオプションを用いるべきではない。
+<DT><B>TCP_KEEPINTVL</B> (Linux 2.4 以降)<DD>
+
+各 keepalive プローブの間隔 (秒単位)。 移植性の必要なプログラムではこのオプションを用いるべきではない。
+<DT><B>TCP_LINGER2</B> (Linux 2.4 以降)<DD>
+
+orphan された FIN_WAIT2 状態のソケットの寿命。 このオプションを用いると、システム全体に適用されるファイル
+<I>/proc/sys/net/ipv4/tcp_fin_timeout</I> の値を、このソケットに対してのみ変更できる。 <B><A HREF="../man7/socket.7.html">socket</A></B>(7)
+レベルのオプション <B>SO_LINGER</B> と混同しないこと。 移植性の必要なプログラムではこのオプションを用いるべきではない。
+<DT><B>TCP_MAXSEG</B><DD>
+
+送出 TCP パケットの最大セグメントサイズ。 Linux 2.2 以前と Linux
+2.6.28 以降では、このオプションを接続確立の前に設定すると、初期パケット
+で他端にアナウンスする MSS の値も変化する。インターフェースの MTU より
+も大きな (あるいは大きくなってしまった) 値は効果を持たない。 また TCP
+は、この値よりも最小・最大の制限の方を優先する。
+<DT><B>TCP_NODELAY</B><DD>
+
+設定すると Nagle アルゴリズムを無効にする。 すなわち、データ量が少ない場合でも 各セグメントは可能な限り早く送信される。 設定されていないと、
+送信する分だけ溜まるまでデータはバッファーされ、 小さなパケットを頻繁に送らずにすみ、 ネットワークを有効に利用できる。 このオプションは
+<B>TCP_CORK</B> により上書きされる。しかしながら、 <B>TCP_CORK</B> が設定されている場合であっても、このオプションを設定すると、
+送信待ちの出力を明示的に掃き出す (flush) ことになる。
+<DT><B>TCP_QUICKACK</B> (Linux 2.4.4 以降)<DD>
+設定されていると quickack モードを有効にし、クリアされると無効にする。 通常の TCP 動作では ack は必要に応じて遅延されるのに対し、
+quickack モードでは ack はすぐに送信される。 このフラグは永続的なものではなく、 quickack
+モードから/モードへ切り替えるためのものである。 これ以降の TCP プロトコルの動作によっては、 内部のプロトコル処理や、遅延 ack
+タイムアウトの発生、 データ転送などの要因によって、 再び quickack から出たり入ったりする。
+移植性の必要なプログラムではこのオプションを用いるべきではない。
+<DT><B>TCP_SYNCNT</B> (Linux 2.4 以降)<DD>
+
+接続の試行を中止させる前に TCP が送る SYN 再送数を設定する。 これは 255 より大きくはできない。
+移植性の必要なプログラムではこのオプションを用いるべきではない。
+<DT><B>TCP_USER_TIMEOUT</B> (Linux 2.6.37 以降)<DD>
+
+
+
+
+
+このオプションは <I>unsigned int</I> 型の引数を取る。 値が 0 より大きい場合、その値は、 どのくらいの時間、送信されたデータが ACK
+を受信しないままの状態が続くと、 TCP がその接続を強制的にクローズし、アプリケーションに <B>ETIMEDOUT</B> を返すかを、
+ミリ秒単位で指定する。 オプションの値が 0 の場合、TCP はシステムのデフォルト値を使用する。
+<DT><DD>
+ユーザータイムアウトを長くすると、 通信の両端での接続性がない場合でも長い時間 TCP 接続が維持されるようになる。 ユーザータイムアウトを短くすると、
+アプリケーションは必要であれば「早く失敗」できるようになる。 設定しなかった場合は、 通常の WAN 環境では現在のシステムのデフォルトの 20
+分で失敗することになる。
+<DT><DD>
+このオプションは TCP 接続がどの状態の場合でも設定することができるが、 接続が同期状態 (ESTABLISHED, FIN-WAIT-1,
+FIN-WAIT-2, CLOSE-WAIT, CLOSING, LAST-ACK) の場合のみ効果がある。 また、 TCP keepalive
+(<B>SO_KEEPALIVE</B>) オプションとともに使用された場合、 <B>TCP_USER_TIMEOUT</B> は keepalive
+失敗による接続クローズを判定するための keepalive 値を上書きする。
+<DT><DD>
+このオプションは TCP がパケットを再送する際や keepalive プローブを送信する際には影響を及ぼさない。
+<DT><DD>
+他の多くのオプション同様、リッスン中のソケットでこのオプションがセットされていれば <B><A HREF="../man2/accept.2.html">accept</A></B>(2) が返すソケットにオプションが継承される。
+<DT><DD>
+ユーザータイムアウト機能の詳細は RFC&nbsp;793 と  RFC&nbsp;5482 (&quot;TCP User Timeout Option&quot;) に書かれている。
+<DT><B>TCP_WINDOW_CLAMP</B> (Linux 2.4 以降)<DD>
+
+広報するウィンドウのサイズをこの値に固定する。 カーネルによって最小サイズは SOCK_MIN_RCVBUF/2 に制限されている。
+このオプションは移植性の必要なコードでは用いるべきでない。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>ソケット API</H3>
+
+TCP は帯域外データ (out-of-band data) を限定的にサポートしており、 (1 バイトの) 緊急データという形である。 つまり
+Linux においては、 接続先が (新しいやり方の) 帯域外データを送ってきた場合、 (古いやり方の)
+緊急データは通常のデータとしてストリームに挿入されることになる (これは <B>SO_OOBINLINE</B> がセットされている場合でも同様である)。
+これは BSD ベースのスタックとは異なる。
+<P>
+
+Linux は、デフォルトでは urgent ポインターフィールドの解釈に BSD 互換の方法を用いる。これは RFC&nbsp;1122 に反しているが、
+他のスタックと同時に動作させるにはやむを得ない。これは <I>/proc/sys/net/ipv4/tcp_stdurg</I> によって変更できる。
+<P>
+
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2)  の <B>MSG_PEEK</B> フラグを使うと、帯域外データを覗き見することができる。
+<P>
+
+Linux 2.4 以降では、 <B><A HREF="../man2/recv.2.html">recv</A></B>(2)  (や <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2))  の <I>flags</I> 引数に <B>MSG_TRUNC</B>
+を使うことができる。 このフラグを指定すると、受信データは、呼び出し元から渡されたバッファー にコピーされて返されるのではなく、廃棄されるようになる。
+Linux 2.4.4 以降では、 <B>MSG_TRUNC</B> を、帯域外データを受信するための <B>MSG_OOB</B>
+と組み合わせて使った場合にも、これと同じ効果を持つようになっている。
+<A NAME="lbAI">&nbsp;</A>
+<H3>ioctl</H3>
+
+以下の <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) 呼び出しは <I>value</I> に情報を入れて返す。
+正しい書式は以下の通り。
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+<B>int</B><I> value</I><B>;</B>
+<I>error</I><B> = ioctl(</B><I>tcp_socket</I><B>, </B><I>ioctl_type</I><B>, &amp;</B><I>value</I><B>);</B>
+</PRE>
+
+</DL>
+
+<P>
+
+<I>ioctl_type</I> は以下のいずれか一つである:
+<DL COMPACT>
+<DT><B>SIOCINQ</B><DD>
+
+
+受信バッファーのキューにある、まだ読んでいないデータの量を返す。ソケットは
+LISTEN 状態にあってはならず、さもないとエラー (<B>EINVAL</B>) が返る。
+<B>SIOCINQ</B> は <I>&lt;<A HREF="file:///usr/include/linux/sockios.h">linux/sockios.h</A>&gt;</I> で定義されている。
+代わりに、<I>&lt;<A HREF="file:///usr/include/sys/ioctl.h">sys/ioctl.h</A>&gt;</I> で定義されている、同義語の <B>FIONREAD</B>
+を使うこともできる。
+<DT><B>SIOCATMARK</B><DD>
+受信データストリームが緊急マークの位置であれば、真を返す (つまり <I>value</I> が 0 以外)。
+<DT><DD>
+<B>SO_OOBINLINE</B> ソケットオプションが設定されていて、 <B>SIOCATMARK</B>
+が真を返した場合、次のソケットからの読み込みでは緊急データが 返される。 <B>SO_OOBINLINE</B> ソケットオプションが設定されておらず、
+<B>SIOCATMARK</B> が真を返した場合、次のソケットからの読み込みでは緊急データに 続くデータが返される (実際に緊急データを読み込むには
+<B>recv(MSG_OOB)</B> とフラグをつける必要がある)。
+<DT><DD>
+データの一回の読み込みでは緊急マークを跨がっての読み込みは行われない。 アプリケーションが緊急データの存在を (<I>exceptfds</I> 引数を使って)
+<B><A HREF="../man2/select.2.html">select</A></B>(2)  経由または <B>SIGURG</B> シグナルの配送を通じて知らされた場合、 <B>SIOCATMARK</B> のチェックと読み込み
+(何バイト読み込み要求をしてもよい) を <B>SIOCATMARK</B> が偽を返さなくなるまで繰り返し行うことで、緊急マークの位置まで
+読み進めることができる。
+<DT><B>SIOCOUTQ</B><DD>
+
+
+ソケットの送信キューに残っている未送信データの量を返す。ソケットは LISTEN 状
+態にあってはならない。 LISTEN 状態の場合にはエラー (<B>EINVAL</B>) となる。
+<B>SIOCOUTQ</B> は <I>&lt;<A HREF="file:///usr/include/linux/sockios.h">linux/sockios.h</A>&gt;</I> で定義されている。
+代わりに、<I>&lt;<A HREF="file:///usr/include/sys/ioctl.h">sys/ioctl.h</A>&gt;</I> で定義されている、同義語の <B>TIOCOUTQ</B> を
+使うこともできる。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>エラー処理</H3>
+
+ネットワークエラーが起こると、 TCP はパケットの再送を試みる。 何回かやっても成功しなければ、この接続に対して <B>ETIMEOUT</B>
+エラーか最後に受信したエラーが返される。
+<P>
+
+アプリケーションによっては、もっと早くエラーを知らせてほしい場合がある。 これには <B>IPPROTO_IP</B> レベルの <B>IP_RECVERR</B>
+ソケットオプションを用いると良い。このオプションが有効になっていると、 到着したエラーはすべてただちにユーザープログラムに渡される。
+このオプションは慎重に用いること --- ルーティングの変更など、 通常ありうるネットワーク状態に対して TCP をより脆弱にしてしまう。
+<A NAME="lbAK">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAFNOTSUPPORT</B><DD>
+<I>sin_family</I> に渡されたソケットアドレスのタイプが <B>AF_INET</B> ではなかった。
+<DT><B>EPIPE</B><DD>
+接続先が予期しなかったかたちでソケットをクローズした。 またはシャットダウンされたソケットに読み込みが実行された。
+<DT><B>ETIMEDOUT</B><DD>
+接続先が、何回かデータを再送しても反応しない。
+</DL>
+<P>
+
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7)  で定義されているエラーや、ジェネリックなソケット層におけるエラーも TCP に返されることがある。
+<A NAME="lbAL">&nbsp;</A>
+<H2>バージョン</H2>
+
+Explicit Congestion Notification、zero-copy の <B><A HREF="../man2/sendfile.2.html">sendfile</A></B>(2)、 並び替えのサポート、SACK
+拡張 (DSACK) などのサポートは 2.4 で導入された。 フォワード確認 (FACK)、TIME_WAIT リサイクル、接続ごとの
+keepalive に対するソケットオプションは 2.3 で導入された。
+<A NAME="lbAM">&nbsp;</A>
+<H2>バグ</H2>
+
+まだ説明されていないエラーがある。
+<P>
+
+
+
+
+
+
+
+
+
+IPv6 に関する記述がない。
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2), <B><A HREF="../man2/bind.2.html">bind</A></B>(2), <B><A HREF="../man2/connect.2.html">connect</A></B>(2), <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2), <B><A HREF="../man2/listen.2.html">listen</A></B>(2),
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2), <B><A HREF="../man2/sendfile.2.html">sendfile</A></B>(2), <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2), <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man7/ip.7.html">ip</A></B>(7),
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7)
+<P>
+
+The kernel source file <I>Documentation/networking/ip-sysctl.txt</I>.
+<P>
+
+RFC&nbsp;793: TCP の仕様。
+<BR>
+
+RFC&nbsp;1122: TCP の要求事項と Nagle アルゴリズムの記述。
+<BR>
+
+RFC&nbsp;1323: TCP のタイムスタンプ・ウィンドウスケーリング各オプション。
+<BR>
+
+RFC&nbsp;1337: TIME_WAIT assassination hazard に関する説明。
+<BR>
+
+RFC&nbsp;3168: Explicit Congestion Notification に関する説明。
+<BR>
+
+RFC&nbsp;2581: TCP 輻輳制御アルゴリズム。
+<BR>
+
+RFC&nbsp;2018 と RFC&nbsp;2883: SACK とその拡張。
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">アドレスのフォーマット</A><DD>
+<DT><A HREF="#lbAF">/proc インターフェース</A><DD>
+<DT><A HREF="#lbAG">ソケットオプション</A><DD>
+<DT><A HREF="#lbAH">ソケット API</A><DD>
+<DT><A HREF="#lbAI">ioctl</A><DD>
+<DT><A HREF="#lbAJ">エラー処理</A><DD>
+</DL>
+<DT><A HREF="#lbAK">エラー</A><DD>
+<DT><A HREF="#lbAL">バージョン</A><DD>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

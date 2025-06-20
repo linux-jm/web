@@ -1,0 +1,185 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MATH_ERROR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MATH_ERROR</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/math_error.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+math_error - 数学関数からのエラーの検出
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/fenv.h">fenv.h</A>&gt;</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+エラーが発生すると、ほとんどのライブラリ関数は (-1 や NULL などの)  特別な値を返すことでエラーを通知する。
+<I>&lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;</I> で宣言されている数学関数は、通常は浮動小数点値を返すので、 他の機構を使ってエラーを通知する。 エラー通知機構は
+2 種類あり、 古いものが <I>errno</I> を設定するやり方であり、新しいものが <B><A HREF="../man3/fenv.3.html">fenv</A></B>(3)  で説明されている浮動小数点例外機構である。
+(<B><A HREF="../man3/feclearexcept.3.html">feclearexcept</A></B>(3)  と <B><A HREF="../man3/fetestexcept.3.html">fetestexcept</A></B>(3)  を使用する。これらについては以下で概要を説明している。)
+<P>
+
+移植性が必要なプログラムで、数学関数からのエラーを確認する必要がある場合には、 数学関数を呼び出す前に <I>errno</I> を 0 に設定し、
+<P>
+
+
+
+feclearexcept(FE_ALL_EXCEPT);
+
+
+<P>
+
+を呼び出すべきである。
+<P>
+
+数学関数から返ってきた際に、 <I>errno</I> が 0 以外か、
+<P>
+
+
+
+fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW |
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FE_UNDERFLOW);
+
+
+<P>
+
+
+
+
+
+
+
+
+
+
+の呼び出しが 0 以外を返した場合 (<B><A HREF="../man3/fenv.3.html">fenv</A></B>(3)  参照)、数学関数でエラーが発生している。
+<P>
+
+数学関数で発生するエラー条件については以下で説明する。
+<A NAME="lbAE">&nbsp;</A>
+<H3>領域エラー (domain error)</H3>
+
+<I>領域エラー</I> が発生するのは、数学関数に渡された引数の値がその関数が定義されている 領域に入っていない場合である (例えば <B><A HREF="../man3/log.3.html">log</A></B>(3)
+に負の引数を渡した場合)。 領域エラーが発生すると、 数学関数は普通は NaN を返し (同じ状況で違う値を返す関数もある)、 <I>errno</I> に
+<B>EDOM</B> を設定し、「無効 (invalid)」 浮動小数点例外 (<B>FE_INVALID</B>)  を上げる。
+<A NAME="lbAF">&nbsp;</A>
+<H3>極エラー (pole error)</H3>
+
+<I>極エラー</I> が発生するのは、関数の数学的な結果が無限大そのものとなる場合である (例えば 0 の対数は負の無限大である)。
+極エラーが発生すると、その関数の返り値は (符号付きの)  <B>HUGE_VAL</B>, <B>HUGE_VALF</B>, <B>HUGE_VALL</B>
+のいずれかとなる (前記の値のうちどれが返るかは関数の返り値の型により決まり、 それぞれ <I>double</I>, <I>float</I>, <I>long
+double</I> に対応する)。 結果の符号は、その関数の数学的な定義から決定される。 <I>errno</I> は <B>ERANGE</B> に設定され、「0
+による除算 (divide-by-zero)」 浮動小数点例外 (<B>FE_DIVBYZERO</B>)  が上がる。
+<A NAME="lbAG">&nbsp;</A>
+<H3>範囲エラー (range エラー)</H3>
+
+<I>範囲エラー</I> が発生するのは、関数の結果の値がその関数の返り値の型では表現できない場合
+である。関数の返り値は、範囲エラーがオーバーフローであったかアンダーフロー であったかによって異なる。
+<P>
+
+浮動小数点のオーバーフローは、結果が有限だが、大き過ぎて 結果を返す型では表現できない場合に発生する。 オーバーフローが発生すると、 その関数は
+<B>HUGE_VAL</B>, <B>HUGE_VALF</B>, <B>HUGE_VALL</B> のいずれかを返す
+(前記の値のうちどれが返るかは関数の返り値の型により決まり、 それぞれ <I>double</I>, <I>float</I>, <I>long double</I>
+に対応する)。 <I>errno</I> は <B>ERANGE</B> に設定され、「オーバーフロー (overflow)」 浮動小数点例外
+(<B>FE_OVERFLOW</B>)  が上がる。
+<P>
+
+浮動小数点のアンダーフローは、 結果が小さ過ぎて、結果を返す型では表現できない場合に発生する。 アンダーフローが発生すると、数学関数は通常は 0.0
+を返す (C99 では、指定された型において最小の正規化された正の値より大きくない 値を持つ実装定義 (implementation-defined)
+の値を返す、となっている)。 <I>errno</I> は <B>ERANGE</B> に設定され、「アンダーフロー」浮動小数点例外 (<B>FE_UNDERFLOW</B>)
+が上がる。
+<P>
+
+いくつかの関数では、渡された引数の値や、正しい関数の結果が <I>subnormal (非正規化数)</I> になる場合に範囲エラーを上げる。
+subnormal な値とは、0 ではないが、その値が小さすぎて (仮数部の最上位ビットが 1 となる) 標準形では表現できないような値である。
+subnormal な値の表現では、仮数部の上位側のビットに 1 個以上の 0 が 含まれることになる。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+
+C99 と POSIX.1-2001 で規定されている <I>math_errhandling</I> 識別子は glibc ではサポートされていない。
+この識別子は、2 つのエラー通知機構 (<I>errno</I> と <B><A HREF="../man3/fetestexcept.3.html">fetestexcept</A></B>(3)  経由で取得できる例外)
+のうちどちらが使用されているかを通知 することになっている。 標準では、少なくとも一つは使用されることが要求されているが、
+両方とも利用可能であってもよいとされている。 glibc での現在の (バージョン 2.8 での) 状況はかなり混乱している。 ほとんどの関数
+(ただし全部ではない) はエラー時に例外を上げる。 いくつかの関数は <I>errno</I> も設定する。 <I>errno</I>
+を設定するが、例外を上げない関数も少しだけ存在する。 どちらも行わない関数もごく少数だが存在する。 詳細については個々のマニュアルページを参照のこと。
+<P>
+
+
+<I>errno</I> と <B><A HREF="../man3/fetestexcept.3.html">fetestexcept</A></B>(3)  の両方を使ってエラーチェックを行うことで複雑になるのを避けるため、
+多くの場合、関数呼び出しを行う前に不正な引数かのチェックを行う 方法が推奨されている。 例えば、以下のコードは、 <B><A HREF="../man3/log.3.html">log</A></B>(3)  の引数が NaN
+でも (極エラーとなる) 0 でも (領域エラーとなる) 0 未満 でもないことを保証するものである。
+<P>
+
+
+
+double x, r;
+<P>
+if (isnan(x) || islessequal(x, 0)) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Deal&nbsp;with&nbsp;NaN&nbsp;/&nbsp;pole&nbsp;error&nbsp;/&nbsp;domain&nbsp;error&nbsp;*/
+}
+<P>
+r = log(x);
+
+
+<P>
+
+このページに書かれていることは、 (<I>&lt;<A HREF="file:///usr/include/complex.h">complex.h</A>&gt;</I> で宣言されている) 複素数関数にはあてはまらない。 一般に、C99 や
+POSIX.1 ではこれらの関数がエラーを返すことを 要求してない。
+<P>
+
+<B><A HREF="../../GNU_gcc/man1/gcc.1.html">gcc</A></B>(1)  の <I>-fno-math-errno</I> オプションを使うと、実行ファイルで、標準の実装よりも高速な数学関数の
+実装が使用されるようになるが、 エラー時に <I>errno</I> が設定されない (<B><A HREF="../../GNU_gcc/man1/gcc.1.html">gcc</A></B>(1)  の <I>-ffast-math</I>
+オプションを指定した場合にも <I>-fno-math-errno</I> は有効になる)。 このオプションを指定した場合でも、
+<B><A HREF="../man3/fetestexcept.3.html">fetestexcept</A></B>(3)  を使ったエラーの検査は可能である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../GNU_gcc/man1/gcc.1.html">gcc</A></B>(1), <B><A HREF="../man3/errno.3.html">errno</A></B>(3), <B><A HREF="../man3/fenv.3.html">fenv</A></B>(3), <B><A HREF="../man3/fpclassify.3.html">fpclassify</A></B>(3), <B><A HREF="../man3/INFINITY.3.html">INFINITY</A></B>(3),
+<B><A HREF="../man3/isgreater.3.html">isgreater</A></B>(3), <B><A HREF="../man3/matherr.3.html">matherr</A></B>(3), <B><A HREF="../man3/nan.3.html">nan</A></B>(3)
+<P>
+
+<I>info libc</I>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">領域エラー (domain error)</A><DD>
+<DT><A HREF="#lbAF">極エラー (pole error)</A><DD>
+<DT><A HREF="#lbAG">範囲エラー (range エラー)</A><DD>
+</DL>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

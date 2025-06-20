@@ -1,0 +1,194 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SYSTEM</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SYSTEM</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/system.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+system - シェルコマンドの実行
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>int system(const char *</B><I>command</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>system</B>() ライブラリ関数は、<B><A HREF="../man2/fork.2.html">fork</A></B>(2) を使って子プロセスを作成し、その子プロセスは以下のように <I>command</I>
+で指定されたシェルコマンドを <B><A HREF="../man3/execl.3.html">execl</A></B>(3) を使って実行する。
+<P>
+
+
+
+execl(&quot;/bin/sh&quot;, &quot;sh&quot;, &quot;-c&quot;, command, (char *) NULL);
+
+
+<P>
+
+<B>system</B>() が返るのはコマンドが完了した後である。
+<P>
+
+コマンドの実行中は、 <B>system</B>() を呼び出したプロセスでは、 <B>SIGCHLD</B> はブロックされ、 <B>SIGINT</B> と
+<B>SIGQUIT</B> は無視される (<I>command</I> を実行する子プロセスでは、これらのシグナルはデフォルトの処理方法にしたがって処理される)。
+<P>
+
+<I>command</I> が NULL の場合、 <B>system</B>()  はそのシステムでシェルが利用可能かを示すステータスを返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>system</B>() の返り値は以下のいずれかである。
+<DL COMPACT>
+<DT>*<DD>
+<I>command</I> が NULL の場合、 シェルが利用可能ならゼロ以外の値、利用不可なら 0。
+<DT>*<DD>
+If a child process could not be created, or its status could not be
+retrieved, the return value is -1 and <I>errno</I> is set to indicate the error.
+<DT>*<DD>
+子プロセスでシェルを実行できなかった場合、 返り値は子プロセスがステータス 127 で <B><A HREF="../man2/_exit.2.html">_exit</A></B>(2) を呼び出して終了したのと同じになる。
+<DT>*<DD>
+システムコールがすべて成功した場合、 返り値は <I>command</I> を実行するのに使用された子プロセスのシェルの終了ステータスとなる
+(シェルの終了ステータスはそのシェルが実行した最後のコマンドの終了ステータスである)。
+</DL>
+<P>
+
+最後の 2 つの場合、返り値は &quot;wait status&quot; であり、 <B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2) に書かれているマクロ (つまり
+<B>WIFEXITED</B>() や <B>WEXITSTATUS</B>() などのマクロ) を使って検査することができる。
+<P>
+
+<B>system</B>()  は他の子プロセスのウエイトステータスには影響を与えない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>system</B>()  can fail with any of the same errors as <B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>system</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, C89, C99.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<B>system</B>() により簡便性と利便性がもたらされる。この関数は <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man3/execl.3.html">execl</A></B>(3), <B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+の呼び出しにおける詳細をすべて行うとともに、 シグナルの適切な処理も行う。 また、シェルは <I>command</I> に対して通常の置換
+(substitutions) と I/O リダイレクトを行う。 <B>system</B>() を使用することによる主なコストは非効率性である。
+シェルを実行するプロセスを作成するためとそのシェルを実行するために、余計にシステムコールが必要となる。
+<P>
+
+(「どの」ヘッダーファイルをインクルードするよりも前に)  機能検査マクロ <B>_XOPEN_SOURCE</B> が定義された場合には、
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)  で説明されているマクロ群 (<B>WEXITSTATUS</B>()  等) が <I>&lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</I>
+をインクルードすると利用可能になる。
+<P>
+
+既に述べたように、 <B>system</B>()  は <B>SIGINT</B> と <B>SIGQUIT</B> を無視する。 よってループから <B>system</B>()
+を呼ぶプログラムは、 以下の例のように子プロセスの終了状態を自分でチェックしておかないと、 中断できなくなるかもしれない。
+<P>
+
+
+
+while (something) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret&nbsp;=&nbsp;system(&quot;foo&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(WIFSIGNALED(ret)&nbsp;&amp;&amp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(WTERMSIG(ret)&nbsp;==&nbsp;SIGINT&nbsp;||&nbsp;WTERMSIG(ret)&nbsp;==&nbsp;SIGQUIT))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+}
+
+
+<P>
+
+According to POSIX.1, it is unspecified whether handlers registered using
+<B><A HREF="../../glibc-linuxthreads/man3/pthread_atfork.3.html">pthread_atfork</A></B>(3)  are called during the execution of <B>system</B>().  In
+the glibc implementation, such handlers are not called.
+<P>
+
+glibc 2.1.3 より前のバージョンでは、 <I>command</I> が NULL の場合に <I>/bin/sh</I>
+が利用可能かどうかのチェックは実際には行わず、 いつでも利用可能であるとみなしていた。 <B>system</B>()  はこの場合に常に 1 を返していた。
+POSIX.1-2001 ではシェルが提供されているという標準に準拠した実装を 要求しているが、glibc 2.1.3
+以降ではシェルのチェックを実行している。 なぜなら、呼び出し元のプログラムが <B>system</B>()  を呼び出すより前に (POSIX.1-2001
+では規定されていない)  <B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)  を呼び出していた時には、シェルが利用可能でない場合や実行可能ファイル でない場合があるからである。
+<P>
+
+
+シェルコマンドがステータス 127 で終了することもある。 この場合、<B>system</B>()
+の返り値は、子プロセスでシェルが実行できなかった場合と区別できない。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Caveats</H3>
+
+Do not use <B>system</B>()  from a privileged program (a set-user-ID or
+set-group-ID program, or a program with capabilities)  because strange
+values for some environment variables might be used to subvert system
+integrity.  For example, <B>PATH</B> could be manipulated so that an arbitrary
+program is executed with privilege.  Use the <B><A HREF="../man3/exec.3.html">exec</A></B>(3)  family of functions
+instead, but not <B><A HREF="../man3/execlp.3.html">execlp</A></B>(3)  or <B><A HREF="../man3/execvp.3.html">execvp</A></B>(3)  (which also use the <B>PATH</B>
+environment variable to search for an executable).
+<P>
+
+<B>system</B>()  will not, in fact, work properly from programs with set-user-ID
+or set-group-ID privileges on systems on which <I>/bin/sh</I> is bash version 2:
+as a security measure, bash 2 drops privileges on startup.  (Debian uses a
+different shell, <B>dash</B>(1), which does not do this when invoked as <B>sh</B>.)
+<P>
+
+Any user input that is employed as part of <I>command</I> should be <I>carefully</I>
+sanitized, to ensure that unexpected shell commands or command options are
+not executed.  Such risks are especially grave when using <B>system</B>()  from
+a privileged program.
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>sh</B>(1), <B><A HREF="../man2/execve.2.html">execve</A></B>(2), <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2),
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2), <B><A HREF="../man3/exec.3.html">exec</A></B>(3), <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">Caveats</A><DD>
+</DL>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

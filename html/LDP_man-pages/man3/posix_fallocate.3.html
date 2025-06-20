@@ -1,0 +1,166 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of POSIX_FALLOCATE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>POSIX_FALLOCATE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/posix_fallocate.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+posix_fallocate - ファイルのスペースを確保する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
+
+<B>int posix_fallocate(int </B><I>fd</I><B>, off_t </B><I>offset</I><B>, off_t </B><I>len</I><B>);</B>
+</PRE>
+
+<P>
+
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>posix_fallocate</B>():
+<DL COMPACT><DT><DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+関数 <B>posix_fallocate</B>()  は、ファイルディスクリプター <I>fd</I>
+で参照されるファイルに対して、ディスクスペースを確実に確保する。 ディスクスペースは <I>offset</I> から始まる <I>len</I>
+バイトの範囲のバイトである。 <B>posix_fallocate</B>()  の呼び出しが成功した後、指定された範囲のバイトに対する書き込みは、
+ディスクスペースの不足で失敗しないことが保証される。
+<P>
+
+ファイルのサイズが <I>offset</I>+<I>len</I> より小さい場合、ファイルはこのサイズになるように拡大される。
+それ以外の場合、ファイルサイズは変わらない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>posix_fallocate</B>()  は成功した場合、0 を返す。 失敗した場合、エラー番号を返す。 <I>errno</I>
+が設定されない点に注意すること。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>fd</I> が有効なファイルディスクリプターでないか、 書き込み用としてオープンされていない。
+<DT><B>EFBIG</B><DD>
+<I>offset+len</I> が最大ファイルサイズを超えている。
+<DT><B>EINTR</B><DD>
+実行中にシグナルが捕捉された。
+<DT><B>EINVAL</B><DD>
+<I>offset</I> was less than 0, or <I>len</I> was less than or equal to 0, or the
+underlying filesystem does not support the operation.
+<DT><B>ENODEV</B><DD>
+<I>fd</I> が通常のファイルとして参照されていない。
+<DT><B>ENOSPC</B><DD>
+<I>fd</I> が参照するファイルを含むデバイスに十分な空き領域がない。
+<DT><B>EOPNOTSUPP</B><DD>
+The filesystem containing the file referred to by <I>fd</I> does not support
+this operation.  This error code can be returned by C libraries that don't
+perform the emulation shown in NOTES, such as musl libc.
+<DT><B>ESPIPE</B><DD>
+<I>fd</I> がパイプを参照している。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>posix_fallocate</B>()  は glibc 2.1.94 以降で利用可能である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>posix_fallocate</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe (ただし「注意」を参照)<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001.
+<P>
+
+POSIX.1-2008 では、 <I>len</I> が 0 の場合、もしくは <I>offset</I> が 0 未満の場合、 <B>EINVAL</B>
+エラーを返すものとされている。 POSIX.1-2001 では、 <I>len</I> が 0 未満の場合、もしくは <I>offset</I> が 0 未満の場合、
+<B>EINVAL</B> エラーを返すものとされている。また、 <I>len</I> が 0 の場合、 <B>EINVAL</B> エラーを返してもよいとされている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+In the glibc implementation, <B>posix_fallocate</B>()  is implemented using the
+<B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2)  system call, which is MT-safe.  If the underlying
+filesystem does not support <B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2), then the operation is emulated
+with the following caveats:
+<DL COMPACT>
+<DT>*<DD>
+The emulation is inefficient.
+<DT>*<DD>
+There is a race condition where concurrent writes from another thread or
+process could be overwritten with null bytes.
+<DT>*<DD>
+There is a race condition where concurrent file size increases by another
+thread or process could result in a file whose size is smaller than
+expected.
+<DT>*<DD>
+If <I>fd</I> has been opened with the <B>O_APPEND</B> or <B>O_WRONLY</B> flags, the
+function fails with the error <B>EBADF</B>.
+</DL>
+<P>
+
+In general, the emulation is not MT-safe.  On Linux, applications may use
+<B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2)  if they cannot tolerate the emulation caveats.  In general,
+this is only recommended if the application plans to terminate the operation
+if <B>EOPNOTSUPP</B> is returned, otherwise the application itself will need to
+implement a fallback with all the same problems as the emulation provided by
+glibc.
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>fallocate</B>(1), <B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2), <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2), <B><A HREF="../man2/posix_fadvise.2.html">posix_fadvise</A></B>(2)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

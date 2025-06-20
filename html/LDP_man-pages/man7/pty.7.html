@@ -1,0 +1,135 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTY</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTY</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/pty.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pty - 擬似端末インターフェース
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+擬似端末 (pseudoterminal; &quot;pty&quot; と略されることもある) は、
+双方向通信チャンネルを提供する仮想キャラクターデバイスのペアである。 チャンネルの一方の端点は <I>マスタ (master)</I>
+と呼ばれ、もう一方の端点は <I>スレーブ (slave)</I> と呼ばれる。
+<P>
+
+擬似端末のスレーブは、伝統的な端末と全く同じ動作をするインターフェースを 提供する。端末に接続されることを想定しているプロセスは擬似端末の
+スレーブをオープンすることができ、それ以降はマスタ側をオープン しているプログラムからそのプロセスを制御することができる。
+端末で入力されたのと同じように、 マスタ側に書き込まれた全てのデータは、スレーブ側のプロセスに送られる。 例えば、マスタデバイスに割り込みキャラクター
+(通常は control-C) を書き込むと、 スレーブに接続されているフォアグラウンドプロセスグループに対して 割り込みシグナル
+(<B>SIGINT</B>)  が生成される。 反対に、擬似端末のスレーブ側に書き込まれた全てのデータは、
+マスタ側に接続されているプロセスから読み出すことができる。
+<P>
+
+Data flow between master and slave is handled asynchronously, much like data
+flow with a physical terminal.  Data written to the slave will be available
+at the master promptly, but may not be available immediately.  Similarly,
+there may be a small processing delay between a write to the master, and the
+effect being visible at the slave.
+<P>
+
+歴史的に見ると BSD と System V の2種類の擬似端末の API が発展してきている。 SUSv1 は System V API
+に基づいた擬似端末 API を標準化しており、 擬似端末を使用する新しいプログラムはすべてこの API を採用すべきである。
+<P>
+
+Linux では BSD 風と (標準化された) System V 風の擬似端末を提供している。 System V 風の端末は、Linux
+システムでは一般に UNIX 98 擬似端末と呼ばれている。
+<P>
+
+カーネル 2.6.4 以降では、BSD 風の擬似端末は廃止予定とされている。この機能は、カーネル作成時に <B>CONFIG_LEGACY_PTYS</B>
+オプションを無効にすることで無効にできる (Linux 2.6.30
+以降では、メインラインのカーネルでは、このオプションはデフォルトで無効になっている)。新しいアプリケーションでは、UNIX 98
+擬似端末を使用すべきである。
+<A NAME="lbAD">&nbsp;</A>
+<H3>UNIX 98 擬似端末</H3>
+
+未使用の UNIX 98 擬似端末マスタをオープンするには <B><A HREF="../man3/posix_openpt.3.html">posix_openpt</A></B>(3)  を呼び出す (この関数はマスタクローンデバイス
+(master clone device), <I>/dev/ptmx</I> をオープンする; <B><A HREF="../man4/pts.4.html">pts</A></B>(4)  を参照)。
+プログラム固有の初期化処理を実行し、 <B><A HREF="../man3/grantpt.3.html">grantpt</A></B>(3)  を使ってスレーブデバイスの所有権や許可を変更し、 <B><A HREF="../man3/unlockpt.3.html">unlockpt</A></B>(3)
+を使ってスレーブのロック解除を行うと、 <B><A HREF="../man3/ptsname.3.html">ptsname</A></B>(3)  が返す名前を渡して <B><A HREF="../man2/open.2.html">open</A></B>(2)  を呼び出すことにより
+対応するスレーブデバイスをオープンできるようになる。
+<P>
+
+Linux カーネルでは、利用できる UNIX 98 擬似端末の数に上限を設けている。 2.6.3
+以前のカーネルでは、この上限はカーネルのコンパイル時の設定 (<B>CONFIG_UNIX98_PTYS</B>)  である。許可される擬似端末の数は最大
+2048 であり、 デフォルトの設定は 256 である。 カーネル 2.6.4 以降では、この上限は
+<I>/proc/sys/kernel/pty/max</I> 経由で動的に調整可能となっている。また、 <I>/proc/sys/kernel/pty/nr</I>
+で現在使用中の擬似端末の数を取得できる。 この 2つのファイルの詳細は <B><A HREF="../man5/proc.5.html">proc</A></B>(5)  を参照。
+<A NAME="lbAE">&nbsp;</A>
+<H3>BSD 擬似端末</H3>
+
+BSD 風の擬似端末はあらかじめ作成されたペアとして提供される。その名前は <I>/dev/ptyXY</I> (マスタ側)、 <I>/dev/ttyXY</I>
+(スレーブ側) である。ここで、 X は [p-za-e] の 16文字のうちの一文字、 Y は [0-9a-f] の 16文字のうちの一文字である
+(X, Y に使われる文字の正確な範囲は UNIX の実装により異なる)。 例えば、 <I>/dev/ptyp1</I> と <I>/dev/ttyp1</I> は
+BSD 擬似端末ペアを構成する。 プロセスが未使用の擬似端末ペアを見つけるには、 各擬似端末のマスタの <B><A HREF="../man2/open.2.html">open</A></B>(2)  を試み、open
+が成功するまでこれを繰り返す。 マスタを open すると、対応する擬似端末のスレーブも open できるようになる (スレーブの名前は、マスタの名前の
+&quot;pty&quot; を &quot;tty&quot; に置き換えたものである)。
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/dev/ptmx</I><DD>
+UNIX 98 マスタクローンデバイス
+<DT><I>/dev/pts/*</I><DD>
+UNIX 98 スレーブデバイス
+<DT><I>/dev/pty[p-za-e][0-9a-f]</I><DD>
+BSD マスタデバイス
+<DT><I>/dev/tty[p-za-e][0-9a-f]</I><DD>
+BSD スレーブデバイス
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+擬似端末は、ネットワークログインサービス (<B>ssh</B>(1), <B><A HREF="../../netkit/man1/rlogin.1.html">rlogin</A></B>(1), <B><A HREF="../../netkit/man1/telnet.1.html">telnet</A></B>(1)) や
+端末エミュレータ (<B>xterm</B>(1), <B><A HREF="../../util-linux/man1/script.1.html">script</A></B>(1), <B><A HREF="../../GNU_screen/man1/screen.1.html">screen</A></B>(1), <B>tmux</B>(1),
+<B>unbuffer</B>(1), <B><A HREF="../../expect/man1/expect.1.html">expect</A></B>(1) など) のアプリケーションで使用されている。
+<P>
+
+パケットモード操作の制御を行う <B>TIOCPKT</B> <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) の説明は <B>ioctl_tty</B>(2) に書かれている。
+<P>
+
+BSD <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  の <B>TIOCSTOP</B>, <B>TIOCSTART</B>, <B>TIOCUCNTL</B>, <B>TIOCREMOTE</B>
+はこれまでのところ Linux では実装されていない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>ioctl_tty</B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/setsid.2.html">setsid</A></B>(2), <B><A HREF="../man3/forkpty.3.html">forkpty</A></B>(3), <B><A HREF="../man3/openpty.3.html">openpty</A></B>(3),
+<B><A HREF="../man3/termios.3.html">termios</A></B>(3), <B><A HREF="../man4/pts.4.html">pts</A></B>(4), <B><A HREF="../man4/tty.4.html">tty</A></B>(4)
+<A NAME="lbAI">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">UNIX 98 擬似端末</A><DD>
+<DT><A HREF="#lbAE">BSD 擬似端末</A><DD>
+</DL>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

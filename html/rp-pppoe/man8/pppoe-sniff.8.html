@@ -1,0 +1,137 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PPPOE-SNIFF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PPPOE-SNIFF</H1>
+Section: Maintenance Commands (8)<BR>Updated: 3 July 2000<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/rp-pppoe/release/man8/pppoe-sniff.8">roff page</A><HR>
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pppoe-sniff - ネットワーク上を流れる標準的でない PPPoE フレームを調査する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>pppoe-sniff </B>[<I>options</I>]
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pppoe-sniff</B> は PPPoE PADR や session フレームと思われるものを待ち受け、
+<B><A HREF="../man8/pppoe.8.html">pppoe</A>(8)</B> を動作させるのに必要なその他のオプションを推定する。
+<P>
+DSL サービス提供業者の中には
+標準的でない PPPoE フレームタイプを使っていると思われるものがあり、
+Service-Name フィールドに適切な値を設定する必要がある。
+多くの場合、DSL 提供業者からそれらの値を詮索するよりは、
+接続の成功しているマシンから嗅ぎ出す方が簡単である。
+<P>
+<B>pppoe-sniff</B> を使うには、2 台のコンピュータ、DSL モデム、
+(イーサーネットスイッチ<I>ではない</I>) イーサーネットハブが必要である。
+<P>
+通常のように DSL モデムがコンピュータの
+イーサーネットカードに直接接続されている場合、
+まず (イーサーネットカードに繋がっていた側を)
+イーサーネットハブの &quot;uplink&quot; ポートに接続する。
+次に 2 台のコンピュータを通常のポートに接続する。
+一方のコンピュータは、DSL サービス提供業者がサポートする OS 上で
+DSL サービス提供業者から提供されたソフトウェアを実行する。
+もう一方のコンピュータは、Linux にして root でログインする。
+<P>
+Linux マシンは、イーサーネットインターフェースを
+無差別 (promiscuous) モードにして、<B>pppoe-sniff</B> を実行する。
+例えば、イーサーネットインターフェースが <I>eth0</I> の場合は、
+以下のコマンドを実行する:
+<P>
+<PRE>
+        ifconfig eth0 promisc
+        pppoe-sniff -I eth0
+</PRE>
+
+<P>
+もう一方のマシンは、通常通り DSL 接続を開始する。
+少し時間が経過すると、 推奨される <B>PPPOE_EXTRA</B> の値を
+<B>pppoe-sniff</B> が表示する筈である。
+この値を <B>/etc/ppp/pppoe.conf</B> に設定すること。
+<B>PPPOE_EXTRA</B> に必要な特別な値を <B>pppoe-sniff</B> が表示した場合、
+この値に ISP 名、DSL モデムの製造業者とモデル番号を添えて
+E メールで <B><A HREF="mailto:pppoe@roaringpenguin.com">pppoe@roaringpenguin.com</A></B> に送って下さい。
+2 台のコンピュータを持たないユーザーのために、
+この情報を集めて PPPoE のウェブページで提供する予定である。
+<P>
+<B>pppoe-sniff</B> が終了した場合
+(または、ハングしたように思われて停止させた場合)、
+以下のようにして無差別モードを解除するのを忘れないこと:
+<P>
+<PRE>
+        ifconfig eth0 -promisc
+</PRE>
+
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-I </B><I>interface</I>
+
+<DD>
+<B>-I</B> オプションは、使用するイーサーネットインターフェースを指定する。
+Linux 上では、<I>eth0</I> や <I>eth1</I> が一般的である。
+インターフェースは、<B>pppoe-sniff</B> を開始する前に
+「アップ (起動)」して、無差別モードにしておかなければならない。
+<P>
+<DT><B>-V</B>
+
+<DD>
+<B>-V</B> オプションを指定すると、
+<B>pppoe-sniff</B> はバージョン番号を表示して終了する。
+<P>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>pppoe-sniff</B> は Linux 上でしか動作しない。
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>著者</H2>
+
+<B>pppoe-sniff</B> は
+David F. Skoll &lt;<A HREF="mailto:dfs@roaringpenguin.com">dfs@roaringpenguin.com</A>&gt; によって作成された。
+<P>
+<B>pppoe</B> のホームページは
+<I><A HREF="http://www.roaringpenguin.com/pppoe/">http://www.roaringpenguin.com/pppoe/</A></I> である。
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man8/adsl-start.8.html">adsl-start</A>(8), <A HREF="../man8/adsl-stop.8.html">adsl-stop</A>(8), <A HREF="../man8/adsl-connect.8.html">adsl-connect</A>(8), <A HREF="../../ppp/man8/pppd.8.html">pppd</A>(8), <A HREF="../man5/pppoe.conf.5.html">pppoe.conf</A>(5),
+<A HREF="../man8/pppoe.8.html">pppoe</A>(8), <A HREF="../man8/adsl-setup.8.html">adsl-setup</A>(8), <A HREF="../man8/adsl-status.8.html">adsl-status</A>(8), <A HREF="../man8/pppoe-server.8.html">pppoe-server</A>(8), <A HREF="../man8/pppoe-relay.8.html">pppoe-relay</A>(8)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">バグ</A><DD>
+<DT><A HREF="#lbAG">著者</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

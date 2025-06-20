@@ -1,0 +1,370 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 11.6 shred: セキュリティを向上させたファイルの削除</title>
+
+<meta name="description" content="GNU Coreutils: 11.6 shred: セキュリティを向上させたファイルの削除">
+<meta name="keywords" content="GNU Coreutils: 11.6 shred: セキュリティを向上させたファイルの削除">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="shred-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_82.html#rm-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_84.html#Special-file-types" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_77.html#Basic-operations" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_77.html#Basic-operations" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_84.html#Special-file-types" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="shred_003a-sekiyuriteiwoXiang-Shang-sasetahuairunoXue-Chu-"></a>
+<h2 class="section">11.6 <code>shred</code>: セキュリティを向上させたファイルの削除</h2>
+
+<a name="index-shred"></a>
+<a name="index-data_002c-erasing"></a>
+<a name="index-erasing-data"></a>
+
+<p><code>shred</code> はデバイスやファイルを上書きして、
+非常に高価な装置を使用しても、データの復元ができないようにする。
+</p>
+<p>通常、ファイルを削除しても (see section <a href="coreutils-ja_82.html#rm-invocation"><code>rm</code>: ファイルやディレクトリを削除する</a>)、データが実際に消去されるわけではない。
+単に、ファイルが格納されている場所をリストしたインデックスが破棄されるだけであり、
+そうすることで、そのデータの格納場所が再利用可能になるのである。
+世の中には、インデックスの再構築を試みる復元ソフト (undelete utilities)
+というものが存在する。そうしたものは、ファイルの存在したスペースが再利用されていなければ、
+ファイルを復元することができるのだ。
+</p>
+<p>頻繁に使われているシステムで、ディスクがほとんど一杯になっている場合、
+スペースは数秒のうちに再利用されるかもしれない。だが、それを確実に知る方法は全くない。
+また、他人に見られては困るデータがあったところで、
+見られても構わないデータでそのファイルを上書きしてしまえば、
+復元は絶対不可能だと考えたいかもしれない。
+</p>
+<p>しかしながら、そういうことをした後でも、ディスクを研究所に持ち込んで、
+高感度の (そして高価な) 装置を山ほど使用すれば、
+上書きされたデータの下にある元のデータのかすかな「痕跡 (echoes)」を検出することが可能なのだ。
+もし、データがたった一回しか上書きされていなかったら、それはさほど難しいことでもない。
+</p>
+<p>データを復元できないように消去する最善の方法は、
+それが載っているメディアを酸で破壊するとか、熱で溶かすとかすることである。
+フロッピーディスクのような廉価なリムーバブル・メディアの場合、それがよく使われる方法だ。
+だが、ハードディスクは高価だし、熱で溶かすのも難しい。
+そこで、<code>shred</code> ユーティリティは、物質的な破壊以外の方法で、
+同様の効果を実現しようとするのである。
+</p>
+<p>そのためには、元のデータに与える損傷を最大にするように選ばれたデータパターンで繰り返し上書きするという方法が採られる。
+この方法は、フロッピーディスクにも効果があるものの、パターンはハードディスクで最も効果を上げるように工夫されたものだ。
+詳細については、ソースコードや、第 6 回 USENIX セキュリティ・シンポジウム
+(San Jose, California, July 22&ndash;25, 1996) の議事録にある
+Peter Gutmann の次の論文をご覧になっていただきたい。<br>
+<a href="http://www.cs.auckland.ac.nz/~pgut001/pubs/secure_del.html"><cite>Secure Deletion of Data from Magnetic and Solid-State Memory</cite></a>
+</p>
+<p>ここで心に銘記してしていただきたいのは、<code>shred</code> には非常に重要な前提があるということである。
+すなわち、ファイルシステムはデータを、それが存在する場所で上書きするものでなければならない。
+それは、こうした操作を行うときの伝統的な方法であるが、
+最近のファイルシステムの設計には、この前提を満たさないものが多い。
+そうした例外には、次のようなものがある。
+</p>
+<ul>
+<li>
+ログ構造化 (log-structured) ファイルシステムや、ジャーナル化
+(journaled) ファイルシステム。たとえば、ATX や Solaris
+で提供されているもの。JFS, ReiserFS, XFS, Ext3 (<code>data=journal</code> モードの場合),
+BFS, NTFS などが、「データ」のジャーナリングをするように設定されている場合もこれに当たる。
+
+</li><li>
+データを冗長化して書き込んだり、一部の書き込みに失敗することがあっても、
+動作し続けるファイルシステム。たとえば、RAID ベースのファイルシステム。
+
+</li><li>
+Network Appliance の NFS サーバのように、スナップショットを作成するファイルシステム。
+
+</li><li>
+NFS バージョン 3 のクライアントのように、一時領域にキャッシュを作るファイルシステム。
+
+</li><li>
+圧縮ファイルシステム。
+</li></ul>
+
+<p>特に ext3 ファイルシステムについて言うと、上記の例外に当てはまるのは
+(その結果、<code>shred</code> が限定された効果しか持たないのは)、<code>data=journal</code>
+モードの場合だけである。これは、メタデータだけでなく、
+ファイルデータもジャーナリングするモードだ。<code>data=ordered</code> (デフォルト)
+と <code>data=writeback</code> の両モードでは、<code>shred</code> は通常どおり役に立つ。
+ext3 のジャーナリング・モードを変更するには、mount のマニュアルに書いてあるように
+(man mount)、&lsquo;<tt>/etc/fstab</tt>&rsquo; ファイルで問題のファイルシステムのマウントオプションに
+<code>data=something</code> オプションを追加すればよい。
+</p>
+<p>ファイルシステムがどういう動作をしているか、よくわからない場合は、
+データをそれが存在する場所で上書きしていないと考えておいた方がよい。
+すなわち、そのファイルシステムでは、通常ファイルに対する <code>shred</code>
+の動作は、信頼できないということである。
+</p>
+<p>一般的に言って、<code>shred</code> は、ファイルよりデバイスに対して使った方が信頼できる。
+そうすれば、上に述べたファイルシステムの設計の問題を回避できるからだ。
+しかしながら、<code>shred</code> のデバイスに対する使用も、必ずしも全面的に信頼できるわけではない。
+たとえば、ほとんどのディスクが、バッドセクターを使用に割り当てる領域から外して、
+アプリケーションから見えないようにしている。
+そこで、バッドセクターに他人に見られたくないデータがある場合、<code>shred</code>
+はそれを破壊できないことになる。
+</p>
+<p><code>shred</code> は、バックアップに対して何の対処も行おうとしないが、
+バッドセクターの問題についても全く同様で、検知しようともしないし、通知しようともしない。
+それでも、<code>shred</code> はファイルに対して行うより、デバイスに対して行う方が信頼できるので、
+デフォルトでは、出力ファイルをサイズ 0 に短縮したり、削除したりしないようになっている。
+このデフォルトは、ファイルよりデバイスに適した動作だ。
+デバイスは一般に短縮できないし、削除するべきでもないからである。
+</p>
+<p>最後になったが、バックアップやミラーの持つリスクも考慮した方がよい。
+削除することのできないファイルのコピーが、ファイルシステムのバックアップやリモートのミラーに残っているかもしれないのだ。
+そして、そうしたものが残っていれば、<code>shred</code>
+で破壊したファイルを後日復元することが可能になる。
+だから、後で <code>shred</code> を使って破棄したくなりそうなデータがある場合には、
+そのバックアップやミラーがないことを確認すべきなのである。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">shred [<var>option</var>]&hellip; <var>file</var>[&hellip;]
+</pre></td></tr></table>
+
+<p>このプログラムでは以下のオプションが使用できる。参照: <a href="coreutils-ja_2.html#Common-options">共通オプション</a>.
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>-f</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--force</samp>&rsquo;</dt>
+<dd><a name="index-_002df-13"></a>
+<a name="index-_002d_002dforce-3"></a>
+<a name="index-force-deletion"></a>
+<p>必要ならば、ファイルの許可属性を無視して、上書きできるようにする。
+</p>
+</dd>
+<dt> &lsquo;<samp>-n <var>number</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--iterations=<var>number</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dn-number"></a>
+<a name="index-_002d_002diterations_003dnumber"></a>
+<a name="index-iterations_002c-selecting-the-number-of"></a>
+<p>デフォルトで <code>shred</code> は、上書きを 3 回する。
+時間を節約するために、回数を減らすこともできるし、
+その方がよいと思えば、回数を増やすこともできる。
+25 回上書きすると、プログラムが内部に持っている上書き用のパターンのすべてが、
+少なくとも一回は使われたことになる。
+</p>
+</dd>
+<dt> &lsquo;<samp>--random-source=<var>file</var></samp>&rsquo;</dt>
+<dd><a name="index-_002d_002drandom_002dsource-2"></a>
+<a name="index-random-source-for-shredding"></a>
+<p>上書きに使用するランダムデータのソースとして <var>file</var> を使用する。
+また、このランダムデータは、上書きパターンの順番を決めるのにも使用される。
+</p>
+</dd>
+<dt> &lsquo;<samp>-s <var>bytes</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--size=<var>bytes</var></samp>&rsquo;</dt>
+<dd><a name="index-_002ds-bytes"></a>
+<a name="index-_002d_002dsize_003dbytes"></a>
+<a name="index-size-of-file-to-shred"></a>
+<p>ファイルの最初の <var>bytes</var> バイトを shred 処理する。デフォルトは、
+ファイル全体の shred である。<var>bytes</var> の後ろには、その何倍かを示すために
+&lsquo;<samp>K</samp>&rsquo;, &lsquo;<samp>M</samp>&rsquo;, &lsquo;<samp>G</samp>&rsquo; といった、サイズの指定を付けることができる。
+ See section <a href="coreutils-ja_5.html#Block-size">ブロックサイズ</a>.
+</p>
+</dd>
+<dt> &lsquo;<samp>-u</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--remove[=<var>how</var>]</samp>&rsquo;</dt>
+<dd><a name="index-_002du-8"></a>
+<a name="index-_002d_002dremove"></a>
+<a name="index-_002d_002dremove_003dunlink"></a>
+<a name="index-_002d_002dremove_003dwipe"></a>
+<a name="index-_002d_002dremove_003dwipesync"></a>
+<a name="index-removing-files-after-shredding"></a>
+<p>shred 処理したファイルを (可能ならば) サイズ 0 に短縮し
+(truncate)、その上で削除する。ファイルが複数のリンクを持っている場合に、
+削除されるのは名前を指定されたリンクだけである。
+ファイルの名前は、ファイルの内容ほど秘密性を必要としないことも多い。
+そうした場合は、長い書式のオプションでサポートされている <var>how</var>
+パラメータを付けることで、各ディレクトリエントリのより効率的な削除法を指定することができる。
+<var>how</var> パラメータに &lsquo;<samp>unlink</samp>&rsquo; を指定した場合は、標準の unlink 呼び出しをするだけだが、
+&lsquo;<samp>wipe</samp>&rsquo; を指定すると、unlink する前にファイル名を構成するバイトの難読化を行う。
+&lsquo;<samp>wipesync</samp>&rsquo; を指定した場合は、ファイル名を難読化するだけでなく、
+それを 1 バイトづつディスクに sync することまで行う。
+留意していただきたいのは、&lsquo;<samp>wipesync</samp>&rsquo; はデフォルトの方法だが、
+すべてのファイル名のすべての文字ごとに sync を行うことになるので、
+負荷が重くなるかもしれないということである。
+ファイル数が多い場合には、無視できない負荷になるかもしれない。
+また、使用しているシステムがメタデータの同期アップデートを提供している場合には、
+やらないでもよいことかもしれない。
+</p>
+</dd>
+<dt> &lsquo;<samp>-v</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--verbose</samp>&rsquo;</dt>
+<dd><a name="index-_002dv-11"></a>
+<a name="index-_002d_002dverbose-7"></a>
+<p>shred 処理が進行する間、更新される進行状態の情報のすべてを標準エラーに表示する。
+</p>
+</dd>
+<dt> &lsquo;<samp>-x</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--exact</samp>&rsquo;</dt>
+<dd><a name="index-_002dx-3"></a>
+<a name="index-_002d_002dexact"></a>
+<p>デフォルトでは、<code>shred</code> は、
+通常ファイルのサイズを、ファイルシステムのブロックサイズの倍数に切り上げて、
+ファイルの最後のブロックの不使用領域まで完全に抹消する。
+この領域には、システムによっては、たとえば、現在のシステムメモリの一部が入っているかもしれない。
+この動作を抑制するには、&lsquo;<samp>--exact</samp>&rsquo; オプションを使用すればよい。
+すなわち、デフォルトでは、1 ブロック 512 バイトのシステムで
+10 バイトの通常ファイルを shred すると、結果として 512 バイトのファイルが出来上がる。
+だが、このオプションを使えば、shred はファイルの見かけのサイズを増加させないのだ。
+</p>
+</dd>
+<dt> &lsquo;<samp>-z</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--zero</samp>&rsquo;</dt>
+<dd><a name="index-_002dz-10"></a>
+<a name="index-_002d_002dzero"></a>
+<p>通常、<code>shred</code> は、最後の 1 回でもランダムデータを書き込む。
+そんなファイルがハードディスクにあると、(たとえば、暗号化されたデータに見えて)
+目立ってしまうのではないかと思うのなら、あるいは、単にそっちの方がもっとすっきりしていると思うのなら、
+&lsquo;<samp>--zero</samp>&rsquo; オプションを指定して、もう一回、 すべて 0 ビットで上書きさせればよい。
+これは、&lsquo;<samp>--iterations</samp>&rsquo; オプションで指定した上書き回数のほかに、もう一回ということである。
+</p>
+</dd>
+</dl>
+
+<p>第 1 ドライブのフロッピーディスクに作成したファイルシステムを跡形もなく消し去るには、
+次のコマンドを使えばよいだろう。このコマンドで &ldquo;1.44MB&rdquo; (実際には 1440 KiB)
+のフロッピーを消去するには、約 20 分かかる。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">shred --verbose /dev/fd0
+</pre></td></tr></table>
+
+<p>同様に、ハードディスクの選択したパーティションからすべてのデータを消去するには、
+以下のコマンドを打ち込めばよい。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">shred --verbose /dev/sda5
+</pre></td></tr></table>
+
+<p>最近のディスクでは、1 回の書き込みで十分なはずだ。
+それならば、書き込みを 3 回行うデフォルトの 3 分の 1 の時間ですむ。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example"># 擬似ランダムデータを 1 回書き込む。デフォルトより 3 倍速い。
+shred --verbose -n1 /dev/sda5
+</pre></td></tr></table>
+
+<p>念のため、少なくとも 1 回は擬似ランダムデータで上書きをした方がよい。
+言い換えると、つい使いたくなっても、&lsquo;<samp>-n0 --zero</samp>&rsquo; を使ってはいけない。
+ディスク・コントローラの中には、すべてが 0 のブロックを書き込む際に、処理の最適化を行っているものがあり、
+そのため、ブロック中のバイトすべてがクリアされない恐れがあるからである。
+SSD の中には、まさにそういうことをするものがある。
+</p>
+<p>&lsquo;<samp>-</samp>&rsquo; という <var>file</var> は、標準出力を表している。
+これの使い道は、削除したテンポラリ・ファイルを shred することである。
+たとえば、次のようにだ。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">i=$(mktemp)
+exec 3&lt;&gt;&quot;$i&quot;
+rm -- &quot;$i&quot;
+echo &quot;Hello, world&quot; &gt;&amp;3
+shred - &gt;&amp;3
+exec 3&gt;&amp;-
+</pre></td></tr></table>
+
+<p>しかしながら、&lsquo;<samp>shred - &gt;file</samp>&rsquo; というコマンドを使っても、ファイルの内容を
+shred することにはならない。なぜなら、シェルは <code>shred</code>
+を呼び出す前に、ファイルをサイズ 0 に短縮 (truncate) してしまうからである。
+&lsquo;<samp>shred file</samp>&rsquo;、あるいは (Bourne 互換シェルをお使いなら) &lsquo;<samp>shred - 1&lt;&gt;file</samp>&rsquo;
+というコマンドを、代わりに使った方がよい。
+</p>
+<p>終了ステータス 0 は成功を示し、0 以外の値は失敗を示す。
+</p>
+
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_82.html#rm-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_84.html#Special-file-types" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_77.html#Basic-operations" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_77.html#Basic-operations" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_84.html#Special-file-types" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

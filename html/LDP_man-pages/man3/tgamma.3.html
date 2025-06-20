@@ -1,0 +1,216 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TGAMMA</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TGAMMA</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/tgamma.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+tgamma, tgammaf, tgammal - 本当のガンマ関数
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;</B>
+<P>
+
+<B>double tgamma(double </B><I>x</I><B>);</B>
+<BR>
+
+<B>float tgammaf(float </B><I>x</I><B>);</B>
+<BR>
+
+<B>long double tgammal(long double </B><I>x</I><B>);</B>
+<P>
+
+<I>-lm</I> でリンクする。
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>tgamma</B>(), <B>tgammaf</B>(), <B>tgammal</B>():
+<DL COMPACT><DT><DD>
+_ISOC99_SOURCE || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらの関数は <I>x</I> のガンマ関数を計算する。
+<P>
+
+ガンマ関数は以下のように定義される:
+<P>
+
+<DL COMPACT><DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma(x)&nbsp;=&nbsp;t^(x-1)&nbsp;e^-t&nbsp;dt&nbsp;の&nbsp;0&nbsp;から無限大までの積分
+</DL>
+
+<P>
+
+この関数は正でない整数を除くすべての実数に対して定義されている。 非負の整数 <I>m</I> に関して、以下が成立する:
+<P>
+
+<DL COMPACT><DT><DD>
+Gamma(m+1) = m!
+</DL>
+
+<P>
+
+より一般的には、すべての <I>x</I> に関して以下が成立する:
+<P>
+
+<DL COMPACT><DT><DD>
+Gamma(x+1) = x * Gamma(x)
+</DL>
+
+<P>
+
+さらに、極を除くすべての <I>x</I> で次式も成立する:
+<P>
+
+<DL COMPACT><DT><DD>
+Gamma(x) * Gamma(1 - x) = PI / sin(PI * x)
+</DL>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、これらの関数は Gamma(x) を返す。
+<P>
+
+<I>x</I> が NaN の場合、NaN が返される。
+<P>
+
+<I>x</I> が正の無限大の場合、正の無限大が返される。
+<P>
+
+<I>x</I> が負の整数か負の無限大の場合、領域エラー (domain error) が発生し、 NaN が返される。
+<P>
+
+結果がオーバーフローする場合、範囲エラー (range error) が発生し、 各関数はそれぞれ <B>HUGE_VAL</B>, <B>HUGE_VALF</B>,
+<B>HUGE_VALL</B>, を返す。この際、数学的に正しい符号が付与される。
+<P>
+
+結果がアンダーフローする場合、範囲エラー (range error) が発生し、 関数は 0 をを返す。この際、数学的に正しい符号が付与される。
+<P>
+
+<I>x</I> が -0 か +0 の場合、極エラー (pole error) が発生し、 各関数はそれぞれ <B>HUGE_VAL</B>,
+<B>HUGE_VALF</B>, <B>HUGE_VALL</B>, を返す。 0 と同じ符号が付与される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+これらの関数を呼び出した際にエラーが発生したかの判定方法についての情報は <B><A HREF="../man7/math_error.7.html">math_error</A></B>(7)  を参照のこと。
+<P>
+
+以下のエラーが発生する可能性がある。
+<DL COMPACT>
+<DT>領域エラー: <I>x</I> が負の整数か負の無限大<DD>
+<I>errno</I> に <B>EDOM</B> が設定される。 不正 (invalid) 浮動小数点例外 (<B>FE_INVALID</B>)  が上がる
+(「バグ」の節を参照)。
+<DT>極エラー (pole error): <I>x</I> が +0 か -0<DD>
+<I>errno</I> に <B>ERANGE</B> が設定される。 0 による除算 (divide-by-zero) 浮動小数点例外
+(<B>FE_DIVBYZERO</B>)  が上がる。
+<DT>範囲エラー (range error): 結果のオーバーフロー<DD>
+<I>errno</I> に <B>ERANGE</B> が設定される。 オーバーフロー浮動小数点例外 (<B>FE_OVERFLOW</B>)  が上がる。
+</DL>
+<P>
+
+glibc では、C99 や POSIX.1-2001 で規定されていない以下のエラーも 起こり得る。
+<DL COMPACT>
+<DT>範囲エラー (range error): 結果のアンダーフロー<DD>
+
+
+
+
+
+
+アンダーフロー浮動小数点例外 (<B>FE_UNDERFLOW</B>) が上がり、 <I>errno</I> が <B>ERANGE</B> に設定される。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+これらの関数は glibc バージョン 2.1 で初めて登場した。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>tgamma</B>(),
+<B>tgammaf</B>(),
+<B>tgammal</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+C99, POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+この関数を「本当の (true) ガンマ関数」と呼ばなければならなかった。 なぜなら、他の値を返す <B><A HREF="../man3/gamma.3.html">gamma</A></B>(3)
+という関数がすでに存在するからである (詳細については <B><A HREF="../man3/gamma.3.html">gamma</A></B>(3)  を参照)。
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+
+バージョン 2.18 より前の glibc の実装では、 <I>x</I> が負の無限大の場合、 <I>errno</I> に <B>EDOM</B> が設定されなかった。
+<P>
+
+
+glibc 2.19 より前では、これらの関数の glibc 実装はアンダーフロー範囲エラーの場合に <I>errno</I> に <B>ERANGE</B>
+を設定しなかった。
+<P>
+
+
+glibc バージョン 2.3.3 以前では、 引数に +0 や -0 を渡すと、極エラーではなく、 領域エラーを間違って発生していた
+(領域エラーの場合、 <I>errno</I> に <B>EDOM</B> を設定され、 <B>FE_INVALID</B> 例外が発生する)。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/gamma.3.html">gamma</A></B>(3), <B><A HREF="../man3/lgamma.3.html">lgamma</A></B>(3)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

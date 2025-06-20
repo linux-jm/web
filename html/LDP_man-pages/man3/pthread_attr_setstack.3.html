@@ -1,0 +1,181 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_ATTR_SETSTACK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_ATTR_SETSTACK</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/pthread_attr_setstack.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_attr_setstack, pthread_attr_getstack -
+スレッド属性オブジェクトのスタック属性の設定/取得を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<B>int pthread_attr_setstack(pthread_attr_t *</B><I>attr</I><B>,</B>
+<B>                          void *</B><I>stackaddr</I><B>, size_t </B><I>stacksize</I><B>);</B>
+<B>int pthread_attr_getstack(const pthread_attr_t *</B><I>attr</I><B>,</B>
+<B>                          void **</B><I>stackaddr</I><B>, size_t *</B><I>stacksize</I><B>);</B>
+
+<I>-pthread</I> でコンパイルしてリンクする。
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>pthread_attr_getstack</B>(), <B>pthread_attr_setstack</B>():
+<DL COMPACT><DT><DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pthread_attr_setstack</B>() 関数は、
+<I>attr</I> が参照するスレッド属性オブジェクトのスタックアドレス属性と
+スタックサイズ属性をそれぞれ <I>stackaddr</I> と <I>stacksize</I> で
+指定された値に設定する。
+これらの属性により、スレッド属性オブジェクト <I>attr</I> を使って
+作成されるスレッドが使用すべきスタックの位置とサイズが指定される。
+<P>
+
+<I>stackaddr</I> は、呼び出し側で割り当てた、大きさが <I>stacksize</I> バイトの
+バッファー内の指定できる最小のアドレスバイトを指すべきである。
+割り当てられたバッファーのページは読み書き両方が可能なページとなっている
+べきである。
+<P>
+
+<B>pthread_attr_getstack</B>() 関数は、
+スレッド属性オブジェクト <I>attr</I> のスタックアドレス属性と
+スタックサイズ属性をそれぞれ <I>stackaddr</I> と <I>stacksize</I> が
+指すバッファーに入れて返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、これらの関数は 0 を返す。
+エラーの場合、0 以外のエラー番号を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>pthread_attr_setstack</B>() は以下のエラーで失敗する場合がある。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>stacksize</I> が <B>PTHREAD_STACK_MIN</B> (16384) よりも小さい。
+システムによっては、 <I>stackaddr</I> か
+<I>stackaddr&nbsp;+&nbsp;stacksize</I> のアライメントが適切でない場合にも
+このエラーが発生する。
+</DL>
+<P>
+
+POSIX.1 では エラー <B>EACCES</B> も規定されており、このエラーは <I>stackaddr</I> と <I>stacksize</I>
+で規定されるスタック領域に呼び出し側から読み書き両方のアクセスができない状況を表す。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+これらの関数は glibc バージョン 2.2 以降で提供されている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>pthread_attr_setstack</B>(),
+<B>pthread_attr_getstack</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+これらの関数は、スレッドのスタックが特定の場所に配置されることを保証
+しなければならないアプリケーションのために提供されている。
+ほとんどのアプリケーションでは、このようなことは必要なく、
+これらの関数を使うのは避けるべきである。
+(アプリケーションが単にスタックサイズだけをデフォルトの値から変更する
+必要がある場合には <B><A HREF="../man3/pthread_attr_setstacksize.3.html">pthread_attr_setstacksize</A></B>(3) を使うこと)
+<P>
+
+アプリケーションが <B>pthread_attr_setstack</B>() を利用する際には、
+スタックの割り当てに責任を持つ必要がある。
+<B><A HREF="../man3/pthread_attr_setguardsize.3.html">pthread_attr_setguardsize</A></B>(3) を使って設定された
+guard size の値は無視される。
+必要と思われる場合は、アプリケーションが責任を持ってガード領域 (読み書
+きが行われないように保護された 1 個かそれ以上のページ) の割り当てを行い、
+スタックオーバーフローの可能性に対処するようにする必要がある。
+<P>
+
+<I>stackaddr</I> に指定するアドレスは適切なアライメントとなっているべきである。
+完全な移植性を持たせるためには、
+ページ境界 (<I>sysconf(_SC_PAGESIZE)</I>) に揃えること。
+割り当てには <B><A HREF="../man3/posix_memalign.3.html">posix_memalign</A></B>(3) を使うとよい。
+たいていは、 <I>stacksize</I> はシステムのページサイズの倍数とすべきである。
+<P>
+
+一つの <I>attr</I> を使って複数のスレッドを作成する場合、
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3) の次の呼び出しを行う前に、
+呼び出し側でスタックアドレス属性を変更しなければならない。
+さもなければ、複数のスレッドがスタックとして同じメモリー領域を
+使おうとするため、訳の分からない状況が発生してしまう。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man3/pthread_attr_init.3.html">pthread_attr_init</A></B>(3) を参照。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2), <B><A HREF="../man3/posix_memalign.3.html">posix_memalign</A></B>(3), <B><A HREF="../man3/pthread_attr_init.3.html">pthread_attr_init</A></B>(3),
+<B><A HREF="../man3/pthread_attr_setguardsize.3.html">pthread_attr_setguardsize</A></B>(3), <B><A HREF="../man3/pthread_attr_setstackaddr.3.html">pthread_attr_setstackaddr</A></B>(3),
+<B><A HREF="../man3/pthread_attr_setstacksize.3.html">pthread_attr_setstacksize</A></B>(3), <B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

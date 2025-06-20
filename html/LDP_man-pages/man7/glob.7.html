@@ -1,0 +1,214 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GLOB</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GLOB</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/glob.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+glob - パス名を glob する
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+昔々 UNIX&nbsp;V6 では、ワイルドカードパターンを展開する <I>/etc/glob</I> と言うプログラムがあった。その後すぐに、
+この機能はシェルに組み込まれるようになった。
+<P>
+
+今日では、この機能をユーザープログラムからも実行できるよう、 <B><A HREF="../man3/glob.3.html">glob</A></B>(3)  というライブラリルーチンも存在している。
+<P>
+
+glob の規則を以下に述べる (POSIX.2 3.13)。
+<A NAME="lbAD">&nbsp;</A>
+<H3>ワイルドカードマッチ</H3>
+
+文字列に '?', '*', '[' が含まれていると、 それはワイルドカードパターンとみなされる。 「glob
+する」というのは、ワイルドカードパターンを展開して、 そのパターンにマッチするパス名のリストを得ることである。 マッチは以下のように定義される。
+<P>
+
+(ブラケット外部の) '?' はあらゆる単一の文字にマッチする。
+<P>
+
+(ブラケット外部の) '*' はあらゆる文字列にマッチする。 空文字列 (empty string) にもマッチする。
+<P>
+
+<B>文字クラス (character class)</B>
+<P>
+
+&quot;<I>[...]</I>&quot; と言う表記は、先頭の '[' に続く最初の文字が '!' で
+なければ、ブラケットの中に含まれている文字のどれか一つにマッチする。 ブラケットの内部に含まれる文字列は空であってはならない。 したがって
+']' も最初の文字に指定すればブラケットの内部に含めることが できる (つまり &quot;<I>[][!]</I>&quot; は '[',
+']', '!' の 3 文字のどれかにマッチする)。
+<P>
+
+<B>領域指定 (range)</B>
+<P>
+
+特殊な表記法が一つ存在する。'-' を挟む二つの文字は領域指定となる。 (つまり &quot;<I>[A-Fa-f0-9]</I>&quot; は
+&quot;<I>[ABCDEFabcdef0123456789]</I>&quot; と等価となる。) '-' 文字そのものを入れたい場合は、
+ブラケットの先頭または最後の文字に指定すればよい。 (つまり &quot;<I>[]-]</I>&quot; は二つの文字 ']' と '-'
+にマッチし、&quot;<I>[--0]</I>&quot; は '-', '.', '0' の 3 文字にマッチする。この間の
+'/' にはマッチしない。後述を参照。)
+<P>
+
+<B>補集合 (complementation)</B>
+<P>
+
+&quot;<I>[!...]</I>&quot; と言う表記は、ブラケットの内部に含まれない単一の文字にマッチする (ただし先頭にある '!' は除外)。 (つまり
+&quot;<I>[!]a-]</I>&quot; は ']', 'a', '-' 以外のすべての文字の、どれか一つにマッチする。)
+<P>
+
+バックスラッシュ '\' を前置すれば、 '?', '*', '[' は通常の文字として扱われる。
+またはシェルのコマンドラインの一部に指定する場合は、 クォートで囲っても同じ効果が得られる。ブラケットの内部では、
+これらの文字はその文字自身だけを意味する。 すなわち &quot;<I>[[?*\]</I>&quot; は '[', '?', '*',
+'\' のどれか一文字にマッチする。
+<A NAME="lbAE">&nbsp;</A>
+<H3>パス名 (pathname)</H3>
+
+glob 動作は、パス名のそれぞれの部分に独立に適用される。 パス名に存在する '/' は '?' や '*'
+ワイルドカードにはマッチしない。 また &quot;<I>[.-0]</I>&quot; のような領域指定にもマッチしない。陽に '/'
+文字を含む領域指定は文法的に正しくない。 (POSIX の要件では、文法的に正しくないパターンは変更せずにそのままにすることになっている。)
+<P>
+
+'.' で始まるパス名では、この文字は陽にマッチさせなければならない。 (つまり <I>rm&nbsp;*</I> は .profile を削除しない。また
+<I>tar&nbsp;c&nbsp;*</I> ではすべてのファイルはアーカイブされない。 <I>tar&nbsp;c&nbsp;.</I> の方が良い。)
+<A NAME="lbAF">&nbsp;</A>
+<H3>空のリスト</H3>
+
+先に与えた、わかりやすく簡単なルール、 「ワイルドカードパターンをマッチしたパス名のリストに展開する」と言うのは、 オリジナルの UNIX
+における定義であった。 これはパターンが空のリストに展開されることも許可されていた。 例えば
+<P>
+
+<PRE>
+    xv -wait 0 *.gif *.jpg
+</PRE>
+
+<P>
+
+において、*.gif ファイルが全くない場合でも、 これは空のリストに展開されるため、エラーにならない。 しかし POSIX
+では、文法的に正しくないパターンや、 マッチがなかったパターンは、 そのまま変更されずに残されることになっている。 <I>bash</I>
+では、次のコマンドで昔からの振る舞いに設定することができる。
+<P>
+
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;shopt&nbsp;-s&nbsp;nullglob
+<P>
+
+(同様の問題は別のところでも起こっている。例えば、古いスクリプトにおける
+<P>
+
+<PRE>
+    rm `find . -name &quot;*~&quot;`
+</PRE>
+
+<P>
+
+のような記述は、新しいスクリプトでは
+<P>
+
+<PRE>
+    rm -f nosuchfile `find . -name &quot;*~&quot;`
+</PRE>
+
+<P>
+
+のようにしなければならない。さもないと <I>rm</I> を引数リストなしで呼び出す可能性があり、 エラーメッセージが出てしまう。)
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>正規表現</H3>
+
+ワイルドカードパターンは正規表現と多少似ているが、しかしこの両者は異なる。 まず第一に、前者がファイル名にマッチするのに対して、
+後者はテキストにマッチする。第二に、ルールも同じではない。 例えば正規表現における '*' は、 前置された文字の 0
+以上の繰り返しを表す。
+<P>
+
+正規表現にもブラケット表現はあるが、否定は '^' でなされる。 POSIX ではワイルドカードパターンにおける
+&quot;<I>[^...]</I>&quot; を未定義であるとしている。
+<A NAME="lbAI">&nbsp;</A>
+<H3>文字クラスと国際化</H3>
+
+領域指定は、もともとはもちろん ASCII における順序並びを意味していた。 したがって &quot;<I>[&nbsp;-%]</I>&quot; は &quot;<I>[&nbsp;!&quot;#$%]</I>&quot;
+の意味であり、 &quot;<I>[a-z]</I>&quot; は「すべての小文字」の意味であった。 UNIX の実装の中には、これを拡張したものが存在し、 そこでは X-Y
+という領域指定は、X のコードと Y のコードに挟まれたコードを持つ文字すべてを表すようになっていた。
+しかし、これにはユーザーがローカルなシステムにおける 文字コードを知らなければならず、 さらにローカルなアルファベットに対する照合順序
+(collating sequence) が文字コードの順序と異なっている場合には不便であった。 (訳注: collating sequence
+に関しては <B><A HREF="../man7/regex.7.html">regex</A></B>(7)  を参照して下さい。)  したがって POSIX では、ワイルドカードパターンと正規表現の双方において、
+ブラケット表記を大幅に拡張している。 これまで我々は、ブラケット表記には三つの要素が含まれうることを見てきた。 すなわち (i) 否定、(ii)
+単一の文字、(iii) 領域指定、の三つである。 POSIX では、領域指定をより国際化に便利なように定義しており、
+また三つのタイプをブラケット表記の要素として追加している。
+<P>
+
+(iii) 領域指定 X-Y は X と Y に挟まれた (両端含む) すべての文字を意味する。 このとき、カレントロケール (current
+locale) の <B>LC_COLLATE</B> カテゴリーで定義されている照合順序が用いられる。
+<P>
+
+(iv) 名前付き文字クラス: 以下のようなものである。
+<P>
+
+<PRE>
+[:alnum:]  [:alpha:]  [:blank:]  [:cntrl:]
+[:digit:]  [:graph:]  [:lower:]  [:print:]
+[:punct:]  [:space:]  [:upper:]  [:xdigit:]
+</PRE>
+
+<P>
+
+これを用いれば &quot;<I>[a-z]</I>&quot; の代わりに &quot;<I>[[:lower:]]</I>&quot; のような指定ができる。 またデンマークのように、アルファベットの
+'z' 以降に 3 つの文字が存在するような場合でも、同じような動作が期待できる。 これらの文字クラスはカレントロケールの
+<B>LC_CTYPE</B> カテゴリーで定義されている。
+<P>
+
+(v) 照合順序におけるシンボル: &quot;<I>[.ch.]</I>&quot; や &quot;<I>[.a-acute.]</I>&quot; のように &quot;<I>[.</I>&quot; と &quot;<I>.]</I>&quot;
+で挟まれた文字列は、カレントロケールで定義された照合順序の要素となる。 ある一つの要素が複数の文字からなる場合もありうることに注意。
+<P>
+
+(vi) 等価クラス表現 (equivalence class expressions):
+&quot;<I>[=a=]</I>&quot; のように &quot;<I>[=</I>&quot; と &quot;<I>=]</I>&quot; とで挟まれた文字列であり、
+カレントロケールで定義された等価クラスのメンバーである照合要素のいずれかを表す。
+例えば、&quot;<I>[[=a=]]</I>&quot; は &quot;<I>[a&aacute;\`a&auml;&acirc;]</I>&quot;、つまり
+&quot;<I>[a[.a-acute.][.a-grave.][.a-umlaut.][.a-circumflex.]]</I>&quot; と等価になる。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>sh</B>(1), <B><A HREF="../man3/fnmatch.3.html">fnmatch</A></B>(3), <B><A HREF="../man3/glob.3.html">glob</A></B>(3), <B><A HREF="../man7/locale.7.html">locale</A></B>(7), <B><A HREF="../man7/regex.7.html">regex</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">ワイルドカードマッチ</A><DD>
+<DT><A HREF="#lbAE">パス名 (pathname)</A><DD>
+<DT><A HREF="#lbAF">空のリスト</A><DD>
+</DL>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAH">正規表現</A><DD>
+<DT><A HREF="#lbAI">文字クラスと国際化</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

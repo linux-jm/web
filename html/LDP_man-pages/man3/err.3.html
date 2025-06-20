@@ -1,0 +1,170 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ERR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ERR</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/err.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+err, verr, errx, verrx, warn, vwarn, warnx, vwarnx - エラーメッセージを整形する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;</B>
+
+<B>void err(int </B><I>eval</I><B>, const char *</B><I>fmt</I><B>, ...);</B>
+
+<B>void errx(int </B><I>eval</I><B>, const char *</B><I>fmt</I><B>, ...);</B>
+
+<B>void warn(const char *</B><I>fmt</I><B>, ...);</B>
+
+<B>void warnx(const char *</B><I>fmt</I><B>, ...);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/stdarg.h">stdarg.h</A>&gt;</B>
+
+<B>void verr(int </B><I>eval</I><B>, const char *</B><I>fmt</I><B>, va_list </B><I>args</I><B>);</B>
+
+<B>void verrx(int </B><I>eval</I><B>, const char *</B><I>fmt</I><B>, va_list </B><I>args</I><B>);</B>
+
+<B>void vwarn(const char *</B><I>fmt</I><B>, va_list </B><I>args</I><B>);</B>
+
+<B>void vwarnx(const char *</B><I>fmt</I><B>, va_list </B><I>args</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>err</B>()  関数群と <B>warn</B>()  関数群は、エラーメッセージを整形して標準エラー出力に表示する。
+どの関数の場合も、(ディレクトリ部分を省いた)プログラム名、 コロン 1個、スペース 1個が出力される。 <I>fmt</I> 引数が NULL でない場合、
+<B><A HREF="../man3/printf.3.html">printf</A></B>(3)  と同様に整形が行われ、エラーメッセージが出力される。 出力は改行文字で終わる。
+<P>
+
+関数 <B>err</B>(), <B>verr</B>(), <B>warn</B>(), <B>vwarn</B>()  は、グローバル変数 <I>errno</I> に基づいて
+<B><A HREF="../man3/strerror.3.html">strerror</A></B>(3)  から得たエラーメッセージを出力する。 <I>fmt</I> 引数が NULL
+でない場合は、一個ずつのコロンとスペースに続けて出力する。
+<P>
+
+関数 <B>errx</B>(), <B>warnx</B>()  はエラーメッセージを付け加えない。
+<P>
+
+関数 <B>err</B>(), <B>verr</B>(), <B>errx</B>(), <B>verrx</B>()  は返り値を返さないが、引数 <I>eval</I> の値を
+exit status に設定し終了する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>err</B>(),
+<B>errx</B>(),
+<BR>
+
+<B>warn</B>(),
+<B>warnx</B>(),
+<BR>
+
+<B>verr</B>(),
+<B>verrx</B>(),
+<BR>
+
+<B>vwarn</B>(),
+<B>vwarnx</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+
+
+
+
+これらの関数は非標準の BSD 拡張である。
+<A NAME="lbAG">&nbsp;</A>
+<H2>例</H2>
+
+現在の <I>errno</I> の情報を表示し、終了する:
+<P>
+
+
+
+p = malloc(size);
+if (p == NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;err(EXIT_FAILURE,&nbsp;NULL);
+fd = open(file_name, O_RDONLY, 0);
+if (fd == -1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;err(EXIT_FAILURE,&nbsp;&quot;%s&quot;,&nbsp;file_name);
+
+
+<P>
+
+エラーメッセージを表示し、終了する:
+<P>
+
+
+
+if (tm.tm_hour &lt; START_TIME)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;errx(EXIT_FAILURE,&nbsp;&quot;too&nbsp;early,&nbsp;wait&nbsp;until&nbsp;%s&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;start_time_string);
+
+
+<P>
+
+エラーを警告表示する:
+<P>
+
+
+
+fd = open(raw_device, O_RDONLY, 0);
+if (fd == -1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;warnx(&quot;%s:&nbsp;%s:&nbsp;trying&nbsp;the&nbsp;block&nbsp;device&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;raw_device,&nbsp;strerror(errno));
+fd = open(block_device, O_RDONLY, 0);
+if (fd == -1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;err(EXIT_FAILURE,&nbsp;&quot;%s&quot;,&nbsp;block_device);
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/error.3.html">error</A></B>(3), <B><A HREF="../man3/exit.3.html">exit</A></B>(3), <B><A HREF="../man3/perror.3.html">perror</A></B>(3), <B><A HREF="../man3/printf.3.html">printf</A></B>(3), <B><A HREF="../man3/strerror.3.html">strerror</A></B>(3)
+<A NAME="lbAI">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">属性</A><DD>
+<DT><A HREF="#lbAF">準拠</A><DD>
+<DT><A HREF="#lbAG">例</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

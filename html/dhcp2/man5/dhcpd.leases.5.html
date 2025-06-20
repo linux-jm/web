@@ -1,0 +1,229 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of dhcpd.leases</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>dhcpd.leases</H1>
+Section: File Formats (5)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/dhcp2/release/man5/dhcpd.leases.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+dhcpd.leases - DHCP クライアントへの貸し出しデータベース
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+Internet Software Consortium DHCP サーバは、
+割り当てたアドレスの貸し出し記録を永続的なデータベースに保持しています。
+このデータベースはフリーフォームの ASCII ファイルで、
+一連の貸し出し宣言 (declaration) からなります。
+貸し出しが要求・更新・破棄されると、
+その新しい値がこの貸し出しファイルの末尾に記録されます。
+よって、ひとつの貸し出しに対して複数の宣言があった場合は、
+ファイルの後ろの方にあるものが現在のものになります。
+<P>
+
+最初に dhcpd がインストールされたときは、
+貸し出しデータベースは存在していません。
+しかし dhcpd は、貸し出しデータベースが存在していないと起動しません。
+この目的の初期データベースには、
+/var/state/dhcp/dhcpd.leases という空のファイルを作るだけでかまいません。
+<P>
+
+貸し出しデータベースが際限なく大きくなるのを防ぐため、
+このファイルは時々書き換えられます。
+まず一時的な貸し出しデータベースが作成され、
+現在わかっている貸し出し記録がすべてそこにダンプされます。
+次に、古い貸し出しデータベースが /var/state/dhcp/dhcpd.leases~
+という名前に変更されます。
+最後に、新たに書き出された貸し出しデータベースが適切な場所に移動されます。
+<P>
+
+古い貸し出しデータベースの名前が変更された後、
+新しいデータベースが適切な場所に移動される前には間隔があるので、
+この間に dhcpd プロセスが kill されたりシステムがクラッシュすると、
+/var/state/dhcp/dhcpd.leases が存在しなくなる危険性があります。
+この場合 dhcpd は起動しなくなり、手動での修復が必要になります。
+このとき新しい貸し出しファイルを<B>単純に作成してはいけません</B>。
+こうすると、古い割り当てはすべて失われ、混乱が生じることになります。
+そうではなく、/var/state/dhcp/dhcpd.leases~ を
+/var/state/dhcp/dhcpd.leases にリネーム、
+すなわち正しい古い貸し出しファイルを元に戻してから、
+dhcpd を起動してください。
+このようにすれば、正しい貸し出しファイルに復元できます。
+<A NAME="lbAD">&nbsp;</A>
+<H2>フォーマット</H2>
+
+貸し出し宣言が保存されるフォーマットは、
+<B><A HREF="../man5/dhcpd.conf.5.html">dhcpd.conf</A></B>(5)
+
+や
+<B><A HREF="../man5/dhclient.conf.5.html">dhclient.conf</A></B>(5)
+
+ファイルの読み込みに用いられるのと同じ再帰パーサによって解釈されます。
+<P>
+
+<BR>&nbsp;<B>lease&nbsp;</B><I>ip-address</I><B>&nbsp;{&nbsp;</B><I>statements...</I><B>&nbsp;}</B>
+<P>
+
+各貸し出し宣言には、
+クライアントに貸し出されている IP アドレスがひとつ含まれます。
+括弧の内部の文は、貸し出しの有効期間と割り当て先とを定義します。
+<P>
+
+貸し出しの開始時刻と終了時刻は、
+それぞれ ``starts'' および ``end'' 文によって記録されます。
+<P>
+
+<BR>&nbsp;<B>&nbsp;starts&nbsp;</B><I>date</I><B>;</B>
+<BR>&nbsp;<B>&nbsp;ends&nbsp;</B><I>date</I><B>;</B>
+<P>
+
+日付は次のように指定されます。
+<P>
+
+<BR>&nbsp;<I>weekday&nbsp;year</I><B>/</B><I>month</I><B>/</B><I>day
+hour</I><B>:</B><I>minute</I><B>:</B><I>second</I>
+<P>
+
+曜日 (weekday) は、
+貸し出しの期限切れを人間にわかりやすくするために書かれています。
+番号 0 から 6 で指定され、0 が日曜日に対応しています。
+曜日は入力では無視されます。年 (year) は世紀の部分とともに指定され、
+よって通常は (ものすごく長い貸し出しでない限り)  4 桁になります。
+月 (month) は 1 から始まり、1 が 1 月に対応します。
+月内日 (day) も同じく 1 から始まります。
+時 (hour) は 0 から 23 の数値で、
+分 (minute) は 0 から 59 の数値で、
+秒 (second) も同じく 0 から 59 の数値で、それぞれ指定します。
+<P>
+
+貸し出し期間の両時刻はグリニッジ平均時 (GMT) で指定され、
+ローカルのタイムゾーンではありません。
+実はグリニッジは年内のある期間サマータイムになるので、
+貸し出しの時刻が常に壁時計時刻と同じになるところは、
+世界中のどこにも存在しません。
+Unix マシンでは、GMT での現時刻は
+<B>date -u</B> と入力すればわかります。
+<P>
+
+貸し出しを要求したネットワークインターフェースの MAC アドレスは、
+<B>hardware</B> 文で記録されます。
+<P>
+
+<BR>&nbsp;<B>hardware&nbsp;</B><I>hardware-type&nbsp;mac-address</I><B>;</B>
+<P>
+
+MAC アドレスは、コロンで区切られた 16 進のオクテットで指定されます。
+<P>
+
+クライアントがアドレス要求時にクライアント識別子を用いた場合は、
+そのクライアント識別子が <B>uid</B> 文で記録されます。
+<P>
+
+<BR>&nbsp;<B>uid&nbsp;</B><I>client-identifier</I><B>;</B>
+<P>
+
+クライアント識別子は 16 進のオクテットで指定されます。
+これはクライアントが ASCII 文字列を利用したか、
+あるいは新しい「ハードウェア形式/MAC アドレス」形式を利用したかによりません。
+<P>
+
+クライアントが
+(DHCP-DNS Interaction ドラフトのある版で指定されているように)
+<I>Client Hostname</I> オプションでホスト名を送ってきた場合には、
+そのホスト名は <B>client-hostname</B> 文で記録されます。
+<P>
+
+<BR>&nbsp;<B>client-hostname&nbsp;&quot;</B><I>hostname</I><B>&quot;;</B>
+<P>
+
+クライアントが (Windows 95 などでのように)
+<I>Hostname</I> オプションで自分のホスト名を送ってきた場合には、
+そのホスト名は <B>hostname</B> 文で記録されます。
+<P>
+
+<BR>&nbsp;<B>hostname&nbsp;&quot;</B><I>hostname</I><B>&quot;;</B>
+<P>
+
+DHCP サーバは、ある貸し出しが
+(なんらかの意味で) 誤用された、と指定することがあります。
+割り当てを受けたクライアントがその割り当てを NAK した場合とか、
+サーバがあるアドレスを割り当てる際にそれが利用中であるかを調べたところ、
+実はそのアドレスがすでに使われていた場合などがこれに該当します。
+このような場合には <B>abandoned</B> 文が用いられ、
+その貸し出しは破棄し、再割り当てするな、ということを示します。
+<P>
+
+<BR>&nbsp;<B>abandoned;</B>
+<P>
+
+破棄された貸し出しは、自動的に再生されます。
+クライアントが新しいアドレスを要求したときに、
+割り当てるべき新しいアドレスがなかった場合には、
+サーバは破棄されたアドレスがないかどうか調べ、
+もっとも前に破棄された貸し出しアドレスを割り当てます。
+貸し出しアドレスが衝突していないかを調べる際には、
+標準的なチェック機構が用いられます。
+従って破棄された貸し出しの IP アドレスがまだ利用されていた場合は,、
+そのアドレスは再び破棄されることになります。
+<P>
+
+クライアントが破棄されたアドレスを<B>要求</B>した場合は、
+サーバはそのアドレスが破棄された理由を、
+貸し出しファイルが壊れたためであるとみなし、
+またそのクライアントは貸し出しを調査したときに反応したマシンであり、
+そのためにそのアドレスが破棄扱いになったのだとみなします。
+この場合には、そのアドレスは直ちにそのクライアントに割り当てられます。
+<A NAME="lbAE">&nbsp;</A>
+<H2>ファイル</H2>
+
+<B>/var/state/dhcp/dhcpd.leases</B>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man8/dhcpd.8.html">dhcpd</A>(8), <A HREF="../man5/dhcp-options.5.html">dhcp-options</A>(5), <A HREF="../man5/dhcpd.conf.5.html">dhcpd.conf</A>(5), RFC2132, RFC2131.
+<A NAME="lbAG">&nbsp;</A>
+<H2>著者</H2>
+
+<B><A HREF="../man8/dhcpd.8.html">dhcpd</A></B>(8)
+
+は Ted Lemon &lt;<A HREF="mailto:mellon@vix.com">mellon@vix.com</A>&gt;
+が Vixie Labs との契約のもとに書きました。
+このプロジェクトの資金は、
+Internet Software Corporation によって提供されました。
+Internet Software Consortium の情報は
+<B><A HREF="http://www.isc.org/isc">http://www.isc.org/isc</A></B>
+
+にあります。
+<A NAME="lbAH">&nbsp;</A>
+<H2>訳注</H2>
+
+ファイルの置き場所はインストールによって変わることがあります。
+ここではデフォルトの /var/state/dhcp を仮定してあります。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DT><A HREF="#lbAD">フォーマット</A><DD>
+<DT><A HREF="#lbAE">ファイル</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">著者</A><DD>
+<DT><A HREF="#lbAH">訳注</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:37 GMT, December 05, 2022
+</BODY>
+</HTML>

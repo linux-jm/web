@@ -1,0 +1,206 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of WORDEXP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>WORDEXP</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/wordexp.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+wordexp, wordfree - posix シェルのように単語の展開を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/wordexp.h">wordexp.h</A>&gt;</B>
+<P>
+
+<B>int wordexp(const char *</B><I>s</I><B>, wordexp_t *</B><I>p</I><B>, int </B><I>flags</I><B>);</B>
+<P>
+
+<B>void wordfree(wordexp_t *</B><I>p</I><B>);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>wordexp</B>(), <B>wordfree</B>(): _XOPEN_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+関数 <B>wordexp</B>()  はシェルのように文字列 <I>s</I> を展開し、 <I>p</I> で指し示す構造体に結果を返す。 データ型
+<I>wordexp_t</I> は少なくともフィールド <I>we_wordc</I>, <I>we_wordv</I>, <I>we_offs</I> を持つ構造体である。
+フィールド <I>we_wordc</I> は <I>size_t</I> であり、 <I>s</I> を展開した結果に単語がいくつあるかを表す。 フィールド
+<I>we_wordv</I> は <I>char&nbsp;**</I> であり、見つかった単語の配列を指し示す。 <I>size_t</I> 型のフィールド <I>we_offs</I>
+は、 <I>we_wordv</I> 配列にある初期要素のうちいくつが NULL で埋められるべきかを表すのに使われたりする (<I>flags</I>
+により決定される。下記を参照。)。
+<P>
+
+関数 <B>wordfree</B>()  は割り当てたメモリーを再度解放する。 より正確にいうと、この関数はその引数を解放するのではなく、 配列
+<I>we_wordv</I> とそれが指し示す文字列を解放する。
+<A NAME="lbAE">&nbsp;</A>
+<H3>文字列引数</H3>
+
+この展開はシェルによるコマンドのパラメーターの展開 (<B>sh</B>(1)  を参照) と同じであるので、文字列 <I>s</I>
+はシェルコマンドパラメーターで不正とされる文字を含んではならない。 特にエスケープされていない改行、|, &amp;, ;, &lt;, &gt;, (,
+), {, } 文字を コマンド置換やパラメーター置換の場面以外に含めてはならない。
+<P>
+
+引数 <I>s</I> にクォートしていないコメント文字 # で始まる単語が含まれている場合には、 その単語とそれ以降の単語が無視されるか、 それとも #
+がコメント文字として扱わないかは、規定されていない。
+<A NAME="lbAF">&nbsp;</A>
+<H3>展開</H3>
+
+実行される展開は、以下の段階で構成される: チルダ展開 (~user を user のホームディレクトリに置き換える)、 変数展開 ($FOO
+を環境変数 FOO の値に置き換える)、 コマンド展開 ($(command) または `command` を command
+の出力で置き換える)、 算術展開、フィールド分割、ワイルドカード展開、クォートの除去。
+<P>
+
+特殊なパラメーター ($@, $*, $#, $?, $-, $$, $!, $0) の 展開結果は規定されていない。
+<P>
+
+フィールド分割は環境変数 $IFS を用いて行われる。 この環境変数が設定されていない場合、 フィールド区切り文字はスペース・タブ・改行である。
+<A NAME="lbAG">&nbsp;</A>
+<H3>出力される配列</H3>
+
+配列 <I>we_wordv</I> は見つかった単語をを含み、最後に NULL が続く。
+<A NAME="lbAH">&nbsp;</A>
+<H3>flags 引数</H3>
+
+<I>flags</I> 引数は以下の値のビット包含的 OR である:
+<DL COMPACT>
+<DT><B>WRDE_APPEND</B><DD>
+見つかった単語を前回の呼び出し結果の配列に追加する。
+<DT><B>WRDE_DOOFFS</B><DD>
+初期状態である <I>we_offs</I> 個の NULL を配列 <I>we_wordv</I> に挿入する (これらは返される <I>we_wordc</I>
+にはカウントされない)。
+<DT><B>WRDE_NOCMD</B><DD>
+コマンド置換を行わない。
+<DT><B>WRDE_REUSE</B><DD>
+引数 <I>p</I> は前回の <B>wordexp</B>()  の呼び出し結果であり、 <B>wordfree</B>()  が (まだ) 呼び出されない。
+割り当てられた領域を再利用する。
+<DT><B>WRDE_SHOWERR</B><DD>
+通常はコマンド置換のときに <I>stderr</I> が <I>/dev/null</I> にリダイレクトされる。 このフラグは <I>stderr</I>
+をリダイレクトしないように指定する。
+<DT><B>WRDE_UNDEF</B><DD>
+未定義のシェル変数を展開しようとした場合に、エラーとして扱う。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。 エラーの場合は以下の 5 つの値のうちの 1 つが返される。
+<DL COMPACT>
+<DT><B>WRDE_BADCHAR</B><DD>
+改行または |, &amp;, ;, &lt;, &gt;, (, ), {, } のうちの 1 つが不正に出現した。
+<DT><B>WRDE_BADVAL</B><DD>
+未定義のシェル変数が参照され、かつ <B>WRDE_UNDEF</B> フラグでこれをエラーとして扱うように指示されている。
+<DT><B>WRDE_CMDSUB</B><DD>
+コマンド置換が要求されたが、 <B>WRDE_NOCMD</B> フラグでこれをエラーとして扱うように指示されていた。
+<DT><B>WRDE_NOSPACE</B><DD>
+メモリーが足りない。
+<DT><B>WRDE_SYNTAX</B><DD>
+対応する括弧がない、クォートが合致しないといった、 シェルの書式エラー。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>wordexp</B>()  と <B>wordfree</B>()  は、バージョン 2.1 以降の glibc で提供されている。
+<A NAME="lbAK">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>wordexp</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:utent const:env
+<BR>
+
+env sig:ALRM timer locale
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>wordfree</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+In the above table, <I>utent</I> in <I>race:utent</I> signifies that if any of the
+functions <B><A HREF="../man3/setutent.3.html">setutent</A></B>(3), <B><A HREF="../man3/getutent.3.html">getutent</A></B>(3), or <B><A HREF="../man3/endutent.3.html">endutent</A></B>(3)  are used in
+parallel in different threads of a program, then data races could occur.
+<B>wordexp</B>()  calls those functions, so we use race:utent to remind users.
+<A NAME="lbAL">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAM">&nbsp;</A>
+<H2>例</H2>
+
+以下のサンプルプログラムの出力はだいたい &quot;ls [a-c]*.c&quot; と同じになる。
+<P>
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/wordexp.h">wordexp.h</A>&gt;
+<P>
+int
+main(int argc, char **argv)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;wordexp_t&nbsp;p;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;**w;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;wordexp(&quot;[a-c]*.c&quot;,&nbsp;&amp;p,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;w&nbsp;=&nbsp;p.we_wordv;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;p.we_wordc;&nbsp;i++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s\n&quot;,&nbsp;w[i]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;wordfree(&amp;p);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/fnmatch.3.html">fnmatch</A></B>(3), <B><A HREF="../man3/glob.3.html">glob</A></B>(3)
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">文字列引数</A><DD>
+<DT><A HREF="#lbAF">展開</A><DD>
+<DT><A HREF="#lbAG">出力される配列</A><DD>
+<DT><A HREF="#lbAH">flags 引数</A><DD>
+</DL>
+<DT><A HREF="#lbAI">返り値</A><DD>
+<DT><A HREF="#lbAJ">バージョン</A><DD>
+<DT><A HREF="#lbAK">属性</A><DD>
+<DT><A HREF="#lbAL">準拠</A><DD>
+<DT><A HREF="#lbAM">例</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:36 GMT, December 05, 2022
+</BODY>
+</HTML>

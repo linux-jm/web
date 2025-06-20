@@ -1,0 +1,259 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LSBLK</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LSBLK</H1>
+Section: System Administration (8)<BR>Updated: February 2013<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/util-linux/release/man8/lsblk.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+lsblk - ブロックデバイスを一覧表示する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>lsblk</B> [options] [<I>device</I>...]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>lsblk</B> は、利用できるすべてのブロックデバイス、
+または指定されたブロックデバイスの情報を一覧表示する。
+<B>lsblk</B> コマンドは、<B>sysfs</B> ファイルシステムや <B>udev</B>
+のデータベースを読んで、情報を収集する。udev
+のデータベースが利用できない場合や、lsblk が udev
+のサポートなしでコンパイルされている場合は、ブロックデバイスから直接 LABEL, UUID,
+ファイルシステムタイプなどを読み取ろうとする。その場合は、ルート権限が必要である。
+<P>
+
+このコマンドは、デフォルトでは、すべてのブロックデバイスをツリー状のフォーマットで表示する
+(RAM ディスクは除く)。利用できるすべての項目 (columns)
+のリストを見るには、<B>lsblk --help</B> を使用すればよい。
+<P>
+
+デフォルトの出力はもとより、<B>--fs</B> や <B>--topology</B>
+といったオプションのデフォルトの出力も、バージョンによって違うことがある。
+そこで、スクリプトで使うときは、デフォルトの出力の使用は、なるべく避けた方がよい。
+いつでも一定の出力が必要な場合には、<B>--output</B> <I>column-list</I> と
+<B>--list</B> を使用して、表示させたい項目が何と何かを、必ず明確に指定するべきである。
+<P>
+
+<B>lsblk</B> を実行したとき、デバイスがつい今しがた追加、変更されたばかりで、
+そうしたデバイスについての情報のすべてを、<B>udev</B>
+がまだ取得していない、ということがあるかもしれない。そうした場合には、現状と
+<B>udev</B> とを同期させるために、<B>lsblk</B> を使用する前に、<B>udevadm settle</B>
+を実行することをお勧めする。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-a</B>,<B> --all</B><DD>
+空っぽのデバイスや RAM ディスクデバイスもリストする。
+<DT><B>-b</B>,<B> --bytes</B><DD>
+SIZE の項目 (column) を人間に読みやすい表記ではなく、バイト単位で表示する。
+<DT><B>-D</B>,<B> --discard</B><DD>
+各デバイスについて、そのディスカーディング能力
+(discarding capabilities、TRIM や UNMAP) の情報を表示する。
+<DT><B>-d</B>,<B> --nodeps</B><DD>
+ホルダーデバイス (holder devices) やスレーブを表示しない。たとえば、<B>lsblk
+--nodeps /dev/sda</B> は、sda というデバイスの情報しか表示しない。
+<DT><B>-E</B>,<B> --dedup </B><I>column</I><DD>
+出力されるツリーの重複をなくすために、項目 <I>column</I> を重複排除キーとして使用する。
+ただし、そのデバイスでそのキーが利用できない場合や、そのデバイスがパーティションであり、
+ディスク全体である親デバイスが同じキーの値を示している場合には、
+そのデバイスはやはり表示されることになる。
+<P>
+よく使われる例としては、システムのマルチパスデバイスで、たとえば <B>-E WWN</B>
+を指定して、出力の重複をなくすといったことがある。
+<DT><B>-e</B>,<B> --exclude </B><I>list</I><DD>
+<I>list</I> で指定されたデバイスを表示から除外する。<I>list</I>
+は、コンマで区切ったメージャーデバイス番号のリストである。なお、RAM ディスク
+(major=1) は、<B>--all</B> が指定されないかぎり、デフォルトで除外されている。
+このフィルターで適用対象に指定されるのは、トップレベルのデバイスだけである。
+そのため、デバイスの階層関係をはっきり示さない <B>--list</B>
+の出力形式では、パーティションまで表示されなくなることに戸惑うかもしれない。
+<DT><B>-f</B>,<B> --fs</B><DD>
+ファイルシステムの情報を表示する。このオプションは、<B>-o
+NAME,FSTYPE,LABEL,UUID,FSAVAIL,FSUSE%,MOUNTPOINT</B> と等価である。
+なお、ファイルシステムや RAID についての信頼できる確かな情報は、<B>blkid</B>
+コマンドが提供している (訳注: <B>blkid</B> は、root によって実行された場合、
+必要に応じて、キャッシュではなく、デバイスそのものから情報を収集するので、その分信頼性が高い)。
+<DT><B>-h</B>,<B> --help</B><DD>
+ヘルプテキストを表示して終了する。
+<DT><B>-I</B>,<B> --include </B><I>list</I><DD>
+<I>list</I> で指定されたデバイスを表示の対象にする。<I>list</I>
+は、コンマで区切ったメージャーデバイス番号のリストである。
+このフィルターで適用対象に指定されるのは、トップレベルのデバイスだけである。
+そのため、デバイスの階層関係をはっきり示さない <B>--list</B>
+の出力形式では、パーティションまで表示されるようになることに戸惑うかもしれない。
+<DT><B>-i</B>,<B> --ascii</B><DD>
+ツリー状の表示にするのに ASCII 文字を用いる。
+<DT><B>-J</B>,<B> --json</B><DD>
+JSON 出力フォーマットを使用する。<B>--output</B>
+を一緒に使うことを強くお勧めする。必要ならば、<B>--tree</B> も。
+<DT><B>-l</B>,<B> --list</B><DD>
+一覧表 (list) 形式で出力を表示する。
+この出力は、デバイス間にどんな関係があるかを明示しない。また、バージョン 2.34
+以来、デバイスはどれも 1 度しか表示されないようになっている
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>[<B>訳注</B>]<DD>
+<B>--list</B> は、<B>--pairs</B> や <B>--raw</B>
+と一緒に使うことができない。
+</DL>
+</DL>
+
+<DT><B>-M</B>,<B> --merge</B><DD>
+RAID やマルチパスデバイスについて、出力を読みやすくするために、
+サブツリーのペアレントをグループ化する。出力はツリー状である必要がある。
+<DT><B>-m</B>,<B> --perms</B><DD>
+デバイスの所有者、グループ、許可属性について情報を出力する。このオプションは、
+<B>-o&nbsp;NAME,SIZE,OWNER,GROUP,MODE</B> と等価である。
+<DT><B>-n</B>,<B> --noheadings</B><DD>
+ヘッダ行を表示しない。
+<DT><B>-o</B>,<B> --output </B><I>list</I><DD>
+出力にどの項目 (columns) を表示するかを指定する。
+使用できる全項目のリストを知るには、<B>--help</B>
+オプションを使用すればよい。選択した項目によっては、ツリー状の出力に変化が生ずるかもしれない。
+デフォルトでは、'NAME' の項目にツリー出力を使用している
+(<B>--tree</B> も参照していただきたい)。
+<P>
+<I>list</I> を <I>+list</I> の形で指定すれば、デフォルトのリストに項目を追加することができる
+(たとえば、<B>lsblk -o +UUID</B> のように)。
+<DT><B>-O</B>,<B> --output-all </B><DD>
+使用できるすべての項目を出力する。
+<DT><B>-P</B>,<B> --pairs</B><DD>
+key=&quot;value&quot; の対の形で出力を表示する。
+問題を起こしかねない文字は、すべて 16 進数にエスケープされる (\x&lt;code&gt;)。
+<DT><B>-p</B>,<B> --paths</B><DD>
+デバイスのフルパスを表示する。
+<DT><B>-r</B>,<B> --raw</B><DD>
+「生の」フォーマットで出力を表示する。NAME, KNAME, LABEL, PARTLABEL,
+MOUNTPOINT といった項目における、問題を起こしかねない文字は、すべて
+16 進数にエスケープされる (\x&lt;code&gt;)。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>[<B>訳注</B>]<DD>
+「生の」フォーマット (raw format) というのは、未加工の出力フォーマット、
+すなわち、最小限の整形しかしないフォーマットのこと。ちなみに raw
+の反対語は cooked である。
+</DL>
+</DL>
+
+<DT><B>-S</B>,<B> --scsi</B><DD>
+SCSI デバイスに関する情報のみを出力する。
+すべてのパーティション、スレーブ、ホルダーデバイスは無視される。
+<DT><B>-s</B>,<B> --inverse</B><DD>
+依存関係を逆の順番で表示する。<B>--list</B> 出力が要求された場合でも、
+出力される行は、やはり依存関係に従って並べられる。
+<DT><B>-T</B>,<B> --tree</B>[<B>=</B><I>column</I>]<DD>
+強制的にツリー状の出力フォーマットにする。<I>column</I>
+が指定されていれば、その項目でツリー表示が行われる (訳注: 現在のところ、<I>column</I>
+の指定は必須)。デフォルトでツリー表示されるのは、NAME の項目である。
+<DT><B>-t</B>,<B> --topology</B><DD>
+ブロックデバイスのトポロジーについて情報を出力する。このオプションは、
+<B>-o NAME,ALIGNMENT,MIN-IO,OPT-IO,PHY-SEC,LOG-SEC,ROTA,
+SCHED,RQ-SIZE,RA,WSAME</B> と等価である。
+<DT><B>-V</B>,<B> --version</B><DD>
+バージョン情報を表示して終了する。
+<DT><B>-x</B>,<B> --sort </B><I>column</I><DD>
+<I>column</I> の項目を使って、出力行をソートする。このオプションは、デフォルトでは
+<B>--list</B> 出力フォーマットを有効にする。<I>--tree</I> オプションを使用して、
+強制的にツリー状の出力にすることも可能であり、その場合は、ツリー表示の枝が、<I>column</I>
+の値を元にしてソートされる。
+<DT><B>-z</B>,<B> --zoned</B><DD>
+各デバイスについて zone model を表示する。
+<DT><B> --sysroot </B><I>directory</I><DD>
+<B>lsblk</B> コマンドが実行されているインスタンス以外の Linux
+インスタンスについてデータを収集する。指定するディレクトリは、調査対象となる
+Linux インスタンスのシステムルートである。このオプションは、テスト用である。
+<P>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>注記</H2>
+
+個々のパーティションに対して、ある種の情報 (たとえば、キュー属性, queue attribures)
+は、親デバイスから継承される。
+<P>
+
+<B>lsblk</B> コマンドでは、各ブロックデバイスを major:minor
+番号によって検索できる必要があり、それは <I>/sys/dev/block</I>
+を使って行われる。この sysfs の block ディレクトリが登場したのは、カーネル
+2.6.27 (2008 年 10 月) だった。十分に新しいカーネルで問題が生じる場合は、
+カーネルをビルドしたときに、CONFIG_SYSFS を有効にしたかどうかを確認した方がよい。
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>リターンコード</H2>
+
+<DL COMPACT>
+<DT>0<DD>
+成功
+<DT>1<DD>
+失敗
+<DT>32<DD>
+指定されたデバイスが一つも見つからなかった
+<DT>64<DD>
+指定されたデバイスのうちに、見つかったものもあり、見つからないものもあった
+<P>
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>作者</H2>
+
+<PRE>
+Milan Broz &lt;<A HREF="mailto:mbroz@redhat.com">mbroz@redhat.com</A>&gt;
+Karel Zak &lt;<A HREF="mailto:kzak@redhat.com">kzak@redhat.com</A>&gt;
+</PRE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>環境変数</H2>
+
+<DL COMPACT>
+<DT>LSBLK_DEBUG=all<DD>
+lsblk デバッグ出力を有効にする。
+<DT>LIBBLKID_DEBUG=all<DD>
+libblkid デバッグ出力を有効にする。
+<DT>LIBMOUNT_DEBUG=all<DD>
+libmount デバッグ出力を有効にする。
+<DT>LIBSMARTCOLS_DEBUG=all<DD>
+libsmartcols デバッグ出力を有効にする。
+<DT>LIBSMARTCOLS_DEBUG_PADDING=on<DD>
+目に見える埋め文字 (padding characters) を使用する。LIBSMARTCOLS_DEBUG
+有効にしておく必要がある。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1), <B><A HREF="../man8/blkid.8.html">blkid</A></B>(8), <B>findmnt</B>(8)
+<A NAME="lbAK">&nbsp;</A>
+<H2>入手方法</H2>
+
+この lsblk コマンドは、util-linux パッケージの一部であり、次の
+URL から入手できる。<A HREF="https://www.kernel.org/pub/linux/utils/util-linux/">https://www.kernel.org/pub/linux/utils/util-linux/</A>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">注記</A><DD>
+<DT><A HREF="#lbAG">リターンコード</A><DD>
+<DT><A HREF="#lbAH">作者</A><DD>
+<DT><A HREF="#lbAI">環境変数</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">入手方法</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:50 GMT, December 05, 2022
+</BODY>
+</HTML>

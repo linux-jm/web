@@ -1,0 +1,124 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SD</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated:  2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man4/sd.4">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sd - SCSI ディスクドライブのためのドライバ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/linux/hdreg.h">linux/hdreg.h</A>&gt;        </B>/* for HDIO_GETGEO */
+<B>#include &lt;<A HREF="file:///usr/include/linux/fs.h">linux/fs.h</A>&gt;           </B>/* for BLKGETSIZE and BLKRRPART */
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>設定</H2>
+
+このブロックデバイス (block device) の名前は、次のような形式をとる: <B>sd</B><I>lp,</I> このうち、 <I>l</I>
+は物理ドライブを意味する文字であり、 <I>p</I> はその物理ドライブ上のパーティション (partition) を意味する数字である。
+パーティションナンバー <I>p</I> がない場合は、そのデバイスファイルはドライブ全体をさす。
+<P>
+
+SCSI ディスクはメジャーナンバー 8 を持ち、次のような形式のマイナーナンバー を持つ。(16 * <I>drive_number</I>) +
+<I>partition_number</I>、 この <I>drive_number</I> は検出された物理ドライブの番号であり、
+<I>partition_number</I> は次のようになる:
+<DL COMPACT>
+<DT> +3<DD>
+パーティション 0 はドライブ全体
+<DT><DD>
+パーティション 1 〜 4 は DOS の &quot;基本 (primary)&quot; パーティション
+<DT><DD>
+パーティション 5 〜 8 は DOS の &quot;拡張 (extended)&quot; (または、&quot;論理 (logical)&quot;) パーティション。
+</DL>
+<P>
+
+例えば、 <I>/dev/sda</I> はメジャーナンバー 8 マイナーナンバー 0 を持ち、システムの最初の SCSI ドライブ全体を参照する。そして、
+<I>/dev/sdb3</I> はメジャーナンバー 8 マイナーナンバー 19 を持ち、システムの二つ目の SCSI ドライブの三番目の DOS &quot;基本&quot;
+パーティションを参照する。
+<P>
+
+現在は、ブロックデバイスだけが提供されている。ローデバイス (raw device)  はまだ実装されていない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+次の <I>ioctl</I> が提供されている:
+<DL COMPACT>
+<DT><B>HDIO_GETGEO</B><DD>
+次のような構造体を用いて BIOS のディスクパラメーターを返す:
+</DL>
+<P>
+
+
+
+struct hd_geometry {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;heads;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;&nbsp;sectors;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;cylinders;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;&nbsp;start;
+};
+
+
+<DL COMPACT>
+<DT><DD>
+この構造体へのポインターが <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  へのパラメーターとして渡される。
+<DT><DD>
+このパラメーターに入れられて返される情報は、 <I>DOS によって理解されるような</I> ドライブのジオメトリである。
+このジオメトリは、ドライブの物理的なジオメトリ <I>ではない。</I> この情報はドライブのパーティションテーブルを作成する時に用いられる、 また、
+<B>fdisk</B>(1), <B>efdisk</B>(1), <B>lilo</B>(1)  の適切な操作に必要である。
+もし、ジオメトリの情報が得られなければ、それぞれの値全てにゼロが入れ られて返される。
+<DT><B>BLKGETSIZE</B><DD>
+セクタの数で表したデバイスのサイズが返される。 <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  のパラメーターは、 <I>long</I> へのポインターでなければならない。
+<DT><B>BLKRRPART</B><DD>
+強制的に、SCSI ディスクのパーティションテーブルの再読み込みを行う。 パラメーターは必要ない。
+<DT><DD>
+SCSI の <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) 操作も同様にサポートされる。 <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) の
+パラメーターが必要で、そのパラメーターが NULL の場合は、
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2) はエラー <B>EINVAL</B> で失敗する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><BR>&nbsp;<I>/dev/sd[a-h]</I><DD>
+デバイス全体
+<DT><BR>&nbsp;<I>/dev/sd[a-h][0-8]</I><DD>
+
+
+個々のブロックパーティション
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">設定</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

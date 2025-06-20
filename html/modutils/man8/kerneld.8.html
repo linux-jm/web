@@ -1,0 +1,145 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of KERNELD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>KERNELD</H1>
+Section: Linux Extensions (8)<BR>Updated: May 14, 1995<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/modutils/release/man8/kerneld.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+kerneld - ユーザ空間でカーネルの動作を実行する (モジュールのオンデマンドロードなど)
+<A NAME="lbAC">&nbsp;</A>
+<H2>警告</H2>
+
+<B>kerneld</B>
+
+は Linux カーネル 2.1.90 の時点で obsolete となり、
+kmod カーネルスレッドと cron エントリによって置き換えられた。
+2.0 カーネルを使っているのでなければ、
+kerneld は使おうなどとも思わないほうがよい。
+<A NAME="lbAD">&nbsp;</A>
+<H2>書式</H2>
+
+<B>kerneld</B>
+
+[ debug ] [ keep ] [ delay=&lt;seconds&gt; ] [ type=&lt;message number&gt; ]
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+<B>kerneld</B>
+
+は未使用モジュールを自動削除するほか、
+専用の IPC メッセージキューを経由してカーネルからのリクエストに応答し、
+カーネルの特定のタスクをユーザ空間で実行する。
+ユーザ空間からこのキューへのアクセスは、
+以下の操作でキューをオープンすることによって行える:
+<P>
+<PRE>
+        qid = msgget(IPC_PRIVATE, 0600 | IPC_KERNELD);
+</PRE>
+
+<P>
+各タスクはメッセージタイプを使ってリクエストする。
+これは &lt;<A HREF="file:///usr/include/linux/kerneld.h">linux/kerneld.h</A>&gt; で指定されている。
+<P>
+
+kerneld メッセージの構造体は以下の通り。
+<P>
+<PRE>
+        struct kerneld_msg {
+                long mtype;
+                long id;
+                char text[1];
+        };
+</PRE>
+
+<P>
+ここで id フィールドは kerneld
+<BR>&nbsp;からカーネルへの応答メッセージの数として使われる。
+id フィールドが 0 ならば、kerneld からの応答はないということである。
+<BR>
+
+(なお、要求側の pid をプロトコルヘッダに入れる、
+新しい構造体が提案されている。)
+<P>
+応答が求められた場合には、kerneld の動作の終了ステータスが
+id フィールドに格納される。
+<P>
+text フィールドは、特定の kerneld 動作に
+カーネルから渡されたパラメータを保持するために使われる。
+<P>
+
+オプションを以下に示す:
+<DL COMPACT>
+<DT>debug<DD>
+デバッグ機能を有効にすると、タスクを実行する度に
+kerneld の現在のステータスを見ることができるようになる。
+デバッグ機能や他の全てのパラメータの制御は
+kdstat ユーティリティで行える。
+<DT>keep<DD>
+keep オプションを指定すると kerneld
+はアンロード中のモジュールに対する全てのリクエストを無視する。
+このオプションは、(何らかの理由で)
+モジュールがアンロードされることが全く起こらないシステムでは
+役立つかもしれない。
+このオプションは、毎分 (あるいは &lt;delay&gt; 秒ごとに)
+実行される未使用のモジュールの自動削除も禁止する。
+<DT>delay=&lt;seconds&gt;<DD>
+delay オプションは未使用モジュールの削除に関する
+kerneld のタイムアウト時間を変更する。
+デフォルトの 60 秒から任意の時間に変更できる。
+<DT>type=&lt;message type&gt;<DD>
+デフォルトのタイプは -255 である。これは、kerneld がタイプの値が 255
+以下である全てのメッセージを監視するという意味である。
+正の数を指定すると、kerneld は指定されたタイプのメッセージだけを監視する。
+</DL>
+<P>
+
+kerneld はエラーメッセージを syslog の
+LOG_DAEMON ファシリティに送る。
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/insmod.8.html">insmod</A></B>(8),
+
+<B><A HREF="../man8/rmmod.8.html">rmmod</A></B>(8),
+
+<B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8),
+
+<B><A HREF="../man8/depmod.8.html">depmod</A></B>(8),
+
+<B><A HREF="../../sysklogd/man8/syslogd.8.html">syslogd</A></B>(8)
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>履歴</H2>
+
+kerneld のアイディアは Jacques Gelinas &lt;<A HREF="mailto:jack@solucorp.qc.ca">jack@solucorp.qc.ca</A>&gt;
+との議論から思い付いた。
+<P>
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">警告</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">履歴</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

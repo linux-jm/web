@@ -1,0 +1,151 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETRESUID</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SETRESUID</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/setresuid.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+setresuid, setresgid - ユーザーやグループの 実、実効、保存 ID を設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#define _GNU_SOURCE</B> /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>int setresuid(uid_t </B><I>ruid</I><B>, uid_t </B><I>euid</I><B>, uid_t </B><I>suid</I><B>);</B>
+<BR>
+
+<B>int setresgid(gid_t </B><I>rgid</I><B>, gid_t </B><I>egid</I><B>, gid_t </B><I>sgid</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>setresuid</B>()  は呼び出し元のプロセスの実 (real) ユーザーID、実効 (effective) ユーザーID、 保存
+set-user-ID を設定する。
+<P>
+
+非特権プロセスは、その実 UID、実効 UID、保存 set-user-ID を、 現在の実 UID、現在の実効 UID、現在の保存
+set-user-ID のどれかに変更することができる:
+<P>
+
+特権プロセス (Linux では <B>CAP_SETUID</B> ケーパビリティ (capability) を持つ プロセス) は、自身の実 UID、実効
+UID、保存 set-user-ID を任意の値に設定できる。
+<P>
+
+引数のどれかが -1 の場合はその値は変更されずに残される。
+<P>
+
+実 UID、実効 UID、保存 set-user-ID にどんな変更が行われたかに関わらず、 ファイルシステム UID は常に実効 UID
+(可能であれば変更後の新しい実効 UID)  と同じ値に設定される。
+<P>
+
+全く同じように、 <B>setresgid</B>()  は呼び出し元のプロセスの実 GID、実効 GID、保存 set-group-ID を設定する
+(さらにファイルシステム GID を実効 GID と同じ値に修正する)。 非特権プロセスは同様の制限を受ける。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<P>
+
+<I>注意</I>: 呼び出し元が UID 0 であっても <B>setresuid</B>() が失敗する場合がある。 <B>setresuid</B>()
+からのリターンが失敗かどうかの確認を省略することは重大なセキュリティ上のエラーとなる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+この呼び出しで呼び出し元の実 UID が変更されるはずだったが (つまり、 <I>ruid</I> が呼び出し元の実 UID と一致していない)、
+必要なカーネルのデータ構造体の割り当てで一時的な失敗があった。
+<DT><B>EAGAIN</B><DD>
+<I>ruid</I> は呼び出し元の実 UID と一致しておらず、 この呼び出しで実ユーザー ID <I>ruid</I> に属するプロセス数が呼び出し元の
+<B>RLIMIT_NPROC</B> リソース上限を超過するところであった。 Linux 3.1 以降では、このエラーはもはや発生することはない
+(しかし、堅牢性が求められるアプリケーションではこのエラーを確認すべきである)。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2) の <B>EAGAIN</B> の説明を参照。
+<DT><B>EINVAL</B><DD>
+対象のユーザー ID やグループ ID のうち 1 つ以上がこのユーザー名前空間で有効ではない。
+<DT><B>EPERM</B><DD>
+The calling process is not privileged (did not have the necessary capability
+in its user namespace)  and tried to change the IDs to values that are not
+permitted.  For <B>setresuid</B>(), the necessary capability is <B>CAP_SETUID</B>;
+for <B>setresgid</B>(), it is <B>CAP_SETGID</B>.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+Linux ではバージョン 2.1.44 より利用可能になった。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+これらのコールは非標準である。 HP-UX や BSD 系のいくつかにも存在する。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+HP-UX や FreeBSD では <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> にプロトタイプが存在する。
+Linux では、glibc 2.3.2 以降で プロトタイプが提供されている。
+<P>
+
+
+元々の Linux の <B>setresuid</B>() と <B>setresgid</B>() システムコールは
+16 ビットのグループ ID だけに対応していた。
+その後、Linux 2.4 で、32 ビットの ID に対応した
+<B>setresuid32</B>() と <B>setresgid32</B>() が追加された。
+glibc の <B>setresuid</B>() と <B>setresgid</B>() のラッパー関数は
+カーネルバージョンによるこの違いを吸収している。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+At the kernel level, user IDs and group IDs are a per-thread attribute.
+However, POSIX requires that all threads in a process share the same
+credentials.  The NPTL threading implementation handles the POSIX
+requirements by providing wrapper functions for the various system calls
+that change process UIDs and GIDs.  These wrapper functions (including those
+for <B>setresuid</B>()  and <B>setresgid</B>())  employ a signal-based technique to
+ensure that when one thread changes credentials, all of the other threads in
+the process also change their credentials.  For details, see <B>nptl</B>(7).
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/getresuid.2.html">getresuid</A></B>(2), <B><A HREF="../man2/getuid.2.html">getuid</A></B>(2), <B><A HREF="../man2/setfsgid.2.html">setfsgid</A></B>(2), <B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2),
+<B><A HREF="../man2/setreuid.2.html">setreuid</A></B>(2), <B><A HREF="../man2/setuid.2.html">setuid</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7),
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

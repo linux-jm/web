@@ -1,0 +1,220 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LSEEK64</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LSEEK64</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/lseek64.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+lseek64 - ファイルの 64 ビットの読み書きオフセットの位置を変える
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#define _LARGEFILE64_SOURCE</B> /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<B>off64_t lseek64(int </B><I>fd</I><B>, off64_t </B><I>offset</I><B>, int </B><I>whence</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>lseek</B>() 関数ファミリーは、ファイルディスクリプター <I>fd</I> に関連するオープンされたファイルのオフセットを、
+ファイルの開始位置・現在位置・終端から <I>offset</I> の位置へ変更する。 これは <I>whence</I> がそれぞれ <B>SEEK_SET</B>,
+<B>SEEK_CUR</B>, <B>SEEK_END</B> の場合に対応する。
+<P>
+
+更に詳しい説明・返り値・エラーは、 <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)  を参照すること。
+<P>
+
+
+
+
+
+4 つのインターフェースが使用可能である: <B>lseek</B>(), <B>lseek64</B>(), <B>llseek</B>(), <B>llseek</B>()
+<A NAME="lbAE">&nbsp;</A>
+<H3>lseek()</H3>
+
+プロトタイプ:
+<P>
+
+
+
+<B>off_t lseek(int </B><I>fd</I><B>, off_t </B><I>offset</I><B>, int </B><I>whence</I><B>);</B>
+
+
+<P>
+
+The C library's <B>lseek</B>()  wrapper function uses the type <I>off_t</I>.  This
+is a 32-bit signed type on 32-bit architectures, unless one compiles with
+<P>
+
+
+
+#define _FILE_OFFSET_BITS 64
+
+
+<P>
+
+を定義してコンパイルした場合は 64 ビット符号付き型である。
+<A NAME="lbAF">&nbsp;</A>
+<H3>lseek64()</H3>
+
+プロトタイプ:
+<P>
+
+
+
+<B>off64_t lseek64(int </B><I>fd</I><B>, off64_t </B><I>offset</I><B>, int </B><I>whence</I><B>);</B>
+
+
+<P>
+
+ライブラリ関数 <B>lseek64</B>()  は <I>off_t</I> が 32 ビット型であっても 64 ビット型を使う。 このプロトタイプ (と型
+<I>off64_t</I>)  は、以下の定義をしてコンパイルした場合にのみ使用可能である。
+<P>
+
+
+
+#define _LARGEFILE64_SOURCE
+
+
+<P>
+
+
+
+関数 <B>lseek64</B>()  は glibc 2.1 以降で使用可能である。
+<A NAME="lbAG">&nbsp;</A>
+<H3>llseek()</H3>
+
+プロトタイプ:
+<P>
+
+
+
+<B>loff_t llseek(int </B><I>fd</I><B>, loff_t </B><I>offset</I><B>, int </B><I>whence</I><B>);</B>
+
+
+<P>
+
+型 <I>loff_t</I> は 64 ビット符号付き型である。 ライブラリ関数 <B>llseek</B>() は glibc で利用可能であり、
+特別な定義なしに動作する。 しかしながら、 glibc のヘッダーはプロトタイプを供していない。 ユーザーは上記のプロトタイプまたはそれと同等のものを、
+自身のソースに追加しなければならない。 このデータがないことによって <B><A HREF="../../e2fsprogs/man8/e2fsck.8.html">e2fsck</A></B>(8)
+のコンパイルが失敗するという苦情がユーザーから出たので、 glibc 2.1.3 では以下のようなリンク時の警告が追加された。
+<P>
+
+
+&quot;the `llseek' function may be dangerous; use `lseek64' instead.&quot;
+
+<P>
+
+これにより、警告なしでコンパイルしたい場合には、この関数を使用不可にできる。
+<P>
+
+
+
+Since glibc 2.28, this function symbol is no longer available to newly
+linked applications.
+<A NAME="lbAH">&nbsp;</A>
+<H3>_llseek()</H3>
+
+On 32-bit architectures, this is the system call that is used (by the C
+library wrapper functions)  to implement all of the above functions.  The
+prototype is:
+<P>
+
+
+
+<B>int _llseek(int </B><I>fd</I><B>, off_t </B><I>offset_hi</I><B>, off_t </B><I>offset_lo</I><B>,</B>
+<B>            loff_t *</B><I>result</I><B>, int </B><I>whence</I><B>);</B>
+
+
+<P>
+
+更に詳しい情報は、 <B><A HREF="../man2/llseek.2.html">llseek</A></B>(2)  を参照すること。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+64-bit systems don't need an <B>_llseek</B>()  system call.  Instead, they have
+an <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)  system call that supports 64-bit file offsets.
+<A NAME="lbAI">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>lseek64</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<B>lseek64</B>()  is one of the functions that was specified in the Large File
+Summit (LFS)  specification that was completed in 1996.  The purpose of the
+specification was to provide transitional support that allowed applications
+on 32-bit systems to access files whose size exceeds that which can be
+represented with a 32-bit <I>off_t</I> type.  As noted above, this symbol is
+exposed by header files if the <B>_LARGEFILE64_SOURCE</B> feature test macro is
+defined.  ALternatively, on a 32-bit system, the symbol <I>lseek</I> is aliased
+to <I>lseek64</I> if the macro <B>_FILE_OFFSET_BITS</B> is defined with the value
+64.
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/llseek.2.html">llseek</A></B>(2), <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">lseek()</A><DD>
+<DT><A HREF="#lbAF">lseek64()</A><DD>
+<DT><A HREF="#lbAG">llseek()</A><DD>
+<DT><A HREF="#lbAH">_llseek()</A><DD>
+</DL>
+<DT><A HREF="#lbAI">属性</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:31 GMT, December 05, 2022
+</BODY>
+</HTML>

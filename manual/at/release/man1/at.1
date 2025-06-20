@@ -1,0 +1,176 @@
+.\"*******************************************************************
+.\"
+.\" This file was generated with po4a. Translate the source file.
+.\"
+.\"*******************************************************************
+.\"
+.\" Japanese Version Copyright (c) 1996 Tanoshima Hidetohsi
+.\"         all rights reserved.
+.\" Dec 31, 1996   Tanoshima Hidetoshi <tano@sainet.or.jp>
+.\"
+.\" Modified to reflect changes at-3.1.7
+.\" Mon 22 Jun 1998, by NAKANO Takeo <nakano@apm.seikei.ac.jp>
+.\"
+.\" Modified to fix two errors(section name, OKURI-GANA)
+.\" Mon 9 Aug 1999, by FUJIWARA Teruyoshi <fujiwara@linux.or.jp>
+.\"
+.\" Modified to reflect changes at-3.1.14
+.\" Fri 1 Aug 2014, by Takayuki Ogawa <takayuki@compusophia.com>
+.\"
+.\" Medified some translation
+.\" Fri 25 March 2022, by ribbon <ribbon@users.osdn.me>
+.\"
+.TH AT 1 2009\-11\-14  
+.SH 名前
+at, batch, atq, atrm \- 後に実行するジョブのキュー操作、確認、削除
+.SH 書式
+\fBat\fP [\fB\-V\fP] [\fB\-q\fP \fIqueue\fP] [\fB\-f\fP \fIfile\fP] [\fB\-u\fP \fIusername\fP]
+[\fB\-mMlv\fP] \fItimespec\fP ..."
+.br
+\fBat\fP [\fB\-V\fP] [\fB\-q\fP \fIqueue\fP] [\fB\-f\fP \fIfile\fP] [\fB\-u\fP \fIusername\fP]
+[\fB\-mMkv\fP] [\fB\-t\fP \fItime\fP]
+.br
+\fBat \-c\fP \fIjob\fP [...\&]
+.br
+\fBat\fP [\fB\-V\fP] \-l [\fB\-o\fP \fItimeformat\fP] \fI[job\fP \fI...\fP]
+.br
+\fBatq\fP [\fB\-V\fP] [\fB\-q\fP \fIqueue\fP] [\fB\-o\fP \fItimeformat\fP] \fI[job\fP \fI...\fP]
+.br
+\fBat\fP [\fB\-rd\fP] \fIjob\fP [...\&]
+.br
+\fBatrm\fP [\fB\-V\fP] \fIjob\fP [...\&]
+.br
+\fBbatch\fP
+.br
+\fBat \-b\fP
+.SH 説明
+\fBat\fP と \fBbatch\fP は、 標準入力や指定されたファイルからコマンドを読み取って、 \fB/bin/sh\fP を使って後で実行します。
+.TP  8
+\fBat\fP
+指定された時間にコマンドを実行します。
+.TP  8
+\fBatq\fP
+ペンディングとなっているユーザージョブの一覧を表示します。 ただしスーパーユーザーが起動した場合には、 全ユーザーのジョブを表示します。 出力行の書式は
+(各ジョブを 1 行ずつに) 、ジョブ番号、日付、時間、キュー、ユーザー名を表示します。
+.TP  8
+\fBatrm\fP
+ジョブ番号によって識別されるジョブを削除します。
+.TP  8
+\fBbatch\fP
+システムの負荷レベルが許容される範囲にある場合にコマンドを実行します。 つまり負荷平均が 0.8 以下、 または \fBatd\fP
+で指定された値以下の場合にコマンドを実行します。
+.PP
+\fBat\fP では複雑な時間指定ができます。 これは POSIX.2 標準を拡張したものです。 ジョブを実行する時刻は \fBHH:MM\fP
+という形式で指定できます。 (すでにその時刻が過ぎている場合は、 次の日として扱われます。) また \fBmidnight\fP (真夜中), \fBnoon\fP
+(正午), \fBteatime\fP (午後 4 時のティータイム) を指定できます。 午前午後を表す \fBAM\fP, \fBPM\fP も指定可能です。
+さらにコマンドを実行する日付を指定することもできます。 日付の書式は \fBmonth\-name\fP \fBday\fP であり、 任意として \fByear\fP
+を指定します。 あるいは \fIMMDD\fP[\fICC\fP]\fIYY\fP, \fIMM\fP/\fIDD\fP/[\fICC\fP]\fIYY\fP,
+\fIDD\fP.\fIMM\fP.[\fICC\fP]\fIYY\fP, [\fICC\fP]\fIYY\fP\-\fIMM\fP\-\fIDD\fP が可能です。 日付の指定は、
+時刻の指定の後に行わなければなりません。 時間の指定において、 \fBnow\fP \fB+\fP \fIcount\fP \fItime\-units\fP
+といった記述もできます。 ここにおいて time\-units とは \fBminutes\fP, \fBhours\fP, \fBdays\fP, \fBweeks\fP
+のことです。 \fBat\fP に対しては、 時刻の後ろにサフィックスとして \fBtoday\fP をつければ、 本日の実行を指示することになります。
+サフィックスとして \fBtomorrow\fP をつければ明日の実行となります。
+.PP
+たとえば今から 3 日後の午後 4 時にジョブを実行する場合は、 \fBat 4pm + 3 days\fP と指定します。 7 月 31 日の
+10:00am にジョブを実行するには、 \fBat 10am Jul 31\fP と指定します。 明日の 1am であれば \fBat 1am
+tomorrow\fP とします。
+.PP
+ジョブの実行に指定された時刻、日付が完全に過去であった場合、 ジョブはできる限りそのときに実行されます。 たとえば今が 8pm であって \fBat
+6pm today\fP と実行すると、 8:05pm には実行されているはずです。
+.PP
+時間指定に関する定義は \fI/usr/share/doc/at/timespec\fP に記述されています。
+.PP
+\fBat\fP と \fBbatch\fP はともに標準入力から読み込みを行い、 あるいは \fB\-f\fP オプションが指定されていればファイルから読み込みを行って、
+処理が実行されます。 ワーキングディレクトリ、 環境変数 (ただし \fBBASH_VERSINFO\fP, \fBDISPLAY\fP, \fBEUID\fP,
+\fBGROUPS\fP, \fBSHELLOPTS\fP, \fBTERM\fP, \fBUID\fP, \fB_\fP を除く)、 umask は、
+いずれも処理実行時の値が保持されます。
+
+現在の \fBat\fP は setuid プログラムとして実装されています。 したがって他の環境変数 (つまり \fBLD_LIBRARY_PATH\fP や
+\fBLD_PRELOAD\fP など) も、 同様にエクスポートされません。 これは将来変更されるかもしれません。 これを回避するには、
+ジョブ内において明示的にそれらの変数を設定してください。
+
+\fBat\fP と \fBbatch \fP のコマンドが \fBsu\fP(1) シェルから呼び出された場合、 現在の userid が保持されます。
+このユーザーに対しては、 コマンド実行によって標準エラー出力や標準出力への書き込みが発生した際には、 その内容がメール送信されます。 メールは
+\fB/usr/sbin/sendmail\fP コマンドを使って送信されます。 \fBsu\fP(1) シェルから \fBat\fP が実行されると、
+ログインシェルの所有者がメールを受信します。
+.PP
+スーパーユーザーであれば、 いつでもこのコマンドを使用できます。 それ以外のユーザーが利用できるかどうかは、 \fI/etc/at.allow\fP
+ファイルまたは \fI/etc/at.deny\fP によって決まります。 詳しくは \fBat.allow\fP(5) を参照してください。
+.SH オプション
+.TP  8
+\fB\-V\fP
+標準エラー出力にバージョン番号を表示して、 正常終了します。
+.TP  8
+\fB\-q\fP\fI queue\fP
+指定されたキューを使用します。  キューの指定には英字 1 文字を使います。 有効な文字は \fBa\fP から \fBz\fP と \fBA\fP から \fBZ\fP
+です。 キュー \fBa\fP は \fBat\fP に対するデフォルトであり、 キュー \fBb\fP は \fBbatch\fP に対するデフォルトです。
+これ以降の文字を使ったキューは、 それだけ nice 値が大きいものとして実行されます。 特別なキューとして "=" があり、
+現在実行中のキューを示すものとして、 この文字が予約されています。
+.P
+英大文字を指定してジョブが登録された場合、 そのジョブは指定時刻に batch を使って実行されるものとして扱われます。 指定時刻になると、
+負荷平均に関するバッチ処理ルールが適用されます。 \fBatq\fP に対して特定のキューが指定されると、 そのキュー内にある未実行ジョブを表示するだけです。
+.TP  8
+\fB\-m\fP
+ジョブが終了する際に、 出力が何もなくても、 ユーザーに対してメールを送信します。
+.TP  8
+\fB\-M\fP
+ユーザーにメールを送信しません。
+.TP  8
+\fB\-u\fP\fI username\fP
+現在ユーザーではなく \fIusername\fP にメールを送信します。
+.TP  8
+\fB\-f\fP\fI file\fP
+ジョブを標準入力からではなく \fIfile\fP から読み込みます。
+.TP  8
+\fB\-t\fP\fI time\fP
+時刻 \fItime\fP にジョブを実行します。 書式は [[CC]YY]MMDDhhmm[.ss] とします。
+.TP  8
+\fB\-l\fP
+\fBatq\fP のエイリアスです。
+.TP 
+\fB\-r\fP
+\fBatrm\fP のエイリアスです。
+.TP 
+\fB\-d\fP
+\fBatrm\fP のエイリアスです。
+.TP 
+\fB\-b\fP
+\fBbatch\fP のエイリアスです。
+.TP 
+\fB\-v\fP
+ジョブを読み込む前に、 ジョブが実行される時間を表示します。
+.P
+表示される時間は "Thu Feb 20 14:50:00 1997" といった書式です。
+.TP 
+\fB\-c\fP
+コマンドラインから指定されたジョブの内容を標準出力に表示します。
+.TP  8
+\fB\-o\fP\fI fmt\fP
+ジョブ一覧に対して strftime のような時間書式を用います。
+.SH ファイル
+\fI/var/spool/atjobs\fP
+.br
+\fI/var/spool/atspool\fP
+.br
+\fI/proc/loadavg\fP
+.br
+\fI/var/run/utmp\fP
+.br
+\fI/etc/at.allow\fP
+.br
+\fI/etc/at.deny\fP
+.SH 関連項目
+\fBat.allow\fP(5), \fBat.deny\fP(5), \fBatd\fP(8), \fBcron\fP(1), \fBnice\fP(1), \fBsh\fP(1),
+\fBumask\fP(2).
+.SH バグ
+Linux において \fBbatch\fP が正しく処理されるためには、 \fI/proc\fP にマウントされた \fIproc\fP
+タイプのディレクトリが存在している必要があります。
+.PP
+ファイル \fI/var/run/utmp\fP が利用できないか壊れている場合、 あるいは \fBat\fP の実行時にユーザーがログインしていない場合は、
+環境変数 \fBLOGNAME\fP に示される userid のユーザーにメールが送信されます。 これが未定義かあるいは空の場合は、 現在の userid
+に対して処理が行われます。
+.PP
+現在実装されている \fBAt\fP や \fBbatch\fP では、 ユーザー間でのリソース競合時には適していません。
+利用環境においてこれが発生する場合は、\fBnqs\fP のような別のバッチシステムの利用が必要かもしれません。
+.SH 著者
+Thomas Koenig がほとんどを作りました。

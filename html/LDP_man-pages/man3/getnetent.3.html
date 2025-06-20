@@ -1,0 +1,186 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETNETENT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETNETENT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getnetent.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getnetent, getnetbyname, getnetbyaddr, setnetent, endnetent -
+ネットワークエントリーを取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</B>
+
+<B>struct netent *getnetent(void);</B>
+
+<B>struct netent *getnetbyname(const char *</B><I>name</I><B>);</B>
+
+<B>struct netent *getnetbyaddr(uint32_t </B><I>net</I><B>, int </B><I>type</I><B>);</B>
+
+<B>void setnetent(int </B><I>stayopen</I><B>);</B>
+
+<B>void endnetent(void);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getnetent</B>()  関数はネットワークデータベースから次のエントリーを読み込み、 そのエントリーを <I>netent</I>
+構造体の要素別のフィールドに格納し、 その構造体を返す。 必要であれば、データベースへの接続がオープンされる。
+<P>
+
+<B>getnetbyname</B>()  関数は、ネットワーク名 <I>name</I> にマッチするエントリーを データベースから探し、そのエントリーを収めた
+<I>netent</I> 構造体を返す。
+<P>
+
+<B>getnetbyaddr</B>()  関数は、<I>type</I> 型のネットワーク番号 <I>net</I> にマッチするエントリーを
+データベースから探し、そのエントリーを収めた <I>netent</I> 構造体を返す。 <I>net</I> 引数はホストバイトオーダでなければならない。
+<P>
+
+<B>setnetent</B>()  関数はデータベースへの接続をオープンし、 次の読み込みエントリーを先頭のエントリーに設定する。 <I>stayopen</I>
+が 0 でない場合、 一つ一つの <B>getnet*</B>()  関数の呼び出し間でデータベースへの接続をクローズしない。
+<P>
+
+<B>endnetent</B>()  関数はデータベースへの接続をクローズする。
+<P>
+
+<I>netent</I> 構造体は <I>&lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</I> で以下のように定義されている。
+<P>
+
+
+
+struct netent {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*n_name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;official&nbsp;network&nbsp;name&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**n_aliases;&nbsp;&nbsp;/*&nbsp;alias&nbsp;list&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n_addrtype;&nbsp;/*&nbsp;net&nbsp;address&nbsp;type&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;&nbsp;&nbsp;n_net;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;network&nbsp;number&nbsp;*/
+}
+
+
+<P>
+
+<I>netent</I> 構造体のメンバは以下の通り。
+<DL COMPACT>
+<DT><I>n_name</I><DD>
+ネットワークの正式名 (official name)。
+<DT><I>n_aliases</I><DD>
+ネットワークの別名からなるリスト。 リストはヌルで終端される。
+<DT><I>n_addrtype</I><DD>
+ネットワーク番号の形式。現在は <B>AF_INET</B> のみ。
+<DT><I>n_net</I><DD>
+ホストバイトオーダ形式のネットワーク番号。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>getnetent</B>(), <B>getnetbyname</B>(), <B>getnetbyaddr</B>()  関数は、静的に割り当てられた
+<I>netent</I> 構造体へのポインターを返す。 エラーが起こったり、ファイルの末尾に達した場合はヌルポインターを返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/etc/networks</I><DD>
+ネットワークデータベースファイル
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明は <B>attributes</B>(7) を参照のこと。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getnetent</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:netent
+<BR>
+
+race:netentbuf env locale
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getnetbyname</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:netbyname
+<BR>
+
+env locale
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getnetbyaddr</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:netbyaddr
+<BR>
+
+locale
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>setnetent</B>(),
+<BR>
+
+<B>endnetent</B>()
+</TD><TD>Thread safety</TD><TD>
+MT-Unsafe race:netent env
+<BR>
+
+locale
+<BR></TD></TR>
+</TABLE>
+
+<P>
+In the above table, <I>netent</I> in <I>race:netent</I> signifies that if any of the
+functions <B>setnetent</B>(), <B>getnetent</B>(), or <B>endnetent</B>()  are used in
+parallel in different threads of a program, then data races could occur.
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, 4.3BSD.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+バージョン 2.2 より前の glibc では、 <B>getnetbyaddr</B>()  の引数 <I>net</I> は <I>long</I> 型だった。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+<B><A HREF="../man3/getnetent_r.3.html">getnetent_r</A></B>(3), <B><A HREF="../man3/getprotoent.3.html">getprotoent</A></B>(3), <B><A HREF="../man3/getservent.3.html">getservent</A></B>(3)
+<BR>
+
+RFC&nbsp;1101
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

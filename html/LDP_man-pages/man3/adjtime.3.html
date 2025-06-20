@@ -1,0 +1,147 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ADJTIME</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ADJTIME</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated:  2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/adjtime.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+adjtime - システムクロックに同期する時刻を調整する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+
+<B>int adjtime(const struct timeval *</B><I>delta</I><B>, struct timeval *</B><I>olddelta</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>adjtime</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.19:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.19&nbsp;and&nbsp;earlier:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>adjtime</B>()  関数は (<B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2)  が返す) システムクロックを徐々に調整する。 調整すべきクロックの時間量は
+<I>delta</I> が指す構造体で指定される。 この構造体は以下の形である:
+<P>
+
+
+
+struct timeval {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;秒&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;suseconds_t&nbsp;tv_usec;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;マイクロ秒&nbsp;*/
+};
+
+
+<P>
+
+<I>delta</I> の調整量が正の場合、調整量に達するまでシステムクロックを 少し割合だけスピードアップさせる (つまり、毎秒クロック値に少しだけ
+時刻を加算する)。 <I>delta</I> の調整量が負の場合、同様の方法でクロックを遅くする。
+<P>
+
+<B>adjtime</B>()  が呼び出されたときに以前の <B>adjtime</B>()  の呼び出しによるクロックの調整がまだ実行中で、かつ後の
+<B>adjtime</B>()  の <I>delta</I> が NULL でない場合、実行中の調整は停止される。
+しかし、すでに実行された調整の取り消しは行われない。
+<P>
+
+<I>olddelta</I> が NULL でない場合、 <I>olddelta</I> が指すバッファーに、過去の調整要求でまだ完了せず残っている時間量が
+格納して返される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>adjtime</B>()  は 0 を返す。失敗すると、-1 を返し、 <I>errno</I> にエラーを示す値をセットする。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>delta</I> で指定された調整量が許可された範囲に入っていない。
+<DT><B>EPERM</B><DD>
+呼び出し者が時刻を調整するのに必要な権限を持っていない。 Linux では <B>CAP_SYS_TIME</B> ケーパビリティが必要である。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>adjtime</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+4.3BSD, System V.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<B>adjtime</B>()  が行うクロックの調整は、クロックは常に単調増加するという範囲内で 実行される。 <B>adjtime</B>()
+を使って時刻を調整することで、システムタイムの突然の正や負のジャンプ により、いくつかのアプリケーション (例えば <B><A HREF="../../GNU_make/man1/make.1.html">make</A></B>(1)  など)
+に起こる問題を防ぐことができる。
+<P>
+
+<B>adjtime</B>()  はシステム時刻に少しずつ調整を行うために使用されることを期待されている。 ほとんどのシステムでは、 <I>delta</I>
+に指定できる調整量に制限を課している。 glibc の実装では、 <I>delta</I> は (INT_MIN / 1000000 + 2) 以上
+(INT_MAX / 1000000 - 2) 以下 (i386 では -2145 以上 2145 以下) でなければならない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+ずっと昔から、 <I>delta</I> に NULL を指定すると、未完了のクロック調整に関する有効な情報が <I>olddelta</I>
+に返されないというバグがあった (この場合、 <B>adjtime</B>()  は、未完了のクロック調整に関する情報を、変更せずに返すべきである)。
+このバグは、 glibc 2.8 以降で、Linux カーネル 2.6.26 以降のシステムで修正されている。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/adjtimex.2.html">adjtimex</A></B>(2), <B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2), <B><A HREF="../man7/time.7.html">time</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:26 GMT, December 05, 2022
+</BODY>
+</HTML>

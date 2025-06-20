@@ -1,0 +1,297 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MQ_OVERVIEW</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MQ_OVERVIEW</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/mq_overview.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mq_overview - POSIX メッセージキューの概要
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+POSIX メッセージキューを使用すると、プロセス間で メッセージの形でのデータのやり取りを行うことができる。 この API は System V
+メッセージキューの API (<B><A HREF="../man2/msgget.2.html">msgget</A></B>(2), <B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2), <B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2)  など)
+とは異なるものだが、同様の機能を提供する。
+<P>
+
+メッセージキューの作成とオープンは <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3)  を使って行う。この関数は <I>メッセージキュー記述子 (message queue
+descriptor)</I> (<I>mqd_t</I>)  を返す。これ以降のコールでは、オープンされたメッセージキューは <I>メッセージキュー記述子</I>
+を使って参照される。 各メッセージキューは <I>/somename</I> の形の名前で区別することができる。 その名前は、最大で <B>NAME_MAX</B>
+(すなわち 255) 文字のヌル終端された文字列で、 スラッシュで始まり、スラッシュ以外の文字が 1 文字以上続く形式である。
+<B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3)  に同じ名前を渡すことで、2つのプロセスで同一のキューを 操作することができる。
+<P>
+
+メッセージのキューへの送受信は <B><A HREF="../man3/mq_send.3.html">mq_send</A></B>(3)  と <B><A HREF="../man3/mq_receive.3.html">mq_receive</A></B>(3)
+を使って行う。プロセスがキューの使用を終えるときには、 <B><A HREF="../man3/mq_close.3.html">mq_close</A></B>(3)
+を使ってキューをクローズする。キューがもはや不要となった場合には、 <B><A HREF="../man3/mq_unlink.3.html">mq_unlink</A></B>(3)  を使ってキューを削除できる。キューの属性は
+<B><A HREF="../man3/mq_getattr.3.html">mq_getattr</A></B>(3)  で取得でき、 (制限はあるが)  <B><A HREF="../man3/mq_setattr.3.html">mq_setattr</A></B>(3)  で変更できる。 <B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3)
+を使うことで、空のキューへのメッセージ到着を非同期で 通知するように要求することもできる。
+<P>
+
+メッセージキュー記述子は <I>オープンメッセージキュー記述 (open message queue description)</I> への参照である
+(<B><A HREF="../man2/open.2.html">open</A></B>(2)  も参照)。 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  実行後は、子プロセスは親プロセスのメッセージキュー記述子のコピーを継承する。
+これらの記述子は、親プロセスの対応するメッセージキュー記述子と同じオープンメッセージキュー記述を参照している。親プロセスと子プロセスの対応するメッセージキュー記述子は、フラグ
+(<I>mq_flags</I>)  を共有する。なぜなら、フラグはオープンメッセージキュー記述に 関連付けられているからである。
+<P>
+
+各メッセージにはそれぞれ <I>優先度 (priority)</I> があり、メッセージの受信プロセスへの配送は常に 優先度の高いメッセージから順に行われる。
+メッセージの優先度は 0 (低優先) から <I>sysconf(_SC_MQ_PRIO_MAX)&nbsp;-&nbsp;1</I> (高優先) の値を持つ。 Linux
+では、 <I>sysconf(_SC_MQ_PRIO_MAX)</I> は 32768 を返すが、 POSIX.1 で要求されているのは最低限 0 から 31
+までの優先度を実装することだけであり、実装によってはこの範囲の優先度しかサポートされていない。
+<P>
+
+この節の残りでは、POSIX メッセージキューの Linux の実装の詳細 について説明する。
+<A NAME="lbAD">&nbsp;</A>
+<H3>ライブラリインターフェースとシステムコール</H3>
+
+ほとんどの場合、上記の <B>mq_*</B>() ライブラリインターフェースは、同じ名前の下位層のシステムコールを
+使って実装されている。この枠組みにあてはまらないものを 以下の表に示す。
+<DL COMPACT><DT><DD>
+<TABLE>
+<TR VALIGN=top><TD><B>Library interface</B></TD><TD><B>System call</B><BR></TD></TR>
+<TR VALIGN=top><TD><A HREF="../man3/mq_close.3.html">mq_close</A>(3)</TD><TD><A HREF="../man2/close.2.html">close</A>(2)<BR></TD></TR>
+<TR VALIGN=top><TD><A HREF="../man3/mq_getattr.3.html">mq_getattr</A>(3)</TD><TD><A HREF="../man2/mq_getsetattr.2.html">mq_getsetattr</A>(2)<BR></TD></TR>
+<TR VALIGN=top><TD><A HREF="../man3/mq_notify.3.html">mq_notify</A>(3)</TD><TD><A HREF="../man2/mq_notify.2.html">mq_notify</A>(2)<BR></TD></TR>
+<TR VALIGN=top><TD><A HREF="../man3/mq_open.3.html">mq_open</A>(3)</TD><TD><A HREF="../man2/mq_open.2.html">mq_open</A>(2)<BR></TD></TR>
+<TR VALIGN=top><TD><A HREF="../man3/mq_receive.3.html">mq_receive</A>(3)</TD><TD><A HREF="../man2/mq_timedreceive.2.html">mq_timedreceive</A>(2)<BR></TD></TR>
+<TR VALIGN=top><TD><A HREF="../man3/mq_send.3.html">mq_send</A>(3)</TD><TD><A HREF="../man2/mq_timedsend.2.html">mq_timedsend</A>(2)<BR></TD></TR>
+<TR VALIGN=top><TD><A HREF="../man3/mq_setattr.3.html">mq_setattr</A>(3)</TD><TD><A HREF="../man2/mq_getsetattr.2.html">mq_getsetattr</A>(2)<BR></TD></TR>
+<TR VALIGN=top><TD><A HREF="../man3/mq_timedreceive.3.html">mq_timedreceive</A>(3)</TD><TD><A HREF="../man2/mq_timedreceive.2.html">mq_timedreceive</A>(2)<BR></TD></TR>
+<TR VALIGN=top><TD><A HREF="../man3/mq_timedsend.3.html">mq_timedsend</A>(3)</TD><TD><A HREF="../man2/mq_timedsend.2.html">mq_timedsend</A>(2)<BR></TD></TR>
+<TR VALIGN=top><TD><A HREF="../man3/mq_unlink.3.html">mq_unlink</A>(3)</TD><TD><A HREF="../man2/mq_unlink.2.html">mq_unlink</A>(2)<BR></TD></TR>
+</TABLE>
+
+</DL>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>バージョン</H3>
+
+Linux では POSIX メッセージキューはカーネル 2.6.6 以降でサポートされている。 glibc ではバージョン 2.3.4
+以降でサポートされている。
+<A NAME="lbAF">&nbsp;</A>
+<H3>カーネルの設定</H3>
+
+POSIX メッセージキューのサポートは、カーネルの設定 (configuration)  オプション <B>CONFIG_POSIX_MQUEUE</B>
+で設定可能である。このオプションはデフォルトでは有効である。
+<A NAME="lbAG">&nbsp;</A>
+<H3>持続性</H3>
+
+POSIX メッセージキューはカーネル内で保持される。 <B><A HREF="../man3/mq_unlink.3.html">mq_unlink</A></B>(3)  で削除されなければ、メッセージキューは
+システムがシャットダウンされるまで存在し続ける。
+<A NAME="lbAH">&nbsp;</A>
+<H3>リンク</H3>
+
+POSIX メッセージキュー API を使用したプログラムは <I>cc -lrt</I> でコンパイルし、リアルタイムライブラリ <I>librt</I>
+とリンクしなければならない。
+<A NAME="lbAI">&nbsp;</A>
+<H3>/proc インターフェース</H3>
+
+以下のインターフェースを使って、 POSIX メッセージキューが消費するカーネル メモリーの量を制限したり、
+新規のメッセージキューのデフォルト属性を設定したりすることができる。
+<DL COMPACT>
+<DT><I>/proc/sys/fs/mqueue/msg_default</I> (Linux 3.5 以降)<DD>
+このファイルは、<I>attr</I> に NULL を指定して <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3) を呼び出してキューが作成された際に、 その新規キューの
+<I>mq_maxmsg</I> 設定に使用される値を定めている。 このファイルのデフォルト値は 10 である。 最小値と最大値は
+<I>/proc/sys/fs/mqueue/msg_max</I> と同様である。 新規キューのデフォルトの <I>mq_maxmsg</I> 値は
+<I>msg_default</I> と <I>msg_max</I> の小さい方となる。 Linux 2.6.28 より前は、デフォルトの <I>mq_maxmsg</I>
+は 10 であった。 Linux 2.6.28 から Linux 3.4 までは、 デフォルト値は <I>msg_max</I> 上限で規定される値であった。
+<DT><I>/proc/sys/fs/mqueue/msg_max</I><DD>
+このファイルを使って、一つのキューに入れられるメッセージの最大数の 上限値を参照したり変更したりできる。この値は、 <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3)  に渡す
+<I>attr-&gt;mq_maxmsg</I> 引数に対する上限値として機能する。 <I>msg_max</I> のデフォルト値は 10 で、 最小値は 1
+(2.6.28 より前のカーネルでは 10) である。 <I>msg_max</I> に指定できる上限値は <B>HARD_MSGMAX</B> である。
+<I>msg_max</I> 上限は特権プロセス (<B>CAP_SYS_RESOURCE</B>)  では無視されるが、上限値 <B>HARD_MSGMAX</B>
+はどんな場合にでも適用される。
+<DT><DD>
+<B>HARD_MSGMAX</B> の定義はカーネルのバージョンにより異なる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+Linux 2.6.32 以前: <I>131072&nbsp;/&nbsp;sizeof(void&nbsp;*)</I>
+<DT>*<DD>
+Linux 2.6.33 以上 3.4 以下: <I>(32768&nbsp;*&nbsp;sizeof(void&nbsp;*) / 4)</I>
+<DT>*<DD>
+
+Linux 3.5 以降: 65,536
+</DL>
+</DL>
+
+<DT><I>/proc/sys/fs/mqueue/msgsize_default</I> (Linux 3.5 以降)<DD>
+このファイルは、<I>attr</I> に NULL を指定して <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3) を呼び出してキューが作成された際に、 その新規キューの
+<I>mq_msgsize</I> 設定に使用される値を定めている。 このファイルのデフォルト値は 8192 バイトである。 最小値と最大値は
+<I>/proc/sys/fs/mqueue/msgsize_max</I> と同様である。
+<I>msgsize_default</I> が <I>msgsize_max</I> より大きい場合は、 新規キューのデフォルトの <I>mq_msgsize</I> 値は
+<I>msgsize_max</I> 上限となる。 Linux 2.6.28 より前は、デフォルトの <I>mq_msgsize</I> は 8192 であった。
+Linux 2.6.28 から Linux 3.4 までは、 デフォルト値は <I>msgsize_max</I> 上限で規定される値であった。
+<DT><I>/proc/sys/fs/mqueue/msgsize_max</I><DD>
+このファイルを使って、メッセージの最大サイズの上限値を参照したり変更したりできる。 この値は、 <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3) に渡す
+<I>attr-&gt;mq_msgsize</I> 引数に対する上限値として機能する。 <I>msgsize_max</I> のデフォルト値は 8192 バイトで、
+最小値は 128 (2.6.28 より前のカーネルでは 8192) である。 <I>msgsize_max</I> の上限はカーネルのバージョンにより異なる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+Linux 2.6.28 より前のバージョンでは、上限は <B>INT_MAX</B> である。
+<DT>*<DD>
+Linux 2.6.28 から 3.4 では、上限は 1,048,576 である。
+<DT>*<DD>
+Linux 3.5 以降では、上限は 16,777,216 (<B>HARD_MSGSIZEMAX</B>) である。
+</DL>
+</DL>
+
+<DT><DD>
+<I>msgsize_max</I> 上限は特権プロセス (<B>CAP_SYS_RESOURCE</B>) では無視されるが、 Linux 3.5
+以降では特権プロセスにも <B>HARD_MSGSIZEMAX</B> という上限が適用される。
+<DT><I>/proc/sys/fs/mqueue/queues_max</I><DD>
+このファイルを使って、作成可能なメッセージキュー数のシステム全体での制限を参照したり変更したりできる。 <I>queues_max</I> のデフォルト値は
+256 である。 <I>queues_max</I> に課される上限値はない。 特権プロセス (<B>CAP_SYS_RESOURCE</B>)
+はこの上限値を超えてメッセージキューを作成できる。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>リソース制限</H3>
+
+リソース上限 <B>RLIMIT_MSGQUEUE</B> は、プロセスの実 UID に対応する全メッセージキューが消費する
+メモリー空間の量に対して上限を設定する。 <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)  を参照。
+<A NAME="lbAK">&nbsp;</A>
+<H3>メッセージキューファイルシステムのマウント</H3>
+
+Linux では、メッセージキューは仮想ファイルシステム内に作成される (他の実装でも同様の機能が提供されているものもあるが、
+詳細は違っているだろう)。 以下のコマンドを使うことで (スーパーユーザーは)  このファイルシステムをマウントできる:
+<P>
+
+
+
+#<B> mkdir /dev/mqueue</B>
+#<B> mount -t mqueue none /dev/mqueue</B>
+
+
+<P>
+
+マウントしたディレクトリのスティッキービット (sticky bit) は 自動的にオンとなる。
+<P>
+
+メッセージキューファイルシステムのマウント後は、ファイルに対して 通常使うコマンド (例えば <B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1)  や <B><A HREF="../../0MultiFileIdx/man1/rm.1.html">rm</A></B>(1))
+を使って、システム上のメッセージキューを表示したり 操作したりできる。
+<P>
+
+ディレクトリ内の各ファイルの内容は 1行であり、 キューに関する情報が表示される。
+<P>
+
+
+
+$<B> cat /dev/mqueue/mymq</B>
+QSIZE:129     NOTIFY:2    SIGNO:0    NOTIFY_PID:8260
+
+
+<P>
+
+各フィールドの詳細は以下の通りである:
+<DL COMPACT>
+<DT><B>QSIZE</B><DD>
+キューに入っている全メッセージの合計バイト数 (ただし「バグ」を参照)。
+<DT><B>NOTIFY_PID</B><DD>
+この値が 0 以外の場合、この値の PID を持つプロセスが <B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3)
+を使って、非同期のメッセージ通知を行うように設定したことを示す。 どのように通知が行われるかは、以下のフィールドにより決定される。
+<DT><B>NOTIFY</B><DD>
+通知方法: 0 は <B>SIGEV_SIGNAL</B>; 1 は <B>SIGEV_NONE</B>; 2 は <B>SIGEV_THREAD</B>
+<DT><B>SIGNO</B><DD>
+<B>SIGEV_SIGNAL</B> に使用されるシグナル番号。
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H3>Linux でのメッセージキュー記述子の実装</H3>
+
+On Linux, a message queue descriptor is actually a file descriptor.  (POSIX
+does not require such an implementation.)  This means that a message queue
+descriptor can be monitored using <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), or <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7).
+This is not portable.
+<P>
+
+The close-on-exec flag (see <B><A HREF="../man2/open.2.html">open</A></B>(2))  is automatically set on the file
+descriptor returned by <B><A HREF="../man2/mq_open.2.html">mq_open</A></B>(2).
+<A NAME="lbAM">&nbsp;</A>
+<H3>IPC 名前空間</H3>
+
+POSIX メッセージキューオブジェクトと IPC 名前空間の相互の影響に関する議論は <B>ipc_namespaces</B>(7) を参照。
+<A NAME="lbAN">&nbsp;</A>
+<H2>注意</H2>
+
+System V メッセージキュー (<B><A HREF="../man2/msgget.2.html">msgget</A></B>(2), <B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2), <B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2)  など)
+はプロセス間でメッセージをやり取りするための古い API である。 POSIX メッセージキューは System V メッセージキューよりもうまく
+設計されたインターフェースを提供している。 一方で、POSIX メッセージキューは System V メッセージキューと比べると
+利用できるシステムが少ない (特に、古いシステムでは少ない)。
+<P>
+
+現在のことろ (バージョン 2.6.26 時点)、 Linux は POSIX メッセージキューに対するアクセス制御リスト (ACL) に
+対応していない。
+<A NAME="lbAO">&nbsp;</A>
+<H2>バグ</H2>
+
+バージョン 3.5 以降 3.14 未満の Linux では、 <I>queues_max</I> 上限を増やすことができる最大値として 1024
+(<B>HARD_QUEUESMAX</B>) という最大上限値がカーネルにより適用されていた。 この最大上限値は特権プロセスにも適用されていた。
+この最大上限値は Linux 3.14 で削除され、 パッチで安定版カーネル 3.5.x から 3.13.x からもこの最大上限値は削除された。
+<P>
+
+
+
+As originally implemented (and documented), the QSIZE field displayed the
+total number of (user-supplied)  bytes in all messages in the message
+queue.  Some changes in Linux 3.5 inadvertently changed the behavior, so
+that this field also included a count of kernel overhead bytes used to store
+the messages in the queue.  This behavioral regression was rectified in
+Linux 4.2 (and earlier stable kernel series), so that the count once more
+included just the bytes of user data in messages in the queue.
+<A NAME="lbAP">&nbsp;</A>
+<H2>例</H2>
+
+各種のメッセージキュー関数を使用した例が <B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3)  に記載されている。
+<A NAME="lbAQ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2), <B><A HREF="../man2/mq_getsetattr.2.html">mq_getsetattr</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2),
+<B><A HREF="../man3/mq_close.3.html">mq_close</A></B>(3), <B><A HREF="../man3/mq_getattr.3.html">mq_getattr</A></B>(3), <B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3), <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3),
+<B><A HREF="../man3/mq_receive.3.html">mq_receive</A></B>(3), <B><A HREF="../man3/mq_send.3.html">mq_send</A></B>(3), <B><A HREF="../man3/mq_unlink.3.html">mq_unlink</A></B>(3), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7),
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
+<A NAME="lbAR">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">ライブラリインターフェースとシステムコール</A><DD>
+<DT><A HREF="#lbAE">バージョン</A><DD>
+<DT><A HREF="#lbAF">カーネルの設定</A><DD>
+<DT><A HREF="#lbAG">持続性</A><DD>
+<DT><A HREF="#lbAH">リンク</A><DD>
+<DT><A HREF="#lbAI">/proc インターフェース</A><DD>
+<DT><A HREF="#lbAJ">リソース制限</A><DD>
+<DT><A HREF="#lbAK">メッセージキューファイルシステムのマウント</A><DD>
+<DT><A HREF="#lbAL">Linux でのメッセージキュー記述子の実装</A><DD>
+<DT><A HREF="#lbAM">IPC 名前空間</A><DD>
+</DL>
+<DT><A HREF="#lbAN">注意</A><DD>
+<DT><A HREF="#lbAO">バグ</A><DD>
+<DT><A HREF="#lbAP">例</A><DD>
+<DT><A HREF="#lbAQ">関連項目</A><DD>
+<DT><A HREF="#lbAR">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

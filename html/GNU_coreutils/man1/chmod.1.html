@@ -1,0 +1,237 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CHMOD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>CHMOD</H1>
+Section: ユーザーコマンド (1)<BR>Updated: 2021年5月<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_coreutils/release/man1/chmod.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+chmod - ファイルのモードビットを変更する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>chmod</B>
+
+[<I>,OPTION/</I>]... <I>,MODE/</I>[<I>,,MODE/</I>]... <I>,FILE/</I>...
+<BR>
+
+<B>chmod</B>
+
+[<I>,OPTION/</I>]... <I>,OCTAL-MODE FILE/</I>...
+<BR>
+
+<B>chmod</B>
+
+[<I>,OPTION/</I>]... <I>,--reference=RFILE FILE/</I>...
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+このマニュアルページでは GNU バージョンの <B>chmod</B> について説明しています。
+<B>chmod</B> は指定されたファイルのモードビット (mode bits) を
+<I>mode</I> に基いて変更します。
+<I>mode</I> は、変更内容の記号表現 (記号モード)か、新しく設定するモードビットの
+ビットパターンを表す 8 進数 (数値モード) のどちらかで指定します。
+<P>
+
+記号モードの書式は
+[<B>ugoa</B>...][[<B>-+=</B>][<I>perms</I>...]...] です。
+<I>perms</I> には、<B>rwxXst</B> のうち 0 個以上の文字か、
+<B>ugo</B> のいずれか 1 文字を指定します。
+コンマで区切って、複数の記号表現を指定することができます。
+<P>
+
+<B>ugoa</B> の組み合わせで、そのファイルに対するユーザのアクセス権限を制御します。
+それぞれ、ファイルの所有者のユーザ (<B>u</B>)、ファイルのグループに属する
+所有者以外のユーザ (<B>g</B>)、ファイルのグループに属さない他のユーザ (<B>o</B>)、
+全てのユーザ (<B>a</B>) を意味します。
+<B>ugoa</B> のどれも指定されなかった場合、(<B>a</B>) が指定されたのと同じ効果を
+持ちますが、umask でセットされているビットは変更されません。
+<P>
+
+<B>+</B> 演算子は、各ファイルの現在のファイルモードビットに
+指定されたファイルモードビットを追加します。
+<B>-</B> を指定すると、指定されたファイルモードビットが削除されます。
+<B>=</B> を指定すると、指定されたファイルモードビットが追加され、
+指定されていないビットが削除されます。
+ただし、指定されていないビットのうち、ディレクトリの set-user-ID と
+set-group-ID は影響を受けません。
+<P>
+
+文字 <B>rwxXst</B> で設定対象のユーザのファイルモードビットを選択します:
+読み出し許可 (<B>r</B>)、書き込み許可 (<B>w</B>)、
+実行許可 (もしくはディレクトリの検索許可) (<B>x</B>)、
+ファイルがディレクトリの場合もしくはファイルが
+実行許可/検索許可 (ただし、ファイルがディレクトリの場合か、
+あるユーザに対してすでに実行許可がある場合のみ) (<B>X</B>)、
+実行時にユーザ ID もしくはグループ ID を設定する (<B>s</B>)、
+削除制限 (restricted deletion) フラグもしくはスティッキービット (<B>t</B>)。
+これらの文字を一つ以上指定する代わりに、
+文字 <B>ugo</B> のいずれか一つだけを指定することもできます:
+ファイルを所有するユーザに付与されたアクセス許可 (<B>u</B>)、
+ファイルのグループの所有者以外のメンバーに付与されたアクセス許可 (<B>g</B>)、
+前記のどちらでもないユーザに付与されたアクセス許可 (<B>o</B>)。
+<P>
+
+数値モードでは 1 桁から 4 桁の 8 進数 (0-7) で指定します。
+その値は、ビットを値 4, 2, 1 に対応させたものを加算することで得られます。
+省略された桁は先頭にある  0 とみなされます。
+1 桁目では、set-user-ID (4)、set-group-ID (2)、削除制限/スティッキー (1)
+といった属性を指定します。
+2 桁目では、ファイルを所有するユーザに対するアクセス許可を指定します:
+読み出し許可 (4)、書き込み許可 (2)、実行許可 (1)。
+3 桁目ではファイルのグループの所有者以外のメンバーに対するアクセス許可を
+指定します: 値は 2 桁目と同じ。
+4 桁目ではファイルのグループに属さないユーザに対するアクセス許可を
+指定します: 値は 2 桁目と同じ。
+<P>
+
+<B>chmod</B> はシンボリックリンクのアクセス許可を変更することはありません。
+<B>chmod</B> システムコールがシンボリックリンクのアクセス許可を変更できないからです。
+シンボリックリンクのアクセス許可が使われることは決してないため、
+これは問題にはなりません。
+しかし、<B>chmod</B> は、コマンドラインで列挙されたシンボリックリンク
+それぞれについて、シンボリックリンクが指しているファイルのアクセス許可を
+変更します。その一方で、<B>chmod</B> は再帰的にディレクトリを辿っている途中で
+見つけたシンボリックリンクは無視します。
+<A NAME="lbAE">&nbsp;</A>
+<H2>SETUID ビットと SETGID ビット</H2>
+
+<B>chmod</B> は、ファイルのグループ ID がユーザの実効グループ ID とも
+ユーザの追加グループ ID とも一致せず、
+ユーザが適切な特権を持っていない場合は、
+通常のファイルの set-group-ID ビットをクリアします。
+他にも追加の制限があり、<I>MODE</I> や <I>RFILE</I> の set-user-ID ビットや
+set-group-ID ビットが無視される場合があります。どのような動作になるかは
+裏で呼び出される <B>chmod</B> システムコールのポリシーや機能に依存します。
+疑わしい点がある場合は、動作しているシステムの動作を確認して下さい。
+<P>
+
+ディレクトリの場合、
+<B>chmod</B> は、明示的に指定した場合を除き、 set-user-ID ビットと
+set-group-ID ビットを保持します。
+記号モードでこれらのビットの設定や解除を行うには、
+<B>u+s</B> and <B>g-s</B> のように指定します。
+<P>
+数値モードでディレクトリのこれらのビットを解除するには、
+先頭に 0 を一つ余計につけるか
+(<B>00755</B>)、
+
+先頭に = をつける必要があります
+(<B>=755</B>)。
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>削除制限フラグとスティッキービット</H2>
+
+削除制限フラグ (restricted deletion flag) とスティッキービット (sticky bit) は
+1 ビットの情報で、ファイル種別によりその意味が変わります。
+ディレクトリの場合、このビットがセットされていると、
+非特権ユーザは、自分が所有者のファイルやディレクトリ以外は
+そのディレクトリにあるファイルの削除や名前変更ができなくなります。
+この機能はディレクトリの <B>削除制限フラグ</B> と呼ばれ、
+<B>/tmp</B> などの誰でも書き込みできるディレクトリでは一般的に使われています。
+いくつかの古いシステムでは、通常のファイルでこのビットが設定されている場合、
+そのプログラムのテキストイメージがスワップデバイス上に保持され、
+実行時により早くファイルがロードできるようになります。
+この機能は <B>スティッキービット</B> と呼ばれます。
+<A NAME="lbAG">&nbsp;</A>
+<H2>オプション</H2>
+
+<P>
+
+各 FILE のモードを MODE に変更します。
+<B>--reference</B> を指定した場合は、各 FILE のモードを RFILE のものに変更する。
+<DL COMPACT>
+<DT><B>-c</B>, <B>--changes</B><DD>
+verbose モードと同様だが、変更が行われた場合にのみ出力する
+<DT><B>-f</B>, <B>--silent</B>, <B>--quiet</B><DD>
+ほとんどのエラーメッセージの出力を抑制する
+<DT><B>-v</B>, <B>--verbose</B><DD>
+処理した各ファイルについて診断メッセージを出力する
+<DT><B>--no-preserve-root</B><DD>
+'/' を特別扱いしない (デフォルト)
+<DT><B>--preserve-root</B><DD>
+'/' に対する再帰的な操作を失敗させる
+<DT><B>--reference</B>=<I>,RFILE/</I><DD>
+MODE の値ではなく RFILE のモードを使用する
+<DT><B>-R</B>, <B>--recursive</B><DD>
+ファイルとディレクトリを再帰的に変更する
+<DT><B>--help</B><DD>
+使い方を表示して終了する
+<DT><B>--version</B><DD>
+バージョン情報を表示して終了する
+</DL>
+<P>
+
+各 MODE の形式は '[ugoa]*([-+=]([rwxXst]*|[ugo]))+|[-+=][0-7]+' です。
+<P>
+
+GNU coreutils のオンラインヘルプ: &lt;<A HREF="https://www.gnu.org/software/coreutils/">https://www.gnu.org/software/coreutils/</A>&gt;
+翻訳に関するバグは &lt;<A HREF="https://translationproject.org/team/ja.html">https://translationproject.org/team/ja.html</A>&gt; に連絡してください。
+詳細な文書 &lt;<A HREF="https://www.gnu.org/software/coreutils/chmod">https://www.gnu.org/software/coreutils/chmod</A>&gt;
+(ローカルでは info '(coreutils) chmod invocation' で参照可能)。
+<A NAME="lbAH">&nbsp;</A>
+<H2>作者</H2>
+
+作者 David MacKenzie および Jim Meyering。
+<A NAME="lbAI">&nbsp;</A>
+<H2>著作権</H2>
+
+Copyright &#169; 2020 Free Software Foundation, Inc.
+ライセンス GPLv3+: GNU GPL version 3 or later &lt;<A HREF="https://gnu.org/licenses/gpl.html">https://gnu.org/licenses/gpl.html</A>&gt;.
+<BR>
+
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../../LDP_man-pages/man2/chmod.2.html">chmod</A>(2)
+<P>
+
+<B>chmod</B>
+
+の完全なマニュアルは Texinfo マニュアルとして整備されている。もし、
+<B>info</B>
+
+および
+<B>chmod</B>
+
+のプログラムが正しくインストールされているならば、コマンド
+<DL COMPACT>
+<DT><DD>
+<B>info chmod</B>
+
+</DL>
+<P>
+
+を使用すると完全なマニュアルを読むことができるはずだ。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">SETUID ビットと SETGID ビット</A><DD>
+<DT><A HREF="#lbAF">削除制限フラグとスティッキービット</A><DD>
+<DT><A HREF="#lbAG">オプション</A><DD>
+<DT><A HREF="#lbAH">作者</A><DD>
+<DT><A HREF="#lbAI">著作権</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:22 GMT, December 05, 2022
+</BODY>
+</HTML>

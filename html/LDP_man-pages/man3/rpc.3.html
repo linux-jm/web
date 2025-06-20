@@ -1,0 +1,1127 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RPC</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RPC</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/rpc.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式と説明</H2>
+
+
+
+
+
+
+これらのルーティンは C プログラムでネットワークを通して 他のマシンにアクセスするプロシージャーを作成することを可能にする。
+最初にクライアントはデータパケットをサーバに送るために プロシージャーを呼び出す。 サーバはパケットを受け取ると、配分ルーチンを呼び出して
+要求されたサービスに実行し、返答を送り返す。 最後にプロシージャーコールはクライアントへと戻る。
+<P>
+
+これらのルーティンを使用するには、ヘッダーファイル <I>&lt;<A HREF="file:///usr/include/rpc/rpc.h">rpc/rpc.h</A>&gt;</I> をインクルードすること。
+<P>
+下記のプロトタイプでは次の型を使用している。
+<P>
+
+<DL COMPACT><DT><DD>
+
+<B>typedef int </B><I>bool_t</I><B>;</B>
+<P>
+
+<B>typedef bool_t (*</B><I>xdrproc_t</I><B>) (XDR *, void *, ...);</B>
+<P>
+
+<B>typedef bool_t (*</B><I>resultproc_t</I><B>) (caddr_t </B><I>resp</I><B>,</B>
+<B>                                struct sockaddr_in *</B><I>raddr</I><B>);</B>
+
+</DL>
+
+<P>
+
+型 <I>AUTH</I>, <I>CLIENT</I>, <I>SVCXPRT</I>, <I>XDR</I> の宣言についてはヘッダーファイルを参照。
+<P>
+
+<PRE>
+<B>void auth_destroy(AUTH *</B><I>auth</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロは <I>auth</I> に関連付けられた認証情報を破壊する。破壊は通常は私的なデータ構造の 破棄を含んでいる。 <B>auth_destroy</B>()
+を呼び出した後に <I>auth</I> を使用することは未定義である。
+</DL>
+<P>
+
+<PRE>
+<B>AUTH *authnone_create(void);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+各リモートプロシージャーコールで使用できない仮の認証情報として渡される RPC 認証ハンドルを作成して返す。 これは RPC
+で使用されるデフォルトの認証である。
+</DL>
+<P>
+
+<PRE>
+<B>AUTH *authunix_create(char *</B><I>host</I><B>, int </B><I>uid</I><B>, int </B><I>gid</I><B>,</B>
+<B>                      int </B><I>len</I><B>, int *</B><I>aup_gids</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+認証情報を含んだ RPC 認証ハンドルを作成して返す。 <I>host</I> パラメーターは情報が作成されたマシンの名前である。 <I>uid</I>
+はそのユーザーのユーザー
+<FONT SIZE="-1">ID</FONT>
+、 <I>gid</I> はそのユーザーの現在のグループ
+<FONT SIZE="-1">ID</FONT>
+である。 <I>len</I> と
+<I>aup_gids</I> はそのユーザーが所属するグループの配列を参照している。 他のユーザーになりすますことは簡単である。
+</DL>
+<P>
+
+<PRE>
+<B>AUTH *authunix_create_default(void);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+適切なパラメーターで <B>authunix_create</B>()  を呼び出す。
+</DL>
+<P>
+
+<PRE>
+<B>int callrpc(char *</B><I>host</I><B>, unsigned long </B><I>prognum</I><B>,</B>
+<B>            unsigned long </B><I>versnum</I><B>, unsigned long </B><I>procnum</I><B>,</B>
+<B>            xdrproc_t </B><I>inproc</I><B>, char *</B><I>in</I><B>,</B>
+<B>            xdrproc_t </B><I>outproc</I><B>, char *</B><I>out</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+マシン <I>host</I> 上で <I>prognum</I>, <I>versnum</I>, <I>procnum</I> に関連付けられたリモートプロシージャーを呼び出す。
+パラメーター <I>in</I> はプロシージャーの引数のアドレスであり <I>out</I> は結果を格納するアドレスである。 <I>inproc</I>
+はプロシージャーのパラメーターをエンコードするのに使用され、 <I>outproc</I> は結果をデコードするのに使用される。
+このルーティンは成功した場合にはゼロを返す。失敗した場合には <B>enum clnt_stat</B> を整数にキャストした値を返す。
+<B>clnt_perrno</B>()  ルーティンが失敗の状態をメッセージに変換するのに使用できる。
+<DT><DD>
+警告: このルーティンでリモートプロシージャーを呼び出すと通信には UDP/IP が使用される。この際の制限については
+<B>clntudp_create</B>()  を参照すること。このルーティンを使用して認証や時間切れの制御を することはできない。
+</DL>
+<P>
+
+<PRE>
+<B>enum clnt_stat clnt_broadcast(unsigned long </B><I>prognum</I><B>,</B>
+<B>                     unsigned long </B><I>versnum</I><B>, unsigned long </B><I>procnum</I><B>,</B>
+<B>                     xdrproc_t </B><I>inproc</I><B>, char *</B><I>in</I><B>,</B>
+<B>                     xdrproc_t </B><I>outproc</I><B>, char *</B><I>out</I><B>,</B>
+<B>                     resultproc_t </B><I>eachresult</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>callrpc</B>()  と同様であるが、メッセージがローカルのブロードキャストネットワーク
+全体へとブロードキャストされる点が異っている。回答を受け取る度に このルーティンは以下の形式の <B>eachresult</B>()  を呼び出す。
+<DT><DD>
+
+
+<B>eachresult(char *</B><I>out</I><B>, struct sockaddr_in *</B><I>addr</I><B>);</B>
+
+
+<DT><DD>
+ここで <I>out</I> は <B>clnt_broadcast</B>()  に渡される <I>out</I>
+と同じであるが、リモートプロシージャーからの出力がデコードされている 点のみが異っている。 <I>addr</I>
+は結果を送って来たマシンのアドレスを指している。 <B>eachresult</B>()  がゼロを返した場合、 <B>clnt_broadcast</B>()
+はさらなる回答を待つ。そうでなければ適切な状態で終了する。
+<DT><DD>
+警告: ブロードキャストソケットはデータリンク層の最大転送単位に 制限されている。イーサネットの場合、最大値は 1500 バイトである。
+</DL>
+<P>
+
+<PRE>
+<B>enum clnt_stat clnt_call(CLIENT *</B><I>clnt</I><B>, unsigned long </B><I>procnum</I><B>,</B>
+<B>                    xdrproc_t </B><I>inproc</I><B>, char *</B><I>in</I><B>,</B>
+<B>                    xdrproc_t </B><I>outproc</I><B>, char *</B><I>out</I><B>,</B>
+<B>                    struct timeval </B><I>tout</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロはクライアントハンドル <I>clnt</I> に関連付けられた <I>procnum</I> リモートプロシージャーを呼び出す。 クライアントハンドルは
+<B>clnt_create</B>()  のような
+<FONT SIZE="-1">RPC</FONT>
+クライアント作成ルーティンによって得られる。 パタメータ <I>in</I>
+はプロシージャーの引数のアドレスである。 <I>out</I> はプロシージャーの返り値を格納するアドレスである。 <I>inproc</I>
+はプロシージャーのパラメーターをエンコードするのに使用される。 <I>outproc</I> はプロシージャーの返り値をデコードするのに使用される。
+<I>tout</I> は結果が返されるのを待つ時間である。
+</DL>
+<P>
+
+<PRE>
+<B>clnt_destroy(CLIENT *</B><I>clnt</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロはクライアントの RPC ハンドルを破壊する。破壊には通常は <I>clnt</I> 自身も含めて私的なデータ構造体の破棄が含まれている。
+<B>clnt_destroy</B>()  の呼び出しの後に <I>clnt</I> を使用することは未定義である。 RPC
+ライブラリが関連するソケットをオープンした場合には、 それも閉じられる。それ以外の場合にはソケットはオープンされたままである。
+</DL>
+<P>
+
+<PRE>
+<B>CLIENT *clnt_create(char *</B><I>host</I><B>, unsigned long </B><I>prog</I><B>,</B>
+<B>                    unsigned long </B><I>vers</I><B>, char *</B><I>proto</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+一般的なクライアントの作成ルーティンである。 <I>host</I> はサーバのあるリモートホストの名前を指定する。 <I>proto</I>
+どのような通信プロトコルを使用するかを指定する。現在ここに 使用できる値は "udp" と "tcp" である。
+デフォルトの時間切れが設定されるが、 <B>clnt_control</B>()  を使用して変更可能である。
+<DT><DD>
+警告: UDP を使用した場合には欠点がある。 UDP に基づいた RPC メッセージは 最大でも 8 KByte のエンコードデータしか保持する
+ことができないため、大きな引数や巨大な結果を取るプロシージャーに は使用することができない。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t clnt_control(CLIENT *</B><I>cl</I><B>, int </B><I>req</I><B>, char *</B><I>info</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロは各種クライアントについて情報を変更したり、取得したり するのに使用する。 <I>req</I> は操作の種類を指定する。 <I>info</I>
+は情報へのポインターである。 UDP と TCP どちらの場合も使用可能な <I>req</I> の値と、その引数の型、およびその内容は以下の通りである:
+<DT><DD>
+
+
+<B>CLSET_TIMEOUT</B>  <I>struct timeval</I> // 時間切れを設定する
+<B>CLGET_TIMEOUT</B>  <I>struct timeval</I> // 時間切れを取得する
+
+
+<DT><DD>
+注意: <B>clnt_control</B>()  を使用して時間切れを設定した場合にはそれ以後は <B>clnt_call</B>()
+に渡される時間切れパラメーターは全て無視される。
+<DT><DD>
+
+
+<B>CLGET_SERVER_ADDR</B>  <I>struct sockaddr_in </I> // サーバアドレスを取得する
+
+
+<DT><DD>
+以下の操作は UDP の場合にのみ有効である:
+<DT><DD>
+
+
+<B>CLSET_RETRY_TIMEOUT</B>  <I>struct timeval</I> // 再送間隔を設定する
+<B>CLGET_RETRY_TIMEOUT</B>  <I>struct timeval</I> // 再送間隔を取得する
+
+
+<DT><DD>
+再送間隔は次に要求を再送する前に &quot;UDP RPC&quot; がサーバの回答を待つ時間である。
+</DL>
+<P>
+
+<PRE>
+<B>clnt_freeres(CLIENT * </B><I>clnt</I><B>, xdrproc_t </B><I>outproc</I><B>, char *</B><I>out</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロは RPC 呼び出しの結果のデコードの際に RPC/XDR システムによって割当てられたデータを解放する。 パラメーター <I>out</I>
+は結果のアドレスである。 <I>outproc</I> は結果を記述している XDR ルーティンである。 このルーティンは結果の解放に成功した場合には 1
+を返す。 失敗した場合にはゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>void clnt_geterr(CLIENT *</B><I>clnt</I><B>, struct rpc_err *</B><I>errp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロはクライアントハンドルのエラー構造体を <I>errp</I> アドレスで指定された構造体へコピーする。
+</DL>
+<P>
+
+<PRE>
+<B>void clnt_pcreateerror(char *</B><I>s</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+標準エラー出力に、なぜクライアント RPC ハンドルの作成が できなかったかについてのメッセージを表示する。 メッセージの前に文字列 <I>s</I>
+とコロン(:)が表示される。 <B>clnt_create</B>(), <B>clntraw_create</B>(), <B>clnttcp_create</B>(),
+<B>clntudp_create</B>()  の呼び出しが失敗した時に使用すること。
+</DL>
+<P>
+
+<PRE>
+<B>void clnt_perrno(enum clnt_stat </B><I>stat</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+標準エラー出力に <I>stat</I> によって指示されるエラー状態に対応するメッセージを表示する。 <B>callrpc</B>()  の後に使用すること。
+</DL>
+<P>
+
+<PRE>
+<B>clnt_perror(CLIENT *</B><I>clnt</I><B>, char *</B><I>s</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+標準エラー出力に、なぜ RPC 呼び出しが失敗したかについてのメッセージを表示する。 <I>clnt</I> はコールに使用したハンドルである。
+メッセージの前に文字列 <I>s</I> とコロン(:)が表示される。 <B>clnt_call</B>()  が失敗した後に使用すること。
+</DL>
+<P>
+
+<PRE>
+<B>char *clnt_spcreateerror(char *</B><I>s</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>clnt_pcreateerror</B>()  と同様であるが、標準エラー出力へ表示するかわりに文字列を返す点が異っている。
+<DT><DD>
+バグ: 静的な領域へのポインターを返すため、呼び出しごとに上書きされる。
+</DL>
+<P>
+
+<PRE>
+<B>char *clnt_sperrno(enum clnt_stat </B><I>stat</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>clnt_perrno</B>()  と同じ引数を取るが、なぜ RPC 呼び出しが失敗したかについてのメッセージを標準エラー出力に表示する
+かわりに、メッセージを格納している文字列へのポインターを返す。 文字列は NEWLINE(改行) で終っている。
+<DT><DD>
+<B>clnt_sperrno</B>()  はプログラムが標準エラー出力を持っていない場合(プログラムがサーバとし
+て走っている場合にはよくありえる)や、プログラマーがメッセージを <B><A HREF="../man3/printf.3.html">printf</A></B>(3)  で出力することを望まない場合や、メッセージの形式が
+<B>clnt_perrno</B>()  がサポートするものとは異っている場合などに <B>clnt_perrno</B>()  のかわりに使用される。 注意:
+<B>clnt_sperror</B>()  や <B>clnt_spcreateerror</B>()  とは違って <B>clnt_sperrno</B>()
+は静的データへのポインターを返す。しかし呼び出しごとに上書きされることはない。
+</DL>
+<P>
+
+<PRE>
+<B>char *clnt_sperror(CLIENT *</B><I>rpch</I><B>, char *</B><I>s</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>clnt_perror</B>()  と同様であるが、標準エラー出力に表示する代りに (<B>clnt_sperrno</B>()  のように)
+文字列へのポインターを返す点が異っている。
+<DT><DD>
+バグ: 静的な領域へのポインターを返すため、呼び出しごとに上書きされる。
+</DL>
+<P>
+
+<PRE>
+<B>CLIENT *clntraw_create(unsigned long </B><I>prognum</I><B>, unsigned long </B><I>versnum</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンはリモートプログラム <I>prognum</I>、 バージョン <I>versnum</I> のための擬似 RPC
+クライアントを作成する。メッセージをサービスに渡すために使用する 通信は実際にはそのプロセスのアドレス空間にあるバッファーである。 それで、対応する
+RPC サーバが同じアドレス空間の中にいなければならない。 <B>svcraw_create</B>()  を参照すること。 これにより RPC
+のシミュレーションや、カーネルインターフェースに影響されずに 応答時間などの RPC オーバヘッドの獲得ができる。 失敗した場合にはこのルーティンは
+NULL を返す。
+</DL>
+<P>
+
+<PRE>
+<B>CLIENT *clnttcp_create(struct sockaddr_in *</B><I>addr</I><B>,</B>
+<B>                unsigned long </B><I>prognum</I><B>, unsigned long </B><I>versnum</I><B>,</B>
+<B>                int *</B><I>sockp</I><B>, unsigned int </B><I>sendsz</I><B>, unsigned int </B><I>recvsz</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+
+このルーティンはリモートプログラム <I>prognum</I>、 バージョン <I>versnum</I> のための RPC
+クライアントを作成する。クライアントは通信に TCP/IP を使用する。リモートプログラムはインターネットアドレスの <I>*addr</I> にある。
+<I>addr-&gt;sin_port</I> がゼロならば、実際にリモートプログラムが listen
+しているポートが設定される。(この情報のためにリモートの <B>portmap</B> サービスが利用される。) パラメーター <I>sockp</I>
+はソケットである。もしこれが <B>RPC_ANYSOCK</B> に設定されている場合は、このルーティンが新しいソケットをオープンして <I>sockp</I>
+に設定する。 TCP に基づいた RPC はバッファーされた I/O を使用するため、ユーザーはパラメーター <I>sendsz</I> と <I>recvsz</I>
+を使用して送信バッファーと受信バッファーのサイズを指定することができる。 ゼロを指定した場合には適切なデフォルトが選択される。
+このルーティンは失敗した場合は NULL を返す。
+</DL>
+<P>
+
+<PRE>
+<B>CLIENT *clntudp_create(struct sockaddr_in *</B><I>addr</I><B>,</B>
+<B>                unsigned long </B><I>prognum</I><B>, unsigned long </B><I>versnum</I><B>,</B>
+<B>                struct timeval </B><I>wait</I><B>, int *</B><I>sockp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンはリモートプログラム <I>prognum</I>、 バージョン <I>versnum</I> のための RPC
+クライアントを作成する。クライアントは通信に UDP/IP を使用する。リモートプログラムはインターネットアドレスの <I>*addr</I> にある。
+<I>addr-&gt;sin_port</I> がゼロならば、実際にリモートプログラムが listen
+しているポートが設定される。(この情報のためにリモートの <B>portmap</B> サービスが利用される。) パラメーター <I>sockp</I>
+はソケットである。もしこれが <B>RPC_ANYSOCK</B> に設定されている場合は、このルーティンが新しいソケットをオープンして <I>sockp</I>
+に設定する。 UDP 通信は回答があるか、時間切れが起こるまで <B>wait</B> 間隔で呼び出しメッセージを再送する。時間切れが起こるまでの合計時間は
+<B>clnt_call</B>()  で指定する。
+<DT><DD>
+警告: UDP に基づいた RPC メッセージは最大でも 8 Kbyte までのエンコードされたデータしか
+保持できないため、この通信は大きな引数や巨大な結果を取る プロシージャーには使用できない。
+</DL>
+<P>
+
+<PRE>
+<B>CLIENT *clntudp_bufcreate(struct sockaddr_in *</B><I>addr</I><B>,</B>
+<B>            unsigned long </B><I>prognum</I><B>, unsigned long </B><I>versnum</I><B>,</B>
+<B>            struct timeval </B><I>wait</I><B>, int *</B><I>sockp</I><B>,</B>
+<B>            unsigned int </B><I>sendsize</I><B>, unsigned int </B><I>recosize</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンはリモートプログラム <I>prognum</I>、 バージョン <I>versnum</I> のための RPC
+クライアントを作成する。クライアントは通信に UDP/IP を使用する。リモートプログラムはインターネットアドレスの <I>*addr</I> にある。
+<I>addr-&gt;sin_port</I> がゼロならば、実際にリモートプログラムが listen
+しているポートが設定される。(この情報のためにリモートの <B>portmap</B> サービスが利用される。) パラメーター <I>sockp</I>
+はソケットである。もしこれが <B>RPC_ANYSOCK</B> に設定されている場合は、このルーティンが新しいソケットをオープンして <I>sockp</I>
+に設定する。 UDP 通信は回答があるか、時間切れが起こるまで <B>wait</B> 間隔で呼び出しメッセージを再送する。時間切れが起こるまでの合計時間は
+<B>clnt_call</B>()  で指定する。
+<DT><DD>
+これを使用すると UDP に基づいた RPC メッセージにおいて送信パケットや 受信パケットの最大サイズを指定することが可能になる。
+</DL>
+<P>
+
+<PRE>
+<B>void get_myaddress(struct sockaddr_in *</B><I>addr</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマシンの IP アドレスを <I>*addr</I> に格納する。 <I>/etc/hosts</I> を扱うライブラリルーティンは使用しない。ポート番号は常に
+<B>htons(PMAPPORT)</B> に設定される。
+</DL>
+<P>
+
+<PRE>
+<B>struct pmaplist *pmap_getmaps(struct sockaddr_in *</B><I>addr</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>portmap</B> サービスのためのユーザーインターフェースであり、 IP アドレス <I>*addr</I> にあるホストの現在の RPC
+プログラムからポート番号へのマッピングの一覧を返す。 このルーティンが NULL を返す場合もある。 `<B>rpcinfo -p</B>'
+コマンドはこのルーティンを使用している。
+</DL>
+<P>
+
+<PRE>
+<B>unsigned short pmap_getport(struct sockaddr_in *</B><I>addr</I><B>,</B>
+<B>                    unsigned long </B><I>prognum</I><B>, unsigned long </B><I>versnum</I><B>,</B>
+<B>                    unsigned int </B><I>protocol</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>portmap</B> サービスのためのユーザーインターフェースで、 プログラム番号 <I>prognum</I>、 バージョン <I>versnum</I>、
+関連付けられた通信プロトコル <I>protocol</I> をサポートするサービスが待っているポート番号を返す。 <I>protocol</I> の値はほとんどの場合
+IPPROTO_UDP か IPPROTO_TCP である。 返り値ゼロはマッピングが存在しないか、 RPC システムがリモートの <B>portmap</B>
+サービスの参照に失敗したことを意味する。後者の場合は大域変数 <I>rpc_createerr</I> が RPC 状態を保持している。
+</DL>
+<P>
+
+<PRE>
+<B>enum clnt_stat pmap_rmtcall(struct sockaddr_in *</B><I>addr</I><B>,</B>
+<B>                    unsigned long </B><I>prognum</I><B>, unsigned long </B><I>versnum</I><B>,</B>
+<B>                    unsigned long </B><I>procnum</I><B>,</B>
+<B>                    xdrproc_t </B><I>inproc</I><B>, char *</B><I>in</I><B>,</B>
+<B>                    xdrproc_t </B><I>outproc</I><B>, char *</B><I>out</I><B>,</B>
+<B>                    struct timeval </B><I>tout</I><B>, unsigned long *</B><I>portp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>portmap</B> サービスのためのユーザーインターフェースで、 IP アドレス <I>*addr</I> のホストの <B>portmap</B> を参照して、
+RPC 呼び出しを生成し、そのホスト上のプロシージャーを呼び出す。 パラメーター <I>*portp</I>
+はプロシージャーが成功した場合にはプログラムのポート番号に修正される。 他のパラメーターの定義については <B>callrpc</B>()  や
+<B>clnt_call</B>()  で説明してある。 このプロシージャーは "ping" のみに使用すべきである。
+<B>clnt_broadcast</B>()  も参照すること。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t pmap_set(unsigned long </B><I>prognum</I><B>, unsigned long </B><I>versnum</I><B>,</B>
+<B>                unsigned int </B><I>protocol</I><B>, unsigned short </B><I>port</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>portmap</B> サービスのためのユーザーインターフェースで、 [<I>prognum</I>,<I>versnum</I>,<I>protocol</I>]
+の組み合わせと <I>port</I> との間のマッピングを、そのマシン上の <B>portmap</B> サービスに登録する。 <I>protocol</I>
+はほとんどの場合 <B>IPPROTO_UDP</B> か <B>IPPROTO_TCP</B> のどちらかである。 このルーティンは成功した場合には 1
+を返す。失敗した場合にはゼロを返す。 <B>svc_register</B>()  によって自動的に実行される。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t pmap_unset(unsigned long </B><I>prognum</I><B>, unsigned long </B><I>versnum</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>portmap</B> サービスのためのユーザーインターフェースで、 [<I>prognum</I>,<I>versnum</I>,<I>*</I>] の組み合わせと
+<B>ports</B> の間のマッピングをそのマシン上の <B>portmap</B> サービスから削除する。このルーティンは成功した場合は 1 を返す。
+失敗した場合には 0 を返す。
+</DL>
+<P>
+
+<PRE>
+<B>int registerrpc(unsigned long </B><I>prognum</I><B>, unsigned long </B><I>versnum</I><B>,</B>
+<B>                unsigned long </B><I>procnum</I><B>, char *(*</B><I>procname</I><B>)(char *),</B>
+<B>                xdrproc_t </B><I>inproc</I><B>, xdrproc_t </B><I>outproc</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC サービスパッケージを使用して <I>procname</I> プロシージャーを登録する。プログラム <I>prognum</I>、 バージョン
+<I>versnum</I>、 プロシージャー <I>procnum</I> への要求が届いた場合、 <I>procname</I>
+がパラメーターへのポインターを持って呼び出される。 <I>procname</I> は静的な結果へのポインターを返す必要がある。 <I>inproc</I>
+はパラメーターをデコードするために使用される。 <I>outproc</I> は結果をエンコードするために使用される。
+このルーティンは登録に成功した場合にはゼロを返す。 失敗した場合には -1 を返す。
+<DT><DD>
+警告: この形式で登録されたリモートプロシージャーは UDP/IP 通信を使用する。制限に関しては <B>svcudp_create</B>()
+を参照すること。
+</DL>
+<P>
+
+<PRE>
+<B>struct rpc_createerr </B><I>rpc_createerr</I><B>;</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+成功しなかった RPC クライアント生成ルーティンによって設定される大域変数。 <B>clnt_pcreateerror</B>()
+ルーティンが理由を表示するために使用する。
+</DL>
+<P>
+
+<PRE>
+<B>void svc_destroy(SVCXPRT *</B><I>xprt</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロは通信ハンドル <I>xprt</I> の RPC サービスを破壊する。破壊には通常、 <I>xprt</I>
+を含めて、私的なデータ構造体の破棄が含まれている。 このルーティンを呼び出した後に <I>xprt</I> を使用することは未定義である。
+</DL>
+<P>
+
+<PRE>
+<B>fd_set </B><I>svc_fdset</I><B>;</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC サービス側のファイルディスクリプターのビットマスクを反映した大域変数。 <B><A HREF="../man2/select.2.html">select</A></B>(2)
+システムコールのパラメーターのために利用できる。これは、サービスの実装者が <B>svc_run</B>()
+を呼び出さずに、独自の非同期イベント処理を用いる場合にのみ意味がある。 この変数は読み込み専用で (そのまま <B><A HREF="../man2/select.2.html">select</A></B>(2)
+へ渡してはならない!)、 <B>svc_getreqset</B>()  呼び出しや生成ルーティンの後に変更されているかもしれない。
+</DL>
+<P>
+
+<PRE>
+<B>int </B><I>svc_fds</I><B>;</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>svc_fdset</B> に似ているが、32 ファイルディスクリプターに制限されている。 このインターフェースは <B>svc_fdset</B>
+によって置き換えられた。
+</DL>
+<P>
+
+<PRE>
+<B>svc_freeargs(SVCXPRT *</B><I>xprt</I><B>, xdrproc_t </B><I>inproc</I><B>, char *</B><I>in</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロはサービスプロシージャーが <B>svc_getargs</B>()  を使用して引数をデコードした時に RPC/XDR
+システムによって割り当てられたデータを解放する。 このルーティンは解放に成功した場合には 1 を返す。 失敗した場合にはゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>svc_getargs(SVCXPRT *</B><I>xprt</I><B>, xdrproc_t </B><I>inproc</I><B>, char *</B><I>in</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このマクロは RPC サービス通信ハンドル <I>xprt</I> に関連付けられた RPC 要求の引数をデコードする。パラメーター <I>in</I>
+は引数の格納されたアドレスである。 <I>inproc</I> は引数をデコードするための XDR ルーティンである。 このルーティンはデコードに成功した場合は
+1 を返す。 失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>struct sockaddr_in *svc_getcaller(SVCXPRT *</B><I>xprt</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC サービス通信ハンドル <I>xprt</I> に関連付けられたプロシージャーの呼び出し元のネットワークアドレスを 取得するための標準的な手段。
+</DL>
+<P>
+
+<PRE>
+<B>void svc_getreqset(fd_set *</B><I>rdfds</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンはサービスの実装者が <B>svc_run</B>()  を呼び出さず、独自の非同期イベント処理を実装する場合にのみ意味がある。 これは
+<B><A HREF="../man2/select.2.html">select</A></B>(2)  システムコールが RPC ソケットに RPC 要求が到着したと返した場合にのみ呼び出される。 <I>rdfds</I>
+は結果の読み込みファイルディスクリプターのビットマスクである。 このルーティンは <I>rdfds</I>
+の値に関連付けられた全てのソケットのサービスが行なわれた時に 返ってくる。
+</DL>
+<P>
+
+<PRE>
+<B>void svc_getreq(int </B><I>rdfds</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<B>svc_getreqset</B>()  に似ているが、ファイルディスクリプターの数が 32 に制限されている。 このインターフェースは
+<B>svc_getreqset</B>()  によって置き換えられた。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t svc_register(SVCXPRT *</B><I>xprt</I><B>, unsigned long </B><I>prognum</I><B>,</B>
+<B>                    unsigned long </B><I>versnum</I><B>,</B>
+<B>                    void (*</B><I>dispatch</I><B>)(svc_req *, SVCXPRT *),</B>
+<B>                    unsigned long </B><I>protocol</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+<I>prognum</I> と <I>versnum</I> をサービス配分プロシージャー <I>dispatch</I> で関連付ける。 <I>protocol</I>
+がゼロの場合、サービスは <B>portmap</B> サービスには登録されない。 <I>protocol</I> がゼロ以外の場合、
+[<I>prognum</I>,<I>versnum</I>,<I>protocol</I>] の組み合わせと <I>xprt-&gt;xp_port</I>
+とのマッピングがローカルの <B>portmap</B> サービスに登録される。(一般的に <I>protocol</I> はゼロ、 <B>IPPROTO_UDP</B>、
+<B>IPPROTO_TCP</B> のどれかである。)  プロシージャー <I>dispatch</I> は以下の形式である:
+<DT><DD>
+
+
+dispatch(struct svc_req *request, SVCXPRT *xprt);
+
+
+<DT><DD>
+<B>svc_register</B>()  ルーティンは成功した場合は 1 を返す。失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>void svc_run(void);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンは戻ってこない。これは
+<FONT SIZE="-1">RPC</FONT>
+要求の到着を待ち、どれかが届いた場合に <B>svc_getreq</B>()
+を使用して適切なサービスプロシージャーを呼び出す。 このプロシージャーは通常は <B><A HREF="../man2/select.2.html">select</A></B>(2)  システムコールから返るのを待っている。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t svc_sendreply(SVCXPRT *</B><I>xprt</I><B>, xdrproc_t </B><I>outproc</I><B>, char *</B><I>out</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC サービス配分ルーティンによってリモートプロシージャーコールの結果を 返すために呼び出される。 パラメーター <I>xprt</I>
+はその要求に関連付けられた通信ハンドルである。 <I>outproc</I> は結果をエンコードするために使用する XDR ルーティンである。 <I>out</I>
+は結果のアドレスである。このルーティンは成功した場合は 1 を返す。 失敗した場合はゼロを返す。
+</DL>
+<P>
+
+<PRE>
+<B>void svc_unregister(unsigned long </B><I>prognum</I><B>, unsigned long </B><I>versnum</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+配分ルーティンから [<I>prognum</I>,<I>versnum</I>] および [<I>prognum</I>,<I>versnum</I>,<I>*</I>]
+の組み合わせからポート番号へのマッピングを全て削除する。
+</DL>
+<P>
+
+<PRE>
+<B>void svcerr_auth(SVCXPRT *</B><I>xprt</I><B>, enum auth_stat </B><I>why</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+認証エラーによりリモートプロシージャーコールの実行を拒否された 場合にサービス配分ルーティンによって呼び出される。
+</DL>
+<P>
+
+<PRE>
+<B>void svcerr_decode(SVCXPRT *</B><I>xprt</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+パラメーターのデコードに失敗した場合に サービス配分ルーティンによって呼び出される。 <B>svc_getargs</B>()  も参照すること。
+</DL>
+<P>
+
+<PRE>
+<B>void svcerr_noproc(SVCXPRT *</B><I>xprt</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+要求のあったプロシージャー番号が実装されていない場合に サービス配分ルーティンより呼び出される。
+</DL>
+<P>
+
+<PRE>
+<B>void svcerr_noprog(SVCXPRT *</B><I>xprt</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC パッケージに要求されたプログラムが登録されていない場合に呼び出される。 サービスの実装には通常、このルーティンは必要ない。
+</DL>
+<P>
+
+<PRE>
+<B>void svcerr_progvers(SVCXPRT *</B><I>xprt</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC パッケージに要求されたバージョンのプログラムが登録されていない場合に 呼び出される。サービスの実装には通常、このルーティンは必要ない。
+</DL>
+<P>
+
+<PRE>
+<B>void svcerr_systemerr(SVCXPRT *</B><I>xprt</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+特定のプロトコルによってカバーされていなシステムエラーが 検出された場合にサービス配分ルーティンによって呼び出される。
+例えば、サービスがそれ以上、記憶装置を割り当てることができない場合には このルーティンが呼び出されるかもしれない。
+</DL>
+<P>
+
+<PRE>
+<B>void svcerr_weakauth(SVCXPRT *</B><I>xprt</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+認証パラメーターが足りないためにリモートプロシージャーコールの実行を 拒否された場合にサービス配分ルーティンによって呼び出される。 このルーティンは
+<B>svcerr_auth(xprt, AUTH_TOOWEAK)</B> を呼び出す。
+</DL>
+<P>
+
+<PRE>
+<B>SVCXPRT *svcfd_create(int </B><I>fd</I><B>, unsigned int </B><I>sendsize</I><B>,</B>
+<B>                      unsigned int </B><I>recvsize</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+任意のオープンされたファイルディスクリプター上にサービスを作成する。 典型的に、ファイルディスクリプターは TCP
+のようなストリームプロトコルで接続されたソケットである。 <I>sendsize</I> と <I>recvsize</I>
+には送信バッファーと受信バッファーの大きさを指定する。もしゼロが指定された 場合は適切なデフォルトが選択される。
+</DL>
+<P>
+
+<PRE>
+<B>SVCXPRT *svcraw_create(void);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンは擬似 RPC サービス通信を生成して、そのポインターを返す。 通信は実際にはそのプロセスのアドレス空間にあるバッファーなので 対応する
+RPC クライアントは同じアドレス空間にいる必要がある。 <B>clntraw_create</B>()  を参照すること。 このルーティンで RPC
+のシミュレーションや、カーネルインターフェースに影響されずに応答時間などの RPC オーバヘッドを取得ができる。このルーティンは失敗した場合は NULL
+を返す。
+</DL>
+<P>
+
+<PRE>
+<B>SVCXPRT *svctcp_create(int </B><I>sock</I><B>, unsigned int </B><I>send_buf_size</I><B>,</B>
+<B>                       unsigned int </B><I>recv_buf_size</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンは TCP/IP に基づく RPC サービス通信を作成し、それへのポインターを返す。 通信はソケット <I>sock</I> に結びつけられる。
+<I>sock</I> は <B>RPC_ANYSOCK</B> でも良い。この場合は新しいソケットが作成される。 もしソケットがローカルな TCP ポートに bind
+されていない場合は、 このルーティンが適当なポートに bind する。 補完された場合、<I>xprt-&gt;xp_sock</I> には通信のソケット
+ディスクリプターが、<I>xprt-&gt;xp_port</I> には通信のポート番号が 設定される。 このルーティンは失敗した場合は NULL を返す。
+TCP に基づいた RPC はバッファーされた I/O を使用するため、 ユーザーはバッファーの大きさを指定できる。
+ゼロを指定した場合は適切なデフォルトが選択される。
+</DL>
+<P>
+
+<PRE>
+<B>SVCXPRT *svcudp_bufcreate(int </B><I>sock</I><B>, unsigned int </B><I>sendsize</I><B>,</B>
+<B>                          unsigned int </B><I>recosize</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+このルーティンは UDP/IP に基づいた RPC サービス通信を作成し、 そのポインターを返す。通信はソケット <I>sock</I> に関連付けられる。
+<I>sock</I> は <B>RPC_ANYSOCK</B> でも良い。この場合は新しいソケットが作成される。 ソケットがローカルの UDP ポートに bind
+されていない場合には このルーティンは適当なポートに bind する。 補完された場合、<I>xprt-&gt;xp_sock</I> に通信のソケットの
+ディスクリプターが、<I>xprt-&gt;xp_port</I> に通信のポート番号が 設定される。このルーティンは失敗した場合には NULL を返す。
+<DT><DD>
+これを使用すると UDP に基づいた RPC メッセージにおいて送信パケットや 受信パケットの最大サイズを指定することが可能になる。
+</DL>
+<P>
+
+<PRE>
+<B>SVCXPRT *svcudp_create(int </B><I>sock</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+送信パケットと受信パケットのサイズを同じデフォルトの値 <I>SZ</I> に指定した <I>svcudp_bufcreate(sock,SZ,SZ)</I>
+と等価である。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_accepted_reply(XDR *</B><I>xdrs</I><B>, struct accepted_reply *</B><I>ar</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC 応答メッセージをエンコードするのに使用する。このルーティンは RPC パッケージを用いずに
+RPC-形式のメッセージを作成しようとする場合に便利である。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_authunix_parms(XDR *</B><I>xdrs</I><B>, struct authunix_parms *</B><I>aupp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+UNIX 形式の証明書を記述するために使用する。このルーティンは RPC 認証パッケージを使用せずにこれらの証明書を作成しようとする場合に便利である。
+</DL>
+<P>
+
+<PRE>
+<B>void xdr_callhdr(XDR *</B><I>xdrs</I><B>, struct rpc_msg *</B><I>chdr</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC 呼び出しのヘッダーメッセージを記述するために使用する。 このルーティンは RPC パッケージを使用せずに
+RPC-形式のメッセージを作成しようとする場合に便利である。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_callmsg(XDR *</B><I>xdrs</I><B>, struct rpc_msg *</B><I>cmsg</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC 呼び出しメッセージを記述するのに使用する。 このルーティンは RPC パッケージを使用せずに
+RPC-形式のメッセージを作成しようとする場合に便利である。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_opaque_auth(XDR *</B><I>xdrs</I><B>, struct opaque_auth *</B><I>ap</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+PRC 認証情報メッセージを記述するために使用する。 このルーティンは RPC パッケージを使用せずに
+RPC-形式のメッセージを作成しようとする場合に便利である。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_pmap(XDR *</B><I>xdrs</I><B>, struct pmap *</B><I>regs</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+各種の <B>portmap</B> プロシージャーへのパラメーターを外部的に記述するために使用する。 このルーティンは <B>pmap</B>
+インターフェースを使用せずに、これらのパラメーターを 作成したい場合に便利である。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_pmaplist(XDR *</B><I>xdrs</I><B>, struct pmaplist **</B><I>rp</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+ポートのマッピングのリストを外部的に記述するために使用する。 このルーティンは <B>pmap</B> インターフェースを使用せずに、これらのパラメーターを
+作成したい場合に便利である。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_rejected_reply(XDR *</B><I>xdrs</I><B>, struct rejected_reply *</B><I>rr</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC 応答メッセージを記述するために使用する。このルーティンは RPC パッケージを使用せずに、
+RPC-形式のメッセージを作成したい場合に便利である。
+</DL>
+<P>
+
+<PRE>
+<B>bool_t xdr_replymsg(XDR *</B><I>xdrs</I><B>, struct rpc_msg *</B><I>rmsg</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC 応答メッセージを記述するために使用する。 このルーティンは RPC パッケージを使用せずに、 RPC
+形式のメッセージを作成したい場合に便利である。
+</DL>
+<P>
+
+<PRE>
+<B>void xprt_register(SVCXPRT *</B><I>xprt</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC サービス通信ハンドルを生成した後に、それら自身を RPC サービスパッケージに登録する必要がある。 このルーティンは大域変数
+<I>svc_fds</I> を修正する。サービスの実装者は通常、このルーティンは必要ない。
+</DL>
+<P>
+
+<PRE>
+<B>void xprt_unregister(SVCXPRT *</B><I>xprt</I><B>);</B>
+</PRE>
+
+<DL COMPACT>
+<DT><DD>
+RPC サービス通信ハンドルを破壊する前に、それを RPC 通信パッケージから登録解除する必要がある。 このルーティンは大域変数 <I>svc_fds</I>
+を修正する。サービスの実装者は通常、このルーティンは必要ない。
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>auth_destroy</B>(),
+<B>authnone_create</B>(),
+<BR>
+
+<B>authunix_create</B>(),
+<BR>
+
+<B>authunix_create_default</B>(),
+<BR>
+
+<B>callrpc</B>(),
+<B>clnt_broadcast</B>(),
+<BR>
+
+<B>clnt_call</B>(),
+<B>clnt_destroy</B>(),
+<BR>
+
+<B>clnt_create</B>(),
+<B>clnt_control</B>(),
+<BR>
+
+<B>clnt_freeres</B>(),
+<B>clnt_geterr</B>(),
+<BR>
+
+<B>clnt_pcreateerror</B>(),
+<B>clnt_perrno</B>(),
+<BR>
+
+<B>clnt_perror</B>(),
+<BR>
+
+<B>clnt_spcreateerror</B>(),
+<BR>
+
+<B>clnt_sperrno</B>(),
+<B>clnt_sperror</B>(),
+<BR>
+
+<B>clntraw_create</B>(),
+<B>clnttcp_create</B>(),
+<BR>
+
+<B>clntudp_create</B>(),
+<BR>
+
+<B>clntudp_bufcreate</B>(),
+<BR>
+
+<B>get_myaddress</B>(),
+<B>pmap_getmaps</B>(),
+<BR>
+
+<B>pmap_getport</B>(),
+<B>pmap_rmtcall</B>(),
+<BR>
+
+<B>pmap_set</B>(),
+<B>pmap_unset</B>(),
+<BR>
+
+<B>registerrpc</B>(),
+<B>svc_destroy</B>(),
+<BR>
+
+<B>svc_freeargs</B>(),
+<B>svc_getargs</B>(),
+<BR>
+
+<B>svc_getcaller</B>(),
+<B>svc_getreqset</B>(),
+<BR>
+
+<B>svc_getreq</B>(),
+<B>svc_register</B>(),
+<BR>
+
+<B>svc_run</B>(),
+<B>svc_sendreply</B>(),
+<BR>
+
+<B>svc_unregister</B>(),
+<B>svcerr_auth</B>(),
+<BR>
+
+<B>svcerr_decode</B>(),
+<B>svcerr_noproc</B>(),
+<BR>
+
+<B>svcerr_noprog</B>(),
+<B>svcerr_progvers</B>(),
+<BR>
+
+<B>svcerr_systemerr</B>(),
+<B>svcerr_weakauth</B>(),
+<BR>
+
+<B>svcfd_create</B>(),
+<B>svcraw_create</B>(),
+<BR>
+
+<B>svctcp_create</B>(),
+<BR>
+
+<B>svcudp_bufcreate</B>(),
+<BR>
+
+<B>svcudp_create</B>(),
+<B>xdr_accepted_reply</B>(),
+<BR>
+
+<B>xdr_authunix_parms</B>(),
+<BR>
+
+<B>xdr_callhdr</B>(),
+<BR>
+
+<B>xdr_callmsg</B>(),
+<B>xdr_opaque_auth</B>(),
+<BR>
+
+<B>xdr_pmap</B>(),
+<B>xdr_pmaplist</B>(),
+<BR>
+
+<B>xdr_rejected_reply</B>(),
+<BR>
+
+<B>xdr_replymsg</B>(),
+<BR>
+
+<B>xprt_register</B>(),
+<B>xprt_unregister</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B><A HREF="../man3/xdr.3.html">xdr</A></B>(3)
+<P>
+
+以下のマニュアル:
+<DL COMPACT><DT><DD>
+Remote Procedure Calls: Protocol Specification
+<BR>
+
+Remote Procedure Call Programming Guide
+<BR>
+
+rpcgen Programming Guide
+<BR>
+
+</DL>
+
+<P>
+
+<I>RPC: Remote Procedure Call Protocol Specification</I>, RFC&nbsp;1050, Sun
+Microsystems, Inc., USC-ISI.
+<A NAME="lbAF">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式と説明</A><DD>
+<DT><A HREF="#lbAD">属性</A><DD>
+<DT><A HREF="#lbAE">関連項目</A><DD>
+<DT><A HREF="#lbAF">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,647 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STAT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>STAT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-08-19<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/stat.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+stat, fstat, lstat, fstatat - ファイルの状態を取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int stat(const char *</B><I>pathname</I><B>, struct stat *</B><I>buf</I><B>);</B>
+<BR>
+<B>int fstat(int </B><I>fd</I><B>, struct stat *</B><I>buf</I><B>);</B>
+<BR>
+<B>int lstat(const char *</B><I>pathname</I><B>, struct stat *</B><I>buf</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;           </B>/* AT_* 定数の定義 */
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+
+<B>int fstatat(int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>, struct stat *</B><I>buf</I><B>,</B>
+<B>            int </B><I>flags</I><B>);</B>
+</PRE>
+
+<P>
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+
+
+<P>
+<B>lstat</B>():
+<DL COMPACT><DT><DD>
+/* glibc 2.19 以前 */ _BSD_SOURCE ||
+<BR>
+
+/* glibc 2.20 以降 */_DEFAULT_SOURCE ||
+<BR>
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED
+<BR>
+
+|| /* glibc 2.10 以降: */ _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+</DL>
+
+<P>
+<B>fstatat</B>():
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>glibc 2.10 以降:<DD>
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;700 || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>glibc 2.10 より前:<DD>
+_ATFILE_SOURCE
+</DL>
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+これらの関数は、ファイルについての情報を <I>stat</I> が指すバッファーに格納して返す。 ファイルそのものに対するアクセス許可は必要としないが、
+---<B>stat</B>(), <B>fstatat</B>(), <B>lstat</B>() の場合には ---そのファイルへ至る <I>pathname</I>
+を構成する全てのディレクトリに対する実行 (検索) 許可が必要である。
+<P>
+
+<B>stat</B>() と <B>fstatat</B>() は <I>pathname</I> が指すファイルに関する情報を取得する。 <B>fstatat</B>()
+の違いについては後で説明する。
+<P>
+<B>lstat</B>()  は <B>stat</B>()  と同じであるが、 <I>pathnames</I>
+がシンボリックリンクの場合、リンクが参照しているファイルではなく、 リンク自身の状態を返す点が異なる。
+<P>
+<B>fstat</B>()  は <B>stat</B>()  と同じだが、 状態を取得するファイルをファイルディスクリプター <I>fd</I> で指定する点が異なる。
+<P>
+
+これらのシステムコールはいずれも、結果を <I>stat</I> 構造体に入れて返す。 <I>stat</I> 構造体には以下のフィールドが含まれている:
+<P>
+
+
+<PRE>
+struct stat {
+    dev_t     st_dev;     /* ファイルがあるデバイスの ID */
+    ino_t     st_ino;     /* inode 番号 */
+    mode_t    st_mode;    /* アクセス保護 */
+    nlink_t   st_nlink;   /* ハードリンクの数 */
+    uid_t     st_uid;     /* 所有者のユーザー ID */
+    gid_t     st_gid;     /* 所有者のグループ ID */
+    dev_t     st_rdev;    /* デバイス ID (特殊ファイルの場合) */
+    off_t     st_size;    /* 全体のサイズ (バイト単位) */
+    blksize_t st_blksize; /* ファイルシステム I/O での
+                             ブロックサイズ */
+    blkcnt_t  st_blocks;  /* 割り当てられた 512B のブロック数 */
+};
+
+    /* Linux 2.6 以降では、カーネルは以下のタイムスタンプ
+       フィールドでナノ秒の精度をサポートしている。
+       Linux 2.6 より前のバージョンでの詳細は
+       下記の「注意」を参照。 */
+
+    struct timespec st_atim;  /* 最終アクセス時刻 */
+    struct timespec st_mtim;  /* 最終修正時刻 */
+    struct timespec st_ctim;  /* 最終状態変更時刻 */
+
+#define st_atime st_atim.tv_sec      /* 後方互換性 */
+#define st_mtime st_mtim.tv_sec
+#define st_ctime st_ctim.tv_sec
+};
+</PRE>
+
+
+<P>
+<I>注意:</I> <I>stat</I> 構造体のフィールドの順序はアーキテクチャーにより様々である。
+また、上記の定義では、フィールド間に存在することがあるパディングバイトは書かれていない。このパディングバイトはアーキテクチャーによっても異なる。詳細を知る必要がある場合は
+glibc とカーネルのソースを調べてほしい。
+<P>
+<I>st_dev</I> フィールドは、このファイルが存在するデバイスを示す (マクロ <B><A HREF="../man3/major.3.html">major</A></B>(3), <B><A HREF="../man3/minor.3.html">minor</A></B>(3)
+は、このフィールドのデバイス ID を分解するのに役立つだろう)。
+<P>
+<I>st_rdev</I> フィールドは、このファイル (inode) が表すデバイスを示す。
+<P>
+<I>st_size</I> フィールドは、(通常のファイルかシンボリックリンクの場合に)
+ファイルの大きさをバイト単位で示す。 シンボリックリンクの大きさは、
+シンボリックリンクに含まれている パス名の長さ (終端のヌルバイトは含まない)
+である。
+<P>
+<I>st_blocks</I> フィールドは、ファイルの大きさを 512 バイトのブロックサイズ単位で示す フィールドは、ファイルに割り当てされたブロック数を
+512 バイト単位で示す。 (ファイルに穴があるような場合、この値は <I>st_size</I>/512 より小さくなることもある)。
+<P>
+<I>st_blksize</I> フィールドは、効率的にファイルシステム I/O ができる「好ましい」 ブロックサイズを示す
+(もっと小さい単位でファイルに書き込みを行うと、 読み出し--修正--再書き込みといった非効率な動作になってしまうかもしれない)。
+<P>
+
+全ての Linux のファイルシステムが全ての時間フィールドを 実装しているわけではない。 ファイルやディレクトリのアクセスが <I>st_atime</I>
+フィールドを更新しないようなかたちでマウントできるファイルシステムもある。 (<B><A HREF="../../util-linux/man8/mount.8.html">mount</A></B>(8)  の <I>noatime</I>,
+<I>nodiratime</I>, <I>relatime</I> や <B><A HREF="../man2/mount.2.html">mount</A></B>(2)  の関連する情報を参照)。 また、ファイルが <B>O_NOATIME</B>
+付きでオープンされている場合には <I>st_atime</I> は更新されない。 <B><A HREF="../man2/open.2.html">open</A></B>(2)  参照。
+<P>
+<I>st_atime</I> フィールドはファイルアクセスがあった場合に変更される (例えば、 <B><A HREF="../man2/execve.2.html">execve</A></B>(2), <B><A HREF="../man2/mknod.2.html">mknod</A></B>(2),
+<B><A HREF="../man2/pipe.2.html">pipe</A></B>(2), <B><A HREF="../man2/utime.2.html">utime</A></B>(2)  を使用した場合や <B><A HREF="../man2/read.2.html">read</A></B>(2)  で 1 バイト以上読み込んだ場合など)。
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  などの他のルーチンでは、 <I>st_atime</I> は更新されることもあれば、そうでない場合もある。
+<P>
+<I>st_mtime</I> フィールドは、ファイルが修正された場合に変更される (例えば、 <B><A HREF="../man2/mknod.2.html">mknod</A></B>(2), <B><A HREF="../man2/truncate.2.html">truncate</A></B>(2),
+<B><A HREF="../man2/utime.2.html">utime</A></B>(2)  を使用した場合や <B><A HREF="../man2/write.2.html">write</A></B>(2)  で 1 バイト以上書き込みをした場合など)。 さらに、ディレクトリの
+<I>st_mtime</I> は、そのディレクトリで ファイルが作成されたり削除されたりすると変更される。 <I>st_mtime</I> フィールドは
+所有者やグループやハードリンク数やモードの変更では変更 <I>されない。</I>
+<P>
+<I>st_ctime</I> フィールドは書き込みや inode 情報 (所有者、グループ、リンク数、モードなど) の 設定によって変更される。
+<P>
+
+以下のマスク値が <I>st_mode</I> フィールドのファイル種別の検査用に定義されている。
+
+<TABLE>
+<TR VALIGN=top><TD><B>S_IFMT</B></TD><TD>0170000</TD><TD>ファイル種別を示すビット領域を表すビットマスク<BR></TD></TR>
+<TR VALIGN=top><TD><B></B></TD><TD></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFSOCK</B></TD><TD>0140000</TD><TD>ソケット<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFLNK</B></TD><TD>0120000</TD><TD>シンボリックリンク<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFREG</B></TD><TD>0100000</TD><TD>通常のファイル<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFBLK</B></TD><TD>0060000</TD><TD>ブロックデバイス<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFDIR</B></TD><TD>0040000</TD><TD>ディレクトリ<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFCHR</B></TD><TD>0020000</TD><TD>キャラクターデバイス<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFIFO</B></TD><TD>0010000</TD><TD>FIFO<BR></TD></TR>
+</TABLE>
+
+
+<P>
+
+したがって、(例えば) 通常のファイルかどうかを検査するには、以下のようにすればよい。
+<P>
+<PRE>
+stat(pathname, &amp;sb);
+if ((sb.st_mode &amp; S_IFMT) == S_IFREG) {
+    /* Handle regular file */
+}
+</PRE>
+
+<P>
+
+上記の形の検査はよくあるので、 POSIX では以下のマクロが定義されており、 <I>st_mode</I>
+のファイル種別の検査をより簡単に書けるようになっている。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>S_ISREG</B>(m)<DD>
+通常のファイルか?
+<DT><B>S_ISDIR</B>(m)<DD>
+ディレクトリか?
+<DT><B>S_ISCHR</B>(m)<DD>
+キャラクターデバイスか?
+<DT><B>S_ISBLK</B>(m)<DD>
+ブロックデバイスか?
+<DT><B>S_ISFIFO</B>(m)<DD>
+FIFO (名前付きパイプ) か?
+<DT><B>S_ISLNK</B>(m)<DD>
+シンボリックリンクか? (POSIX.1-1996 にはない)
+<DT><B>S_ISSOCK</B>(m)<DD>
+ソケットか? (POSIX.1-1996 にはない)
+</DL>
+</DL>
+
+<P>
+
+上で挙げたコードは以下のように書き換えることができる。
+<P>
+<PRE>
+stat(pathname, &amp;sb);
+if (S_ISREG(sb.st_mode)) {
+    /* Handle regular file */
+}
+</PRE>
+
+<P>
+
+上記のほとんどのファイル種別検査マクロの定義は、 機能検査マクロ <B>_BSD_SOURCE</B> (glibc 2.19 以前の場合)、
+<B>_SVID_SOURCE</B> (glibc 2.19 以前の場合)、 <B>_DEFAULT_SOURCE</B> (glibc 2.20 以降の場合)
+のいずれかが定義されている場合に公開される。 さらに、 <B>S_IFSOCK</B> と <B>S_ISSOCK</B> 以外の上記のすべてのマクロの定義は
+<B>_XOPEN_SOURCE</B> が定義されている場合にも公開される。 <B>S_IFSOCK</B> の定義は <B>_XOPEN_SOURCE</B> が値 500
+以上で定義された場合にも公開される。
+<P>
+<B>S_ISSOCK</B>() の定義が公開されるのは以下の機能検査マクロが定義されている場合である: <B>_BSD_SOURCE</B> (glibc 2.19
+以前の場合)、 <B>_DEFAULT_SOURCE</B> (glibc 2.20 以降の場合)、 値 500 以上の <B>_XOPEN_SOURCE</B>、
+値が 200112L 以上の <B>_POSIX_C_SOURCE</B>。
+<P>
+
+以下のマスク値が <I>st_mode</I> フィールドのファイルのアクセス許可の検査用に定義されている。
+
+<TABLE>
+<TR VALIGN=top><TD><B>S_ISUID</B></TD><TD>0004000</TD><TD>set-user-ID bit<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_ISGID</B></TD><TD>0002000</TD><TD>set-group-ID bit (下記参照)<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_ISVTX</B></TD><TD>0001000</TD><TD>スティッキービット (下記参照)<BR></TD></TR>
+<TR VALIGN=top><TD><B></B></TD><TD></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRWXU</B></TD><TD>00700</TD><TD>ファイル所有者のアクセス許可用のビットマスク<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRUSR</B></TD><TD>00400</TD><TD>所有者の読み込み許可<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IWUSR</B></TD><TD>00200</TD><TD>所有者の書き込み許可<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IXUSR</B></TD><TD>00100</TD><TD>所有者の実行許可<BR></TD></TR>
+<TR VALIGN=top><TD><B></B></TD><TD></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRWXG</B></TD><TD>00070</TD><TD>グループのアクセス許可用のビットマスク<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRGRP</B></TD><TD>00040</TD><TD>グループの読み込み許可<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IWGRP</B></TD><TD>00020</TD><TD>グループの書き込み許可<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IXGRP</B></TD><TD>00010</TD><TD>グループの実行許可<BR></TD></TR>
+<TR VALIGN=top><TD><B></B></TD><TD></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRWXO</B></TD><TD>00007</TD><TD>
+他人 (others) のアクセス許可用のビットマスク
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IROTH</B></TD><TD>00004</TD><TD>他人の読み込み許可<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IWOTH</B></TD><TD>00002</TD><TD>他人の書き込み許可<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IXOTH</B></TD><TD>00001</TD><TD>他人の実行許可<BR></TD></TR>
+</TABLE>
+
+
+<P>
+
+set-group-ID bit (<B>S_ISGID</B>)  にはいくつかの特殊な使用法がある: ディレクトリに設定した場合には、そのディレクトリが
+BSD 方式で使用される ことを示す。つまり、そのディレクトリに作成されたファイルのグループID は 作成したプロセスの実効 (effective)
+グループID ではなく、ディレクトリの グループID を継承する。また、そのディレクトリに作成されたディレクトリにも <B>S_ISGID</B>
+ビットが設定される。グループ実行ビット (<B>S_IXGRP</B>)  が設定されていないファイルに設定された場合は、 set-group-ID
+ビットはファイル/レコードの 強制的な (mandatory) ロックを表す。
+<P>
+
+
+
+ディレクトリにスティッキービット (S_ISVTX) が設定された場合は、 そのディレクトリのファイルの名前を変更したり、削除したりできるのは、
+そのファイルの所有者か、そのディレクトリの所有者か、特権プロセス だけとなる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>fstatat()</H3>
+
+<B>fstatat</B>() システムコールは <B>stat</B>() と全く同様に動作するが、以下で説明する点が異なる。
+<P>
+指定された <I>pathname</I> が相対パスの場合、 ファイルディスクリプター <I>dirfd</I> が参照するディレクトリに対する相対パスと解釈される
+(<B>stat</B>() に相対パスを渡した場合のように、呼び出したプロセスのカレントワーキングディレクトリに対する相対パスではない)。
+<P>
+<I>pathname</I> が相対パスで、 <I>dirfd</I> が特別な値 <B>AT_FDCWD</B> の場合、 (<B><A HREF="../man2/stat.2.html">stat</A></B>(2) と同様に)
+<I>pathname</I> は呼び出したプロセスのカレントワーキングディレクトリに対する相対パスと解釈される。
+<P>
+<I>pathname</I> で指定されたパス名が絶対パスの場合、 <I>dirfd</I> は無視される。
+<P>
+この <I>flags</I> 引き数は下記のフラグの 0 個以上の論理和を取ったものである:
+<DL COMPACT>
+<DT><B>AT_EMPTY_PATH</B> (Linux 2.6.39 以降)<DD>
+
+
+<I>pathname</I> が空文字列の場合、 <I>dirfd</I> が参照するファイルに対して操作を行う (<I>dirfd</I> は <B><A HREF="../man2/open.2.html">open</A></B>(2) の
+<B>O_PATH</B> フラグを使って取得できる)。 <B>dirfd</B> が <B>AT_FDCWD</B>
+の場合、呼び出しはカレントワーキングディレクトリに対して操作を行う。 この場合、 <I>dirfd</I>
+は、ディレクトリだけでなく、任意のタイプのファイルを参照することができる。 このフラグは Linux 固有であり、その定義を得るには
+<B>_GNU_SOURCE</B> を定義すること。
+<DT><B>AT_NO_AUTOMOUNT</B> (Linux 2.6.38 以降)<DD>
+
+<I>pathname</I> がオートマウントポイントとなっているディレクトリの場合、 <I>pathname</I> の最終 (&quot;basename&quot;)
+要素のオートマウントを行わない。 これにより (マウントされるはずの場所ではなく) オートマウントポイントの属性を取得することができる。
+このフラグを使うと、 ディレクトリをスキャンするツールがオートマウントポイントのディレクトリを大量にオートマウントしてしまうのを防ぐことができる。
+マウントポイントがすでにマウントされている場合 <B>AT_NO_AUTOMOUNT</B> フラグは何の効果もない。 このフラグは Linux
+固有であり、その定義を得るには <B>_GNU_SOURCE</B> を定義すること。
+<DT><B>AT_SYMLINK_NOFOLLOW</B><DD>
+(<B>lstat</B>() 同様) <I>pathname</I> がシンボリックリンクの場合リンクの展開を行わず、 リンク自身の情報を返す (デフォルトでは、
+<B>fstatat</B>() は、 <B>stat</B>() と同様に、シンボリックリンクの展開を行う)。
+</DL>
+<P>
+
+<B>fstatat</B>() の必要性についての説明については <B><A HREF="../man2/openat.2.html">openat</A></B>(2) を参照。
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、0 が返される。 失敗した場合、 -1 が返され、 <I>errno</I> に適切な値がセットされる。
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+<I>pathname</I> が所属するディレクトリとその上位のディレクトリのいずれかに 対する検索許可がなかった
+(<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)  も参照のこと)。
+<DT><B>EBADF</B><DD>
+<I>fd</I> が不正である。
+<DT><B>EFAULT</B><DD>
+アドレスが間違っている。
+<DT><B>ELOOP</B><DD>
+パスを辿る際に解決すべきシンボリックリンクが多過ぎた。
+<DT><B>ENAMETOOLONG</B><DD>
+<I>pathname</I> が長過ぎる。
+<DT><B>ENOENT</B><DD>
+<I>pathname</I> の構成要素が存在しないか、 <I>pathname</I> が空文字列である。
+<DT><B>ENOMEM</B><DD>
+カーネルのメモリーが足りない。
+<DT><B>ENOTDIR</B><DD>
+<I>pathname</I> の前半部分 (prefix) の構成要素がディレクトリではない。
+<DT><B>EOVERFLOW</B><DD>
+<I>pathname</I> または <I>fd</I> が、ファイルサイズ、inode 番号、ブロック数が
+それぞれ <I>off_t</I> 型、 <I>ino_t</I> 型、 <I>blkcnt_t</I> 型で表現できないファイルを
+参照している。このエラーが起こるのは、例えば、32 ビットプラットフォーム上で
+<I>-D_FILE_OFFSET_BITS=64</I> を指定せずにコンパイルされたアプリケーションが、
+ファイルサイズが <I>(1&lt;&lt;31)-1</I> バイトを超えるファイルに対して
+<B>stat</B>() を呼び出した場合である。
+</DL>
+<P>
+
+<B>fstatat</B>() では以下のエラーも発生することがある。
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>dirfd</I> が有効なファイルディスクリプターでない。
+<DT><B>EINVAL</B><DD>
+<I>flags</I> に無効なフラグが指定された。
+<DT><B>ENOTDIR</B><DD>
+<I>pathname</I> が相対パスで、 <I>dirfd</I> がディレクトリ以外のファイルを参照しているファイルディスクリプターである。
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>fstatat</B>()  はカーネル 2.6.16 で Linux に追加された。 ライブラリによるサポートはバージョン 2.4 で glibc
+に追加された。
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+
+
+
+
+
+<B>stat</B>(), <B>fstat</B>(), <B>lstat</B>(): SVr4, 4.3BSD, POSIX.1-2001, POSIX.1.2008.
+<P>
+<B>fstatat</B>(): POSIX.1-2008.
+<P>
+POSIX.1-2001 では、シンボリックリンクに対する <B>lstat</B>() で
+有効な情報を返すように求められていたのは、 <I>stat</I> 構造体の <I>st_size</I>
+と <I>st_mode</I> のファイル種別要素だけであった。
+POSIX.1-2008 では規定が厳しくなり、 <B>lstat</B>() は <I>st_mode</I> の
+アクセス許可ビット以外の全てのフィールドに有効な情報を返すことが
+求められるようになっている。
+<P>
+<I>st_blocks</I> と <I>st_blksize</I> フィールドの使用はあまり移植性がない
+(これらのフィールドは BSD によって導入された。 システムごとに解釈が
+異なっており、 NFS マウントの場合には同じシステムでも異なる可能性がある)。
+<I>&lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</I> から <I>blkcnt_t</I> の <I>blksize_t</I> 型定義を
+読み込みたい場合は、(<I>どの</I>ヘッダーファイルをインクルードするよりも前に)
+<B>_XOPEN_SOURCE</B> を 500 以上の値で定義すること。
+<P>
+
+POSIX.1-1990 には <B>S_IFMT</B>, <B>S_IFSOCK</B>, <B>S_IFLNK</B>, <B>S_IFREG</B>,
+<B>S_IFBLK</B>, <B>S_IFDIR</B>, <B>S_IFCHR</B>, <B>S_IFIFO</B>, <B>S_ISVTX</B> 定数に関する
+記述はなかったが、代わりに <B>S_ISDIR</B>() のようなマクロを使用するように
+要求していた。 <B>S_IF*</B> 定数は POSIX.1-2001 以降には存在する。
+<P>
+マクロ <B>S_ISLNK</B>() と <B>S_ISSOCK</B>() は POSIX.1-1996 にはないが、
+POSIX.1-2001 には両方とも存在する。 前者は SVID 4 に、後者は SUSv2 に
+由来している。
+<P>
+
+UNIX&nbsp;V7 (とその後のシステム) は <B>S_IREAD</B>, <B>S_IWRITE</B>, <B>S_IEXEC</B> を持っており、
+POSIX はその同義語として <B>S_IRUSR</B>, <B>S_IWUSR</B>, <B>S_IXUSR</B> を規定している。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>他のシステム</H3>
+
+各種システムで使用されていた(いる)値:
+
+<TABLE>
+<TR VALIGN=top><TD>16進</TD><TD>名前</TD><TD>ls</TD><TD>8進数</TD><TD>説明<BR></TD></TR>
+<TR VALIGN=top><TD>f000</TD><TD>S_IFMT</TD><TD></TD><TD>170000</TD><TD>ファイル種別フィールドのビットマスク<BR></TD></TR>
+<TR VALIGN=top><TD>0000</TD><TD></TD><TD></TD><TD>000000</TD><TD>
+SCO では 使用不能 inode; BSD では不明なファイル種別;
+SVID-v2 と XPG2 では 0 と 0100000 の両方が通常のファイル
+<BR></TD></TR>
+<TR VALIGN=top><TD>1000</TD><TD>S_IFIFO</TD><TD>p|</TD><TD>010000</TD><TD>FIFO (名前付きパイプ)<BR></TD></TR>
+<TR VALIGN=top><TD>2000</TD><TD>S_IFCHR</TD><TD>c</TD><TD>020000</TD><TD>キャラクター特殊ファイル (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>3000</TD><TD>S_IFMPC</TD><TD></TD><TD>030000</TD><TD>多重化されたキャラクター特殊ファイル (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>4000</TD><TD>S_IFDIR</TD><TD>d/</TD><TD>040000</TD><TD>ディレクトリ (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>5000</TD><TD>S_IFNAM</TD><TD></TD><TD>050000</TD><TD>
+XENIX の二つの副型を持つ名前付きの特殊ファイル
+副型は <I>st_rdev</I> の値 1, 2 で区別される
+<BR></TD></TR>
+<TR VALIGN=top><TD>0001</TD><TD>S_INSEM</TD><TD>s</TD><TD>000001</TD><TD>XENIX の IFNAM セマフォ副型<BR></TD></TR>
+<TR VALIGN=top><TD>0002</TD><TD>S_INSHD</TD><TD>m</TD><TD>000002</TD><TD>XENIX の IFNAM 共有データ副型<BR></TD></TR>
+<TR VALIGN=top><TD>6000</TD><TD>S_IFBLK</TD><TD>b</TD><TD>060000</TD><TD>ブロック特殊ファイル (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>7000</TD><TD>S_IFMPB</TD><TD></TD><TD>070000</TD><TD>多重化されたブロック特殊ファイル (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>8000</TD><TD>S_IFREG</TD><TD>-</TD><TD>100000</TD><TD>通常ファイル (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>9000</TD><TD>S_IFCMP</TD><TD></TD><TD>110000</TD><TD>VxFS 圧縮ファイル<BR></TD></TR>
+<TR VALIGN=top><TD>9000</TD><TD>S_IFNWK</TD><TD>n</TD><TD>110000</TD><TD>ネットワーク特殊ファイル (HP-UX)<BR></TD></TR>
+<TR VALIGN=top><TD>a000</TD><TD>S_IFLNK</TD><TD>l@</TD><TD>120000</TD><TD>シンボリックリンク (BSD)<BR></TD></TR>
+<TR VALIGN=top><TD>b000</TD><TD>S_IFSHAD</TD><TD></TD><TD>130000</TD><TD>
+Solaris の ACL 用の隠し inode (ユーザー空間からは見えない)
+<BR></TD></TR>
+<TR VALIGN=top><TD>c000</TD><TD>S_IFSOCK</TD><TD>s=</TD><TD>140000</TD><TD>ソケット (BSD; VxFS の &quot;S_IFSOC&quot;)<BR></TD></TR>
+<TR VALIGN=top><TD>d000</TD><TD>S_IFDOOR</TD><TD>D&gt;</TD><TD>150000</TD><TD>Solaris の door ファイル<BR></TD></TR>
+<TR VALIGN=top><TD>e000</TD><TD>S_IFWHT</TD><TD>w%</TD><TD>160000</TD><TD>BSD の空白ファイル (inode を使用しない)<BR></TD></TR>
+<TR VALIGN=top><TD>0200</TD><TD>S_ISVTX</TD><TD></TD><TD>001000</TD><TD>
+スティッキービット: 使用後もスワップに残す (V7)
+<BR>
+
+予約 (SVID-v2)
+<BR>
+
+ディレクトリ以外: ファイルをキャッシュしない (SunOS)
+<BR>
+
+ディレクトリの場合: 削除制限フラグ (SVID-v4.2)
+<BR></TD></TR>
+<TR VALIGN=top><TD>0400</TD><TD>S_ISGID</TD><TD></TD><TD>002000</TD><TD>
+実行時の set-group-ID (V7)
+<BR>
+
+ディレクトリの場合: GID の伝搬に BSD 方式を使用する
+<BR></TD></TR>
+<TR VALIGN=top><TD>0400</TD><TD>S_ENFMT</TD><TD></TD><TD>002000</TD><TD>
+System V ファイルロックを強制する (S_ISGID と共有)
+<BR></TD></TR>
+<TR VALIGN=top><TD>0800</TD><TD>S_ISUID</TD><TD></TD><TD>004000</TD><TD>実行時の set-user-ID (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>0800</TD><TD>S_CDF</TD><TD></TD><TD>004000</TD><TD>
+ディレクトリがコンテキスト依存ファイル (HP-UX)
+<BR></TD></TR>
+</TABLE>
+
+
+<P>
+スティッキー コマンドは Version 32V AT&amp;T UNIX で登場した。
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+Linux では、 <B>lstat</B>() は一般には自動マウント動作 (automounter action) の
+きっかけとならないが、 <B>stat</B>() はきっかけとなる (<B><A HREF="../man2/fstatat.2.html">fstatat</A></B>(2) を参照)。
+<P>
+<I>/proc</I> ディレクトリ以下にあるファイルのほとんどでは、 <B>stat</B>()  を呼び出した際に、 <I>st_size</I>
+フィールドにファイルサイズが返されない。 代わりに <I>st_size</I> フィールドには 0 が返される。
+<A NAME="lbAL">&nbsp;</A>
+<H3>タイムスタンプフィールド</H3>
+
+古いカーネルや古い標準では、ナノ秒精度のタイムスタンプフィールドはサポートされていなかった。 代わりに 3 つの <I>time_t</I>
+型のタイムスタンプフィールド <I>st_atime</I>, <I>st_mtime</I>, and <I>st_ctime</I> があった。これらのフィールドには 1
+秒単位のタイムスタンプが記録されていた。
+<P>
+カーネル 2.5.48 以降では、 <I>stat</I> 構造体は 3 つのファイルのタイムスタンプ関連のフィールドでナノ秒単位の精度に対応している。
+機能検査マクロ <B>_BSD_SOURCE</B> か <B>_SVID_SOURCE</B> が定義された場合に、各タイムスタンプのナノ秒の情報は
+<I>st_atim.tv_nsec</I> という形式の名前で参照できる。 ナノ秒のタイムスタンプは現在では標準化されており、 POSIX.1-2008
+からである。 バージョン 2.12 以降の glibc では、 <B>_POSIX_C_SOURCE</B> が 200809L 以上の値で定義されるか、
+<B>_XOPEN_SOURCE</B> が 700 以上の値で定義された場合にも、 このナノ秒のタイムスタンプが公開される。
+上記のマクロのいずれも定義されていない場合、ナノ秒の値は <I>st_atimensec</I> という形式の名前で公開される。
+<P>
+
+ナノ秒のタイムスタンプは XFS, JFS, Btrfs, ext4 でサポートされている (Linux 2.6.23 以降)。
+ナノ秒のタイムスタンプは ext2, ext3, Reiserfs ではサポートされていない。
+サブ秒のタイムスタンプをサポートしていないファイルシステムでは、 ナノ秒のフィールドには値 0 が入る。
+<A NAME="lbAM">&nbsp;</A>
+<H3>背後のカーネルインターフェース</H3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+時間の経過とともに、 <I>stat</I> 構造体のサイズが大きくなり、この影響で <B>stat</B>()  には 3つのバージョンが存在する:
+<I>sys_stat</I>()  (スロットは <I>__NR_oldstat</I>)、 <I>sys_newstat</I>()  (スロットは
+<I>__NR_stat</I>)、 <I>sys_stat64</I>()  (カーネル 2.4 で導入; スロットは <I>__NR_stat64</I>).  glibc
+の <B>stat</B>()  ラッパー関数はこれらの詳細をアプリケーションから隠蔽してくれる。
+具体的には、カーネルが提供しているシステムコールのうち最新のバージョンを 起動し、古いバイナリの場合には必要に応じて返された情報を再構成
+(repack) する。 <B>fstat</B>()  と <B>lstat</B>()  についても同様である。
+<P>
+glibc の <B>fstatat</B>() ラッパー関数が内部で利用するシステムコールは、実際には <B>fstatat64</B>() である。
+<A NAME="lbAN">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは <B>stat</B>()  を呼び出し、返ってきた <I>stat</I> 構造体のフィールドのいくつかを表示する。
+<PRE>
+
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    struct stat sb;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s &lt;pathname&gt;\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    if (stat(argv[1], &amp;sb) == -1) {
+        perror(&quot;stat&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;File type:                &quot;);
+
+    switch (sb.st_mode &amp; S_IFMT) {
+    case S_IFBLK:  printf(&quot;block device\n&quot;);            break;
+    case S_IFCHR:  printf(&quot;character device\n&quot;);        break;
+    case S_IFDIR:  printf(&quot;directory\n&quot;);               break;
+    case S_IFIFO:  printf(&quot;FIFO/pipe\n&quot;);               break;
+    case S_IFLNK:  printf(&quot;symlink\n&quot;);                 break;
+    case S_IFREG:  printf(&quot;regular file\n&quot;);            break;
+    case S_IFSOCK: printf(&quot;socket\n&quot;);                  break;
+    default:       printf(&quot;unknown?\n&quot;);                break;
+    }
+
+    printf(&quot;I-node number:            %ld\n&quot;, (long) sb.st_ino);
+
+    printf(&quot;Mode:                     %lo (octal)\n&quot;,
+            (unsigned long) sb.st_mode);
+
+    printf(&quot;Link count:               %ld\n&quot;, (long) sb.st_nlink);
+    printf(&quot;Ownership:                UID=%ld   GID=%ld\n&quot;,
+            (long) sb.st_uid, (long) sb.st_gid);
+
+    printf(&quot;Preferred I/O block size: %ld bytes\n&quot;,
+            (long) sb.st_blksize);
+    printf(&quot;File size:                %lld bytes\n&quot;,
+            (long long) sb.st_size);
+    printf(&quot;Blocks allocated:         %lld\n&quot;,
+            (long long) sb.st_blocks);
+
+    printf(&quot;Last status change:       %s&quot;, ctime(&amp;sb.st_ctime));
+    printf(&quot;Last file access:         %s&quot;, ctime(&amp;sb.st_atime));
+    printf(&quot;Last file modification:   %s&quot;, ctime(&amp;sb.st_mtime));
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/ls.1.html">ls</A></B>(1), <B><A HREF="../../GNU_coreutils/man1/stat.1.html">stat</A></B>(1), <B><A HREF="../man2/access.2.html">access</A></B>(2), <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2), <B><A HREF="../man2/chown.2.html">chown</A></B>(2),
+<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2), <B><A HREF="../man2/utime.2.html">utime</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/symlink.7.html">symlink</A></B>(7)
+<A NAME="lbAP">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">fstatat()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">他のシステム</A><DD>
+</DL>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAL">タイムスタンプフィールド</A><DD>
+<DT><A HREF="#lbAM">背後のカーネルインターフェース</A><DD>
+</DL>
+<DT><A HREF="#lbAN">例</A><DD>
+<DT><A HREF="#lbAO">関連項目</A><DD>
+<DT><A HREF="#lbAP">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

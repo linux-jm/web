@@ -1,0 +1,333 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SK98LIN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SK98LIN</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated:  2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man4/sk98lin.4">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sk98lin - Marvell/SysKonnect ギガビットイーサネットドライバ v6.21
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>insmod sk98lin.o</B> [<B>Speed_A=</B><I>i,j,...</I>] [<B>Speed_B=</B><I>i,j,...</I>]
+[<B>AutoNeg_A=</B><I>i,j,...</I>] [<B>AutoNeg_B=</B><I>i,j,...</I>] [<B>DupCap_A=</B><I>i,j,...</I>]
+[<B>DupCap_B=</B><I>i,j,...</I>] [<B>FlowCtrl_A=</B><I>i,j,...</I>]
+[<B>FlowCtrl_B=</B><I>i,j,...</I>] [<B>Role_A=</B><I>i,j,...</I>] [<B>Role_B=</B><I>i,j,...</I>]
+[<B>ConType=</B><I>i,j,...</I>] [<B>Moderation=</B><I>i,j,...</I>]
+[<B>IntsPerSec=</B><I>i,j,...</I>] [<B>PrefPort=</B><I>i,j,...</I>] [<B>RlmtMode=</B><I>i,j,...</I>]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+
+<B>注意</B>: この時代遅れのドライバはカーネル 2.6.26 で削除された。
+<P>
+
+<B>sk98lin</B> は Marvell と SysKonnect のネットワークアダプターカードの ギガビットイーサネットドライバである。 これは
+SysKonnect SK-98xx/SK-95xx 互換のギガビットイーサネットアダプターと Yukon 互換のチップセットをサポートしている。
+<P>
+
+insmod を使ってドライバをロードする際、 ネットワークアダプターカードのパラメーターを コンマで区切られたコマンドの列として指定することができる。
+2 つのネットワークアダプターが取り付けられている時に、 例えば、1 つ目のアダプターのポート A の自動ネゴシエーションは ON にするが、 2
+つ目のアダプターのポート A は OFF にする場合は、 以下のように入力すればよい:
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;insmod&nbsp;sk98lin.o&nbsp;AutoNeg_A=On,Off
+<P>
+
+<B>sk98lin</B> が 1 つ以上のアダプターカードに関連づけられていて、 かつ <I>/proc</I>
+ファイルシステムがシステムにマウントされている場合、 取り付けられているネットワークアダプターカードの全てのポートについて、 (ポート単位に)
+専用の統計ファイルがフォルダ <I>/proc/net/sk98lin</I> に作られる。 これらのファイルは <I>eth[x]</I> という名前であり、
+<I>x</I> はインターフェースの番号である。 この番号はシステムによってポート毎に割り当てられたものである。
+<P>
+
+ロードが完了すると、 <B><A HREF="../../net-tools/man8/ifconfig.8.html">ifconfig</A></B>(8)  コマンドを使って、各 <I>eth[x]</I> インターフェースに希望する IP
+アドレスを割り当てることができる。 これによりアダプターがイーサネットに接続され、 コンソールに状態メッセージが表示される。 このメッセージでは、
+&quot;ethx: network connection up using port y&quot; の後に 設定されたり検出された接続パラメーターが表示される。
+<P>
+
+<B>sk98lin</B> はラージフレーム (ジャンボフレームとも呼ばれる) もサポートする。 ジャンボフレームを使うと、大量のデータを転送する際に、
+スループットを大幅に向上させることができる。 ラージフレームを有効にするには、 インターフェースの MTU (maximum transfer
+unit, 最大転送単位) サイズを 大きな値に設定すればよい。 デフォルトの MTU サイズは 1500 であり、 最大で 9000 (バイト)
+まで設定することができる。 MTU サイズを設定するのは、 インターフェースに IP アドレスを割り当てるときにもできるし、後から
+<B><A HREF="../../net-tools/man8/ifconfig.8.html">ifconfig</A></B>(8)  コマンドに mtu 引数を指定することで設定することもできる。 例えば、eth0 に IP アドレスとラージフレーム
+MTU サイズを 割り当てたい場合、以下の 2 つのコマンドを実行すればよい:
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ifconfig&nbsp;eth0&nbsp;10.1.1.1
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ifconfig&nbsp;eth0&nbsp;mtu&nbsp;9000
+<P>
+
+これらの 2 つのコマンドは 1 つにまとめることもできる:
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ifconfig&nbsp;eth0&nbsp;10.1.1.1&nbsp;mtu&nbsp;9000
+<P>
+
+ラージフレームを使用できるのは、ネットワーク環境全体で ラージフレームの使用が認められている場合のみである点に注意すること。
+つまり、イーサネットで使われている全てのスイッチでも ラージフレームがサポートされていなければならない。
+多くのスイッチがラージフレームをサポートしてはいるが、 設定を行う必要がある。 多くの場合、デフォルトの設定では標準フレーム (1500 バイトの
+MTU サイズ) だけしかサポートしない。 ネットワーク内のスイッチに加え、 使用される全てのネットワークアダプターでも
+ジャンボフレームが有効になっていなければならない。 アダプターがラージフレームを受け取るように設定されていない場合、
+アダプターはそのフレームを単純に捨ててしまう。
+<P>
+
+標準のイーサネットフレームサイズに戻すのは、再び <B><A HREF="../../net-tools/man8/ifconfig.8.html">ifconfig</A></B>(8)  コマンドを使えばよい:
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ifconfig&nbsp;eth0&nbsp;mtu&nbsp;1500
+<P>
+
+Linux の Marvell/SysKonnect ギガビットイーサネットドライバは、 IEEE 規格 802.1, 802.1q, 802.3ad
+に準拠する VLAN と Link Aggregation に対応している。 これらの機能は、インターネットにあるオープンソースモジュールを
+インストールした後でのみ利用可能である:
+<P>
+
+<BR>&nbsp;<I>VLAN</I>:
+
+
+<BR>
+
+<BR>&nbsp;<I>Link</I>&nbsp;<I>Aggregation</I>:
+
+
+<P>
+
+Marvell/SysKonnect は、これらのオープンソースモジュールに対するサポートは
+行っておらず、これらを使った場合に生じるいかなる失敗や問題についても 責任を負わない点に注意すること。
+<A NAME="lbAE">&nbsp;</A>
+<H3>パラメーター</H3>
+
+<DL COMPACT>
+<DT><B>Speed_A=</B><I>i,j,...</I><DD>
+このパラメーターはアダプターカードのポート A がサポートするリンク速度を 設定するのに使われる。これは Yukon copper
+アダプターでのみ有効である。 使用可能な値は以下の通り: <I>10</I>, <I>100</I>, <I>1000</I>, <I>Auto</I>。 デフォルトは <I>Auto</I>
+である。 通常、リンク速度はリンクの確立時に 2 つのポートの間で自動設定される。 これに失敗した場合、ポートはこの引数で指定された設定になる。
+<DT><B>Speed_B=</B><I>i,j,...</I><DD>
+このパラメーターはアダプターカードのポート B がサポートするリンク速度を 設定するのに使われる。これは Yukon copper
+アダプターでのみ有効である。 使用可能な値は以下の通り: <I>10</I>, <I>100</I>, <I>1000</I>, <I>Auto</I>。 デフォルトは <I>Auto</I>
+である。 通常、リンク速度はリンクの確立時に 2 つのポートの間で自動設定される。 これに失敗した場合、ポートはこの引数で指定された設定になる。
+<DT><B>AutoNeg_A=</B><I>i,j,...</I><DD>
+アダプターカードのポート A の自動設定 (autonegotiation) の使用を 有効または無効にする。使用可能な値は以下の通り: <I>On</I>,
+<I>Off</I>, <I>Sense</I>。 デフォルトは <I>On</I> である。 <I>Sense</I> モードはリンクパートナが自動設定をサポートしているか否かを
+自動的に検知する。
+<DT><B>AutoNeg_B=</B><I>i,j,...</I><DD>
+アダプターカードのポート B の自動設定 (autonegotiation) の使用を 有効または無効にする。使用可能な値は以下の通り: <I>On</I>,
+<I>Off</I>, <I>Sense</I>。 デフォルトは <I>On</I> である。 <I>Sense</I> モードはリンクパートナが自動設定をサポートしているか否かを
+自動的に検知する。
+<DT><B>DupCap_A=</B><I>i,j,...</I><DD>
+この引数はアダプターカードのポート A で使う二重通信 (duplex) モードを示す。 使用可能な値は以下の通り: <I>Half</I>, <I>Full</I>,
+<I>Both</I>。 デフォルトは <I>Both</I> である。 この引数はポート A の AutoNeg_A が <I>Sense</I>
+に設定されていない場合にのみ有効である。 AutoNeg_A が <I>On</I> の場合、DupCap_A の 3 つの値 (<I>Half</I>,
+<I>Full</I>, <I>Both</I>)  のうちどれでも指定することができる。 AutoNeg_A が <I>Off</I> の場合、DupCap_A の値
+<I>Full</I> と <I>Half</I> のみを指定することができる。 この DupCap_A 引数は、リンクパートナが全ての二重通信の組み合わせを
+サポートしていない場合に役に立つ。
+<DT><B>DupCap_B=</B><I>i,j,...</I><DD>
+この引数はアダプターカードのポート B で使う二重通信モードを示す。 使用可能な値は以下の通り: <I>Half</I>, <I>Full</I>, <I>Both</I>。
+デフォルトは <I>Both</I> である。 この引数はポート B の AutoNeg_B が <I>Sense</I> に設定されていない場合にのみ有効である。
+AutoNeg_B が <I>On</I> の場合、DupCap_B の 3 つの値 (<I>Half</I>, <I>Full</I>, <I>Both</I>)
+のうちどれでも指定することができる。 AutoNeg_B が <I>Off</I> の場合、DupCap_B の値 <I>Full</I> と <I>Half</I>
+のみを指定することができる。 この DupCap_B 引数は、リンクパートナが全ての二重通信の組み合わせを サポートしていない場合に役に立つ。
+<DT><B>FlowCtrl_A=</B><I>i,j,...</I><DD>
+この引数は自動設定時にポートが対向に伝える フロー制御機能を設定する。 使用可能な値は以下の通り: <I>Sym</I>, <I>SymOrRem</I>,
+<I>LocSend</I>, <I>None</I>。 デフォルトは <I>SymOrRem</I> である。 それぞれのモードには以下のような意味がある:
+<DT><DD>
+<I>Sym</I>
+= Symmetric
+<BR>&nbsp;リンクパートナの双方が&nbsp;PAUSE&nbsp;フレームを送ることができる。
+<BR>
+
+<I>SymOrRem</I>
+= SymmetricOrRemote
+<BR>&nbsp;リンクパートナの双方またはリモートパートナのみが
+PAUSE フレームを送ることができる。
+<BR>
+
+<I>LocSend</I>
+= LocalSend
+<BR>&nbsp;ローカルリンクパートナのみが&nbsp;PAUSE&nbsp;フレームを送ることができる。
+<BR>
+
+<I>None</I>
+= None
+<BR>&nbsp;リンクパートナのどちらも&nbsp;PAUSE&nbsp;フレームを送ることはできない。
+<DT><DD>
+このパラメーターは AutoNeg_A が <I>Off</I> の場合には無視される点に注意すること。
+<DT><B>FlowCtrl_B=</B><I>i,j,...</I><DD>
+この引数は自動設定時にポートが対向に伝える フロー制御機能を設定する。 使用可能な値は以下の通り: <I>Sym</I>, <I>SymOrRem</I>,
+<I>LocSend</I>, <I>None</I>。 デフォルトは <I>SymOrRem</I> である。 それぞれのモードには以下のような意味がある:
+<DT><DD>
+<I>Sym</I>
+= Symmetric
+<BR>&nbsp;リンクパートナの双方が&nbsp;PAUSE&nbsp;フレームを送ることができる。
+<BR>
+
+<I>SymOrRem</I>
+= SymmetricOrRemote
+<BR>&nbsp;リンクパートナの双方またはリモートパートナのみが
+PAUSE フレームを送ることができる。
+<BR>
+
+<I>LocSend</I>
+= LocalSend
+<BR>&nbsp;ローカルリンクパートナのみが&nbsp;PAUSE&nbsp;フレームを送ることができる。
+<BR>
+
+<I>None</I>
+= None
+<BR>&nbsp;リンクパートナのどちらも&nbsp;PAUSE&nbsp;フレームを送ることはできない。
+<BR>
+
+<DT><DD>
+このパラメーターは AutoNeg_B が <I>Off</I> の場合には無視される点に注意すること。
+<DT><B>Role_A=</B><I>i,j,...</I><DD>
+この引数は 1000Base-T アダプターカードでのみ有効である。 2 つの 1000Base-T ポートが通信する場合、 片方が
+(タイミング情報を提供する) マスタの役割をしなければならず、 もう片方がスレーブにならなければならない。 使用可能な値は以下の通り: <I>Auto</I>,
+<I>Master</I>, <I>Slave</I>。 デフォルトは <I>Auto</I> である。 通常、ポートの役割は 2
+つのポートでリンクを確立するときに自動設定される。 自動設定に失敗した場合、 アダプターカードのポート A はこの引数で指定された設定になる。
+<DT><B>Role_B=</B><I>i,j,...</I><DD>
+この引数は 1000Base-T アダプターカードでのみ有効である。 2 つの 1000Base-T ポートが通信する場合、 片方が
+(タイミング情報を提供する) マスタの役割をしなければならず、 もう片方がスレーブにならなければならない。 使用可能な値は以下の通り: <I>Auto</I>,
+<I>Master</I>, <I>Slave</I>。 デフォルトは <I>Auto</I> である。 通常、ポートの役割は 2
+つのポートでリンクを確立するときに自動設定される。 自動設定に失敗した場合、 アダプターカードのポート B はこの引数で指定された設定になる。
+<DT><B>ConType=</B><I>i,j,...</I><DD>
+この引数は、ポート毎に指定する、全部で 5 個の引数の組み合わせを、 1 つの引数にしたものである。 これによりアダプターカードの 2
+つのポートの設定を簡略化できる。 この変数のそれぞれの値は、 ポート引数の最も意味のある組み合わせを反映したものである。
+使用可能な値とそれに対応するポート毎のパラメーターの組み合わせは、 以下の通り:
+<DT><DD>
+<TABLE>
+<TR VALIGN=top><TD><B>ConType</B></TD><TD><B>DupCap</B></TD><TD><B>AutoNeg</B></TD><TD><B>FlowCtrl</B></TD><TD><B>Role</B></TD><TD><B>Speed</B><BR></TD></TR>
+<TR VALIGN=top><TD><I>Auto</I></TD><TD>Both</TD><TD>On</TD><TD>SymOrRem</TD><TD>Auto</TD><TD>Auto<BR></TD></TR>
+<TR VALIGN=top><TD><I>100FD</I></TD><TD>Full</TD><TD>Off</TD><TD>なし</TD><TD>Auto</TD><TD>100<BR></TD></TR>
+<TR VALIGN=top><TD><I>100HD</I></TD><TD>Half</TD><TD>Off</TD><TD>なし</TD><TD>Auto</TD><TD>100<BR></TD></TR>
+<TR VALIGN=top><TD><I>10FD</I></TD><TD>Full</TD><TD>Off</TD><TD>なし</TD><TD>Auto</TD><TD>10<BR></TD></TR>
+<TR VALIGN=top><TD><I>10HD</I></TD><TD>Half</TD><TD>Off</TD><TD>なし</TD><TD>Auto</TD><TD>10<BR></TD></TR>
+</TABLE>
+
+<DT><DD>
+その他のポート引数を <I>ConType</I> 引数と組み合わせて指定すると、それらの設定を結合した設定となる。 これは、ポート毎の引数 (例えば
+<I>Speed_A</I>)  の方が組み合わせ変数 <I>ConType</I> より優先順位が高いためである。
+<DT><B>Moderation=</B><I>i,j,...</I><DD>
+割り込み調停 (interrupt moderation) は、ドライバが処理を開始しなければ ならない割り込み回数の最大値を設定するために使用される。
+つまり、ドライバが処理を行うまで、1回以上の割り込み (送信または受信パケットが処理されること) がキューに入れられる。
+キューに入れられた割り込みがいつ処理されるかは、 以下で説明する <I>IntsPerSec</I> 引数で決定される。 使用可能な調停モードは以下の通り:
+<I>None</I>, <I>Static</I>, <I>Dynamic</I>。 デフォルトは <I>None</I> である。 それぞれのモードは以下の意味を持つ:
+<DT><DD>
+<I>None</I> アダプターカードに対して割り込み調停を適用しない。 よって送信または受信割り込みは、
+アダプターカードの割り込み線に現れると直ぐに処理される。
+<DT><DD>
+<I>Static</I> アダプターカードに対して割り込み調停が適用される。 全ての送信または受信割り込みは、調停間隔が完全に終わるまで キューに入れられる。
+この調停間隔が終わると、キューに入れられた全ての割り込みは、 1個の大きな塊として遅延なく処理される。 <I>Static</I>
+という用語は、あるインターフェースに現在どれだけの ネットワーク負荷がかかっているかに関わらず、 割り込み調停が常に有効になることを表している。
+さらに、調停間隔の時間は固定で、ドライバが動作している間は変化しない。
+<DT><DD>
+<I>Dynamic</I> システムの負荷に応じて、アダプターカードに対して割り込み調停が適用される。 ドライバがシステムの負荷が高すぎると検出した場合、
+割り込み調停を有効にすることにより、 過剰なネットワーク負荷からシステムを保護しようとする。 ---その後に---CPU 利用率が再び下がった場合
+(またはネットワーク負荷が極わずかになった場合)、 割り込み調停は自動的に無効にされる。
+<DT><DD>
+ドライバが扱わなければならないインターフェースのうち ネットワーク負荷が高いものが 1 つ以上あり、 ---その結果---CPU
+利用率が高くなっている場合、 割り込み調停を使うべきである。 ネットワーク負荷が高い状況で調停が適用されると、 遅いコンピュータでは CPU 負荷が
+20-30% 削減されるだろう。
+<DT><DD>
+割り込み調停を使うことの欠点として、 往復遅延時間 (round-trip-time, RTT) の増加がある点に注意すること。
+これは、割り込みがキューに入れられ、まとめて処理されるためである。
+<DT><B>IntsPerSec=</B><I>i,j,...</I><DD>
+この引数は割り込み調停の間隔を決定する。 静的 (static) 割り込み調停が使われている場合、 <I>IntsPerSec</I> 引数の値が 2000
+であれば、割り込み調停の間隔は 500 ミリ秒になる。 この引数に設定可能な値は 30...40000 の範囲で、 これは 1
+秒毎の割り込み回数である。 デフォルト値は 2000 である。
+<DT><DD>
+この引数は静的 (static) または動的 (dynamic) 割り込み調停が 有効になっているときにのみ使用される。
+この引数は割り込み調停が適用されていない場合には無視される。
+<DT><DD>
+調停間隔の期間は注意して選ぶこと。 一見したところでは、とても長い期間 (例えば 1 秒間に 100 回だけの割り込み) を
+選ぶことに意味があるように見えるかもしれないが、そうすると パケット処理の遅延が激しく増加する。
+一方で、とても短い調停時間を選ぶと、割り込み調停を使う意味がなくなってしまう。
+<DT><B>PrefPort=</B><I>i,j,...</I><DD>
+この引数は (2 ポートのネットワークアダプターで)  優先 (preferred) ポートを A または B のどちらにするかを指定するのに使われる。
+優先ポートとは、A と B の両方のポートが完全に機能していると検知された場合に 使用されるポートである。 使用可能な値は以下の通り: <I>A</I> または
+<I>B</I>。 デフォルトは <I>A</I> である。
+<DT><B>RlmtMode=</B><I>i,j,...</I><DD>
+RLMT はポートの状態を監視する。 アクティブなポートのリンクが落ちた場合、 RLMT は即時に待機しているリンクに切り替える。 少なくとも 1
+つの「物理的」リンクが起動するまでは、仮想リンクが維持される。 この引数は RLMT が両方のポートをどのように監視するかを決める。
+使用可能な値は以下の通り: <I>CheckLinkState</I>, <I>CheckLocalPort</I>, <I>CheckSeg</I>, <I>DualNet</I>。
+デフォルトは <I>CheckLinkState</I> である。 各モードは以下のような意味を持つ。
+<DT><DD>
+<I>CheckLinkState</I> リンク状態のチェックのみ: RLMT は、各ポートについてアダプターハードウェアが報告するリンク状態を使い、
+そのポートが全てのネットワークトラフィックを送受信するのに使用可能かを 決定する。
+<DT><DD>
+<I>CheckLocalPort</I> このモードでは、RLMT はアダプターカードの 2 つのポートの間で 定期的にパケットを交換することにより、 2
+つのポートの間のネットワーク経路を監視する。 このモードでは 2 つのポートが互いに「見える」ような ネットワーク設定が必要である
+(つまり、ポート間にルーターがあってはならない)。
+<DT><DD>
+<I>CheckSeg</I> ローカルポートとセグメントをチェックする。 このモードは CheckLocalPort モードと同じ機能を提供し、
+更にポート間のネットワークセグメントをチェックする。 よって、このモードはネットワーク上に スパニングツリープロトコル (Spanning Tree
+protocol) を 使うように設定されたギガビットイーサネットスイッチが 設置されている場合にのみ使用できる。
+<DT><DD>
+<I>DualNet</I> このモードでは、ポート A と B が別々のデバイスとして使用される。 2 ポートのアダプターを持っている場合、ポート A を
+<I>eth[x]</I> に、ポート B を <I>eth[x+1]</I> に設定することができる。 2 つのポートは別々の IP
+アドレスを付けて独立に使用することができる。 優先ポートの設定は使用されない。 RLMT は無効にされる。
+<DT><DD>
+RLMT モード <I>CheckLocalPort</I> と <I>CheckLinkState</I> は、1
+つのアダプター上のポート間でネットワーク経路があるような設定で 動作するように設計されている。 さらに、このモードはアダプター同士が直結
+(back-to-back) で 接続されている状態で動作するようには設計されていない。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/proc/net/sk98lin/eth[x]</I><DD>
+アダプターカードの特定のインターフェースの統計ファイル。 このファイルには、アダプターカードの一般的な情報と、
+全ての送信・受信カウンターの詳細な一覧が含まれる。
+<DT><I>/usr/src/linux/Documentation/networking/sk98lin.txt</I><DD>
+<I>sk98lin</I> ドライバの <I>README</I> ファイルである。 これには詳細なインストール HOWTO が含まれており、
+ドライバの全ての引数が記述されている。 また一般的な問題とその解決法についても書かれている。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+
+バグは <A HREF="mailto:linux@syskonnect.de">linux@syskonnect.de</A> に報告してほしい。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man8/insmod.8.html">insmod</A></B>(8), <B><A HREF="../../net-tools/man8/ifconfig.8.html">ifconfig</A></B>(8), <B><A HREF="../../0MultiFileIdx/man8/modprobe.8.html">modprobe</A></B>(8)
+<A NAME="lbAI">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">パラメーター</A><DD>
+</DL>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,249 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- このマニュアルは、GNU core utilities version 8.26 の詳細な解説である。
+core utilities には、テキストやファイルを操作するための標準的なプログラムが入っている。
+
+Copyright C 1994-2016 Free Software Foundation, Inc.
+
+Japanese translation copyright C 2014-2017 Linux JM project
+
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.  A copy
+of the license is included in the section entitled "GNU Free Documentation
+License".
+
+
+【訳者から御注意】 この文書を info コマンドで閲覧なさっている場合は、
+行末に余計な文字が入って、読みにくいことがあるかもしれない。
+そうしたときは、Ctrl キーと l (エル) キーを同時に押して、画面を再描画していただきたい。
+たぶん、表示が正常になるはずである。
+
+お手元の coreutils のバージョンが 8.26 以外の場合、
+この文書の説明と動作が違うことがあるかもしれない 
+(たとえば、この文書に書いてあるオプションが使えない、あるいは、
+使えるはずのオプションの説明がないなど)。
+そうした場合は、お使いの coreutils と同じバージョンの info マニュアルや 
+man ページに当ってみていただきたい。そちらの方が正しいはずである。
+ -->
+<!-- Created on June 7, 2022 by texi2html 1.82
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>GNU Coreutils: 23.3 nice: niceness を変更して、コマンドを実行する</title>
+
+<meta name="description" content="GNU Coreutils: 23.3 nice: niceness を変更して、コマンドを実行する">
+<meta name="keywords" content="GNU Coreutils: 23.3 nice: niceness を変更して、コマンドを実行する">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.82">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="nice-invocation"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_170.html#env-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_172.html#nohup-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_168.html#Modified-command-invocation" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_168.html#Modified-command-invocation" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_175.html#Process-control" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<hr size="1">
+<a name="nice_003a-niceness-woBian-Geng-site_002c-komandowoShi-Xing-suru"></a>
+<h2 class="section">23.3 <code>nice</code>: niceness を変更して、コマンドを実行する</h2>
+
+<a name="index-nice"></a>
+<a name="index-niceness"></a>
+<a name="index-scheduling_002c-affecting"></a>
+<a name="index-appropriate-privileges-3"></a>
+
+<p><code>nice</code> はプロセスの <em>niceness</em> を表示したり、niceness を変更してコマンドを実行したりする。
+<em>niceness</em> は、プロセスがシステム中でどの程度優先的にスケジュールされるかに影響を及ぼす。
+(訳注: niceness を「スケジューリング優先度」と訳さない理由については、
+三つほど下のパラグラフを御覧いただきたい。)
+</p>
+<p>書式:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">nice [<var>option</var>]&hellip; [<var>command</var> [<var>arg</var>]&hellip;]
+</pre></td></tr></table>
+
+<p>引数を指定しないと、<code>nice</code> は現在の niceness を表示する。引数に
+<var>command</var> を指定した場合は、niceness を調整して、その <var>command</var> を実行する。
+デフォルトでは、niceness が 10 増加する。
+</p>
+<p>niceness の値は、最小が -20 で、最大が 19 である
+(値が小さければ、プロセスの優先度が高くなり、使えるリソースも多くなるが、
+その分、他のプロセスの動作が遅くなる。また、値が大きければ、プロセスの優先度が低くなり、
+自分自身の動作は遅くなるが、実行中の他のプロセスの速度に与える影響は小さくなる)。
+システムによっては、niceness の値の範囲がもっと広いものもあるし、
+反対に、上下限の制限がもっときついものもある。サポートされている範囲を越えた niceness を指定すると、
+サポートされている値の最小、または最大を使用しようとしているものと見なされる。
+</p>
+<p>niceness をスケジューリング優先度 (scheduling priority) と混同してはならない。
+後者は、様々なスレッドをどういう序列で実行するかの予定を組む際に、
+その序列をアプリケーション側に決めさせるものである。
+優先度とは違って、niceness はスケジューラに対する単なるアドバイスにすぎず、
+スケジューラはそれを無視することができるのだ。また、用語について言うと、
+POSIX は <code>nice</code> の動作を <em>nice value</em> という用語で定義している。
+この nice value は、ある niceness と 最小の niceness との間の負ではない差である。
+<code>nice</code> コマンドは POSIX に準拠しているものの、
+この文書やエラーメッセージでは、従来の習慣との親和性を考慮して、
+&ldquo;niceness&rdquo; という言葉を使っている。
+</p>
+<p><var>command</var> は、シェルの組み込みコマンドであってはならない (see section <a href="coreutils-ja_14.html#Special-built_002din-utilities">特殊ビルトイン・ユーティリティ</a>)。
+</p>
+<a name="index-conflicts-with-shell-built_002dins-6"></a>
+<a name="index-built_002din-shell-commands_002c-conflicts-with-6"></a>
+<p>シェルの組み込み機能の <code>nice</code> やエイリアスのために、
+<code>nice</code> に何の修飾も付けずに対話的に使ったり、スクリプトの中で使ったりすると、
+動作がここで述べているものとは違うことがあるかもしれない。
+シェルによる干渉を避けるためには、<code>env</code> 経由で <code>nice</code>
+を起動すればよい (すなわち、<code>env nice &hellip;</code> のようにだ)。
+</p>
+
+<p>注意: 現在動作中のプロセスの <em>niceness</em> を変更するには、<code>renice</code>
+コマンドを使う必要がある。
+</p>
+<p>このプログラムでは、以下のオプションが使用できる。参照: <a href="coreutils-ja_2.html#Common-options">共通オプション</a>.
+オプションはオペランドの前に置かなければならない。
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>-n <var>adjustment</var></samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--adjustment=<var>adjustment</var></samp>&rsquo;</dt>
+<dd><a name="index-_002dn-19"></a>
+<a name="index-_002d_002dadjustment"></a>
+<p>コマンドの niceness を 10 ではなく、<var>adjustment</var> 増加する。
+<var>adjustment</var> が負の数の場合、ユーザがしかるべき特権を持っていなければ、
+<code>nice</code> は警告を発する。とは言え、警告を出すだけで、<var>adjustment</var>
+として 0 が指定されたかのように振る舞う。
+</p>
+<p>互換性を考慮して、<code>nice</code> は &lsquo;<samp>-<var>adjustment</var></samp>&rsquo;
+というオプションの古い書式もサポートしている。
+だが、新しいスクリプトでは、&lsquo;<samp>-n <var>adjustment</var></samp>&rsquo; の方を使うべきである。
+</p>
+</dd>
+</dl>
+
+<p><code>nice</code> がインストールされるのは、
+POSIX の <code>setpriority</code> 関数を持っているシステムだけである。
+従って、移植を考慮したシステムでは、非 POSIX のプラットフォームに
+<code>nice</code> コマンドがあることを当てにしない方がよい。
+</p>
+<a name="index-exit-status-of-nice"></a>
+<p>終了ステータス:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="display">0:   <var>command</var> が指定されなかったので、niceness を出力した。
+125: <code>nice</code> そのものの実行に失敗した。
+126: <var>command</var> が見つかったが、起動できなかった。
+127: <var>command</var> が見つからなかった。
+それ以外は、<var>command</var> の終了ステータス。
+</pre></td></tr></table>
+
+<p>対話的ではないプログラムは、niceness を落として (訳注: すなわち、
+niceness の値を増やして) 実行すると、都合のよいことがある。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ nice factor 4611686018427387903
+</pre></td></tr></table>
+
+<p><code>nice</code> は、現在の niceness を表示するので、<code>nice</code> を通して <code>nice</code>
+を起動すれば、それがどんな動作をするか、目の当たりに見ることができる。
+</p>
+<p>デフォルトの動作は、niceness を &lsquo;<samp>10</samp>&rsquo; 増加することである。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ nice
+0
+$ nice nice
+10
+$ nice -n 10 nice
+10
+</pre></td></tr></table>
+
+<p><var>adjustment</var> は、現在の niceness からいくら増減するかということである。
+次の例では、最初の <code>nice</code> が、二番目の <code>nice</code> を
+niceness 10 で実行し、二番目の <code>nice</code> は、niceness
+をさらに 3 増やして、三番目の <code>nice</code> を実行している。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ nice nice -n 3 nice
+13
+</pre></td></tr></table>
+
+<p>サポートされている範囲より大きい niceness を指定するのは、
+サポートされている最大値を指定するのと同じことである。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ nice -n 10000000000 nice
+19
+</pre></td></tr></table>
+
+<p>特権ユーザだけが niceness の値を下げて、プロセスを実行できる。
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">$ nice -n -1 nice
+nice: cannot set niceness: Permission denied
+0
+$ sudo nice -n -1 nice
+-1
+</pre></td></tr></table>
+
+
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="coreutils-ja_170.html#env-invocation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_172.html#nohup-invocation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja_168.html#Modified-command-invocation" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_168.html#Modified-command-invocation" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_175.html#Process-control" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="coreutils-ja.html#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_220.html#Concept-index" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="coreutils-ja_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated on <i>June 7, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 1.82</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

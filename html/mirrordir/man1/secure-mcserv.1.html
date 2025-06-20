@@ -1,0 +1,294 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of mirrordir</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>mirrordir</H1>
+Section: User Commands  (1)<BR>Updated: 1998 November 8<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/mirrordir/release/man1/secure-mcserv.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+secure-mcserv - 暗号化ログイン・ファイル転送・ソケットフォワード用の安全なサーバ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>secure-mcserv</B><I> </I>[options] [<B>-p</B><I> portnum</I>]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>secure-mcserv</B>
+
+は Midnight Commander vfs (バーチャルファイルシステム) の
+Midnight Commander (ネットワーク) ファイルシステム (mcfs) サーバである。
+<B>secure-mcserv</B>
+
+は
+<B>mirrordir</B>
+
+パッケージに含まれている。Midnight Commander のネイティブな
+<B>mcserv</B>
+
+デーモンの代わりに動作させることができ、
+<B>mirrordir</B>
+
+向けにいくつかの拡張がなされている。
+<DL COMPACT>
+<DT><B>セキュリティと圧縮</B>
+
+<DD>
+これは
+<B>secure-mcserv</B>
+
+の機能というよりも、
+<B>mirrordir</B>
+
+全体に対して実装された、透過的かつ安全な TCP 層である。
+この層は、通常モード、圧縮 (gzipped) モード、暗号化モード、
+圧縮+暗号化モードで動作できる。
+接続のモードは TCP ストリーム先頭のマジックナンバーによって自動検知される。
+Midnight Commander は
+<B>secure-mcserv</B>
+
+を、自らのネイティブなサーバである
+<B>mcserv</B>
+
+の代わりに利用できる。
+<B><A HREF="../man1/mirrordir.1.html">mirrordir</A></B>(1)
+
+の
+<B>-z</B>,
+
+<B>--secure</B>,
+
+<B>-K</B>
+
+各オプションを見よ。
+<DT><B>特定のホストからのアクセスの拒否</B>
+
+<DD>
+<DL COMPACT><DT><DD>
+<I>/etc/hosts.allow</I>
+
+ファイルに以下のような行を追加する。
+<P>
+
+<PRE>
+    secure-mcserv:  &lt;source-ip-address&gt; : ALLOW
+    secure-mcserv:  212.89.128.0/255.255.255.0 : ALLOW
+    secure-mcserv:  ALL : DENY
+</PRE>
+
+<P>
+
+(この機能は Juergen Kammer &lt;<A HREF="mailto:j.kammer@eurodata.de">j.kammer@eurodata.de</A>&gt;
+から寄せられました。彼のところでは動作しているそうです。)
+</DL>
+
+<DT><B>ログイン</B>
+
+<DD>
+<B>mirrordir</B>
+
+の配布に含まれる
+<B>pslogin</B>
+
+を用いると、安全に
+<B>secure-mcserv</B>
+
+に対するログインができる。
+これは
+<B><A HREF="../../netkit/man1/rlogin.1.html">rlogin</A></B>(1)
+
+が
+<B><A HREF="../../netkit/man8/rlogind.8.html">rlogind</A></B>(8)
+
+に対して動作するのと同様である。
+<B><A HREF="../man1/mirrordir.1.html">mirrordir</A></B>(1)
+
+の
+<B>--login-mode</B>
+
+オプションを見よ。
+<DT><B>TCP ソケットのフォワード</B>
+
+<DD>
+<B>mirrordir</B>
+
+の配布に含まれる
+<B><A HREF="../man1/forward.1.html">forward</A></B>(1)
+
+コマンドを用いると、任意の TCP ソケット接続を
+安全または圧縮 (あるいはその両方の) TCP チャネルにフォワードできる。
+これは通常のサービスを暗号化サービスにでき、とても便利である。
+<B><A HREF="../man1/forward.1.html">forward</A></B>(1)
+
+に例がある。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-d</B><DD>
+デーモンになる (同時に -q も設定される)。
+通常は常にこのオプションを用いることになるだろう。
+これ以外としては、
+<B>-d</B>
+
+を指定せずに
+<B>-v</B>
+
+(後述) を指定して、失敗した接続をデバッグする場合があり得るだろう。
+<DT><B>-q</B><DD>
+寡黙モード。これはデフォルトである。
+<DT><B>-f</B><DD>
+通常の認証が失敗したときに ftp 認証を試みる。
+<DT><B>-v</B><DD>
+饒舌モード。様々なデバッグ情報を表示する。
+<DT><B>-p</B> <I>port</I><DD>
+待ち受けるポート番号を指定する。デフォルトは 9876。
+<DT><B>-s</B> <I>server</I><B>[</B><I>:port</I><B>]</B><DD>
+<DL COMPACT><DT><DD>
+利用するパスワードサーバを指定する。
+このパスワードサーバとは、単に他のマシンで
+<B>-s</B>
+
+オプション無しで動作している
+<B>secure-mcserv</B>
+
+のことである。
+<P>
+このオプションは、たくさんのマシンを用いており、
+それらに対して一群のユーザ達がログインするような場合にとても便利である。
+これらのユーザ全員に対するアカウントを各マシンにつくり、
+<B>/etc/password</B>
+
+(あるいは
+<B>/etc/shadow</B>)
+
+を編集してパスワードフィールドを
+<B>*</B> にしてアカウントを無効にしておく。
+<P>
+ひとつのマシンをパスワードサーバとして選択する (このマシンを仮に
+<B>passerv.my.doma.in</B>
+
+としよう)。このマシンの
+<B>/etc/password</B>
+
+のパスワードフィールドには、正しいパスワードを入れておく。
+このマシンで、通常のように
+<B>secure-mcserv -d</B>
+
+を起動する。他の全てのマシンでは、
+<B>secure-mcserv -d -s passerv.my.doma.in</B>
+
+を起動する。
+<P>
+これらの間の接続は、全て等しく暗号化された TCP ストリームとなるので、
+これらはすべて同じように安全である。この方法は
+<B>passerv.my.doma.in</B>
+
+がインターネットの向こうにあるような場合にでも利用できる。
+実際、パスワードサーバに対する認証は、
+以下のコマンドの終了ステータスを見ることによって行なわれている。
+<BR>
+
+<PRE>
+<B>pslogin</B> <I>user</I><B>@passerv.my.doma.in --test-login --read-password-from-stdin</B>
+</PRE>
+
+<P>
+
+また、パスワードサーバのカスケードを利用することも不可能では無いはずだ。
+こうすることには何の利点も無いけれど。
+<P>
+それぞれの認証は、実行に同じ時間を必要とする。
+よってパスワードサーバを用いると、
+2 つめの接続がパスワードサーバになされるため、
+通常のログインの 2 倍の時間がかかる。
+カスケードにすると、各パスワードサーバごとに、
+もっと余計な時間がかかる。
+</DL>
+
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>バグ</H2>
+
+syslog にログ出力しない。
+<P>
+
+Midnight Commander vfs にはバグがあり、
+デバイスファイルは常に メジャー番号:マイナー番号 が 0:0 となる。
+このバグは、この実装では修正されている。
+デバイスファイルの転送に Midnight Commander を用いてはいけない。
+ただしこれをあなたが読んだ時点の最新版の Midnight Commander では、
+この問題は修正されているかもしれない。
+<P>
+
+<B>rlogin</B>
+
+セッションをサスペンドする特殊なエスケープ文字は認識しない。
+よって
+<B>screen</B>
+
+(?) のようなコマンドは動作しない。
+もしユーザからの要望があれば、この機能は追加するつもりだ。
+現在のところ、^Z などは効力を持たない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+<B>mirrodir</B>(1)
+
+を見よ。
+<A NAME="lbAH">&nbsp;</A>
+<H2>標準</H2>
+
+ない。
+<B>バグ</B>
+
+を見よ。
+<A NAME="lbAI">&nbsp;</A>
+<H2>入手方法</H2>
+
+このプログラムの最新版は、
+<B><A HREF="ftp://metalab.unc.edu/pub/Linux/system/backup">ftp://metalab.unc.edu/pub/Linux/system/backup</A></B>,
+<B><A HREF="ftp://lava.obsidian.co.za/pub/linux/mirrordir">ftp://lava.obsidian.co.za/pub/linux/mirrordir</A></B>,
+<B><A HREF="ftp://obsidian.co.za/pub/linux/mirrordir">ftp://obsidian.co.za/pub/linux/mirrordir</A></B>
+のいずれかから入手できる。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>著者</H2>
+
+Paul Sheer  &lt;<A HREF="mailto:psheer@obsidian.co.za">psheer@obsidian.co.za</A>&gt;  &lt;<A HREF="mailto:psheer@icon.co.za">psheer@icon.co.za</A>&gt;
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/mirrordir.1.html">mirrordir</A></B>(1), <B>ssh</B>(1), <B>mcserv</B>(1), <B>mc</B>(1)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">バグ</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">標準</A><DD>
+<DT><A HREF="#lbAI">入手方法</A><DD>
+<DT><A HREF="#lbAJ">著者</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

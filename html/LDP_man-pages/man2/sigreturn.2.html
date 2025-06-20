@@ -1,0 +1,127 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SIGRETURN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SIGRETURN</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/sigreturn.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sigreturn, rt_sigreturn - シグナルハンドラーから返り、スタックを掃除する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>int sigreturn(...);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+Linux カーネルがプロセスに対してブロックされていないシグナルが処理待ちと判定した場合、 そのプロセスの次回のユーザーモードへの遷移
+(すなわち、システムコールからのリターン時やそのプロセスが CPU
+に再スケジュールされる際)、カーネルはユーザー空間スタックの新しいフレームを作成し、そこにプロセスコンテキストの種々の値
+(プロセッサーのステータスワード、レジスター、シグナルマスク、シグナルスタック設定) を保存する。
+<P>
+
+また、 カーネルは、 ユーザーモードへの遷移時にシグナルハンドラーが呼び出され、 ハンドラーからのリターン時に、 制御が &quot;signal
+trampoline&quot; と呼ばれるユーザー空間コードブロックに渡されるように、準備を行う。 signal trampoline のコードが
+<B>sigreturn</B>() を呼び出す。
+<P>
+
+<B>sigreturn</B>()  は、シグナルハンドラーを起動するために行ったことの全て --- プロセスのシグナルマスクの変更、
+シグナルスタックの切り替え (<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2)  参照) ---
+の取り消しを行う。以前にユーザー空間スタックに保存された情報を使って、 <B>sigreturn</B>()
+はプロセスのシグナルマスクの復元、スタックの切り替え、プロセスのコンテキスト (プロセッサフラグ、レジスター
+(スタックポインター、命令ポインターを含む)) の復元を行い、 プロセスがシグナルにより割り込まれた場所から実行を再開できるようにする。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>sigreturn</B>()  が返ることはない。
+<A NAME="lbAF">&nbsp;</A>
+<H2>準拠</H2>
+
+多くの UNIX 系のシステムには <B>sigreturn</B>() システムコールか似たようなシステムコールがある。 しかしながら、 このシステムコールは
+POSIX には規定されておらず、 その動作の詳細はシステムにより異なる。
+<A NAME="lbAG">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+<B>sigreturn</B>()  exists only to allow the implementation of signal handlers.
+It should <B>never</B> be called directly.  (Indeed, a simple <B>sigreturn</B>()
+wrapper in the GNU C library simply returns -1, with <I>errno</I> set to
+<B>ENOSYS</B>.)  Details of the arguments (if any) passed to <B>sigreturn</B>()
+vary depending on the architecture.  (On some architectures, such as x86-64,
+<B>sigreturn</B>()  takes no arguments, since all of the information that it
+requires is available in the stack frame that was previously created by the
+kernel on the user-space stack.)
+<P>
+
+
+
+かつて、 UNIX システムでは signal trampoline コードがユーザースタックに置かれていた。 今日では、
+ユーザースタックのページは保護され、 コードの実行は禁止されている。 したがって、 現代の Linux システムでは、 アーキテクチャー依存ではあるが、
+signal trampoline コードは <B><A HREF="../man7/vdso.7.html">vdso</A></B>(7) 内もしくは C ライブラリ内に置かれる。後者の場合、 C ライブラリの
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2) のラッパー関数は、 trampoline code の場所をそのアドレスを <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2) 構造体の
+<I>sa_restorer</I> フィールドに設定してカーネルに伝え、 <I>sa_flags</I> フィールドの <B>SA_RESTORER</B>
+フラグをセットする。
+<P>
+
+保存されたプロセスコンテキスト情報は <I>ucontext_t</I>構造体に置かれる (<I>&lt;<A HREF="file:///usr/include/sys/ucontext.h">sys/ucontext.h</A>&gt;</I> 参照)。
+この構造体は、 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2) の <B>SA_SIGINFO</B> フラグで設定されたシグナルハンドラーの第 3
+引数としてシングルハンドラー内で参照できる。
+<P>
+
+
+他のいくつかの UNIX システムでは、 signal trampoline の扱いは少し異なる。 特に、 いくつかのシステムでは、
+ユーザーモードに戻る際に、 カーネルは制御を (シグナルハンドラーではなく) trampoline に渡し、 trampoline
+コードがシグナルハンドラーを呼び出す (その後ハンドラーが返ると <B>sigreturn</B>() を呼び出す)。
+<A NAME="lbAH">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+
+The original Linux system call was named <B>sigreturn</B>().  However, with the
+addition of real-time signals in Linux 2.2, a new system call,
+<B>rt_sigreturn</B>()  was added to support an enlarged <I>sigset_t</I> type.  The
+GNU C library hides these details from us, transparently employing
+<B>rt_sigreturn</B>()  when the kernel provides it.
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2), <B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A></B>(2), <B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2), <B><A HREF="../man2/signal.2.html">signal</A></B>(2),
+<B><A HREF="../man3/getcontext.3.html">getcontext</A></B>(3), <B><A HREF="../man7/signal.7.html">signal</A></B>(7), <B><A HREF="../man7/vdso.7.html">vdso</A></B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">準拠</A><DD>
+<DT><A HREF="#lbAG">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAH">C ライブラリとカーネルの違い</A><DD>
+</DL>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,234 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RSSH.CONF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RSSH.CONF</H1>
+Section: Derek D. Martin (5)<BR>Updated: 7 Jul 2003<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/rssh/release/man5/rssh.conf.5">roff page</A><HR>
+
+/etc/rssh.conf - rssh の設定ファイル
+<A NAME="lbAB">&nbsp;</A>
+<H2>概要</H2>
+
+<B>rssh.conf</B>
+
+は
+<B>rssh</B>
+
+の設定ファイルである。
+これにより、システム管理者はシェルの動きを制御できるようになる。
+設定に使うキーワードは、それ自身で行を構成するか、
+またはそれに続くイコール記号('=')と設定値とともに使われる。
+コメントはクロスハッチ('#')で始まり、行の任意の場所に置くことができる。
+設定オプションでは大文字と小文字を区別しない。
+行の先頭や行の終り、イコール記号とキーワードや値との間の空白は無視される。
+もし設定値が空白を含むのであれば、それ(少なくともその空白)は
+シングルクォートまたはダブルクォートで囲まれていなければならない。
+<P>
+
+デフォルトの設定ファイルは、
+<B>rssh</B>
+
+のソースとともに提供される。
+設定ファイルがない場合は次のデフォルト値が使われる。
+umask は 022 で
+<I>scp</I>
+
+のみが許可される。
+設定ファイルがある場合は、scp と sftp のどちらも明示的に
+許可されていなければ、ユーザは閉め出される。
+<P>
+
+v2.1 からは、user キーワードを使ったユーザごとの設定オプションが
+使用できる。詳細は追って説明する。
+<A NAME="lbAC">&nbsp;</A>
+<H2>設定キーワード</H2>
+
+<DL COMPACT>
+<DT><B>allowscp</B>
+
+<DD>
+scp が許可されていることを示す。
+<DT><B>allowsftp</B>
+
+<DD>
+sftp が許可されていることを示す。
+<DT><B>allowcvs</B>
+
+<DD>
+cvs が許可されていることを示す。
+<DT><B>allowrdist</B>
+
+<DD>
+rdist が許可されていることを示す。
+<DT><B>allowrsync</B>
+
+<DD>
+rsync が許可されていることを示す。
+<DT><B>umask</B>
+
+<DD>
+scp/sftp セッションで作成したファイルの umask 値を設定する。
+通常は、ログイン時にユーザのシェルによって設定される。
+システムデフォルトを使わないようにするために、
+<B>rssh</B>
+
+は umask を設定しなければならない。
+<DT><B>logfacility</B>
+
+<DD>
+<B>rssh</B>
+
+がログ出力しようとする syslog の機能分類(facility)を指定する。
+機能分類は
+<I>syslogd.conf</I>(5)
+
+で使われているものと同じものである。
+代わりに C のマクロを使って指定することもできる。
+たとえば、
+<P>
+<PRE>
+logfacility=user
+logfacility=LOG_USER
+</PRE>
+
+<P>
+は全く同じで、
+<B>rssh</B>
+
+に機能分類 user を使って syslog へのログ出力を行わせる。
+<DT><B>chrootpath</B>
+
+<DD>
+<B>rssh</B>
+
+(実際には補助プログラム)が
+<I>chroot</I>()
+
+システムコールを呼んで、指定されたディレクトリにファイルシステムの
+ルートディレクトリを変更する。例えば、
+<P>
+<PRE>
+chrootpath=/usr/chroot
+</PRE>
+
+<P>
+は仮想的なファイルシステムのルートを /usr/chroot に変更し、
+ファイルシステムの /usr/chroot の下以外にユーザがアクセスできないようにし、
+/usr/chroot がルートディレクトリとして見えるようにする。
+chroot jail を適切に設定するように注意すること。
+どのようにしたらよいかのヒントについては、rssh ソースとともに配布される
+CHROOT ファイルを見ること。また
+<I><A HREF="../../LDP_man-pages/man2/chroot.2.html">chroot</A></I>(2)
+
+の man ページも参照すること。
+<P>
+もし(/etc/password で指定される)ユーザのホームディレクトリが、
+このキーワードで示されるパス以下であれば、ユーザはホームディレクトリ
+へと chdir される。
+そうでなければ、chroot jail の / へと chdir される。
+<DT><B>user</B>
+
+<DD>
+user キーワードはユーザごとのオプション設定を可能にする。
+<B>このキーワードは、指定されたユーザのすべての他のキーワードを
+上書きする。</B>
+すなわち、ユーザ foo に user キーワードを使用したなら、
+user 行にある設定だけがユーザ foo に使用され、今までに述べた
+キーワードによるすべての設定は無視される。
+user キーワードの引数は、コロン(':')で区切られた、以下に示す
+フィールドのかたまりからなる。
+フィールドは、順番に:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>username</B>
+
+<DD>
+このエントリがオプションを提供するユーザ名
+<DT><B>umask</B>
+
+<DD>
+そのユーザーの 8 進数での umask 値で、シェルで設定するのと同じ意味である。
+<DT><B>access bit</B>
+
+<DD>
+5個の 0/1 で、rsync, rdist, cvs, sftp, scp の順に、
+ユーザーがそれらを許可されるかを示す。
+1 はコマンドが許可され、0 は許可されないことを意味する。
+<DT><B>path</B>
+
+<DD>
+そのユーザーが chroot されるべきパス。
+</DL>
+<P>
+
+例えば、以下のような行になる。
+<P>
+
+<PRE>
+user = luser:022:00001:
+</PRE>
+
+<P>
+
+これは次のような意味になる。
+ユーザ名 &quot;luser&quot; について、umask を 022 に設定し、
+sftp を許可せず、scp を許可する。
+chroot パスが指定されていないので、
+<B>他のキーワードでのデフォルトオプションにかかわらず</B>、
+ユーザは chroot され<I>ない</I>。
+このユーザーが chroot されるようにしたならば、たとえ chrootpath
+キーワードを使って設定したものと同じであっても、
+明示的に chroot パスを指定する必要がある。
+もし path に空白があれば、以下のようにそれを括る必要があることを
+思い出して欲しい。
+<P>
+
+<PRE>
+user = &quot;luser:022:00001:/usr/local/chroot dir&quot;
+</PRE>
+
+<P>
+
+さらなる例については、デフォルトの rssh.conf ファイルを参照のこと。
+</DL>
+
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>関連項目</H2>
+
+<I><A HREF="../man1/rssh.1.html">rssh</A></I>(1),
+
+<I>sshd</I>(8),
+
+<I>ssh</I>(1),
+
+<I>scp</I>(1),
+
+<I>sftp</I>(1),
+
+<I>syslogd.conf</I>(5),
+
+<I><A HREF="../../LDP_man-pages/man2/chroot.2.html">chroot</A></I>(2).
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">概要</A><DD>
+<DT><A HREF="#lbAC">設定キーワード</A><DD>
+<DT><A HREF="#lbAD">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

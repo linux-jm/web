@@ -1,0 +1,708 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of dhclient.conf</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../contrib.css">
+</HEAD>
+<BODY>
+<DIV ALIGN="right">
+本ページは <A HREF="http://www.jp.freebsd.org/man-jp/">FreeBSD jpman project</A>
+(man-jp@jp.FreeBSD.org) より寄贈いただきました。
+</DIV>
+
+
+<H1>dhclient.conf</H1>
+Section: File Formats (5)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/dhcp2/contrib/man5/dhclient.conf.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+dhclient.conf - DHCP クライアント設定ファイル
+<A NAME="lbAC">&nbsp;</A>
+<H2>解説</H2>
+
+dhclient.conf ファイルには
+Internet Software Consortium の DHCP クライアントである
+<I>dhclient</I>
+
+の設定情報が含まれます。
+<P>
+
+dhclient.conf は自由形式の ASCII テキストファイルです。
+このファイルは dhclient に組み込まれた再帰下降パーザに解析されます。
+ファイルには、整形の目的でタブや改行を余分に含めることもできます。
+ファイル中のキーワードでは大文字小文字を区別しません。
+(クォート内は除いて) ファイル中のどこでもコメントを置くことができます。
+コメントは文字 # で始まり、行末で終わります。
+<P>
+
+dhclient.conf ファイルで、クライアントのさまざまな動作を設定できます。
+それらには、プロトコルのタイミング、サーバに対して要求する情報、
+サーバに対して必須とされる情報、
+サーバが情報を提供しなかった場合に用いるデフォルト、
+サーバから提供された情報を上書きする値、
+サーバから提供された情報に前置や後置する値などがあります。
+また、DHCP サーバを持たないネットワークで使うアドレスであっても、
+あらかじめ設定ファイルで初期化することもできます。
+<A NAME="lbAD">&nbsp;</A>
+<H2>プロトコルのタイミング</H2>
+
+クライアントのタイミング動作は、ユーザが設定する必要はありません。
+ユーザがタイミング設定を行わなければ、
+サーバに無秩序に負荷を与えたりせず適時更新を行うような、
+充分に適切なタイミング動作がデフォルトで用いられます。
+<P>
+
+しかし、必要に応じて、
+次の文を指定して DHCP クライアントのタイミング動作を調節できます:
+<P>
+
+<B>timeout</B>
+
+<I>文</I>
+
+<P>
+
+<B>timeout</B>
+
+<I>time</I>
+
+<B>;</B>
+
+<P>
+
+<I>timeout</I>
+
+文は、クライアントがアドレスを決める試みを開始してから、
+サーバにアクセスすることが
+できないと判断するまでに経過すべき時間を決めます。
+デフォルトではこのタイムアウト値は 60 秒です。
+このタイムアウト値が過ぎた後は、
+もし静的なリースが設定ファイルに定義されているか、
+リースデータベースにまだ期限切れになっていないリースが残っていれば、
+クライアントはそれらのリースをひとつずつ検証してみて、
+いずれかが有効なようであればそのリースのアドレスを使います。
+もし静的なリースも、リースデータベース内の期限の切れていないリースで
+有効なものも存在しなければ、
+クライアントは定義された retry 間隔の後でプロトコルを再開させます。
+<P>
+
+<B>retry</B>
+
+<I>文</I>
+
+<P>
+
+<BR>&nbsp;<B>retry&nbsp;</B><I>time</I><B>;</B>
+<P>
+
+<I>retry</I>
+
+文は、クライアントが DHCP サーバが存在しないと判断してから
+再び DHCP サーバにアクセスを試みるまでの間に、経過するべき時間を決めます。
+デフォルトでは、これは 5 分です。
+<P>
+
+<B>select-timeout</B>
+
+<I>文</I>
+
+<P>
+
+<BR>&nbsp;<B>select-timeout&nbsp;</B><I>time</I><B>;</B>
+<P>
+
+あるネットワーク上で、複数の DHCP サーバがサービスを提供することもできます
+(その方が望ましいという意見もあります)。
+その場合、最初のリース発見メッセージ (lease discovery message)
+への応答として、
+クライアントが複数のリース提供の申し出を受けることもあり得ます。
+それらのうち、ある提供が他の提供よりも好ましいかもしれません
+(例えば、クライアントが以前使用していたアドレスがある提供に含まれているが、
+他の提供には含まれないなど)。
+<P>
+
+<I>select-timeout</I>
+
+はクライアントが最初のリース発見要求
+を送信して、
+少なくとも 1 つの提供申し出を受けた場合、
+サーバからの提供申し出待ちをやめるまでの時間です。
+もし
+<I>select-timeout</I>
+
+が切れるまでにどこからも提供申し出を受け取れなければ、
+クライアントはそのあと最初に到着する提供申し出を受け入れます。
+<P>
+
+デフォルトでは、select-timeout 値は 0 秒です。
+つまりクライアントは最初に受け取る提供申し出を受け入れます。
+<P>
+
+<B>reboot</B>
+
+<I>文</I>
+
+<P>
+
+<BR>&nbsp;<B>reboot&nbsp;</B><I>time</I><B>;</B>
+<P>
+
+クライアントは、再起動すると、
+最後に保持していたアドレスをまず取得し直そうとします。
+これを INIT-REBOOT (初期リブート) 状態と呼びます。
+最後に動作していたときと同じネットワークに
+クライアントがまだ接続していれば、これが最も素早い起動法となります。
+<I>reboot</I>
+
+文は、クライアントが最初に古いアドレスの再取得を試みてから、
+あきらめて新しいアドレスを発見しようとするまでに、
+経過すべき時間を設定します。
+デフォルトでは、reboot タイムアウト値は 10 秒です。
+<P>
+
+<B>backoff-cutoff</B>
+
+<I>文</I>
+
+<P>
+
+<BR>&nbsp;<B>backoff-cutoff&nbsp;</B><I>time</I><B>;</B>
+<P>
+
+クライアントは、指数的な一時退避 (backoff) アルゴリズムを、ある程度の
+乱数付きで使用します。これは、多くのクライアントが同時に自分を設定しよう
+としたときでも、リクエストがロックしてしまうことがないようにするためです。
+<I>backoff-cutoff</I>
+
+文は、一時退避に許された最大時間を決定します。デフォルト値は 2 分です。
+<P>
+
+<B>initial-interval</B>
+
+<I>文</I>
+
+<P>
+
+<BR>&nbsp;<B>initial-interval&nbsp;</B><I>time</I><B>;</B>
+<P>
+
+<I>initial-interval</I>
+
+文は、サーバへの最初のアクセスの試みから次の試みまでの間の時間を
+設定します。メッセージの間隔は、メッセージを 1 回送信するたびに、
+現在の間隔に 0 から 1 の間の乱数値を乗じたものの 2 倍を、現在の間隔に
+加えたものになります。
+この値が backoff-cutoff 値より大きくなると、この時間が設定されます。
+デフォルト値は 10 秒です。
+<A NAME="lbAE">&nbsp;</A>
+<H2>リース要求とリクエスト</H2>
+
+DHCP プロトコルでは、クライアントからサーバに対し、特定の情報を送るよう
+要求したり、受け入れ準備のできていない他の情報は送らないように要求したり
+できます。
+また、サーバからの提供申し出にクライアントの必要とする情報が含まれない
+場合や、提供された情報が充分でない場合、クライアントが提供申し出を
+拒否することもできます。
+<P>
+
+DHCP サーバが DHCP クライアントに送る提供申し出に含まれるデータには、
+さまざまなものがあります。
+特に要求できるデータは <I>DHCP オプション</I> と呼ばれるものです。
+DHCP オプションは
+<B><A HREF="../man5/dhcp-options.5.html">dhcp-options</A>(5)</B>
+に定義されています。
+<P>
+
+<B>request</B>
+
+<I>文</I>
+
+<P>
+
+<BR>&nbsp;<B>request&nbsp;[&nbsp;</B><I>option</I>&nbsp;]&nbsp;[<B>,</B><I>&nbsp;...&nbsp;option</I>&nbsp;]<B>;</B>
+<P>
+
+request 文を指定することで、クライアントは、サーバに対し、その
+クライアントに応答するならば、指定したオプションの値を送るよう
+要求するようになります。
+request 文にはオプション名だけを指定し、オプションパラメータは指定しません。
+<P>
+
+<B>require</B>
+
+<I>文</I>
+
+<P>
+
+<BR>&nbsp;<B>require&nbsp;[&nbsp;</B><I>option</I>&nbsp;]&nbsp;[<B>,</B><I>&nbsp;...&nbsp;option&nbsp;]</I><B>;</B>
+<P>
+
+require 文には、ある提供申し出をクライアントが受け入れるために
+サーバが送るべきオプションを列挙します。
+列挙されたオプションすべてを含まない提供申し出は無視されます。
+<P>
+
+<B>send</B>
+
+<I>文</I>
+
+<P>
+
+<BR>&nbsp;<B>send&nbsp;{&nbsp;[&nbsp;</B><I>option&nbsp;declaration</I>&nbsp;]
+[<B>,</B><I> ... option declaration</I> ]<B>}</B>
+<P>
+
+send 文を指定することで、クライアントは、
+指定したオプションを指定した値でサーバに送信するようになります。
+ここで指定できるオプションは、
+<B><A HREF="../man5/dhcp-options.5.html">dhcp-options</A>(5)</B> で説明されているオプション宣言すべてです。
+DHCP プロトコルで常に送られるオプションは
+ここに指定するべきではありません。但し、
+<B>requested-lease-time</B> オプションをデフォルトのリース時間 (2 時間)
+以外の値で指定することはできます。この文を使う他の場合として明らかな
+ものは、自分と別の種類のクライアントとを区別できるような
+情報を、サーバに対し送信する場合です。
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション修飾子</H2>
+
+そのクライアントにとって実際には適切でない
+オプションデータを受け取ったり、必要な情報を受け取らなかったり
+する場合で、かつ、それらの情報に利用可能なデフォルトの値が
+クライアント側に存在する場合があります。
+また、利用可能ではあるがローカルの情報で補う必要のある情報を
+クライアントが受けとる場合もあります。
+こういう場合を扱うために、
+いくつかのオプション修飾子が利用できます。
+<P>
+
+<B>default</B>
+
+<I>文</I>
+
+<P>
+
+<BR>&nbsp;<B>default&nbsp;{&nbsp;[&nbsp;</B><I>option&nbsp;declaration</I>&nbsp;]
+[<B>,</B><I> ... option declaration</I> ]<B>}</B>
+<P>
+
+あるオプションの集合について、
+サーバから提供される値をクライアントが使わなければならないが、
+もしサーバから値が提供されなければ
+何らかのデフォルト値を使う必要がある場合、
+それらの値を
+<B>default</B>
+
+文で定義することができます。
+<P>
+
+<B>supersede</B>
+
+<I>文</I>
+
+<P>
+
+<BR>&nbsp;<B>supersede&nbsp;{&nbsp;[&nbsp;</B><I>option&nbsp;declaration</I>&nbsp;]
+[<B>,</B><I> ... option declaration</I> ]<B>}</B>
+<P>
+
+あるオプションの集合について、
+どのような値がサーバから提供されても、
+常にクライアント自身の値を使わなければならない場合、
+それらの値を
+<B>supersede</B>
+
+文で定義することができます。
+<P>
+
+<B>prepend</B>
+
+<I>文</I>
+
+<P>
+
+<BR>&nbsp;<B>prepend&nbsp;{&nbsp;[&nbsp;</B><I>option&nbsp;declaration</I>&nbsp;]
+[<B>,</B><I> ... option declaration</I> ]<B>}</B>
+<P>
+
+あるオプションの集合について、まずユーザが提供する値を使い、
+その次にサーバから提供された値があればそれを使う場合、
+それらの値を
+<B>prepend</B>
+
+文で定義することができます。
+<B>prepend</B>
+
+文は複数の値を取ることのできるオプションにのみ用いることができます。
+この制約は強制されるものではありませんが、
+もし違反すると予期できない結果となります。
+<P>
+
+<B>append</B>
+
+<I>文</I>
+
+<P>
+
+<BR>&nbsp;<B>append&nbsp;{&nbsp;[&nbsp;</B><I>option&nbsp;declaration</I>&nbsp;]
+[<B>,</B><I> ... option declaration</I> ]<B>}</B>
+<P>
+
+あるオプションの集合について、まずサーバから提供された値を使い、
+その次にユーザが提供する値があればそれも使う場合、
+それらの値を
+<B>append</B>
+
+文で定義することができます。
+<B>append</B>
+
+文は複数の値を取ることのできるオプションにのみ用いることができます。
+この制約は強制されるものではありませんが、
+もし違反すると予期できない結果となります。
+<A NAME="lbAG">&nbsp;</A>
+<H2>リース宣言</H2>
+
+<P>
+
+<B>lease</B>
+
+<I>宣言</I>
+
+<P>
+
+<BR>&nbsp;<B>lease&nbsp;{</B>&nbsp;<I>lease-declaration</I>&nbsp;[&nbsp;...&nbsp;<I>lease-declaration&nbsp;]&nbsp;</I><B>}</B>
+<P>
+
+ある時間 (<B>プロトコルのタイミング</B> 参照) の後、DHCP クライアントは
+サーバへのアクセスに成功しそうにないと判断する場合があります。
+その時点で、クライアントは自分が持っている、古いリースのデータベースを
+見て、時間切れになっていないリースを順に調べ、そこに挙がっている
+ルータに ping を行って、それが利用可能なリースかどうかを調べます。
+DHCP サービスや BOOTP サービスが存在しないネットワークのために、
+1 つ以上の <I>固定</I> リースをクライアント設定ファイルに定義しておいて、
+クライアントがアドレスを自動的に設定できるようにすることもできます。
+これは
+<B>lease</B>
+
+文で行います。
+<P>
+
+注意: lease 文は、DHCP サーバから受け取ったリースを記録するために、
+dhclient.leases ファイルでも使われます。
+以下に説明するリース用のシンタックスには
+dhclient.leases ファイルでのみ必要なものもあります。
+説明を完全なものにするため、そのようなシンタックスもここで記述します。
+<P>
+
+lease 文は、リースキーワード、左中括弧、1 つ以上のリース宣言文、
+右中括弧が続いたもので構成されます。
+リース宣言として、次のものが可能です:
+<P>
+
+<BR>&nbsp;<B>bootp;</B>
+<P>
+
+<B>bootp</B>
+
+文は、リースが DHCP プロトコルではなく、
+BOOTP プロトコルを用いて取得されたことを示します。
+この文をクライアント設定ファイルに指定する必要は全くありません。
+クライアントはこの構文をリースデータベースファイル内で使います。
+<P>
+
+<BR>&nbsp;<B>interface</B>&nbsp;<B>&quot;</B><I>string</I><B>&quot;;</B>
+<P>
+
+<B>interface</B>
+
+リース文は、そのリースを有効とするインタフェースを示します。
+これが設定されている場合、このリースは、指定されたインタフェース
+上でのみ使用されます。
+サーバからリースを受け取ったとき、
+クライアントは常にそのリースを受け取ったインタフェース番号を記録します。
+dhclient.conf ファイルで事前にリースを定義している場合、要求されてない
+のですが、そのリースでインタフェースもあわせて指定しなければ
+なりません。
+<P>
+
+<BR>&nbsp;<B>fixed-address</B>&nbsp;<I>ip-address</I><B>;</B>
+<P>
+
+<B>fixed-address</B>
+
+文は特定のリースの IP アドレスを指定する際に使います。
+これはすべての lease 文に必要です。
+IP アドレスは (12.34.56.78 のように) ドット付き 4 つ組形式で
+指定しなければなりません。
+<P>
+
+<BR>&nbsp;<B>filename&nbsp;&quot;</B><I>string</I><B>&quot;;</B>
+<P>
+
+<B>filename</B>
+
+文は使用するブートファイル名を指定します。
+これは標準的なクライアント設定スクリプトでは使われませんが、
+説明の完全を期すためにここに含めてあります。
+<P>
+
+<BR>&nbsp;<B>server-name&nbsp;&quot;</B><I>string</I><B>&quot;;</B>
+<P>
+
+<B>server-name</B>
+
+文は使用するブートサーバ名を指定します。
+これも標準的なクライアント設定スクリプトでは使われません。
+<P>
+
+<BR>&nbsp;<B>option</B>&nbsp;<I>option-declaration</I><B>;</B>
+<P>
+
+<B>option</B>
+
+文は、サーバから提供されるオプションの値を指定するのに使います。
+あるいは、dhclient.conf で事前定義リースが宣言されている場合には、
+その事前定義リースが使われる際にクライアント設定スクリプトで使用して
+欲しい値を指定します。
+<P>
+
+<BR>&nbsp;<B>script&nbsp;&quot;</B><I>script-name</I><B>&quot;;</B>
+<P>
+
+<B>script</B>
+
+文は dhcp クライアント設定スクリプトのパス名を指定するのに使います。
+このスクリプトは、アドレスを要求したり、以前に提供されたアドレスを
+試したり、
+リースを取得してからインタフェースの最終設定を行ったりする前に、
+dhcp クライアントが各インタフェースの初期設定を行うのに使います。
+リースが取得できなかった場合には、
+事前定義リースが存在する場合、それらを試すためにこのスクリプトが使われます。
+また、有効なリースがひとつも得られなかった場合でも、このスクリプトは、
+1 回は呼び出されます。
+より詳しくは、
+<B><A HREF="../man5/dhclient.leases.5.html">dhclient.leases</A>(5)</B>
+
+を参照してください。
+<P>
+
+<BR>&nbsp;<B>medium&nbsp;&quot;</B><I>media&nbsp;setup</I><B>&quot;;</B>
+<P>
+
+<B>medium</B>
+
+文は、接続されているネットワークのタイプをネットワークインタフェースが
+自動的に判断できないようなシステムで使うことができます。
+文字列 media setup はシステム依存のパラメータで、
+インタフェース初期化の際に dhcp クライアント設定スクリプトに渡されます。
+Unix および Unix 風のシステムでは、
+この引数はインタフェースを設定するときに ifconfig コマンドラインに
+渡されます。
+<P>
+
+リースを得るためにインタフェースを設定する
+際に、dhcp クライアントがメディアタイプ (
+<B>media</B>
+
+文を参照) を使用する場合、dhcp クライアントは、このパラメータを
+自動的に宣言します。ネットワークインタフェースがメディアタイプの
+設定を必要とする場合は (する場合に限り)、この文を事前定義リースで
+使用しなければなりません。
+<P>
+
+<BR>&nbsp;<B>renew</B>&nbsp;<I>date</I><B>;</B>
+<P>
+
+<BR>&nbsp;<B>rebind</B>&nbsp;<I>date</I><B>;</B>
+<P>
+
+<BR>&nbsp;<B>expire</B>&nbsp;<I>date</I><B>;</B>
+<P>
+
+<B>renew</B> 文は、現在使用中のリースを更新 (renew) するために、
+dhcp クライアントが使用中のリースを提供してくれたサーバへのアクセスの
+試みを開始しなければならない日時を定義します。<B>rebind</B> 文は、
+リースを更新するために、dhcp クライアントが <I>いずれかの</I> dhcp
+サーバへのアクセスの試みを開始しなければならない日時を定義します。
+<B>expire</B> 文は、リースの更新のためにサーバにアクセスできなかった場合、
+dhcp クライアントがそのリースの使用を停止しなければならない日時を
+定義します。
+<P>
+
+これらの宣言は、DHCP クライアントが得たリース中では自動的に設定されます。
+事前定義リースのうち、DHCP クライアントに有効期限が過ぎたものを使用して
+欲しくないものの中では、これらの宣言を設定しておく必要があります。
+<P>
+
+date は以下のように指定します。
+<P>
+
+<BR>&nbsp;<I>&lt;weekday&gt;&nbsp;&lt;year&gt;</I><B>/</B><I>&lt;month&gt;</I><B>/</B><I>&lt;day&gt;
+&lt;hour&gt;</I><B>:</B><I>&lt;minute&gt;</I><B>:</B><I>&lt;second&gt;</I>
+<P>
+
+weekday は、人間が見てリース期限をわかりやすくするために存在します。
+これは、0 から 6 までの数字で指定します。0 は日曜日です。year は世紀
+込みで指定します。ですから、本当に長いリースを別にすると、必ず 4 桁に
+なるはずです。month は 1 (1 月を表します) から始まる数字で指定します。
+day は同様に 1 から始まる (月における) 日として指定します。hour は、
+0 から 23 の間の数字です。minute と second はともに 0 から 59 の間の
+数字を指定します。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エイリアス宣言</H2>
+
+<BR>&nbsp;<B>alias&nbsp;{&nbsp;</B><I>&nbsp;declarations&nbsp;...&nbsp;</I><B>}</B>
+<P>
+
+DHCP クライアントが TCP/IP ローミング (roaming) プロトコルを実行して
+いる場合、DHCP を用いて得られるリースだけでなく、事前に定義された
+IP エイリアスも、自分が使用するインタフェースに設定する必要がある
+場合があります。Internet Software Consortium 版 DHCP クライアントは、
+固定アドレス直接指定のローミングをサポートしていませんが、その種の実験
+ができるように、この dhcp クライアントは、
+<B>alias</B>
+
+宣言を使って IP エイリアスを設定する準備はできています。
+<P>
+
+alias 宣言は lease 宣言に似ています。但し、標準の
+クライアント設定スクリプトでは、subnet-mask オプション以外の
+オプションと、各種有効期限 (expiry times) が無視される点が異なります。
+普通の alias 宣言では、 interface 宣言、IP エイリアスのための
+固定アドレス宣言、subnet-mask オプションを含みます。alias 宣言には
+medium 文は決して含まれてはなりません。
+<A NAME="lbAI">&nbsp;</A>
+<H2>その他の宣言</H2>
+
+<BR>&nbsp;<B>reject&nbsp;</B><I>ip-address</I><B>;</B>
+<P>
+
+<B>reject</B>
+
+文により、DHCP クライアントは指定したアドレスをサーバ識別子として使用する
+サーバからの提供申し出を拒否するようになります。標準に準拠しない dhcp
+サーバや設定を間違えている dhcp サーバによってクライアントが設定されない
+ようにするために、この文を使用することができます。しかしながら、これは
+最後の武器とするべきです。これに先立ち、腐った DHCP サーバを追いかけて
+それを直す方がよいです。
+<P>
+
+<BR>&nbsp;<B>interface&nbsp;&quot;</B><I>name</I><B>&quot;&nbsp;{&nbsp;</B><I>declarations&nbsp;...&nbsp;</I><B>&nbsp;}
+<P>
+
+複数のネットワークインタフェースを持つクライアントの場合、DHCP で
+設定されるインタフェースによって異なる動作をさせる必要がある場合が
+あります。lease 宣言と alias 宣言を除くすべてのタイミングパラメータ
+と宣言を、interface 宣言で囲むことができます。その場合、囲まれた
+パラメータは指定した名前に合致するインタフェースにのみ適用されます。
+interface 宣言を持たないインタフェースは、すべての interface 宣言の
+外側で宣言されたパラメータ、もしくはデフォルトの設定が適用されます。
+<P>
+
+<BR>&nbsp;media&nbsp;&quot;</B><I>media&nbsp;setup</I><B>&quot;</B><I>&nbsp;[&nbsp;</I><B>,&nbsp;&quot;</B><I>media&nbsp;setup</I><B>&quot;,&nbsp;</B><I>...&nbsp;]</I><B>;</B>
+<P>
+
+<B>media</B>
+
+文は、IP アドレス取得中に使用が試みられる、メディア設定パラメータを 1 つ
+以上定義します。dhcp クライアントは、リスト中の各 media setup 文字列を
+順次使用し、あるインタフェースをそれで設定し、ブートを試みます。
+駄目ならば次の media setup 文字列を使用します。この文は、
+メディアタイプを検出する能力を持たないネットワークインタフェースに
+対して利用できます。サーバへのリクエストができ応答が得られるもの
+ならば、どのようなメディアタイプでもたぶん正当です (保証はしませんが)。
+<P>
+
+media setup はアドレス取得の初期フェーズ (DHCPDISCOVER パケットと
+DHCPOFFER パケット)でのみ使用されます。ひとたびアドレスが取得されると、
+dhcp クライアントはそのアドレスをリースデータベースに記録し、
+そのアドレスを得る際に用いたメディアタイプを記録します。クライアントが
+リースを更新しようとする際には常に、それと同じメディアタイプを使用します。
+リースを期限切れにしてはじめて、クライアントはメディアタイプを順に試す
+状態に戻ります。
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>使用例</H2>
+
+以下の設定ファイルは、NetBSD 1.3 を実行するあるラップトップマシンで
+使用されているものです。このマシンは、IP エイリアスとして 192.5.5.213、
+インタフェース ep0 (3Com 3C589C) をひとつ持っています。このクライアント
+は、DHCP 活動がほとんどないネットワークで時間の大部分を消費することが
+わかっているので、ブート間隔はデフォルト値からいくぶん小さくして
+あります。このマシンは複数ネットワーク間でローミング (移動) します。
+<P>
+<PRE>
+
+timeout 60;
+retry 60;
+reboot 10;
+select-timeout 5;
+initial-interval 2;
+reject 192.33.137.209;
+
+interface &quot;ep0&quot; {
+    send host-name &quot;andare.fugue.com&quot;;
+    send dhcp-client-identifier 1:0:a0:24:ab:fb:9c;
+    send dhcp-lease-time 3600;
+    supersede domain-name &quot;fugue.com rc.vix.com home.vix.com&quot;;
+    prepend domain-name-servers 127.0.0.1;
+    request subnet-mask, broadcast-address, time-offset, routers,
+            domain-name, domain-name-servers, host-name;
+    require subnet-mask, domain-name-servers;
+    script &quot;/sbin/dhclient-script&quot;;
+    media &quot;media 10baseT/UTP&quot;, &quot;media 10base2/BNC&quot;;
+}
+
+alias {
+  interface &quot;ep0&quot;;
+  fixed-address 192.5.5.213;
+  option subnet-mask 255.255.255.255;
+}
+</PRE>
+
+これは dhclient.conf ファイルとしては非常に複雑なものです。一般に、
+皆さんが使用するものははるかに簡単なはずです。多くの場合、dhclient.conf
+ファイルとして空のファイルを生成するだけで十分なはずです。
+つまり、デフォルト値でよいのが普通です。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man5/dhcp-options.5.html">dhcp-options</A>(5), <A HREF="../man5/dhclient.leases.5.html">dhclient.leases</A>(5), <A HREF="../man8/dhclient.8.html">dhclient</A>(8), RFC2132,
+RFC2131
+<A NAME="lbAL">&nbsp;</A>
+<H2>作者</H2>
+
+<B><A HREF="../man8/dhclient.8.html">dhclient</A>(8)</B>
+
+は Vixie Labs との契約のもとで Ted Lemon &lt;<A HREF="mailto:mellon@vix.com">mellon@vix.com</A>&gt; が書きました。
+本プロジェクトの基金は Internet Software Corporation が提供しました。
+Internet Software Consortium に関する情報は、
+<B><A HREF="http://www.isc.org/isc">http://www.isc.org/isc</A></B>
+
+にあります。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">解説</A><DD>
+<DT><A HREF="#lbAD">プロトコルのタイミング</A><DD>
+<DT><A HREF="#lbAE">リース要求とリクエスト</A><DD>
+<DT><A HREF="#lbAF">オプション修飾子</A><DD>
+<DT><A HREF="#lbAG">リース宣言</A><DD>
+<DT><A HREF="#lbAH">エイリアス宣言</A><DD>
+<DT><A HREF="#lbAI">その他の宣言</A><DD>
+<DT><A HREF="#lbAJ">使用例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">作者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:37 GMT, December 05, 2022
+</BODY>
+</HTML>

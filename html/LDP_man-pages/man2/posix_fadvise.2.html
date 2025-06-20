@@ -1,0 +1,212 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of POSIX_FADVISE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>POSIX_FADVISE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/posix_fadvise.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+posix_fadvise - ファイルデータのアクセスパターンをあらかじめ宣言する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
+
+<B>int posix_fadvise(int </B><I>fd</I><B>, off_t </B><I>offset</I><B>, off_t </B><I>len</I><B>, int </B><I>advice</I><B>);</B>
+</PRE>
+
+<P>
+
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+<B>posix_fadvise</B>():
+<DL COMPACT><DT><DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+プログラムは、将来特定のパターンでファイルデータに アクセスする意思を伝えるために <B>posix_fadvise</B>()  を使うことができる。
+これにより、カーネルが適切な最適化を実行することが可能になる。
+<P>
+
+<I>advice</I> は <I>fd</I> が参照しているファイルの <I>offset</I> から始まる <I>len</I> バイ
+トの範囲内 (<I>len</I> が 0 の場合はファイルの終りまで) の (必ずしも存在しない)
+領域に適用される。 <I>advice</I> は義務づけではない。 <I>advice</I> は単にアプリケー
+ションのために可能性を構成するだけである。
+<P>
+
+<I>advice</I> に許される値には、以下のものが含まれる:
+<DL COMPACT>
+<DT><B>POSIX_FADV_NORMAL</B><DD>
+指定されたデータのアクセスパターンを指示するアドバイスを アプリケーションが何も持っていないことを示す。
+オープンされたファイルにアドバイスが指定されない場合、 これがデフォルトで仮定される。
+<DT><B>POSIX_FADV_SEQUENTIAL</B><DD>
+アプリケーションは指定されたデータがシーケンシャルに (大きなオフセットの前に小さなオフセットのデータを読むように)  アクセスされることを期待する。
+<DT><B>POSIX_FADV_RANDOM</B><DD>
+指定されたデータがランダムな順番でアクセスされる。
+<DT><B>POSIX_FADV_NOREUSE</B><DD>
+指定されたデータは 1 度しかアクセスされない。
+<DT><DD>
+2.6.18 より前のカーネルでは、<B>POSIX_FADV_NOREUSE</B> は <B>POSIX_FADV_WILLNEED</B> と同じ意味であった。
+これは多分バグであった。 カーネル 2.6.18 以降では、このフラグは何も行わない。
+<DT><B>POSIX_FADV_WILLNEED</B><DD>
+指定されたデータは近い将来アクセスされる。
+<DT><DD>
+<B>POSIX_FADV_WILLNEED</B> は、 ページキャッシュに指定領域のブロックされない読み込みを開始する。 読み込まれるデータの総量は、
+仮想メモリーの負荷に依ってカーネルが減らすかもしれない (数メガバイトであれば通常は全く十分であり、 それより多くてもめったに役に立たない)。
+<DT><B>POSIX_FADV_DONTNEED</B><DD>
+指定されたデータは近い将来アクセスされない。
+<DT><DD>
+<B>POSIX_FADV_DONTNEED</B> は指定された領域に関連付けられた キャッシュページを解放しようとする。
+例えば、これは大きなファイルをストリーミングするときに役立つ。 プログラムは、使用済みのキャッシュされたデータを解放するように、
+定期的にカーネルに要求するかもしれない。 そうすることにより、さらに有効なキャッシュされたページが、 代わりに破棄されることはない。
+<DT><DD>
+ページの一部分の破棄要求は無視される。 不要なデータを破棄するよりも必要なデータを保持する方がよい。
+アプリケーションがデータを破棄した方がよいと思う場合は、 <I>offset</I> と <I>len</I> がページ境界に合っていなければならない。
+<DT><DD>
+The implementation <I>may</I> attempt to write back dirty pages in the specified
+region, but this is not guaranteed.  Any unwritten dirty pages will not be
+freed.  If the application wishes to ensure that dirty pages will be
+released, it should call <B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)  or <B><A HREF="../man2/fdatasync.2.html">fdatasync</A></B>(2)  first.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。 失敗した場合はエラー番号が返される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+<I>fd</I> 引数が有効なファイルディスクリプターでない。
+<DT><B>EINVAL</B><DD>
+無効な値が <I>advice</I> に指定された。
+<DT><B>ESPIPE</B><DD>
+
+指定されたファイルディスクリプターがパイプまたは FIFO を参照している (<B>ESPIPE</B> は POSIX で規定されているエラーだが、
+バージョン 2.6.16 より前のカーネルでは、 この場合に <B>EINVAL</B> を返していた。)
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+カーネルによるサポートは Linux 2.5.60 で最初に登場し、
+対応するシステムコールは <B>fadvise64</B>() という名前である。
+ライブラリによるサポートは glibc バージョン 2.2 以降で提供されており、
+ラッパー関数は <B>posix_fadvise</B>() という名前である。
+<P>
+
+
+Linux 3.18 以降では、対応するシステムコールのサポートは任意となり、利用できるかはカーネルが
+<B>CONFIG_ADVISE_SYSCALLS</B> オプションを有効にしてコンパイルされているかに依存する。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.  <I>len</I> 引数の型が POSIX.1-2001 TC1 において <I>size_t</I> から
+<I>off_t</I> に変更された点に注意すること。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+Linux では、<B>POSIX_FADV_NORMAL</B> はバッキングデバイスの デフォルトサイズに先読み (readahead)
+ウインドウを設定する。 <B>POSIX_FADV_SEQUENTIAL</B> はこのサイズを 2 倍し、 <B>POSIX_FADV_RANDOM</B>
+は先読みを全く無効にする。 これらの変更はファイル全体に影響し、指定された領域のみに影響するわけではない
+(しかし同じファイルに対する他のオープンファイルハンドルは影響を受けない)。
+<P>
+
+The contents of the kernel buffer cache can be cleared via the
+<I>/proc/sys/vm/drop_caches</I> interface described in <B><A HREF="../man5/proc.5.html">proc</A></B>(5).
+<P>
+
+One can obtain a snapshot of which pages of a file are resident in the
+buffer cache by opening a file, mapping it with <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), and then
+applying <B><A HREF="../man2/mincore.2.html">mincore</A></B>(2)  to the mapping.
+<A NAME="lbAJ">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+The name of the wrapper function in the C library is <B>posix_fadvise</B>().
+The underlying system call is called <B>fadvise64</B>()  (or, on some
+architectures, <B>fadvise64_64</B>()); the difference between the two is that
+the former system call assumes that the type of the <I>len</I> argument is
+<I>size_t</I>, while the latter expects <I>loff_t</I> there.
+<A NAME="lbAK">&nbsp;</A>
+<H3>アーキテクチャー固有の派生バージョン</H3>
+
+いくつかのアーキテクチャーでは、 64 ビットの引数は適切なレジスターの組に割り当てる必要がある (<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2) 参照)。
+このようなアーキテクチャーでは、 「書式」に書かれている  <B>posix_fadvise</B>() の呼び出しシグネチャーで、 引数 <I>fd</I> と
+<I>offset</I> の間のパディング (詰めもの) でレジスターが一つ消費されてしまう。 そのため、
+これらのアーキテクチャーでは引数が適切な順序になった別のシステムコールが定義されているが、 それ以外は <B>posix_fadvise</B>()
+と全く同じである。
+<P>
+
+例えば、 Linux 2.6.14 以降では、 ARM には以下のシステムコールが存在する。
+<P>
+
+
+
+<B>long arm_fadvise64_64(int </B><I>fd</I><B>, int </B><I>advice</I><B>,</B>
+<B>                      loff_t </B><I>offset</I><B>, loff_t </B><I>len</I><B>);</B>
+
+
+<P>
+
+通常、 glibc の <B>posix_fadvise</B>() ラッパー関数により、 これらのアーキテクチャー固有の詳細はアプリケーションには見えない。
+glibc のラッパー関数では、適切なアーキテクチャー固有のシステムコールが呼び出される。
+<A NAME="lbAL">&nbsp;</A>
+<H2>バグ</H2>
+
+2.6.6 より前のカーネルでは、 <I>len</I> に 0 が指定された場合、 「ファイルの終りまでの全てのバイト」という意味ではなく、 文字通り「0
+バイト」として解釈されていた。
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>fincore</B>(1), <B><A HREF="../man2/mincore.2.html">mincore</A></B>(2), <B><A HREF="../man2/readahead.2.html">readahead</A></B>(2), <B><A HREF="../man2/sync_file_range.2.html">sync_file_range</A></B>(2),
+<B><A HREF="../man3/posix_fallocate.3.html">posix_fallocate</A></B>(3), <B>posix_madvise</B>(3)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">C ライブラリとカーネルの違い</A><DD>
+<DT><A HREF="#lbAK">アーキテクチャー固有の派生バージョン</A><DD>
+</DL>
+<DT><A HREF="#lbAL">バグ</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

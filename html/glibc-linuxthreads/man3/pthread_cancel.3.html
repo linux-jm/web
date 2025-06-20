@@ -1,0 +1,527 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_CANCEL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_CANCEL</H1>
+Section: C Library Functions (3)<BR>Updated: LinuxThreads<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/glibc-linuxthreads/release/man3/pthread_cancel.3">roff page</A><HR>
+
+<P>
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+pthread_cancel, pthread_setcancelstate, pthread_setcanceltype, pthread_testcancel - スレッドの取り消し
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<P>
+<B>int pthread_cancel(pthread_t </B><I>thread</I><B>);</B>
+
+<P>
+<B>int pthread_setcancelstate(int </B><I>state</I><B>, int *</B><I>oldstate</I><B>);</B>
+
+<P>
+<B>int pthread_setcanceltype(int </B><I>type</I><B>, int *</B><I>oldtype</I><B>);</B>
+
+<P>
+<B>void pthread_testcancel(void);</B>
+
+<P>
+
+
+
+
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+取り消しは、あるスレッドが他のスレッドの実行を終了させることを可能
+にするメカニズムである。より正確には、スレッドは他のスレッドに対して
+取消要求を送ることができる。設定次第で、目標のスレッドは、要求を無視
+したり、直ちに実現したり、ある取り消しポイントに至るまでその要求の実行
+を延期したりできる。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+スレッドが最終的に取り消し要求を実現する際には、それはあたかも
+<B>pthread_exit(PTHREAD_CANCELED)</B>
+
+がその時点で呼び出されたかのように振舞う。すなわち、全てのクリーン
+アップハンドラが逆順に実行され、スレッド固有データの終了処理関数が
+呼び出され、最後にスレッドは、返り値
+<B>PTHREAD_CANCEL</B>
+
+で実行を停止する。詳しくは
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)
+
+を見よ。
+<P>
+
+
+
+
+
+<B>pthread_cancel</B>
+
+は
+<I>thread</I>
+
+引数で指定されたスレッドに対して、取り消し要求を送る。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>pthread_setcancelstate</B>
+
+は、これを呼び出すスレッドの取り消し状態を変更する。
+すなわち、取り消し要求を受け入れるか否かを変更する。
+<I>state</I>
+
+引数は新たな取り消し状態である。これは取り消しを可能にする
+<B>PTHREAD_CANCEL_ENABLE</B>
+
+もしくは、取り消しを不可能にする(取り消し要求を無視する)
+<B>PTHREAD_CANCEL_DISABLE</B>
+
+のいずれかである。
+<I>oldstate</I>
+
+が
+<B>NULL</B>
+
+でなければ、以前の取り消し状態が
+<I>oldstate</I>
+
+が指す場所に格納され、従って、後で別の
+<B>pthread_setcancelstate</B>
+
+の呼び出しにより、回復することができる。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>pthread_setcanceltype</B>
+
+は、これを呼び出すスレッドの取り消し要求に対する反応の型を変更する。
+これは、非同期(即時)または遅延のいずれかである。
+<I>type</I>
+
+引数は、新たな取り消し方であり、取り消し要求が届くと直ちに呼び出し
+スレッドを取り消す
+<B>PTHREAD_CANCEL_ASYNCHRONOUS</B>
+
+か、取り消し要求を次の取り消しポイントまで留保する
+<B>PTHREAD_CANCEL_DEFERRED</B>
+
+かのいずれかである。
+<I>oldtype</I>
+
+が
+<B>NULL</B>
+
+でなければ、以前の取り消し型が
+<I>oldtype</I>
+
+の指す場所に格納され、従って、後から別の
+<B>pthread_setcanceltype</B>
+
+の呼び出しによって回復することが可能である。
+<P>
+
+
+
+
+
+
+
+スレッドは常に
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3)
+
+によって、取り消し可能かつ遅延で作成される。
+すなわち、初期の取り消し状態は
+<B>PTHREAD_CANCEL_ENABLE</B>
+
+であり、初期の型は
+<B>PTHREAD_CANCEL_DEFERRED</B>
+
+である。
+<P>
+
+
+
+
+取り消しポイントとは、保留中の取り消し要求に対するテストが行われ、
+実際に要求があれば取り消しが実行される点である。以下の POSIX スレッド
+関数は取り消しポイントである:
+<P>
+
+
+
+
+
+
+
+
+
+
+
+<B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3)
+
+<BR>
+
+<B><A HREF="../man3/pthread_cond_wait.3.html">pthread_cond_wait</A></B>(3)
+
+<BR>
+
+<B><A HREF="../man3/pthread_cond_timedwait.3.html">pthread_cond_timedwait</A></B>(3)
+
+<BR>
+
+<B><A HREF="../man3/pthread_testcancel.3.html">pthread_testcancel</A></B>(3)
+
+<BR>
+
+<B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3)
+
+<BR>
+
+<B><A HREF="../man3/sigwait.3.html">sigwait</A></B>(3)
+
+<P>
+
+
+
+これ以外の全ての POSIX スレッド関数は取り消しポイントではないことが保証
+されている。すなわち、それらは遅延取り消しモードで決して取り消しを
+実現することはない。
+<P>
+
+
+
+
+
+<B>pthread_testcancel</B>
+
+は保留中の取り消し要求を調べ、それを実現するだけである。その目的は、
+他に取り消しポイントとなる関数を呼び出すことのない、長い連続した
+コードの中に、明示的に取り消しのチェックを導入することである。
+<P>
+
+
+
+
+
+
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<P>
+<B>pthread_cancel、</B>
+
+<B>pthread_setcancelstate</B>
+
+および
+<B>pthread_setcanceltype</B>
+
+は成功すると 0 を返し、エラーならば、非ゼロのエラーコードを返す。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>pthread_cancel</B>
+
+はエラーの際に次のエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>ESRCH</B>
+
+<DD>
+<I>thread</I>
+
+で指定されたものに対応するスレッドが存在しない。
+ID.
+</DL>
+</DL>
+
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+<B>pthread_setcancelstate</B>
+
+はエラーの際に次のエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+<I>state</I>
+
+が
+<B>PTHREAD_CANCEL_ENABLE</B>
+
+でも
+<B>PTHREAD_CANCEL_DISABLE</B>
+
+でもない。
+</DL>
+</DL>
+
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+<B>pthread_setcanceltype</B>
+
+はエラーの際に次のエラーコードを返す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+<I>type</I>
+
+引数が
+<B>PTHREAD_CANCEL_DEFERRED</B>
+
+でも
+<B>PTHREAD_CANCEL_ASYNCHRONOUS</B>
+
+でもない。
+</DL>
+</DL>
+
+<P>
+
+
+
+
+
+
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>著者</H2>
+
+Xavier Leroy &lt;<A HREF="mailto:Xavier.Leroy@inria.fr">Xavier.Leroy@inria.fr</A>&gt;
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3),
+
+<B><A HREF="../man3/pthread_cleanup_push.3.html">pthread_cleanup_push</A></B>(3),
+
+<B><A HREF="../man3/pthread_cleanup_pop.3.html">pthread_cleanup_pop</A></B>(3).
+
+<P>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>バグ</H2>
+
+<P>
+
+
+
+
+
+
+
+
+
+
+POSIX は一連のシステムコール(基本的には
+<B><A HREF="../../LDP_man-pages/man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../../LDP_man-pages/man2/write.2.html">write</A></B>(2),
+
+<B><A HREF="../../LDP_man-pages/man2/wait.2.html">wait</A></B>(2),
+
+等のようなブロックの可能性のある全ての関数)とそれらのシステムコール
+を呼ぶようなライブラリ関数(例えば
+<B><A HREF="../../LDP_man-pages/man3/fprintf.3.html">fprintf</A></B>(3))
+
+が取り消しポイントであると規定している。 LinuxThreads はこれを実装する
+には、まだ十分に C ライブラリと統合されていると言えず、
+従っていかなる C ライブラリの関数も取り消しポイントではない。
+<P>
+
+
+
+
+
+
+
+
+
+
+少なくとも、システムコールに対してはこれを回避する方法がある。
+取り消し要求は、目標スレッドにシグナルを送ることによって送信される。
+このシグナルはブロックしているシステムコール全てに対して割込みを掛け、
+それらは直ちに
+<B>EINTR</B>
+
+で戻る。よって、例えば
+<B>read</B>
+
+システムコールを呼んでいる間に取り消しをチェックするには、次のように
+すれば良い:
+<P>
+<DL COMPACT><DT><DD>
+<B>
+</B><PRE>
+
+pthread_testcancel();
+retcode = read(fd, buffer, length);
+pthread_testcancel();
+
+</DL>
+</PRE>
+
+<P>
+<P>
+[訳注] 上の記述は glibc2 を用いたシステムでは正しくない。以下は 
+glib-2.1.2 の info ファイルからの引用である。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+取り消しポイントとは、保留中の取り消し要求に対するテストが行われ、
+実際に要求があれば取り消しが実行される点である。POSIX スレッド関数
+のうち、`pthread_join', `pthread_cond_wait', `pthread_cond_timed_wait', 
+`pthread_testcancel', `sem_wait' 及び `sigwait' は取り消しポイント
+である。 これに加えて、以下のシステムコールは取り消しポイントである:
+<P>
+<BR>&nbsp;accept&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;open&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendmsg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<BR>&nbsp;close&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pause&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendto&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<BR>&nbsp;connect&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;read&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;system&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<BR>&nbsp;fcntl&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tcdrain&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<BR>&nbsp;fsync&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvfrom&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wait&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<BR>&nbsp;lseek&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvmsg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;waitpid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<BR>&nbsp;msync&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;send&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<BR>&nbsp;nanosleep&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<P>
+これらの関数を呼び出す可能性のある printf() などのライブラリ関数も
+取り消しポイントになる場合がある。
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">著者</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">バグ</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

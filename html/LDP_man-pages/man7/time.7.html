@@ -1,0 +1,169 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TIME</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TIME</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated:  2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man7/time.7">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+time - 時間とタイマーの概要
+<A NAME="lbAC">&nbsp;</A>
+<H2>説明</H2>
+
+<A NAME="lbAD">&nbsp;</A>
+<H3>実時間 (real time) とプロセス時間</H3>
+
+<I>実時間</I>は、特定の時点から計った時間と定義される。 特定の時点とは、過去の標準的な時点 (下記の紀元 (Epoch) とカレンダ時刻の説明を参照)
+や、 プロセスの一生における何らかの時点 (例えば、開始時) である (<I>経過時間</I>)。
+<P>
+
+<I>プロセス時間</I>は、プロセスによって使われた総 CPU 時間と定義される。 多くの場合、<I>ユーザー</I>時間と<I>システム</I>時間に分けられる。 ユーザー
+CPU 時間は、コードをユーザーモードで実行するのに使った時間である。 システム CPU 時間は、そのプロセスのために
+カーネルがシステムモードで実行するのに使った時間である (例えば、システムコールを実行するのに使った時間)。 <B><A HREF="../man1/time.1.html">time</A></B>(1)
+コマンドはプログラムの実行に費された総 CPU 時間を計るのに使用される。 プログラムは、自身が費した総 CPU 時間を <B><A HREF="../man2/times.2.html">times</A></B>(2),
+<B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2), <B><A HREF="../man3/clock.3.html">clock</A></B>(3)  を使って計ることができる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>ハードウェアクロック</H3>
+
+多くのコンピュータが (電池で駆動される) ハードウェアクロックを持っている。 カーネルは起動時にソフトウェアクロックを初期化するために
+ハードウェアクロックを読み込む。 より詳しい情報は、 <B><A HREF="../man4/rtc.4.html">rtc</A></B>(4)  と <B><A HREF="../../util-linux/man8/hwclock.8.html">hwclock</A></B>(8)  を参照すること。
+<A NAME="lbAF">&nbsp;</A>
+<H3>ソフトウェアクロック, HZ, Jiffy</H3>
+
+
+
+タイムアウトを設定したり (例えば <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/sigtimedwait.2.html">sigtimedwait</A></B>(2))、 CPU 時間を計測したり (例えば
+<B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2))<B>する様々なシステムコールの精度は</B> <I>ソフトウェアクロック</I> の分解能 (resolution) に制限される。
+ソフトウェアクロックとは、カーネルが管理する <I>jiffy</I> 単位で時間を計測するクロックのことである。 jiffy の大きさはカーネル定数
+<I>HZ</I> の値で決定される。
+<P>
+
+<I>HZ</I> の値はカーネルのバージョンとハードウェアプラットフォームで異なる。 i386 の場合は以下の通りである: 2.4.x
+とそれより前のカーネルでは、HZ は 100 であったので、 jiffy の値は 0.01 秒になっていた。 2.6.0 以降では、HZ は 1000
+に増やされたので、jiffy の値は 0.001 秒である。 カーネル 2.6.13 以降では、HZ の値はカーネル設定パラメーターになり、 100,
+250 (デフォルト), 1000 という値にできる。 それぞれ jiffy の値は 0.01, 0.004, 0.001 秒になる。 カーネル
+2.6.20 以降では、300 も利用できるようになっている。 300 は一般的な映像フレームレートの公倍数である (PAL, 25HZ; NTSC,
+30HZ)。
+<P>
+
+
+
+
+<B><A HREF="../man2/times.2.html">times</A></B>(2)  システムコールは特殊なケースであり、 このシステムコールはカーネル定数 <I>USER_HZ</I>
+で定義された粒度で時間を報告する。 ユーザー空間のアプリケーションは <I>sysconf(_SC_CLK_TCK)</I>
+を使ってこの定数の値を知ることができる。
+<A NAME="lbAG">&nbsp;</A>
+<H3>System and process clocks; time namespaces</H3>
+
+
+The kernel supports a range of clocks that measure various kinds of elapsed
+and virtual (i.e., consumed CPU) time.  These clocks are described in
+<B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2).  A few of the clocks are settable using
+<B><A HREF="../man2/clock_settime.2.html">clock_settime</A></B>(2).  The values of certain clocks are virtualized by time
+namespaces; see <B>time_namespaces</B>(7).
+<A NAME="lbAH">&nbsp;</A>
+<H3>高精度タイマー</H3>
+
+Linux 2.6.21 より前では、タイマーやスリープ関連のシステムコールの精度も jiffy のサイズにより制限されていた。
+<P>
+
+Linux 2.6.21 以降では、Linux は高精度タイマー (high-resolution timers; HRTs)  をサポートしており、
+<B>CONFIG_HIGH_RES_TIMERS</B> で制御できる。 高精度タイマーをサポートしているシステムでは、タイマーとスリープ関連のシステムコール
+の精度はもはや jiffy に制約されることはなく、 ハードウェアが許す限りの精度となる (最近のハードウェアではマイクロ秒単位の精度が一般的である)。
+高精度タイマーがサポートされているかは、 <B><A HREF="../man2/clock_getres.2.html">clock_getres</A></B>(2)  を呼び出して分解能を確認するか、
+<I>/proc/timer_list</I> 内の &quot;resolution&quot; エントリーを参照するかで判断できる。
+<P>
+
+高精度タイマーはすべてのハードウェアアーキテクチャーでサポートされている 訳ではない (対応しているアーキテクチャーは x86, arm,
+powerpc である)。
+<A NAME="lbAI">&nbsp;</A>
+<H3>紀元</H3>
+
+UNIX システムは時刻を 紀元 (1970-01-01 00:00:00 +0000 (UTC)) からの秒数で表現する。
+<P>
+
+
+A program can determine the <I>calendar time</I> via the <B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2)
+<B>CLOCK_REALTIME</B> clock, which returns time (in seconds and nanoseconds)
+that have elapsed since the Epoch; <B><A HREF="../man2/time.2.html">time</A></B>(2)  provides similar information,
+but only with accuracy to the nearest second.  The system time can be
+changed using <B><A HREF="../man2/clock_settime.2.html">clock_settime</A></B>(2).
+<A NAME="lbAJ">&nbsp;</A>
+<H3>要素別の時刻</H3>
+
+ライブラリ関数の中には <I>tm</I> 型の構造体を使うものがある。 この構造体は<I>要素別の時刻</I>を表し、 時刻の値を別々の要素
+(年・月・日・時・分・秒など) に分けて格納する。 この構造体は <B><A HREF="../man3/ctime.3.html">ctime</A></B>(3)  に記述されており、カレンダ時刻を要素別の時刻に変換する
+関数についても記述されている。 要素別の時刻を表示可能な文字列に変換する関数については、 <B><A HREF="../man3/ctime.3.html">ctime</A></B>(3), <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3),
+<B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)  に記述されている。
+<A NAME="lbAK">&nbsp;</A>
+<H3>タイマーのスリープと設定</H3>
+
+様々なシステムコールと関数により、指定された一定の時間、 プログラムはスリープ (実行を停止) することが可能である。 <B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2),
+<B><A HREF="../man2/clock_nanosleep.2.html">clock_nanosleep</A></B>(2), <B><A HREF="../man3/sleep.3.html">sleep</A></B>(3)  を参照すること。
+<P>
+
+様々なシステムコールにより、プロセスは将来のある時点で 有効期間が終了するタイマーを設定できる。
+またオプションとして繰り返し間隔が指定できるものもある。 <B><A HREF="../man2/alarm.2.html">alarm</A></B>(2), <B><A HREF="../man2/getitimer.2.html">getitimer</A></B>(2),
+<B><A HREF="../man2/timerfd_create.2.html">timerfd_create</A></B>(2), <B>timer_create</B>(2)  を参照すること。
+<A NAME="lbAL">&nbsp;</A>
+<H3>timer slack</H3>
+
+Linux 2.6.28 以降では、スレッドの &quot;timer slack&quot; 値を制御することができる。 &quot;timer slack&quot; は、
+停止中のシステムコールがタイムアウト以外で wake-up される (起こされる) 際に、 カーネルに許容される遅延時間である。
+この遅延を認めることで、 カーネルは wake-up イベントをまとめて行うことができ、 その結果、 システム全体の wake-up 数を減らし、
+電力を節約することができる。 詳細は <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2) の <B>PR_SET_TIMERSLACK</B> の説明を参照のこと。
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<BR>&nbsp;<B><A HREF="../../0MultiFileIdx/man1/date.1.html">date</A></B>(1),&nbsp;<B><A HREF="../man1/time.1.html">time</A></B>(1),&nbsp;<B><A HREF="../../0MultiFileIdx/man1/timeout.1.html">timeout</A></B>(1),&nbsp;<B><A HREF="../man2/adjtimex.2.html">adjtimex</A></B>(2),&nbsp;<B><A HREF="../man2/alarm.2.html">alarm</A></B>(2),
+<B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2), <B><A HREF="../man2/clock_nanosleep.2.html">clock_nanosleep</A></B>(2), <B><A HREF="../man2/getitimer.2.html">getitimer</A></B>(2),
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2), <B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2), <B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2), <B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2),
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2), <B><A HREF="../man2/time.2.html">time</A></B>(2), <B>timer_create</B>(2), <B><A HREF="../man2/timerfd_create.2.html">timerfd_create</A></B>(2),
+<B><A HREF="../man2/times.2.html">times</A></B>(2), <B><A HREF="../man2/utime.2.html">utime</A></B>(2), <B><A HREF="../man3/adjtime.3.html">adjtime</A></B>(3), <B><A HREF="../man3/clock.3.html">clock</A></B>(3),
+<B><A HREF="../man3/clock_getcpuclockid.3.html">clock_getcpuclockid</A></B>(3), <B><A HREF="../man3/ctime.3.html">ctime</A></B>(3), <B><A HREF="../man3/ntp_adjtime.3.html">ntp_adjtime</A></B>(3),
+<B>ntp_gettime</B>(3), <B><A HREF="../man3/pthread_getcpuclockid.3.html">pthread_getcpuclockid</A></B>(3), <B><A HREF="../man3/sleep.3.html">sleep</A></B>(3), <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3),
+<B><A HREF="../man3/strptime.3.html">strptime</A></B>(3), <B><A HREF="../man3/timeradd.3.html">timeradd</A></B>(3), <B><A HREF="../man3/usleep.3.html">usleep</A></B>(3), <B><A HREF="../man4/rtc.4.html">rtc</A></B>(4),
+<B>time_namespaces</B>(7), <B><A HREF="../../util-linux/man8/hwclock.8.html">hwclock</A></B>(8)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAD">実時間 (real time) とプロセス時間</A><DD>
+<DT><A HREF="#lbAE">ハードウェアクロック</A><DD>
+<DT><A HREF="#lbAF">ソフトウェアクロック, HZ, Jiffy</A><DD>
+<DT><A HREF="#lbAG">System and process clocks; time namespaces</A><DD>
+<DT><A HREF="#lbAH">高精度タイマー</A><DD>
+<DT><A HREF="#lbAI">紀元</A><DD>
+<DT><A HREF="#lbAJ">要素別の時刻</A><DD>
+<DT><A HREF="#lbAK">タイマーのスリープと設定</A><DD>
+<DT><A HREF="#lbAL">timer slack</A><DD>
+</DL>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

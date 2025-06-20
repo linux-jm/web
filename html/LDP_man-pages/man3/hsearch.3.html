@@ -1,0 +1,267 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of HSEARCH</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>HSEARCH</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/hsearch.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+hcreate, hdestroy, hsearch, hcreate_r, hdestroy_r, hsearch_r - ハッシュテーブルの管理
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</B>
+
+<B>int hcreate(size_t </B><I>nel</I><B>);</B>
+
+<B>ENTRY *hsearch(ENTRY </B><I>item</I><B>, ACTION </B><I>action</I><B>);</B>
+
+<B>void hdestroy(void);</B>
+
+<B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
+<B>#include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</B>
+
+<B>int hcreate_r(size_t </B><I>nel</I><B>, struct hsearch_data *</B><I>htab</I><B>);</B>
+
+<B>int hsearch_r(ENTRY </B><I>item</I><B>, ACTION </B><I>action</I><B>, ENTRY **</B><I>retval</I><B>,</B>
+<B>              struct hsearch_data *</B><I>htab</I><B>);</B>
+
+<B>void hdestroy_r(struct hsearch_data *</B><I>htab</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>hcreate</B>(), <B>hsearch</B>(), <B>hdestroy</B>()  の 3 つの関数を利用すると、キー (文字列)
+と対応するデータから構成される エントリーを格納できるハッシュ検索テーブルを作成、管理することができる。
+これらの関数を使って、一度に使用できるのは一つのハッシュテーブルだけである。
+<P>
+
+<B>hcreate_r</B>(), <B>hsearch_r</B>(), <B>hdestroy_r</B>()  の 3
+つの関数はリエントラント版で、これらを利用すると、 一つのプログラムで同時に複数のハッシュテーブルを使うことができる。 最後の引数 <I>htab</I>
+は関数の操作対象となるテーブルを示す構造体へのポインターである。 プログラマはこの構造体をブラックボックスとして扱うべきである
+(つまり、この構造体のフィールドに直接アクセスしたり変更したり しないこと)。
+<P>
+
+
+最初に、 <B>hcreate</B>()  関数によってハッシュテーブルを作成しなければならない。 引数 <I>nel</I> でテーブルの最大エントリー数を指定する
+(この最大値は後で変更することはできないので、よく考えて選択すること)。 作成されるハッシュテーブルの性能を向上させるために、
+関数内部の実装によりこの値は増やされる場合もある。
+<P>
+
+<B>hcreate_r</B>()  関数は <B>hcreate</B>()  と同じ動作をするが、構造体 <I>*htab</I>
+で示されるテーブルを対象として動作する。 <I>htab</I> が指し示す構造体は、 <B>hcreate_r</B>()  を初めて呼び出す前に 0
+で埋めておかなければならない。
+<P>
+
+<B>hdestroy</B>()  関数は、 <B>hcreate</B>()  で作成されたハッシュテーブルが占有していたメモリーを解放する。
+ハッシュテーブルによって占有されていたメモリーを解放し、 新しいテーブルを作成できるようにする。 <B>hdestroy</B>()  を呼び出すと、その後は
+<B>hcreate</B>()  を使って新しいハッシュテーブルを作成することができる。 <B>hdestroy_r</B>()  関数は、同様の処理を、それ以前に
+<B>hcreate_r</B>()  を使って作成した <I>*htab</I> で示されるハッシュテーブルに対して実行する。
+<P>
+
+<B>hsearch</B>()  関数は、<I>item</I> と同じキーを持つ項目をハッシュテーブルから
+検索し、項目が見つかった場合にはその項目へのポインターを返す (「同じ」かどうかは <B><A HREF="../man3/strcmp.3.html">strcmp</A></B>(3)  を使って判定する)。
+<P>
+
+引数 <I>item</I> は <B>ENTRY</B> 型であり、<I>&lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</I> の中で 以下のように定義されている。
+<P>
+
+
+
+typedef struct entry {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*key;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;*data;
+} ENTRY;
+
+
+<P>
+
+フィールド <I>key</I> は検索キーとなるヌル終端された文字列を指す。 フィールド <I>data</I> は、このキーに対応するデータを指す。
+<P>
+
+検索が失敗した後の動作は、引数 <I>action</I> により決まる。 この引数には <B>ENTER</B> か <B>FIND</B>
+のいずれかの値を指定しなければならない。 <B>ENTER</B> は <I>item</I> のコピーを挿入することを
+(関数の結果として新しいハッシュテーブルエントリーへのポインターを返す)、 <B>FIND</B> は NULL を返すことを意味する (<I>action</I> が
+<B>FIND</B> の場合、 <I>data</I> は無視される)。
+<P>
+
+<B>hsearch_r</B>()  関数は <B>hsearch</B>()  と同様だが、 <I>*htab</I> で示されるハッシュテーブルに対して処理を行う。
+<B>hsearch_r</B>()  関数が <B>hsearch</B>()  と異なるのは、見つかった項目へのポインターを、 関数の結果としてではなく、
+<I>*retval</I> に格納して返す点である。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>hcreate</B>()  と <B>hcreate_r</B>()  は、成功した場合 0 以外の値を返す。 エラーの場合 0 を返し、 <I>errno</I>
+にエラーの原因を示す値を設定する。
+<P>
+
+成功すると、 <B>hsearch</B>()  は、ハッシュテーブル内のエントリーへのポインターを返す。 エラーの場合、 <B>hsearch</B>()  は
+NULL を返す。 エラーとなるのは、 <I>action</I> が <B>ENTER</B> でハッシュテーブルがいっぱいの場合か、 <I>action</I> が
+<B>FIND</B> で <I>item</I> がハッシュテーブル内に 見つからない場合である。 <B>hsearch_r</B>()  は、成功すると 0
+以外を返し、エラーの場合 0 を返す。 エラーの場合、 これら二つの関数は <I>errno</I> にエラーの原因を示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>hcreate_r</B>()  と <B>hdestroy_r</B>()  は以下の理由で失敗する可能性がある。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>htab</I> が NULL である。
+</DL>
+<P>
+
+<B>hsearch</B>()  と <B>hsearch_r</B>()  は以下の理由で失敗する可能性がある。
+<DL COMPACT>
+<DT><B>ENOMEM</B><DD>
+<I>action</I> が <B>ENTER</B> で、 <I>key</I> がテーブル内に見つからず、 テーブルに新しいエントリーを追加する余地がなかった。
+<DT><B>ESRCH</B><DD>
+<I>action</I> が <B>FIND</B> で、 <I>key</I> がテーブル内に見つからなかった。
+</DL>
+<P>
+
+
+POSIX.1 が規定しているのは、エラー <B>ENOMEM</B> だけである。
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>hcreate</B>(),
+<B>hsearch</B>(),
+<BR>
+
+<B>hdestroy</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:hsearch<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>hcreate_r</B>(),
+<B>hsearch_r</B>(),
+<BR>
+
+<B>hdestroy_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe race:htab<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+関数 <B>hcreate</B>(), <B>hsearch</B>(), <B>hdestroy</B>()  は SVr4 から導入されたもので、POSIX.1-2001
+と POSIX.1-2008 に記述されている。
+<P>
+
+関数 <B>hcreate_r</B>(), <B>hsearch_r</B>(), <B>hdestroy_r</B>() は GNU による拡張である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+通常、ハッシュテーブルの実装は、衝突を最小限にするために テーブルに十分な空き領域がある場合に効率がよくなる。 このため、普通は、 <I>nel</I>
+を、呼び出し側がテーブルに格納しようと思っている エントリーの最大数より少なくとも 25% は大きな値にすべきである。
+<P>
+
+<B>hdestroy</B>()  と <B>hdestroy_r</B>()  は、ハッシュテーブルのエントリーの要素である <I>key</I> と <I>data</I>
+が指すバッファーを解放しない (これができないのは、これらのバッファーが動的に割り当てられたのかを 知ることができないからである)。
+これらのバッファーを解放する必要がある場合、 プログラムでは、これらのバッファーを解放できるように管理用のデータ構造を
+設けて、これを管理しなければならない (解放が必要となる理由は、たいていは、プログラム自身と生存期間が同じ
+ハッシュテーブルを一つだけ作成するのではなく、そのプログラムでは複数の ハッシュテーブルを繰り返して作成したり破棄したりするからであろう)。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バグ</H2>
+
+SVr4 と POSIX.1-2001 の規定では、 <I>action</I> は検索が失敗したときにだけ意味を持つとなっている。
+よって、検索が成功した場合、<I>action</I> の値が <B>ENTER</B> でも 何もすべきではない。 (バージョン 2.3 より前の) libc と
+glibc の実装はこの規格に違反しており、 この状況で、指定された <I>key</I> に対応する <I>data</I> が更新される。
+<P>
+
+ハッシュテーブルエントリーの追加はできるが、削除ができない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+次のプログラムは、ハッシュテーブルに 24 個の項目を挿入し、 それからそのうちのいくつかを表示する。
+<P>
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;
+<P>
+static char *data[] = { &quot;alpha&quot;, &quot;bravo&quot;, &quot;charlie&quot;, &quot;delta&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;echo&quot;,&nbsp;&quot;foxtrot&quot;,&nbsp;&quot;golf&quot;,&nbsp;&quot;hotel&quot;,&nbsp;&quot;india&quot;,&nbsp;&quot;juliet&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;kilo&quot;,&nbsp;&quot;lima&quot;,&nbsp;&quot;mike&quot;,&nbsp;&quot;november&quot;,&nbsp;&quot;oscar&quot;,&nbsp;&quot;papa&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;quebec&quot;,&nbsp;&quot;romeo&quot;,&nbsp;&quot;sierra&quot;,&nbsp;&quot;tango&quot;,&nbsp;&quot;uniform&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;victor&quot;,&nbsp;&quot;whisky&quot;,&nbsp;&quot;x-ray&quot;,&nbsp;&quot;yankee&quot;,&nbsp;&quot;zulu&quot;
+};
+<P>
+int
+main(void)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ENTRY&nbsp;e;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ENTRY&nbsp;*ep;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hcreate(30);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;24;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e.key&nbsp;=&nbsp;data[i];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;データは、ポインターではなく、単なる整数値である。&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e.data&nbsp;=&nbsp;(void&nbsp;*)&nbsp;i;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ep&nbsp;=&nbsp;hsearch(e,&nbsp;ENTER);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;エラーは起こらないはずである。&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ep&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;entry&nbsp;failed\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;22;&nbsp;i&nbsp;&lt;&nbsp;26;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;テーブルにある&nbsp;2&nbsp;つのエントリーを表示し、
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;あとの&nbsp;2&nbsp;つがテーブルにないことを示す。&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e.key&nbsp;=&nbsp;data[i];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ep&nbsp;=&nbsp;hsearch(e,&nbsp;FIND);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%9.9s&nbsp;-&gt;&nbsp;%9.9s:%d\n&quot;,&nbsp;e.key,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ep&nbsp;?&nbsp;ep-&gt;key&nbsp;:&nbsp;&quot;NULL&quot;,&nbsp;ep&nbsp;?&nbsp;(int)(ep-&gt;data)&nbsp;:&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hdestroy();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/bsearch.3.html">bsearch</A></B>(3), <B><A HREF="../man3/lsearch.3.html">lsearch</A></B>(3), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3), <B><A HREF="../man3/tsearch.3.html">tsearch</A></B>(3)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

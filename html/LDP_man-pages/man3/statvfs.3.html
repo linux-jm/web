@@ -1,0 +1,208 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STATVFS</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>STATVFS</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/statvfs.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+statvfs, fstatvfs - ファイルシステムの統計を取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/statvfs.h">sys/statvfs.h</A>&gt;</B>
+<P>
+
+<B>int statvfs(const char *</B><I>path</I><B>, struct statvfs *</B><I>buf</I><B>);</B>
+<BR>
+
+<B>int fstatvfs(int </B><I>fd</I><B>, struct statvfs *</B><I>buf</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+関数 <B>statvfs</B>()  はマウントされたファイルシステムについての情報を返す。 <I>path</I>
+はマウントされたファイルシステム中の任意のファイルのパス名である。 <I>buf</I> は、だいたい以下のように定義されている <I>statvfs</I>
+構造体へのポインターである:
+<P>
+
+
+
+struct statvfs {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;&nbsp;f_bsize;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Filesystem&nbsp;block&nbsp;size&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;&nbsp;f_frsize;&nbsp;&nbsp;&nbsp;/*&nbsp;Fragment&nbsp;size&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fsblkcnt_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f_blocks;&nbsp;&nbsp;&nbsp;/*&nbsp;Size&nbsp;of&nbsp;fs&nbsp;in&nbsp;f_frsize&nbsp;units&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fsblkcnt_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f_bfree;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;free&nbsp;blocks&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fsblkcnt_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f_bavail;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;free&nbsp;blocks&nbsp;for
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unprivileged&nbsp;users&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fsfilcnt_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f_files;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;inodes&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fsfilcnt_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f_ffree;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;free&nbsp;inodes&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fsfilcnt_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f_favail;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;free&nbsp;inodes&nbsp;for
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unprivileged&nbsp;users&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;&nbsp;f_fsid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Filesystem&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;&nbsp;f_flag;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Mount&nbsp;flags&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;&nbsp;f_namemax;&nbsp;&nbsp;/*&nbsp;Maximum&nbsp;filename&nbsp;length&nbsp;*/
+};
+
+
+<P>
+
+ここで、型 <I>fsblkcnt_t</I> と <I>fsfilcnt_t</I> は <I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I> で定義されている。
+かつて、これらは共に <I>unsigned long</I> であった。
+<P>
+
+
+The field <I>f_flag</I> is a bit mask indicating various options that were
+employed when mounting this filesystem.  It contains zero or more of the
+following flags:
+<DL COMPACT>
+<DT><B>ST_MANDLOCK</B><DD>
+Mandatory locking is permitted on the filesystem (see <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
+<DT><B>ST_NOATIME</B><DD>
+Do not update access times; see <B><A HREF="../man2/mount.2.html">mount</A></B>(2).
+<DT><B>ST_NODEV</B><DD>
+Disallow access to device special files on this filesystem.
+<DT><B>ST_NODIRATIME</B><DD>
+Do not update directory access times; see <B><A HREF="../man2/mount.2.html">mount</A></B>(2).
+<DT><B>ST_NOEXEC</B><DD>
+Execution of programs is disallowed on this filesystem.
+<DT><B>ST_NOSUID</B><DD>
+The set-user-ID and set-group-ID bits are ignored by <B><A HREF="../man3/exec.3.html">exec</A></B>(3)  for
+executable files on this filesystem
+<DT><B>ST_RDONLY</B><DD>
+This filesystem is mounted read-only.
+<DT><B>ST_RELATIME</B><DD>
+Update atime relative to mtime/ctime; see <B><A HREF="../man2/mount.2.html">mount</A></B>(2).
+<DT><B>ST_SYNCHRONOUS</B><DD>
+Writes are synched to the filesystem immediately (see the description of
+<B>O_SYNC</B> in <B><A HREF="../man2/open.2.html">open</A></B>(2)).
+</DL>
+<P>
+
+返された構造体の全てのメンバが全てのファイルシステムで 意味のある値であるか否かは、指定されていない。
+<P>
+
+<B>fstatvfs</B>()  は、ディスクリプター <I>fd</I> で参照されるオープンされたファイルについて、同じ情報を返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、0 が返される。 失敗した場合、 -1 が返され、 <I>errno</I> に適切な値がセットされる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B><DD>
+(<B>statvfs</B>()  の場合)  <I>path</I> のディレクトリ部分に検索許可が与えられていない (<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)
+も参照すること)。
+<DT><B>EBADF</B><DD>
+(<B>fstatvfs</B>()  の場合)  <I>fd</I> が有効なオープンファイルディスクリプターではない。
+<DT><B>EFAULT</B><DD>
+<I>buf</I> または <I>path</I> が無効なアドレスを指している。
+<DT><B>EINTR</B><DD>
+この呼び出しがシグナルで中断された。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7) 参照。
+<DT><B>EIO</B><DD>
+ファイルシステムからの読み込みの間に I/O エラーが発生した。
+<DT><B>ELOOP</B><DD>
+(<B>statvfs</B>()  の場合)  <I>path</I> にシンボリックリンクが多すぎる。
+<DT><B>ENAMETOOLONG</B><DD>
+(<B>statvfs</B>()  の場合)  <I>path</I> が長すぎる。
+<DT><B>ENOENT</B><DD>
+(<B>statvfs</B>()  の場合)  <I>path</I> で参照されるファイルが存在しない。
+<DT><B>ENOMEM</B><DD>
+十分なカーネルメモリーがない。
+<DT><B>ENOSYS</B><DD>
+ファイルシステムがこの呼び出しをサポートしていない。
+<DT><B>ENOTDIR</B><DD>
+(<B>statvfs</B>()  の場合)  <I>path</I> のディレクトリ部分がディレクトリでない。
+<DT><B>EOVERFLOW</B><DD>
+いくつかの値が大き過ぎて、返り値の構造体で表現できない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>statvfs</B>(),
+<B>fstatvfs</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<P>
+
+Only the <B>ST_NOSUID</B> and <B>ST_RDONLY</B> flags of the <I>f_flag</I> field are
+specified in POSIX.1.  To obtain definitions of the remaining flags, one
+must define <B>_GNU_SOURCE</B>.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+Linux カーネルには、このライブラリコールをサポートするために、 <B><A HREF="../man2/statfs.2.html">statfs</A></B>(2), <B><A HREF="../man2/fstatfs.2.html">fstatfs</A></B>(2)  システムコールがある。
+<P>
+
+
+In glibc versions before 2.13, <B>statvfs</B>()  populated the bits of the
+<I>f_flag</I> field by scanning the mount options shown in <I>/proc/mounts</I>.
+However, starting with Linux 2.6.36, the underlying <B><A HREF="../man2/statfs.2.html">statfs</A></B>(2)  system
+call provides the necessary information via the <I>f_flags</I> field, and since
+glibc version 2.13, the <B>statvfs</B>()  function will use information from
+that field rather than scanning <I>/proc/mounts</I>.
+<P>
+
+The glibc implementations of
+<P>
+
+
+
+pathconf(path, _PC_REC_XFER_ALIGN);
+pathconf(path, _PC_ALLOC_SIZE_MIN);
+pathconf(path, _PC_REC_MIN_XFER_SIZE);
+
+
+<P>
+
+respectively use the <I>f_frsize</I>, <I>f_frsize</I>, and <I>f_bsize</I> fields
+returned by a call to <B>statvfs</B>()  with the argument <I>path</I>.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/statfs.2.html">statfs</A></B>(2)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

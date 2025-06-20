@@ -1,0 +1,313 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SCHED_SETATTR</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SCHED_SETATTR</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/sched_setattr.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+sched_setattr, sched_getattr - スケジューリングポリシーと属性の設定と取得を行なう
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
+
+ <B>int sched_setattr(pid_t </B><I>pid</I><B>, struct sched_attr *</B><I>attr</I><B>,</B>
+<B>                  unsigned int </B><I>flags</I><B>);</B>
+
+ <B>int sched_getattr(pid_t </B><I>pid</I><B>, struct sched_attr *</B><I>attr</I><B>,</B>
+<B>                  unsigned int </B><I>size</I><B>, unsigned int </B><I>flags</I><B>);</B>
+</PRE>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>sched_setattr()</H3>
+
+<B>sched_setattr</B>() システムコールは、 <I>pid</I> で指定された ID
+を持つスレッドのスケジューリングポリシーと関連する属性を設定する。 <I>pid</I> が 0
+の場合、呼び出したスレッド自身のスケジューリングポリシーと属性が設定される。
+<P>
+
+現在のところ、 Linux では、 以下の「通常」の (つまり、リアルタイムではない) スケジューリングポリシーが、 <I>policy</I>
+に指定できる値としてサポートされている。
+<DL COMPACT>
+<DT><B>SCHED_OTHER</B><DD>
+
+
+標準の、ラウンドロビンによる時分割型のスケジューリングポリシー。
+<DT><B>SCHED_BATCH</B><DD>
+「バッチ」形式でのプロセスの実行用。
+<DT><B>SCHED_IDLE</B><DD>
+「非常に」低い優先度で動作するバックグラウンドジョブ用。
+</DL>
+<P>
+
+どの実行可能スレッドを選択するかについて、より正確な制御を必要とする 時間の制約が厳しい特別なアプリケーション用として、
+いろいろな「リアルタイム」ポリシーもサポートされている。 プロセスがこれらのポリシーをいつ使用できるかを決めるルールについては、<B><A HREF="../man7/sched.7.html">sched</A></B>(7)
+を参照。 <I>policy</I> には以下のリアルタイムポリシーを指定できる。
+<DL COMPACT>
+<DT><B>SCHED_FIFO</B><DD>
+ファーストイン、ファーストアウト型のポリシー。
+<DT><B>SCHED_RR</B><DD>
+ラウンドロビン型のポリシー。
+</DL>
+<P>
+
+Linux では以下のポリシーも提供されている。
+<DL COMPACT>
+<DT><B>SCHED_DEADLINE</B><DD>
+デッドライン (応答期限) ベースのスケジューリングポリシー。詳細は <B><A HREF="../man7/sched.7.html">sched</A></B>(7) を参照。
+</DL>
+<P>
+
+<I>attr</I> 引数は、 指定したスレッドの新しいスケジューリングポリシーと属性を定義した構造体へのポインターである。 この構造体は以下の形式である。
+<P>
+
+
+
+struct sched_attr {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u32&nbsp;size;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;この構造体のサイズ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u32&nbsp;sched_policy;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ポリシー&nbsp;(SCHED_*)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;sched_flags;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;フラグ&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s32&nbsp;sched_nice;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;nice&nbsp;値&nbsp;(SCHED_OTHER,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SCHED_BATCH)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u32&nbsp;sched_priority;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;静的優先度&nbsp;(SCHED_FIFO,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SCHED_RR)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;残りのフィールドは&nbsp;SCHED_DEADLINE&nbsp;用である&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;sched_runtime;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;sched_deadline;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;sched_period;
+};
+
+
+<P>
+
+構造体 <I>sched_attr</I> のフィールドは以下の通りである。
+<DL COMPACT>
+<DT><B>size</B><DD>
+このフィールドには、 構造体のバイト単位のサイズを設定する。 <I>sizeof(struct sched_attr)</I> を指定すればよい。
+指定された構造体がカーネル構造体よりも小さい場合、 追加となるフィールドは 0 とみなされる。 指定された構造体がカーネル構造体よりも大きい場合、
+カーネルは追加のフィールドが 0 であるかを検査する。 0 でない場合は <B>sched_setattr</B>() はエラー <B>E2BIG</B>
+で失敗するので、 <I>size</I> をカーネル構造体のサイズに更新する必要がある。
+<DT><DD>
+ユーザー空間の <I>sched_attr</I> 構造体のサイズがカーネル構造体のサイズと一致しなかった場合の上記の動作は、
+このインターフェースを将来拡張できるようにするためである。 サイズが大きい構造体を渡す行儀の良くないアプリケーションも、 将来カーネルの
+<I>sched_attr</I> 構造体のサイズが大きくなったとしてもおかしくならない。 この仕組みにより、 将来的には、 大きなユーザー空間
+<I>sched_attr</I> 構造体があることを知っているアプリケーションで、
+大きいサイズの構造体に対応していない古いカーネル上で動作しているかを判定することができる。
+<DT><I>sched_policy</I><DD>
+このフィールドはスケジューリングポリシーを指定する。 上記のリストにある <B>SCHED_*</B> 値のいずれかを指定する。
+<DT><I>sched_flags</I><DD>
+This field contains zero or more of the following flags that are ORed
+together to control scheduling behavior:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><BR>&nbsp;<B>SCHED_FLAG_RESET_ON_FORK</B><DD>
+Children created by <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  do not inherit privileged scheduling
+policies.  See <B><A HREF="../man7/sched.7.html">sched</A></B>(7)  for details.
+<DT><B>SCHED_FLAG_RECLAIM</B> (Linux 4.13 以降)<DD>
+
+
+
+This flag allows a <B>SCHED_DEADLINE</B> thread to reclaim bandwidth unused by
+other real-time threads.
+<DT><B>SCHED_FLAG_DL_OVERRUN</B> (Linux 4.16 以降)<DD>
+
+This flag allows an application to get informed about run-time overruns in
+<B>SCHED_DEADLINE</B> threads.  Such overruns may be caused by (for example)
+coarse execution time accounting or incorrect parameter assignment.
+Notification takes the form of a <B>SIGXCPU</B> signal which is generated on
+each overrun.
+<DT><DD>
+This <B>SIGXCPU</B> signal is <I>process-directed</I> (see <B><A HREF="../man7/signal.7.html">signal</A></B>(7))  rather
+than thread-directed.  This is probably a bug.  On the one hand,
+<B>sched_setattr</B>()  is being used to set a per-thread attribute.  On the
+other hand, if the process-directed signal is delivered to a thread inside
+the process other than the one that had a run-time overrun, the application
+has no way of knowing which thread overran.
+</DL>
+</DL>
+
+<DT><I>sched_nice</I><DD>
+このフィールドは、 <I>sched_policy</I> に <B>SCHED_OTHER</B> か <B>SCHED_BATCH</B> が指定された場合に設定される
+nice 値を指定する。 nice 値は -20 (高優先度) から +19 (低優先度) の範囲の数値である。 <B><A HREF="../man7/sched.7.html">sched</A></B>(7) を参照。
+<DT><I>sched_priority</I><DD>
+このフィールドは、 <I>sched_policy</I> に <B>SCHED_FIFO</B> か <B>SCHED_RR</B>
+が指定された場合に設定される静的優先度を指定する。 これらのポリシーで指定できる優先度の範囲は、
+<B><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></B>(2) と <B><A HREF="../man2/sched_get_priority_max.2.html">sched_get_priority_max</A></B>(2) を使って判定できる。
+他のポリシーでは、 このフィールドには 0 を指定しなければならない。
+<DT><I>sched_runtime</I><DD>
+このフィールドは、 デッドラインスケジューリングの &quot;Runtime&quot; パラメーターを指定する。 この値はナノ秒単位で表現される。 このフィールドと次の
+2 つのフィールドは <B>SCHED_DEADLINE</B> スケジューリングにおいてのみ使用される。 詳細は <B><A HREF="../man7/sched.7.html">sched</A></B>(7) を参照。
+<DT><I>sched_deadline</I><DD>
+このフィールドは、 デッドラインスケジューリングの &quot;Deadline&quot; パラメーターを指定する。 この値はナノ秒単位で表現される。
+<DT><I>sched_period</I><DD>
+このフィールドは、 デッドラインスケジューリングの &quot;Period&quot; パラメーターを指定する。 この値はナノ秒単位で表現される。
+</DL>
+<P>
+
+
+
+<I>flags</I> 引数は、このインターフェースの将来の拡張のために用意されている。 現在の実装では 0 を指定しなければならない。
+<A NAME="lbAF">&nbsp;</A>
+<H3>sched_getattr()</H3>
+
+<B>sched_getattr</B>() システムコールは、 <I>pid</I> で指定された ID
+を持つスレッドのスケジューリングポリシーと関連する属性を取得する。 <I>pid</I> が 0
+の場合、呼び出したスレッド自身のスケジューリングポリシーと関連する属性を取得する。
+<P>
+
+<I>size</I> 引数には、 ユーザー空間での <I>sched_attr</I> 構造体の大きさを設定する。 この値は、 少なくとも初期バージョンの
+<I>sched_attr</I> 構造体のサイズでなければならない。 そうでなかった場合、 エラー <B>EINVAL</B> で呼び出しが失敗する。
+<P>
+
+取得したスケジューリング属性は、 <I>attr</I> が指す <I>sched_attr</I> 構造体の各フィールドに格納される。 カーネルは
+<I>attr.size</I> に <I>sched_attr</I> 構造体のサイズを設定する。
+<P>
+
+If the caller-provided <I>attr</I> buffer is larger than the kernel's
+<I>sched_attr</I> structure, the additional bytes in the user-space structure
+are not touched.  If the caller-provided structure is smaller than the
+kernel <I>sched_attr</I> structure, the kernel will silently not return any
+values which would be stored outside the provided space.  As with
+<B>sched_setattr</B>(), these semantics allow for future extensibility of the
+interface.
+<P>
+
+<I>flags</I> 引数は、このインターフェースの将来の拡張のために用意されている。 現在の実装では 0 を指定しなければならない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は <B>sched_setattr</B>()  と <B>sched_getattr</B>()  は 0 を返す。 エラーの場合は -1 が返され、
+エラーの原因を示す値が <I>errno</I> に設定される。
+<A NAME="lbAH">&nbsp;</A>
+<H2>エラー</H2>
+
+<B>sched_getattr</B>() と <B>sched_setattr</B>() の両方が以下の理由で失敗する。
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>attr</I> が NULL である。 <I>pid</I> が負である。 <I>flags</I> が 0 以外である。
+<DT><B>ESRCH</B><DD>
+ID が <I>pid</I> のスレッドが見つからなかった。
+</DL>
+<P>
+
+さらに、 <B>sched_getattr</B>() は以下の理由でも失敗する。
+<DL COMPACT>
+<DT><B>E2BIG</B><DD>
+<I>size</I> と <I>attr</I> で指定されたバッファーが小さすぎる。
+<DT><B>EINVAL</B><DD>
+<I>size</I> が無効である。つまり、 最初のバージョンの <I>sched_attr</I> 構造体 (48 バイト) よりも小さいか、
+システムのページサイズよりも大きい。
+</DL>
+<P>
+
+さらに、 <B>sched_setattr</B>() は以下の理由でも失敗する。
+<DL COMPACT>
+<DT><B>E2BIG</B><DD>
+<I>size</I> と <I>attr</I> で指定されたバッファーがカーネル構造体よりも大きく、 一つ以上の超過バイトが 0 でなかった。
+<DT><B>EBUSY</B><DD>
+<B>SCHED_DEADLINE</B> の流入制御の失敗については <B><A HREF="../man7/sched.7.html">sched</A></B>(7) を参照。
+<DT><B>EINVAL</B><DD>
+<I>attr.sched_policy</I> が認識できるポリシーではない。 <I>attr.sched_flags</I> に
+<B>SCHED_FLAG_RESET_ON_FORK</B> 以外のフラグが含まれている。 <I>attr.sched_priority</I> が無効である。
+<I>attr.sched_policy</I> が <B>SCHED_DEADLINE</B> で、 <I>attr</I>
+に指定されたデッドラインスケジューリングパラメーターが無効である。
+<DT><B>EPERM</B><DD>
+呼び出した元が適切な特権を持っていない。
+<DT><B>EPERM</B><DD>
+<I>pid</I> で指定されたスレッドの CPU affinity マスクにシステムの全ての CPU のうち含まれていないものがある
+(<B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2) を参照)。
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>バージョン</H2>
+
+
+これらのシステムコールは Linux 3.14 で初めて登場した。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>準拠</H2>
+
+これらのシステムコールは非標準の Linux による拡張である。
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+<B>sched_setattr</B>() は、<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2), <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2),
+<B><A HREF="../man2/nice.2.html">nice</A></B>(2) の機能および <B>setpriority</B> の一部機能を持つ (ただし、<B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2)
+の、指定されたユーザーに所属するすべてのプロセスまたは指定されたグループのすべてのプロセスの優先度を設定する機能は除く)。 同様に、
+<B>sched_getattr</B>() は <B><A HREF="../man2/sched_getscheduler.2.html">sched_getscheduler</A></B>(2), <B><A HREF="../man2/sched_getparam.2.html">sched_getparam</A></B>(2) の機能および
+<B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2) の一部機能を持つ。
+<A NAME="lbAL">&nbsp;</A>
+<H2>バグ</H2>
+
+
+バージョン 3.15 までの Linux では、 <B>sched_setattr</B>() は、 エラーの節に書かれている <B>E2BIG</B>
+の場合にエラー<B>EFAULT</B> で失敗していた。
+<P>
+
+
+
+
+
+
+
+In Linux versions up to 5.3, <B>sched_getattr</B>()  failed with the error
+<B>EFBIG</B> if the in-kernel <I>sched_attr</I> structure was larger than the
+<I>size</I> passed by user space.
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<BR>&nbsp;<B>chrt</B>(1),&nbsp;<B><A HREF="../man2/nice.2.html">nice</A></B>(2),&nbsp;<B><A HREF="../man2/sched_get_priority_max.2.html">sched_get_priority_max</A></B>(2),
+<B><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></B>(2), <B><A HREF="../man2/sched_getaffinity.2.html">sched_getaffinity</A></B>(2), <B><A HREF="../man2/sched_getparam.2.html">sched_getparam</A></B>(2),
+<B><A HREF="../man2/sched_getscheduler.2.html">sched_getscheduler</A></B>(2), <B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2),
+<B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2), <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2), <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2),
+<B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2), <B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2), <B><A HREF="../man3/pthread_getschedparam.3.html">pthread_getschedparam</A></B>(3),
+<B><A HREF="../man3/pthread_setschedparam.3.html">pthread_setschedparam</A></B>(3), <B><A HREF="../man3/pthread_setschedprio.3.html">pthread_setschedprio</A></B>(3), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+<B>cpuset</B>(7), <B><A HREF="../man7/sched.7.html">sched</A></B>(7)
+
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">sched_setattr()</A><DD>
+<DT><A HREF="#lbAF">sched_getattr()</A><DD>
+</DL>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
+<DT><A HREF="#lbAJ">準拠</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DT><A HREF="#lbAL">バグ</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

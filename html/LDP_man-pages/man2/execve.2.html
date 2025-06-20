@@ -1,0 +1,638 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of EXECVE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>EXECVE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated:  2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/execve.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+execve - プログラムを実行する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<P>
+
+<BR>&nbsp;<B>int&nbsp;execve(const&nbsp;char&nbsp;*</B><I>pathname</I><B>,&nbsp;char&nbsp;*const&nbsp;</B><I>argv</I><B>[],</B>
+<BR>
+
+<B> char *const </B><I>envp</I><B>[]);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>execve</B>()  executes the program referred to by <I>pathname</I>.  This causes
+the program that is currently being run by the calling process to be
+replaced with a new program, with newly initialized stack, heap, and
+(initialized and uninitialized) data segments.
+<P>
+
+<I>pathname</I> は、バイナリ実行形式か、 以下の形式の行で始まるスクリプトでなければならない。
+<P>
+
+
+
+<B>#!</B><I>interpreter </I>[optional-arg]
+
+
+<P>
+
+後者の詳細は、後ろの「インタープリタースクリプト」の節を参照のこと。
+<P>
+
+<I>argv</I> is an array of pointers to strings passed to the new program as its
+command-line arguments.  By convention, the first of these strings (i.e.,
+<I>argv[0]</I>)  should contain the filename associated with the file being
+executed.  The <I>argv</I> array must be terminated by a NULL pointer.  (Thus,
+in the new program, <I>argv[argc]</I> will be NULL.)
+<P>
+
+<I>envp</I> is an array of pointers to strings, conventionally of the form
+<B>key=value</B>, which are passed as the environment of the new program.  The
+<I>envp</I> array must be terminated by a NULL pointer.
+<P>
+
+The argument vector and environment can be accessed by the new program's
+main function, when it is defined as:
+<P>
+
+
+
+int main(int argc, char *argv[], char *envp[])
+
+
+<P>
+
+Note, however, that the use of a third argument to the main function is not
+specified in POSIX.1; according to POSIX.1, the environment should be
+accessed via the external variable <B><A HREF="../man7/environ.7.html">environ</A></B>(7).
+<P>
+
+<B>execve</B>()  does not return on success, and the text, initialized data,
+uninitialized data (bss), and stack of the calling process are overwritten
+according to the contents of the newly loaded program.
+<P>
+
+元のプログラムが ptrace されている場合、 <B>execve</B>()  が成功した後に そのプログラムに <B>SIGTRAP</B> シグナルが送られる。
+<P>
+
+<I>pathname</I> で参照されるプログラムファイルに set-user-ID ビットが設定されている場合、呼び出したプロセスの実効
+(effective) ユーザー ID は プログラムファイルの所有者 (owner) に変更される。 同様に、プログラムファイルに
+set-group-ID ビットが設定されていた場合、 呼び出したプロセスの有効グループ ID は プログラムファイルのグループに変更される。
+<P>
+
+The aforementioned transformations of the effective IDs are <I>not</I> performed
+(i.e., the set-user-ID and set-group-ID bits are ignored)  if any of the
+following is true:
+<DL COMPACT>
+<DT>*<DD>
+the <I>no_new_privs</I> attribute is set for the calling thread (see
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2));
+<DT>*<DD>
+the underlying filesystem is mounted <I>nosuid</I> (the <B>MS_NOSUID</B> flag for
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2)); or
+<DT>*<DD>
+the calling process is being ptraced.
+</DL>
+<P>
+
+The capabilities of the program file (see <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7))  are also
+ignored if any of the above are true.
+<P>
+
+プロセスの実効ユーザー ID は保存 (saved) set-user-ID にコピーされる。 同様に、実効グループ ID は保存
+set-group-ID にコピーされる。 このコピーは、set-user-ID / set-group-ID モードビットにより発生する 実効 ID
+の変更後に行われる。
+<P>
+
+The process's real UID and real GID, as well its supplementary group IDs,
+are unchanged by a call to <B>execve</B>().
+<P>
+
+実行ファイルが動的リンクされた a.out 実行形式で、共有ライブラリの スタブを含むものだった場合、実行の開始時に Linux の
+ダイナミックリンカー <B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)  が呼び出され、必要な共有オブジェクトをメモリーに読み込んでリンクを行う。
+<P>
+
+
+実行ファイルがダイナミックリンクされた ELF 実行形式だった場合、
+PT_INTERP セグメントに指定されたインタープリターが必要な 共有オブジェクト
+(shared library) を読み込むのに使用される。
+通常、インタープリターは glibc をリンクしたバイナリでは
+<I>/lib/ld-linux.so.2</I> である。 (<B><A HREF="../man8/ld-linux.so.8.html">ld-linux.so</A></B>(8) を参照)
+<A NAME="lbAE">&nbsp;</A>
+<H3>Effect on process attributes</H3>
+
+以下に示す以外のすべてのプロセス属性は <B>execve</B>()  の前後で保持される。
+<DL COMPACT>
+<DT>*<DD>
+捕捉されたシグナルの処理方法 (disposition) は デフォルト動作にリセットされる (<B><A HREF="../man7/signal.7.html">signal</A></B>(7))。
+<DT>*<DD>
+代替シグナルスタックはどれも保持されない (<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2))。
+<DT>*<DD>
+メモリーマッピングは保持されない (<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2))。
+<DT>*<DD>
+付加された (attached) System&nbsp;V 共有メモリーセグメントは分離される (<B><A HREF="../man2/shmat.2.html">shmat</A></B>(2))。
+<DT>*<DD>
+POSIX 共有メモリー領域はマッピングを解除される (<B><A HREF="../man3/shm_open.3.html">shm_open</A></B>(3))。
+<DT>*<DD>
+オープンされた POSIX メッセージキューディスクリプターはクローズされる (<B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7))。
+<DT>*<DD>
+オープンされた POSIX 名前付きセマフォはいずれもクローズされる (<B><A HREF="../man7/sem_overview.7.html">sem_overview</A></B>(7))。
+<DT>*<DD>
+POSIX タイマーは保持されない (<B>timer_create</B>(2))。
+<DT>*<DD>
+オープンされたディレクトリストリームはいずれもクローズされる (<B><A HREF="../man3/opendir.3.html">opendir</A></B>(3))。
+<DT>*<DD>
+メモリーロックは保持されない (<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2), <B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2))。
+<DT>*<DD>
+終了 (exit) ハンドラーは保持されない (<B><A HREF="../man3/atexit.3.html">atexit</A></B>(3), <B><A HREF="../man3/on_exit.3.html">on_exit</A></B>(3))。
+<DT>*<DD>
+浮動小数点関連の環境はデフォルトにリセットされる (<B><A HREF="../man3/fenv.3.html">fenv</A></B>(3)  参照)。
+</DL>
+<P>
+
+上記のリストのプロセス属性はいずれも POSIX.1 で規定されている。 以下に示す Linux 固有のプロセス属性も <B>execve</B>()
+の前後で保持されない。
+<DL COMPACT>
+<DT>*<DD>
+The process's &quot;dumpable&quot; attribute is set to the value 1, unless a
+set-user-ID program, a set-group-ID program, or a program with capabilities
+is being executed, in which case the dumpable flag may instead be reset to
+the value in <I>/proc/sys/fs/suid_dumpable</I>, in the circumstances described
+under <B>PR_SET_DUMPABLE</B> in <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2).  Note that changes to the
+&quot;dumpable&quot; attribute may cause ownership of files in the process's
+<I>/proc/[pid]</I> directory to change to <I>root:root</I>, as described in
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5).
+<DT>*<DD>
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)  の <B>PR_SET_KEEPCAPS</B> フラグはクリアされる。
+<DT>*<DD>
+(Linux 2.4.36 以降 / 2.6.23 以降)  set-user-ID や set-group-ID されたプログラムが実行された場合、
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2) の <B>PR_SET_PDEATHSIG</B> フラグで設定された parent death シグナルはクリアされる。
+<DT>*<DD>
+プロセス名は新しい実行ファイルの名前にリセットされる。 プロセス名は <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)  の <B>PR_SET_NAME</B> で設定でき、
+<I>ps&nbsp;-o comm</I> で表示できる。
+<DT>*<DD>
+<B>SECBIT_KEEP_CAPS</B> の <I>securebits</I> フラグはクリアされる。 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7) 参照。
+<DT>*<DD>
+終了シグナル (termination signal) は <B>SIGCHLD</B> にリセットされる (<B><A HREF="../man2/clone.2.html">clone</A></B>(2)  参照)。
+<DT>*<DD>
+The file descriptor table is unshared, undoing the effect of the
+<B>CLONE_FILES</B> flag of <B><A HREF="../man2/clone.2.html">clone</A></B>(2).
+</DL>
+<P>
+
+以下の点についても注意すること:
+<DL COMPACT>
+<DT>*<DD>
+呼び出し元スレッド以外の全てのスレッドは <B>execve</B>()  中に破棄される。 mutex、条件変数、その他の pthread
+オブジェクトは保持されない。
+<DT>*<DD>
+<I>setlocale(LC_ALL, &quot;C&quot;)</I> 相当の処理がプログラム開始時に実行される。
+<DT>*<DD>
+POSIX.1 は、動作が無視かデフォルトに設定されている全てのシグナル の処理方法は変更せずそのままにする、と規定している。
+但し、POSIX.1-2001 には一つ例外があり、 <B>SIGCHLD</B> が無視になっている場合、
+その処理方法を変更せずにそのままにするか、デフォルト動作にリセットするかは 実装依存となっている。 Linux では前者 (変更しない) となっている。
+<DT>*<DD>
+完了していない非同期 I/O 操作はキャンセルされる (<B><A HREF="../man3/aio_read.3.html">aio_read</A></B>(3), <B><A HREF="../man3/aio_write.3.html">aio_write</A></B>(3))。
+<DT>*<DD>
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)  時のケーパビリティの扱いについては、 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)  を参照。
+<DT>*<DD>
+
+
+
+デフォルトでは、ファイルディスクリプターは <B>execve</B>()  を行った後でもオープンされたままである。 close-on-exec
+の印が付いているファイルディスクリプターはクローズされる。 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  の <B>FD_CLOEXEC</B> の説明を参照。
+(ファイルディスクリプターがクローズされると、このプロセスが ファイルディスクリプターに対応するファイルに対して獲得していた
+レコードのロックが全て解放されることになる。)  POSIX.1 では、 ファイルディスクリプター 0, 1, 2 が <B>execve</B>()
+成功後にどこかでクローズされ、かつ 実行されるファイルに set-user_ID か set-group_ID のモードビットが
+セットされていてプロセスが特権を獲得した場合、 システムは何らかのファイルをオープンする際に これらの番号のディスクリプターのどれかを使うことがある、
+とされている。 原則として、移植性が必要なプログラムでは、 特権の有無に関わらず、 <B>execve</B>()  の前後でこれら
+3つのファイルディスクリプターがクローズされたままで あることを前提にすることはできない。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>インタープリタースクリプト</H3>
+
+インタープリタースクリプトとは、実行許可が有効になっていて、 最初の行が以下の形になっているテキストファイルのことである。
+<P>
+
+
+
+<B>#!</B><I>interpreter </I>[optional-arg]
+
+
+<P>
+
+The <I>interpreter</I> must be a valid pathname for an executable file.
+<P>
+
+<B>execve</B>()  の <I>pathname</I> 引数がインタープリタースクリプトを指定している場合、 <I>interpreter</I>
+は以下の引数で起動される。
+<P>
+
+
+
+<I>interpreter</I> [optional-arg] <I>pathname</I> arg...
+
+
+<P>
+
+
+
+
+where <I>pathname</I> is the absolute pathname of the file specified as the
+first argument of <B>execve</B>(), and <I>arg...</I> is the series of words pointed
+to by the <I>argv</I> argument of <B>execve</B>(), starting at <I>argv[1]</I>.  Note
+that there is no way to get the <I>argv[0]</I> that was passed to the
+<B>execve</B>()  call.
+<P>
+
+移植性を持たすには、 <I>optional-arg</I> は空か 1ワードだけにすべきである (つまり、ホワイトスペースを含めるべきではない)。
+下記の「注意」の節を参照。
+<P>
+
+
+Since Linux 2.6.28, the kernel permits the interpreter of a script to itself
+be a script.  This permission is recursive, up to a limit of four
+recursions, so that the interpreter may be a script which is interpreted by
+a script, and so on.
+<A NAME="lbAG">&nbsp;</A>
+<H3>引数と環境変数の合計サイズの上限</H3>
+
+ほとんどの UNIX の実装は、新しいプログラムに渡すことができる コマンドライン引数 (<I>argv</I>)  と環境変数 (<I>envp</I>)
+の文字列群の合計サイズに何らかの上限を設けている。 POSIX.1 は、 <B>ARG_MAX</B> 定数を使ってこの上限を決める実装を認めている
+(<B>ARG_MAX</B> は <I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I> で定義されるか、実行時に <I>sysconf(_SC_ARG_MAX)</I>
+の呼び出しで入手できるかのいずれかである)。
+<P>
+
+カーネル 2.6.23 より前の Linux では、環境変数と引数の文字列群を 格納するのに使用されるメモリーは 32 ページに制限されていた (32
+ページというのはカーネル定数 <B>MAX_ARG_PAGES</B> で定義される)。したがって、 ページサイズが 4&nbsp;kB のアーキテクチャーでは、
+最大サイズは 128&nbsp;kB ということになる。
+<P>
+
+
+
+
+
+
+
+
+
+On kernel 2.6.23 and later, most architectures support a size limit derived
+from the soft <B>RLIMIT_STACK</B> resource limit (see <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2))  that is
+in force at the time of the <B>execve</B>()  call.  (Architectures with no
+memory management unit are excepted: they maintain the limit that was in
+effect before kernel 2.6.23.)  This change allows programs to have a much
+larger argument and/or environment list.  For these architectures, the total
+size is limited to 1/4 of the allowed stack size.  (Imposing the 1/4-limit
+ensures that the new program always has some stack space.)  Additionally,
+the total size is limited to 3/4 of the value of the kernel constant
+<B>_STK_LIM</B> (8 Mibibytes).  Since Linux 2.6.25, the kernel also places a
+floor of 32 pages on this size limit, so that, even when <B>RLIMIT_STACK</B> is
+set very low, applications are guaranteed to have at least as much argument
+and environment space as was provided by Linux 2.6.23 and earlier.  (This
+guarantee was not provided in Linux 2.6.23 and 2.6.24.)  Additionally, the
+limit per string is 32 pages (the kernel constant <B>MAX_ARG_STRLEN</B>), and
+the maximum number of strings is 0x7FFFFFFF.
+<A NAME="lbAH">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると <B>execve</B>()  は返らない。エラーの場合は -1 を返し、 <I>errno</I> を適切に設定する。
+<A NAME="lbAI">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>E2BIG</B><DD>
+環境変数 (<I>envp</I>)  と引数リスト (<I>argv</I>)  の合計バイト数が大き過ぎる。
+<DT><B>EACCES</B><DD>
+<I>pathname</I> やスクリプトインタープリター名の構成要素に検索許可 (search permission)  が与えられていない
+(<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)  も参照すること)。
+<DT><B>EACCES</B><DD>
+ファイルもしくはスクリプトのインタープリターが通常ファイル (regular file)  でない。
+<DT><B>EACCES</B><DD>
+ファイルやスクリプトや ELF インタープリターに 実行許可 (execute permission) が与えられていない。
+<DT><B>EACCES</B><DD>
+ファイルシステムが <I>noexec</I> でマウントされている。
+<DT><B>EAGAIN</B> (Linux 3.1 以降)<DD>
+
+<B>set*uid</B>() のいずれかの呼び出しでプロセスの実 UID が変更されたとすると、呼び出し元の <B>RLIMIT_NPROC</B> リソース上限
+(<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2) 参照) を超えてしまう、 現在もまだ超えている。 このエラーの詳細な説明については「注意」の節を参照。
+<DT><B>EFAULT</B><DD>
+<I>pathname</I> または配列 <I>argv</I> か <I>envp</I> のポインターの一つがアクセス可能なアドレス空間の外を指している。
+<DT><B>EINVAL</B><DD>
+ELF 実行形式で複数の PT_INTERP セグメントが存在する。 (すなわち複数のインタープリターを指定した。)
+<DT><B>EIO</B><DD>
+I/O エラーが発生した。
+<DT><B>EISDIR</B><DD>
+ELF インタープリターがディレクトリだった。
+<DT><B>ELIBBAD</B><DD>
+ELF インタープリターが理解できるフォーマットでなかった。
+<DT><B>ELOOP</B><DD>
+<I>pathname</I> やスクリプトや ELF のインタープリターを解決する際に遭遇した シンボリックリンクが多過ぎる。
+<DT><B>ELOOP</B><DD>
+
+The maximum recursion limit was reached during recursive script
+interpretation (see &quot;Interpreter scripts&quot;, above).  Before Linux 3.8, the
+error produced for this case was <B>ENOEXEC</B>.
+<DT><B>EMFILE</B><DD>
+The per-process limit on the number of open file descriptors has been
+reached.
+<DT><B>ENAMETOOLONG</B><DD>
+<I>pathname</I> が長過ぎる。
+<DT><B>ENFILE</B><DD>
+オープンされたファイルの総数がシステム全体の上限に達していた。
+<DT><B>ENOENT</B><DD>
+The file <I>pathname</I> or a script or ELF interpreter does not exist.
+<DT><B>ENOEXEC</B><DD>
+実行ファイルが理解できない形式であるか、違うアーキテクチャーのものか、 その他のフォーマットエラーにより実行ができなかった。
+<DT><B>ENOMEM</B><DD>
+カーネルに十分なメモリーがない。
+<DT><B>ENOTDIR</B><DD>
+<I>pathname</I> やスクリプトや ELF のインタープリターの構成要素がディレクトリでない。
+<DT><B>EPERM</B><DD>
+ファイルシステムが <I>nosuid</I> でマウントされ、ユーザーがスーパーユーザーでなく、 ファイルに set-user-ID あるいは
+set-group-ID ビットが設定されている。
+<DT><B>EPERM</B><DD>
+プロセスがトレースされ、ユーザーがスーパーユーザーでなく、 ファイルに set-user-ID あるいは set-group-ID
+ビットが設定されている。
+<DT><B>EPERM</B><DD>
+A &quot;capability-dumb&quot; applications would not obtain the full set of permitted
+capabilities granted by the executable file.  See <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
+<DT><B>ETXTBSY</B><DD>
+指定された実行ファイルを書き込み用にオープンしているプロセスがある。
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>準拠</H2>
+
+
+
+
+
+POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.  POSIX does not document the #!
+behavior, but it exists (with some variations) on other UNIX systems.
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+One sometimes sees <B>execve</B>()  (and the related functions described in
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3))  described as &quot;executing a <I>new</I> process&quot; (or similar).  This
+is a highly misleading description: there is no new process; many attributes
+of the calling process remain unchanged (in particular, its PID).  All that
+<B>execve</B>()  does is arrange for an existing process (the calling process)
+to execute a new program.
+<P>
+
+set-user-id プロセスと set-group-ID プロセスは <B>ptrace</B>(2)  できない。
+<P>
+
+ファイルシステムを <I>nosuid</I> でマウントした場合に set-user-ID/set-group-ID の実行ファイルを
+どの様に扱うかは、Linux カーネルのバージョンによって異なる: あるバージョンでは、すでに必要な権限を持っている場合を除いて、 その実行を拒否する
+(そして <B>EPERM</B> を返す)。別のあるバージョンでは set-user-ID/set-group-ID ビットのみを無視し <B>exec</B>()
+は成功する。
+<P>
+
+
+
+
+
+
+On Linux, <I>argv</I> and <I>envp</I> can be specified as NULL.  In both cases, this
+has the same effect as specifying the argument as a pointer to a list
+containing a single null pointer.  <B>Do not take advantage of this
+nonstandard and nonportable misfeature!</B> On many other UNIX systems,
+specifying <I>argv</I> as NULL will result in an error (<B>EFAULT</B>).  <I>Some</I>
+other UNIX systems treat the <I>envp==NULL</I> case the same as Linux.
+<P>
+
+POSIX.1 は、 <B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)  が返す値はプロセスの生存中は変化しないべきだとしている。 しかしながら、Linux 2.6.23
+以降では、リソース上限 <B>RLIMIT_STACK</B> が変化した場合、 コマンドライン引数と環境変数を保持するための空間に対する上限が
+変化したことを反映して、 <B>_SC_ARG_MAX</B> が返す値も変化する。
+<P>
+
+
+
+<B>execve</B>() が失敗するほとんどの場合、 制御は元の実行可能イメージに戻り、 <B>execve</B>()
+の呼び出し元がエラーを処理することができる。 しかしながら、 (リソース枯渇が原因となった場合など、まれに)
+呼び出し元に制御が戻る時点を過ぎてからエラーが発生する場合がある。 元の実行可能イメージはすでに破棄されているが、
+新しいイメージが完全には構築されていないという状況である。 このような場合、カーネルはそのプロセスをシグナル <B>SIGSEGV</B> (Linux
+3.17 までは <B>SIGKILL</B>) で停止 (kill) する。
+<A NAME="lbAL">&nbsp;</A>
+<H3>インタープリタースクリプト</H3>
+
+
+The kernel imposes a maximum length on the text that follows the &quot;#!&quot;
+characters at the start of a script; characters beyond the limit are
+ignored.  Before Linux 5.1, the limit is 127 characters.  Since Linux 5.1,
+the limit is 255 characters.
+<P>
+
+
+
+インタープリタースクリプトの <I>optional-arg</I> 引数の解釈方法は実装により異なる。 Linux では、インタープリター名
+<I>interpreter</I> に続く文字列全体がインタープリターに 1個の引数として渡される。 しかし、動作が異なるシステムもある。 あるシステムでは、
+<I>optional-arg</I> のうち最初のホワイトスペースまでが 引数として渡される。 また、別のシステムでは
+インタープリタースクリプトは複数の引数を持つことができ、 <I>optional-arg</I> 内のホワイトスペースが引数の区切りとなる。
+<P>
+
+
+
+
+
+
+
+
+
+
+Linux (like most other modern UNIX systems)  ignores the set-user-ID and
+set-group-ID bits on scripts.
+<A NAME="lbAM">&nbsp;</A>
+<H3>execve() と EAGAIN</H3>
+
+<B>execve</B>() を呼び出した際に (Linux 3.1 以降で) 起こり得る <B>EAGAIN</B> エラーの詳細な説明を以下で行う。
+<P>
+
+
+<I>直前の</I> <B><A HREF="../man2/setuid.2.html">setuid</A></B>(2), <B><A HREF="../man2/setreuid.2.html">setreuid</A></B>(2), <B><A HREF="../man2/setresuid.2.html">setresuid</A></B>(2) の呼び出しで、 そのプロセスの実ユーザー ID
+が変更され、 その変更によりそのプロセスが <B>RLIMIT_NPROC</B> リソース上限を超過してしまった場合 (すなわち、新しい実ユーザー ID
+に属するプロセス数が <B>RLIMIT_NPROC</B> リソース上限を超過した場合) に、 <B>EAGAIN</B> エラーが発生する。 Linux 2.6.0
+以上 3.0 以下では、これにより <B>set*uid</B>() の呼び出しが失敗していた。 (Linux 2.6 より前では、このリソース上限はユーザー
+ID を変更したプロセスには適用されていなかった。)
+<P>
+
+Linux 3.1 以降では、上で説明したシナリオでは <B>set*uid</B>() の呼び出しは失敗しない。 なぜなら、
+返されたステータスの確認を行わず「呼び出し元が特権を持っている場合には」呼び出しは必ず成功するとみなしているバグがあるアプリケーションでは、セキュリティホールにつながることが非常によくあるからだ。
+その代わり、 <B>set*uid</B>() の呼び出しによる実 UID の変更は成功するが、 カーネルは <B>PF_NPROC_EXCEEDED</B>
+という名前の内部フラグをセットする。 このフラグは <B>RLIMIT_NPROC</B> リソース上限が超過したことを示す。
+<B>PF_NPROC_EXCEEDED</B> フラグがセットされていて、その後で <B>execve</B>() が呼ばれた際にリソース上限がまだ超過していれば、
+その <B>execve</B>() の呼び出しは <B>EAGAIN</B> エラーで失敗する。 このカーネルのロジックにより、
+特権デーモンでよく行われる処理フロー、 すなわち <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  + <B>set*uid</B>()  + <B>execve</B>()
+に対して、前と変わらず <B>RLIMIT_NPROC</B> リソース上限を適用できることが保証される。
+<P>
+
+(<B>set*uid</B>() と <B>execve</B>() の呼び出しの間に、この実 UID に属する他のプロセスが終了して) 次に <B>execve</B>()
+が呼び出された際にこのリソース上限が超過してなければ、 <B>execve</B>() の呼び出しは成功し、カーネルは <B>PF_NPROC_EXCEEDED</B>
+プロセスフラグをクリアする。 同じプロセスによって <B><A HREF="../man2/fork.2.html">fork</A></B>(2) の呼び出しが後で行われた場合にも、このフラグはクリアされる。
+<A NAME="lbAN">&nbsp;</A>
+<H3>歴史</H3>
+
+
+
+
+
+
+
+
+
+
+UNIX&nbsp;V6 では <B>exec</B>()  コールの引数リストは 0 で終端され、 <I>main</I> の引数リストは -1 で終端されていた。
+そのため、 <I>main</I> の引数リストは、その後の <B>exec</B>()  コールには直接使用できなかった。 UNIX&nbsp;V7 以降では、ともに
+NULL で終端される。
+<A NAME="lbAO">&nbsp;</A>
+<H2>例</H2>
+
+このプログラムは、以下の二つ目のプログラムから実行するためのものである。 コマンドライン引数を 1行に 1個ずつ表示するだけのプログラムである。
+<P>
+
+
+
+/* myecho.c */
+<P>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;argc;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;argv[%d]:&nbsp;%s\n&quot;,&nbsp;j,&nbsp;argv[j]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+
+<P>
+
+以下のプログラムは、コマンドライン引数で指定した名前のプログラムを 実行するのに使う。
+<P>
+
+
+
+/* execve.c */
+<P>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*newargv[]&nbsp;=&nbsp;{&nbsp;NULL,&nbsp;&quot;hello&quot;,&nbsp;&quot;world&quot;,&nbsp;NULL&nbsp;};
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*newenviron[]&nbsp;=&nbsp;{&nbsp;NULL&nbsp;};
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;file-to-exec&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;newargv[0]&nbsp;=&nbsp;argv[1];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;execve(argv[1],&nbsp;newargv,&nbsp;newenviron);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;execve&quot;);&nbsp;&nbsp;&nbsp;/*&nbsp;execve()&nbsp;returns&nbsp;only&nbsp;on&nbsp;error&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+}
+
+
+<P>
+
+二つ目のプログラムを使って一つ目のプログラムを実行するには 以下のようにする。
+<P>
+
+
+
+$<B> cc myecho.c -o myecho</B>
+$<B> cc execve.c -o execve</B>
+$<B> ./execve ./myecho</B>
+argv[0]: ./myecho
+argv[1]: hello
+argv[2]: world
+
+
+<P>
+
+さらに、これらのプログラムを使って、スクリプトインタープリターの例を示す。 このために、「インタープリター」として先ほど作成したプログラム
+<I>myecho</I> を使うスクリプトを作成する。
+<P>
+
+
+
+$<B> cat &gt; script</B>
+<B>#!./myecho script-arg</B>
+<B>^D</B>
+$<B> chmod +x script</B>
+
+
+<P>
+
+作成しておいたプログラムを使ってスクリプトを実行する。
+<P>
+
+
+
+$<B> ./execve ./script</B>
+argv[0]: ./myecho
+argv[1]: script-arg
+argv[2]: ./script
+argv[3]: hello
+argv[4]: world
+
+
+<A NAME="lbAP">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/chmod.2.html">chmod</A></B>(2), <B><A HREF="../man2/execveat.2.html">execveat</A></B>(2), <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B>get_robust_list</B>(2),
+<B>ptrace</B>(2), <B><A HREF="../man3/exec.3.html">exec</A></B>(3), <B><A HREF="../man3/fexecve.3.html">fexecve</A></B>(3), <B><A HREF="../man3/getopt.3.html">getopt</A></B>(3), <B><A HREF="../man3/system.3.html">system</A></B>(3),
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7), <B><A HREF="../man7/environ.7.html">environ</A></B>(7), <B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7),
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)
+<A NAME="lbAQ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Effect on process attributes</A><DD>
+<DT><A HREF="#lbAF">インタープリタースクリプト</A><DD>
+<DT><A HREF="#lbAG">引数と環境変数の合計サイズの上限</A><DD>
+</DL>
+<DT><A HREF="#lbAH">返り値</A><DD>
+<DT><A HREF="#lbAI">エラー</A><DD>
+<DT><A HREF="#lbAJ">準拠</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAL">インタープリタースクリプト</A><DD>
+<DT><A HREF="#lbAM">execve() と EAGAIN</A><DD>
+<DT><A HREF="#lbAN">歴史</A><DD>
+</DL>
+<DT><A HREF="#lbAO">例</A><DD>
+<DT><A HREF="#lbAP">関連項目</A><DD>
+<DT><A HREF="#lbAQ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,259 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PPPOE-SERVER</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PPPOE-SERVER</H1>
+Section: Maintenance Commands (8)<BR>Updated: 3 July 2000<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/rp-pppoe/release/man8/pppoe-server.8">roff page</A><HR>
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pppoe-server - ユーザー空間 PPPoE サーバー
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>pppoe-server </B>[<I>options</I>]
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pppoe-server</B> は PPPoE (Point-to-Point Protocol over Ethernet) の
+ユーザー空間サーバーであり、Linux やその他の UNIX 系システムで利用できる。
+<B>pppoe-server</B> は <B>pppoe</B> クライアントと関連して動作し、
+PPPoE discovery パケットに応答して、PPPoE セッションを設定する。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-F</B>
+
+<DD>
+<B>-F</B> オプションを指定すると、
+<B>pppoe-server</B> は fork されずデーモンにならない。
+デフォルトでは fork されてデーモンになる。
+<P>
+<DT><B>-I </B><I>interface</I>
+
+<DD>
+<B>-I</B> オプションは、使用するイーサーネットインターフェースを指定する。
+Linux 上では、<I>eth0</I> や <I>eth1</I> が一般的である。
+インターフェースは <B>pppoe-server</B> を開始する前に
+「アップ (起動)」しておかなければならないが、
+IP アドレスを設定しては<I>ならない</I>。
+2 つ以上のインターフェースで応答するサーバーを設定するには、
+複数の <B>-I</B> オプションを指定すればよい。
+<P>
+<DT><B>-T </B><I>timeout</I>
+
+<DD>
+このオプションは <B>pppoe</B> に直接渡される。
+詳細は <B><A HREF="../man8/pppoe.8.html">pppoe</A></B>(8) を参照すること。
+<P>
+<DT><B>-C </B><I>ac_name</I>
+
+<DD>
+アクセス集信装置の名前として使用したい名前を指定する。
+指定しない場合は、ホスト名が使われる。
+<P>
+<DT><B>-S </B><I>name</I>
+
+<DD>
+<I>name</I> という名前のサービスを提供する。
+<B>-S</B> オプションは複数個指定できる。
+各 <B>-S</B> オプションごとに、指定した名前のサービスを
+PADO フレームの Service-Name タグで広告できる。
+最初の <B>-S</B> オプションはデフォルトのサービスを指定し、
+PPPoE クライアントが長さ 0 の Service-Name をリクエストした場合は、
+このサービスが使われる。
+<P>
+<DT><B>-m </B><I>MSS</I>
+
+<DD>
+このオプションは <B>pppoe</B> に直接渡される。
+詳細は <B><A HREF="../man8/pppoe.8.html">pppoe</A></B>(8) を参照すること。
+<P>
+<DT><B>-s</B>
+
+<DD>
+このオプションは <B>pppoe</B> に直接渡される。
+詳細は <B><A HREF="../man8/pppoe.8.html">pppoe</A></B>(8) を参照すること。
+このオプションを指定すると、
+<I>sync</I> オプションを付けて <B>pppd</B> が起動される。
+<P>
+<DT><B>-L </B><I>ip</I>
+
+<DD>
+IP アドレスを設定する。
+このアドレスは生成される <B>pppd</B> プロセスに渡される。
+指定しない場合のデフォルトは 10.0.0.1 である。
+<P>
+<DT><B>-R </B><I>ip</I>
+
+<DD>
+リモート側の IP アドレスの開始点を指定する。
+セッションを確立すると、<I>ip</I> から順に IP アドレスが割り当てられる。
+<B>pppoe-server</B> はアドレスのプールを自動的に監視し、
+有効な IP アドレスを <B>pppd</B> に渡す。
+指定しない場合は、開始アドレスとして 10.67.15.1 が使われる。
+<P>
+<DT><B>-N </B><I>num</I>
+
+<DD>
+最大 <I>num</I> 個の PPPoE セッションを許可する。
+指定しない場合のデフォルトは 64 である。
+<P>
+<DT><B>-p </B><I>fname</I>
+
+<DD>
+1 行に 1 つの IP アドレスが書かれたテキストファイル <I>fname</I> を読み込む。
+ここに書かれた IP アドレスがクライアントに割り当てられる。
+許可されるセッション数は、このファイルにある IP アドレスの数に等しい。
+<B>-p</B> オプションは、<B>-R</B> と <B>-N</B> の両方を上書きする。
+<P>
+このプールファイルには IP アドレスだけでなく、
+以下の形式の行があってもよい。
+<P>
+<PRE>
+        a.b.c.d-e
+</PRE>
+
+<P>
+これには a.b.c.d 〜 a.b.c.e の IP アドレスが含まれる。
+例えば、
+<P>
+<PRE>
+        1.2.3.4-7
+</PRE>
+
+<P>
+という行は
+<P>
+<PRE>
+        1.2.3.4
+        1.2.3.5
+        1.2.3.6
+        1.2.3.7
+</PRE>
+
+<P>
+と同じである。
+<P>
+<DT><B>-r</B>
+
+<DD>
+PPPoE サーバーにセッション番号をランダムに割り当てさせる。
+セッションは順番に操作されるのではなく、
+予想できない順番で割り当てられる。
+<P>
+<DT><B>-u</B>
+
+<DD>
+サーバーに対して、<B>pppd</B> に <I>unit</I> オプションをつけて起動させる。
+このオプションはバージョン 2.4.0 以降の <B>pppd</B> でしか
+動作しない点に注意すること。
+<P>
+<DT><B>-o </B><I>offset</I>
+
+<DD>
+PPPoE セッションの開始番号を、1 ではなく、<I>offset</I>+1 にする。
+これを使うと、与えられたマシン上で複数のサーバーを稼働することができる。
+ただし、セッション番号が重複しないように注意すること。
+<P>
+<DT><B>-f disc:sess</B>
+
+<DD>
+<B>-f</B> オプションは、
+PPPoE の discovery フレームと session フレームで使う
+イーサーネットフレームタイプを設定する。
+タイプはコロンで区切られた 16 進数で指定する。
+標準的な PPPoE では、フレームタイプ 8863:8864 を使う。
+接続先が標準的でないフレームタイプを使っていることが
+はっきり解っている場合以外は、
+<I>このオプションを使うべきではない</I>。 
+<P>
+<DT><B>-k</B>
+
+<DD>
+Linux で <B>-k</B> オプションを指定すると、
+サーバーはカーネルモード PPPoE を使う。 
+このオプションは、Linux カーネル 2.4.0 以降で、
+かつ PPPoE サーバーがカーネルモードをサポートするように
+構築されている場合にのみ使用可能である。
+<P>
+<DT><B>-h</B>
+
+<DD>
+<B>-h</B> オプションを指定すると、
+使用法についての簡単なメッセージを表示して終了する。
+<P>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>動作</H2>
+
+<P>
+<B>pppoe-server</B> は入ってくる PPPoE discovery パケットを待ち受ける。
+セッションが確立されると、サーバーは <B>pppd</B> プロセスを生成する。
+以下のオプションが <B>pppd</B> に渡される:
+<P>
+<PRE>
+nodetach noaccomp nobsdcom nodeflate nopcomp novj novjccomp
+default-asyncmap
+</PRE>
+
+<P>
+さらに、<B>-L</B> と <B>-R</B> オプションに基づいて
+ローカルとリモートの IP アドレスが設定される。
+PPPoE セッションを初期化するために、
+<B>pppoe</B> コマンドに <B>pty</B> オプションが指定される。
+また、その他の <B>pppd</B> オプションは
+ファイル <B>/etc/ppp/pppoe-server-options</B> に書いておくことができる
+(このファイルは何も書いていなくてもよいが、存在しなければならない)。
+<P>
+<B>pppoe-server</B> は主に PPPoE クライアントの
+テスト用のものである点に注意すること。
+製品としての使用を意図した高性能のサーバー<I>ではない</I>。
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>著者</H2>
+
+<B>pppoe-server</B> は
+David F. Skoll &lt;<A HREF="mailto:dfs@roaringpenguin.com">dfs@roaringpenguin.com</A>&gt; によって作成された。
+<P>
+<B>pppoe</B> のホームページは
+<I><A HREF="http://www.roaringpenguin.com/pppoe/">http://www.roaringpenguin.com/pppoe/</A></I> である。
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<A HREF="../man8/adsl-start.8.html">adsl-start</A>(8), <A HREF="../man8/adsl-stop.8.html">adsl-stop</A>(8), <A HREF="../man8/adsl-connect.8.html">adsl-connect</A>(8), <A HREF="../../ppp/man8/pppd.8.html">pppd</A>(8), <A HREF="../man5/pppoe.conf.5.html">pppoe.conf</A>(5),
+<A HREF="../man8/pppoe.8.html">pppoe</A>(8), <A HREF="../man8/adsl-setup.8.html">adsl-setup</A>(8), <A HREF="../man8/adsl-status.8.html">adsl-status</A>(8), <A HREF="../man8/pppoe-sniff.8.html">pppoe-sniff</A>(8), <A HREF="../man8/pppoe-relay.8.html">pppoe-relay</A>(8)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">動作</A><DD>
+<DT><A HREF="#lbAG">著者</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:45 GMT, December 05, 2022
+</BODY>
+</HTML>

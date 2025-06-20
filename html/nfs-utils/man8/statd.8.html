@@ -1,0 +1,302 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of rpc.statd</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>rpc.statd</H1>
+Section: Maintenance Commands (8)<BR>Updated: 31 Aug 2004<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/nfs-utils/release/man8/statd.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+rpc.statd - NSM ステータスモニタ
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>/sbin/rpc.statd [-F] [-d] [-?] [-n  name ] [-o  port ] [-p  port ] [-H  prog ] [-V]</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+<B>rpc.statd</B>
+
+サーバは NSM (Network Status Monitor) RPC プロトコルを実装したものである。
+このサービスは少々名前が適切ではなく、
+予想されるようなアクティブなモニタリングを実際に行うわけではない。
+実際には NSM はリブート通知サービスを実装したものなのである。
+<B>rpc.statd</B>
+
+は NFS ファイルロックサービス
+<B>rpc.lockd</B>
+
+が利用するもので、
+NFS サーバマシンがクラッシュして復帰したときに、
+ロックを回復するために用いられる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>動作</H3>
+
+モニタの対象となる
+NFS のクライアントとサーバのマシンそれぞれに対し、
+<B>rpc.statd</B>
+
+は
+<B>/var/lib/nfs/sm</B>
+
+にファイルを作る。
+起動するとき、
+<B>rpc.statd</B>
+
+はこれらのファイルを順次調べ、
+それら接続先のマシンの
+<B>rpc.statd</B>
+
+に通知する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-F</B>
+
+<DD>
+デフォルトでは
+<B>rpc.statd</B>
+
+はフォークしてバックグラウンドに移動してから動作を始める。
+<B>-F</B>
+
+オプションは、
+<B>rpc.statd</B>
+
+にフォアグラウンドに留まるよう伝える。
+このオプションは主にデバッグのためのものである。
+<DT><B>-d</B>
+
+<DD>
+デフォルトでは
+<B>rpc.statd</B>
+
+はログメッセージを
+<B><A HREF="../../LDP_man-pages/man3/syslog.3.html">syslog</A></B>(3)
+
+を通してシステムログに送る。
+<B>-d</B>
+
+オプションは、このログ出力を詳細にし、
+<B>stderr</B>
+
+に送るよう指示する。
+このオプションは主にデバッグのためのものであり、
+おそらく
+<B>-F</B>
+
+と同時にのみ使うことになるだろう。
+<DT><B>-n,</B><I></I><B> --name </B><I>name</I>
+
+<DD>
+<B>rpc.statd</B>
+
+がローカルのホスト名として用いる名前を指定する。
+デフォルトでは
+<B>rpc.statd</B>
+
+は
+<B><A HREF="../../LDP_man-pages/man2/gethostname.2.html">gethostname</A></B>(2)
+
+を呼んでローカルのホスト名を取得する。
+インターフェースが 2 つ以上あるマシンでは、
+ローカルのホスト名を指定すると便利かもしれない。
+<DT><B>-o,</B><I></I><B> --outgoing-port </B><I>port</I>
+
+<DD>
+<B>rpc.statd</B>
+
+が外向きのステータスリクエストを送信するときに使うポートを指定する。
+デフォルトでは
+<B>rpc.statd</B>
+
+は
+<B>portmap</B>(8)
+
+にポート番号を割り当ててくれるよう要求する。
+このマニュアルの執筆時点では、
+<B>portmap</B>
+
+が常に割り当てに用いるような、標準的なポート番号はない。
+ポートの指定は、ファイアウォールを実装するときに便利だろう。
+<DT><B>-p,</B><I></I><B> --port </B><I>port</I>
+
+<DD>
+<B>rpc.statd</B>
+
+が listen するポートを指定する。
+デフォルトでは
+<B>rpc.statd</B>
+
+は
+<B>portmap</B>(8)
+
+にポート番号を割り当ててくれるよう要求する。
+このマニュアルの執筆時点では、
+<B>portmap</B>
+
+が常に割り当てに用いるような、標準的なポート番号はない。
+ポートの指定は、ファイアウォールを実装するときに便利だろう。
+<DT><B>-P,</B><I></I><B> --state-directory-path </B><I>directory</I>
+
+<DD>
+statd の状態情報を置くディレクトリを指定する。
+このオプションが指定されない場合、デフォルトの
+<B>/var/lib/nfs</B>
+
+が使用される。
+<DT><B>-N</B>
+
+<DD>
+statd を通知専用モードで実行させる。
+このモードで起動すると、
+statd プログラムは状態情報を置くディレクトリをチェックして、
+全てのモニタ対象ノードに通知を送信し、通知の送信が完了したら終了する。
+このモードは高可用性 (Highly Available) NFS 実装 (つまり HA-NFS) を
+有効にするために使用される。
+<DT><B>-H, </B><I></I><B> --ha-callout </B><I>prog</I>
+
+<DD>
+高可用性コールアウトプログラムを指定する。
+このプログラムは全てのクライアントモニタとモニタ終了リクエストに対する
+コールアウトを受け取る。
+これにより
+<B>rpc.statd</B>
+
+を高可用性 NFS (HA-NFS) 環境で使用することができる。
+このプログラムは 3 つの引き数を付けて実行される。
+1 つ目は、
+<B>add-client</B>
+
+または
+<B>del-client</B>
+
+であり、コールアウトの理由に依存する。
+2 つ目はクライアントの名前である。
+3 つ目はクライアントに知らせるサーバの名前である。
+<DT><B>-?</B>
+
+<DD>
+コマンドラインヘルプを表示して終了する。
+<DT><B>-V</B>
+
+<DD>
+バージョン情報を表示して終了する。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>TCP_WRAPPERS のサポート</H2>
+
+この版の
+<B>rpc.statd</B>
+
+は
+<B>tcp_wrapper</B>
+
+ライブラリによって保護されている。
+クライアントからの
+<B>rpc.statd</B>
+
+に対するアクセスが必要なら、
+許可するよう設定しなければならない。.bar.com ドメインの
+クライアントからのアクセスを許可するには、
+/etc/hosts.allow に次のように書けばよい。
+<P>
+statd: .bar.com
+<P>
+デーモンの名前は (バイナリのファイル名が異なっていても)
+<B>statd</B>
+
+としなければならない。
+<P>
+詳細は man ページ
+<B><A HREF="../../tcp_wrappers/man8/tcpd.8.html">tcpd</A></B>(8)
+
+と
+<B><A HREF="../../tcp_wrappers/man5/hosts_access.5.html">hosts_access</A></B>(5)
+
+を見てほしい。
+<A NAME="lbAH">&nbsp;</A>
+<H2>シグナル</H2>
+
+<B>SIGUSR1</B>
+
+を送ると、
+<B>rpc.statd</B>
+
+はディスクから通知リストを読み直して、クライアントに通知を送る。
+このシグナルは高可用性 NFS (HA-NFS) 環境において、
+他のサーバから NFS エクスポートの引き継ぎを行うときに、
+クライアントに通知を行ってファイルロックを再取得するために使用される。
+<A NAME="lbAI">&nbsp;</A>
+<H2>ファイル</H2>
+
+<B>/var/lib/nfs/state</B>
+
+<BR>
+
+<B>/var/lib/nfs/sm/*</B>
+
+<BR>
+
+<B>/var/lib/nfs/sm.bak/*</B>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man8/rpc.nfsd.8.html">rpc.nfsd</A>(8),</B>
+
+<B>portmap(8)</B>
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>著者</H2>
+
+<BR>
+
+Jeff Uphoff &lt;<A HREF="mailto:juphoff@nrao.edu">juphoff@nrao.edu</A>&gt;
+<BR>
+
+Olaf Kirch &lt;<A HREF="mailto:okir@monad.swb.de">okir@monad.swb.de</A>&gt;
+<BR>
+
+H.J. Lu &lt;<A HREF="mailto:hjl@gnu.org">hjl@gnu.org</A>&gt;
+<BR>
+
+Lon Hohberger &lt;<A HREF="mailto:hohberger@missioncriticallinux.com">hohberger@missioncriticallinux.com</A>&gt;
+<BR>
+
+Paul Clements &lt;<A HREF="mailto:paul.clements@steeleye.com">paul.clements@steeleye.com</A>&gt;
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">動作</A><DD>
+</DL>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">TCP_WRAPPERS のサポート</A><DD>
+<DT><A HREF="#lbAH">シグナル</A><DD>
+<DT><A HREF="#lbAI">ファイル</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:43 GMT, December 05, 2022
+</BODY>
+</HTML>

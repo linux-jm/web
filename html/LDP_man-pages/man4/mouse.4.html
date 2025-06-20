@@ -1,0 +1,177 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MOUSE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MOUSE</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated:  2020-08-13<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man4/mouse.4">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mouse - シリアルマウスインターフェース
+<A NAME="lbAC">&nbsp;</A>
+<H2>設定</H2>
+
+シリアルマウスは RS232/V24 ダイアルアウトラインに接続される。 RS232/V24 ダイアルアウトライン については <B><A HREF="../man4/ttyS.4.html">ttyS</A></B>(4)
+を参照のこと。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>概説</H3>
+
+シリアルマウスで使われる普通の 9 ピンプラグのピン配列は以下である:
+<P>
+
+<CENTER><TABLE>
+<TR VALIGN=top><TD ALIGN=right>pin</TD><TD ALIGN=center>name</TD><TD>used for<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>2</TD><TD ALIGN=center>RX</TD><TD>Data<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>3</TD><TD ALIGN=center>TX</TD><TD>-12 V, Imax = 10 mA<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>4</TD><TD ALIGN=center>DTR</TD><TD>+12 V, Imax = 10 mA<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>7</TD><TD ALIGN=center>RTS</TD><TD>+12 V, Imax = 10 mA<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>5</TD><TD ALIGN=center>GND</TD><TD>Ground<BR></TD></TR>
+</TABLE></CENTER>
+
+<P>
+
+これは仕様書であり、実際はほとんどのマウスでは 9 V で十分である。
+<P>
+
+マウスドライバは RTS をロー(low)に落し、再び上げることによって、マウスを認識でき る。およそ 14 ms 後、マウスはデータライン上に
+0x4D ('M') を送るだろう。さら に 63ms あと、マイクロソフト互換 3ボタンマウスは 0x33 ('3')
+を送る。
+<P>
+
+マウスの相対的な移動は、<I>dx</I>(正が右)と<I>dy</I>(正が下)として伝えられる。
+各種のマウスは異なったスピードで操作できる。スピードを選択するには、 下の表の２文字を送ってから 0.1 秒待つことで、9600, 4800,
+2400, 1200 bit/s を順に選べる。 以下の表では選択可能なスピードとそれを選択するための文字列を示している。
+<P>
+
+<CENTER><TABLE>
+<TR VALIGN=top><TD>bit/s</TD><TD>string<BR></TD></TR>
+<TR VALIGN=top><TD>9600</TD><TD>*q<BR></TD></TR>
+<TR VALIGN=top><TD>4800</TD><TD>*p<BR></TD></TR>
+<TR VALIGN=top><TD>2400</TD><TD>*o<BR></TD></TR>
+<TR VALIGN=top><TD>1200</TD><TD>*n<BR></TD></TR>
+</TABLE></CENTER>
+
+<P>
+
+データパケットの第 1 バイトは同期をとるのに利用できる。
+<A NAME="lbAF">&nbsp;</A>
+<H3>マイクロソフト プロトコル(Microsoft Protocol)</H3>
+
+<B>マイクロソフト</B>プロトコルは、1200 bits/sec のスピードで、1 ス タートビット(1 start bit)、7 データビット(7
+data bits)、パリティな し、1 ストップビット(1 stop bit)である。 データは RxD に 3
+バイトのパケットとして送られる。<I>dx</I> と <I>dy</I> の動きは 2 の補数表示で送られ、左(右)のボタンが押された時には <I>lb</I>
+(<I>rb</I>)がセットされる。
+<P>
+
+<CENTER><TABLE>
+<TR VALIGN=top><TD ALIGN=right>byte</TD><TD ALIGN=center>d6</TD><TD ALIGN=center>d5</TD><TD ALIGN=center>d4</TD><TD ALIGN=center>d3</TD><TD ALIGN=center>d2</TD><TD ALIGN=center>d1</TD><TD ALIGN=center>d0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>1</TD><TD ALIGN=center>1</TD><TD ALIGN=center>lb</TD><TD ALIGN=center>rb</TD><TD ALIGN=center>dy7</TD><TD ALIGN=center>dy6</TD><TD ALIGN=center>dx7</TD><TD ALIGN=center>dx6<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>2</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dx5</TD><TD ALIGN=center>dx4</TD><TD ALIGN=center>dx3</TD><TD ALIGN=center>dx2</TD><TD ALIGN=center>dx1</TD><TD ALIGN=center>dx0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>3</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dy5</TD><TD ALIGN=center>dy4</TD><TD ALIGN=center>dy3</TD><TD ALIGN=center>dy2</TD><TD ALIGN=center>dy1</TD><TD ALIGN=center>dy0<BR></TD></TR>
+</TABLE></CENTER>
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>3つボタン マイクロソフト プロトコル(3-button Microsoft protocol)</H3>
+
+本来のマイクロソフトマウスは 2 つのボタンしか持たない。しかし、3 つボタン のマウスでマイクロソフトプロトコルの物も存在する。真中のボタンを押す、
+または放すということは、動きゼロでボタンが押されていないというパケット を送ることで伝えられる。(従って他の二つのボタンと違い、真中のボタ
+ンのステータスは、それぞれのパケットからは伝わって来ない。)
+<A NAME="lbAH">&nbsp;</A>
+<H3>ロジテック プロトコル(Logitech protocol)</H3>
+
+ロジテック シリアル 3つボタンマウスは、マイクロソフト プロトコルとは 異なった拡張をしている。:真中のボタンが押されてないと、上記 3バイトの
+パケットが送られる。真中のボタンが押されていると、4バイトのパケットが 送られる。第４バイトは 0x20 の値を持っている(あるいは、少なくとも
+0x20 ビットがセットされている)。 但し、他のボタンが押されていない状態で、 真中のボタンが押されると、0,0,0,0x20 と伝えられる。
+<A NAME="lbAI">&nbsp;</A>
+<H3>マウスシステムズ プロトコル(Mousesystems protocol)</H3>
+
+<B>マウスシステムズ</B>プロトコルは、1200 bits/secで、1 スタートビット、 8 データビット、パリティなし、2 ストップビットである。
+データは、RxD に 5 バイトのパケットとして送られる。<I>dx</I> は 2 つの 2 の補数の和として送られ、<I>dy</I> は 2 つの 2
+の補数の和の否定 として送られる。左(中、右)のボタンが押された時には<I>lb</I> (<I>mb</I>, <I>rb</I>) がクリアされる。
+<P>
+
+<CENTER><TABLE>
+<TR VALIGN=top><TD ALIGN=right>byte</TD><TD ALIGN=center>d7</TD><TD ALIGN=center>d6</TD><TD ALIGN=center>d5</TD><TD ALIGN=center>d4</TD><TD ALIGN=center>d3</TD><TD ALIGN=center>d2</TD><TD ALIGN=center>d1</TD><TD ALIGN=center>d0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>1</TD><TD ALIGN=center>1</TD><TD ALIGN=center>0</TD><TD ALIGN=center>0</TD><TD ALIGN=center>0</TD><TD ALIGN=center>0</TD><TD ALIGN=center>lb</TD><TD ALIGN=center>mb</TD><TD ALIGN=center>rb<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>2</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dxa6</TD><TD ALIGN=center>dxa5</TD><TD ALIGN=center>dxa4</TD><TD ALIGN=center>dxa3</TD><TD ALIGN=center>dxa2</TD><TD ALIGN=center>dxa1</TD><TD ALIGN=center>dxa0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>3</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dya6</TD><TD ALIGN=center>dya5</TD><TD ALIGN=center>dya4</TD><TD ALIGN=center>dya3</TD><TD ALIGN=center>dya2</TD><TD ALIGN=center>dya1</TD><TD ALIGN=center>dya0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>4</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dxb6</TD><TD ALIGN=center>dxb5</TD><TD ALIGN=center>dxb4</TD><TD ALIGN=center>dxb3</TD><TD ALIGN=center>dxb2</TD><TD ALIGN=center>dxb1</TD><TD ALIGN=center>dxb0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>5</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dyb6</TD><TD ALIGN=center>dyb5</TD><TD ALIGN=center>dyb4</TD><TD ALIGN=center>dyb3</TD><TD ALIGN=center>dyb2</TD><TD ALIGN=center>dyb1</TD><TD ALIGN=center>dyb0<BR></TD></TR>
+</TABLE></CENTER>
+
+<P>
+
+第 4,5 バイトには、第 2,3 バイトが送られたあと生じた変更が記述される。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>サン プロトコル(Sun protocol)</H3>
+
+<B>サン</B> プロトコルは、上記の 5 バイト マウスシステムプロトコルの 3 バイト版です。後の 2 バイトは送られません。
+<A NAME="lbAK">&nbsp;</A>
+<H3>MM プロトコル(MM protocol)</H3>
+
+<B>MM</B> プロトコルは 1200 bits/sec で 1 スタートビット、8 データビッ ト、奇数パリティ、 1 ストップビットを使う。データは
+RxD に 3 バイトのパ ケットとして送られる。<I>dx</I> と <I>dy</I> は一つの符号つきの値として
+送られ、サインビットは負の値を表す。左(中、右)のボタンが押された時には <I>lb</I> (<I>mb</I>, <I>rb</I>)がセットされる。
+<P>
+
+<CENTER><TABLE>
+<TR VALIGN=top><TD ALIGN=right>byte</TD><TD ALIGN=center>d7</TD><TD ALIGN=center>d6</TD><TD ALIGN=center>d5</TD><TD ALIGN=center>d4</TD><TD ALIGN=center>d3</TD><TD ALIGN=center>d2</TD><TD ALIGN=center>d1</TD><TD ALIGN=center>d0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>1</TD><TD ALIGN=center>1</TD><TD ALIGN=center>0</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dxs</TD><TD ALIGN=center>dys</TD><TD ALIGN=center>lb</TD><TD ALIGN=center>mb</TD><TD ALIGN=center>rb<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>2</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dx6</TD><TD ALIGN=center>dx5</TD><TD ALIGN=center>dx4</TD><TD ALIGN=center>dx3</TD><TD ALIGN=center>dx2</TD><TD ALIGN=center>dx1</TD><TD ALIGN=center>dx0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>3</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dy6</TD><TD ALIGN=center>dy5</TD><TD ALIGN=center>dy4</TD><TD ALIGN=center>dy3</TD><TD ALIGN=center>dy2</TD><TD ALIGN=center>dy1</TD><TD ALIGN=center>dy0<BR></TD></TR>
+</TABLE></CENTER>
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/dev/mouse</I><DD>
+一般的にマウスデバイスをさすのに使われるシンボリックリンク
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man4/ttyS.4.html">ttyS</A></B>(4), <B>gpm</B>(8)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">設定</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">概説</A><DD>
+<DT><A HREF="#lbAF">マイクロソフト プロトコル(Microsoft Protocol)</A><DD>
+<DT><A HREF="#lbAG">3つボタン マイクロソフト プロトコル(3-button Microsoft protocol)</A><DD>
+<DT><A HREF="#lbAH">ロジテック プロトコル(Logitech protocol)</A><DD>
+<DT><A HREF="#lbAI">マウスシステムズ プロトコル(Mousesystems protocol)</A><DD>
+<DT><A HREF="#lbAJ">サン プロトコル(Sun protocol)</A><DD>
+<DT><A HREF="#lbAK">MM プロトコル(MM protocol)</A><DD>
+</DL>
+<DT><A HREF="#lbAL">ファイル</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

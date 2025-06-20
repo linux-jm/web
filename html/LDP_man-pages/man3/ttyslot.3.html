@@ -1,0 +1,176 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TTYSLOT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>TTYSLOT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/ttyslot.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ttyslot - カレントユーザーの端末のスロットをファイルから探す
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B> /* 「注意」を参照 */
+<P>
+
+<B>int ttyslot(void);</B>
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>ttyslot</B>():
+<DL COMPACT><DT><DD>
+glibc 2.24 以降:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>
+
+glibc 2.20 から 2.23 まで:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE&nbsp;||
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;_XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE&nbsp;&lt;&nbsp;500
+<BR>
+
+Glibc 2.19 以前:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE&nbsp;||
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;_XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE&nbsp;&lt;&nbsp;500
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+レガシーな関数 <B>ttyslot</B>()  は、あるファイルに書かれているカレントユーザーのエントリーのインデックスを返す。
+<P>
+
+「どのファイルなのか？」という質問があるだろう。 では、まず最初にその歴史を見てみよう。
+<A NAME="lbAE">&nbsp;</A>
+<H3>大昔の歴史</H3>
+
+UNIX&nbsp;V6 では <I>/etc/ttys</I> ファイルが使われていた。 <B>init</B>(1)  プログラムは、このファイルを読み込み、
+各端末行で何をすべきかを探す。 各行は 3 文字から構成されている。 1 文字目は '0' または '1' であり、
+'0' は「無視する」ことを表す。 2 文字目は端末を示す: '8' は &quot;/dev/tty8&quot; を表す。 3 文字目は
+<B>getty</B>(8)  への引数であり、(接続を) 試みる回線速度の順序を表す ('-' は 110
+ボーで接続の試行を開始することを表す)。 よって一般的な行は &quot;18-&quot; となる。 ある行でハングした場合は、'1' を '0'
+に変更し、 init にシグナルを送り、'0' を '1' 再度に変更し、 init に再度シグナルを送ることで解決する。
+<P>
+
+UNIX&nbsp;V7 ではフォーマットが変更された: 2 文字目が <B>getty</B>(8)  の引数となり、(接続を) 試みる回線速度の順序を表すようになり
+('0' は 300-1200-150-110 を繰り返すことを表し、 '4' はオンラインコンソール DECwriter
+を表す)、 行の残り (の文字) は端末名となった。 よって、一般的な行は &quot;14console&quot; となる。
+<P>
+
+後者のシステムの書式は、より精巧である。 System V 系のシステムでは、代わりに <I>/etc/inittab</I> がある。
+<A NAME="lbAF">&nbsp;</A>
+<H3>大昔の歴史 (2)</H3>
+
+一方、現在ログインしている人をリストするファイル <I>/etc/utmp</I> がある。 これは <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1)  によって管理されている。
+このファイルは固定されたサイズであり、ファイル内の適切なインデックスは、 <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1)  によって決定される。 この際に
+<B>ttyslot</B>()  が呼ばれて、 <I>/etc/ttys</I> における行番号を見つける (行番号は 1 から数える)。
+<A NAME="lbAG">&nbsp;</A>
+<H3>ttyslot の意味</H3>
+
+よって、関数 <B>ttyslot</B>()  は、ファイル <I>/etc/ttys</I> における呼び出し元のプロセスの制御端末のインデックスを返す。 これは
+<I>/etc/utmp</I> におけるカレントユーザーのエントリーのインデックスと (通常は) 等しい。 BSD には未だに <I>/etc/ttys</I>
+ファイルがあるが、System V 系のシステムにはないので、 このファイルを参照することはできない。 よって、そのようなシステムでは
+「<B>ttyslot</B>()  はカレントユーザーのユーザーアカウントデータベースにおけるインデックスを返す」 とドキュメントに書かれている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合、この関数はスロット番号を返す。 エラーの場合 (例えば、ファイルディスクリプター 0, 1, 2 の何れも
+データベースにある端末に関連づけられていない場合)、 UNIX&nbsp;V6, V7, BSD 系のシステムは 0 を返すが、 System V
+系のシステムは -1 を返す。
+<A NAME="lbAI">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>ttyslot</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>準拠</H2>
+
+SUSv1。SUSv2 では「過去の名残 (LEGACY)」と位置付けられている。 POSIX.1-2001 で削除された。 SUSv2 ではエラー時に
+-1 を返すことが要求されている。
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+utmp ファイルは様々なシステムで <I>/etc/utmp</I>, <I>/var/adm/utmp</I>, <I>/var/run/utmp</I>
+のようにいろいろな場所にある。
+<P>
+
+この関数の glibc2 における実装では、ファイル <B>_PATH_TTYS</B> を読み込む。 これは <I>&lt;<A HREF="file:///usr/include/ttyent.h">ttyent.h</A>&gt;</I>
+において &quot;/etc/ttys&quot; と定義されている。 エラーの場合、0 を返す。 Linux システムには通常 &quot;/etc/ttys&quot; がないので、常に
+0 を返す。
+<P>
+
+On BSD-like systems and Linux, the declaration of <B>ttyslot</B>()  is provided
+by <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>.  On System V-like systems, the declaration is
+provided by <I>&lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</I>.  Since glibc 2.24, <I>&lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</I>
+also provides the declaration with the following feature test macro
+definitions:
+<P>
+
+
+
+(_XOPEN_SOURCE &gt;= 500 ||
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(_XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&amp;&amp;&nbsp;!&nbsp;(_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L&nbsp;||&nbsp;_XOPEN_SOURCE&nbsp;&gt;=&nbsp;600)
+
+
+<P>
+
+
+
+
+Minix には <I>fttyslot</I>(<I>fd</I>)  もある。
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/getttyent.3.html">getttyent</A></B>(3), <B><A HREF="../man3/ttyname.3.html">ttyname</A></B>(3), <B><A HREF="../man5/utmp.5.html">utmp</A></B>(5)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">大昔の歴史</A><DD>
+<DT><A HREF="#lbAF">大昔の歴史 (2)</A><DD>
+<DT><A HREF="#lbAG">ttyslot の意味</A><DD>
+</DL>
+<DT><A HREF="#lbAH">返り値</A><DD>
+<DT><A HREF="#lbAI">属性</A><DD>
+<DT><A HREF="#lbAJ">準拠</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

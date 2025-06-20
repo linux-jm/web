@@ -1,0 +1,150 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_JOIN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_JOIN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/pthread_join.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_join - 終了したスレッドを join する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<B>int pthread_join(pthread_t </B><I>thread</I><B>, void **</B><I>retval</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>-pthread</I> を付けてコンパイルとリンクを行う。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pthread_join</B>() 関数は、<I>thread</I> で指定されたスレッドが
+終了するのを待つ。そのスレッドがすでに終了している場合、
+<B>pthread_join</B>() はすぐに返る。
+<I>thread</I> で指定されたスレッドは join 可能でなければならない。
+<P>
+
+<I>retval</I> が NULL でない場合、 <B>pthread_join</B>() は対象スレッドの終了ステータス (すなわち、対象スレッドが
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3) に渡した値) を <I>retval</I> が指す場所にコピーする。対象スレッドがキャンセルされた場合、
+<I>retval</I> が指す場所には <B>PTHREAD_CANCELED</B> が格納される。
+<P>
+
+複数のスレッドが同時に同じスレッドを join しようとした場合、その結果
+は不定である。<B>pthread_join</B>() を呼び出しているスレッドがキャンセル
+された場合、対象スレッドは join 可能のままとなる (detached 状態には
+ならない)。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>pthread_join</B>() は 0 を返す。エラーの場合、エラー番号を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EDEADLK</B><DD>
+
+
+デッドロックが検出された (例えば、二つのスレッドが互いに join しようと
+した場合)、または <I>thread</I> に呼び出したスレッドが指定されている。
+<DT><B>EINVAL</B><DD>
+<I>thread</I> が join 可能なスレッドではない。
+<DT><B>EINVAL</B><DD>
+
+別のスレッドがすでにこのスレッドの join 待ちである。
+<DT><B>ESRCH</B><DD>
+ID が <I>thread</I> のスレッドが見つからなかった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>pthread_join</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+After a successful call to <B>pthread_join</B>(), the caller is guaranteed that
+the target thread has terminated.  The caller may then choose to do any
+clean-up that is required after termination of the thread (e.g., freeing
+memory or other resources that were allocated to the target thread).
+<P>
+
+すでに join されたスレッドを join した場合の結果は不定である。
+<P>
+
+join 可能なスレッド (detached 状態でないスレッド) の join に失敗した場合、
+&quot;ゾンビスレッド (zombie thread)&quot; が生成される。
+各ゾンビスレッドはシステムリソースをいくらかは消費し、
+ゾンビスレッドがたくさん生成されてしまうと、
+新しいスレッド (やプロセス) がそれ以上作成できなくなってしまうので、
+このようなことが起きるのは避けること。
+<P>
+
+pthreads には、 <I>waitpid(-1,&nbsp;&amp;status,&nbsp;0)</I>、つまり
+&quot;終了されたスレッドのどれかを join する&quot; といった機能はない。
+この機能が必要だと思うような場合には、おそらく
+自分のアプリケーションの設計を考え直す必要があるだろう。
+<P>
+
+プロセス内の全てのスレッドは対等であり、
+どのスレッドでもプロセス内の他のスレッドを join できる。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3) を参照。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/pthread_cancel.3.html">pthread_cancel</A></B>(3), <B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3), <B><A HREF="../man3/pthread_detach.3.html">pthread_detach</A></B>(3),
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3), <B><A HREF="../man3/pthread_tryjoin_np.3.html">pthread_tryjoin_np</A></B>(3), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

@@ -1,0 +1,289 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MODPROBE.D</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MODPROBE.D</H1>
+Section: modprobe.d (5)<BR>Updated: 2021/01/29<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/kmod/release/man5/modprobe.d.5">roff page</A><HR>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+modprobe.d - modprobe 用の設定ディレクトリ
+<A NAME="lbAC">&nbsp;</A>
+<H2>概要</H2>
+
+<P>
+
+/lib/modprobe.d/*.conf
+<P>
+
+/usr/local/lib/modprobe.d/*.conf
+<P>
+
+/run/modprobe.d/*.conf
+<P>
+
+/etc/modprobe.d/*.conf
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+モジュールには依存関係があるので、<B>modprobe</B>
+コマンドは、複数のモジュールを追加したり、取り外したりすることがありますが、そのため、
+そうした個々のモジュールにどんなオプションを使うべきかを指定する方法が必要になります。
+/etc/modprobe.d ディレクトリの直下にあるファイルで、.conf
+という拡張子で終わるもののすべてが、必要に応じて、そうしたオプションを指定しています。
+そうしたファイルは、使いやすいエイリアス、
+すなわちモジュールの別名を作るためにも使用することができます。
+また、そうしたファイルによって、(二つ以上のモジュールを組み込むといった)
+特別な要求を持つモジュールのために、標準の <B>modprobe</B>
+の動作を全面的に変更することもできます。
+<P>
+
+モジュール名やエイリアス名では (後者の場合も、ほかのモジュール名と同様に)、- や _
+を名前の一部に使うことができます。アンダースコアへの変換が自動的に行われるので、
+モジュールコマンドのすべてにおいて、どちらを使っても同じであることに留意してください。
+<P>
+
+modprobe.d の下にあるファイルの書式は単純です。1 行 1 コマンドで、空行や
+'#' で始まる行は無視されます (後者はコメントを付けるのに使えます)。
+行末に 1 個の '\' があると、その行は次の行に続くことになります。
+これを使うと、ファイルの見かけがちょっとよくなります。
+<A NAME="lbAE">&nbsp;</A>
+<H2>コマンド</H2>
+
+<P>
+
+alias <I>wildcard</I> <I>modulename</I>
+<DL COMPACT><DT><DD>
+このコマンドを使えば、モジュールに別名を付けることができます。たとえば、&quot;alias
+my-mod really_long_modulename&quot; と指定すると、&quot;modprobe
+really_long_modulename&quot; の代わりに &quot;modprobe my-mod&quot;
+を使うことができます。シェル式のワイルドカードも使用できるので、
+&quot;alias my-mod* really_long_modulename&quot; と指定すれば、
+&quot;modprobe my-mod-something&quot; でも同じ効果があります。
+ほかのエイリアスに対するエイリアスは作れませんが
+(そんなことをしたら、わけが分からなくなります)、
+エイリアスにもオプションを指定することはできます。その場合は、
+ほかにもオプションがあれば、そこに追加されることになるわけです。
+(訳注: このオプションは、<B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8) の「書式」で <I>module&nbsp;parameter</I>
+と言われているもののことで、そうしたオプションを、実モジュールに対してだけでなく、
+エイリアスに対しても、コマンドラインや、下記の <B>options</B>
+コマンドで指定できるということ。<B>alias</B>
+コマンド中でエイリアスにオプションまで指定できるというわけではありません。)
+<P>
+気をつけていただきたいのですが、
+モジュールは、自前のエイリアスを内蔵していることもあり、<B>modinfo</B>
+を使えば、それを見ることができます。
+そうしたエイリアスは (訳注: モジュールを特定するとき) 最後の手段として利用されます
+(すなわち、指定された名前の実モジュールがなく、その名前に対応する
+<B>install</B>, <B>remove</B>, <B>alias</B> コマンドも設定ファイル中にない場合)。
+</DL>
+
+<P>
+
+blacklist <I>modulename</I>
+<DL COMPACT><DT><DD>
+モジュールは、自前のエイリアスを内蔵していることがあります。たいていの場合、
+そうしたエイリアスは、そのモジュールがサポートしているデバイスを表していて、
+&quot;pci:123...&quot; といったものです。こうした「内蔵」エイリアスも、通常の
+&quot;alias&quot; キーワードによって置き換えることができますが、
+二つ以上のモジュールが、どちらも同じデバイスをサポートしていたり
+(訳注: すなわち、同じ名前の内蔵エイリアスを持っていたり)、
+あるモジュールが、実際にはサポートしていないデバイスをサポートしていると、
+無効な主張をしていたりすることもあります。そうした場合に <B>blacklist</B>
+キーワードを使うと、そのモジュールの内蔵エイリアスをすべて無視せよと指示することになります。
+</DL>
+
+<P>
+
+install <I>modulename</I> <I>command...</I>
+<DL COMPACT><DT><DD>
+このコマンドは、<B>modprobe</B>
+に対して、いつもどおりカーネルにモジュールを組み込む代わりに、
+指定されたコマンドを実行するように指示します。
+指定するコマンドには任意のシェルコマンドが使えるので、
+どのような複雑な処理を望もうと、それを実行することができます。たとえば、
+モジュール &quot;fred&quot; は、モジュール &quot;barney&quot;
+がすでにインストールされているときの方が、うまく動作するとします
+(しかし、前者は後者に依存しているわけではないので、<B>modprobe</B>
+は後者を自動的にロードしようとはしません)。そういう場合は、&quot;install fred
+/sbin/modprobe barney; /sbin/modprobe --ignore-install fred&quot;
+と、設定ファイルに書いておけばよいのです。そうすれば、
+希望する動作が行われることになります。
+<B>--ignore-install</B> に注意してください。これは、二番目の <B>modprobe</B>
+が、ほかならぬこの <B>install</B> コマンドを繰り返し実行しないようにしているのです。
+以下の <B>remove</B> の項も参照してください。
+<P>
+このコマンドは、モジュールに補助的な依存モジュールを提供するという課題に対する一つの解決策ですが、
+長期的に見て、将来もそうである保証はありません。
+それどころか、このコマンドは、将来のリリースのある時点で、
+いずれ廃棄されるだろうとか、非推奨であるとかの警告に置き換えることが予定されています。
+このコマンドを使用すると、mkinitrd
+のようなディストリビューション固有のユーティリティが、
+依存するモジュールを自動的に判断しようとするとき、作業が複雑になるのです
+(なぜなら、現状では、そうしたユーティリティは、<B>install</B>
+コマンドがやっていそうなことを、何らかの方法で解読しなければならないからです)。
+完璧な世界でなら、このコマンドを使わないでも、モジュールは、
+依存関係の情報を漏れなく提供することでしょう。実際、ゆるやかな依存関係のサポートを
+Linux カーネルの内部で実装しようとする作業が、現在進行しています。
+<P>
+このコマンド中で、&quot;$CMDLINE_OPTS&quot; という文字列を使用すると、
+<B>modprobe</B> のコマンドラインでオプションを指定した場合に、そのオプションが
+&quot;$CMDLINE_OPTS&quot; に置き換わります (訳注: このオプションは、上の <B>alias</B>
+コマンドの訳注でも述べましたが、<B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8) の「書式」で <I>module parameter</I>
+と言われているもののことです)。この動作は重宝なことがあります。
+なぜなら、ユーザとしては、&quot;modprobe fred opt=1&quot; とコマンドライン上で指定したら、
+設定ファイル中に <B>install</B> コマンドが存在する場合でも、モジュール fred に
+&quot;opt=1&quot; という引数が渡ってほしいと思うからです。そこで、上記の例でこれを使うと、
+&quot;install fred /sbin/modprobe barney;
+/sbin/modprobe --ignore-install fred $CMDLINE_OPTS&quot; になります。
+</DL>
+
+<P>
+
+options <I>modulename</I> <I>option...</I>
+<DL COMPACT><DT><DD>
+このコマンドを使えば、モジュール <I>modulename</I> (エイリアスであっても構いません)
+がカーネルに組み込まれるたびに、それにオプションを付け加えることができます。
+組み込みは、(<B>modprobe </B> <I>modulename</I> を使って) 直接行われるか、
+組み込もうとするモジュールがこのモジュールに依存しているために行われるかを問いません。
+<P>
+すべてのオプションは、まとめて付け加えられます。そうしたオプションには、
+モジュールそのものやエイリアスに対して <B>options</B>
+コマンドで指定したものあれば、コマンドラインで指定したものもあるわけです。
+</DL>
+
+<P>
+
+remove <I>modulename</I> <I>command...</I>
+<DL COMPACT><DT><DD>
+これは上記の <B>install</B> コマンドに似ていますが、&quot;modprobe -r&quot;
+が実行されるときに、呼び出される点が異なっています。
+</DL>
+
+<P>
+
+softdep <I>modulename</I> pre: <I>modules...</I> post: <I>modules...</I>
+<DL COMPACT><DT><DD>
+<B>softdep</B> コマンドを使えば、
+ゆるやかな、すなわち使用・不使用が任意なモジュールの依存関係を指定できます。
+<I>modulename</I> というモジュールは、
+そうした使用・不使用が任意なモジュールをインストールしないでも、使うことができます。
+でも、たいていの場合、何らかの機能が使えないことになります。
+たとえば、ある記憶装置の HBA (ホストバスアダプタ) 用のドライバは、
+管理機能を使うためには、別のモジュールをロードする必要があるかもしれません。
+<P>
+前依存モジュールや後依存モジュール (訳注: 上記 <B>softdep</B> の書式の pre: や
+post: に続く <I>modules...</I>) は、<I>modulename</I>
+という引数によって指定されたメインモジュールの前後に、<B>modprobe</B>
+が 順番に組み込み (あるいは、取り外し)
+を試みるほかのモジュールの名前やエイリアスのリストです。
+<P>
+用例: &quot;softdep c pre: a b post: d e&quot;
+という設定がなされているとします。このとき、&quot;modprobe c&quot; を実行するのは、この
+softdep コマンドを設定せずに、&quot;modprobe --all a b c d e&quot;
+を行うのと同じことです。なお、--use-blacklist
+のようなフラグは、指定されたすべてのモジュールに適用されますが、
+モジュールパラメータが適用されるのは、モジュール c だけです。
+<P>
+注意: 同じ <I>modulename</I> 引数を取る <B>install</B> や <B>remove</B>
+コマンドが設定ファイル中にあっても、<B>softdep</B> が優先されます。
+</DL>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>互換性</H2>
+
+<P>
+
+kmod の将来のバージョンでは、上で述べたように、<B>install</B>
+の使用は避けるべきだとの強い警告が出ることになるでしょう。
+そうなるのは、カーネル中でのゆるやかな依存関係に対するサポートが完成したときのことです。
+そうしたサポートでは、ゆるやかな依存関係の情報をモジュール内で直接提供することによって、
+kmod ユーティリティ内での softdep
+による現在のサポートを補完することになるでしょう。
+<A NAME="lbAG">&nbsp;</A>
+<H2>著作権</H2>
+
+<P>
+
+このマニュアルページの最初の版は、&quot;Copyright 2004, Rusty Russell,
+IBM Corporation&quot; でした。現在では、Jon Masters ほか数名によって保守されています。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<P>
+
+<B><A HREF="../man8/modprobe.8.html">modprobe</A></B>(8), <B><A HREF="../man5/modules.dep.5.html">modules.dep</A></B>(5)
+<A NAME="lbAI">&nbsp;</A>
+<H2>著者</H2>
+
+<P>
+
+<B>Jon Masters</B> &lt;<A HREF="mailto:jcm@jonmasters.org">jcm@jonmasters.org</A>&gt;
+<DL COMPACT><DT><DD>
+開発者
+</DL>
+
+<P>
+
+<B>Robby Workman</B> &lt;<A HREF="mailto:rworkman@slackware.com">rworkman@slackware.com</A>&gt;
+<DL COMPACT><DT><DD>
+開発者
+</DL>
+
+<P>
+
+<B>Lucas De Marchi</B> &lt;<A HREF="mailto:lucas.de.marchi@gmail.com">lucas.de.marchi@gmail.com</A>&gt;
+<DL COMPACT><DT><DD>
+開発者
+</DL>
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">概要</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">コマンド</A><DD>
+<DT><A HREF="#lbAF">互換性</A><DD>
+<DT><A HREF="#lbAG">著作権</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

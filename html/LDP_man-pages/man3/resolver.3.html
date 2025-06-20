@@ -1,0 +1,201 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RESOLVER</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RESOLVER</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2014-05-28<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/resolver.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+res_init, res_query, res_search, res_querydomain, res_mkquery, res_send,
+dn_comp, dn_expand - レゾルバルーチン
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/arpa/nameser.h">arpa/nameser.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;</B>
+<B>extern struct __res_state _res;</B>
+
+<B>int res_init(void);</B>
+
+<B>int res_query(const char *</B><I>dname</I><B>, int </B><I>class</I><B>, int </B><I>type</I><B>,</B>
+<DL COMPACT><DT><DD><B>unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
+</DL>
+
+<B>int res_search(const char *</B><I>dname</I><B>, int </B><I>class</I><B>, int </B><I>type</I><B>,</B>
+<DL COMPACT><DT><DD><B>unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
+</DL>
+
+<B>int res_querydomain(const char *</B><I>name</I><B>, const char *</B><I>domain</I><B>,</B>
+<DL COMPACT><DT><DD><B>int </B><I>class</I><B>, int </B><I>type</I><B>, unsigned char *</B><I>answer</I><B>,</B>
+<B>int </B><I>anslen</I><B>);</B>
+</DL>
+
+<B>int res_mkquery(int </B><I>op</I><B>, const char *</B><I>dname</I><B>, int </B><I>class</I><B>,</B>
+<DL COMPACT><DT><DD><B>int </B><I>type</I><B>, const unsigned char *</B><I>data</I><B>, int </B><I>datalen</I><B>,</B>
+<B>const unsigned char *</B><I>newrr</I><B>, unsigned char *</B><I>buf</I><B>, int </B><I>buflen</I><B>);</B>
+</DL>
+
+<B>int res_send(const unsigned char *</B><I>msg</I><B>, int </B><I>msglen</I><B>,</B>
+<DL COMPACT><DT><DD><B>unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
+</DL>
+
+<B>int dn_comp(const char *</B><I>exp_dn</I><B>, unsigned char *</B><I>comp_dn</I><B>,</B>
+<DL COMPACT><DT><DD><B>int </B><I>length</I><B>, unsigned char **</B><I>dnptrs</I><B>, unsigned char **</B><I>lastdnptr</I><B>);</B>
+</DL>
+
+<B>int dn_expand(const unsigned char *</B><I>msg</I><B>, const unsigned char *</B><I>eomorig</I><B>,</B>
+<DL COMPACT><DT><DD><B>const unsigned char *</B><I>comp_dn</I><B>, char *</B><I>exp_dn</I><B>,</B>
+<B>int </B><I>length</I><B>);</B>
+</DL>
+</PRE>
+
+<P>
+<I>-lresolv</I> でリンクする。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+これらの関数はインターネットのドメインネームサーバーに問い合わせ、 その応答を解釈する。
+<P>
+
+<B>res_init</B>()  関数は、デフォルトのドメイン名、検索順、ネームサーバー アドレスを得るために設定ファイル
+(<B><A HREF="../man5/resolv.conf.5.html">resolv.conf</A></B>(5) 参照) を読む。 もしサーバーが示されていなければローカルホストを試す。
+ドメインが示されていなければローカルホストに付けられたドメインを用いる。 環境変数 <B>LOCALDOMAIN</B> でオーバーライドできる。
+<B>res_init</B>()  は、後述する関数のどれかが最初に呼び出された時、その関数 から実行される。
+<P>
+
+<B>res_query</B>()  関数は、指定された <I>type</I> と <I>class</I> の 完全修飾ドメイン名 (FQDN) <I>name</I>
+を、ネームサーバーへ問い合わせる。 応答は、呼び出した側によって用意される長さ <I>anslen</I> の <I>answer</I> バッファーに残される。
+<P>
+
+<B>res_search</B>()  関数は、問い合わせを行い <B>res_query</B>()  同様その応答を 待つが、さらにデフォルトを実装しており
+<B>RES_DEFNAMES</B> と <B>RES_DNSRCH</B> によって規定される検索ルールを適用する。 (下記 <I>_res</I>
+オプションの説明を参照)
+<P>
+
+<B>res_querydomain</B>()  関数は <I>name</I> と <I>domain</I> の結合に <B>res_query</B>()
+を用いて問い合わせを行う。
+<P>
+
+次の関数は、 <B>res_query</B>()  で使われる下位ルーチンである。
+<P>
+
+<B>res_mkquery</B>()  関数は、ドメイン名 <I>dname</I> の為に、長さ <I>buflen</I> の <I>buf</I>
+に問い合わせるメッセージを作成する。 問い合わせの型 <I>op</I> は通常 <B>QUERY</B> だが、
+<I>&lt;<A HREF="file:///usr/include/arpa/nameser.h">arpa/nameser.h</A>&gt;</I> で定義された型のどれでも良い。 <I>newrr</I> は現在使用されていない。
+<P>
+
+<B>res_send</B>()  関数は、長さ <I>msglen</I> の <I>msg</I> に決められた書式 で問い合わせ、<I>answer</I> に長さ
+<I>anslen</I> の回答を返す。 まだ呼び出されていなければ <B>res_init</B>()  を呼び出す。
+<P>
+
+<B>dn_comp</B>()  関数はドメイン名 <I>exp_dn</I> を圧縮して、長さ <I>length</I> のバッファー <I>comp_dn</I> に保存する。
+圧縮にはポインター配列 <I>dnptrs</I> を用いる。 これらのポインターは、現在のメッセージの中にある以前に圧縮された名前を指す。
+最初のポインターはメッセージの冒頭を指し、そのリストは NULL で終わる。 配列の範囲は <I>lastdnptr</I> で決められる。 <I>dnptr</I>
+が NULL ならばドメイン名は圧縮されない。 <I>lastdnptr</I> が NULL ならば、そのラベルのリストはアップデートされない。
+<P>
+
+<B>dn_expand</B>()  関数は、圧縮されたドメイン名 <I>comp_dn</I> からサイズ が <I>length</I> の <I>exp_dn</I>
+バッファーに正式なドメイン名を展開する。 その圧縮された名前は、問い合わせ、または応答メッセージに含まれていて、 <I>msg</I>
+がメッセージの冒頭を指す。
+<P>
+
+レゾルバルーチンは、<I>&lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;</I> に定義された <I>_res</I> 構造体に 含まれている全体的な設定と状態の情報を使用する。
+通常ユーザーに操作できる項目は <I>_res.options</I> だけである。 この項目は以下のオプションのビット単位の論理和にできる。
+<DL COMPACT>
+<DT><B>RES_INIT</B><DD>
+<B>res_init</B>()  が呼び出されていれば真。
+<DT><B>RES_DEBUG</B><DD>
+
+
+デバッグ情報を表示する。このオプションは、 glibc がデバッグを有効にしてコンパイルされている場合にのみ利用できる。 デフォルトでは glibc
+のデバッグは有効になっていない。
+<DT><B>RES_AAONLY</B><DD>
+権威付けされた (authoritative) 回答のみ受け入れる。 <B>res_send</B>()
+は、最終的に権威付けされた回答を得られるか、エラーが返される まで続行する。 [現在実装されていない]
+<DT><B>RES_USEVC</B><DD>
+問い合わせに UDP データグラムではなく TCP 接続を用いる。
+<DT><B>RES_PRIMARY</B><DD>
+プライマリドメインネームサーバーのみ問い合わせる。
+<DT><B>RES_IGNTC</B><DD>
+切り詰めエラー (truncation error) を無視する。TCP でリトライしない。 [現在実装されていない]
+<DT><B>RES_RECURSE</B><DD>
+再帰要求 (recursion desired) ビットを問い合わせに設定する。 再帰は <B>res_send</B>()
+ではなくドメインネームサーバーによって行われる。 [デフォルトで有効]
+<DT><B>RES_DEFNAMES</B><DD>
+設定されていれば、 <B>res_search</B>()  はデフォルトのドメイン名を一部分 のみからなる名前、すなわちドットを含まない名前に付け加える。
+[デフォルトで有効]
+<DT><B>RES_STAYOPEN</B><DD>
+問い合わせ中に TCP 接続を保つため <B>RES_USEVC</B> と共に用いられる。
+<DT><B>RES_DNSRCH</B><DD>
+設定されていれば、 <B>res_search</B>()  は現在のドメインおよび親ドメインの ホスト名を探す。このオプションは
+<B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)  で用いられる。 [デフォルトで有効]
+</DL>
+<P>
+
+このリストは完全なものではない。
+<B><A HREF="../man5/resolv.conf.5.html">resolv.conf</A></B>(5) には他にいくつかのフラグが記載されている。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>res_init</B>()  関数は成功すれば 0 を、エラーが発生すれば -1 を返す。
+<P>
+
+<B>res_query</B>(), <B>res_search</B>(), <B>res_querydomain</B>(), <B>res_mkquery</B>(),
+<B>res_send</B>()  関数は応答の長さを返す。 また、エラーが発生すれば -1 を返す。
+<P>
+
+<B>dn_comp</B>()  と <B>dn_expand</B>()  関数は圧縮されたドメイン名の長さを返す。 また、エラーが発生すれば -1 を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>ファイル</H2>
+
+<PRE>
+/etc/resolv.conf          レゾルバ設定ファイル
+/etc/host.conf            レゾルバ設定ファイル
+</PRE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+4.3BSD.
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3), <B><A HREF="../man5/resolv.conf.5.html">resolv.conf</A></B>(5), <B><A HREF="../man5/resolver.5.html">resolver</A></B>(5), <B><A HREF="../man7/hostname.7.html">hostname</A></B>(7),
+<B><A HREF="../../bind/man8/named.8.html">named</A></B>(8)
+<A NAME="lbAI">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">ファイル</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

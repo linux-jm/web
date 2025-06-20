@@ -1,0 +1,112 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STDIN</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>STDIN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/stdin.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+stdin, stdout, stderr - 標準入出力ストリーム
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<B>extern FILE *</B><I>stdin</I><B>;</B>
+<B>extern FILE *</B><I>stdout</I><B>;</B>
+<B>extern FILE *</B><I>stderr</I><B>;</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+標準の環境では、 UNIX プログラムは起動時に、オープンされているストリー ムを 3 つ与えられる。それぞれ入力用、出力用、診断メッセージやエラーメッ
+セージの表示用のものである。これらは通常ユーザーの端末 (<B><A HREF="../man4/tty.4.html">tty</A></B>(4) を参照) に接続されているが、親プロセスでの選択・設定によってファイル
+や他のデバイスに関連づけられていることもある (<B>sh</B>(1)  の「リダイレクション」セクションも参照のこと)。
+<P>
+
+入力ストリームは &quot;standard input&quot; と呼ばれる。出力ストリームは &quot;standard output&quot;、エラーストリームは
+&quot;standard error&quot; と呼ばれる。 これらの用語を短縮したものがそれぞれのファイルを示すシンボルとなる。つ まり <I>stdin</I>,
+<I>stdout</I>, <I>stderr</I> である。
+<P>
+
+これらのシンボルは <B><A HREF="../man3/stdio.3.html">stdio</A></B>(3)  のマクロで、 FILE へのポインター型である。したがって <B><A HREF="../man3/fprintf.3.html">fprintf</A></B>(3)  や
+<B><A HREF="../man3/fread.3.html">fread</A></B>(3)  などの関数とともに用いることができる。
+<P>
+
+<I>FILE</I> は UNIX のファイルディスクリプターにバッファー機能を追加したラッパー であるから、これらのマクロにも対応するファイルがあり、
+UNIX の raw ファ イルインターフェース (<B><A HREF="../man2/read.2.html">read</A></B>(2)  や <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)  など) によってアクセスすることもできる。
+<P>
+
+プログラムの起動時には、 ストリーム <I>stdin</I>, <I>stdout</I>, <I>stderr</I>
+に結びつけられているファイルディスクリプターの番号は、 それぞれ 0, 1, 2 である。 プリプロセッサシンボル <B>STDIN_FILENO</B>,
+<B>STDOUT_FILENO</B>, <B>STDERR_FILENO</B> は <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>
+中でそれぞれこれらの値に定義されている。 (これらのストリームに対して <B><A HREF="../man3/freopen.3.html">freopen</A></B>(3)
+を適用することで、そのストリームに関連付けられたファイルディスクリプター の番号を変更することができる。)
+<P>
+
+<I>FILE</I> と raw なファイルディスクリプターの併用は、予期できない結果を生じ ることがあるので、通常は避けるべきである。
+(マゾヒスティックな人に: POSIX.1 のセクション 8.2.3 には、この混用で動作がどのようになりそう かが詳しく記述されている。)
+一般的なルールは以下の通り: ファイルディスクリプターはカーネルによって 扱われ、 stdio は単にライブラリによって扱われるのである。すなわち例えば
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3)  の後には、子プロセスはオープンされているファイルディスクリプター
+をすべて継承するが、親からのストリームはすべてアクセス不可となる。
+<P>
+
+シンボル <I>stdin</I>, <I>stdout</I>, <I>stderr</I> はすべてマクロとして定義されているので、これらへの代入
+は移植性を保証されない。標準ストリームはライブラリ関数 <B><A HREF="../man3/freopen.3.html">freopen</A></B>(3)  を用いれば、別のファイルを示すように変更することもできる。
+このライブラリ関数は <I>stdin</I>, <I>stdout</I>, <I>stderr</I> の再割り当てが可能なように特別に導入されたものである。
+標準ストリームは <B><A HREF="../man3/exit.3.html">exit</A></B>(3)  の呼び出しと、プログラムの正常終了によってクローズされる。
+<A NAME="lbAE">&nbsp;</A>
+<H2>準拠</H2>
+
+<I>stdin</I>, <I>stdout</I>, <I>stderr</I> マクロは C89 に準拠している。 また C89 では、これら 3
+つのストリームがプログラム の起動時にオープンされているべきであることが規定されている。
+<A NAME="lbAF">&nbsp;</A>
+<H2>注意</H2>
+
+<I>stderr</I> ストリームはバッファーリングされていない。 <I>stdout</I> ストリームは、端末に接続されているときには行単位でバッファーリング
+されている。一行に満たない内容は、 <B><A HREF="../man3/fflush.3.html">fflush</A></B>(3)  か <B><A HREF="../man3/exit.3.html">exit</A></B>(3)
+が呼び出されるか、改行文字が印字されるまで表示されない。これは、 特にデバッグ時において、予期しない結果を生じる原因となるかもしれない。
+標準ストリームの (あるいは他のすべてのストリームの)  バッファーリングモードは、 <B><A HREF="../man3/setbuf.3.html">setbuf</A></B>(3)  または <B><A HREF="../man3/setvbuf.3.html">setvbuf</A></B>(3)
+を呼び出すことによって変更できる。 ただし、 <I>stdin</I> が端末に接続されているときは、端末のドライバでバッファーリングされている
+可能性がある点にも注意すること。これは stdio のバッファーリングとは全く 関係なく存在しうる。 (実際、通常だと端末入力はカーネルによって行単位
+でバッファーリングされている。) このカーネルによる入力の扱いは <B><A HREF="../man3/tcsetattr.3.html">tcsetattr</A></B>(3)  などの呼び出しによって変更することができる。
+<B><A HREF="../../0MultiFileIdx/man1/stty.1.html">stty</A></B>(1)  と <B><A HREF="../man3/termios.3.html">termios</A></B>(3)  も参照すること。
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>csh</B>(1), <B>sh</B>(1), <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man3/fopen.3.html">fopen</A></B>(3), <B><A HREF="../man3/stdio.3.html">stdio</A></B>(3)
+<A NAME="lbAH">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">準拠</A><DD>
+<DT><A HREF="#lbAF">注意</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:34 GMT, December 05, 2022
+</BODY>
+</HTML>

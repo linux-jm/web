@@ -1,0 +1,664 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PRINTF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PRINTF</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/printf.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+printf, fprintf, dprintf, sprintf, snprintf, vprintf, vfprintf, vdprintf,
+vsprintf, vsnprintf - 指定された書式に変換して出力を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<B>int printf(const char *</B><I>format</I><B>, ...);</B>
+<B>int fprintf(FILE *</B><I>stream</I><B>, const char *</B><I>format</I><B>, ...);</B>
+<B>int dprintf(int </B><I>fd</I><B>, const char *</B><I>format</I><B>, ...);</B>
+<B>int sprintf(char *</B><I>str</I><B>, const char *</B><I>format</I><B>, ...);</B>
+<B>int snprintf(char *</B><I>str</I><B>, size_t </B><I>size</I><B>, const char *</B><I>format</I><B>, ...);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/stdarg.h">stdarg.h</A>&gt;</B>
+
+<B>int vprintf(const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+<B>int vfprintf(FILE *</B><I>stream</I><B>, const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+<B>int vdprintf(int </B><I>fd</I><B>, const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+<B>int vsprintf(char *</B><I>str</I><B>, const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+<B>int vsnprintf(char *</B><I>str</I><B>, size_t </B><I>size</I><B>, const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+<P>
+
+
+<B>snprintf</B>(), <B>vsnprintf</B>():
+<DL COMPACT><DT><DD>
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _ISOC99_SOURCE ||
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Glibc&nbsp;versions&nbsp;&lt;=&nbsp;2.19:&nbsp;*/&nbsp;_BSD_SOURCE
+</DL>
+
+<P>
+
+<B>dprintf</B>(), <B>vdprintf</B>():
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>glibc 2.10 以降:<DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>glibc 2.10 より前:<DD>
+_GNU_SOURCE
+</DL>
+</DL>
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>printf</B>()  関数グループは、以下で述べるように、 <I>format</I> に従って出力を生成するものである。 <B>printf</B>()  と
+<B>vprintf</B>()  は出力を <I>stdout</I> (標準出力ストリーム) に書き出す。 <B>fprintf</B>()  と
+<B>vfprintf</B>()  は出力を指定された出力 <I>stream</I> に書き出す。 <B>sprintf</B>(), <B>snprintf</B>(),
+<B>vsprintf</B>(), <B>vsnprintf</B>()  は出力を文字列 <I>str</I> に書き込む。
+<P>
+
+<B>dprintf</B>() 関数は <B><A HREF="../man3/fprintf.3.html">fprintf</A></B>(3) 関数と同じだが、 この関数は <I>stdio</I> ストリームではなくファイルディスクリプター
+<I>fd</I> に対して出力を行う点が異なる。
+<P>
+
+<B>snprintf</B>()  と <B>vsnprintf</B>()  は最大で <I>size</I> バイトを <I>str</I> に書き込む (<I>size</I>
+には文字列を終端するヌルバイト ('\0') もを含まれる)。
+<P>
+
+<B>vprintf</B>(), <B>vfprintf</B>(), <B>vdprintf</B>(), <B>vsprintf</B>(), <B>vsnprintf</B>()
+の各関数はそれぞれ <B>printf</B>(), <B>fprintf</B>(), <B>dprintf</B>(), <B>sprintf</B>(),
+<B>snprintf</B>(), の各関数と等価であり、可変数引数の代わりに <I>va_list</I> を引数として呼び出される点だけが異なる。
+これらの関数では <I>va_end</I> マクロは呼び出されない。 これらの関数は <I>va_arg</I> を呼び出すので、呼び出し後の <I>ap</I>
+の値は未定義である。 <B><A HREF="../man3/stdarg.3.html">stdarg</A></B>(3)  を参照のこと。
+<P>
+
+これらの関数はすべて <I>format</I> 文字列の制御に従って出力を書き出す。 <I>format</I> 文字列は、これに続く引数 (または
+<B><A HREF="../man3/stdarg.3.html">stdarg</A></B>(3)  の可変長引数機構を使ってアクセスできる引数)  をどのように変換して出力するかを指定する。
+<P>
+
+C99 と POSIX.1-2001 では、 <B>sprintf</B>(), <B>snprintf</B>(), <B>vsprintf</B>(),
+<B>vsnprintf</B>()  の呼び出しで、範囲が重複するオブジェクト間でコピーが発生する場合の 結果は不定であると規定されている
+(例えば、出力先の文字列と入力された 引数の一つが同じバッファーを参照している場合などである)。 「注意」の節を参照。
+<A NAME="lbAE">&nbsp;</A>
+<H3>フォーマット文字列のフォーマット</H3>
+
+フォーマット文字列は文字の列で、 (もしあるなら) 初期シフト状態で始まり、初期シフト状態で終わる。 フォーマット用の文字列は 0 個以上の命令
+(directives) によって構成される。 命令には、通常文字と変換指定 (conversion specifications) がある。
+通常文字は <B>%</B> 以外の文字で、出力ストリームにそのままコピーされる。 変換指定は、それぞれが 0 個以上の引数を取る。 各変換指定は文字 <B>%</B>
+で始まり、 <I>変換指定子 (conversion specifier)</I> で終わる。 <B>%</B> と変換指定子の間には、0 個以上の <I>フラグ 、</I>
+最小 <I>フィールド幅 、</I> <I>精度 、</I> <I>長さ修飾子</I> を (この順序で) 置くことができる。
+<P>
+
+The arguments must correspond properly (after type promotion) with the
+conversion specifier.  By default, the arguments are used in the order
+given, where each '*' (see <I>Field width</I> and <I>Precision</I> below) and
+each conversion specifier asks for the next argument (and it is an error if
+insufficiently many arguments are given).  One can also specify explicitly
+which argument is taken, at each place where an argument is required, by
+writing &quot;%m$&quot; instead of '%' and &quot;*m$&quot; instead of '*', where the
+decimal integer <I>m</I> denotes the position in the argument list of the
+desired argument, indexed starting from 1.  Thus,
+<P>
+
+
+
+printf(&quot;%*d&quot;, width, num);
+
+
+<P>
+
+と
+<P>
+
+
+
+printf(&quot;%2$*1$d&quot;, width, num);
+
+
+<P>
+
+は等価である。 二番目の書き方では同じ引数を繰り返し参照することができる。 C99 標準には、 Single UNIX Specification
+由来の '$' を使った書き方は含まれていない。 '$' を使ったスタイルを使うと、引数を取る変換及び幅と精度の引数を
+全てこのスタイルで指定しなければならないが、 引数を消費しない &quot;%%&quot; フォーマットと混ざっているかもしれない。 '$'
+で指定される引数の番号に空きがあってはならない。 例えば、もし引数 1 と 3 が指定されると、引数 2 もフォーマット文字列のどこかで
+指定されなければならない。
+<P>
+
+数値変換には小数点や 1000 単位の区切り文字を使うものもある。 実際にどの文字を使うかはロケールの <B>LC_NUMERIC</B> による
+(<B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3) 参照)。 POSIX ロケールでは小数点に '.' を用い、 区切り文字は使わない。 従って、
+<P>
+
+
+
+printf(&quot;%'.2f&quot;, 1234567.89);
+
+
+<P>
+
+は、 POSIX ロケールでは &quot;1234567.89&quot; 、 nl_NL ロケールでは &quot;1234567,89&quot;、 da_DK ロケールでは
+&quot;1.234.567,89&quot; となる。
+<A NAME="lbAF">&nbsp;</A>
+<H3>フラグ文字</H3>
+
+% 文字の後ろには 0 個以上のフラグ文字が続く。
+<DL COMPACT>
+<DT><B>#</B><DD>
+値は「別の形式」に変換される。 <B>o</B> 変換の場合、(先頭文字が 0 になっていない場合に先頭に 0 を追加することで)  出力文字列の最初の文字を
+0 にする。 <B>x</B> と <B>X</B> 変換の場合、数値が 0 でないときには文字列 &quot;0x&quot; (<B>X</B> 変換の場合には &quot;0X&quot;) が前に付与される。
+<B>a</B>, <B>A</B>, <B>e</B>, <B>E</B>, <B>f</B>, <B>F</B>, <B>g</B>, <B>G</B> 変換では、 小数点に続く数字がなくても、
+出力には常に小数点が含まれる (通常は、小数点の後に数字が続く場合にのみ、 小数点が表示される)。 <B>g</B> と <B>G</B>
+変換の場合、他の変換とは異なり、末尾のゼロが変換結果から削除されない。 その他の変換では、結果は未定義である。
+<DT><B>0</B><DD>
+値をゼロで埋める。 <B>d</B>, <B>i</B>, <B>o</B>, <B>u</B>, <B>x</B>, <B>X</B>, <B>a</B>, <B>A</B>, <B>e</B>, <B>E</B>, <B>f</B>,
+<B>F</B>, <B>g</B>, <B>G</B> 変換では、変換した値の左側を空白文字の代わりにゼロで埋める。 <B>0</B> と <B>-</B> が両方とも指定された場合は、
+<B>0</B> フラグは無視される。 精度が数値変換 (<B>d</B>, <B>i</B>, <B>o</B>, <B>u</B>, <B>x</B>, <B>X</B>)
+と同時に指定された場合には、 <B>0</B> フラグは無視される。 その他の変換では、動作は未定義である。
+<DT><B>-</B><DD>
+変換値をフィールド境界で左揃えにする (デフォルトは右揃えである)。 変換された値は 左側ではなく右側を空白文字やゼロで埋められる。 <B>-</B> と
+<B>0</B> の両方が指定された場合には、 <B>-</B> が優先される。
+<DT><B>' '</B><DD>
+(1個の半角スペース)  符号付き変換で生成された正の数字の前に空白 (または空文字列) が置かれる。
+<DT><B>+</B><DD>
+符号付き変換によって出力される数字の前に、常に符号 (+ か -) が置かれる。 デフォルトでは、符号は負の数字の場合のみ付与される。 <B>+</B>
+と半角スペースの 両方が使われている場合には、 <B>+</B> が優先される。
+</DL>
+<P>
+
+上記の 5 つのフラグは C99 標準で定義されている。 Single UNIX Specified では、さらにもう一つフラグ文字が規定されている。
+<DL COMPACT>
+<DT><B>'</B><DD>
+10進数変換 (<B>i</B>, <B>d</B>, <B>u</B>, <B>f</B>, <B>F</B>, <B>g</B>, <B>G</B>)  において、ロケール情報に指定があれば 1000
+単位の区切り文字を出力する (<B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3) 参照)。 <B><A HREF="../../GNU_gcc/man1/gcc.1.html">gcc</A></B>(1)
+の多くのバージョンは、このオプションを解釈することができず、 警告を出力することに注意せよ。 (<I>%'F</I> は SUSv2
+には含まれていなかったが、 SUSv3 で追加された。
+</DL>
+<P>
+
+glibc 2.2 では、さらに一つフラグ文字が追加されている。
+<DL COMPACT>
+<DT><B>I</B><DD>
+
+10進整数変換 (<B>i</B>, <B>d</B>, <B>u</B>)  において、ロケールの代替出力数字があれば、それを用いて出力する。 例えば、 glibc
+2.2.3 以降では、ペルシア (&quot;fa_IR&quot;) ロケールで アラビア数字 (Arabic-Indic digits) を出力できる。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>フィールド幅</H3>
+
+最小のフィールド幅を指定する 10進数の数値文字列 (文字列の最初の文字は ゼロ以外)。本項目はオプションである。
+変換された値の文字数がフィールド長よりも少ない場合、 フィールドの左側をスペースで埋める (左揃えのフラグがある場合は右側を埋める)。
+10進数の文字列の代わりに &quot;*&quot; や &quot;*m$&quot; (<I>m</I> は 10進整数) を書くこともできる。 &quot;*&quot; と &quot;*m$&quot; はそれぞれ、次の引数と
+<I>m</I> 番目の引数をフィールド幅として 使うことを指定する (これらの引数は <I>int</I> 型でなければならない)。
+フィールド幅に負の数が指定された場合は、 '-' フラグと正の数のフィールド幅として扱われる。
+フィールド幅が小さかったり指定がなかったりしても、フィールドが切り詰められる ことはない。もし変換結果がフィールド幅よりも広かった場合、
+フィールドは変換結果が入る幅に広げられる。
+<A NAME="lbAH">&nbsp;</A>
+<H3>精度</H3>
+
+オプションである精度は、ピリオド ('.') とそれに続く10進数という 形式で指定する (10進数はオプション) 。
+10進数の文字列の代わりに &quot;*&quot; や &quot;*m$&quot; (<I>m</I> は 10 進整数)を書くこともできる。 &quot;*&quot; と &quot;*m$&quot; はそれぞれ、次の引数と
+<I>m</I> 番目の引数を精度として 使うことを指定する (これらの引数は <I>int</I> 型でなければならない)。 精度として '.'
+だけが指定された場合、 精度はゼロとみなされる。 精度が負の数だった場合、 精度は指定されなかったものとみなされる。 <B>d</B>, <B>i</B>, <B>o</B>,
+<B>u</B>, <B>x</B>, <B>X</B> 変換では、表示される最小の桁数を指定する。 <B>a</B>, <B>A</B>, <B>e</B>, <B>E</B>, <B>f</B>, <B>F</B>
+変換では、小数点以下に表示される数字の桁数を指定する。 <B>g</B> と <B>G</B> 変換では、有効数字の最大桁数を指定する。 <B>s</B> と <B>S</B>
+変換では、文字列から出力される最大文字数を指定する。
+<A NAME="lbAI">&nbsp;</A>
+<H3>長さ修飾子</H3>
+
+「整数変換」とは、 <B>d</B>, <B>i</B>, <B>o</B>, <B>u</B>, <B>x</B>, <B>X</B> 変換のことである。
+<DL COMPACT>
+<DT><B>hh</B><DD>
+整数変換に対応する引数が <I>signed char</I> か <I>unsigned char</I> で、 <B>n</B> 変換に対応する引数が <I>signed
+char</I> へのポインターであることを示す。
+<DT><B>h</B><DD>
+整数変換に対応する引数が <I>short</I> か <I>unsigned short</I> で、 <B>n</B> 変換に対応する引数が <I>short</I>
+へのポインターであることを示す。
+<DT><B>l</B><DD>
+各変換に対応する引数が、 整数変換では <I>long</I> か <I>unsigned long</I>、 <B>n</B> 変換では <I>long</I> へのポインター、
+<B>c</B> 変換では <I>wint_t</I>、 <B>s</B> 変換では <I>wchar_t</I> へのポインターであることを示す。
+<DT><B>ll</B> (エルエル)<DD>
+整数変換に対応する引数が <I>long long</I> か <I>unsigned long long</I> で、 <B>n</B> 変換に対応する引数が <I>long
+long</I> へのポインターであることを示す。
+<DT><B>q</B><DD>
+A synonym for <B>ll</B>.  This is a nonstandard extension, derived from BSD;
+avoid its use in new code.
+<DT><B>L</B><DD>
+<B>a</B>, <B>A</B>, <B>e</B>, <B>E</B>, <B>f</B>, <B>F</B>, <B>g</B>, <B>G</B> 変換に対応する引数が <I>long double</I>
+であることを示す。 (C99 では %LF を使うことを認めているが、SUSv2 では認められていない。)
+<DT><B>j</B><DD>
+整数変換に対応する引数が <I>intmax_t</I> か <I>uintmax_t</I> で、 <B>n</B> 変換に対応する引数が <I>intmax_t</I>
+へのポインターであることを示す。
+<DT><B>z</B><DD>
+整数変換に対応する引数が <I>size_t</I> か <I>ssize_t</I> で、 <B>n</B> 変換に対応する引数が <I>size_t</I>
+へのポインターであることを示す。
+<DT><B>Z</B><DD>
+A nonstandard synonym for <B>z</B> that predates the appearance of <B>z</B>.  Do not
+use in new code.
+<DT><B>t</B><DD>
+整数変換に対応する引数が <I>ptrdiff_t</I> で、 <B>n</B> 変換に対応する引数が <I>ptrdiff_t</I> へのポインターであることを示す。
+</DL>
+<P>
+
+SUSv3 specifies all of the above, except for those modifiers explicitly
+noted as being nonstandard extensions.  SUSv2 specified only the length
+modifiers <B>h</B> (in <B>hd</B>, <B>hi</B>, <B>ho</B>, <B>hx</B>, <B>hX</B>, <B>hn</B>)  and <B>l</B> (in
+<B>ld</B>, <B>li</B>, <B>lo</B>, <B>lx</B>, <B>lX</B>, <B>ln</B>, <B>lc</B>, <B>ls</B>)  and <B>L</B> (in <B>Le</B>,
+<B>LE</B>, <B>Lf</B>, <B>Lg</B>, <B>LG</B>).
+<P>
+
+
+As a nonstandard extension, the GNU implementations treats <B>ll</B> and <B>L</B> as
+synonyms, so that one can, for example, write <B>llg</B> (as a synonym for the
+standards-compliant <B>Lg</B>)  and <B>Ld</B> (as a synonym for the standards
+compliant <B>lld</B>).  Such usage is nonportable.
+<A NAME="lbAJ">&nbsp;</A>
+<H3>変換指定子</H3>
+
+適用される変換の型を指定する文字。 変換指定子とその意味は以下の通りである。
+<DL COMPACT>
+<DT><B>d</B>, <B>i</B><DD>
+<I>int</I> 引数を符号付き 10 進表記に変換する。 精度指定があれば、精度で指定した桁数は必ず出力される。変換後の値が
+指定された桁数に足りない場合は、左側が 0 で埋められる。 デフォルトの精度は 1 である。 0 を表示しようとした時に、明示的に精度として 0
+が指定されていると、 出力は空文字列となる。
+<DT><B>o</B>, <B>u</B>, <B>x</B>, <B>X</B><DD>
+<I>unsigned int</I> 引数を、 符号なし8進数 (<B>o</B>), 符号なし10進数 (<B>u</B>), 符号なし16進数 (<B>x</B> と <B>X</B>)
+に変換する。 <B>x</B> 変換では <B>abcdef</B> が使用され、 <B>X</B> 変換では <B>ABCDEF</B> が使用される。
+精度指定があれば、精度で指定した桁数は必ず出力される。変換後の値が 指定された桁数に足りない場合は、左側が 0 で埋められる。
+<DT><B>e</B>, <B>E</B><DD>
+The <I>double</I> argument is rounded and converted in the style
+[-]d<B>.</B>ddd<B>e</B>&plusmn;dd where there is one digit (which is nonzero if the
+argument is nonzero)  before the decimal-point character and the number of
+digits after it is equal to the precision; if the precision is missing, it
+is taken as 6; if the precision is zero, no decimal-point character
+appears.  An <B>E</B> conversion uses the letter <B>E</B> (rather than <B>e</B>)  to
+introduce the exponent.  The exponent always contains at least two digits;
+if the value is zero, the exponent is 00.
+<DT><B>f</B>, <B>F</B><DD>
+<I>double</I> 引数を丸めて [-]ddd<B>.</B>ddd の形の10進表現に変換する。 小数点の後の桁数は、精度で指定された値となる。
+精度が指定されていない場合には 6 として扱われる。 精度として明示的に 0 が指定されたときには、小数点以下は表示されない。
+小数点を表示する際には、小数点の前に少なくとも一桁は数字が表示される。
+<DT><DD>
+(SUSv2 では、<B>F</B> は規定されておらず、無限や NaN に関する文字列表現を行ってもよいことになっている。 SUSv3 では <B>F</B>
+の規定が追加された。 C99 標準では、<B>f</B> 変換では、無限は &quot;[-]inf&quot; か &quot;[-]infinity&quot; と表示し、 NaN
+は文字列の先頭に `nan' をつけて表示するように規定されている。 <B>F</B> 変換の場合は &quot;[-]INF&quot;, &quot;[-]INFINITY&quot;,
+&quot;NAN&quot; と表示される。)
+<DT><B>g</B>, <B>G</B><DD>
+<I>double</I> 引数を <B>f</B> か <B>e</B> (<B>G</B> 変換の場合は <B>F</B> か <B>E</B>)  の形式に変換する。
+精度は表示する桁数を指定する。 精度が指定されない場合は、6桁とみなされる。 精度が 0 の場合は、1桁とみなされる。 変換される値の指数が、 -4
+より小さいか、精度以上の場合に、 <B>e</B> 形式が使用される。 変換された結果の小数部分の末尾の 0 は削除される。小数点が表示されるのは、
+小数点以下に数字が少なくとも一つある場合にだけである。
+<DT><B>a</B>, <B>A</B><DD>
+(C99; not in SUSv2, but added in SUSv3)  For <B>a</B> conversion, the <I>double</I>
+argument is converted to hexadecimal notation (using the letters abcdef)  in
+the style [-]<B>0x</B>h<B>.</B>hhhh<B>p</B>&plusmn;d; for <B>A</B> conversion the prefix
+<B>0X</B>, the letters ABCDEF, and the exponent separator <B>P</B> is used.  There
+is one hexadecimal digit before the decimal point, and the number of digits
+after it is equal to the precision.  The default precision suffices for an
+exact representation of the value if an exact representation in base 2
+exists and otherwise is sufficiently large to distinguish values of type
+<I>double</I>.  The digit before the decimal point is unspecified for
+nonnormalized numbers, and nonzero but otherwise unspecified for normalized
+numbers.  The exponent always contains at least one digit; if the value is
+zero, the exponent is 0.
+<DT><B>c</B><DD>
+<B>l</B> 修飾子がなければ、 <I>int</I> 引数を <I>unsigned char</I> に変換して、その結果に対応する文字を出力する。 <B>l</B>
+修飾子があれば、 <I>wint_t</I> (ワイド文字) 引数を、 <B><A HREF="../man3/wcrtomb.3.html">wcrtomb</A></B>(3)
+関数を初期シフト状態で呼び出してマルチバイト文字列に変換し、 変換されたマルチバイト文字列を出力する。
+<DT><B>s</B><DD>
+<B>l</B> 修飾子がない場合、 引数は <I>const char&nbsp;*</I> 型で文字型の配列へのポインター (文字列へのポインター) であることが
+期待されている。配列中の文字は、終端の ヌルバイト ('\0')  が出てくるまで出力される (終端文字は出力されない)。
+精度が指定されていると、指定された字数以上は出力されない。 精度が指定された場合には、終端バイトが存在する必要はない。
+精度が指定されていなかったり、精度の値が配列の大きさより大きい場合には、 配列は終端のヌルバイトを含んでいなければならない。
+<DT><DD>
+<B>l</B> 修飾子が指定されている場合、 引数は <I>const wchar_t&nbsp;*</I> 型でワイド文字の配列へのポインターであることが期待されている。
+配列中のワイド文字は (1文字毎に <B><A HREF="../man3/wcrtomb.3.html">wcrtomb</A></B>(3)  を呼び出して) マルチバイト文字に変換される (最初のワイド文字の変換の前に
+<B>wcrtomb</B>()  のシフト状態を初期状態に戻してから変換は行われる)。 マルチバイト文字への変換は、文字列を終端するヌルワイド文字が
+出てくるまで行われ、終端ヌルワイド文字も含めて変換される。 結果のマルチバイト文字列は、終端のヌルバイトが出てくるまで 出力される
+(終端のヌルバイトは出力されない)。 精度が指定された場合、指定されたバイト数以上には出力されない。
+但し、マルチバイト文字の一部分だけが出力されることはない。 精度は「バイト」数を指定するものであり、「ワイド文字」数や
+「画面での位置」を指定するものではないことに注意。 精度が指定されていて、さらに出力が配列の末尾に達する前に出力バイト数が
+精度の値を超える場合だけは、配列はヌルワイド文字で終端されていなくてもよい。 それ以外の場合は、必ず配列はヌルワイド文字で終端されていなければならない。
+<DT><B>C</B><DD>
+(C99, C11 にはないが SUSv2, SUSv3, SUSv4 にはある)  <B>lc</B> と同じ。使ってはならない。
+<DT><B>S</B><DD>
+(C99, C11 にはないが SUSv2, SUSv3, SUSv4 にはある)  <B>ls</B> と同じ。使ってはならない。
+<DT><B>p</B><DD>
+<I>void&nbsp;*</I> ポインター引数を (<B>%#x</B> や <B>%#lx</B> のような) 16 進数で出力する。
+<DT><B>n</B><DD>
+The number of characters written so far is stored into the integer pointed
+to by the corresponding argument.  That argument shall be an <I>int&nbsp;*</I>, or
+variant whose size matches the (optionally)  supplied integer length
+modifier.  No argument is converted.  (This specifier is not supported by
+the bionic C library.)  The behavior is undefined if the conversion
+specification includes any flags, a field width, or a precision.
+<DT><B>m</B><DD>
+(glibc での拡張; uClibc と musl で対応)  <I>strerror(errno)</I> の出力を表示する。引数は必要ない。
+<DT><B>%</B><DD>
+'%' 文字を出力する。変換される引数は無い。 変換指定全体を書くと &quot;%%&quot; となる。
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>返り値</H2>
+
+成功時には、上記の関数は書き込まれた文字数を返す (文字列の最後を示すために使用するヌルバイトは数に含まれない)。
+<P>
+
+<B>snprintf</B>()  と <B>vsnprintf</B>()  は、 <I>size</I> バイトを越える文字数を書き込まない (<I>size</I>
+には文字列を終端するヌルバイト ('\0') も含まれる)。 この制限によって出力が切り詰められた場合には、
+もし十分なスペースがあれば書き込まれたであろう文字の個数 (文字列を終端するヌルバイトを除く) を返す。 従って、返り値が <I>size</I>
+以上だった場合、出力が切り詰められたことを意味する (後述の注意も参照のこと)。
+<P>
+
+エラーが発生した場合は、負の数を返す。
+<A NAME="lbAL">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>printf</B>(),
+<B>fprintf</B>(),
+<BR>
+
+<B>sprintf</B>(),
+<B>snprintf</B>(),
+<BR>
+
+<B>vprintf</B>(),
+<B>vfprintf</B>(),
+<BR>
+
+<B>vsprintf</B>(),
+<B>vsnprintf</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAM">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>fprintf</B>(), <B>printf</B>(), <B>sprintf</B>(), <B>vprintf</B>(), <B>vfprintf</B>(),
+<B>vsprintf</B>(): POSIX.1-2001, POSIX.1-2008, C89, C99.
+<P>
+
+<B>snprintf</B>(), <B>vsnprintf</B>(): POSIX.1-2001, POSIX.1-2008, C99.
+<P>
+
+<B>dprintf</B>()  と <B>vdprintf</B>()  は、どちらも元は GNU による拡張であったが、 POSIX.1-2008
+で標準化された。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>snprintf</B>()  の返り値を見ると、 SUSv2 と C99 標準は互いに矛盾している。 SUSv2 では、 <B>snprintf</B>()
+が <I>size</I>=0 で呼び出された場合、 1 未満の値を何か返り値とするように規定している。 一方 C99 では、このような場合 <I>str</I> を
+NULL とし、返り値として (通常通り) 出力バッファーが十分な大きさが あった場合に出力されるであろう文字数を返す。 POSIX.1-2001
+やそれ以降では C99 の <B>snprintf</B>() の規定にあわせたものとなっている。
+<P>
+
+glibc 2.1 では、長さ修飾子 <B>hh</B>, <B>j</B>, <B>t</B>, <B>z</B> と変換文字 <B>a</B>, <B>A</B> が追加された。
+<P>
+
+glibc 2.2 では、 C99 で規定された意味での変換文字 <B>F</B> と フラグ文字 <B>I</B> が追加された。
+<A NAME="lbAN">&nbsp;</A>
+<H2>注意</H2>
+
+テキストを <I>buf</I> に追加するのに、軽率にも次のようなコードを使っているプログラムがある。
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sprintf(buf,&nbsp;&quot;%s&nbsp;some&nbsp;further&nbsp;text&quot;,&nbsp;buf);
+<P>
+
+
+しかしながら、標準規格では、 <B>sprintf</B>(), <B>snprintf</B>(), <B>vsprintf</B>(), <B>vsnprintf</B>()
+の呼び出しにおいて、コピー元とコピー先のバッファーが重なっていた場合の 結果は不定である、と明記されている。 使用する <B><A HREF="../../GNU_gcc/man1/gcc.1.html">gcc</A></B>(1)
+のバージョンや指定したコンパイラのオプション次第では、 上記のような呼び出しで、期待した結果が得られ「ない」ことがある。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+glibc の <B>snprintf</B>()  と <B>vsnprintf</B>()  の実装は、バージョン 2.1 以降は C99 標準に準拠しており、
+上記の通りの動作をする。 glibc 2.0.6 までは、出力が切り詰められた場合は -1 を返す。
+<A NAME="lbAO">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B>sprintf</B>()  と <B>vsprintf</B>()  は勝手に十分に長い文字列領域があると仮定するので、呼び出し側は
+実際の領域からあふれないように注意しなければならない。 しかし、これを保証することが不可能な場合が多い。
+生成される文字列の長さはロケール依存であり、予測が難しいことに注意。 代わりに <B>snprintf</B>()  と <B>vsnprintf</B>()
+(または <B><A HREF="../man3/asprintf.3.html">asprintf</A></B>(3)  と <B><A HREF="../man3/vasprintf.3.html">vasprintf</A></B>(3))  を使うこと。
+<P>
+
+
+
+
+<B>printf(</B><I>foo</I><B>);</B> のようなコードはしばしばバグを引き起こす。 なぜなら <I>foo</I> に %
+文字が含まれてるかもしれないからである。 <I>foo</I> が信頼できないユーザー入力から作られている場合には、 その中に <B>%n</B>
+が含まれていることがあり、 <B>printf</B>()  呼び出し時にメモリーへの書き込みが起こり、 セキュリティーホールを作ることになるかもしれない。
+<A NAME="lbAP">&nbsp;</A>
+<H2>例</H2>
+
+<I>Pi</I> を 5 桁で出力する。
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+fprintf(stdout, &quot;pi = %.5f\n&quot;, 4 * atan(1.0));
+
+
+<P>
+
+日付と時間を &quot;Sunday, July 3, 10:02&quot; の形式で出力する。 (<I>weekday</I> と <I>month</I>
+は文字列へのポインターである)
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+fprintf(stdout, &quot;%s, %s %d, %.2d:%.2d\n&quot;,
+<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>weekday, month, day, hour, min);<BR>
+
+
+<P>
+
+日 - 月 - 年 の順序で表示を行う国も多い。 従って、国際版では書式で指定された順番で 引数を表示できなければならない。
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+fprintf(stdout, format,
+<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>weekday, month, day, hour, min);<BR>
+
+
+<P>
+
+<I>format</I> はロケールに依存しており、引数の順番を変えることもできる。 <I>format</I> が
+<P>
+
+
+
+&quot;%1$s, %3$d. %2$s, %4$d:%5$.2d\n&quot;
+
+
+<P>
+
+であれば、 &quot;Sonntag, 3. Juli, 10:02&quot; という結果になる。
+<P>
+
+十分に大きな文字列領域を確保して、そこにメッセージを格納するには (glibc 2.0 と glibc 2.1 の両方で正しく動作するコード):
+<P>
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdarg.h">stdarg.h</A>&gt;
+<P>
+char *
+make_message(const char *fmt, ...)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;n&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;size&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*p&nbsp;=&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;va_list&nbsp;ap;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Determine&nbsp;required&nbsp;size&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;va_start(ap,&nbsp;fmt);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;n&nbsp;=&nbsp;vsnprintf(p,&nbsp;size,&nbsp;fmt,&nbsp;ap);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;va_end(ap);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(n&nbsp;&lt;&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;One&nbsp;extra&nbsp;byte&nbsp;for&nbsp;'\0'&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;(size_t)&nbsp;n&nbsp;+&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;p&nbsp;=&nbsp;malloc(size);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(p&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;va_start(ap,&nbsp;fmt);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;n&nbsp;=&nbsp;vsnprintf(p,&nbsp;size,&nbsp;fmt,&nbsp;ap);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;va_end(ap);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(n&nbsp;&lt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;free(p);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;p;
+}
+
+<P>
+
+バージョン 2.0.6 より前の glibc で切り詰めが起こった場合、切り詰めは適切に処理されず、エラーとして扱われる。
+<A NAME="lbAQ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/printf.1.html">printf</A></B>(1), <B><A HREF="../man3/asprintf.3.html">asprintf</A></B>(3), <B><A HREF="../man3/puts.3.html">puts</A></B>(3), <B><A HREF="../man3/scanf.3.html">scanf</A></B>(3), <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3),
+<B>strfromd</B>(3), <B><A HREF="../man3/wcrtomb.3.html">wcrtomb</A></B>(3), <B><A HREF="../man3/wprintf.3.html">wprintf</A></B>(3), <B><A HREF="../man5/locale.5.html">locale</A></B>(5)
+<A NAME="lbAR">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">フォーマット文字列のフォーマット</A><DD>
+<DT><A HREF="#lbAF">フラグ文字</A><DD>
+<DT><A HREF="#lbAG">フィールド幅</A><DD>
+<DT><A HREF="#lbAH">精度</A><DD>
+<DT><A HREF="#lbAI">長さ修飾子</A><DD>
+<DT><A HREF="#lbAJ">変換指定子</A><DD>
+</DL>
+<DT><A HREF="#lbAK">返り値</A><DD>
+<DT><A HREF="#lbAL">属性</A><DD>
+<DT><A HREF="#lbAM">準拠</A><DD>
+<DT><A HREF="#lbAN">注意</A><DD>
+<DT><A HREF="#lbAO">バグ</A><DD>
+<DT><A HREF="#lbAP">例</A><DD>
+<DT><A HREF="#lbAQ">関連項目</A><DD>
+<DT><A HREF="#lbAR">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

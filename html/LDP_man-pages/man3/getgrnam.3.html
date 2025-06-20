@@ -1,0 +1,216 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETGRNAM</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETGRNAM</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getgrnam.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getgrnam, getgrnam_r, getgrgid, getgrgid_r - グループファイルエントリーの取り出し
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</B>
+
+<B>struct group *getgrnam(const char *</B><I>name</I><B>);</B>
+
+<B>struct group *getgrgid(gid_t </B><I>gid</I><B>);</B>
+
+<B>int getgrnam_r(const char *</B><I>name</I><B>, struct group *</B><I>grp</I><B>,</B>
+<B>          char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct group **</B><I>result</I><B>);</B>
+
+<B>int getgrgid_r(gid_t </B><I>gid</I><B>, struct group *</B><I>grp</I><B>,</B>
+<B>          char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct group **</B><I>result</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+
+<P>
+
+<B>getgrnam_r</B>(), <B>getgrgid_r</B>():
+<DL COMPACT><DT><DD>
+_POSIX_C_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以前:&nbsp;*/&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
+</DL>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getgrnam</B>()  関数は、グループ名 <I>name</I> にマッチするグループデータベースのエントリーを
+要素毎に分解し、各要素を格納した構造体へのポインターを返す (パスワードデータベースの例: ローカルのグループファイル <I>/etc/group</I>,
+NIS, LDAP)。
+<P>
+
+<B>getgrgid</B>()  関数は、グループ ID <I>uid</I> にマッチするグループデータベースのエントリーを
+要素毎に分解し、各要素を格納した構造体へのポインターを返す。
+<P>
+
+<I>group</I> 構造体は <I>&lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</I> で以下のように定義されている:
+<P>
+
+
+
+struct group {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*gr_name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループ名&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*gr_passwd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループのパスワード&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;&nbsp;&nbsp;gr_gid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループ&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;**gr_mem;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループのメンバ名へのポインター
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;の配列&nbsp;(配列はヌルで終端する)&nbsp;*/
+};
+
+
+<P>
+
+この構造体のフィールドの詳細は <B><A HREF="../man5/group.5.html">group</A></B>(5)  を参照のこと。
+<P>
+
+<B>getgrnam_r</B>() と <B>getgrgid_r</B>() 関数は、それぞれ <B>getgrnam</B>() と
+<B>getgrgid</B>() と同じ情報を取得するが、取得した <I>group</I> 構造体を
+<I>grp</I> が指す領域に格納する。<I>group</I> 構造体のメンバーが指す文字列は、
+サイズ <I>buflen</I> のバッファー <I>buf</I> に格納される。成功した場合
+<I>*gbufp</I> には結果へのポインターが格納される。エントリーが見つからなかった
+場合やエラーが発生した場合には <I>*result</I> には NULL が入る。
+<P>
+
+呼び出し
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sysconf(_SC_GETGR_R_SIZE_MAX)
+<P>
+
+は、 <I>errno</I> を変更せずに -1 を返すか、 <I>buf</I> の初期サイズの推奨値を
+返す。(このサイズが小さすぎる場合、呼び出しは <B>ERANGE</B> で失敗し、この
+場合には呼び出し側はバッファーを大きくしてから再度呼び出すことができる。)
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>getgrnam</B>()  と <B>getgrgid</B>()  関数は、 <I>group</I> 構造体へのポインターを返す。
+マッチするエントリーが見つからなかった場合や、 エラーが発生した場合は NULL を返す。 エラーが起こった場合、 <I>errno</I>
+が適切に設定される。 呼び出しの後で <I>errno</I> をチェックしたい場合は、 呼び出しの前に (この値を) 0 に設定しておくべきである。
+<P>
+
+返り値は静的な領域を指しており、その後の <B><A HREF="../man3/getgrent.3.html">getgrent</A></B>(3), <B>getgrgid</B>(), <B>getgrnam</B>()
+の呼び出しで上書きされるかもしれない。 (返されたポインターを <B><A HREF="../man3/free.3.html">free</A></B>(3)  に渡さないこと。)
+<P>
+
+成功すると、 <B>getgrnam_r</B>()  と <B>getgrgid_r</B>()  は 0 を返し、 <I>*result</I> に <I>grp</I>
+を設定する。 マッチするグループエントリーが見つからなかった場合には、 0 を返し、 <I>*result</I> に NULL を設定する。
+エラーの場合、エラー番号を返し、 <I>*result</I> に NULL を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>0</B> または <B>ENOENT</B> または <B>ESRCH</B> または <B>EBADF</B> または <B>EPERM</B> または ...<DD>
+指定された <I>name</I> または <I>gid</I> が見つからなかった。
+<DT><B>EINTR</B><DD>
+シグナルが捕捉された。<B><A HREF="../man7/signal.7.html">signal</A></B>(7) 参照。
+<DT><B>EIO</B><DD>
+I/O エラー。
+<DT><B>EMFILE</B><DD>
+オープンされたファイルディスクリプター数がプロセス毎の上限に達している。
+<DT><B>ENFILE</B><DD>
+オープンされたファイルの総数がシステム全体の上限に達している。
+<DT><B>ENOMEM</B><DD>
+
+
+<I>group</I> 構造体を割り当てるためのメモリーが不十分。
+<DT><B>ERANGE</B><DD>
+与えられたバッファー空間が不十分である。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+<DL COMPACT>
+<DT><I>/etc/group</I><DD>
+ローカルのグループデータベースファイル
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getgrnam</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:grnam locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getgrgid</B>()
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:grgid locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getgrnam_r</B>(),
+<BR>
+
+<B>getgrgid_r</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+
+
+
+
+
+
+
+上記の「返り値」以下の記述は POSIX.1 に拠る。 この標準は「(エントリーが) 見つからないこと」をエラーとしていないので、 そのような場合に
+<I>errno</I> がどのような値になるかを定めていない。 そのため、エラーを認識することは不可能である。 POSIX
+に準拠して、エントリーが見つからない場合は <I>errno</I> を変更しないようにすべきである、と主張する人もいるかもしれない。 様々な UNIX
+系のシステムで試してみると、そのような場合には 0, ENOENT, EBADF, ESRCH, EWOULDBLOCK, EPERM
+といった様々な値が返される。 他の値が返されるかもしれない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man3/endgrent.3.html">endgrent</A></B>(3), <B><A HREF="../man3/fgetgrent.3.html">fgetgrent</A></B>(3), <B><A HREF="../man3/getgrent.3.html">getgrent</A></B>(3), <B><A HREF="../man3/getpwnam.3.html">getpwnam</A></B>(3),
+<B><A HREF="../man3/setgrent.3.html">setgrent</A></B>(3), <B><A HREF="../man5/group.5.html">group</A></B>(5)
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

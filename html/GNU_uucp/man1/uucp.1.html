@@ -1,0 +1,349 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of uucp</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>uucp</H1>
+Section: User Commands  (1)<BR>Updated: Taylor UUCP 1.06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/GNU_uucp/release/man1/uucp.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名称</H2>
+
+uucp - Unix to Unix CoPy。システム間でファイルのコピーを行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>uucp</B>
+
+[ options ] source-file destination-file
+<P>
+
+<B>uucp</B>
+
+[ options ] source-file... destination-directory
+<A NAME="lbAD">&nbsp;</A>
+<H2>解説</H2>
+
+<I>uucp</I>
+
+コマンドは、システム間でのファイルコピーを行います。
+<I>source-file</I>
+
+,
+<I>destination-file</I>
+
+などのファイル名に関連した引数は、ローカルマシン上のパス名か、
+以下の形式で与えます。
+<DL COMPACT>
+<DT><DD>
+system!path
+</DL>
+<P>
+
+本形式で記述することで、ファイルがリモートマシン上のものであるとして解釈され
+ます。最初の書式では、最初に指定したファイルを次に指定したファイル名で
+コピーします。次の形式では、
+各コピー元ファイルはコピー先ディレクトリにコピーされます。
+<P>
+<I>system1</I>
+
+を経由して、
+<I>system2</I>
+
+にあるファイルに対しアクセスする場合には、以下のよ
+うにしてファイル名を指定します。
+<DL COMPACT>
+<DT><DD>
+system1!system2!path.
+</DL>
+<P>
+
+<P>
+与えたパス名が / もしくは ~ で開始しない場合、その前にはカレントディレクトリを
+表す文字列が付加されます。ただし、
+<B>-W</B>
+
+および
+<B>--noexpand</B>
+
+オプションが指定された場合にはこの限りではありま
+せん。結果として、フルパス名はリモートシステム上については特に必要ないことに
+なります。
+~ ではじまるパス名は、UUCP パブリックディレクトリを指します。パス名を ~ で
+始める場合、その部分をユーザのホームディレクトリに変換します。
+~ は、指定されたシステム上で文字列に変換されます。ただし、シェルの中には、~ を
+リモートシステムに渡す前に、ローカルで変換してしまうものがありますので、
+その場合は ~ をクオートしてやって
+変換されないようにして下さい。
+<P>
+
+シェルのメタキャラクタである ? * [ ] は、指定されたシステム上で変換されます。
+ただしこの動作は、メタキャラクタがクオートされていて、ローカルシェルで変換
+されないことを仮定し
+た場合です。
+<P>
+実際にはコピーは即時には行われず、かわりに
+<I>uucico</I>
+
+(8) デーモンのキューに蓄積されます。
+本デーモンは、uucp コマンドに
+<B>-r</B>
+
+もしくは
+<B>--nouucico</B>
+
+オプションが与えられない限り、ただちに動作します。
+いかなる場合でも、リモートシステムが次に呼ばれる時には、ファイルはコピーされます。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<I>uucp</I>
+
+では以下のオプションが使用可能です。
+<DL COMPACT>
+<DT><B>-c, --nocopy</B>
+
+<DD>
+ローカルソースファイルをスプールディレクトリにコピーしません。それらの
+ファイルが
+<I>uucico</I>
+
+(8) デーモンが処理する前に削除された場合には、コピーは失敗します。
+ファイルは uucico および uucp を実行したユーザが可読な状態にある必要があります。
+<DT><B>-C, --copy</B>
+
+<DD>
+ローカルソースファイルをスプールディレクトリにコピーします。
+デフォルトオプションです。
+<DT><B>-d, --directories</B>
+
+<DD>
+コピー中に、必要な全てのディレクトリを作成します。
+これはデフォルトオプションです。
+<DT><B>-f, --nodirectories</B>
+
+<DD>
+コピー中に、コピー先パス名に記述されたディレクトリが存在しない場合は、コピーを
+中断します。
+<DT><B>-R, --recursive</B>
+
+<DD>
+ソースファイル名がディレクトリであるものは、その中身をコピー先
+(ディレクトリでなければなりません) に再帰的にコピーします。
+<DT><B>-g grade, --grade grade</B>
+
+<DD>
+ファイル転送コマンドのグレードを設定します。高いグレードのジョブは、
+早い順番で実行されます。
+グレードは、0を最高、zを最低として、0から9,AからZ,aからzの順にならびます。
+<DT><B>-m, --mail</B>
+
+<DD>
+ファイル転送が正常終了したか、異常終了したかを、
+<I>mail</I>
+
+(1) コマンドを用いて報告します。
+<DT><B>-n user, --notify user</B>
+
+<DD>
+ファイル転送が正常終了したか、異常終了したかを、
+<I>mail</I>
+
+(1) コマンドを用いて
+リモートシステム上のユーザに報告します。
+<DT><B>-r, --nouucico</B>
+
+<DD>
+<I>uucico</I>
+
+(8) デーモンをすぐに起動しません。単に後でファイル転送を行うために
+キューにつないでおくだけです。
+<DT><B>-j, --jobid</B>
+
+<DD>
+標準出力に、ジョブ ID を表示します。ジョブは、
+<I>uustat</I>
+
+(1) の 
+<B>-k</B>
+
+オプションを用いる
+ことで、実行をキャンセルすることが可能です。いくつかの操作を複合することに
+よって、1 つ以上のジョブをキャンセルすることが可能になります。
+このことを実行するにあたっては、各ジ
+ョブに関して独立した行で情報が表示されることを用います。例えば、
+<BR>
+
+
+<PRE>
+uucp sys1!~user1/file1 sys2!~user2/file2 ~user3
+</PRE>
+
+
+の場合、/usr/spool/uucppublic には 2 つの独立したジョブが生成されます。
+1 つはシステム
+<I>sys1</I>
+
+上のジョブであり、もう 1 つはシステム
+<I>sys2</I>
+
+上のジョブです。
+<DT><B>-W, --noexpand</B>
+
+<DD>
+カレントディレクトリ名を用いたリモートの相対パス名の解決を行いません。
+<DT><B>-t, --uuto</B>
+
+<DD>
+このオプションは
+<I>uuto</I>
+
+シェルスクリプト内で使われます。
+<I>uucp</I>
+
+は最後の引数を
+<I>system!user</I>
+
+という形式として解釈します。
+ファイルはリモートシステム上の
+<I>~/receive/USER/LOCAL</I>
+
+に送られます。ここで、
+<I>USER</I>
+
+は最後の引数からのもので、
+<I>LOCAL</I>
+
+はローカルの UUCP システム名です。
+また、
+<I>uucp</I>
+
+は
+<I>--notify user</I>
+
+が指定されたかのように振舞います。
+<DT><B>-x type, --debug type</B>
+
+<DD>
+特定のデバッグタイプを有効にします。デバッグタイプとしては、
+abnormal, chat, handshake, uucp-proto, proto, port,
+config, spooldir, execute, incoming, outgoing
+が有効です。
+なお、
+<I>uucp</I>
+
+自体に意味のあるデバッグタイプは abnormal, config, spooldir, execute
+の 4 つだけです。
+<P>
+また、デバッグタイプに関しては、コンマで区切ることで複数指定が可能になります。
+また、
+<B>--debug</B>
+
+によるデバッグタイプ指定は、1 つのコマンドライン中に複数存在してもかまい
+ません。
+数字による指定を行うと、先述のリスト中、先頭から指定した番号までの
+デバッグタイプが有効になります。例えば、
+<B>--debug 2</B>
+
+と指定した場合は、
+<B>--debug abnormal,chat</B>
+
+と指定したのと同じです。
+<DT><B>-I file, --config file</B>
+
+<DD>
+使用するコンフィギュレーションファイルを設定します。しかし
+このオプションが利用できるかできないかは
+<I>uucp</I>
+
+をどのようにコンパイルしたかに依存します。
+<DT><B>-v, --version</B>
+
+<DD>
+バージョン情報を表示して終了します。
+<DT><B>--help</B>
+
+<DD>
+ヘルプメッセージを表示して終了します。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連ファイル</H2>
+
+ファイル名は、コンパイル時もしくはコンフィギュレーションファイルによって
+変更可能です。
+したがって、これは目安だと思って下さい。
+<P>
+<BR>
+
+/usr/lib/uucp/config - コンフィギュレーションファイル
+<BR>
+
+/usr/spool/uucp - UUCP スプールディレクトリ
+<BR>
+
+/usr/spool/uucp/Log - UUCP ログ記録ファイル
+<BR>
+
+/usr/spool/uucppublic - デフォルト時の UUCP パブリックディレクトリ
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+mail(1), <A HREF="../man1/uux.1.html">uux</A>(1), <A HREF="../man1/uustat.1.html">uustat</A>(1), uucico(8)
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+オプションの中には、リモートシステム上の
+<I>uucico</I>
+
+(8) の機能に依存するものがあります。
+<P>
+<I>-n</I>
+
+および
+<I>-m</I>
+
+オプションについては他のシステム上のファイルをさらに別のシステム
+上に転送する場合には機能しません。
+<P>
+ファイル属性は実行属性を除き、引き継がれません。実行の結果、生成されたファイル
+の所有者は、uucp ユーザになります。
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>参照文献</H2>
+
+UUCP システム管理 (Nutshell/アスキー)
+<BR>
+
+UUCP 入門 (Nutshell/アスキー)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>作者</H2>
+
+Ian Lance Taylor
+&lt;<A HREF="mailto:ian@airs.com">ian@airs.com</A>&gt;
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名称</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">解説</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">関連ファイル</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">参照文献</A><DD>
+<DT><A HREF="#lbAJ">作者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:25 GMT, December 05, 2022
+</BODY>
+</HTML>

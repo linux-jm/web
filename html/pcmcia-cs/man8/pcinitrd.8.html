@@ -1,0 +1,200 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PCINITRD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PCINITRD</H1>
+Section: Maintenance Commands (8)<BR>Updated: 2000/07/25 18:31:33<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/pcmcia-cs/release/man8/pcinitrd.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pcinitrd - PCMCIA initrd RAM ディスクイメージを作成する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>pcinitrd</B>
+
+[<B>-v</B>]
+
+[<B>-a</B>]
+
+[<B>--all</B>]
+
+[<B>-d&nbsp;</B><I>alternate-root</I>]
+[<B>--dir=</B><I>alternate-root</I>]
+[<B>-r&nbsp;</B><I>kernel-release</I>]
+[<B>--release=</B><I>kernel-release</I>]
+[<B>-s&nbsp;</B><I>image-size</I>]
+[<B>--size=</B><I>image-size</I>]
+[<B>-u</B>]
+
+[<B>--update</B>]
+
+<I>initrd-image</I>
+
+[<I>modules&nbsp;...</I>]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pcinitrd</B>
+
+スクリプトは、
+PCMCIA デバイス上に root ファイルシステムがある場合のブート用
+initrd RAM ディスクイメージを作成する。
+この initrd イメージは
+ターゲットがブロックスペシャルデバイス (例:
+<I>/dev/fd0</I>)
+
+の場合は、 initrd イメージはそのデバイス上に作成される。
+ターゲットが存在していない場合や通常のファイルだった場合は、
+<B>pcinitrd</B>
+
+はイメージファイルを &quot;loopback&quot; デバイスを用いて作成する。
+<P>
+
+モジュールは
+<I>/lib/modules/[kernel-release]</I>
+
+からの相対パスで指定する。コア PCMCIA モジュール
+(<I>pcmcia/pcmcia_core</I>
+
+と
+<I>pcmcia/ds</I>)
+
+はターゲットイメージに自動的にインストールされる。
+他の各デバイス用のモジュールと
+適切なソケットドライバ
+(<I>pcmcia/i82365.o</I>
+
+または
+<I>pcmcia/tcic.o</I>)
+
+のモジュールとはコマンドラインにリストする必要がある。
+あるいは
+<B>-a</B>
+
+を指定すれば、入手可能な全ての PCMCIA ソケットドライバと
+ブロックデバイスドライバとがイメージに入れられる。
+initrd イメージにコピーしたい他のファイルをコマンドラインにリストしてもよい。
+実行ファイルは
+<I>/bin</I>
+
+に、共有ライブラリは
+<I>/lib</I>
+
+に、デバイスファイルは
+<I>/dev</I>
+
+に、他の全てのファイルは
+<I>/etc</I>
+
+にインストールされる。
+<P>
+
+結果のイメージに入る起動スクリプト
+<I>linuxrc</I>
+
+は、それぞれのシステムにあわせてカスタマイズする必要がある。
+このスクリプトには、通常の PCMCIA 起動スクリプトのように、
+いくつかの変数定義 (例えば
+<B>PCIC=</B>, <B>PCIC_OPTS</B>, <B>CORE_OPTS</B> など)
+
+が含まれる。
+<I>/etc/config.opts</I>
+
+ファイルも編集が必要かもしれない。
+<I>linuxrc</I> または <I>config.opts</I>
+
+に行った全ての変更は、
+<B>pcinitd</B>
+
+を &quot;update&quot; モードで実行されていれば保存される。
+<P>
+
+作成される
+<I>linuxrc</I>
+
+の別の機能として、もし
+<B>DEBUG</B>
+
+変数がブートプロンプトで空白文字列以外に設定されると、
+cardmgr は全ての状態メッセージをコンソールに表示し、
+<I>linuxrc</I>
+
+が実行されると、コンソールにシェルを起動する。
+これは initrd の障害をデバッグする助けになるだろう。
+ただ、普通の initrd 環境で使えるコマンドはほとんどないが。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-v</B>
+
+<DD>
+詳細表示モード。ファイルがコピーされるたびに表示する。
+<DT><B>-a</B>, <B>--all</B><DD>
+全てのソケットドライバとブロック形式の
+PCMCIA デバイスドライバをインストールする。
+メモリーカード・ SCSI カード・固定ディスクドライバなどもインストールされる。
+これはパッケージ管理者向けのものである。
+<DT><B>-d</B><I> alternate-root</I>, <B>--dir=</B><I>alternate-root</I><DD>
+initrd イメージに追加する各ファイルを検索するディレクトリツリーを別に指定する。
+これはインストールフロッピーやレスキューフロッピーからブートした後に
+<B>pcinitrd</B>
+
+を実行する場合に便利である。
+<DT><B>-r</B><I> kernel-release</I>, <B>--release=</B><I>kernel-release</I><DD>
+モジュールを
+<I>/lib/modules</I>
+
+から探す際に用いるカーネルのリリース番号 (例: 2.0.28) を指定する。
+デフォルトは現在実行しているカーネルのリリース番号である。
+<DT><B>-s</B><I> image-size</I>, <B>--size=</B><I>image-size</I><DD>
+ターゲットのファイルやデバイスに作成するファイルシステムのサイズを
+1k ブロック単位で指定する。デフォルトは 2400。
+<DT><B>-u</B>, <B>--update</B><DD>
+更新モード:
+initrd イメージに含まれる
+<B>cardmgr</B>
+
+と全てのカーネルモジュールを更新する。しかし他のファイルは変更しない。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>著者</H2>
+
+David Hinds - <A HREF="mailto:dahinds@users.sourceforge.net">dahinds@users.sourceforge.net</A>
+<A NAME="lbAG">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man5/pcmcia.5.html">pcmcia</A></B>(5),
+
+<B><A HREF="../man8/cardmgr.8.html">cardmgr</A></B>(8),
+
+<B><A HREF="../../lilo/man8/lilo.8.html">lilo</A></B>(8)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">著者</A><DD>
+<DT><A HREF="#lbAG">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:43 GMT, December 05, 2022
+</BODY>
+</HTML>

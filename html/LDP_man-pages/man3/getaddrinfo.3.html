@@ -1,0 +1,564 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETADDRINFO</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETADDRINFO</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/getaddrinfo.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getaddrinfo, freeaddrinfo, gai_strerror - ネットワークのアドレスとサービスを変換する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</B>
+
+<B>int getaddrinfo(const char *</B><I>node</I><B>, const char *</B><I>service</I><B>,</B>
+<B>                const struct addrinfo *</B><I>hints</I><B>,</B>
+<B>                struct addrinfo **</B><I>res</I><B>);</B>
+
+<B>void freeaddrinfo(struct addrinfo *</B><I>res</I><B>);</B>
+
+<B>const char *gai_strerror(int </B><I>errcode</I><B>);</B>
+</PRE>
+
+<P>
+
+
+glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
+
+
+<P>
+
+<B>getaddrinfo</B>(),
+<B>freeaddrinfo</B>(),
+<B>gai_strerror</B>():
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.22:&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.21&nbsp;and&nbsp;earlier:&nbsp;_POSIX_C_SOURCE
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+
+
+<B>getaddrinfo</B>()  は、(インターネットのホストとサービスを識別する)  <I>node</I> と <I>service</I> を渡すと、一つ以上の
+<I>addrinfo</I> 構造体を返す。それぞれの <I>addrinfo</I> 構造体には、 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)  や <B><A HREF="../man2/connect.2.html">connect</A></B>(2)
+を呼び出す際に指定できるインターネットアドレスが格納されている。 <B>getaddrinfo</B>()  関数は、 <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)
+と <B><A HREF="../man3/getservbyname.3.html">getservbyname</A></B>(3) の機能をまとめて一つのインターフェースにしたものであるが、 これらの関数と違い、
+<B>getaddrinfo</B>() はリエントラントであり、 <B>getaddrinfo</B>() を使うことでプログラムは IPv4 と IPv6
+の違いに関する依存関係を なくすことができる。
+<P>
+
+<B>getaddrinfo</B>()  が用いる <I>addrinfo</I> 構造体は以下のフィールドを含む。
+<P>
+
+
+
+struct addrinfo {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_flags;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_family;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_socktype;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_protocol;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;socklen_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_addrlen;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr&nbsp;*ai_addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ai_canonname;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;*ai_next;
+};
+
+
+<P>
+
+<I>hints</I> 引数は <I>addrinfo</I> 構造体を指し示し、この構造体を用いて <I>res</I>
+が指すリストに入れて返すソケットアドレス構造体を選択するための基準を指定する。 <I>hints</I> が NULL でない場合、 <I>hints</I> は
+<I>addrinfo</I> 構造体を指し示し、その構造体のフィールド <I>ai_family</I>, <I>ai_socktype</I>,
+<I>ai_protocol</I> で <B>getaddrinfo</B>()  が返すソケットアドレス集合に対する基準を指定する。
+<DL COMPACT>
+<DT><I>ai_family</I><DD>
+このフィールドは返されるアドレスの希望のアドレスファミリーを指定する。 このフィールドに指定できる有効な値としては <B>AF_INET</B> と
+<B>AF_INET6</B> がある。 また、値 <B>AF_UNSPEC</B> を指定すると、 <B>getaddrinfo</B>()  は <I>node</I> と
+<I>service</I> で使用できるいずれかのアドレスファミリー (例えば IPv4 か IPv6) の ソケットアドレスを返すことを求められる。
+<DT><I>ai_socktype</I><DD>
+このフィールドは推奨のソケット型 (例えば <B>SOCK_STREAM</B> や <B>SOCK_DGRAM</B>)  を指定する。 このフィールドに 0
+を指定すると、任意のソケット型のソケットアドレスを <B>getaddrinfo</B>()  が返してよいことを意味する。
+<DT><I>ai_protocol</I><DD>
+このフィールドは返されるソケットアドレスのプロトコルを指定する。 このフィールドに 0 を指定すると、任意のプロトコルののソケットアドレスを
+<B>getaddrinfo</B>()  が返してよいことを意味する。
+<DT><I>ai_flags</I><DD>
+このフィールドは、追加のオプション (下記) を指定する。 複数のフラグを指定する際には、それらのビット単位の OR をとって指定する。
+</DL>
+<P>
+
+<I>hints</I> が指し示す構造体の他のすべてのフィールドには 0 かヌルポインターを適切に入れなければならない。
+<P>
+
+<I>hints</I> に NULL を指定するのは、 <I>ai_socktype</I> と <I>ai_protocol</I> に 0 を、 <I>ai_family</I>
+に <B>AF_UNSPEC</B> を、 <I>ai_flags</I> に <B>(AI_V4MAPPED&nbsp;|&nbsp;AI_ADDRCONFIG)</B>
+を設定するのと等価である (POSIX では <I>ai_flags</I> には別のデフォルト値が規定されている; 「備考」を参照)。 <I>node</I>
+には、数値形式のネットワークアドレス (IPv4 の場合は <B><A HREF="../man3/inet_aton.3.html">inet_aton</A></B>(3)  でサポートされているドット区切りの数字による表記、
+IPv6 の場合は <B><A HREF="../man3/inet_pton.3.html">inet_pton</A></B>(3)  でサポートされている 16 進数の文字列形式) もしくは ネットワークホスト名を指定する。
+ネットワークホスト名を指定した場合には、そのネットワークアドレスが検索され、 名前解決が行なわれる。 <I>hints.ai_flags</I> に
+<B>AI_NUMERICHOST</B> フラグが含まれている場合は、 <I>node</I> は数値形式のネットワークアドレスでなければならない。
+<B>AI_NUMERICHOST</B> フラグを使うと、時間の掛かる可能性のあるネットワークホストアドレスの検索は すべて抑制される。
+<P>
+
+<I>hints.ai_flags</I> に <B>AI_PASSIVE</B> フラグが指定され、かつ <I>node</I> が NULL の場合、
+返されるソケットアドレスは コネクションを <B><A HREF="../man2/accept.2.html">accept</A></B>(2)  するためのソケットを <B><A HREF="../man2/bind.2.html">bind</A></B>(2)  するのに適したものとなる。
+返されるソケットアドレスには「ワイルドカードアドレス」 (IPv4 アドレスの場合は <B>INADDR_ANY</B>、 IPv6 アドレスの場合は
+<B>IN6ADDR_ANY_INIT</B>)  が入る。 ワイルドカードアドレスは、任意のホストのネットワークアドレスで接続を
+受け付けようとするアプリケーション (通常はサーバー) で用いられる。 <I>node</I> が NULL でない場合、 <B>AI_PASSIVE</B>
+フラグは無視される。
+<P>
+
+<I>hints.ai_flags</I> に <B>AI_PASSIVE</B> フラグがセットされていない場合、 返されるソケットアドレスは
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2), <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2), <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)  での使用に適したものとなる。 <I>node</I> が NULL
+の場合、ネットワークアドレスにはループバックインターフェイスの アドレス (IPv4 アドレスの場合は <B>INADDR_LOOPBACK</B> IPv6
+アドレスの場合は <B>IN6ADDR_LOOPBACK_INIT</B>)<B>が設定される。</B> これは同じホスト上で動作している接続相手と通信するような
+アプリケーションで用いられる。
+<P>
+
+<I>service</I> により、返される各アドレス構造体のポート番号が決まる。 この引数がサービス名 (<B><A HREF="../man5/services.5.html">services</A></B>(5)  参照)
+の場合、対応するポート番号に翻訳される。 この引数には 10 進数も指定することができ、 この場合にはバイナリへの変換だけが行われる。
+<I>service</I> が NULL の場合、返されるソケットアドレスのポート番号は 初期化されないままとなる。 <I>hints.ai_flags</I> に
+<B>AI_NUMERICSERV</B> が指定され、かつ <I>service</I> が NULL でない場合、 <I>service</I>
+は数値のポート番号を含む文字列を指し示さなければならない。 このフラグは、名前解決サービスが不要であることが分かっている場合に、
+サービスの起動を抑制するために用いられる。
+<P>
+
+<I>node</I> と <I>service</I> のどちらかは NULL にしてよいが、両方同時に NULL にしてはならない。
+<P>
+
+<B>getaddrinfo</B>()  関数は、 <I>addrinfo</I> 構造体のメモリー確保を行い、 <I>addrinfo</I>
+構造体のリンクリストを初期化し、 <I>res</I> にリストの先頭へのポインターを入れて返す。 このとき、各構造体のネットワークアドレスは <I>node</I>
+と <I>service</I> に一致し、 <I>hints</I> で課されたすべての制限を満たすものとなる。 リンクリストの要素は <I>ai_next</I>
+フィールドにより連結される。
+<P>
+
+リンクリストの <I>addrinfo</I> 構造体は複数個になることもあり、その理由はいくつかある。 ネットワークホストがマルチホームである、
+複数のプロトコルでアクセスできる (例えば <B>AF_INET</B> と <B>AF_INET6</B> の両方) 、 複数のソケット種別で同じサービスが利用できる
+(例えば、ひとつが <B>SOCK_STREM</B> アドレスで、もうひとつが <B>SOCK_DGRAM</B> アドレスである)、がある。
+通常は、アプリケーションは返された順序でアドレスを試すべきである。 <B>getaddrinfo</B>()  の中で使用される並べ替え関数は RFC&nbsp;3484 で定義されている。 特殊なシステムでは、 <I>/etc/gai.conf</I> を編集することで、この順序を微調整することができる
+(<I>/etc/gai.conf</I> は glibc 2.5 以降で利用できる)。
+<P>
+
+
+
+
+
+<I>hints.ai_flags</I> に <B>AI_CANONNAME</B> フラグが含まれている場合、返されるリストの最初の <I>addrinfo</I>
+構造体の <I>ai_canonname</I> フィールドはホストの公式な名前を指すように設定される。
+<P>
+
+返される各々の <I>addrinfo</I> 構造体の残りのフィールドは以下のように初期化される。
+<DL COMPACT>
+<DT>*<DD>
+<I>ai_family</I>, <I>ai_socktype</I>, <I>ai_protocol</I> フィールドはソケット生成パラメーターを返す
+(これらのフィールドの意味は <B><A HREF="../man2/socket.2.html">socket</A></B>(2)  の同じ名前の引数と同じである)。 例えば、 <I>ai_family</I> は <B>AF_INET</B>
+や <B>AF_INET6</B> を返し、 <I>ai_socktype</I> は <B>SOCK_DGRAM</B> や <B>SOCK_STREAM</B> を返し、
+<I>ai_protocol</I> はそのソケットのプロトコルを返す。
+<DT>*<DD>
+<I>ai_addr</I> フィールドにはソケットアドレスへのポインターが書き込まれ、 <I>ai_addrlen</I>
+フィールドにはソケットアドレスの長さがバイト単位で書き込まれる。
+</DL>
+<P>
+
+<I>hints.ai_flags</I> が <B>AI_ADDRCONFIG</B> を含む場合、 <I>res</I> が指すリストには、ローカルシステムに最低一つの
+IPv4 アドレスが設定されている場合のみ IPv4 アドレスが返され、 ローカルシステムに最低一つの IPv6 アドレスが設定されている場合にのみ
+IPv6 アドレスが返される。 なお、この場合には、ループバックアドレスは有効に設定されたアドレスとはみなされない。 このフラグは、例えば、IPv4
+だけのシステムで、 <B>getaddrinfo</B>() が必ず IPv6 ソケットアドレスを返さないことを保証するのに役立つ。 IPv4
+だけのシステムでは、IPv6 アドレスは <B><A HREF="../man2/connect.2.html">connect</A></B>(2) や <B><A HREF="../man2/bind.2.html">bind</A></B>(2) で必ず失敗することになる。
+<P>
+
+<I>hints.ai_flags</I> に <B>AI_V4MAPPED</B> が指定されていて、 <I>hints.ai_family</I> に
+<B>AF_INET6</B> が指定され、 マッチする IPv6 アドレスが見つからなかった場合、 <I>res</I> が指すリストには IPv4-mapped
+IPv6 アドレスが返される。 <I>hints.ai_flags</I> に <B>AI_V4MAPPED</B> と <B>AI_ALL</B>
+の両方が指定されている場合、 <I>res</I> が指すリストには IPv6 アドレスと IPv4-mapped IPv6 アドレスの 両方が返される。
+<B>AI_V4MAPPED</B> が指定されていない場合、 <B>AI_ALL</B> は無視される。
+<P>
+
+<B>freeaddrinfo</B>()  関数は、 リンクリスト <I>res</I> に対して動的に割り当てられたメモリーを解放する。
+<A NAME="lbAE">&nbsp;</A>
+<H3>国際化ドメイン名のための getaddrinfo() の拡張</H3>
+
+glibc 2.3.4 から、 <B>getaddrinfo</B>()  は入出力するホスト名を透過的に国際化ドメイン名 (IDN) 形式 (RFC 3490
+の <I>Internationalizing Domain Names in Applications (IDNA)</I> を参照のこと)
+と変換することを選択的に認めるように拡張されている。 4 つの新しいフラグが定義されている:
+<DL COMPACT>
+<DT><B>AI_IDN</B><DD>
+このフラグが指定されると、 <I>node</I> で与えられたノード名は必要があれば IDN 形式に変換される。
+ソース符号化形式は現在のロケールのものである。
+<DT><DD>
+
+
+
+
+
+
+入力名に非 ASCII 文字が含まれている場合、 IDN 符号化形式が使われる。 非 ASCII
+文字が含まれている(ピリオドで区切られる)部分ノード名は、 名前解決機能に渡される前に ASCII 互換符号化形式 (ACE) を使って 符号化される。
+<DT><B>AI_CANONIDN</B><DD>
+<B>AI_CANONNAME</B> が指定されている場合、 <B>getaddrinfo</B>()  は名前の検索に成功した後、 返された <I>addrinfo</I>
+構造体に対応するノードの正規名を返す。 返り値は名前解決機能から返された値の正確なコピーである。
+<DT><DD>
+
+
+
+
+<B>AI_CANONIDN</B> 名前が ACE で符号化されている場合、一つまたは複数の名前の構成要素の先頭に <I>xn--</I> を含んでいる。
+これらの構成要素を読み込み可能な形に変換するために、 <B>AI_CANONNAME</B> と共に <B>AI_CANONIDN</B> フラグを渡すことも出来る。
+返される文字列は現在のロケールの符号化形式で符号化されている。
+<DT><B>AI_IDN_ALLOW_UNASSIGNED</B>, <B>AI_IDN_USE_STD3_ASCII_RULES</B><DD>
+これらのフラグをセットすると、IDNA 処理で使用されるフラグ IDNA_ALLOW_UNASSIGNED (未割り当ての Unicode
+のコードポイントを許容) と IDNA_USE_STD3_ASCII_RULES (出力が STD3 準拠のホスト名かをチェックする)
+がそれぞれ有効になる。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>返り値</H2>
+
+
+
+
+
+
+
+
+
+
+
+
+<B>getaddrinfo</B>()  は成功すると 0 を返し、失敗すると以下の非 0 のエラーコードのいずれかを返す。
+<DL COMPACT>
+<DT><B>EAI_ADDRFAMILY</B><DD>
+
+指定されたネットワークホストには、 要求されたアドレスファミリーのネットワークアドレスがない。
+<DT><B>EAI_AGAIN</B><DD>
+ネームサーバーから一時的な失敗 (temporary failure)  を意味する返事が返された。後でもう一度試してみよ。
+<DT><B>EAI_BADFLAGS</B><DD>
+<I>hints.ai_flags</I> のフラグに不正なフラグが含まれている。または、 <I>hints.ai_flags</I> に
+<B>AI_CANONNAME</B> が含まれていて、かつ <I>name</I> が NULL であった。
+<DT><B>EAI_FAIL</B><DD>
+ネームサーバーから恒久的な失敗 (permanent failure)  を意味する返事が返された。
+<DT><B>EAI_FAMILY</B><DD>
+要求されたアドレスファミリーがサポートされていない。
+<DT><B>EAI_MEMORY</B><DD>
+メモリーが足りない。
+<DT><B>EAI_NODATA</B><DD>
+
+指定されたネットワークホストは存在するが、 ネットワークアドレスがひとつも定義されていない。
+<DT><B>EAI_NONAME</B><DD>
+<I>node</I> と <I>service</I> のどちらかが不明、または <I>node</I> と <I>service</I> の両方が NULL だった場合、または
+<B>AI_NUMERICSERV</B> が <I>hints.ai_flags</I> に指定されていて、 <I>hints.ai_flags</I> と
+<I>service</I> が数値のポート番号の文字列でない。
+<DT><B>EAI_SERVICE</B><DD>
+要求されたサービスは、要求されたソケットタイプでは利用できない。 他のソケットタイプでなら利用可能かもしれない。 このエラーが発生する例としては、
+<I>service</I> が &quot;shell&quot; (ストリームソケットでのみ利用できるサービス) で、 <I>hints.ai_protocol</I> に
+<B>IPPROTO_UDP</B> が指定されたり、 <I>hints.ai_socktype</I> に <B>SOCK_DGRAM</B> が指定されたりした場合がある。
+また、 <I>service</I> が NULL 以外で、 <I>hints.ai_socktype</I> に <B>SOCK_RAW</B>
+(サービスの考え方をサポートしていないソケット種別)  が指定された場合にも、このエラーが発生する。
+<DT><B>EAI_SOCKTYPE</B><DD>
+要求されたソケットタイプがサポートされていない。 このエラーが発生する例としては、 <I>hints.ai_socktype</I> と
+<I>hints.ai_protocol</I> が矛盾している場合 (例えば <I>hints.ai_socktype</I> が <B>SOCK_DGRAM</B> で
+<I>hints.ai_protocol</I> が <B>IPPROTO_TCP</B>)  がある。
+<DT><B>EAI_SYSTEM</B><DD>
+その他のシステムエラー。詳しくは <I>errno</I> を調べること。
+</DL>
+<P>
+
+<B>gai_strerror</B>()  関数を用いると、これらのエラーコードを人間に可読な文字列に変換できるので、 エラー報告に適するだろう。
+<A NAME="lbAG">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/etc/gai.conf</I>
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明は <B>attributes</B>(7) を参照のこと。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>getaddrinfo</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe env locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>freeaddrinfo</B>(),
+<B>gai_strerror</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.  <B>getaddrinfo</B>()  関数は RFC 2553 に記載されている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<B>getaddrinfo</B>()  は、IPv6 scope-ID を指定するために <I>address</I><B>%</B><I>scope-id</I>
+記法をサポートしている。
+<P>
+
+<B>AI_ADDRCONFIG</B>, <B>AI_ALL</B>, <B>AI_V4MAPPED</B> は glibc 2.3.3 以降で利用可能である。
+<B>AI_NUMERICSERV</B> は glibc 2.3.4 以降で利用可能である。
+<P>
+
+
+POSIX.1 によると、 <I>hints</I> に NULL が指定された場合、 <I>ai_flags</I> を 0 とみなすべきとされている。 GNU C
+ライブラリでは、この場合に、代わりに <I>ai_flags</I> を <B>(AI_V4MAPPED&nbsp;|&nbsp;AI_ADDRCONFIG)</B>
+とみなすようになっている。 この値の方が標準規格の改善になると考えられているからである。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+
+
+
+
+
+
+以下のプログラムは、 <B>getaddrinfo</B>(), <B>gai_strerror</B>(), <B>freeaddrinfo</B>(),
+<B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3)  の使い方を示したものである。 プログラムは UDP データグラムの echo サーバとクライアントである。
+<A NAME="lbAL">&nbsp;</A>
+<H3>サーバのプログラム</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt; 
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
+<P>
+#define BUF_SIZE 500
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;hints;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;*result,&nbsp;*rp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sfd,&nbsp;s;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_storage&nbsp;peer_addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;socklen_t&nbsp;peer_addr_len;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nread;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[BUF_SIZE];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;port\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;hints,&nbsp;0,&nbsp;sizeof(hints));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_family&nbsp;=&nbsp;AF_UNSPEC;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allow&nbsp;IPv4&nbsp;or&nbsp;IPv6&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_socktype&nbsp;=&nbsp;SOCK_DGRAM;&nbsp;/*&nbsp;Datagram&nbsp;socket&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_flags&nbsp;=&nbsp;AI_PASSIVE;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;For&nbsp;wildcard&nbsp;IP&nbsp;address&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_protocol&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Any&nbsp;protocol&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_canonname&nbsp;=&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_addr&nbsp;=&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_next&nbsp;=&nbsp;NULL;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;getaddrinfo(NULL,&nbsp;argv[1],&nbsp;&amp;hints,&nbsp;&amp;result);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getaddrinfo:&nbsp;%s\n&quot;,&nbsp;gai_strerror(s));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;getaddrinfo()&nbsp;returns&nbsp;a&nbsp;list&nbsp;of&nbsp;address&nbsp;structures.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Try&nbsp;each&nbsp;address&nbsp;until&nbsp;we&nbsp;successfully&nbsp;<A HREF="../man2/bind.2.html">bind</A>(2).
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;<A HREF="../man2/socket.2.html">socket</A>(2)&nbsp;(or&nbsp;<A HREF="../man2/bind.2.html">bind</A>(2))&nbsp;fails,&nbsp;we&nbsp;(close&nbsp;the&nbsp;socket
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and)&nbsp;try&nbsp;the&nbsp;next&nbsp;address.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(rp&nbsp;=&nbsp;result;&nbsp;rp&nbsp;!=&nbsp;NULL;&nbsp;rp&nbsp;=&nbsp;rp-&gt;ai_next)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sfd&nbsp;=&nbsp;socket(rp-&gt;ai_family,&nbsp;rp-&gt;ai_socktype,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rp-&gt;ai_protocol);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sfd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(bind(sfd,&nbsp;rp-&gt;ai_addr,&nbsp;rp-&gt;ai_addrlen)&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Success&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(sfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;freeaddrinfo(result);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;No&nbsp;longer&nbsp;needed&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(rp&nbsp;==&nbsp;NULL)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;No&nbsp;address&nbsp;succeeded&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Could&nbsp;not&nbsp;bind\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Read&nbsp;datagrams&nbsp;and&nbsp;echo&nbsp;them&nbsp;back&nbsp;to&nbsp;sender&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;peer_addr_len&nbsp;=&nbsp;sizeof(peer_addr);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nread&nbsp;=&nbsp;recvfrom(sfd,&nbsp;buf,&nbsp;BUF_SIZE,&nbsp;0,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;peer_addr,&nbsp;&amp;peer_addr_len);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nread&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Ignore&nbsp;failed&nbsp;request&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;host[NI_MAXHOST],&nbsp;service[NI_MAXSERV];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;getnameinfo((struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;peer_addr,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;peer_addr_len,&nbsp;host,&nbsp;NI_MAXHOST,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;service,&nbsp;NI_MAXSERV,&nbsp;NI_NUMERICSERV);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Received&nbsp;%zd&nbsp;bytes&nbsp;from&nbsp;%s:%s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nread,&nbsp;host,&nbsp;service);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getnameinfo:&nbsp;%s\n&quot;,&nbsp;gai_strerror(s));
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sendto(sfd,&nbsp;buf,&nbsp;nread,&nbsp;0,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;peer_addr,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;peer_addr_len)&nbsp;!=&nbsp;nread)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Error&nbsp;sending&nbsp;response\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>クライアントのプログラム</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+#define BUF_SIZE 500
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;hints;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;*result,&nbsp;*rp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sfd,&nbsp;s;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;len;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nread;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[BUF_SIZE];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;3)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;host&nbsp;port&nbsp;msg...\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Obtain&nbsp;address(es)&nbsp;matching&nbsp;host/port&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;hints,&nbsp;0,&nbsp;sizeof(hints));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_family&nbsp;=&nbsp;AF_UNSPEC;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allow&nbsp;IPv4&nbsp;or&nbsp;IPv6&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_socktype&nbsp;=&nbsp;SOCK_DGRAM;&nbsp;/*&nbsp;Datagram&nbsp;socket&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_flags&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_protocol&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Any&nbsp;protocol&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;getaddrinfo(argv[1],&nbsp;argv[2],&nbsp;&amp;hints,&nbsp;&amp;result);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getaddrinfo:&nbsp;%s\n&quot;,&nbsp;gai_strerror(s));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;getaddrinfo()&nbsp;returns&nbsp;a&nbsp;list&nbsp;of&nbsp;address&nbsp;structures.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Try&nbsp;each&nbsp;address&nbsp;until&nbsp;we&nbsp;successfully&nbsp;<A HREF="../man2/connect.2.html">connect</A>(2).
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;<A HREF="../man2/socket.2.html">socket</A>(2)&nbsp;(or&nbsp;<A HREF="../man2/connect.2.html">connect</A>(2))&nbsp;fails,&nbsp;we&nbsp;(close&nbsp;the&nbsp;socket
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and)&nbsp;try&nbsp;the&nbsp;next&nbsp;address.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(rp&nbsp;=&nbsp;result;&nbsp;rp&nbsp;!=&nbsp;NULL;&nbsp;rp&nbsp;=&nbsp;rp-&gt;ai_next)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sfd&nbsp;=&nbsp;socket(rp-&gt;ai_family,&nbsp;rp-&gt;ai_socktype,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rp-&gt;ai_protocol);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sfd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(connect(sfd,&nbsp;rp-&gt;ai_addr,&nbsp;rp-&gt;ai_addrlen)&nbsp;!=&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Success&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(sfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;freeaddrinfo(result);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;No&nbsp;longer&nbsp;needed&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(rp&nbsp;==&nbsp;NULL)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;No&nbsp;address&nbsp;succeeded&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Could&nbsp;not&nbsp;connect\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Send&nbsp;remaining&nbsp;command-line&nbsp;arguments&nbsp;as&nbsp;separate
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;datagrams,&nbsp;and&nbsp;read&nbsp;responses&nbsp;from&nbsp;server&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;3;&nbsp;j&nbsp;&lt;&nbsp;argc;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;len&nbsp;=&nbsp;strlen(argv[j])&nbsp;+&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;+1&nbsp;for&nbsp;terminating&nbsp;null&nbsp;byte&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;&gt;&nbsp;BUF_SIZE)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;Ignoring&nbsp;long&nbsp;message&nbsp;in&nbsp;argument&nbsp;%d\n&quot;,&nbsp;j);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(write(sfd,&nbsp;argv[j],&nbsp;len)&nbsp;!=&nbsp;len)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;partial/failed&nbsp;write\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nread&nbsp;=&nbsp;read(sfd,&nbsp;buf,&nbsp;BUF_SIZE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nread&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;read&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Received&nbsp;%zd&nbsp;bytes:&nbsp;%s\n&quot;,&nbsp;nread,&nbsp;buf);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+<B><A HREF="../man3/getaddrinfo_a.3.html">getaddrinfo_a</A></B>(3), <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3), <B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3), <B><A HREF="../man3/inet.3.html">inet</A></B>(3),
+<B><A HREF="../man5/gai.conf.5.html">gai.conf</A></B>(5), <B><A HREF="../man7/hostname.7.html">hostname</A></B>(7), <B><A HREF="../man7/ip.7.html">ip</A></B>(7)
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">国際化ドメイン名のための getaddrinfo() の拡張</A><DD>
+</DL>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DL>
+<DT><A HREF="#lbAL">サーバのプログラム</A><DD>
+<DT><A HREF="#lbAM">クライアントのプログラム</A><DD>
+</DL>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

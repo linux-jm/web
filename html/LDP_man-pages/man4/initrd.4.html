@@ -1,0 +1,314 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of INITRD</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>INITRD</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated:  2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man4/initrd.4">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+initrd - ブートローダーによって初期化された RAM ディスク
+<A NAME="lbAC">&nbsp;</A>
+<H2>設定</H2>
+
+<I>/dev/initrd</I> は、メジャー番号 1、マイナー番号 250 が割り当てられた 読み込み専用のブロックデバイスである。 普通、
+<I>/dev/initrd</I> の所有者は root:disk であり、モードは 400 (root のみが読み出し可能) である。 もし、Linux
+システムに作成済の <I>/dev/initrd</I> ファイルがなかった場合、以下のコマンドで作成することができる:
+<P>
+
+
+
+<BR>&nbsp;mknod&nbsp;-m&nbsp;400&nbsp;/dev/initrd&nbsp;b&nbsp;1&nbsp;250
+chown root:disk /dev/initrd
+
+
+<P>
+
+
+
+
+また、 <I>/dev/initrd</I> を使用するためには、 &quot;RAM disk&quot; と &quot;Initial RAM disk&quot; の両方の機能が Linux
+カーネルに直接組み込まれていなければならない (例えば、カーネルのコンパイル時の設定で <B>CONFIG_BLK_DEV_RAM=y</B> かつ
+<B>CONFIG_BLK_DEV_INITRD=y</B> とする)。 <I>/dev/initrd</I> を使用する場合には、RAM
+ディスクドライバをモジュールとして ロードすることはできない。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<I>/dev/initrd</I> スペシャルファイルは読み込み専用のブロックデバイスである。 このデバイスはカーネルが起動される前にブートローダー
+(boot loader)  によって初期化 (例えば、ロード) される RAM ディスクである。 その後、カーネルは <I>/dev/initrd</I>
+の内容を二段階のシステム起動 (two-phase system boot-up)  で利用することができる。
+<P>
+
+
+
+
+最初のブートアップ段階 (first boot-up phase) では、カーネルは (例えば、ブートローダーによって初期化された RAM disk
+である)  <I>/dev/initrd</I> の内容を初期ルートファイルシステム (root file-system) としてマウント して起動する。
+第二段階では初期ルートデバイスに含まれているものから、追加のドライ バやその他のモジュールがロードされる。
+追加のモジュールがロードされた後、新しいルートファイルシステム (すなわち、通常時のルートファイルシステム)  が別のデバイスからマウントされる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>ブートアップ作業</H3>
+
+<B>initrd</B> を利用した時は、システムは次のようにブートする:
+<DL COMPACT>
+<DT>1.<DD>
+ブートローダーはカーネルプログラムと <I>/dev/initrd</I> の内容をメモリーにロードする。
+<DT>2.<DD>
+カーネル起動時、カーネルは <I>/dev/initrd</I> デバイスの内容を展開 (uncompress) し、 <I>/dev/ram0</I>
+にコピーする。さらに、 <I>/dev/initrd</I> の使っていたメモリーを解放する。
+<DT>3.<DD>
+カーネルは <I>/dev/ram0</I> デバイスを初期のルートファイルシステムとして読み書き可能な形式でマウン トする。
+<DT>4.<DD>
+指示されたルートファイルシステムが初期ルートファイルシステム (例えば <I>/dev/ram0</I>)
+と同一の場合は、カーネルは普通のブートシーケンスのための最後のステップを 省略する。
+<DT>5.<DD>
+<I>/linuxrc</I> という実行可能なファイルが初期ルートファイルシステムに存在すれば、 <I>/linuxrc</I> を UID 0
+(すなわち、root) の権限で実行する。 (<I>/linuxrc</I> ファイルは実行可能パーミッションが与えられていなければならない。
+<I>/linuxrc</I> は正当な実行ファイルであればよく、シェルスクリプトでも構わない。)
+<DT>6.<DD>
+<I>/linuxrc</I> が実行されない、または、 <I>/linuxrc</I> の実行が終了した時は、通常時ルートファイルシステムがマウントされる。
+(<I>/linuxrc</I> を終了した時、何らかのファイルシステムが初期ルートファイルシステム上に マウントされている場合のカーネルの動作は
+<B>決められていない (不定である)</B>。 現在のカーネルがどのように動作するかは、 「注意」のセクションを参照のこと。)
+<DT>7.<DD>
+通常時ルートファイルシステムに ディレクトリ <I>/initrd</I> があれば、 <I>/dev/ram0</I> デバイスは <I>/</I> から
+<I>/initrd</I> に移動される。 <I>/initrd</I> ディレクトリが存在しない場合は、 <I>/dev/ram0</I> はアンマウントされる。
+(<I>/</I> が <I>/initrd</I> に移動された場合には、 <I>/dev/ram0</I> はアンマウントされず、その結果、 <I>/dev/ram0</I>
+で走り始めたプロセスはそのまま残る事ができる。 もし、 <I>/initrd</I> ディレクトリが通常時ルートファイルシステムに存在せず、
+<I>/linuxrc</I> が終了した時に <I>/dev/ram0</I> 上で実行された、なんらかのプロセスが走り続けていた場合の カーネルの動作は
+<B>決められていない (不定である)</B>。 現在のカーネルが、この時どのような動作をするかについては、 「注意」を参照のこと。)
+<DT>8.<DD>
+
+
+
+普通のブートシーケンス (例えば、 <I>/sbin/init</I> の起動) が通常時ルートファイルシステム上で行われる。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>オプション</H3>
+
+<B>initrd</B> を用いる場合に、カーネルのブートアップ操作に影響を与える ブートローダーオプションは次のようなものがある、
+<DL COMPACT>
+<DT><B>initrd=</B><I>filename</I><DD>
+<I>/dev/initrd</I> の内容としてロードするファイルを指定する。 <B>LOADLIN</B> では、これはコマンドラインオプションである。
+<B>LILO</B> では、 <B>LILO</B> の設定ファイル <I>/etc/lilo.config</I> 内でコマンドとして使用しなければならない。
+このオプションで指定されるファイルは、多くの場合 gzip 圧縮された ファイルシステムイメージである。
+<DT><BR>&nbsp;<B>noinitrd</B><DD>
+この起動オプションは二段階の起動操作を無効にする。 カーネルは <I>/dev/initrd</I>
+が初期化されていない場合と同様の、通常のブートアップ動作を行う。 このオプションを用いると、ブートローダーによってメモリー上にロードされた
+<I>/dev/initrd</I> の内容はそのまま保存される。 つまり、このオプションを用いることによって、 <I>/dev/initrd</I> の内容を
+(ブート以外の目的に) 利用することが可能になる。また、その内容は ファイルシステムイメージに限定されない。 しかし、 <I>/dev/initrd</I>
+デバイスは読みだしのみ可能であり、システムの起動後 1 度しか読み出す事 ができない。
+<DT><B>root=</B><I>device-name</I><DD>
+
+
+
+通常時ルートファイルシステムとして使われるデバイスを指定する。 <B>LOADLIN</B> では、これはコマンドラインオプションである。 <B>LILO</B>
+ではコマンドラインオプション、または、 <B>LILO</B> の設定ファイルである <I>/etc/lilo.config</I> のオプションラインとして使用する。
+このオプションで指定されるデバイスは、適切なルートファイルシステムとし てマウント可能なデバイスでなければならない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>通常時ルートファイルシステムの変更</H3>
+
+
+デフォルトでは、カーネルの設定 (例えば、 <B>rdev</B>(8)  を用いてカーネルファイル内にセットされたもの、または、コンパイル時にカー
+ネルファイル内に埋め込まれたもの)、 または、ブートローダーのオプション設定によって指定されたものが通常時ルー トファイルシステムとして使われる。
+NFS マウントされた通常時ルートファイルシステムを利用する場合、 <B>nfs_root_name</B> と <B>nfs_root_addrs</B>
+ブートオプションを使って NFS の設定を与えなければならない。 NFS マウントされたルート (ファイルシステム) についての
+より詳しい情報は、カーネルのドキュメントファイル <I>Documentation/filesystems/nfs/nfsroot.txt</I> (Linux
+2.6.33 より前は <I>Documentation/filesystems/nfsroot.txt</I>) を参照のこと。
+ルートファイルシステムの設定についてのより詳しい情報は、 <B>LILO</B> と <B>LOADLIN</B> のドキュメントも参照のこと。
+<P>
+
+また、 <I>/linuxrc</I> を用いる事によっても通常時ルートファイルシステムデバイスを変更すること ができる。 <I>/linuxrc</I>
+を用いて、通常時ルートデバイスを変更するためには、 <I>/proc</I> がマウントされていなければならない。 <I>/proc</I> をマウントした後で、
+<I>/linuxrc</I> は proc ファイル <I>/proc/sys/kernel/real-root-dev</I>,
+<I>/proc/sys/kernel/nfs-root-name</I>, <I>/proc/sys/kernel/nfs-root-addrs</I>
+に書き込みを行い、通常時ルートデバイスを変更する。 (NFS ではない) 物理的なルートデバイスの場合、 <I>/linuxrc</I>
+が新しいルートファイルシステムのデバイス番号を <I>/proc/sys/kernel/real-root-dev</I>
+に書き込むことで、ルートデバイスが変更される。 NFS ルートファイルシステムの場合、 <I>/linuxrc</I> が NFS の設定を
+<I>/proc/sys/kernel/nfs-root-name</I> と <I>/proc/sys/kernel/nfs-root-addrs</I>
+に書き込み、それから <I>/proc/sys/kernel/real-root-dev</I> に (疑似 NFS デバイスナンバーである) 0xff
+を書き込むことで、 ルートデバイスが変更される。 例えば、次のシェルコマンドラインにより、通常時ルートデバイスを <I>/dev/hdb1</I>
+に変更できるだろう:
+<P>
+
+
+
+<BR>&nbsp;echo&nbsp;0x365&nbsp;&gt;/proc/sys/kernel/real-root-dev
+
+
+<P>
+
+また、NFS の場合、次のようなシェルコマンドラインにより、 193.8.232.2 という IP アドレスを持つ &quot;idefix&quot; という名前の
+システムの、通常時ルートデバイスとして、 ローカルネットワークの 193.8.232.2 という IP アドレスを持つ NFS サーバの NFS
+ディレクトリ <I>/var/nfsroot</I> をマウントするように変更できる:
+<P>
+
+
+
+<BR>&nbsp;echo&nbsp;/var/nfsroot&nbsp;&gt;/proc/sys/kernel/nfs-root-name
+echo 193.8.232.2:193.8.232.7::255.255.255.0:idefix \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&gt;/proc/sys/kernel/nfs-root-addrs
+echo 255 &gt;/proc/sys/kernel/real-root-dev
+
+
+<P>
+
+
+
+
+
+
+<B>注意</B>: ルートファイルシステムを変更するために <I>/proc/sys/kernel/real-root-dev</I> を使うのは以前の方法である。
+ルートファイルシステムを変更する新しい方法についての情報は、 Linux カーネルソースに含まれる
+<I>Documentation/admin-guide/initrd.rst</I> (Linux 4.10 より前は
+<I>Documentation/initrd.txt</I>) ファイルを参照のこと。また、 <B><A HREF="../man2/pivot_root.2.html">pivot_root</A></B>(2) や
+<B><A HREF="../../util-linux/man8/pivot_root.8.html">pivot_root</A></B>(8) も参照のこと。
+<A NAME="lbAH">&nbsp;</A>
+<H3>使い方</H3>
+
+<B>initrd</B> が実装された主な目的は、システムインストール時に、モジュール化されたカー ネルの設定を可能にすることであった。
+<P>
+
+次のような流れのシステムインストールが可能になる:
+<DL COMPACT>
+<DT>1.<DD>
+ローダープログラムは、フロッピーやその他のメディアから、 最小限のカーネル (例えば、 <I>/dev/ram</I>, <I>/dev/initrd</I>,
+ext2 ファイルシステムのみのサポートしたカーネル) をブートし、 gzip 圧縮された初期ファイルシステムイメージを <I>/dev/initrd</I>
+にロードする。
+<DT>2.<DD>
+実行ファイル <I>/linuxrc</I> は、(1) 通常時ルートファイルシステムのマウントに何が必要か
+(すなわち、デバイスタイプ、デバイスドライバ、ファイルシステム)、 (2) 配布メディアに何が必要か (例えば、CD-ROM,
+ネットワーク、テープなど)  を決定する。決定は、ユーザーへの問い合わせ、自動検出、あるいはその両者の 方法を組み合わせて行われる。
+<DT>3.<DD>
+実行ファイル <I>/linuxrc</I> は、初期ルートファイルシステムから必要なモジュールをロードする。
+<DT>4.<DD>
+実行ファイル <I>/linuxrc</I> は、ルートファイルシステムを作成し、配置する (この段階では、通常時ルー
+トファイルシステムは完全なシステムである必要はない)。
+<DT>5.<DD>
+実行ファイル <I>/linuxrc</I> は、 <I>/proc/sys/kernel/real-root-dev</I> を設定し、 <I>/proc</I>、通常の
+root ファイルシステム、マウントされているその他のファイルシステムをアンマウントし、実行を終了する。
+<DT>6.<DD>
+次に、カーネルは、通常時ルートファイルシステムをマウントする。
+<DT>7.<DD>
+この段階で、ファイルシステムは全く変更が行われていない状態で、 アクセスできる状態になる。 また、ブートローダーをインストールすることができる。
+<DT>8.<DD>
+ブートローダーを設定し、システム起動時に使用されるカーネルモジュールのセッ トを含んだファイルシステムを <I>/dev/initrd</I> にロードする
+(例えば、 <I>/dev/ram0</I> デバイスの内容を修正し、アンマウントする。最後に、 <I>/dev/ram0</I> のイメージをファイルに書き出す)。
+<DT>9.<DD>
+これで、システムがブート可能になる。この後、さらにその他のインストール の作業を実行できる。
+</DL>
+<P>
+
+上記の動作での <I>/dev/initrd</I> の役割のキーポイントは、初期カーネルの選択や大きなジェネリックカーネル、
+カーネルの再構築なしに、通常のシステム操作で再利用可能な設定データを利 用することにある。
+<P>
+
+2 番目のケースは、一つの管理上のネットワークにおいて、異なる設定のハー ドウェアのシステム上で Linux を動作させるためのインストールを行う場合
+である。 このようなケースの場合、ごく小数のカーネルのセット (理想的にはたった一 つのカーネル)
+のみを利用し、システム固有の設定情報は可能な限り小さくす ることが望ましいであろう。 この場合、全ての必要なモジュールが入った共通ファイルを作成する。
+そして、 <I>/linuxrc</I> ファイル、または、 <I>/linuxrc</I> から実行されるファイルのみを異なったものにしておく。
+<P>
+
+3 番目のケースは、より便利な復旧用ディスクを作る場合である。 ルートファイルシステムのパーティションの位置といった情報は ブート時に必要ないため、
+<I>/dev/initrd</I> からロードされたシステムは、 必要な正常性チェックを行った後で、ユーザーへの問い合わせや自動検出 (もしくはその両方)
+を行うことができるようになる。
+<P>
+
+
+
+
+(他にもたくさん例があるだろうが) 最後の例としては、 <B>initrd</B> を利用すると、CD-ROM 上の Linux ディストリビューションを
+より簡単に CD-ROM からインストールすることができるだろう。 ディストリビューションは、 <B>LOADLIN</B>
+を使って、フロッピーを全く利用せずに CD-ROM から <I>/dev/initrd</I> を直接ロードすることができる。 また、 <B>LILO</B>
+ブートフロッピーを使ってブートを行い、 <I>/dev/initrd</I> を通して CD-ROM からより大きな RAM ディスクを起動することもできる。
+<A NAME="lbAI">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/dev/initrd</I>
+<BR>
+
+<I>/dev/ram0</I>
+<BR>
+
+<I>/linuxrc</I>
+<BR>
+
+
+
+
+<I>/initrd</I>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<DL COMPACT>
+<DT>1.<DD>
+現在のカーネルでは、 <I>/dev/ram0</I> が <I>/</I> から <I>/initrd</I>
+に移動された際に、移動時にマウントされていたファイルシステムは、 その後も継続的にアクセス可能である。しかし、 <I>/proc/mounts</I>
+のエントリーは更新されない。
+<DT>2.<DD>
+現在のカーネルでは、ディレクトリ <I>/initrd</I> が存在しない場合、 <I>/dev/ram0</I>
+を何らかのプロセスが利用していたり、何らかのファイルシステムが <I>/dev/ram0</I> 上にマウントされていると、 <I>/dev/ram0</I>
+は完全にはアンマウント「されない」。 <I>/dev/ram0</I> が、完全にアンマウント「されなければ」、 <I>/dev/ram0</I>
+はメモリー上に残ってしまうはずである。
+<DT>3.<DD>
+
+
+
+
+
+
+
+
+
+
+
+<I>/dev/initrd</I> の利用者は、上記の注意事項で述べた動作に依存しないようにすべきである。 これらの動作は Linux
+カーネルの将来のバージョンでは変更される かもしれないからだ。
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/chown.1.html">chown</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/mknod.1.html">mknod</A></B>(1), <B><A HREF="../man4/ram.4.html">ram</A></B>(4), <B>freeramdisk</B>(8), <B>rdev</B>(8)
+<P>
+
+
+Linux カーネルソースの <I>Documentation/admin-guide/initrd.rst</I> (Linux 4.10 より前では
+<I>Documentation/initrd.txt</I>)、 LILO のドキュメント、LOADLIN のドキュメント、SYSLINUX のドキュメント
+<A NAME="lbAL">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">設定</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">ブートアップ作業</A><DD>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">通常時ルートファイルシステムの変更</A><DD>
+<DT><A HREF="#lbAH">使い方</A><DD>
+</DL>
+<DT><A HREF="#lbAI">ファイル</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+<DT><A HREF="#lbAL">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

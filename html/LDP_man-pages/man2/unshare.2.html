@@ -1,0 +1,354 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UNSHARE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>UNSHARE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated:  2020-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/unshare.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+unshare - プロセス実行コンテキストの一部を分離する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>
+<B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
+
+<B>int unshare(int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>unshare</B>() を使うと、プロセス (やスレッド) は他のプロセス (やスレッド) と現在共有している
+実行コンテキストの一部を分離することができる。 実行コンテキストの一部、たとえばマウント名前空間 (mount namespace)
+などは、新しいプロセスを <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  または <B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)  を使って生成したときに、暗黙のうちに共有される。
+一方、仮想メモリーなどは、 <B><A HREF="../man2/clone.2.html">clone</A></B>(2) を使ってプロセスやスレッドを生成するときに、明示的に共有することを要求できる。
+<P>
+
+<B>unshare</B>()  の主な利用法は、プロセスが新しいプロセスを生成することなく、 共有実行コンテキストを制御することである。
+<P>
+
+<I>flags</I> 引数はビットマスクであり、 実行コンテキストのどの部分の共有を解除するかを表す。 この引数は、以下の定数の 0 個以上の OR
+で指定する:
+<DL COMPACT>
+<DT><B>CLONE_FILES</B><DD>
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)  <B>CLONE_FILES</B> フラグの効果を取り消す。 ファイルディスクリプターテーブルを共有させず、
+呼び出し元プロセスは他のプロセスとファイルディスクリプターを共有しなくなる。
+<DT><B>CLONE_FS</B><DD>
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)  <B>CLONE_FS</B> フラグの効果を取り消す。ファイルシステム属性を共有させず、呼び出し元プロセスは、ルートディレクトリ
+(<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2))、カレントディレクトリ (<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2))、 umask (<B><A HREF="../man2/umask.2.html">umask</A></B>(2))
+を他のプロセスと共有しなくなる。
+<DT><B>CLONE_NEWCGROUP</B> (Linux 4.6 以降)<DD>
+This flag has the same effect as the <B><A HREF="../man2/clone.2.html">clone</A></B>(2)  <B>CLONE_NEWCGROUP</B> flag.
+Unshare the cgroup namespace.  Use of <B>CLONE_NEWCGROUP</B> requires the
+<B>CAP_SYS_ADMIN</B> capability.
+<DT><B>CLONE_NEWIPC</B> (Linux 2.6.19 以降)<DD>
+このフラグは <B><A HREF="../man2/clone.2.html">clone</A></B>(2) <B>CLONE_NEWIPC</B> フラグと同じ効果を持つ。 IPC 名前空間を共有せず、呼び出し元プロセスは
+他のプロセスとは共有しない固有の IPC 名前空間のコピーを持つ。 このフラグを指定すると、 <B>CLONE_SYSVSEM</B>
+も暗黙のうちに指定される。 <B>CLONE_NEWIPC</B> を使用するには <B>CAP_SYS_ADMIN</B> ケーパビリティが必要である。
+<DT><B>CLONE_NEWNET</B> (Linux 2.6.24 以降)<DD>
+このフラグは <B><A HREF="../man2/clone.2.html">clone</A></B>(2) <B>CLONE_NEWNET</B> フラグと同じ効果を持つ。ネット
+ワーク名前空間を共有せず、呼び出し元プロセスは他のプロセスとは共有しな
+い固有のネットワーク名前空間のコピーを持つ。<B>CLONE_NEWNET</B> を使用する
+には <B>CAP_SYS_ADMIN</B> ケーパビリティが必要である。
+<DT><B>CLONE_NEWNS</B><DD>
+
+
+
+
+このフラグは <B><A HREF="../man2/clone.2.html">clone</A></B>(2) <B>CLONE_NEWNS</B> フラグと同じ効果を持つ。 マウント名前空間を共有せず、呼び出し元プロセスは
+他のプロセスとは共有しない固有の名前空間のコピーを持つ。 このフラグを指定すると、 <B>CLONE_FS</B> も暗黙のうちに指定される。
+<B>CLONE_NEWNS</B> を使用するには <B>CAP_SYS_ADMIN</B> ケーパビリティが必要である。詳細は
+<B>mount_namespaces</B>(7) を参照。
+<DT><B>CLONE_NEWPID</B> (Linux 3.8 以降)<DD>
+このフラグは <B><A HREF="../man2/clone.2.html">clone</A></B>(2) <B>CLONE_NEWPID</B> フラグと同じ効果を持つ。 PID 名前空間を共有しない。 呼び出し元プロセスは、
+すでに存在するどのプロセスとも共有されない新しい PID 名前空間を、 自身の子プロセス用に持つことになる。
+このプロセスにより作成される最初の子プロセスはプロセス ID 1 を持ち、 この新しい名前空間において <B>init</B>(1) の役割を持つとみなされる。
+<B>CLONE_NEWPID</B> を指定すると、自動的に <B>CLONE_THREAD</B> も指定されたものとみなされる。 <B>CLONE_NEWPID</B>
+を使用するには <B>CAP_SYS_ADMIN</B> ケーパビリティが必要である。 詳細な情報は <B><A HREF="../man7/pid_namespaces.7.html">pid_namespaces</A></B>(7) を参照。
+<DT><B>CLONE_NEWTIME</B> (Linux 5.6 以降)<DD>
+Unshare the time namespace, so that the calling process has a new time
+namespace for its children which is not shared with any previously existing
+process.  The calling process is <I>not</I> moved into the new namespace.  Use
+of <B>CLONE_NEWTIME</B> requires the <B>CAP_SYS_ADMIN</B> capability.  For further
+information, see <B>time_namespaces</B>(7).
+<DT><B>CLONE_NEWUSER</B> (Linux 3.8 以降)<DD>
+このフラグは <B><A HREF="../man2/clone.2.html">clone</A></B>(2) <B>CLONE_NEWUSER</B> フラグと同じ効果を持つ。 ユーザー名前空間を共有せず、
+呼び出し元プロセスはすでに存在するどのプロセスとも共有されない新しいユーザー名前空間に移動される。 <B>CLONE_NEWUSER</B> フラグを指定して
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2) で作成された子プロセスと同様に、 呼び出し元は新しい名前空間ですべてのケーパビリティを獲得する。
+<DT><DD>
+
+
+<B>CLONE_NEWUSER</B> を使うには、呼び出し元プロセスがスレッド化されていないことが必要である。 <B>CLONE_NEWUSER</B>
+を指定すると、自動的に <B>CLONE_THREAD</B> が指定されたものとみなされる。 Linux 3.9 以降では、 <B>CLONE_NEWUSER</B>
+が指定された場合 <B>CLONE_FS</B> も指定されたとみなされる。 <B>CLONE_NEWUSER</B> を使うには、呼び出し元プロセスのユーザー ID
+とグループ ID が、 呼び出した時点で、 呼び出し元プロセスのユーザー名前空間のユーザー ID とグループ ID にマッピングされている必要がある。
+<DT><DD>
+ユーザー名前空間の詳細は <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7) を参照。
+<DT><B>CLONE_NEWUTS</B> (Linux 2.6.19 以降)<DD>
+このフラグは <B><A HREF="../man2/clone.2.html">clone</A></B>(2) <B>CLONE_NEWUTS</B> フラグと同じ効果を持つ。 UTS
+IPC 名前空間を共有せず、呼び出し元プロセスは他のプロセスとは共有しない
+固有の UTS IPC 名前空間のコピーを持つ。 このフラグを指定すると、
+<B>CLONE_FS</B> も暗黙のうちに指定される。<B>CLONE_NEWUTS</B> を使用するには
+<B>CAP_SYS_ADMIN</B> ケーパビリティが必要である。
+<DT><B>CLONE_SYSVSEM</B> (Linux 2.6.26 以降)<DD>
+
+
+
+このフラグは <B><A HREF="../man2/clone.2.html">clone</A></B>(2) <B>CLONE_SYSVSEM</B> フラグの効果を逆転させる。 System&nbsp;V セマフォの調整値
+(<I>semadj</I>) を共有せず、 呼び出し元プロセスは他のプロセスとは共有されない新しい空の <I>semadj</I> リストを持つ。
+そのプロセスが、自分の現在の <I>semadj</I> リストへの参照を持つ最後のプロセスであれば、 このリストの調整値は対応するセマフォに適用される
+(<B><A HREF="../man2/semop.2.html">semop</A></B>(2) に説明がある通り)。
+</DL>
+<P>
+
+
+
+
+
+
+
+上記に加えて、 呼び出し元がシングルスレッドの場合 (すなわち別のプロセスやスレッドとアドレス空間を共有していない場合)、
+<B>CLONE_THREAD</B>, <B>CLONE_SIGHAND</B>, <B>CLONE_VM</B> を指定することができる。 この場合、
+これらのフラグは効果を持たない。 (<B>CLONE_THREAD</B> を指定すると自動的に <B>CLONE_VM</B> が指定されたとみなされ、
+<B>CLONE_VM</B> を指定すると自動的に <B>CLONE_SIGHAND</B> が指定されたとみなされる点に注意してほしい。)
+プロセスがマルチスレッドの場合、 これらのフラグを使用するとエラーとなる。
+<P>
+
+<I>flags</I> に 0 が指定された場合、 <B>unshare</B>()  は何も行わないので、
+呼び出し元プロセスの実行コンテキストは、何も変更されない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。 失敗した場合は -1 が返されて、 <I>errno</I> にはエラーを示す値が設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>flags</I> に不正なビットが指定された。
+<DT><B>EINVAL</B><DD>
+<B>CLONE_THREAD</B>, <B>CLONE_SIGHAND</B>, <B>CLONE_VM</B> が <I>flags</I> に指定されたが、
+呼び出したプロセスはマルチスレッドである。
+<DT><B>EINVAL</B><DD>
+<I>flags</I> に <B>CLONE_NEWIPC</B> が指定されたが、カーネルでオプション <B>CONFIG_SYSVIPC</B> と
+<B>CONFIG_IPC_NS</B> が有効になっていなかった。
+<DT><B>EINVAL</B><DD>
+<I>flags</I> に <B>CLONE_NEWNET</B> が指定されたが、カーネルでオプション <B>CONFIG_NET_NS</B> が有効になっていなかった。
+<DT><B>EINVAL</B><DD>
+<I>flags</I> に <B>CLONE_NEWPID</B> が指定されたが、カーネルでオプション <B>CONFIG_PID_NS</B> が有効になっていなかった。
+<DT><B>EINVAL</B><DD>
+<I>flags</I> に <B>CLONE_NEWUSER</B> が指定されたが、カーネルでオプション <B>CONFIG_USER_NS</B>
+が有効になっていなかった。
+<DT><B>EINVAL</B><DD>
+<I>flags</I> に <B>CLONE_NEWUTS</B> が指定されたが、カーネルでオプション <B>CONFIG_UTS_NS</B> が有効になっていなかった。
+<DT><B>EINVAL</B><DD>
+<B>CLONE_NEWPID</B> was specified in <I>flags</I>, but the process has previously
+called <B>unshare</B>()  with the <B>CLONE_NEWPID</B> flag.
+<DT><B>ENOMEM</B><DD>
+呼び出し元のコンテキストのうち共有を解除する必要がある部分をコピーするために、 十分なメモリーが確保できなかった。
+<DT><B>ENOSPC</B> (Linux 3.7 以降)<DD>
+
+<B>CLONE_NEWPID</B> was specified in flags, but the limit on the nesting depth
+of PID namespaces would have been exceeded; see <B><A HREF="../man7/pid_namespaces.7.html">pid_namespaces</A></B>(7).
+<DT><B>ENOSPC</B> (Linux 4.9 以降; 以前は <B>EUSERS</B>)<DD>
+<B>CLONE_NEWUSER</B> が <I>flags</I> に指定されており、 この呼び出しによりネストされたユーザー名前空間数の上限を超えてしまう。
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7) を参照。
+<DT><DD>
+From Linux 3.11 to Linux 4.8, the error diagnosed in this case was
+<B>EUSERS</B>.
+<DT><B>ENOSPC</B> (Linux 4.9 以降)<DD>
+One of the values in <I>flags</I> specified the creation of a new user
+namespace, but doing so would have caused the limit defined by the
+corresponding file in <I>/proc/sys/user</I> to be exceeded.  For further
+details, see <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
+<DT><B>EPERM</B><DD>
+呼び出し元プロセスはこの操作を行うのに必要な特権を持っていなかった。
+<DT><B>EPERM</B><DD>
+<B>CLONE_NEWUSER</B> が <I>flags</I> に指定されたが、 呼び出し元の実効ユーザー ID もしくは実効グループ ID
+が親名前空間にマッピングがない (<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7) 参照)。
+<DT><B>EPERM</B> (Linux 3.9 以降)<DD>
+
+
+<B>CLONE_NEWUSER</B> が <I>flags</I> に指定され、 呼び出し元が chroot された環境にいる (すなわち、呼び出し元の root
+ディレクトリが呼び出し元が属するマウント名前空間の root ディレクトリに一致しない)。
+<DT><BR>&nbsp;<B>EUSERS</B>&nbsp;(from&nbsp;Linux&nbsp;3.11&nbsp;to&nbsp;Linux&nbsp;4.8)<DD>
+<B>CLONE_NEWUSER</B> was specified in <I>flags</I>, and the limit on the number of
+nested user namespaces would be exceeded.  See the discussion of the
+<B>ENOSPC</B> error above.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>unshare</B>()  システムコールは Linux カーネル 2.6.16 で追加された。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+<B>unshare</B>()  システムコールは Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)  で新しいプロセスを生成したときに共有される全てのプロセス属性を、 <B>unshare</B>()
+によって共有の解除ができるわけではない。 特に、カーネル 3.8 時点では、 <B>unshare</B>()  に <B>CLONE_SIGHAND</B>,
+<B>CLONE_THREAD</B>, <B>CLONE_VM</B> の効果を取り消すためのフラグが実装されていない。
+これらの機能は、必要であれば将来追加されるかもしれない。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは <B>unshare</B>(1) コマンドの簡単な実装である。 このコマンドは、1 つ以上の名前空間の unshare を行ってから、
+コマンドライン引数で指定されたコマンドを実行する。 以下はこのプログラムの使用例である。 新しいマウント名前空間でシェルを実行し、
+元のシェルと新しいシェルが別のマウント名前空間にいることを確認している。
+<P>
+
+
+
+$ <B>readlink /proc/$$/ns/mnt</B>
+mnt:[4026531840]
+$ <B>sudo ./unshare -m /bin/bash</B>
+# <B>readlink /proc/$$/ns/mnt</B>
+mnt:[4026532325]
+
+
+<P>
+
+2 つの <B><A HREF="../../GNU_coreutils/man1/readlink.1.html">readlink</A></B>(1) コマンドの出力が違うことから、 2 つのシェルは異なるマウント名前空間にいることが分かる。
+<A NAME="lbAK">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+/* unshare.c
+<P>
+<BR>&nbsp;&nbsp;&nbsp;A&nbsp;simple&nbsp;implementation&nbsp;of&nbsp;the&nbsp;unshare(1)&nbsp;command:&nbsp;unshare
+<BR>&nbsp;&nbsp;&nbsp;namespaces&nbsp;and&nbsp;execute&nbsp;a&nbsp;command.
+*/
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+<P>
+/* A simple error-handling function: print an error message based
+<BR>&nbsp;&nbsp;&nbsp;on&nbsp;the&nbsp;value&nbsp;in&nbsp;'errno'&nbsp;and&nbsp;terminate&nbsp;the&nbsp;calling&nbsp;process&nbsp;*/
+<P>
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+static void
+usage(char *pname)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;[options]&nbsp;program&nbsp;[arg...]\n&quot;,&nbsp;pname);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Options&nbsp;can&nbsp;be:\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-C&nbsp;&nbsp;&nbsp;unshare&nbsp;cgroup&nbsp;namespace\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-i&nbsp;&nbsp;&nbsp;unshare&nbsp;IPC&nbsp;namespace\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-m&nbsp;&nbsp;&nbsp;unshare&nbsp;mount&nbsp;namespace\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-n&nbsp;&nbsp;&nbsp;unshare&nbsp;network&nbsp;namespace\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-p&nbsp;&nbsp;&nbsp;unshare&nbsp;PID&nbsp;namespace\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-t&nbsp;&nbsp;&nbsp;unshare&nbsp;time&nbsp;namespace\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-u&nbsp;&nbsp;&nbsp;unshare&nbsp;UTS&nbsp;namespace\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-U&nbsp;&nbsp;&nbsp;unshare&nbsp;user&nbsp;namespace\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;flags,&nbsp;opt;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;flags&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((opt&nbsp;=&nbsp;getopt(argc,&nbsp;argv,&nbsp;&quot;CimnptuU&quot;))&nbsp;!=&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(opt)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'C':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWCGROUP;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'i':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWIPC;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'m':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWNS;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'n':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWNET;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'p':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWPID;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'t':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWTIME;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'u':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWUTS;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'U':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWUSER;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:&nbsp;&nbsp;usage(argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(optind&nbsp;&gt;=&nbsp;argc)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;usage(argv[0]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(unshare(flags)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;unshare&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;execvp(argv[optind],&nbsp;&amp;argv[optind]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;execvp&quot;);
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>unshare</B>(1), <B><A HREF="../man2/clone.2.html">clone</A></B>(2), <B><A HREF="../man2/fork.2.html">fork</A></B>(2), <B><A HREF="../man2/kcmp.2.html">kcmp</A></B>(2), <B><A HREF="../man2/setns.2.html">setns</A></B>(2),
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2), <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
+<P>
+
+
+Linux カーネルソース内の <I>Documentation/userspace-api/unshare.rst</I> (Linux 4.12 より前では
+<I>Documentation/unshare.txt</I>)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
+<DL>
+<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:35 GMT, December 05, 2022
+</BODY>
+</HTML>

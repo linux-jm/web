@@ -1,0 +1,185 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_ATTR_SETGUARDSIZE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_ATTR_SETGUARDSIZE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/pthread_attr_setguardsize.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_attr_setguardsize, pthread_attr_getguardsize -
+スレッド属性オブジェクトの guard size 属性の設定/取得を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<B>int pthread_attr_setguardsize(pthread_attr_t *</B><I>attr</I><B>, size_t </B><I>guardsize</I><B>);</B>
+<B>int pthread_attr_getguardsize(const pthread_attr_t *</B><I>attr</I><B>,</B>
+<B>                              size_t *</B><I>guardsize</I><B>);</B>
+
+<I>-pthread</I> でコンパイルしてリンクする。
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pthread_attr_setguardsize</B>() 関数は、
+<I>attr</I> が参照するスレッド属性オブジェクトの guard size 属性を
+<I>guardsize</I> で指定された値に設定する。
+<P>
+
+<I>guardsize</I> が 0 より大きい場合、
+<I>attr</I> を使って新しく作成された各スレッドに対して、
+システムはスレッドのスタックの末尾に少なくとも <I>guardsize</I> バイトの
+追加領域を割り当てる。この追加領域はスタックに対するガード領域として
+機能する (ただし「バグ」の節も参照)。
+<P>
+
+<I>guardsize</I> が 0 の場合、
+<I>attr</I> を使って新しく作成されたスレッドはガード領域を持たない。
+<P>
+
+デフォルトの guard size はシステムのページサイズと同じである。
+<P>
+
+(<B><A HREF="../man3/pthread_attr_setstack.3.html">pthread_attr_setstack</A></B>(3) や <B><A HREF="../man3/pthread_attr_setstackaddr.3.html">pthread_attr_setstackaddr</A></B>(3)を使って)
+<I>attr</I> でスタックアドレス属性が設定されている場合には、呼び出し側がそ
+のスレッドのスタックを割り当てていることを意味するので、guard size 属性
+は無視される (すなわち、システムによるガード領域の作成は行われない)。
+この場合、スタックオーバーフローが起こらないように対処するのはアプリ
+ケーション側の責任となる (おそらく <B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2) を使って、割り当て
+られたスタックの最後に手動でガード領域を定義することになるだろう)。
+<P>
+
+<B>pthread_attr_getguardsize</B>() は、
+スレッド属性オブジェクト <I>attr</I> の guard size 属性を
+<I>guardsize</I> が指すバッファーに入れて返す。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、これらの関数は 0 を返す。
+エラーの場合、0 以外のエラー番号を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+POSIX.1 では、エラー <B>EINVAL</B> が
+<BR>&nbsp;<I>attr</I>&nbsp;か&nbsp;<I>guardsize</I>&nbsp;が無効な場合に対して規定されている。
+Linux では、これらの関数は常に成功する
+(ただし、移植性や将来も動作することを保証したいアプリケーションでは
+正のエラーの返り値を処理するようにすべきである)。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+これらの関数は glibc バージョン 2.1 以降で提供されている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>pthread_attr_setguardsize</B>(),
+<B>pthread_attr_getguardsize</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+ガード領域は、読み出し/書き込みアクセスが行われないように保護がかけ
+られた仮想メモリーページで構成で構成される。スレッドがスタックをガード
+領域までオーバーフローさせた場合、ほとんどのハードウェアアーキテクチャー
+では、スレッドに <B>SIGSEGV</B> シグナルが送られ、オーバーフローが発生した
+ことが通知される。ガード領域はページ境界から開始され、ガード領域の
+大きさはスレッド作成時に内部的にシステムのページサイズに切り上げられる
+(その場合も <B>pthread_attr_getguardsize</B>() では
+<B>pthread_attr_setguardsize</B>() で設定された guard size が返される)。
+<P>
+
+多くのスレッドを作成するアプリケーションで、かつ、スタックオーバーフロー
+が決して発生しないことが分かっている場合には、guard size を 0 に設定
+することで、メモリーを節約できることもある。
+<P>
+
+スレッドがスタックに大きなデータ構造を割り当てる場合には、
+スタックオーバーフローを検出するためには、デフォルトサイズよりも
+大きな guard size を選ぶ必要があるかもしれない。
+<A NAME="lbAK">&nbsp;</A>
+<H2>バグ</H2>
+
+glibc 2.8 の時点では、 NPTL スレッド実装ではガード領域はスタックサイズ
+で割り当てられる領域の中に含まれている。一方、POSIX.1 では、スタックの
+末尾に追加の領域を割り当てることが求められている。
+(このため、ガード領域が大きすぎて、
+実際のスタック用の場所がなくなってしまう場合、
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3) で <B>EINVAL</B> エラーが発生することになる。)
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+廃止予定の LinuxThreads 実装では、
+POSIX.1 で求められている通りの動作で、
+ガード領域がスタックの末尾に追加の領域が割り当てられる。
+<A NAME="lbAL">&nbsp;</A>
+<H2>例</H2>
+
+<B><A HREF="../man3/pthread_getattr_np.3.html">pthread_getattr_np</A></B>(3) を参照。
+<A NAME="lbAM">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2), <B><A HREF="../man3/pthread_attr_init.3.html">pthread_attr_init</A></B>(3),
+<B><A HREF="../man3/pthread_attr_setstack.3.html">pthread_attr_setstack</A></B>(3), <B><A HREF="../man3/pthread_attr_setstacksize.3.html">pthread_attr_setstacksize</A></B>(3),
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
+<A NAME="lbAN">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">バグ</A><DD>
+<DT><A HREF="#lbAL">例</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
+<DT><A HREF="#lbAN">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>

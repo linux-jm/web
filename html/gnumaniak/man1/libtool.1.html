@@ -1,0 +1,894 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LIBTOOL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>LIBTOOL</H1>
+Section: Misc. Reference Manual Pages (301)<BR>Updated: June 2002<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/gnumaniak/release/man1/libtool.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<B>libtool</B> - ライブラリのコンパイル・ビルド・
+インストール・アンインストールをする
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>libtool</B>
+
+[<B>-n</B>]
+
+[<B>--config</B>]
+
+[<B>--debug</B>]
+
+[<B>--dry-run</B>]
+
+[<B>--features</B>]
+
+[<B>--finish</B>]
+
+[<B>--mode=</B><I>MODE</I>]
+
+[<B>--quiet</B>]
+
+[<B>--silent</B>]
+
+[<I>MODE-ARGS...</I>]
+
+<P>
+リンクモード: [<B>-l</B><I>NAME</I>] [<B>-o </B><I> OUTPUT-FILE</I>] [<B>-L</B><I>LIBDIR</I>]
+[<B>-R </B><I>LIBDIR</I>]
+[<B>-all-static</B>]
+
+[<B>-avoid-version</B>]
+
+[<B>-dlopen </B><I>FILE</I>]
+
+[<B>-dlpreopen </B><I>FILE</I>]
+
+[<B>-export-dynamic</B>]
+
+[<B>--export-symbols </B><I>FILE</I>]
+
+[<B>--export-symbols </B><I>REGEX</I>]
+
+[<B>--module</B>]
+
+[<B>-no-undefined</B>]
+
+[<B>-release </B><I>RELEASE</I>]
+
+[<B>-rpath </B><I>LIBDIR</I>]
+
+[<B>-static</B>]
+
+[<B>-version-info </B><I>CURRENT</I>[<B>:</B><I>REVISION</I>[<B>:</B><I>AGE</I>]]
+
+<P>
+実行モード: [<B>-dlopen </B><I>FILE</I>]
+<P>
+<B>libtool</B> [<B>--features</B>] [<B>--help</B>] [<B>--version</B>]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>libtool</B>
+
+は静的ライブラリや共有ライブラリの
+コンパイル・リンク・インストール・アンインストールの複雑さを簡略化する。
+異なるプラットフォームそれぞれで、完全な機能を
+統一的なインターフェースを介して使用することができ、
+プラットフォーム固有の厄介な癖はプログラマーから隠蔽される。
+<P>
+<B>libtool</B>
+
+はコンパイル・実行・リンク・フィニッシュ・インストール・アンインストール
+という 6 つのモードで動作できる。
+<A NAME="lbAE">&nbsp;</A>
+<H3>コンパイルモード</H3>
+
+<B>コンパイル</B>モードの場合、<I>MODE-ARGS</I> は
+標準的なオブジェクトファイルを作成するために使われる
+コンパイラコマンドである。
+これらの引き数は C コンパイラの名前で始まり、
+オブジェクトファイルのみを作成するよう、
+<B>-c</B> コンパイラフラグを含んでいなければならない。
+<P>
+<B>libtool</B> は出力ファイルの名前を決定するとき、
+ソースファイル名からディレクトリ構成要素を取り除き、
+それから C 言語のソースコードの拡張子 `.c' をライブラリオブジェクトの
+拡張子 `.lo' に置き換えるという方法を用いる。
+<P>
+共有ライブラリがビルドされる場合、必要な PIC 作成フラグすべてが
+コンパイルコマンドに挿入される。
+<B>-static</B> オプションを指定すると、たとえ <B>--disable-static</B> が
+設定されていたとしても、<B>libtool</B> は `.o' ファイルを作成する。
+<BR>&nbsp;
+<B>-o</B> オプションが直接サポートされていないプラットフォーム上では
+(コンパイラによって作成されたオブジェクトファイルのロックと移動により)
+エミュレートを行う。
+したがって、以下のような通常の構文を使うことができる。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+lightside:% libtool cc -c foo/x.c -o foo/x.lo
+</PRE>
+
+</DL>
+
+<P>
+プラットフォームが <B>-c</B> と <B>-o</B> オプションをサポートしていない場合、
+古い `foo/x.o' を上書きせずに `foo/x.lo' をビルドすることはできない。
+この場合、`foo/x.o' が `foo/x.lo' の後に (再) ビルドされることを
+確かめておかなければならない。
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H3>リンクモード</H3>
+
+<B>リンク</B>モードはライブラリや実行可能プログラムを作成するために、
+オブジェクトファイル (ライブラリオブジェクトも含む) をリンクする。
+<P>
+<I>MODE-ARGS</I> は、C コンパイラがオブジェクトファイルから
+(<B>-o</B> フラグにより) 出力ファイル <I>OUTPUT-FILE</I> を作成する
+ときに使用するコマンドで構成される。
+以下のように、ファイルの形式は <I>OUTPUT-FILE</I> の拡張子に依存する。
+<DL COMPACT>
+<DT><B>.la</B>
+
+<DD>
+libtool ライブラリを作成する。
+このライブラリはライブラリオブジェクト (`.lo' ファイル) 
+のみからビルドされなければならない。
+<B>-rpath</B> オプションが必要である。
+現在の実装では、libtool ライブラリはアンインストールされた他の
+libtool ライブラリに依存できない。
+<DT><B>.a</B>
+
+<DD>
+<B><A HREF="../../GNU_binutils/man1/ar.1.html">ar</A></B>(1) と (あるいは) <B><A HREF="../../GNU_binutils/man1/ranlib.1.html">ranlib</A></B>(1) を使って
+標準ライブラリが作成される。
+<DT><B>.o .lo</B>
+
+<DD>
+(一般には `ld -r' を使うことで) 入力ファイルから
+再ロード可能なオブジェクトファイルが作成される。
+この手法は ``部分リンク'' と呼ばれることが多い。
+<DT><B>other</B>
+
+<DD>
+実行可能なプログラムが作成される。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>実行モード</H3>
+
+<B>実行</B>モードでは、ライブラリパスの環境変数が自動的にセットされ
+(そして <B>-dlopen</B> によって修正されて)、プログラムが実行される。
+<P>
+一番目の <I>MODE-ARGS</I> はプログラム名として扱われ、
+残りはプログラムの引数として扱われる。
+<P>
+引数の中のどれかが libtool 実行ファイルのラッパーであった場合、
+その引数はそれぞれ対応するアンインストール済みバイナリの名前に変換される。
+このとき、必要とされるライブラリディレクトリがライブラリパスに加えられる。
+<A NAME="lbAH">&nbsp;</A>
+<H3>インストールモード</H3>
+
+<B>インストール</B>モードでは、<I>MODE-ARGS</I> を
+<B><A HREF="../man1/cp.1.html">cp</A></B>(1) もしくは BSD-互換の <B><A HREF="../man1/install.1.html">install</A></B>(1) から始まる
+インストールコマンドとして解釈する。
+<P>
+残りの <B>MODE-ARGS</B> は、インストールコマンドの
+引数として解釈される。
+<P>
+このコマンドは実行され、
+インストール後の処理に必要な非特権コマンドもすべて完了する。
+<A NAME="lbAI">&nbsp;</A>
+<H3>フィニッシュモード</H3>
+
+<B>フィニッシュ</B>モードは、システム管理者の libtool ライブラリ
+インストール作業を補助し、 libtool ライブラリの探索およびユーザー
+プログラムへのリンクができるようにする。
+<P>
+<I>MODE-ARG</I> はライブラリディレクトリ名として解釈される。
+このコマンドを実行するのにはスーパーユーザー特権が必要なため、
+<B>--dry-run</B> オプションを使うと便利だろう。
+<A NAME="lbAJ">&nbsp;</A>
+<H3>アンインストールモード</H3>
+
+このモードではインストールされたライブラリ (もしくはファイル) を削除する。
+<P>
+一番目の  <I>MODE-ARG</I> はファイルを削除するためのプログラム名
+(一般には `/bin/rm') である。
+<P>
+残りの <I>MODE-ARGS</I> は削除プログラムの (`-' で始まる) フラグもしくは、
+削除するファイルの名前である。
+<A NAME="lbAK">&nbsp;</A>
+<H2>オプション</H2>
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>グローバルオプション</H3>
+
+<DL COMPACT>
+<DT><B>--config</B>
+
+<DD>
+libtool の設定変数を表示して終了する。
+<DT><B>--debug</B>
+
+<DD>
+シェルスクリプトのトレースモードを有効にして、標準出力に書き出す。
+<DT><B>-n, --dry-run</B>
+
+<DD>
+ファイルの作成・修正・削除を行わず、<B>libtool</B> によってどのような
+コマンドが実行されるかを表示する。
+<DT><B>--features</B>
+
+<DD>
+libtool の基本的な特徴を表示する。
+また静的ライブラリと共有ライブラリが有効になっているかを表示する。
+<DT><B>--finish</B>
+
+<DD>
+<B>--mode=finish</B> と同じ。
+<DT><B>--mode=</B><I>MODE</I>
+
+<DD>
+<I>MODE</I> をオペレーションモードとする。
+デフォルトでは、オペレーションモードは <I>MODE-ARGS</I> の内容から推論される。
+<I>MODE</I> を指定する場合、次のうちの一つでなければならない。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>compile</B>
+
+<DD>
+ソースファイルを libtool オブジェクトにコンパイルする。
+<DT><B>execute</B>
+
+<DD>
+他のプログラムがアンインストールされたプログラムやライブラリ
+(libtool により作成されたもの) を使うことができるように、
+ライブラリパスを自動的に設定する。
+<DT><B>finish</B>
+
+<DD>
+システムへの libtool ライブラリのインストールを完了する。
+<DT><B>install</B>
+
+<DD>
+ライブラリや実行ファイルをインストールする。
+<DT><B>link</B>
+
+<DD>
+ライブラリや実行ファイルを作成する。
+<DT><B>uninstall</B>
+
+<DD>
+ライブラリや実行ファイルを削除する。
+</DL>
+</DL>
+
+<DT><B>--features</B>
+
+<DD>
+libtool の設定情報を表示して終了する。
+このオプションを使うと、パッケージは共有ライブラリと静的ライブラリの
+どちらを作るか決定できる。
+<DT><B>--help</B>
+
+<DD>
+使用法のメッセージを標準出力に表示して、正常終了する。
+<B>--mode=</B><I>MODE</I> が指定されている場合は、
+指定されたモードについてのヘルプが表示される。
+<DT><B>--version</B>
+
+<DD>
+バージョン情報を標準出力に表示して、正常終了する。
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H3>リンクモードオプション</H3>
+
+<DL COMPACT>
+<DT><B>-l</B><I>NAME</I>
+
+<DD>
+<I>OUTPUT-FILE</I> はインストール済みの
+ライブラリ <B>lib</B><I>NAME</I> を必要とする。
+このオプションは <I>OUTPUT-FILE</I> が実行ファイルでなくても必要とされる。
+<DT><B>-o </B><I>OUTPUT-FILE</I>
+
+<DD>
+指定したオブジェクトとライブラリから <I>OUTPUT-FILE</I> を作成する。
+<DT><B>-L</B><I>LIBDIR</I>
+
+<DD>
+必要なインストール済みライブラリを <I>LIBDIR</I> から検索する。
+<DT><B>-R </B><I>LIBDIR</I>
+
+<DD>
+<I>OUTPUT-FILE</I> が実行ファイルの場合は <I>LIBDIR</I> を実行時パスに加える。
+<I>OUTPUT-FILE</I> がライブラリの場合は 
+`-RLIBDIR' を <B>DEPENDENCY_LIBS</B> に加える。
+これは、そのライブラリが実行ファイルにリンクされるときに必ず
+<I>LIBDIR</I> を実行ファイルの実行時パスに加えるためである。
+<DT><B>-all-static</B>
+
+<DD>
+<I>OUTPUT-FILE</I> がプログラムの場合は、
+そのプログラムをどの共有ライブラリともリンクさせない。
+<I>OUTPUT-FILE</I> がライブラリの場合は静的ライブラリを作成するのみである。
+<DT><B>-avoid-version</B>
+
+<DD>
+どのような種類のバージョニングも行わない
+(バージョン情報は組み込まれず、シンボリックリンクも作られない)。
+このオプションはバージョニングを必要とするプラットホーム上では働かない。
+<DT><B>-dlopen </B><I>FILE</I>
+
+<DD>
+ホストプラットホーム上でネイティブな
+ダイナミックロードがサポートされていない場合や、
+実行ファイルが <B>-static</B> や <B>-all-static</B> を
+使ってリンクされる場合は、<B>-dlpreopen </B><I>FILE</I> と同じ。
+それ以外の場合は何も影響を及ぼさない。
+<P>
+<I>FILE</I> が `実行ファイル自身' であった場合、
+libtool は実行ファイルが <B>-export-dynamic</B> や
+<B>-dlpreopen</B> を使って自らを <B><A HREF="../../0MultiFileIdx/man3/dlopen.3.html">dlopen</A></B>(3) できるかを確かめる。
+<DT><B>-dlpreopen </B><I>FILE</I>
+
+<DD>
+<I>FILE</I> を出力プログラムにリンクし、そのシンボルを
+<B>LT_PRELOADED_SYMBOLS</B> に加える。
+<P>
+<I>FILE</I> が `出力プログラム自身' であった場合、
+出力プログラム自身のシンボルが <B>LT_PRELOADED_SYMBOLS</B> に加えられる。
+<DT><B>-export-dynamic</B>
+
+<DD>
+<I>OUTPUT-FILE</I> のシンボルを <B><A HREF="../../ld.so/man3/dlsym.3.html">dlsym</A></B>(3) を使って解決できるようにする。
+<DT><B>-export-symbols </B><I>FILE</I>
+
+<DD>
+これをサポートしているプラットホーム上では、
+リンカは <I>FILE</I> にリストされているシンボルのみをエクスポートする。
+<I>FILE</I> の名前は `.sym' で終っていなければならず、
+1 行に 1 つのシンボルを含んでいなければならない。
+デフォルトではすべてのシンボルがエクスポートされる。
+<DT><B>-export-symbols-regex </B><I>REGEX</I>
+
+<DD>
+<I>REGEX</I> <B><A HREF="../../LDP_man-pages/man7/regex.7.html">regex</A></B>(7) にマッチするシンボルのみがエクスポートされる以外は
+<B>-export-symbols</B> と同じ。
+<DT><B>-module</B>
+
+<DD>
+ダイナミックロードできるライブラリを作成する。
+モジュール名は `lib' で始まる必要はないが、
+名前の衝突を避けるため `libname' と `name' はパッケージの中で
+同時に使用すべきではない。
+<DT><B>-no-undefined</B>
+
+<DD>
+<I>OUTPUT-FILE</I> が他のライブラリに依存していないことを宣言する。
+他のライブラリに依存する共有ライブラリを作れないプラットホームもある。
+<DT><B>-release </B><I>RELEASE</I>
+
+<DD>
+ライブラリがパッケージのリリース <I>RELEASE</I> で作られたことを指定する。
+これによって、ユーザーはどのバージョンが他のものより新しいかを
+簡単に判断できる。
+このフラグを使うと、パッケージの各リリースのいかなるペアの間にも
+バイナリ互換はなくなることに注意せよ。
+バイナリ互換にしたい場合は、<B>-version-info</B> フラグを使うこと。
+<DT><B>-rpath </B><I>LIBDIR</I>
+
+<DD>
+<I>OUTPUT-FILE</I> がライブラリの場合、
+最終的に <I>LIBDIR</I> にインストールされる。
+<DT><B>-static</B>
+
+<DD>
+<I>OUTPUT-FILE</I> がプログラムの場合、
+アンインストールされた共有 libtool ライブラリはリンクしない。
+<I>OUTPUT-FILE</I> がライブラリの場合、
+静的ライブラリを作成するのみである。
+<DT><B>-version-info </B><I>CURRENT</I>[<B>:</B><I>REVISION</I>[<B>:</B><I>AGE</I>]]
+
+<DD>
+<I>OUTPUT-FILE</I> が libtool ライブラリであるとき、
+ライブラリをビルドするためにインターフェースバージョン情報
+<I>CURRENT</I>, <I>REVISION</I>, <I>AGE</I> を使う。
+パッケージのリリース情報を指定するために、
+このオプションを使っては<B>いけない</B>。
+むしろ <B>-release</B> フラグを参照すべきである。
+</DL>
+<A NAME="lbAN">&nbsp;</A>
+<H3>実行モードオプション</H3>
+
+<DL COMPACT>
+<DT><B>-dlopen </B><I>FILE</I>
+
+<DD>
+<I>FILE</I> を含んでいるディレクトリをライブラリパスに加える。
+</DL>
+<A NAME="lbAO">&nbsp;</A>
+<H2>バージョニング</H2>
+
+<B>libtool</B>
+
+は共有ライブラリ用に独自のバージョニングシステムを持っている。
+このシステムを使いたい場合は、<B>-version-info</B> オプションを
+使わなければならない。
+このオプションは
+<I>CURRENT</I>[<B>:</B><I>REVISION</I>[<B>:</B><I>AGE</I>]]
+という形式の引数を受け付ける。
+<DL COMPACT>
+<DT><I>CURRENT</I>
+
+<DD>
+インターフェースのバージョン。インターフェースとは
+&quot;外側&quot; の世界に見えるすべてのもので、
+変数・関数プロトタイプ・出力形式などである。
+<DT><I>REVISION</I>
+
+<DD>
+<I>CURRENT</I> からの相対値で与える実装のバージョン。
+<DT><I>AGE</I>
+
+<DD>
+このライブラリが実装している最新のインターフェースと
+最古のインターフェースとの違い。
+言い替えると、このライブラリは `<I>CURRENT - AGE</I>' から
+<I>CURRENT</I> までの範囲のすべてのインターフェース番号を実装していて、
+このバージョンの範囲にあるライブラリに対して過去にリンクされた
+すべての実行ファイルは、このライブラリを使うことができる、
+ということである。
+</DL>
+<P>
+
+<I>REVISION</I> と <I>AGE</I> が省略された場合のデフォルトは 0 である。
+<I>AGE</I> は <I>CURRENT</I> インターフェース番号より小さいか
+等しくなければならないことにも注意すること。
+2 つのライブラリが同一の <I>CURRENT</I> 番号と <I>AGE</I> 番号であるとき、
+ダイナミックリンカは大きい <I>REVISION</I> 番号のライブラリを選択する。
+<P>
+バージョニングのガイドライン：
+<P>
+<B>&bull;&nbsp;1.</B> それぞれの libtool ライブラリについて
+`0:0:0' というバージョン情報から始めなさい。
+<P>
+<B>&bull;&nbsp;2. </B> バージョン情報を更新するのは
+ソフトウェアの公開リリースの直前だけにしなさい。
+頻繁な更新は不必要であり、現在のインターフェース番号が大きくなるのを
+早くするだけである。
+<P>
+<B>&bull;&nbsp;3.</B> 前回の更新からライブラリのソースコードが
+すっかり変更されたなら、<I>REVISION</I> を増加させなさい
+(<I>C</I><B>:</B><I>R</I><B>:</B><I>A</I> が <I>C</I><B>:</B><I>R+1</I><B>:</B><I>A</I> になる)。
+<P>
+<B>&bull;&nbsp;4.</B> 前回の更新からインターフェースが
+追加・削除・変更されたなら、<I>CURRENT</I> を増加させ、<I>REVISION</I> を
+0 にしなさい。
+<P>
+<B>&bull;&nbsp;5.</B> 前回の公開リリースからインターフェースが
+追加されたなら、<I>AGE</I> を増加させなさい。
+<P>
+<B>&bull;&nbsp;6.</B> 前回の公開リリースからインターフェースが
+削除されたなら、<I>AGE</I> を 0 にしなさい。
+<P>
+パッケージバージョンをライブラリ名にエンコードしたい場合や、
+<B>libtool</B> のバージョニングと衝突せずに
+他のバージョニングシステムを使いたい場合は、<B>-release</B> を使うこと。
+たとえば binutils-2.7.0.2 に付属する `libbfd.so.2.7.0.2' は
+<B>libtool</B> のバージョニングと明らかに衝突する。
+`-release 2.7.0' を使えば `libbfd-2.7.0.so.0.0.0' で終ることができる。
+<P>
+異なる <I>CURRENT</I> バージョンのライブラリや
+異なる <B>-release</B> のライブラリはバイナリ非互換であろう。
+<A NAME="lbAP">&nbsp;</A>
+<H2>インターフェースの設計</H2>
+
+良いライブラリインターフェースを書くには、
+練習とライブラリが解決しようとしている問題に対する徹底的な理解が必要である。
+良いインターフェースを設計すれば、
+頻繁に変更する必要はなく、ドキュメントを更新し続ける必要もなく、
+クライアントがライブラリの使い方を再び勉強し続ける必要もないだろう。
+<P>
+設計に対するガイドラインをいくつか示す：
+<P>
+<B>&bull;</B> 前もって計画を立てる
+<BR>
+
+エントリーポイントを頻繁に削除する必要がないように、
+それぞれのインターフェースを最小にするようにしなさい。
+<P>
+<B>&bull;</B> インターフェースの変更を避ける
+<BR>
+
+もしインターフェースを再設計する必要があるならば、
+クライアントが既に存在するコードを書き直す必要がないように、
+互換性のある関数も残しておくようにしなさい。
+<P>
+<B>&bull;</B> 見えないデータタイプを使う
+<BR>
+
+クライアントがアクセスする必要のあるデータタイプの定義は少ない程良い。
+可能ならば、関数がジェネリックポインタ
+(内部データタイプにキャストすることが可能) を
+受け付けるように設計しなさい。
+クライアントに直接データを操作させるよりは、
+アクセス関数を提供しなさい。
+このようするとインターフェースを変更することなく
+データ構造を自由に変更できる。
+<P>
+<B>&bull;</B> ヘッダファイルを使う
+<BR>
+
+それぞれのライブラリについて大域関数・大域変数をヘッダファイルに書いて
+ライブラリのソースファイルにインクルードしておけば、
+気づかずにインターフェースの変更をしてしまっても
+コンパイラが知らせてくれるだろう。
+<P>
+<B>&bull;</B> 可能なときはいつでも<B>静的</B> (もしくは等価なもの) を使う
+<BR>
+
+ライブラリに大域関数が少ないほど、ライブラリは柔軟に変更できる。
+<B>静的な</B>関数・変数は、クライアントがアクセスできないから
+インターフェースの変更とはならないので、好きなだけ変更することができる。
+<A NAME="lbAQ">&nbsp;</A>
+<H2>AUTOMAKE ルールの書き方</H2>
+
+<B>libtool</B> ライブラリのサポートは、
+<B>LTLIBRARIES</B> プライマリのもとに実装されている。
+<P>
+プログラムを <B>libtool</B> ライブラリにリンクするためには、
+ライブラリ名を指定する <I>program</I><B>_LDADD</B> 変数を使うこと。
+libtool に <B>-static</B> といったオプションを渡すためには
+<I>program</I><B>_LDFLAGS</B> を使うと良い。
+<P>
+<B>libtool</B> ライブラリをビルドするには、
+ライブラリ名を指定する <I>lib</I><B>_LTLIBRARIES</B> を使うこと。
+<B>そして、たとえば、</B><B>libtool</B> に <B>-version-info</B> オプションを
+渡すには <I>lib</I><B>_LDFLAGS</B> を使うこと。
+次のセクションに例がある。
+<P>
+作業をするためには、パッケージにいくつかの基本的なファイルを入れたり、
+<B>libtoolize</B> を使う必要があるだろう。
+<B>libtool</B> スクリプトを直接インクルードしてはならない。
+<DL COMPACT>
+<DT><B>config.guess</B>
+
+<DD>
+標準システム名を推測しようとする。
+<DT><B>config.sub</B>
+
+<DD>
+標準システム名を確認するサブルーチンスクリプト。
+<DT><B>ltconfig</B>
+
+<DD>
+指示されたシステムについて libtool スクリプトを作成する。
+<DT><B>ltmain.sh</B>
+
+<DD>
+基本的な libtool の機能を実装した一般的なスクリプト。
+</DL>
+<A NAME="lbAR">&nbsp;</A>
+<H2>モジュールのダイナミックロード</H2>
+
+<B>libtool</B> のダイナミックロード機能を使うためには、
+<B>configure.in</B> のなかで <B>AM_PROG_LIBTOOL</B> より前に
+マクロ <B>AC_LIBTOOL_DLOPEN</B> を使わなければならない。
+さもなければ、<B>libtool</B> はそのプラットホームには
+ダイナミックロードのメカニズムがないと仮定して、
+これをシミュレートしようとする。
+このシミュレーション機能を使うためには、
+実行ファイルをリンクするときに
+<B>-dlopen</B> と <B>-dlreopen</B> フラグを使い、
+ダイナミックロードするオブジェクトを宣言しなければならない。
+<B>libtool</B> はオブジェクトファイルをリンクし、
+以下のような実行ファイルのシンボルテーブルを保持した
+データ構造を作成する。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+struct lt_dlsymlist { const char *NAME; lt_ptr_t ADDRESS; }
+</PRE>
+
+</DL>
+
+<P>
+<I>NAME</I> には、&quot;fprintf&quot; のような、シンボル名のアスキー文字列が保持される。
+<I>ADDRESS</I> は、&amp;fprintf のような、
+適切なオブジェクトへのジェネリックポインタである。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+const lt_dlsymlist * lt_preloaded_symbols;
+</PRE>
+
+</DL>
+
+<P>
+この配列は実行ファイルにリンクされている
+プリロードされたシンボルを表す。
+<B>-dlpreloaded</B> されたファイルのそれぞれについて要素が存在し、
+ファイル名 <I>NAME</I> と `<B>0</B>' というアドレス <I>ADDRESS</I>、
+およびこのファイルからエクスポートされたすべてのシンボルを保持する。
+実行ファイル自身については、特別な名前 <B>@PROGRAM@</B> が使われる。
+最後のエレメントは <I>NAME</I> と `<B>0</B>' という <I>ADDRESS</I> を持つ。
+<P>
+ダイナミックロードされるライブラリもしくは、
+モジュールをダイナミックロードしようとする実行ファイルをリンクするときは、
+<B>-module</B> フラグを指定するのを忘れないこと。
+<P>
+ダイナミックロードしようとしているライブラリの外部シンボルを、
+実行ファイルが参照する必要がある場合は、実行ファイルをリンクするときに
+<B>-export-dynamic</B> を使用すること。
+<P>
+ライブラリ名にバリエーションがあるので、
+プログラムはどれがダイナミックロードするための
+正しいファイルであるのかを決定する必要がある。
+直接的な方法は `<B>.la</B>' ファイルを調べて、
+<BR>&nbsp;<B>dlname='</B><I>DLNAME</I><B>'</B>&nbsp;という行を探すことである。
+この行はライブラリをダイナミックロードできない場合は空で、
+そうでない場合はライブラリの名前が入っている。
+<P>
+<A NAME="lbAS">&nbsp;</A>
+<H2>例</H2>
+
+ソースファイル `foo.c', `bar.c' から `libbaz' とよばれるライブラリを作成し、
+次に `a' という名前の実行ファイルを作成するために `a.c' を `libbaz' と
+リンクしようといる。
+<A NAME="lbAT">&nbsp;</A>
+<H3>ライブラリの作成</H3>
+
+<B>&bull;</B> コンパイルモード：Linux は共有ライブラリをサポートしているので、
+<B>libtool</B> は 2 つのオブジェクトファイル、
+一つは静的ライブラリ (`foo.lo')、
+もう一つは共有ライブラリ (`foo.o') を作成する。
+ソースファイル自身へのリンクをコンパイラにやらせたくないので、
+<B>-c</B> オプションは必須である。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+lightside:~% libtool cc -c foo.c
+cc -c -fPIC -DPIC foo.c -o .libs/foo.lo
+cc -c foo.c &gt;/dev/null 2&gt;&amp;1
+lightside:~% libtool cc -c bar.c
+cc -c -fPIC -DPIC bar.c -o .libs/bar.lo
+cc -c bar.c &gt;/dev/null 2&gt;&amp;1
+</PRE>
+
+</DL>
+
+<P>
+<B>&bull;</B> リンクモード、静的ライブラリのみをビルドする：
+以前に作成された `.o' というオブジェクトファイルを指定している。
+<B>-o</B> オプションは必須である。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+lightside:~% libtool cc -o libbaz.a foo.o bar.o
+ar cru libbaz.a foo.o bar.o
+ranlib libbaz.a
+</PRE>
+
+</DL>
+
+<P>
+<B>&bull;</B> リンクモード、静的ライブラリと共有ライブラリをビルドする：
+`.lo' というオブジェクトファイルを指定する。
+必須オプションは、前と同じ <B>-o</B> と
+ライブラリのインストールされるディレクトリを指示する <B>-rpath</B> である。
+ライブラリは `.libs' ディレクトリに作成される。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+lightside:~% libtool cc -o libbaz.la foo.lo bar.lo \
+    -rpath /usr/local/lib
+cc -shared -Wl,-soname -Wl,libbaz.so.0 \
+    -o .libs/libbaz.so.0.0.0 foo.lo bar.lo
+(cd .libs &amp;&amp; ln -s libbaz.so.0.0.0 libbaz.so.0)
+(cd .libs &amp;&amp; ln -s libbaz.so.0.0.0 libbaz.so)
+ar cru .libs/libbaz.a foo.o bar.o
+ranlib .libs/libbaz.a
+creating libbaz.la
+(cd .libs &amp;&amp; ln -s ../libbaz.la libbaz.la)
+</PRE>
+
+</DL>
+
+<P>
+<B>&bull;</B> インストールモード：ライブラリを指定したパス
+(この場合は `/usr/local/lib') にインストールするために
+必要なコマンドを実行する。
+このモードでは共有ライブラリ (`.so') と静的ライブラリ (`.a') を
+インストールするとともに、アンインストールと情報提供の目的で
+libtool ファイル (`.la') がインストールされる。
+<P>
+このモードはふつう特権ユーザーとして実行されるので、
+<B>-n</B> または <B>--dry-run</B> オプションを
+指定して結果をチェックしておくとよい。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+lightside:/tmp% libtool -n install libbaz.la /usr/local/lib
+install .libs/libbaz.so.0.0.0 /usr/local/lib/libbaz.so.0.0.0
+(cd /usr/local/lib &amp;&amp; ln -s libbaz.so.0.0.0 libbaz.so.0)
+(cd /usr/local/lib &amp;&amp; ln -s libbaz.so.0.0.0 libbaz.so)
+install libbaz.la /usr/local/lib/libbaz.la
+install .libs/libbaz.a /usr/local/lib/libbaz.a
+ranlib /usr/local/lib/libbaz.a
+chmod 644 /usr/local/lib/libbaz.a
+</PRE>
+
+</DL>
+
+<P>
+<A NAME="lbAU">&nbsp;</A>
+<H3>実行ファイルの作成</H3>
+
+最初に `a.c' をコンパイルする
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+cc -c a.c
+</PRE>
+
+</DL>
+
+<P>
+ライブラリが既にインストールされている場合には、
+普段のように続行することができる
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+cc a.c -lbaz -L/usr/local/lib
+</PRE>
+
+</DL>
+
+<P>
+ライブラリがまだインストールされていない場合は、
+実行ファイルのリンク・デバッグ・インストールに
+<B>libtool</B> を使用しなければならない
+(一度ライブラリがインストールされるまで、これはつづく)。
+実際の実行ファイルはインストールされるまで `.libs' 内にあり、
+作業ディレクトリにある実行ファイルは単なるラッパーであることに注意すること。
+<P>
+曖昧さを避けるため、絶対に
+<B>-l</B> と <B>-L</B> を使ってアンインストールされた
+共有ライブラリにリンクしてはならない。
+`.la' ファイルへのパスだけを指定すること。
+以下の (`-lm') でわかるように、インストール済みのライブラリは問題ではない。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+lightside:~% libtool cc a.o libbaz.la -o a -lm
+cc a.o -Wl,--rpath -Wl,/usr/local/lib \
+    .libs/libbaz.so -o .libs/a -lm
+lightside:~% libtool gdb a
+[複雑なデバッグのセッションは省略]
+lightside:~% libtool install -c a /usr/local/bin/a
+install -c .libs/a /usr/local/bin/a
+</PRE>
+
+</DL>
+
+<P>
+<A NAME="lbAV">&nbsp;</A>
+<H3>Makefile.am の作成</H3>
+
+<B>&bull;</B>&nbsp;最初に簡単な <B>configure.in</B> を作成し、
+<B>automake</B> と <B>libtool</B> のためのマクロを忘れずに追加する。
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+AC_DEFUN(AM_INIT_AUTOMAKE)
+AC_INIT(a.c)
+AM_INIT_AUTOMAKE(a, 1.0)
+AC_PROG_CC
+AM_PROG_LIBTOOL
+AC_OUTPUT(Makefile)
+</PRE>
+
+</DL>
+
+<P>
+<B>&bull;</B>&nbsp;対応する <B>Makefile.am</B>
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+# ライブラリのビルド
+lib_LTLIBRARIES=libbaz.la
+libbaz_la_SOURCES = foo.c bar.c
+libbaz_la_LDFLAGS = -version-info 0:0:0
+
+bin_PROGRAMS = a a.debug
+
+# a.c と libbaz.la から a をビルド
+a_SOURCES = a.c
+a_LDADD = libbaz.la
+
+# 静的デバッグバージョンを作成
+a_debug_SOURCES = a.c
+a_debug_LDADD = libbaz.la
+a_debug_LDFLAGS = -static
+</PRE>
+
+</DL>
+
+<P>
+<B>&bull;</B>&nbsp;そして最後に実行する
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+lightside:~% aclocal; libtoolize; automake --add-missing; autoconf
+lightside:~% ./configure; make
+</PRE>
+
+</DL>
+
+<P>
+<A NAME="lbAW">&nbsp;</A>
+<H2>関連項目</H2>
+
+<BR>&nbsp;<B><A HREF="../man1/libtoolize.1.html">libtoolize</A></B>(1),&nbsp;<B>libltdl</B>(3)
+<A NAME="lbAX">&nbsp;</A>
+<H2>注意</H2>
+
+プログラムのバグについては &lt;<A HREF="mailto:bug-libtool@gnu.org">bug-libtool@gnu.org</A>&gt; へ報告してください。
+<BR>
+
+この man ページは Ragnar Hojland Espinosa
+&lt;<A HREF="mailto:ragnar@ragnar-hojland.com">ragnar@ragnar-hojland.com</A>&gt; が作成しました。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DL>
+<DT><A HREF="#lbAE">コンパイルモード</A><DD>
+<DT><A HREF="#lbAF">リンクモード</A><DD>
+<DT><A HREF="#lbAG">実行モード</A><DD>
+<DT><A HREF="#lbAH">インストールモード</A><DD>
+<DT><A HREF="#lbAI">フィニッシュモード</A><DD>
+<DT><A HREF="#lbAJ">アンインストールモード</A><DD>
+</DL>
+<DT><A HREF="#lbAK">オプション</A><DD>
+<DL>
+<DT><A HREF="#lbAL">グローバルオプション</A><DD>
+<DT><A HREF="#lbAM">リンクモードオプション</A><DD>
+<DT><A HREF="#lbAN">実行モードオプション</A><DD>
+</DL>
+<DT><A HREF="#lbAO">バージョニング</A><DD>
+<DT><A HREF="#lbAP">インターフェースの設計</A><DD>
+<DT><A HREF="#lbAQ">AUTOMAKE ルールの書き方</A><DD>
+<DT><A HREF="#lbAR">モジュールのダイナミックロード</A><DD>
+<DT><A HREF="#lbAS">例</A><DD>
+<DL>
+<DT><A HREF="#lbAT">ライブラリの作成</A><DD>
+<DT><A HREF="#lbAU">実行ファイルの作成</A><DD>
+<DT><A HREF="#lbAV">Makefile.am の作成</A><DD>
+</DL>
+<DT><A HREF="#lbAW">関連項目</A><DD>
+<DT><A HREF="#lbAX">注意</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:38 GMT, December 05, 2022
+</BODY>
+</HTML>

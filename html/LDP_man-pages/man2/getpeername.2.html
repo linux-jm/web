@@ -1,0 +1,108 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETPEERNAME</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>GETPEERNAME</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/getpeername.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+getpeername - 接続している相手ソケットの名前を取得する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<P>
+
+<B>int getpeername(int </B><I>sockfd</I><B>, struct sockaddr *</B><I>addr</I><B>, socklen_t
+*</B><I>addrlen</I><B>);</B>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>getpeername</B>()  は、ソケット(socket)  <I>sockfd</I> に接続している相手のアドレスを、 <I>addr</I>
+が指すバッファーに格納して返す。 <I>addrlen</I> 引数は、 <I>addr</I> が指している領域のサイズに初期化しておかなければならない。
+関数が返る時には、 <I>addrlen</I> には実際に返された名前のサイズが (バイト単位で) 格納される。
+提供されたバッファーが小さすぎた場合には、名前は切り詰められる。
+<P>
+
+渡されたバッファーが小さ過ぎた場合は、返されるアドレスの末尾が切り詰められる。 この場合には、 <I>addrlen</I>
+には、呼び出し時に指定された値よりも大きな値が格納される。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B><DD>
+引数 <I>sockfd</I> が有効なファイルディスクリプターでない。
+<DT><B>EFAULT</B><DD>
+<I>addr</I> 引数の指しているメモリーが有効なプロセスのアドレス空間の 一部でない。
+<DT><B>EINVAL</B><DD>
+<I>addrlen</I> が不正である (例えば、負で場合など)。
+<DT><B>ENOBUFS</B><DD>
+この操作を行なうのに十分な資源がシステムに存在しない。
+<DT><B>ENOTCONN</B><DD>
+ソケットが接続していない。
+<DT><B>ENOTSOCK</B><DD>
+ファイルディスクリプター <I>sockfd</I> がソケットを参照していない。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>準拠</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4, 4.4BSD (<B>getpeername</B>()  関数コールは 4.2BSD
+で初めて登場した)。
+<A NAME="lbAH">&nbsp;</A>
+<H2>注意</H2>
+
+For background on the <I>socklen_t</I> type, see <B><A HREF="../man2/accept.2.html">accept</A></B>(2).
+<P>
+
+ストリームソケットでは、 いったん <B><A HREF="../man2/connect.2.html">connect</A></B>(2) が実行されると、 どのソケットも <B>getpeername</B>()
+を使って相手ソケットのアドレスを取得できる。 一方、データグラムソケットはコネクションレスである (接続がない)。 データグラムソケットに対する
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2) の呼び出しは、 <B><A HREF="../man2/write.2.html">write</A></B>(2) や <B><A HREF="../man2/recv.2.html">recv</A></B>(2)
+で送信される出力データグラムの相手アドレスを設定するだけである。
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2) の呼び出し元は、 <B>getpeername</B>()
+を使って、それ以前にそのソケットに設定された相手アドレスを取得することができる。 しかし、相手ソケットはこの情報を知らないので、 相手ソケットで
+<B>getpeername</B>() を呼び出しても、 役に立つ情報は得られない (相手側でも <B><A HREF="../man2/connect.2.html">connect</A></B>(2) が呼び出されている場合を除く)。
+なお、データグラムの受信側では <B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2) を使って送信元アドレスを 取得できることも覚えておいてほしい。
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2), <B><A HREF="../man2/bind.2.html">bind</A></B>(2), <B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2), <B><A HREF="../man7/ip.7.html">ip</A></B>(7), <B><A HREF="../man7/socket.7.html">socket</A></B>(7),
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7)
+<A NAME="lbAJ">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">準拠</A><DD>
+<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+<DT><A HREF="#lbAJ">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:29 GMT, December 05, 2022
+</BODY>
+</HTML>

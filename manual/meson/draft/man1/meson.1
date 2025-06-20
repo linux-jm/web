@@ -1,0 +1,199 @@
+.\"*******************************************************************
+.\"
+.\" This file was generated with po4a. Translate the source file.
+.\"
+.\"*******************************************************************
+.\"
+.\" translated for 0.62.1, 2022-05-05 ribbon <ribbon@users.osdn.me>
+.\"
+.TH MESON 1 2022/04 "meson 0.62.1" ユーザーコマンド
+.SH 名前
+meson \- 生産性の高いビルドシステム
+.SH 説明
+
+Meson はプログラマーの生産性を最適化するために設計されたビルドシステムです。 これを実現するために、 最新のソフトウェア開発ツールや技法を、
+簡単にすぐ利用できる機能を提供しています。 それはたとえば、 ユニットテスト、 網羅性レポート、 Valgrind、 Ccache などです。
+
+メインの実行コマンド meson には数多くのサブコマンドがあり、 これによって全機能の利用が可能になります。
+
+.SH セットアップコマンド
+
+Meson を用いるのは実に簡単です。 ビルドシステムのほとんどにおいて、 普通は二段階プロセスを実現します。 一度めは Meson
+を実行してビルド設定を行います。
+
+\fBmeson setup [\fP \fIoptions\fP \fB] [\fP \fIbuild directory\fP \fB] [\fP \fIsource
+directory\fP \fB]\fP
+
+なおビルドディレクトリは、 ソースディレクトリとは別のところにしなければなりません。 Meson
+ではソースディレクトリ内でのビルドには対応していないため、 これを行うとエラーが発生します。
+
+設定ステップが正常処理されたら、 ビルドディレクトリ内において実際のビルドコマンドを実行してソースをビルドできます。 Meson
+のデフォルトのバックエンドは Ninja です。 これは以下のようにして起動できます。
+
+\fBninja [\fP \fItarget\fP \fB]\fP
+
+Meson コマンドを実行するのは、 ビルドディレクトリにおいて最初に設定を行う一度だけです。 これを行ったら、 次はビルドコマンドを実行するだけです。
+Meson はソースツリー内の変更を自動的に検出して、 プロジェクトビルドに必要となるファイルをすべて再生成します。
+
+セットアップコマンドを実行するのがデフォルトの動作です。 特に何かコマンドが指定されない限り、 Meson はセットアップを行うものとして動作します。
+セットアップコマンドを用いなくても、 ビルドディレクトリは以下のようにしてセットアップすることができます。
+
+\fBmeson [\fP \fIoptions\fP \fB] [\fP \fIbuild directory\fP \fB] [\fP \fIsource directory\fP
+\fB]\fP
+
+.SS オプション:
+.TP 
+\fB\-\-version\fP
+バージョン番号を表示します。
+.TP 
+\fB\-\-help\fP
+コマンドラインヘルプを表示します。
+
+.SH "configure コマンド"
+
+\fBmeson configure\fP は、 コマンドラインから Meson プロジェクトを設定するものです。 その利用の仕方は以下のように簡単です。
+
+\fBmeson configure [\fP \fIbuild directory\fP \fB] [\fP \fIoptions to set\fP \fB]\fP
+
+ビルドディレクトリが省略された場合は、 カレントディレクトリが用いられます。
+
+パラメーターが何も設定されなかった場合、 \fBmeson configure\fP はすべてのビルドオプションの値をコンソールに出力します。
+
+値を設定するには、 以下のようにコマンドライン引数 \-D を利用します。
+
+\fBmeson configure \-Dopt1=value1 \-Dopt2=value2\fP
+
+.SH "イントロスペクト (introspect) コマンド"
+
+Meson の introspect は、 他のツール、 たとえば IDE などとの連携を簡単に実現するように設計されたコマンドです。
+このコマンドの出力は JSON 形式です。
+
+\fBmeson introspect [\fP \fIbuild directory\fP \fB] [\fP \fIoption\fP \fB]\fP
+
+ビルドディレクトリが省略された場合は、 カレントディレクトリが用いられます。
+
+.SS オプション:
+.TP 
+\fB\-\-targets\fP
+トップレベルターゲット (実行モジュール、ライブラリなど) をすべて表示します。
+.TP 
+\fB\-\-target\-files\fP
+指定されたターゲットに対するソースファイルを表示します。
+.TP 
+\fB\-\-buildsystem\-files\fP
+ビルドシステムを構成するファイル (meson.build、meson_options.txt など) をすべて表示します。
+.TP 
+\fB\-\-tests\fP
+ユニットテストをすべて表示します。
+.TP 
+\fB\-\-help\fP
+コマンドラインヘルプを表示します。
+
+.SH テストコマンド
+
+\fBmeson test\fP は Meson を利用してプロジェクトのテストスイートを実行するヘルパーツールです。 テスト実行を行うデフォルトの方法は、
+以下のようにデフォルトのビルドコマンドを実行することです。
+
+\fBninja [\fP \fItest\fP \fB]\fP
+
+\fBmeson test\fP では、テスト実行に対して機能豊富なツールセットを提供しています。
+
+\fBmeson test\fP はバックエンドとして Ninja を利用する場合には、 テスト実行に必要となるターゲットを自動的に再ビルドします。
+ビルドに失敗すると \fBmeson test\fP は終了コードとして 125 を返します。 この返り値コードは \fBgit bisect run\fP
+にあたって、 カレントなコミットをスキップします。 したがって git を用いた bisect 処理は、 以下のようにわかりやすく実現できます。
+
+\fBgit bisect run meson test \-C build_dir\fP
+
+.SS オプション:
+.TP 
+\fB\-\-repeat\fP
+指定された回数分だけテストを実行します。
+.TP 
+\fB\-\-gdb\fP
+gdb のもとでテストを実行します。
+.TP 
+\fB\-\-list\fP
+利用可能なテストをすべて一覧表示します。
+.TP 
+\fB\-\-wrapper\fP
+指定されたラッパー (たとえば valgrind) 経由によりすべてのテストを起動します。
+.TP 
+\fB\-C\fP
+テスト実施前に、 指定されたディレクトリに移動します (これはビルドディレクトリの最上位でなければなりません)。
+.TP 
+\fB\-\-suite\fP
+このスイートにおいてテストを実行します。
+.TP 
+\fB\-\-no\-suite\fP
+このスイートの中ではテストを実行しません。
+.TP 
+\fB\-\-no\-stdsplit\fP
+テストログにおいて stderr と stdout を分割しません。
+.TP 
+\fB\-\-benchmark\fP
+テストの代わりにベンチマークを実行します。
+.TP 
+\fB\-\-logbase\fP
+テストログ出力に利用するファイルのベース名を指定します。
+.TP 
+\fB\-\-num\-processes\fP
+テスト実行における同時並行処理数を指定します。
+.TP 
+\fB\-\-verbose\fP
+stdout と stderr にリダイレクトしません。
+.TP 
+\fB\-t\fP
+テストにおけるタイムアウト値の乗数を指定します (通常 Valgrind に対しては 100 などとします)。
+.TP 
+\fB\-\-setup\fP
+指定されたテストのセットアップを用います。
+
+.SH "ラップ (wrap) コマンド"
+
+ラップツール (wraptool) は、 オンラインの wrabdb サービスを利用して、 ソースの依存関係を管理するヘルパーユーティリティーです。
+
+\fBmeson wrap <\fP \fIcommand\fP \fB> [\fP \fIoptions\fP \fB]\fP
+
+このコマンドは、 プロジェクトの最上位ソースディレクトリにおいて実行することが必要です。
+
+.SS コマンド
+.TP 
+\fBlist\fP
+利用可能なプロジェクトの一覧を表示します。
+.TP 
+\fBsearch\fP
+プロジェクト名で検索します。
+.TP 
+\fBinstall\fP
+プロジェクトを指定された名前を用いてインストールします。
+.TP 
+\fBupdate\fP
+指定されたプロジェクトを、 利用可能な最新バージョンにアップデートします。
+.TP 
+\fBinfo\fP
+指定されたプロジェクトの利用可能バージョンを表示します。
+.TP 
+\fBstatus\fP
+現在利用されているサブプロジェクトに対して、 インストールされている、 または利用可能なバージョンを表示します。
+
+.SH 終了ステータス
+
+.TP 
+\fB0\fP
+正常終了。
+.TP 
+\fB1\fP
+利用エラー。 つまり meson.build の解析または実行エラー。
+.TP 
+\fB2\fP
+内部エラー。
+.TP 
+\fB125\fP
+\fBmeson test\fP において必要なターゲットが再ビルドできなかったことを表します。
+.TP 
+
+.SH 関連項目
+
+http://mesonbuild.com/
+
+https://wrapdb.mesonbuild.com/

@@ -1,0 +1,258 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of IOPRIO_SET</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>IOPRIO_SET</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/ioprio_set.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+ioprio_get, ioprio_set - I/O スケジューリングクラスと優先度の設定/取得
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>int ioprio_get(int </B><I>which</I><B>, int </B><I>who</I><B>);</B>
+<B>int ioprio_set(int </B><I>which</I><B>, int </B><I>who</I><B>, int </B><I>ioprio</I><B>);</B>
+</PRE>
+
+<P>
+
+<I>注意</I>: これらのシステムコールには glibc ラッパー関数は存在しない。 「注意」の節を参照。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+システムコール <B>ioprio_get</B>()  / <B>ioprio_set</B>()  は、(1つ以上の) スレッドの I/O スケジューリングクラスと
+優先度の取得/設定を行う。
+<P>
+
+<I>which</I> と <I>who</I> 引数でシステムコールの操作対象となるスレッドを指示する。 <I>which</I> 引数は、 <I>who</I>
+をどのように解釈するかを決めるもので、以下のいずれか一つを指定する。
+<DL COMPACT>
+<DT><B>IOPRIO_WHO_PROCESS</B><DD>
+<I>who</I> は特定のプロセスやスレッドを特定するためのプロセス ID かスレッド ID である。 <I>who</I> が 0
+の場合、呼び出し元のスレッドに対して操作が行われる。
+<DT><B>IOPRIO_WHO_PGRP</B><DD>
+<I>who</I> はプロセスグループ ID であり、プロセスグループの全メンバが対象となる。 <I>who</I> が 0 の場合、
+呼び出し元がメンバーとなっているプロセスグループに対して操作が行われる。
+<DT><B>IOPRIO_WHO_USER</B><DD>
+
+
+<I>who</I> はユーザーID であり、実 UID に一致する全プロセスが対象となる。
+</DL>
+<P>
+
+<B>ioprio_get</B>()  の呼び出し時に <I>which</I> に <B>IOPRIO_WHO_PGRP</B> か <B>IOPRIO_WHO_USER</B>
+が指定され、 <I>who</I> に一致するプロセスが複数あった場合、 一致するプロセス全体の中で最も高い優先度が返される。
+優先度が高いとは、より高い優先度クラスに属している (<B>IOPRIO_CLASS_RT</B> が最も高い優先度クラスで、
+<B>IOPRIO_CLASS_IDLE</B> が最も低い)、もしくは 同じ優先度クラスに属しているが優先度レベルが高い
+(優先度番号が小さい方が優先度レベルが高いことを意味する)、 ということである。
+<P>
+
+<B>ioprio_set</B>()  に渡す <I>ioprio</I> 引数は、対象となるプロセスに割り当てるスケジューリングクラスと
+優先度の両方を指定するビットマスクである。 <I>ioprio</I> の値を組み立てたり解釈するのに、以下のマクロが利用できる。
+<DL COMPACT>
+<DT><B>IOPRIO_PRIO_VALUE(</B><I>class</I><B>, </B><I>data</I><B>)</B><DD>
+スケジューリングクラス <I>class</I> と優先度 (<I>data</I>)  を与えると、このマクロは 2つの値を組み合わせて、 <I>ioprio</I>
+値を生成し、マクロの結果として返す。
+<DT><B>IOPRIO_PRIO_CLASS(</B><I>mask</I><B>)</B><DD>
+<I>mask</I> (<I>ioprio</I> 値) を与えると、このマクロは I/O クラス要素、つまり <B>IOPRIO_CLASS_RT</B>,
+<B>IOPRIO_CLASS_BE</B>, <B>IOPRIO_CLASS_IDLE</B> のいずれか一つの値を返す。
+<DT><B>IOPRIO_PRIO_DATA(</B><I>mask</I><B>)</B><DD>
+<I>mask</I> (<I>ioprio</I> 値) を与えると、このマクロは優先度 (<I>data</I>)  要素を返す。
+</DL>
+<P>
+
+See the NOTES section for more information on scheduling classes and
+priorities, as well as the meaning of specifying <I>ioprio</I> as 0.
+<P>
+
+I/O 優先度は読み出しと同期書き込み (<B>O_DIRECT</B>, <B>O_SYNC</B>)  に対応している。 I/O
+優先度は非同期書き込みには対応していない。なぜなら、 非同期書き込みはメモリー書き換えを行うプログラムの動作 (context) とは
+関係なく発行され、そのためプログラム単位の優先度は適用されないから である。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、 <B>ioprio_get</B>()  は、 <I>which</I> と <I>who</I> で指定された基準に合致した全プロセスで最も高い I/O
+優先度を持つプロセスの <I>ioprio</I> 値を返す。 エラーの場合、-1 を返し、 <I>errno</I> にエラーを示す値を設定する。
+<P>
+
+成功すると、 <B>ioprio_set</B>()  は 0 を返す。 エラーの場合、-1 を返し、 <I>errno</I> にエラーを示す値を設定する。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B><DD>
+<I>which</I> か <I>ioprio</I> の値が不正である。 <I>ioprio</I> 用に指定可能なスケジューラクラスと優先度レベルについては
+「備考」を参照のこと。
+<DT><B>EPERM</B><DD>
+呼び出し元プロセスが、指定されたプロセスに <I>ioprio</I> を割り当てるのに必要な権限を持っていない。 <B>ioprio_set</B>()
+に必要な権限についての詳しい情報は「備考」の節を参照のこと。
+<DT><B>ESRCH</B><DD>
+<I>which</I> と <I>who</I> で指定された基準に合致するプロセスが見つからなかった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+これらのシステムコールはカーネル 2.6.13 以降の Linux で利用可能である。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+これらのシステムコールは Linux 独自である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+glibc はこれらのシステムコールに対するラッパー関数を提供していない。 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)  を使って呼び出すこと。
+<P>
+
+複数のプロセスやスレッドが一つの I/O コンテキストを共有する場合がある。 <B><A HREF="../man2/clone.2.html">clone</A></B>(2) を <B>CLONE_IO</B>
+フラグ付きで呼び出した場合にはこの状況となる。 しかしながら、デフォルトでは、一つのプロセスの個々のスレッドは I/O コンテキストを共有「しない」。
+したがって、 プロセス内のすべてのスレッドの I/O 優先度を変更したい場合には、 それぞれのスレッドに対して <B>ioprio_set</B>()
+を呼び出す必要がある。 この操作を行うのに必要となるスレッド ID には <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2) か <B><A HREF="../man2/clone.2.html">clone</A></B>(2) が返す値を指定する。
+<P>
+
+これらのシステムコールは、I/O 優先度に対応した I/O スケジューラと 組み合わせて使用された場合にのみ効果を持つ。 カーネル 2.6.17
+では、この条件を満たすスケジューラは Completely Fair Queuing (CFQ) I/O スケジューラだけである。
+<P>
+
+
+If no I/O scheduler has been set for a thread, then by default the I/O
+priority will follow the CPU nice value (<B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2)).  In Linux
+kernels before version 2.6.24, once an I/O priority had been set using
+<B>ioprio_set</B>(), there was no way to reset the I/O scheduling behavior to
+the default.  Since Linux 2.6.24, specifying <I>ioprio</I> as 0 can be used to
+reset to the default I/O scheduling behavior.
+<A NAME="lbAJ">&nbsp;</A>
+<H3>I/O スケジューラの選択</H3>
+
+I/O スケジューラの選択はデバイス単位に行われ、その選択は スペシャルファイル
+<I>/sys/block/&lt;device&gt;/queue/scheduler</I> 経由で行われる。
+<P>
+
+現在の I/O スケジューラは <I>/sys</I> ファイルシステム経由で参照できる。例えば、以下のコマンドを実行すると、
+現在カーネルでロードされているスケジューラの全リストが表示される。
+<P>
+
+
+
+$<B> cat /sys/block/sda/queue/scheduler</B>
+noop anticipatory deadline [cfq]
+
+
+<P>
+
+括弧で囲まれたスケジューラがそのデバイス (上の例では <I>sda</I>)  について実際に使用されているスケジューラである。
+別のスケジューラを設定するには、このファイルに新しいスケジューラ名を 書き込めばよい。例えば、以下のコマンドを実行すると、デバイス <I>sda</I>
+のスケジューラとして <I>cfq</I> が設定される。
+<P>
+
+
+
+$<B> su</B>
+Password:
+#<B> echo cfq &gt; /sys/block/sda/queue/scheduler</B>
+
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>Completely Fair Queuing (CFQ) I/O スケジューラ</H3>
+
+バージョン 3 (別名 CFQ Time Sliced) 以降、 CPU スケジューリングと同様の I/O nice レベルが CFQ
+に実装されている。 これらの nice レベルは 3つのスケジューリングクラスに分類でき、 各スケジューリングクラスにつき
+1つ以上の優先度レベルが定義されている。
+<DL COMPACT>
+<DT><B>IOPRIO_CLASS_RT</B> (1)<DD>
+これはリアルタイム I/O クラスである。 このスケジューリングクラスには他のクラスよりも高い優先度が与えられる。
+このクラスのプロセスには、常にディスクへのアクセスが優先して 割り当てられる。そのため、この I/O クラスを使う際には、 たった一つの リアルタイム
+I/O クラスのプロセスにより システム全体のディスクアクセスができなくなってしまうことがある という点に、注意を払う必要がある。 このクラスには、8
+段階の class data (優先度レベル) がある。 この値は、そのプロセスが 1回のディスクアクセスにどれだけの
+時間が必要かを正確に決めるためのものである。 最高のリアルタイム優先度レベルは 0 で、最低は 7 である。
+将来的には、優先度レベルは、希望するデータレートを渡すなど、 より直接的に性能条件を反映できるように変更されるかもしれない。
+<DT><B>IOPRIO_CLASS_BE</B> (2)<DD>
+これは ベストエフォートスケジューリングクラスである。 このクラスは、特定の I/O 優先度を設定していないプロセスの デフォルト値である。 class
+data (優先度レベル) により、そのプロセスがどの程度の I/O 帯域を得られるかが決定される。 ベストエフォート優先度レベルは、CPU の
+nice 値 (<B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2)  参照) と同様のものである。 優先度レベルは、ベストエフォートスケジューリングクラスの中で
+他のプロセスとの相対的な優先度を決定する。 優先度レベルの値の範囲は 0 (最高) から 7 (最低) である。
+<DT><B>IOPRIO_CLASS_IDLE</B> (3)<DD>
+これは idle スケジューリングクラスである。 このレベルで動作するプロセスは他にディスクアクセスをしようとする プロセスがない場合にのみ I/O
+時間を取得する。 idle クラスには class data (優先度) は用意されていない。 プロセスにこの優先度を割り当てる際には注意が必要である。
+なぜなら、優先度の高いプロセスが常にディスクにアクセスしている場合には ディスクにアクセスできなくなる可能性があるからだ。
+</DL>
+<P>
+
+CFQ I/O スケジューラの更なる情報とサンプルプログラムについては、カーネルのソースファイル
+<I>Documentation/block/ioprio.txt</I> を参照のこと。
+<A NAME="lbAL">&nbsp;</A>
+<H3>I/O 優先度の設定に必要な許可</H3>
+
+プロセスの優先度を変更する許可が得られるかどうかは 以下の 2 つの基準に基いて決定される。
+<DL COMPACT>
+<DT><B>プロセスの所有権</B><DD>
+非特権プロセスは、プロセスの実 UID が呼び出し元プロセスの実 UID もしくは 実効 UID と一致するプロセスの I/O 優先度のみを設定できる。
+<B>CAP_SYS_NICE</B> ケーパビリティを持つプロセスは、どのプロセスの優先度でも変更できる。
+<DT><B>どの優先度に設定しようとしているか</B><DD>
+非常に高い優先度 (<B>IOPRIO_CLASS_RT</B>)  を設定しようとする場合、 <B>CAP_SYS_ADMIN</B> ケーパビリティが必要である。
+カーネル 2.6.24 以前では、非常に低い優先度 (<B>IOPRIO_CLASS_IDLE</B>)  を設定するためにも <B>CAP_SYS_ADMIN</B>
+ケーパビリティが必要であったが、 Linux 2.6.25 以降ではもはや必要なくなった。
+</DL>
+<P>
+
+<B>ioprio_set</B>()  はこの両方のルールに従い、条件を満たさない場合、エラー <B>EPERM</B> で失敗する。
+<A NAME="lbAM">&nbsp;</A>
+<H2>バグ</H2>
+
+
+
+
+
+glibc は、このページに記載された関数プロトタイプやマクロを定義する 適切なヘッダーファイルをまだ提供していない。 必要な定義については
+<I>linux/ioprio.h</I> を見ればよい。
+<A NAME="lbAN">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B>ionice</B>(1), <B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2), <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+<B>cgroups</B>(7)
+<P>
+
+Linux カーネルソース内の <I>Documentation/block/ioprio.txt</I>
+<A NAME="lbAO">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">I/O スケジューラの選択</A><DD>
+<DT><A HREF="#lbAK">Completely Fair Queuing (CFQ) I/O スケジューラ</A><DD>
+<DT><A HREF="#lbAL">I/O 優先度の設定に必要な許可</A><DD>
+</DL>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
+<DT><A HREF="#lbAO">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:30 GMT, December 05, 2022
+</BODY>
+</HTML>

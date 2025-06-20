@@ -1,0 +1,132 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of depmod</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>depmod</H1>
+Section: Maintenance Commands (8)<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/module-init-tools/release/man8/depmod.8">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+depmod --- <B>modules.dep</B> とマップファイルを生成するプログラム
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<P>
+
+<B>depmod</B> [<B>-b </B><I>basedir</I><I>] [</I><B>-e</B><I>] [</I><B>-F </B><I>System.map</I><I>]
+[</I><B>-n</B><I>] [</I><B>-v</B><I>] [</I><I>version</I><I>] [</I><B>-A</B><I> ]</I>
+<P>
+
+<B>depmod</B> [<B>-e</B>] [<B>-F</B><I>System.map</I><I>] [</I><B>-n</B><I>] [</I><B>-v</B><I>]
+[</I><I>version</I><I>] [</I><I>filename</I><I> ...]</I>
+<A NAME="lbAD">&nbsp;</A>
+<H2>このマニュアルについて</H2>
+
+<P>
+
+これは、module-init-tools 
+パッケージに所属するユーティリティのマニュアルです。module-init-tools
+は、現在では kmod パッケージに引き継がれているので、kmod
+パッケージの同名のユーティリティのマニュアルをご覧になることをお勧めします。
+(2022/12/02, Linux JM Project)
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+Linux カーネルモジュールは、 (「シンボル」と呼ばれる) サービスを (コード中で EXPORT_SYMBOL を使って)
+他のモジュールが使えるように提供することができる。 後者のモジュールがこのシンボルを使う場合、
+後者のモジュールは前者のモジュールに依存しているのは明らかである。 このような依存関係はかなり複雑になることがある。
+<BR>&nbsp;
+<P>
+
+<B>depmod</B> は、 <B>/lib/modules/</B><I>version</I> 以下のモジュールをひとつひとつ読み込み、
+各モジュールがどんなシンボルをエクスポートしているかや どんなシンボルを必要としているかを調べて、 モジュールの依存関係のリストを作る。
+デフォルトでは、このリストは同じディレクトリの <B>modules.dep</B> に書かれる。 ファイル名がコマンドラインで与えられると、
+それらのモジュールに限って調べられる (全てのモジュールが列挙されていない限り、これが役に立つことは滅多にない) 。
+<BR>&nbsp;
+<P>
+
+<I>version</I> が与えられると、 現在のカーネルバージョン (&quot;uname -r&quot; で返るもの) ではなく、
+そのカーネルバージョンのモジュールディレクトリが使われる。
+<BR>&nbsp;
+<P>
+
+<B>depmod</B> は このディレクトリにさまざまなマップファイルも出力する。 ホットプラグ機構で使うためである。
+<BR>&nbsp;
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-b </B><I>basedir</I><I> </I><B>--basedir </B><I>basedir</I><I> <TT>&nbsp;</TT>  </I><DD>
+対象となるモジュールが現在は (通常の) ディレクトリ <B>/lib/modules/</B><I>version</I> ではなく、<BR>
+準備用のディレクトリに置かれている場合、 ディレクトリ名の前に付く <I>basedir</I> を指定することができる。 この <I>basedir</I>
+は生成される <B>modules.dep</B> ファイルでは 取り除かれており、そのため、いつでも通常の場所に移動させることができる。
+<BR>&nbsp;
+<DT><B>-e</B> <B>--errsyms</B>         <DD>
+このオプションが <B>-F</B> オプションと組み合わされると、 モジュールが必要としているが 他のモジュールやカーネルが提供していないシンボルを通知する。
+通常、モジュールが提供していないシンボルは カーネルが提供するものと見なせる (完璧な世界では当然だ) 。
+<BR>&nbsp;
+<DT><B>-F</B> <B>--filesyms </B><I>System.map</I><I>         </I><DD>
+カーネルがビルドされたときに生成された <B>System.map</B> を指定する。 このオプションを使うと、 <B>-e</B>
+オプションで未解決のシンボルを通知することができる。
+<BR>&nbsp;
+<DT><B>-n</B> <B>--dry-run</B>         <DD>
+このオプションは生成される modules.dep とさまざまなマップファイルを、 モジュールディレクトリに書き出すのではなく、標準出力に送る。
+<BR>&nbsp;
+<DT><B>-A</B> <B>--quick</B>         <DD>
+このオプションを使うと、 処理を行なう前に各モジュールが <B>modules.dep</B> ファイルよりも 新しいかどうかを見て、
+<B>modules.dep</B> のほうが新しければファイルを再生成せずに静かに終了する。
+<BR>&nbsp;
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>下位互換性</H2>
+
+<P>
+
+このバージョンの <B>depmod</B> は、 カーネル <B>2.5.48</B> およびそれ以降のためのものである。
+古い形式のモジュールに対応したカーネルを検出するか、 指定されたバージョンが <B>2.5.48</B> よりも前の場合、 その場で <B>depmod.old</B>
+を実行しようとする。 そのため、ユーザは全く意識しなくてよい。
+<BR>&nbsp;
+<A NAME="lbAH">&nbsp;</A>
+<H2>著作権</H2>
+
+<P>
+
+このマニュアルページの著作権表示は Copyright 2002, Rusty Russell, IBM Corporation.
+<BR>&nbsp;
+<A NAME="lbAI">&nbsp;</A>
+<H2>関連項目</H2>
+
+<P>
+
+<B><A HREF="../man8/modprobe.8.html">modprobe</A></B><B>(8)</B>, <B><A HREF="../man5/modules.dep.5.html">modules.dep</A></B><B>(5)</B>, <B>depmod.old</B><B>(8)</B>
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">このマニュアルについて</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">下位互換性</A><DD>
+<DT><A HREF="#lbAH">著作権</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

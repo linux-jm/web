@@ -1,0 +1,1250 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ELF</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>ELF</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2013-04-17<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man5/elf.5">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+elf - 実行可能リンクフォーマット (ELF) ファイルのフォーマット
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/elf.h">elf.h</A>&gt;</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+ヘッダーファイル <I>&lt;<A HREF="file:///usr/include/elf.h">elf.h</A>&gt;</I> は ELF 実行可能バイナリファイルのフォーマットを定義する。
+これらのファイルとしては、通常の実行可能ファイル・ 再配置可能オブジェクトファイル・コアファイル・共有ライブラリがある。
+<P>
+
+ELF ファイルフォーマットを使う実行可能ファイルは、 ELF ヘッダーの後にプログラムヘッダーテーブルまたは セクションヘッダーテーブル
+(またはその両方) が続く構成である。 ELF ヘッダーは常にファイルのオフセット 0 にある。
+プログラムヘッダーテーブルとセクションヘッダーテーブルの ファイル内でのオフセットは、ELF ヘッダーに定義されている。 この 2
+つのテーブルはファイルの残りの部分の詳細を記述する。
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+このヘッダーファイルは上記のヘッダーを C 言語の構造体で記述し、 また動的セクション・再配置可能セクション・シンボルテーブルの構造体も 含んでいる。
+<P>
+
+以下の型は N ビットアーキテクチャーで使われる (N=32,64 であり <I>ElfN</I> は <I>Elf32</I> または <I>Elf64</I> を表し、
+<I>uintN_t</I> は <I>uint32_t</I> または <I>uint64_t</I> を表す):
+
+<PRE>
+
+ElfN_Addr       符号なしのプログラムアドレス, uintN_t
+ElfN_Off        符号なしのファイルオフセット, uintN_t
+ElfN_Section    符号なしのセクションインデックス, uint16_t
+ElfN_Versym     符号なしのバージョンシンボル情報, uint16_t
+Elf_Byte        unsigned char
+ElfN_Half       uint16_t
+ElfN_Sword      int32_t
+ElfN_Word       uint32_t
+ElfN_Sxword     int64_t
+ElfN_Xword      uint64_t
+</PRE>
+
+
+<P>
+
+(注意: *BSD での用語は少し異なる。 <I>Elf64_Half</I> は <I>Elf32_Half</I> の 2 倍であり、
+<I>Elf64Quarter</I> が <I>uint16_t</I> に用いられる。 混乱を避けるため、以下では、これらの型はサイズが自明な型に置き換えてある。)
+<P>
+
+このファイルフォーマットが定義する全てのデータ構造体は、 関連するクラスの &quot;自然な&quot; サイズと配置の指針に従う。
+必要な場合、データ構造体では明示的なパディング (padding, 詰め込み)  が行なわれる。これは 4 バイトオブジェクトに対する 4
+バイト配置を保証するためや、 構造体のサイズを 4 の倍数にするためなどである。
+<P>
+
+ELF ヘッダーは型 <I>Elf32_Ehdr</I> または <I>Elf64_Ehdr</I> で記述される:
+
+<PRE>
+
+#define EI_NIDENT 16
+
+typedef struct {
+    unsigned char e_ident[EI_NIDENT];
+    uint16_t      e_type;
+    uint16_t      e_machine;
+    uint32_t      e_version;
+    ElfN_Addr     e_entry;
+    ElfN_Off      e_phoff;
+    ElfN_Off      e_shoff;
+    uint32_t      e_flags;
+    uint16_t      e_ehsize;
+    uint16_t      e_phentsize;
+    uint16_t      e_phnum;
+    uint16_t      e_shentsize;
+    uint16_t      e_shnum;
+    uint16_t      e_shstrndx;
+} ElfN_Ehdr;
+</PRE>
+
+
+<P>
+
+
+フィールドは以下の意味を持つ:
+<DL COMPACT>
+<DT><I>e_ident</I><DD>
+このバイト配列は、プロセッサやファイルの他の部分には依存せずに、 ファイルを解釈 (interpret) するために指定される。
+この配列内のすべてのものは、接頭辞 <B>EI_</B> で始まるマクロの名前が付き、接頭辞 <B>ELF</B> で始まる値を持つ。 以下のマクロが定義されている:
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT><B>EI_MAG0</B><DD>
+マジックナンバーの第 1 バイト。 <B>ELFMAG0</B> で埋めなければならない。 (0: 0x7f)
+<DT><B>EI_MAG1</B><DD>
+マジックナンバーの第 2 バイト。 <B>ELFMAG1</B> で埋めなければならない。 (1: 'E')
+<DT><B>EI_MAG2</B><DD>
+マジックナンバーの第 3 バイト。 <B>ELFMAG2</B> で埋めなければならない。 (2: 'L')
+<DT><B>EI_MAG3</B><DD>
+マジックナンバーの第 4 バイト。 <B>ELFMAG3</B> で埋めなければならない。 (3: 'F')
+<DT><B>EI_CLASS</B><DD>
+第 5 バイトは、このバイナリのアーキテクチャーを示す:
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT><B>ELFCLASSNONE</B><DD>
+このクラスは不正である。
+<DT><B>ELFCLASS32</B><DD>
+32 ビットアーキテクチャーを定義する。 ファイルと仮想アドレス空間が 4 ギガバイトまでのマシンをサポートする。
+<DT><B>ELFCLASS64</B><DD>
+64 ビットアーキテクチャーを定義する。
+
+</DL>
+</DL>
+
+
+<DT><B>EI_DATA</B><DD>
+
+第 6 バイトはファイル内のプロセッサ固有データの データエンコーディングを指定する。 現在のところ以下のエンコーディングがサポートされている:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>ELFDATANONE</B><DD>
+不明なデータフォーマット。
+<DT><B>ELFDATA2LSB</B><DD>
+2 の補数、リトルエンディアン。
+<DT><B>ELFDATA2MSB</B><DD>
+2 の補数、ビッグエンディアン。
+
+</DL>
+</DL>
+
+
+<DT><B>EI_VERSION</B><DD>
+
+第 7 バイトは ELF 仕様のバージョン番号である:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EV_NONE</B><DD>
+不正なバージョン。
+<DT><B>EV_CURRENT</B><DD>
+現在のバージョン。
+
+</DL>
+</DL>
+
+
+<DT><B>EI_OSABI</B><DD>
+
+第 8 バイトはオブジェクトのターゲットとなるオペレーティングシステムと ABI を示す。他の ELF
+構造体のフィールドには、プラットフォーム固有の意味を持つフラグや値を持つものもある。これらのフィールドの解釈は、このバイトの値によって決定される。以下に例を挙げる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>ELFOSABI_NONE</B><DD>
+
+ELFOSABI_SYSV と同じ。
+<DT><B>ELFOSABI_SYSV</B><DD>
+
+
+UNIX System V ABI.
+<DT><B>ELFOSABI_HPUX</B><DD>
+
+HP-UX ABI.
+<DT><B>ELFOSABI_NETBSD</B><DD>
+
+NetBSD ABI.
+<DT><B>ELFOSABI_LINUX</B><DD>
+
+
+
+
+
+
+
+
+
+Linux ABI.
+<DT><B>ELFOSABI_SOLARIS</B><DD>
+
+
+
+
+
+
+
+Solaris ABI.
+<DT><B>ELFOSABI_IRIX</B><DD>
+
+IRIX ABI.
+<DT><B>ELFOSABI_FREEBSD</B><DD>
+
+FreeBSD ABI.
+<DT><B>ELFOSABI_TRU64</B><DD>
+
+
+
+
+
+TRU64 UNIX ABI.
+<DT><B>ELFOSABI_ARM</B><DD>
+
+ARM アーキテクチャー ABI.
+<DT><B>ELFOSABI_STANDALONE</B><DD>
+
+
+スタンドアロン (組み込み) ABI.
+
+</DL>
+</DL>
+
+<DT><B>EI_ABIVERSION</B><DD>
+第 9 バイトはオブジェクトがターゲットとしている ABI のバージョンを示す。 このフィールドは互換性のない ABI
+のバージョンを区別するために使われる。 このバージョン番号の解釈は、 <B>EI_OSABI</B> フィールドで識別される ABI に依存する。
+この仕様に準拠するアプリケーションでは、値 0 を使う。
+<DT><B>EI_PAD</B><DD>
+
+
+
+
+
+
+パディングの開始。 これらのバイトは予約されており、0 に設定されている。 これらを読み込むプログラムは、これらのバイトを無視すべきである。
+現在使われていないバイトに意味が与えられる場合、 <B>EI_PAD</B> の値は将来変更されるかもしれない。
+<DT><B>EI_NIDENT</B><DD>
+
+<I>e_ident</I> 配列のサイズ。
+</DL>
+</DL>
+
+<DT><I>e_type</I><DD>
+この構造体のメンバはオブジェクトファイルタイプを示す:
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT><B>ET_NONE</B><DD>
+不明なタイプ。
+<DT><B>ET_REL</B><DD>
+再配置可能ファイル。
+<DT><B>ET_EXEC</B><DD>
+実行可能ファイル。
+<DT><B>ET_DYN</B><DD>
+共有オブジェクト。
+<DT><B>ET_CORE</B><DD>
+コアファイル。
+
+</DL>
+</DL>
+
+
+<DT><I>e_machine</I><DD>
+このメンバは個々のファイルに必要とされるアーキテクチャーを指定する。 例:
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT><B>EM_NONE</B><DD>
+
+不明なマシン。
+<DT><B>EM_M32</B><DD>
+
+AT&amp;T WE 32100.
+<DT><B>EM_SPARC</B><DD>
+
+Sun Microsystems SPARC.
+<DT><B>EM_386</B><DD>
+
+Intel 80386.
+<DT><B>EM_68K</B><DD>
+
+Motorola 68000.
+<DT><B>EM_88K</B><DD>
+
+
+
+
+
+Motorola 88000.
+<DT><B>EM_860</B><DD>
+
+Intel 80860.
+<DT><B>EM_MIPS</B><DD>
+
+
+
+
+
+
+
+
+
+MIPS RS3000 (ビッグエンディアンのみ)。
+<DT><B>EM_PARISC</B><DD>
+
+HP/PA.
+<DT><B>EM_SPARC32PLUS</B><DD>
+
+拡張命令セット付き SPARC。
+<DT><B>EM_PPC</B><DD>
+
+PowerPC.
+<DT><B>EM_PPC64</B><DD>
+
+PowerPC 64-bit.
+<DT><B>EM_S390</B><DD>
+
+IBM S/390
+<DT><B>EM_ARM</B><DD>
+
+Advanced RISC Machines
+<DT><B>EM_SH</B><DD>
+
+Renesas SuperH
+<DT><B>EM_SPARCV9</B><DD>
+
+SPARC v9 64-bit.
+<DT><B>EM_IA_64</B><DD>
+
+Intel Itanium
+<DT><B>EM_X86_64</B><DD>
+
+AMD x86-64
+<DT><B>EM_VAX</B><DD>
+
+
+
+
+
+
+
+
+
+DEC Vax.
+
+</DL>
+</DL>
+
+
+<DT><I>e_version</I><DD>
+
+このメンバはファイルバージョンを示す:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EV_NONE</B><DD>
+不正なバージョン。
+<DT><B>EV_CURRENT</B><DD>
+
+現在のバージョン。
+
+</DL>
+</DL>
+
+<DT><I>e_entry</I><DD>
+このメンバは、システムが最初に制御を渡す、 つまりプロセスを開始する仮想アドレスを指定する。 ファイルにエントリーポイントが関連付けられていない場合、
+このメンバには 0 が入る。
+<DT><I>e_phoff</I><DD>
+このメンバはプログラムヘッダーテーブルの ファイルオフセット (バイト単位) を保持する。 ファイルにプログラムヘッダーテーブルがない場合、
+このメンバには 0 が入る。
+<DT><I>e_shoff</I><DD>
+このメンバはセクションヘッダーテーブルの ファイルオフセット (バイト単位) を保持する。 ファイルにセクションヘッダーテーブルがない場合、
+このメンバには 0 が入る。
+<DT><I>e_flags</I><DD>
+このメンバはファイルに関連付けられたプロセッサ固有のフラグを保持する。 フラグの名前は EF_`machine_flag' という形式である。
+現在のところフラグは定義されていない。
+<DT><I>e_ehsize</I><DD>
+このメンバは ELF ヘッダーサイズ (バイト単位) を保持する。
+<DT><I>e_phentsize</I><DD>
+このメンバはこのファイルのプログラムヘッダーテーブルの 1 エントリーあたりのサイズ (バイト単位) を保持する; 全てのエントリーは同じサイズである。
+<DT><I>e_phnum</I><DD>
+このメンバはプログラムヘッダーテーブルにあるエントリーの数を保持する。 よって <I>e_phentsize</I> と <I>e_phnum</I>
+の積がテーブルサイズ (バイト単位) になる。 ファイルにプログラムヘッダーがない場合、 <I>e_phnum</I> は値 0 を保持する。
+<DT><DD>
+
+
+プログラムヘッダーテーブルのエントリー数が <B>PN_XNUM</B> (0xffff) 以上の場合、
+このメンバは <B>PN_XNUM</B> (0xffff) になり、プログラムヘッダーテーブルの
+エントリーの実際の数は、セクションヘッダーテーブルの最初のエントリーの
+<I>sh_info</I> メンバに格納される。それ以外の場合、セクションヘッダーテーブルの
+最初のエントリーの <I>sh_info</I> メンバには値 0 が格納される。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>PN_XNUM</B><DD>
+<I>e_phnum</I> が保持できる最大値を表し、 0xffff に定義されている。 <I>e_phnum</I>
+はプログラムヘッダーの実際の数がどこに割り当てられているかを示す。
+
+</DL>
+</DL>
+
+
+<DT><DD>
+<DT><I>e_shentsize</I><DD>
+このメンバはセクションヘッダーのサイズ (バイト単位) を保持する。 セクションヘッダーはセクションヘッダーテーブルの 1 つのエントリーである;
+全てのエントリーは同じサイズである。
+<DT><I>e_shnum</I><DD>
+このメンバはセクションヘッダーテーブルにあるエントリーの数を保持する。 よって <I>e_shentsize</I> と <I>e_shnum</I>
+の積はセクションヘッダーテーブルのサイズ (バイト単位) になる。 ファイルにセクションヘッダーテーブルがない場合、 <I>e_shnum</I> は値 0
+を保持する。
+<DT><DD>
+セクションヘッダーテーブルのエントリー数が <B>SHN_LORESERVE</B> (0xff00) 以上の場合、
+<I>e_shnum</I> には値 0 が入り、セクションヘッダーテーブルのエントリーの実際の数は
+セクションヘッダーテーブルの最初のエントリーの <I>sh_size</I> メンバに格納される。
+それ以外の場合、セクションヘッダーテーブルの最初のエントリーの <I>sh_info</I> メンバ
+には値 0 が格納される。
+<DT><I>e_shstrndx</I><DD>
+このメンバはセクション名文字列テーブルに関連付けられたエントリーの セクションヘッダーテーブルインデックスを保持する。
+ファイルにセクション名文字列テーブルがない場合、 このメンバは値 <B>SHN_UNDEF</B> を保持する。 <B>SHN_UNDEF</B>.
+<DT><DD>
+セクション名前文字列テーブルのインデックスが <B>SHN_LORESERVE</B> (0xff00) 以上の
+場合、このメンバには <B>SHN_XINDEX</B> (0xffff) が入り、セクション名前文字列
+テーブルの実際のインデックスはセクションヘッダーテーブルの最初のエントリーの
+<I>sh_link</I> メンバに格納される。それ以外の場合、セクションヘッダーテーブルの
+最初のエントリーの <I>sh_link</I> メンバには値 0 が格納される。
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT><B>SHN_UNDEF</B><DD>
+この値は未定義・存在しない・無関係その他、 意味のないセクションの参照であることを表す。 例えば、セクション番号 <B>SHN_UNDEF</B>
+に関連づけて「定義」されたシンボルは、「未定義」なシンボルである。
+<DT><B>SHN_LORESERVE</B><DD>
+この値は予約済みのインデックス領域の下限を指定する。
+<DT><B>SHN_LOPROC</B><DD>
+この値以上で <B>SHN_HIPROC</B> 以下の値はプロセッサ固有の意味に予約されている。
+<DT><B>SHN_HIPROC</B><DD>
+この値以下で <B>SHN_HIPROC</B> 以上の値はプロセッサ固有の意味に予約されている。
+<DT><B>SHN_ABS</B><DD>
+この値は対応する参照の絶対値を指定する。 例えば、セクション番号 <B>SHN_ABS</B> に関連づけられたシンボルは絶対値を保持し、再配置に影響されない。
+<DT><B>SHN_COMMON</B><DD>
+このセクションに関連して定義されたシンボルは、 Fortran の COMMON や C の未割り当て external 変数のような、
+共通シンボルである。
+<DT><B>SHN_HIRESERVE</B><DD>
+この値は予約されたインデックスの範囲の上限を指定する。 <B>SHN_LORESERVE</B> と <B>SHN_HIRESERVE</B> は含まれる。
+この値はセクションヘッダーテーブルを参照しない。 つまり、セクションヘッダーテーブルは 予約されたインデックスのエントリーを <I>含まない 。</I>
+</DL>
+</DL>
+
+
+
+</DL>
+<P>
+
+実行可能ファイルまたは共有オブジェクトファイルのプログラムヘッダーテーブルは、 システムによるプログラム実行準備に必要な、
+セグメント等の情報を記述する構造体の配列である。 オブジェクトファイルの <I>セグメント</I> には 1 つ以上の <I>セクション</I> が含まれる。
+プログラムヘッダーは実行可能ファイルと共有オブジェクトファイルでのみ意味を持つ。 ファイルは自身のプログラムヘッダーサイズを ELF ヘッダーの
+<I>e_phentsize</I> メンバと <I>e_phnum</I> メンバで指定する。 ELF プログラムヘッダーは <I>Elf32_Phdr</I> 型または
+<I>Elf64_Phdr</I> 型で記述される (どちらになるかはアーキテクチャー依存):
+
+<PRE>
+
+typedef struct {
+    uint32_t   p_type;
+    Elf32_Off  p_offset;
+    Elf32_Addr p_vaddr;
+    Elf32_Addr p_paddr;
+    uint32_t   p_filesz;
+    uint32_t   p_memsz;
+    uint32_t   p_flags;
+    uint32_t   p_align;
+} Elf32_Phdr;
+</PRE>
+
+
+
+<PRE>
+
+typedef struct {
+    uint32_t   p_type;
+    uint32_t   p_flags;
+    Elf64_Off  p_offset;
+    Elf64_Addr p_vaddr;
+    Elf64_Addr p_paddr;
+    uint64_t   p_filesz;
+    uint64_t   p_memsz;
+    uint64_t   p_align;
+} Elf64_Phdr;
+</PRE>
+
+
+<P>
+
+
+32 ビットと 64 ビットのプログラムヘッダーの主な違いは、構造体における <I>p_flags</I> メンバの位置にある。
+<DL COMPACT>
+<DT><I>p_type</I><DD>
+
+Phdr 構造体のこのメンバは、 この配列要素がどのような種類のセグメントを記述しているか、 またはこの配列要素の情報をどのように解釈するか、を表す。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>PT_NULL</B><DD>
+この配列要素は使用されておらず、その他のメンバの値は未定義である。 これにより、このプログラムヘッダーのエントリーは無視される。
+<DT><B>PT_LOAD</B><DD>
+この配列要素は <I>p_filesz</I> と <I>p_memsz</I> で記述されるロード可能セグメントを指定する。
+このファイルからのバイトデータが、このメモリーセグメントの先頭からマップされる。 セグメントのメモリーサイズ <I>Sy</I>p_memsz がファイルサイズ
+<I>Sy</I>p_filesz より大きい場合、 「余った」バイトは値 0 となり、 そのセグメント初期化データの後ろに置かれると定められている。
+ファイルサイズはメモリーサイズより大きくてはいけない。 プログラムヘッダーテーブルのロード可能セグメントエントリーは、 <I>p_vaddr</I>
+メンバの昇順にソートされて出現する。
+<DT><B>PT_DYNAMIC</B><DD>
+この配列要素は動的リンク情報を指定する。
+<DT><B>PT_INTERP</B><DD>
+この配列要素は、インタープリターとして起動されるパス名 (ヌル文字終端)  の位置とサイズを指定する。 このセグメント型は
+(共有オブジェクトにもあるかも知れないが)  実行可能ファイルでのみ意味を持つ。 ただし、このセグメント型は 1 つのファイルに 2
+回以上出現してはならない。 もし存在する場合、このセグメント型は 全てのロード可能セグメントエントリーより前になければならない。
+<DT><B>PT_NOTE</B><DD>
+この配列要素は補足情報 (auxiliary information) の位置とサイズを指定する。
+<DT><B>PT_SHLIB</B><DD>
+このセグメント型は予約されているが、意味は指定されていない。 この型の配列要素を保持するプログラムは ABI に準拠しない。
+<DT><B>PT_PHDR</B><DD>
+この配列要素は、もし存在しているならば、 ファイルおよびプログラムのメモリーイメージ双方における
+プログラムヘッダーテーブル自身の位置とサイズを指定する。 このセグメント型は 1 つのファイルに 2 回以上出現してはならない。
+さらに、このセグメント型が存在してもよいのは、プログラムヘッダーテーブルが プログラムのメモリーイメージの一部である場合のみである。
+もし存在する場合、これは全てのロード可能セグメントエントリーより 前になければならない。
+<DT><B>PT_LOPROC</B><DD>
+この値以上で <B>PT_HIPROC</B> 以下の値はプロセッサ固有の意味に予約されている。
+<DT><B>PT_HIPROC</B><DD>
+この値以下で <B>PT_LOPROC</B> 以上の値はプロセッサ固有の意味に予約されている。
+<DT><B>PT_GNU_STACK</B><DD>
+
+GNU 拡張であり、Linux カーネルが <I>p_flags</I> のメンバーにセットされたフラグ経由でスタックの状態を制御するために使用する。
+</DL>
+</DL>
+
+<DT><I>p_offset</I><DD>
+このメンバは、セグメントの先頭バイトがある (ファイル先頭からの) オフセットを保持する。
+<DT><I>p_vaddr</I><DD>
+このメンバは、セグメントの先頭バイトがある メモリーの仮想アドレスを保持する。
+<DT><I>p_paddr</I><DD>
+物理アドレスが意味をもつシステムでは、 このメンバはセグメントの物理アドレスとして予約されている。 BSD ではこのメンバは使用されない。0
+でなければならない。
+<DT><I>p_filesz</I><DD>
+このメンバはセグメントのファイルイメージのバイト数を保持する。 これは 0 でもよい。
+<DT><I>p_memsz</I><DD>
+このメンバはセグメントのメモリーイメージのバイト数を保持する。 これは 0 でもよい。
+<DT><I>p_flags</I><DD>
+
+このメンバはセグメントに関連するフラグのビットマスクを保持する:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>PF_X</B><DD>
+実行可能セグメント。
+<DT><B>PF_W</B><DD>
+書き込み可能セグメント.
+<DT><B>PF_R</B><DD>
+読み込み可能セグメント。
+
+</DL>
+</DL>
+
+
+<DT><DD>
+テキストセグメントは一般にフラグ <B>PF_X</B> と <B>PF_R</B> を持つ。 データセグメントは一般に <B>PF_X</B>, <B>PF_W</B>,
+<B>PF_R</B> を持つ。
+<DT><I>p_align</I><DD>
+
+このメンバは、セグメントがメモリーおよびファイルにおいて配置 (align)  される値を保持する。
+ロード可能プロセスセグメントは、ページサイズを法として <I>p_vaddr</I> と <I>p_offset</I> と合同でなければならない
+(訳注:「p_vaddr mod ページサイズ = p_offset mod ページサイズ」 でなければならない)。。 0 と 1
+という値は配置が必要ないことを意味する。 それ以外の場合、 <I>p_align</I> は正で 2 の整数乗でなければならず、 <I>p_vaddr</I> は
+<I>p_align</I> を法として <I>p_offset</I> と合同でなければならない (訳注:「p_vaddr mod p_align =
+p_offset mod p_align」でなければならない)。
+</DL>
+<P>
+
+ファイルのセクションヘッダーテーブルには、 全てのファイルセクションの場所が記述されている。 セクションヘッダーテーブルは <I>Elf32_Shdr</I>
+構造体または <I>Elf64_Shdr</I> 構造体の配列である。 ELF ヘッダーの <I>e_shoff</I> メンバはファイルの先頭から
+セクションヘッダーテーブルへのバイトオフセットである。 <I>e_shnum</I> はセクションヘッダーテーブルに含まれるエントリーの数を保持する。
+<I>e_shentsize</I> は各エントリーのサイズ (バイト単位) を保持する。
+<P>
+
+
+セクションヘッダーテーブルインデックスは、この配列の添字である。
+いくつかのセクションヘッダーテーブルインデックスは予約されている。予約されて
+いるのは、最初のエントリーと、<B>SHN_LORESERVE</B> と <B>SHN_HIRESERVE</B> の間の
+インデックスである。
+最初のエントリーは、ELF 拡張で <I>e_phnum</I>, <I>e_shnum</I>, <I>e_strndx</I> に使用
+される。それ以外の場合、最初のエントリーの各フィールドには 0 が設定される。
+オブジェクトファイルにはこれらの特別なインデックスに対応するセクションはない。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>SHN_UNDEF</B><DD>
+この値は、未定義 (undefined)、不足 (missing)、無関係 (irrelevant)、その他無意味なセクション参照を示す。
+<DT><B>SHN_LORESERVE</B><DD>
+この値は予約済みのインデックス領域の下限を指定する。
+<DT><B>SHN_LOPROC</B><DD>
+この値以上で <B>SHN_HIPROC</B> 以下の値はプロセッサ固有の意味に予約されている。
+<DT><B>SHN_HIPROC</B><DD>
+この値以下で <B>SHN_HIPROC</B> 以上の値はプロセッサ固有の意味に予約されている。
+<DT><B>SHN_ABS</B><DD>
+この値は対応する参照の絶対値を指定する。 例えば、セクション番号 <B>SHN_ABS</B> に関連して定義されているシンボルは、
+絶対値を保持しているので、再配置に影響されない。
+<DT><B>SHN_COMMON</B><DD>
+このセクションに関連して定義されているシンボルは、 FORTRAN の COMMON や C の未割り当て外部変数のような共通シンボルである。
+<DT><B>SHN_HIRESERVE</B><DD>
+この値は予約済みのインデックス領域の上限を指定する。 システムは <B>SHN_LORESERVE</B> と <B>SHN_HIRESERVE</B>
+を含む範囲を予約する。 セクションヘッダーテーブルは予約されたインデックスに対応するエントリーを持たない。
+</DL>
+</DL>
+
+
+<P>
+
+セクションヘッダーは以下の構造体を持つ:
+
+<PRE>
+
+typedef struct {
+    uint32_t   sh_name;
+    uint32_t   sh_type;
+    uint32_t   sh_flags;
+    Elf32_Addr sh_addr;
+    Elf32_Off  sh_offset;
+    uint32_t   sh_size;
+    uint32_t   sh_link;
+    uint32_t   sh_info;
+    uint32_t   sh_addralign;
+    uint32_t   sh_entsize;
+} Elf32_Shdr;
+</PRE>
+
+
+
+<PRE>
+
+typedef struct {
+    uint32_t   sh_name;
+    uint32_t   sh_type;
+    uint64_t   sh_flags;
+    Elf64_Addr sh_addr;
+    Elf64_Off  sh_offset;
+    uint64_t   sh_size;
+    uint32_t   sh_link;
+    uint32_t   sh_info;
+    uint64_t   sh_addralign;
+    uint64_t   sh_entsize;
+} Elf64_Shdr;
+</PRE>
+
+
+<P>
+
+
+32 ビットと 64 ビットのセクションヘッダーには実際の違いはない。
+<DL COMPACT>
+<DT><I>sh_name</I><DD>
+このメンバはセクション名を定める。 この値はセクションヘッダー文字列テーブルセクションのインデックスであり、 ヌル文字で終端された文字列の場所を示す。
+<DT><I>sh_type</I><DD>
+
+このメンバはセクションの内容と意味が含まれるカテゴリーを示す。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>SHT_NULL</B><DD>
+この値はセクションヘッダーが不活性であることを示す。 これは関連するセクションを持たない。 このセクションヘッダーの他のメンバは、未定義の値を持つ。
+<DT><B>SHT_PROGBITS</B><DD>
+このセクションはプログラムにより定義される情報を保持する。 この情報の形式と意味は、ひとえにプログラムによって決定される。
+<DT><B>SHT_SYMTAB</B><DD>
+このセクションはシンボルテーブルを保持する。 一般には <B>SHT_SYMTAB</B> はリンク編集のためのシンボルを提供するが、 動的リンクにも使われる。
+完全なシンボルテーブルとして、動的リンクには不要な 多くのシンボルを保持できる。 オブジェクトファイルも <B>SHT_DYNSYM</B>
+セクションを持つことができる。
+<DT><B>SHT_STRTAB</B><DD>
+このセクションは文字列テーブルを保持する。 オブジェクトファイルは複数の文字列テーブルセクションを持つことができる。
+<DT><B>SHT_RELA</B><DD>
+このセクションは明示的な加数 (addend) を持つ再配置エントリーを保持する。 再配置エントリーの型は、オブジェクトファイルの 32
+ビットクラスでは <I>Elf32_Rela</I> である。 オブジェクトファイルは複数の再配置セクションを持つことができる。
+<DT><B>SHT_HASH</B><DD>
+このセクションはシンボルハッシュテーブルを保持する。 動的リンクされるオブジェクトは、 シンボルハッシュテーブルを含んでいなければならない。
+オブジェクトファイルは 1 つのハッシュテーブルのみを持つことができる。
+<DT><B>SHT_DYNAMIC</B><DD>
+このセクションは動的リンクの情報を保持する。 オブジェクトファイルは 1 つの動的セクションのみを持つことができる。
+<DT><B>SHT_NOTE</B><DD>
+このセクションはファイルに何らかの印を付ける情報を保持する。
+<DT><B>SHT_NOBITS</B><DD>
+このタイプのセクションはファイルの領域を使わないという以外は、 <B>SHT_PROGBITS</B> と似ている。 このセクションは 1 バイトも含まないが、
+<I>sh_offset</I> メンバは概念的なファイルオフセットを持つ。
+<DT><B>SHT_REL</B><DD>
+このセクションは明示的な加数を持たない再配置オフセットを保持する。 再配置オフセットの型は、オブジェクトファイルの 32 ビットクラスでは
+<I>Elf32_Rel</I> である。 オブジェクトファイルは複数の再配置セクションを持つことができる。
+<DT><B>SHT_SHLIB</B><DD>
+このセクションは予約されているが、意味は指定されていない。
+<DT><B>SHT_DYNSYM</B><DD>
+このセクションは動的リンクシンボルの最小セットを保持する。 オブジェクトファイルは <B>SHT_SYMTAB</B> セクションも含むことができる。
+<DT><B>SHT_LOPROC</B><DD>
+この値以上で <B>SHT_HIPROC</B> 以下の範囲はプロセッサ固有の意味に予約されている。
+<DT><B>SHT_HIPROC</B><DD>
+この値以下で <B>SHT_LOPROC</B> 以上の範囲はプロセッサ固有の意味に予約されている。
+<DT><B>SHT_LOUSER</B><DD>
+この値はアプリケーションプログラムのために予約される インデックス範囲の下限を指定する。
+<DT><B>SHT_HIUSER</B><DD>
+
+この値はアプリケーションプログラムのために予約される インデックス範囲の上限を指定する。 <B>SHT_LOUSER</B> から <B>SHT_HIUSER</B>
+の間のセクションタイプは、 現在または将来のシステム定義セクションタイプと衝突することなく、 アプリケーションで使用することができる。
+</DL>
+</DL>
+
+<DT><I>sh_flags</I><DD>
+
+様々な属性を記述するための 1 ビットのフラグをサポートするセクション。 フラグビットが <I>sh_flags</I>
+に設定された場合、そのセクションについての属性は &quot;オン&quot; になる。 それ以外の場合、属性が &quot;オフ&quot; であるか属性が適用されない。 未定義の属性は 0
+に設定される。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>SHF_WRITE</B><DD>
+このセクションはプロセス実行中に書き込み可能なデータを含む。
+<DT><B>SHF_ALLOC</B><DD>
+このセクションはプロセス実行中にメモリーを使用する。 制御セクションの中には、オブジェクトファイルのメモリーイメージには 存在しないものもある。
+そうしたセクションの場合、この属性はオフである。
+<DT><B>SHF_EXECINSTR</B><DD>
+このセクションは実行可能なマシン命令を含む。
+<DT><B>SHF_MASKPROC</B><DD>
+このマスクに含まれる全てのビットはプロセッサ固有の意味に予約されている。
+</DL>
+</DL>
+
+
+<DT><I>sh_addr</I><DD>
+このセクションがプロセスのメモリーイメージにある場合、 このメンバはセクションの最初のバイトが存在するアドレスを保持する。 それ以外の場合、このメンバは
+0 である。
+<DT><I>sh_offset</I><DD>
+このメンバの値は、ファイルの先頭からセクションの最初のバイトへの バイトオフセットを保持する。 セクションタイプ <B>SHT_NOBITS</B>
+はファイルの領域を全く使用せず、このタイプの <I>sh_offset</I> メンバはファイルの概念的な位置を示す。
+<DT><I>sh_size</I><DD>
+このメンバはセクションのサイズ (バイト単位) を保持する。 セクションタイプが <B>SHT_NOBITS</B> でない限り、そのセクションはファイル中の
+<I>sh_size</I> バイトを使用する。 タイプが <B>SHT_NOBITS</B> のセクションはサイズが 0 でないが、ファイルの領域を使用しない。
+<DT><I>sh_link</I><DD>
+このメンバは、セクションヘッダーテーブルインデックスリンクを保持する。 この解釈はセクションタイプに依存する。
+<DT><I>sh_info</I><DD>
+このメンバは追加情報を保持する。 この解釈はセクションタイプに依存する。
+<DT><I>sh_addralign</I><DD>
+アドレス配置に制約があるセクションもある。 セクションが倍長語 (doubleword) を保持する場合、
+システムは全てのセクションについて倍長語の配置を保証しなければならない。 つまり、 <I>sh_addr</I> の値は <I>sh_addralign</I>
+の値を法として 0 と合同でなければならない (訳注:「sh_addr mod sh_addralign = 0 でなければならない)。 2 の 0
+乗と正の整数乗のみが許可される。 0 または 1 はセクションの配置に制約がないことを意味する。
+<DT><I>sh_entsize</I><DD>
+
+シンボルテーブルのような固定サイズエントリーのテーブルを保持する セクションもある。 このようなセクションでは、 このメンバは各エントリーのサイズ
+(バイト単位) を表す。 このメンバが 0 の場合、 そのセクションは固定サイズエントリーのテーブルを保持しない。
+</DL>
+<P>
+
+
+さまざまなセクションにプログラム情報・制御情報が保持される:
+<DL COMPACT>
+<DT><I>.bss</I><DD>
+このセクションはプログラムのメモリーイメージに配置される 非初期化データを保持する。 定義上、システムはプログラムの実行開始時に、データを 0
+で初期化する。 このセクションのタイプは <B>SHT_NOBITS</B> である。 属性タイプは <B>SHF_ALLOC</B> と <B>SHF_WRITE</B>
+である。
+<DT><I>.comment</I><DD>
+このセクションはバージョン制御情報を保持する。 このセクションのタイプは <B>SHT_PROGBITS</B> である。 属性タイプは使用されない。
+<DT><I>.ctors</I><DD>
+このセクションは C++ コンストラクター関数への初期化されたポインターを保持する。 このセクションのタイプは <B>SHT_PROGBITS</B> である。
+属性タイプは <B>SHF_ALLOC</B> と <B>SHF_WRITE</B> である。
+<DT><I>.data</I><DD>
+このセクションはプログラムのメモリーイメージに配置される 初期化済みデータを保持する。 このセクションのタイプは <B>SHT_PROGBITS</B>
+である。 属性タイプは <B>SHF_ALLOC</B> と <B>SHF_WRITE</B> である。
+<DT><I>.data1</I><DD>
+このセクションはプログラムのメモリーイメージに配置される 初期化済みデータを保持する。 このセクションのタイプは <B>SHT_PROGBITS</B>
+である。 属性タイプは <B>SHF_ALLOC</B> と <B>SHF_WRITE</B> である。
+<DT><I>.debug</I><DD>
+このセクションはシンボリックデバッグ用の情報を保持する。 その内容は指定されていない。 このセクションのタイプは <B>SHT_PROGBITS</B>
+である。 属性タイプは使用されない。
+<DT><I>.dtors</I><DD>
+このセクションは C++ デストラクタ関数への初期化されたポインターを保持する。 このセクションのタイプは <B>SHT_PROGBITS</B> である。
+属性タイプは <B>SHF_ALLOC</B> と <B>SHF_WRITE</B> である。
+<DT><I>.dynamic</I><DD>
+このセクションは動的リンク情報を保持する。 このセクションの属性は <B>SHF_ALLOC</B> ビットを含む。 <B>SHF_WRITE</B>
+ビットが設定されるか否かはプロセッサによる。 このセクションのタイプは <B>SHT_DYNAMIC</B> である。 上記の属性を参照すること。
+<DT><I>.dynstr</I><DD>
+このセクションは動的リンクに必要な文字列を保持する。 最も一般的には、この文字列はシンボルテーブルエントリーと 関連づけられた名前を表す。
+このセクションのタイプは <B>SHT_STRTAB</B> である。 使用される属性タイプは <B>SHF_ALLOC</B> である。
+<DT><I>.dynsym</I><DD>
+このセクションは動的リンクシンボルテーブルを保持する。 このセクションのタイプは <B>SHT_DYNSYM</B> である。 使用される属性タイプは
+<B>SHF_ALLOC</B> である。
+<DT><I>.fini</I><DD>
+このセクションはプロセス終了コードに置かれる実行可能命令を保持する。 プロセスが正常に終了した場合、システムはこのセクションにある
+コードを配置して実行する。 このセクションのタイプは <B>SHT_PROGBITS</B> である。 使用される属性タイプは <B>SHF_ALLOC</B> と
+<B>SHF_EXECINSTR</B> である。
+<DT><I>.gnu.version</I><DD>
+このセクションはバージョンシンボルテーブルを保持する。 その内容は <I>ElfN_Half</I> 要素の配列である。 このセクションのタイプは
+<B>SHT_GNU_versym</B> である。 使用される属性タイプは <B>SHF_ALLOC</B> である。
+<DT><I>.gnu.version_d</I><DD>
+このセクションはバージョンシンボルの定義を保持する。 その内容は <I>ElfN_Verdef</I> 構造体のテーブルである。 このセクションのタイプは
+<B>SHT_GNU_verdef</B> である。 使用される属性タイプは <B>SHF_ALLOC</B> である。
+<DT><I>.gnu.version_r</I><DD>
+このセクションはバージョンシンボルが必要とする要素を保持する。 その内容は <I>ElfN_Verneed</I> 構造体のテーブルである。
+このセクションのタイプは <B>SHT_GNU_versym</B> である。 使用される属性タイプは <B>shf_alloc</B> である。
+<DT><I>.got</I><DD>
+このセクションはグローバルオフセットテーブルを保持する。 このセクションのタイプは <B>SHT_PROGBITS</B> である。
+属性はプロセッサ毎に異なる。
+<DT><I>.hash</I><DD>
+このセクションはシンボルハッシュテーブルを保持する。 セクションのタイプは <B>SHT_HASH</B> である。 使用される属性は <B>SHF_ALLOC</B>
+である。
+<DT><I>.init</I><DD>
+このセクションはプロセス初期化コードに配置される実行可能命令を保持する。 プログラムが実行を開始すると、
+システムはメインプログラムエントリーポイントを呼び出す前に、 このセクションにあるコードを配置して実行する。 このセクションはのタイプは
+<B>SHT_PROGBITS</B> である。 使用される属性は <B>SHF_ALLOC</B> と <B>SHF_EXECINSTR</B> である。
+<DT><I>.interp</I><DD>
+このセクションはプログラムインタープリターのパス名を保持する。 ファイルにこのセクションを含むロード可能セグメントがある場合、 そのセクションの属性には
+<B>SHF_ALLOC</B> ビットが含まれる。 それ以外の場合このビットはオフになる。 このセクションのタイプは <B>SHT_PROGBITS</B> である。
+<DT><I>.line</I><DD>
+このセクションはシンボリックデバッグのための行番号情報を保持する。 ここにはプログラムソースコードとマシンコードの対応関係が記述される。
+内容は指定されていない。 このセクションのタイプは <B>SHT_PROGBITS</B> である。 属性タイプは使用されない。
+<DT><I>.note</I><DD>
+このセクションは &quot;Note Section&quot; 形式で情報を保持する。このセクションのタイプ
+は <B>SHT_NOTE</B> である。属性タイプは使用されない。通常 OpenBSD ネイティブ実行
+可能ファイルは自身を識別するために <I>.note.openbsd.ident</I> セクションを持つ。
+これによりカーネルは、ファイルをロードする際に 互換 ELF バイナリエミュレーショ
+ンテストを回避できる。
+<DT><I>.note.GNU-stack</I><DD>
+このセクションは Linux のオブジェクトファイルで スタック属性を宣言するのに使用される。 セクションのタイプは <B>SHT_PROGBITS</B>
+である。使用される属性は <B>SHF_EXECINSTR</B> だけである。この属性は GNU リンカーに対して オブジェクトファイルが実行可能なスタック
+(executable stack) を必要とする 示すものである。
+<DT><I>.plt</I><DD>
+このセクションは手続き (procedure) リンクテーブルを保持する。 このセクションのタイプは <B>SHT_PROGBITS</B> である。
+属性はプロセッサ毎に異なる。
+<DT><I>.relNAME</I><DD>
+このセクションは以下に記述される再配置情報を保持する。 ファイルが再配置を含むロード可能セグメントを持っている場合、 このセクションの属性は
+<B>SHF_ALLOC</B> ビットを含む。 それ以外の場合、そのビットはオフである。 慣例として、 &quot;NAME&quot;
+は再配置が適用されるセクションが指定される。 よって <B>.text</B> についての再配置セクションは、通常は <B>.rel.text</B>
+という名前を持つ。 このセクションのタイプは <B>SHT_REL</B> である。
+<DT><I>.relaNAME</I><DD>
+このセクションは以下に記述される再配置情報を保持する。 ファイルが再配置を含むロード可能セグメントを持っている場合、 このセクションの属性は
+<B>SHF_ALLOC</B> ビットを含む。 それ以外の場合、そのビットはオフである。 慣例として、 &quot;NAME&quot;
+は再配置が適用されるセクションが指定される。 よって <B>.text</B> についての再配置セクションは、通常は <B>.rela.text</B>
+という名前を持つ。 このセクションのタイプは <B>SHT_RELA</B> である。
+<DT><I>.rodata</I><DD>
+このセクションはリードオンリーのデータを保持する。 このデータはプロセスイメージにおける書き込み不可能なセグメントに置かれる。 このセクションのタイプは
+<B>SHT_PROGBITS</B> である。 使用される属性は <B>SHF_ALLOC</B> である。
+<DT><I>.rodata1</I><DD>
+このセクションはリードオンリーのデータを保持する。 このデータはプロセスイメージにおける書き込み不可能なセグメントに置かれる。 このセクションのタイプは
+<B>SHT_PROGBITS</B> である。 使用される属性は <B>SHF_ALLOC</B> である。
+<DT><I>.shstrtab</I><DD>
+このセクションはセクション名を保持する。 このセクションのタイプは <B>SHT_STRTAB</B> である。 属性タイプは使用されない。
+<DT><I>.strtab</I><DD>
+このセクションは文字列を保持する。 最も一般的なのは、シンボルテーブルエントリーに関連づけられた 名前を表す文字列である。
+ファイルがシンボル文字列テーブルを含むロード可能セグメントを持つ場合、 セクションの属性は <B>SHF_ALLOC</B> ビットを含む。
+それ以外の場合、そのビットはオフである。 このセクションのタイプは <B>SHT_STRTAB</B> である。
+<DT><I>.symtab</I><DD>
+このセクションはシンボルテーブルを保持する。 ファイルがシンボルテーブルを含むロード可能セグメントを持つ場合、 セクションの属性は
+<B>SHF_ALLOC</B> ビットを含む。 それ以外の場合、ビットはオフである。 このセクションのタイプは <B>SHT_SYMTAB</B> である。
+<DT><I>.text</I><DD>
+
+このセクションはプログラムの &quot;テキスト&quot; または実行可能命令を保持する。 セクションのタイプは <B>SHT_PROGBITS</B> である。
+使用される属性は <B>SHF_ALLOC</B> と <B>SHF_EXECINSTR</B> である。
+</DL>
+<P>
+
+文字列テーブルセクションはヌル文字で終端されたキャラクター配列 (通常文字列と呼ばれるもの) を保持する。 オブジェクトファイルはこれらの文字列を
+シンボル名とセクション名を表すために使う。 文字列は、文字列テーブルセクションへのインデックスとして参照される。 インデックス 0
+の最初のバイトは、ヌルバイト ('\0') を 保持すると定義されている。
+同様に文字列テーブルの最後のバイトもヌル文字を保持すると定義されている。 これは全ての文字列がヌルバイトで終端されていることを保証するためである。
+<P>
+
+オブジェクトファイルのシンボルテーブルは、 プログラムのシンボル定義と参照を配置または再配置するのに 必要な情報を保持する。
+
+<PRE>
+
+typedef struct {
+    uint32_t      st_name;
+    Elf32_Addr    st_value;
+    uint32_t      st_size;
+    unsigned char st_info;
+    unsigned char st_other;
+    uint16_t      st_shndx;
+} Elf32_Sym;
+</PRE>
+
+
+
+<PRE>
+
+typedef struct {
+    uint32_t      st_name;
+    unsigned char st_info;
+    unsigned char st_other;
+    uint16_t      st_shndx;
+    Elf64_Addr    st_value;
+    uint64_t      st_size;
+} Elf64_Sym;
+</PRE>
+
+
+<P>
+
+
+32 ビット版と 64 ビット版は同じメンバを持ち、単に順番が異なるだけである。
+<DL COMPACT>
+<DT><I>st_name</I><DD>
+このメンバはオブジェクトファイルのシンボル文字列テーブルの インデックスを保持する。 シンボル文字列テーブルはシンボル名の文字表現を保持する。 この値が
+0 でない場合、シンボル名を得るための文字テーブルインデックスを表す。 それ以外の場合、シンボルテーブルは名前を持たない。
+<DT><I>st_value</I><DD>
+このメンバは関連づけられたシンボルの値を表す。
+<DT><I>st_size</I><DD>
+多くのシンボルにはそれに関連づけられたサイズがある。 シンボルがサイズを持たない場合、またはサイズが不明な場合、 このメンバは 0 である。
+<DT><I>st_info</I><DD>
+
+このメンバはシンボルのタイプとバインディング (binding) 属性を指定する:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>STT_NOTYPE</B><DD>
+シンボルのタイプが定義されていない。
+<DT><B>STT_OBJECT</B><DD>
+シンボルはデータオブジェクトに関連づけられている。
+<DT><B>STT_FUNC</B><DD>
+シンボルは関数またはその他の実行コードに関連づけられている。
+<DT><B>STT_SECTION</B><DD>
+シンボルはセクションに関連づけられている。 このタイプのシンボルテーブルエントリーは、 主として再配置のために存在し、通常は <B>STB_LOCAL</B>
+バインディングを持つ。
+<DT><B>STT_FILE</B><DD>
+慣例として、シンボルの名前は オブジェクトファイルに関連づけられたソースファイルの名前を指定する。 ファイルシンボルは <B>STB_LOCAL</B>
+バインディングを持ち、そのセクションインデックスは <B>SHN_ABS</B> である。 ファイルシンボルは、ファイルに他の <B>STB_LOCAL</B>
+シンボルがある場合は、それよりも先に来る。
+<DT><B>STT_LOPROC</B><DD>
+この値以上で <B>STT_HIPROC</B> 以下の範囲はプロセッサ固有の意味に予約されている。
+<DT><B>STT_HIPROC</B><DD>
+
+
+この値以下で <B>STT_LOPROC</B> 以上の範囲はプロセッサ固有の意味に予約されている。
+<DT><B>STB_LOCAL</B><DD>
+局所的シンボルはその定義を含むオブジェクトファイルの外からは見えない。 同じ名前の局所的シンボルは、お互いに影響を受けることなく、
+複数のファイルに存在できる。
+<DT><B>STB_GLOBAL</B><DD>
+大域的シンボルは結びつけられている全てのオブジェクトファイルから見える。 1 つのファイルで大域的シンボルが定義されていたら、
+他のファイルでは同じシンボルへの参照は未定義でなければならない。
+<DT><B>STB_WEAK</B><DD>
+弱シンボルは大域的シンボルに似ているが、その定義は優先度が低い。
+<DT><B>STB_LOPROC</B><DD>
+この値以上で <B>STB_HIPROC</B> 以下の範囲はプロセッサ固有の意味に予約されている。
+<DT><B>STB_HIPROC</B><DD>
+この値以下で <B>STB_LOPROC</B> 以上の範囲はプロセッサ固有の意味に予約されている。
+<DT><DD>
+バインディングとタイプフィールドを パックしたりアンパックしたりするマクロがある:
+<DT><DD>
+<B>ELF32_ST_BIND</B>(info)  または <B>ELF64_ST_BIND</B>(info)  <I>st_info</I>
+の値からバインディングを取り出す。
+<DT><DD>
+<B>ELF32_ST_TYPE</B>(info)  または <B>ELF64_ST_TYPE</B>(info)
+<BR>
+
+<I>st_info</I> の値からタイプを取り出す。
+<DT><DD>
+<B>ELF32_ST_INFO</B>(bind, type)  または <B>ELF64_ST_INFO</B>(bind, type)
+<BR>
+
+バインディングとタイプを <I>st_info</I> の値に変換する。
+</DL>
+</DL>
+
+
+<DT><I>st_other</I><DD>
+
+このメンバはシンボルの visibility (見える範囲) を規定する。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>STV_DEFAULT</B><DD>
+デフォルトのシンボル visibility ルール。
+<DT><B>STV_INTERNAL</B><DD>
+プロセッサ固有の隠しクラス。
+<DT><B>STV_HIDDEN</B><DD>
+シンボルは他のモジュールからは利用できない。
+<DT><B>STV_PROTECTED</B><DD>
+横取りできず (not preemptible)、公開されない。
+
+</DL>
+<P>
+
+visibility 種別を抽出するためのマクロがある。
+<P>
+
+<B>ELF32_ST_VISIBILITY</B>(other)  または <B>ELF64_ST_VISIBILITY</B>(other)
+</DL>
+
+
+<DT><I>st_shndx</I><DD>
+
+各シンボルテーブルエントリーは、いくつかのセクションに関連して &quot;定義されている&quot;。
+このメンバは関連するセクションヘッダーテーブルインデックスを保持する。
+</DL>
+<P>
+
+再配置はシンボル参照とシンボル定義を結合するプロセスである。 再配置可能ファイルはセクションの内容をどのように修正するかに関する
+情報を持たなければならない。 これにより、実行可能ファイルと共有オブジェクトファイルは
+プロセスのプログラムイメージについての正しい情報を持つことができる。 再配置エントリーは以下のようなデータである。
+<P>
+
+加数を必要としない再配置構造体。
+
+<PRE>
+
+typedef struct {
+    Elf32_Addr r_offset;
+    uint32_t   r_info;
+} Elf32_Rel;
+</PRE>
+
+
+
+<PRE>
+
+typedef struct {
+    Elf64_Addr r_offset;
+    uint64_t   r_info;
+} Elf64_Rel;
+</PRE>
+
+
+<P>
+
+加数を必要とする再配置構造体。
+
+<PRE>
+
+typedef struct {
+    Elf32_Addr r_offset;
+    uint32_t   r_info;
+    int32_t    r_addend;
+} Elf32_Rela;
+</PRE>
+
+
+
+<PRE>
+
+typedef struct {
+    Elf64_Addr r_offset;
+    uint64_t   r_info;
+    int64_t    r_addend;
+} Elf64_Rela;
+</PRE>
+
+
+
+<DL COMPACT>
+<DT><I>r_offset</I><DD>
+このメンバは再配置動作が適用される位置を与える。 再配置可能ファイルの場合、この値はセクションの先頭から 再配置で影響を受ける格納単位 (storage
+unit) までのバイトオフセットである。 実行可能ファイルまたは共有オブジェクトの場合、 この値は再配置で影響を受ける格納単位の仮想アドレスである。
+<DT><I>r_info</I><DD>
+このメンバは、再配置が行われなければならないシンボルテーブルインデックスと、 適用される再配置のタイプの両方を与える。
+再配置タイプはプロセッサ毎に異なる。 テキストが再配置エントリーの再配置タイプ またはシンボルテーブルインデックスを参照している場合、
+それぞれエントリーの <I>r_info</I> メンバに対して、それぞれ <B>ELF[32|64]_R_TYPE</B> と <B>ELF[32|64]_R_SYM</B>
+を適用した結果を意味する。
+<DT><I>r_addend</I><DD>
+
+このメンバは定数の加数を指定する。 この加数は再配置可能フィールドに格納される値を計算するために使われる。
+</DL>
+<P>
+
+.dynamic セクションは、関連する動的リンク情報を保持している 一連の構造体を保持する。 d_tag メンバは d_un の解釈を制御する。
+
+<PRE>
+
+typedef struct {
+    Elf32_Sword    d_tag;
+    union {
+        Elf32_Word d_val;
+        Elf32_Addr d_ptr;
+    } d_un;
+} Elf32_Dyn;
+extern Elf32_Dyn _DYNAMIC[];
+</PRE>
+
+
+
+<PRE>
+
+typedef struct {
+    Elf64_Sxword    d_tag;
+    union {
+        Elf64_Xword d_val;
+        Elf64_Addr  d_ptr;
+    } d_un;
+} Elf64_Dyn;
+extern Elf64_Dyn _DYNAMIC[];
+</PRE>
+
+
+
+<DL COMPACT>
+<DT><I>d_tag</I><DD>
+
+このメンバは以下の値を持つことができる:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>DT_NULL</B><DD>
+動的セクションの終りのマーク
+<DT><B>DT_NEEDED</B><DD>
+必要なライブラリの名前への文字列テーブルオフセット
+<DT><B>DT_PLTRELSZ</B><DD>
+PLT 再配置 (reloc) テーブルのサイズ (バイト単位)
+<DT><B>DT_PLTGOT</B><DD>
+PLT と GOT (または何れか一方) のアドレス
+<DT><B>DT_HASH</B><DD>
+シンボルハッシュテーブルのアドレス
+<DT><B>DT_STRTAB</B><DD>
+文字列テーブルのアドレス
+<DT><B>DT_SYMTAB</B><DD>
+シンボルテーブルのアドレス
+<DT><B>DT_RELA</B><DD>
+Rela 再配置テーブルのアドレス
+<DT><B>DT_RELASZ</B><DD>
+Rela テーブルのサイズ (バイト単位)
+<DT><B>DT_RELAENT</B><DD>
+Rela テーブルエントリーのサイズ (バイト単位)
+<DT><B>DT_STRSZ</B><DD>
+文字列テーブルのサイズ (バイト単位)
+<DT><B>DT_SYMENT</B><DD>
+シンボルテーブルエントリーのサイズ (バイト単位)
+<DT><B>DT_INIT</B><DD>
+初期化関数のアドレス
+<DT><B>DT_FINI</B><DD>
+終了関数のアドレス
+<DT><B>DT_SONAME</B><DD>
+共有オブジェクトの名前への文字列テーブルオフセット
+<DT><B>DT_RPATH</B><DD>
+ライブラリ検索パスへの文字列テーブルオフセット (推奨されない)
+<DT><B>DT_SYMBOLIC</B><DD>
+リンカーがシンボルの実行可能ファイルより前に この共有オブジェクトを検索した場合は、警告を出す。
+<DT><B>DT_REL</B><DD>
+Rel 再配置テーブルのアドレス
+<DT><B>DT_RELSZ</B><DD>
+Rel テーブルのサイズ (バイト単位)
+<DT><B>DT_RELENT</B><DD>
+Rel テーブルエントリーのサイズ (バイト単位)
+<DT><B>DT_PLTREL</B><DD>
+PLT が参照する再配置テーブルのタイプ (Rela または Rel)
+<DT><B>DT_DEBUG</B><DD>
+デバッグのために使用されている。内容は定義されていない。
+<DT><B>DT_TEXTREL</B><DD>
+これが指定されていない場合、 書き込み不可のセグメントには再配置は適用されない。
+<DT><B>DT_JMPREL</B><DD>
+PLT 専用の再配置エントリーのアドレス
+<DT><B>DT_BIND_NOW</B><DD>
+実行可能ファイルに制御を譲る前に、 全ての再配置を処理するように動的リンカーに指示する。
+<DT><B>DT_RUNPATH</B><DD>
+ライブラリ検索パスへの文字列テーブルオフセット
+<DT><B>DT_LOPROC</B><DD>
+プロセッサ固有の意味の開始
+<DT><B>DT_HIPROC</B><DD>
+プロセッサ固有の意味の終了
+</DL>
+</DL>
+
+
+<DT><I>d_val</I><DD>
+このメンバは様々な意味に解釈される整数値である。
+<DT><I>d_ptr</I><DD>
+このメンバはプログラムの仮想アドレスを表す。 これらのアドレスを解釈する際に、 実際のアドレスは元々のファイルの値と
+メモリーの基底アドレスから計算される。 ファイルにはこれらのアドレスを修正するための 再配置エントリーを含めてはならない。
+<DT><I>_DYNAMIC</I><DD>
+
+.dynamic セクションにある全ての動的構造体を含む配列。 これは自動的にリンカーに渡される。
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>注意</H2>
+
+
+
+
+
+
+ELF は System V で初めて登場した。 ELF 自体は System V で初めて登場した。 ELF フォーマットは採択された標準である。
+<P>
+
+
+
+
+
+
+
+
+
+<I>e_phnum</I>, <I>e_shnum</I>, <I>e_strndx</I> に対する拡張は、いずれも Linux での拡張で
+ある。Sun, BSD, AMD64 もこれに対応している。詳しい情報は、関連項目を参照。
+<A NAME="lbAF">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../GNU_binutils/man1/as.1.html">as</A></B>(1), <B><A HREF="../../GNU_gdb/man1/gdb.1.html">gdb</A></B>(1), <B><A HREF="../../GNU_binutils/man1/ld.1.html">ld</A></B>(1), <B><A HREF="../../GNU_binutils/man1/objdump.1.html">objdump</A></B>(1), <B><A HREF="../man2/execve.2.html">execve</A></B>(2), <B><A HREF="../man5/core.5.html">core</A></B>(5)
+<P>
+
+Hewlett-Packard, <I>Elf-64 Object File Format</I>.
+<P>
+
+Santa Cruz Operation, <I>System V Application Binary Interface</I>.
+<P>
+
+UNIX System Laboratories, &quot;Object Files&quot;, <I>Executable and Linking Format
+(ELF)</I>.
+<P>
+
+Sun Microsystems, <I>Linker and Libraries Guide</I>.
+<P>
+
+AMD64 ABI Draft, <I>System V Application Binary Interface AMD64 Architecture
+Processor Supplement</I>.
+<P>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
+である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">注意</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
+<DT><A HREF="#lbAG">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:28 GMT, December 05, 2022
+</BODY>
+</HTML>

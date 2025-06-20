@@ -1,0 +1,209 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MODPROBE</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MODPROBE</H1>
+Section:  (8)<BR>Updated: 08 May 2005<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/module-init-tools/release/man8/modprobe.8">roff page</A><HR>
+
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+modprobe - Linux カーネルにモジュールを追加したり削除したりするプログラム
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<P>
+<B>modprobe</B> [ <B>-v</B> ] [ <B>-V</B> ] [ <B>-C </B><I>config-file</I> ] [ <B>-n</B> ] [ <B>-i</B> ]
+[ <B>-q</B> ] [ <B>-o </B><I>modulename</I> ] [ <I>modulename</I> ] [ <I>module parameters</I><I>
+...</I> ]
+<P>
+<P>
+<B>modprobe</B> [ <B>-r</B> ] [ <B>-v</B> ] [ <B>-n</B> ] [ <B>-i</B> ] [ <I>modulename</I><I> ...</I> ]
+<P>
+<P>
+<B>modprobe</B> [ <B>-l</B> ] [ <B>-t </B><I>dirname</I> ] [ <I>wildcard</I> ]
+<P>
+<P>
+<B>modprobe</B> [ <B>-c</B> ]
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>このマニュアルについて</H2>
+
+<P>
+
+これは、module-init-tools 
+パッケージに所属するユーティリティのマニュアルです。module-init-tools
+は、現在では kmod パッケージに引き継がれているので、kmod
+パッケージの同名のユーティリティのマニュアルをご覧になることをお勧めします。
+(2022/12/02, Linux JM Project)
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+<B>modprobe</B> は Linux カーネルに賢くモジュールを追加したり削除したりする。 利便性のため、モジュール名において _ と -
+の違いはないことに注意。 <B>modprobe</B> は、 全てのモジュールと他のファイルを モジュールディレクトリ
+<I>/lib/modules/`uname -r`</I> から参照する。 このほかに、もしあれば <I>/etc/modprobe.conf</I> 設定ファイルと
+<I>/etc/modprobe.d</I> ディレクトリを参照する (<B><A HREF="../man5/modprobe.conf.5.html">modprobe.conf</A></B>(5) を参照) 。
+<P>
+
+このバージョンの <B>modprobe</B> は、 自身ではモジュールに対して何もしないことに注意。
+シンボルの解決やパラメータの解釈といった処理はカーネルの中で行なわれる。 そのため、モジュールの不具合はカーネルのメッセージとして報告されることもある。
+<B>dmesg</B>(8) を参照。
+<P>
+
+<B>modprobe</B> を実行するときは、 <B>depmod</B> (<B><A HREF="../man8/depmod.8.html">depmod</A></B>(8) を参照) で生成された <I>modules.dep</I>
+が最新の状態になっていなければならない。 このファイルには、 それぞれのモジュールが (もしあれば) 他のどのモジュールを
+必要としているかが列挙されていて、 <B>modprobe</B> はこれを使って依存するモジュールを自動的に追加したり削除したりする。
+(<B><A HREF="../man5/modules.dep.5.html">modules.dep</A></B>(5) を参照) 。
+<P>
+
+<I>modulename</I> の後ろに指定された引数は、 カーネルに渡される (設定ファイルに列挙されたオプションに追加される) 。
+<A NAME="lbAF">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-v --verbose </B><DD>
+プログラムが何をしているかに関するメッセージを表示する。 通常、 <B>modprobe</B> は何かまずいことが起こった場合に限って メッセージを表示する。
+<P>
+このオプションは <B>install</B> および <B>remove</B> コマンドを通じて、 MODPROBE_OPTIONS 環境変数にある
+<B>modprobe</B> の他のコマンドに渡される。
+<DT><B>-C --config </B><DD>
+このオプションはデフォルトの設定ファイル (<I>/etc/modprobe.conf</I> や <I>/etc/modprobe.d/</I>)  を無視する。
+<P>
+このオプションは <B>install</B> および <B>remove</B> コマンドを通じて、 MODPROBE_OPTIONS 環境変数にある
+<B>modprobe</B> の他のコマンドに渡される。
+<DT><B>-c --showconfig </B><DD>
+設定ファイルの内容を表示し、終了する。
+<DT><B>-n --dry-run </B><DD>
+このオプションは実際にモジュールを登録したり削除したりする (あるいは install や remove コマンドを実行する) 以外の、
+全ての処理を行なう。 <B>-v</B> と組み合わせて使うと、不具合をデバッグするのに便利である。
+<DT><B>-i --ignore-install --ignore-remove </B><DD>
+このオプションを使うと、 <B>modprobe</B> は コマンドラインで指定されたモジュールに対する 設定ファイル中の <B>install</B> および
+<B>remove</B> コマンドを (もしあれば) 無視する (ただし、依存するモジュールは設定ファイル中のコマンドに従う) 。
+<B><A HREF="../man5/modprobe.conf.5.html">modprobe.conf</A></B>(5) を参照。
+<DT><B>-q --quiet </B><DD>
+通常、 <B>modprobe</B> は 見つからない (かつエイリアスでもないか <B>install</B>/<B>remove</B> コマンドでもない) モジュールを
+削除したり登録したりしようとすると、エラーを通知する。 このフラグを使うと、 <B>modprobe</B> は でたらめな名前は単に無視する
+(カーネルはこの名前を使って 存在するかもしれないモジュールを日和見的にプローブする) 。
+<DT><B>-r --remove </B><DD>
+このオプションで <B>modprobe</B> は モジュールを削除する。 このオプションがない場合は登録する。 依存するモジュールも使われていない場合、
+<B>modprobe</B> はそれらも削除しようとする。 登録とは異なり、複数のモジュールをコマンドラインで指定することができる
+(モジュールを削除するときにモジュールパラメータを指定するのは意味がない) 。
+<P>
+通常は、モジュールを削除する理由などないが、 不具合のあるモジュールには必要である。 使っているカーネルがモジュールの削除に対応していないかもしれない。
+<DT><B>-V --version </B><DD>
+プログラムのバージョンを表示し、終了する。
+古いカーネルで実行する場合の注意については下を参照。
+<DT><B>-f --force </B><DD>
+モジュールからバージョンに関する情報を取り除こうとする (そうしないとロードできないモジュールに対して) 。 このオプションは
+<B>--force-vermagic</B> と <B>--force-modversion</B> オプションの 両方を使ったのと同じである。 当然のことながら、
+これらのチェックはあなたを守るために存在するのであって、 このオプションを使うのは危険である。
+<P>
+このオプションは登録されるすべてのモジュールに適用される。 つまり、 コマンドラインで指定したモジュール (またはエイリアス) だけでなく、
+依存するモジュールにも有効である。
+<DT><B>--force-vermagic </B><DD>
+どのモジュールにも、 カーネルやコンパイラのバージョンといった、 重要な情報を持つ短い文字列がある。 モジュールがロードに失敗し、カーネルが
+&quot;version magic&quot; が 一致しないと文句を言う場合、このオプションを使って &quot;version magic&quot; を削除することができる。
+当然のことながら、 これらのチェックはあなたを守るために存在するのであって、 このオプションを使うのは危険である。
+<P>
+このオプションは登録されるすべてのモジュールに適用される。 つまり、 コマンドラインで指定したモジュール (またはエイリアス) だけでなく、
+依存するモジュールにも有効である。
+<DT><B>--force-modversion </B><DD>
+モジュールが CONFIG_MODVERSIONS をセットして コンパイルされている場合、 モジュールが使っている (または提供する)
+ひとつひとつのインタフェースのバージョンを記したセクションが生成される。 モジュールがロードに失敗し、
+カーネルがインタフェースのバージョンの一致しないものがあると文句を言う場合、 &quot;--force-modversion&quot;
+を使ってバージョン情報をばっさり削除することができる。 当然のことながら、 これらのチェックはあなたを守るために存在するのであって、
+このオプションを使うのは危険である。
+<P>
+このオプションは登録されるすべてのモジュールに適用される。 つまり、 コマンドラインで指定したモジュール (またはエイリアス) だけでなく、
+依存するモジュールにも有効である。
+<DT><B>-l --list </B><DD>
+指定されたワイルドカード (あるいはワイルドカードが指定されない場合 &quot;*&quot;) に一致する すべてのモジュールを列挙する。
+このオプションは下位互換性のために用意されている。 もっと柔軟性のある代替品として、 <B><A HREF="../../GNU_findutils/man1/find.1.html">find</A></B>(1) や <B><A HREF="../../0MultiFileIdx/man1/basename.1.html">basename</A></B>(1) を参照。
+<DT><B>-a --all </B><DD>
+指定されたワイルドカードに一致する全てのモジュールを登録する。 このオプションは下位互換性のために用意されている。 もっと柔軟性のある代替品として、
+<B><A HREF="../../GNU_findutils/man1/find.1.html">find</A></B>(1) や <B><A HREF="../../0MultiFileIdx/man1/basename.1.html">basename</A></B>(1) を参照。
+<DT><B>-t --type </B><DD>
+<B>-l</B> を 指定された <I>dirname</I> に一致するディレクトリにあるモジュールに限定する。 このオプションは下位互換性のために用意されている。
+もっと柔軟性のある代替品として、 <B><A HREF="../../GNU_findutils/man1/find.1.html">find</A></B>(1) や <B><A HREF="../../0MultiFileIdx/man1/basename.1.html">basename</A></B>(1) を参照。
+<DT><B>-s --syslog </B><DD>
+このオプションを使うと、 すべてのエラーメッセージが syslog の仕組みで (LOG_NOTICE というレベルの LOG_DAEMON として)
+通知されるようになる。 このオプションがない場合は標準エラーに出力される。 このオプションは標準エラーが使えない場合、自動的に有効になる。
+<P>
+このオプションは <B>install</B> および <B>remove</B> コマンドを通じて、 MODPROBE_OPTIONS 環境変数にある
+<B>modprobe</B> の他のコマンドに渡される。
+<DT><B>--set-version </B><DD>
+カーネルバージョンを設定する。 このオプションがない場合、 カーネルバージョン (モジュールを検索する場所を表す) を 決定するために
+<B><A HREF="../../LDP_man-pages/man2/uname.2.html">uname</A></B>(2) が使われる。 このオプションは下位互換性のチェックも無効にする (そのため <B>modprobe.old</B>(8)
+は一切実行されない) 。
+<DT><B>--show-depends </B><DD>
+モジュール (またはエイリアス) の依存関係を列挙する。 モジュール自身も含まれる。 このオプションは モジュールのファイル名の集合 (空の場合もある)
+を生成する。 1 行に 1 個のモジュールが表示され、先頭に &quot;insmod&quot; が付く。 install コマンドが適用される場合、先頭に
+&quot;install&quot; が付く。 install コマンドは一切実行しない。 <B><A HREF="../man8/modinfo.8.html">modinfo</A></B>(8) を使えば
+モジュール自身からモジュールの依存関係を取り出すことができるが、 エイリアスや install コマンドについては全く分からないことに注意。
+<DT><B>-o --name </B><DD>
+このオプションはカーネルに登録されるモジュールの名前を変更しようとする。 テスト用のモジュールには複数回登録することのできるものがあり便利だが、
+カーネルは同じ名前のモジュールが 2 個あると拒否する。 通常、モジュールを複数回登録する必要はないはずである。
+なぜならモジュールに対応していない場合に役に立たないからである。
+<DT><B>--first-time </B><DD>
+通常、 <B>modprobe</B> は すでに存在するモジュールを登録しようとした場合や 存在しないモジュールを削除しようとした場合にも 成功する
+(そして何もしない) 。 この振る舞いは modutils と下位互換性があり、 単純なスクリプトにとっては望ましい。
+しかし、もっと複雑なスクリプトでは <B>modprobe</B> が実際に何かをしたかどうかを知りたくなることも多い。 このオプションは上のような場合、
+modprobe が失敗するようにする。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>下位互換性</H2>
+
+<P>
+
+このバージョンの <B>modprobe</B> は、 カーネル <B>2.5.48</B> およびそれ以降のためのものである。
+古い形式のモジュールに対応したカーネルを検出すると (そのためのほとんどの処理はユーザ空間で行なわれる) 、 その場で <B>modprobe.old</B>
+を実行しようとする。 そのため、ユーザは全く意識しなくてよい。
+<A NAME="lbAH">&nbsp;</A>
+<H2>環境変数</H2>
+
+<P>
+
+MODPROBE_OPTIONS 環境変数も <B>modprobe</B> に引数を渡すのに使うことができる。
+<A NAME="lbAI">&nbsp;</A>
+<H2>著作権</H2>
+
+<P>
+
+このマニュアルページの著作権表示は Copyright 2002, Rusty Russell, IBM Corporation.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<P>
+
+<B><A HREF="../man5/modprobe.conf.5.html">modprobe.conf</A></B>(5), <B><A HREF="../man8/lsmod.8.html">lsmod</A></B>(8), <B>modprobe.old</B>(8)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">このマニュアルについて</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">オプション</A><DD>
+<DT><A HREF="#lbAG">下位互換性</A><DD>
+<DT><A HREF="#lbAH">環境変数</A><DD>
+<DT><A HREF="#lbAI">著作権</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:39 GMT, December 05, 2022
+</BODY>
+</HTML>

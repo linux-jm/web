@@ -1,0 +1,116 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RESTART_SYSCALL</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>RESTART_SYSCALL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man2/restart_syscall.2">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+restart_syscall - 一時停止シグナルによる割り込み後にシステムコールを再開する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>long restart_syscall(void);</B>
+<P>
+
+<I>注</I>: このシステムコールには、glibc のラッパー関数はない。「注意」の節を参照。
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>restart_syscall</B>() システムコールは、 シグナル (<B>SIGSTOP</B> や <B>SIGTSTP</B> など)
+によって停止されたプロセスが <B>SIGCONT</B> シグナルを受信して再開された後に、 特定のシステムコールを再開するのに使用される。
+このシステムコールはカーネル内部での利用のみを想定している。
+<P>
+
+
+
+
+
+
+
+
+<B>restart_syscall</B>() は、 再開時に時刻関連のパラメーターを調整する必要があるシステムコールを再開させる場合にのみ使用される。
+概要するシステムコールは <B><A HREF="../man2/poll.2.html">poll</A></B>(2) (Linux 2.6.24 以降)、 <B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2) (Linux 2.6 以降)、
+<B><A HREF="../man2/clock_nanosleep.2.html">clock_nanosleep</A></B>(2) (Linux 2.6 以降)、 <B>FUTEX_WAIT</B> (Linux 2.6.22 以降) や
+<B>FUTEX_WAIT_BITSET</B> (Linux 2.6.31 以降) 操作を利用した場合の <B><A HREF="../man2/futex.2.html">futex</A></B>(2) である。
+<B>restart_syscall</B>() は、 中断されたシステムコールを、 経過した時間 (プロセスがシグナルにより停止されていた時間も含む)
+を考慮に入れて適切に調整した時刻引数で再開する。 <B>restart_syscall</B>() の仕組みがないと、 これらのシステムコールの再開で、
+プロセスが実行を継続する際にすでに経過した時間を正しく減算できない。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+<B>restart_syscall</B>() の返り値は、 再開中のシステムコールの返り値となる。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<I>errno</I> は <B>restart_syscall</B>() が再開しているシステムコールのエラーに基づいて設定される。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+<B>restart_syscall</B>() システムコールは Linux 2.6 以降に存在する。
+<A NAME="lbAH">&nbsp;</A>
+<H2>準拠</H2>
+
+このシステムコールは Linux 固有である。
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+このシステムコールには glibc のラッパー関数はない。 それはカーネルによる利用だけが想定されており、
+アプリケーションは決してこのシステムコールを呼び出すべきではない。
+<P>
+
+カーネルは <B>restart_syscall</B>() を使用することで、 シグナルにより停止されたプロセスが <B>SIGCONT</B>
+により再開された後にシステムコールが再開される際に、 元のシステムコールに指定されたタイムアウト時間の計算に、
+プロセスが停止中に経過した時間が含まれることを保証する。 タイムアウト引数を取り、停止シグナルの後に <B>SIGCONT</B>
+があった場合自動的に再開するシステムコールだが、 そのシステムコールに <B>restart_syscall</B>() の仕組みが組込まれていない場合には、
+プロセスの実行が再開された後、 停止中にプロセスが消費した時間はタイムアウト値としてカウント「されない」。 この問題を持つ有名なシステムコールとしては
+<B><A HREF="../man2/ppoll.2.html">ppoll</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/pselect.2.html">pselect</A></B>(2) がある。
+<P>
+
+ユーザー空間からは <B>restart_syscall</B>() の動作はほとんど見えない。 再開されたシステムコールを呼び出したプロセスには、
+そのシステムコールが通常通り実行され返ったように見える。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+
+
+
+
+
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2), <B><A HREF="../man2/sigreturn.2.html">sigreturn</A></B>(2), <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+<A NAME="lbAK">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:33 GMT, December 05, 2022
+</BODY>
+</HTML>

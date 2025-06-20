@@ -1,0 +1,277 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETTERM</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>SETTERM</H1>
+Section: User Commands (1)<BR>Updated: May 2014<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/util-linux/release/man1/setterm.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+setterm - 端末の属性を設定する
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>setterm</B> [options]
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>setterm</B> は、指定された端末機能 (terminal capabilities)
+を呼び出すための文字列を標準出力に出力する。
+その際、使用すべき文字列を見つけるために、
+可能なかぎり <I>terminfo</I> を参照する。もっとも、一部のオプション
+(以下で「仮想コンソール専用」と断り書きがあるもの) は、<B>terminfo</B>(5)
+にある機能と対応していない。その場合は、端末のタイプが
+&quot;con&quot; か &quot;linux&quot; ならば、指定された機能を PC Minix
+の仮想コンソールドライバで呼び出すための文字列を出力する。
+端末に実装されていないオプションは、無視する。
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+引き数にブール値 (<B>on</B> または <B>off</B>) を取るオプションは、デフォルトでは
+<B>on</B> になっている (訳注: 現在では、デフォルトが <B>on</B> のものも <B>off</B>
+のものもある。たとえば、<B>--bold</B> のデフォルトは、たぶん <B>off</B> である)。
+<P>
+
+以下で <I>8-color</I> と書いてあるところには、<B>black</B>, <B>red</B>, <B>green</B>,
+<B>yellow</B>, <B>blue</B>, <B>magenta</B>, <B>cyan</B>, <B>white</B> が使える。
+<P>
+
+<I>16-color</I> と書いてあるところには、<I>8-color</I> と <B>grey</B>、それに
+<B>bright</B> を前に付けた  <B>red</B>, <B>green</B>, <B>yellow</B>, <B>blue</B>,
+<B>magenta</B>, <B>cyan</B>, <B>white</B> が使える。
+<P>
+
+様々なカラーオプションは、少なくとも仮想端末では、それぞれ独立して設定できる。
+ただし、複数のモード (たとえば、<B>--underline</B> と <B>--half-bright</B>)
+を同時に設定したときの結果は、ハードウェア次第である。
+<P>
+
+指定するかしないかが任意の引き数では、オプションと引き数の間にスペースではなく、'='
+(等号) が必要である。たとえば、--option=argument のように
+(訳注：実際のところ、util-linux 2.36 では、<B>--clear</B>
+のような例外もあるが、たいていの場合スペースも使える)。
+<DL COMPACT>
+<DT><B>--appcursorkeys</B> on|off<DD>
+カーソルキーアプリケーションモードを on または off にする。on
+の場合は、カーソルキーを押したとき、ESC [ A, ESC [ B
+などの代わりに、ESC O A, ESC O B などが送出される。それが <B>vi</B>
+ユーザーに対して引き起こしかねない問題については、<I>Text-Terminal-HOWTO</I>
+の「vi and Cursor-Keys」セクションをご覧いただきたい。仮想コンソール専用。
+<DT><B>--append</B> <I>console_number</I><DD>
+<B>--dump</B> と似ているが、既存のスナップショットファイルを上書きせず、その末尾に追記する。
+<B>--dump</B> オプションが指定されていない場合にのみ効果がある。
+<DT><B>--background</B> <I>8-color</I>|default<DD>
+テキストの背景色を設定する。
+<DT><B>--blank</B>[=0-60|force|poke]<DD>
+スクリーンが自動的に消灯されるまでの無活動時間を分単位で指定する
+(自動消灯には、使用できれば APM
+を使用する)。引き数を指定しない場合は、消灯状態を返す
+(どの vt が消灯されたかを返す。消灯されていない vt については、0
+を返す)。仮想コンソール専用。
+<P>
+引き数 <B>force</B> は、キーが押されても、スクリーンを消灯したままにする。
+(訳注: <B>--blank</B>=force を指定すると、仮想コンソールは即座に消灯する。
+そして、どのキーを押しても消灯は解除されない。)
+<P>
+引き数 <B>poke</B> は、スクリーンの消灯を解除する。(訳注: <B>--blank</B>=force
+で消灯したとき、それを解除するのに <B>setterm --blank</B>=poke を使用する。)
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>[<B>訳注</B>]<DD>
+<B>--blank</B> に引き数を付けなかったときの動作がよく分からない。
+訳者のところでは、消灯しているはずの仮想コンソールが他にあっても、その番号を示さず、常に
+0 が返ってくる。1 つのコンピュータに複数の端末がつながっていた時代の話なのだろうか。
+つまり、vt とは、virtual terminal ではなく、video terminal のことなのか。
+</DL>
+</DL>
+
+<DT><B>--bfreq</B>[=<I>number</I>]<DD>
+ベルの周波数をヘルツ (Hz) で指定する。引き数が指定されていない場合は、デフォルトの
+<B>0</B> になる。仮想コンソール専用。
+<DT><B>--blength</B>[=0-2000]<DD>
+ベルの継続時間をミリ秒単位で設定する。引き数が指定されていない場合は、デフォルトの
+<B>0</B> になる。仮想コンソール専用。
+<DT><B>--blink</B> on|off<DD>
+点滅モードを on または off にする。 仮想コンソール以外では、<B>--blink off</B>
+にすると、(太字・半輝度・点滅・反転といった) 全ての属性が off になる。
+<DT><B>--bold</B> on|off<DD>
+太字 (高輝度) モードを on または off にする。仮想コンソール以外では、<B>--bold off</B>
+にすると (太字・半輝度・点滅・反転といった) 全ての属性が off になる。
+<DT><B>--clear</B>[=all|rest]<DD>
+引き数なし、または引き数 <B>all</B> が指定された場合は、<B>clear</B>(1)
+コマンドとまったく同じように、スクリーン全体をクリアしてカーソルをホームポジションに移動する。
+引き数 <B>rest</B>
+が指定された場合は、現在のカーソル位置からスクリーンの最下行までをクリアする。
+<DT><B>--clrtabs</B>[=<I>tab1 tab2 tab3</I> ...]<DD>
+指定された水平方向のカーソル位置にあるタブストップを解除する。範囲は <B>1-160</B>
+である。引き数が指定されない場合は、全てのタブストップを解除する。仮想コンソール専用。
+<DT><B>--cursor</B> on|off<DD>
+端末のカーソルを on または off にする。
+<DT><B>--default</B><DD>
+端末のレンダリングオプションをデフォルト値に戻す。
+<DT><B>--dump</B>[=<I>console_number</I>]<DD>
+番号で指定された仮想コンソールのスナップショットを <B>--file</B>
+オプションで指定されたファイルに書き出す。ファイルの内容は上書きされる。
+デフォルトのファイルは <I>screen.dump</I>
+である。引き数が指定されない場合は、現在使用中の仮想コンソールをダンプする。
+このオプションは、<B>--append</B> を無効にする。
+<DT><B>--file</B> <I>filename</I><DD>
+同じコマンドライン上に <B>--dump</B> や <B>--append</B>
+オプションがある場合に、それに使うスナップショットファイルの名前を設定する。
+このオプションが指定されない場合、デフォルトのファイル名はカレントディレクトリの
+<I>screen.dump</I> である。システムの規定する長さの上限を越えたパス名は、切り詰められる。
+linux/limits.h の PATH_MAX の値を参照すること。
+<DT><B>--foreground</B> <I>8-color</I>|default<DD>
+テキストの前景色を設定する。
+<DT><B>--half-bright</B> on|off<DD>
+減光 (半輝度) モードを on または off
+にする。仮想コンソール以外では、<B>--half-bright off</B>
+にすると、(太字・半輝度・点滅・反転といった) 全ての属性が off になる。
+<DT><B>--hbcolor</B> [bright] <I>16-color</I><DD>
+半輝度の文字の色を設定する (訳注: 減光する代わりに、色を変更する端末で使用)。
+<DT><B>--initialize</B><DD>
+端末の初期化文字列を出力する。
+通常、それは、端末のレンダリングオプションを設定し、その他の属性をデフォルトの値にする。
+<DT><B>--inversescreen</B> on|off<DD>
+スクリーン全体で前景色と背景色を入れ換える。
+<DT><B>--linewrap</B> on|off<DD>
+行がいっぱいになったとき、端末上の表示を次の行に続けるか否かを設定する。
+<DT><B>--msg</B> on|off<DD>
+カーネルの <B>printk</B>()
+によるメッセージをコンソールに送出するか否かを設定する。仮想コンソール専用。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>[<B>訳注</B>]<DD>
+コンソール出力の閾値であるロギングレベルが、現在いくつに設定されているかを知るには、
+<B>cat /proc/sys/kernel/printk</B> を実行すればよい。
+その出力の一番左側の数値が現在のロギングレベルである。
+各数値の意味については、<B><A HREF="../../LDP_man-pages/man2/syslog.2.html">syslog</A></B>(2)
+に説明がある。次の項目 <B>--msglevel</B> も参照。
+</DL>
+</DL>
+
+<DT><B>--msglevel</B> 0-8<DD>
+カーネルの <B>printk()</B>
+によるメッセージに対する、コンソールのロギングレベルを設定する。
+ここで設定したレベルよりも高い重大度を持つ (等しいレベルは含まない)
+全てのメッセージが、コンソールに表示されることになる
+(訳注: レベルの数値が小さいほど、重大度は高い)。
+従って、ロギングレベルを <B>8</B> に設定すると、全てのカーネルメッセージが表示される。
+なお、ロギングレベル <B>0</B> は <B>--msg on</B>
+と同じ効果がある。カーネルメッセージのロギングのインターフェースとしては、
+<B><A HREF="../../sysklogd/man8/klogd.8.html">klogd</A></B>(8) の方が使いやすいかもしれない。
+<P>
+仮想コンソール専用。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>[<B>訳注</B>]<DD>
+ロギングレベルは、0 から 7 まであり、それぞれ emerg, alert, crit, err,
+warning, notice, info, debug という重大度に対応する。詳しくは、<B><A HREF="../../LDP_man-pages/man2/syslog.2.html">syslog</A></B>(2)
+の <B>The log level</B> セクションなどを参照していただきたい。
+</DL>
+</DL>
+
+<DT><B>--powerdown</B>[=0-60]<DD>
+VESA パワーダウンまでの時間を分単位で設定する。引き数を指定しない場合は、デフォルトの
+<B>0</B> になる (すなわち、パワーダウンを行わない)。この時間が経過すると、
+コンソールが消灯している場合は vsync
+サスペンドモードになり、モニタがサスペンドモードの場合はパワーダウンモードになる。
+<DT><B>--powersave</B> <I>mode</I><DD>
+以下の値が <I>mode</I> に指定できる。
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>vsync|on</B><DD>
+モニタを VESA vsync サスペンドモードにする。
+<DT><B>hsync</B><DD>
+モニタを VESA hsync サスペンドモードにする。
+<DT><B>powerdown</B><DD>
+モニタを VESA パワーダウンモードにする。
+<DT><B>off</B><DD>
+モニタの VESA パワーセーブ機能を off にする。
+</DL>
+</DL>
+
+<DT><B>--regtabs</B>[=1-160]<DD>
+全てのタブストップを解除して、通常のタブストップパターンを設定する。
+タブ位置は、指定した数値ごとに置かれる。引き数を指定しない場合は、デフォルトの
+<B>8</B> が使用される。仮想コンソール専用。
+<DT><B>--repeat</B> on|off<DD>
+キーボードリピートを on または off にする。仮想コンソール専用。
+<DT><B>--reset</B><DD>
+端末リセット文字列を出力する。通常、それは、端末を起動時の状態にリセットする。
+<DT><B>--resize</B><DD>
+行と列の最大の大きさを見積もって、端末のサイズをリセットする。
+これは、実際の大きさとカーネルの端末ドライバーがうまく噛み合っていないとき、役に立つ。
+特筆すべき使用例は、シリアルコンソールの場合だ。そこでは <B>ioctl</B>(3p)
+を使わず、バイトストリームとブレークのみを使用しているのである。
+<DT><B>--reverse</B> on|off<DD>
+ビデオの反転モードを on または off にする。仮想コンソール以外では、<B>--reverse off</B>
+にすると、(太字・半輝度・点滅・反転といった) 全ての属性が off になる。
+<DT><B>--store</B><DD>
+端末の現在のレンダリングオプション (前景色と背景色)
+を、デフォルトにリセットする際に使用する値として保存する。仮想コンソール専用。
+<DT><B>--tabs</B>[=<I>tab1 tab2 tab3</I> ...]<DD>
+指定された水平方向のカーソル位置にタブストップを設定する。範囲は <B>1-160</B>
+である。引き数を指定しない場合は、現在のタブストップの設定を表示する。
+<DT><B>--term</B> <I>terminal_name</I><DD>
+環境変数 TERM を上書きする。
+<DT><B>--ulcolor</B> [bright] <I>16-color</I><DD>
+下線を引かれる文字の色を設定する
+(訳注: 下線を引く代わりに、色を変更する端末で使用)。仮想コンソール専用。
+<DT><B>--underline</B> on|off<DD>
+下線モードを on または off にする。
+<DT><B>--version</B><DD>
+バージョン情報を表示して終了する。
+<DT><B>--help</B><DD>
+ヘルプを表示して終了する。
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>互換性</H2>
+
+バージョン 2.25 以来、<B>setterm</B> は、昔からのハイフン 1 つの長いオプション
+(たとえば <B>-help</B>) に加えて、ハイフン 2 つの長いオプション
+(たとえば <B>--help</B>) をサポートしている。スクリプト内では、後方互換のため、ハイフン
+2 つよりハイフン 1 つを使う方がよい。現在のところ、ハイフン
+1 つの互換性を止める計画はなく、またそうする正当な理由もない。
+<A NAME="lbAG">&nbsp;</A>
+<H2>バグ</H2>
+
+Minix 版と Linux 版の違いが、この文書には書かれていない。
+<A NAME="lbAH">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../../0MultiFileIdx/man1/stty.1.html">stty</A></B>(1), <B>tput</B>(1), <B><A HREF="../../LDP_man-pages/man4/tty.4.html">tty</A></B>(4), <B>terminfo</B>(5)
+<A NAME="lbAI">&nbsp;</A>
+<H2>入手方法</H2>
+
+この setterm コマンドは、util-linux パッケージの一部であり、Linux Kernel Archive
+&lt;<A HREF="https://www.kernel.org/pub/linux/utils/util-linux/">https://www.kernel.org/pub/linux/utils/util-linux/</A>&gt;
+から入手できる。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">互換性</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
+<DT><A HREF="#lbAI">入手方法</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:50 GMT, December 05, 2022
+</BODY>
+</HTML>

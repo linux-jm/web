@@ -1,0 +1,224 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTHREAD_SETAFFINITY_NP</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>PTHREAD_SETAFFINITY_NP</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/LDP_man-pages/release/man3/pthread_setaffinity_np.3">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+pthread_setaffinity_np, pthread_getaffinity_np - スレッドの
+CPU affinity の設定/取得を行う
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>             /* See <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) */
+<B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
+
+<B>int pthread_setaffinity_np(pthread_t </B><I>thread</I><B>, size_t </B><I>cpusetsize</I><B>,</B>
+<B>                           const cpu_set_t *</B><I>cpuset</I><B>);</B>
+<B>int pthread_getaffinity_np(pthread_t </B><I>thread</I><B>, size_t </B><I>cpusetsize</I><B>,</B>
+<B>                           cpu_set_t *</B><I>cpuset</I><B>);</B>
+
+<I>-pthread</I> でコンパイルしてリンクする。
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>pthread_setaffinity_np</B>() 関数は、スレッド <I>thread</I> の CPU affinity
+マスクに <I>cpuset</I> が指す CPU 集合を設定する。呼び出しが成功し、
+そのスレッドが現在 <I>cpuset</I> で指定された CPU 上でが実行されていない
+場合は、スレッドは指定された CPU のいずれかに移動される。
+<P>
+
+<B>pthread_getaffinity_np</B>() 関数は、スレッド <I>thread</I> の CPU affinity
+マスクを、<I>cpuset</I> が指すバッファーに入れて返す。
+<P>
+
+CPU affinity マスクの詳細については、
+<B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2) を参照してほしい。
+CPU 集合の操作や取得を行う際に利用できるマクロ群の説明は
+<B><A HREF="../man3/CPU_SET.3.html">CPU_SET</A></B>(3) を参照してほしい。
+<P>
+
+引数 <I>cpusetsize</I> は <I>cpuset</I> が指すバッファーの長さ (バイト単位) で
+ある。通常は、この引数には <I>sizeof(cpu_set_t)</I> を指定する
+(<B><A HREF="../man3/CPU_SET.3.html">CPU_SET</A></B>(3) に書かれているマクロを使って CPU 集合を動的に
+割り当てている場合には、別の値になることもある)。
+<A NAME="lbAE">&nbsp;</A>
+<H2>返り値</H2>
+
+成功すると、これらの関数は 0 を返す。
+エラーの場合、0 以外のエラー番号を返す。
+<A NAME="lbAF">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B><DD>
+指定されたメモリーアドレスが無効である。
+<DT><B>EINVAL</B><DD>
+(<B>pthread_setaffinity_np</B>()) affinity ビットマスク <I>mask</I> に、
+その時点でシステム上に物理的に存在して、かつそのスレッドに対して許可
+されているプロセッサが一つも含まれていない。
+スレッドに対してどのプロセッサの利用が許可されるかは、<B>cpuset</B>(7) で
+説明されている &quot;cpuset&quot; 機構に適用される制限に基づいて決まる。
+<DT><B>EINVAL</B><DD>
+
+
+
+(<B>pthread_setaffinity_np</B>()) <I>cpuset</I> が、カーネルがサポートする CPU
+集合に含まれない CPU を指定していた。(カーネルの設定オプション
+<B>CONFIG_NR_CPUS</B> により、CPU 集合を表現するのに使われるカーネルの
+データ型がサポートする CPU 集合の範囲が定義される。)
+<DT><B>EINVAL</B><DD>
+(<B>pthread_getaffinity_np</B>()) <I>cpusetsize</I> がカーネルが使用する
+affinity マスクの大きさよりも小さい。
+<DT><B>ESRCH</B><DD>
+ID が <I>thread</I> のスレッドが見つからなかった。
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>バージョン</H2>
+
+これらの関数は glibc バージョン 2.3.4 以降で提供されている。
+<A NAME="lbAH">&nbsp;</A>
+<H2>属性</H2>
+
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>pthread_setaffinity_np</B>(),
+<B>pthread_getaffinity_np</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>準拠</H2>
+
+これらの関数は非標準の GNU による拡張である。
+そのため、名前に &quot;_np&quot; (nonportable; 移植性がない) という接尾辞が
+付いている。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>注意</H2>
+
+<B>pthread_setaffinity_np</B>() を呼び出した後、
+そのスレッドが実際に実行される CPU 集合は、
+<I>cpuset</I> 引数で指定された集合と
+システムに実際に存在する CPU 集合の共通部分になる。
+また、 <B>cpuset</B>(7) で説明されている &quot;cpuset&quot; 機構が使われている場合
+には、そのスレッドが実行される CPU 集合がシステムによってさらに制限
+される場合がある。そのスレッドが実行される実際の CPU 集合に対する
+これらの制限は、カーネルにより黙って適用される。
+<P>
+
+これらの関数は、システムコール <B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2) と
+<B><A HREF="../man2/sched_getaffinity.2.html">sched_getaffinity</A></B>(2) を使って実装されている。
+<P>
+
+(このバージョンだけであるが) glibc 2.3.3 では、
+これらの関数は <I>cpusetsize</I> 引数を持っていなかった。
+内部で呼ばれるシステムコールに渡される CPU セットの大きさは
+常に <I>sizeof(cpu_set_t)</I> であった。
+<P>
+
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3) で作成される新しいスレッドは、
+作成者の CPU affinity マスクを継承する。
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムでは、メインスレッドは
+<B>pthread_setaffinity_np</B>() を使って自分の CPU affinity マスクに
+CPU 0 から 7 が含まれるように設定し
+(システム上には 0 から 7 に対応する CPU が全て存在するとは限らない)、
+その後で <B>pthread_getaffinity_np</B>() を使って
+スレッドに実際に設定された CPU affinity マスクを確認している。
+<P>
+
+
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+<P>
+#define handle_error_en(en, msg) \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;errno&nbsp;=&nbsp;en;&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cpu_set_t&nbsp;cpuset;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;thread;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;thread&nbsp;=&nbsp;pthread_self();
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Set&nbsp;affinity&nbsp;mask&nbsp;to&nbsp;include&nbsp;CPUs&nbsp;0&nbsp;to&nbsp;7&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;CPU_ZERO(&amp;cpuset);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;8;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CPU_SET(j,&nbsp;&amp;cpuset);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_setaffinity_np(thread,&nbsp;sizeof(cpuset),&nbsp;&amp;cpuset);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_setaffinity_np&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Check&nbsp;the&nbsp;actual&nbsp;affinity&nbsp;mask&nbsp;assigned&nbsp;to&nbsp;the&nbsp;thread&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_getaffinity_np(thread,&nbsp;sizeof(cpuset),&nbsp;&amp;cpuset);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_getaffinity_np&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Set&nbsp;returned&nbsp;by&nbsp;pthread_getaffinity_np()&nbsp;contained:\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;CPU_SETSIZE;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(CPU_ISSET(j,&nbsp;&amp;cpuset))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;CPU&nbsp;%d\n&quot;,&nbsp;j);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2), <B><A HREF="../man3/CPU_SET.3.html">CPU_SET</A></B>(3), <B><A HREF="../man3/pthread_attr_setaffinity_np.3.html">pthread_attr_setaffinity_np</A></B>(3),
+<B><A HREF="../man3/pthread_self.3.html">pthread_self</A></B>(3), <B><A HREF="../man3/sched_getcpu.3.html">sched_getcpu</A></B>(3), <B>cpuset</B>(7), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7),
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7)
+<A NAME="lbAM">&nbsp;</A>
+<H2>この文書について</H2>
+
+この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
+<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">返り値</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
+<DT><A HREF="#lbAM">この文書について</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:33:32 GMT, December 05, 2022
+</BODY>
+</HTML>
