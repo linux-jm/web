@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html lang="ja" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>LDP man-pages 翻訳ガイド &#8212; Linux JM Guide master ドキュメント</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/nature.css?v=279e0f84" />
+    <script src="../_static/documentation_options.js?v=8e17ca2f"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/translations.js?v=4755f45a"></script>
+    <link rel="index" title="索引" href="../genindex/" />
+    <link rel="search" title="検索" href="../search/" />
+    <link rel="next" title="GNU coreutils 翻訳ガイド" href="../GNU_coreutils/" />
+    <link rel="prev" title="翻訳更新方法" href="../translation_update/" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex/" title="総合索引"
+             accesskey="I">索引</a></li>
+        <li class="right" >
+          <a href="../GNU_coreutils/" title="GNU coreutils 翻訳ガイド"
+             accesskey="N">次へ</a> |</li>
+        <li class="right" >
+          <a href="../translation_update/" title="翻訳更新方法"
+             accesskey="P">前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../">Linux JM Guide master ドキュメント</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">LDP man-pages 翻訳ガイド</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="ldp-man-pages">
+<h1>LDP man-pages 翻訳ガイド<a class="headerlink" href="#ldp-man-pages" title="Link to this heading">¶</a></h1>
+<p>LDP man-pages では、翻訳に po4a を利用しています。
+そのため、手順が他の翻訳方法と少し異なっています。</p>
+<section id="ldp-preparation">
+<span id="id1"></span><h2>準備<a class="headerlink" href="#ldp-preparation" title="Link to this heading">¶</a></h2>
+<p>po4a を利用しているので、インストールしておきます。
+以下は Debian/Ubuntu の場合。
+他のディストリビューションの場合も po4a をインストールすれば大丈夫だと思います。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>apt-get<span class="w"> </span>install<span class="w"> </span>po4a
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>po4a のバージョンにより roff マクロの認識や文字列抽出方法に違いがあることを
+確認しています。以下の環境で動作を確認しています (2021年3月時点)。</p>
+<ul class="simple">
+<li><p>po4a 0.57 (Ubuntu 20.04 focal)</p></li>
+<li><p>po4a 0.55 (Debian 10 buster)</p></li>
+<li><p>po4a 0.52 (Ubuntu 18.04 focal/openSUSE 15.3)</p></li>
+</ul>
+</div>
+<p>翻訳更新の動作確認を行っておきます。
+全ファイルを処理するので多少時間がかかります (2〜3分くらい)。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>manual/LDP_man-pages
+<span class="gp">$ </span>make<span class="w"> </span>setup
+<span class="gp">$ </span>make
+<span class="gp">$ </span>git<span class="w"> </span>status
+</pre></div>
+</div>
+<p>全部のコマンドがエラーなく終了すること、
+最後の <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">status</span></code> コマンドで更新されているファイルがないこと、
+を確認してください。
+<code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">status</span></code> の出力で更新されているファイルがある場合は、
+そのまま翻訳作業を進めると、意図しないファイルも更新してしまうことがあるので、
+メーリングリストで相談するなどして対応を検討しましょう。
+作業漏れ以外の可能性もあり、たとえば、 po4a のバージョンが変わって
+PO ファイルへの抜き出し方法が変わることもあります。</p>
+</section>
+<section id="id2">
+<h2>翻訳方法<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<p>LDP man-pages では、翻訳に po4a を利用しています。</p>
+<p>roff ファイルと PO ファイルの変換には、 roff ファイルと PO ファイルが 1:1
+になっているわけではなく、 po4a ファイルはカテゴリー毎に用意され、
+ひとつの po4a ファイルには複数の roff ファイルが含まれています。</p>
+<p>おおまかな流れは以下のようになります。</p>
+<ol class="arabic simple">
+<li><p>翻訳したい man page に対応する PO ファイルを特定する</p></li>
+<li><p>PO ファイルで翻訳を行う</p></li>
+<li><p>draft の man page を生成する</p></li>
+</ol>
+<p>ファイルの対応付けがこのようになっているのは、
+似た roff ファイルには似た文が含まれていてカテゴリー単位の方が翻訳が
+効率化されること、逆に全 roff ファイルを一つの PO ファイルにまとめて
+しまうと本来違う意味で解釈すべき文が同じエントリーになってしまう可能性
+があり、それを回避するため、という点からです。
+この対応付けは、もともと LDP man-pages のフランス語翻訳チームが
+公開していた perkamon をベースにしています。</p>
+<section id="draft">
+<h3>翻訳と draft への変換<a class="headerlink" href="#draft" title="Link to this heading">¶</a></h3>
+<section id="ja-po-man-page">
+<h4>ja.po と man page の関係<a class="headerlink" href="#ja-po-man-page" title="Link to this heading">¶</a></h4>
+<p>一つの po ファイルは、 LDP_man-pages の複数の man page に対応しています。
+man page に対応する po ファイルを特定するには、以下のコマンドを実行します。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./tools/identify-po.sh<span class="w"> </span>strptime.3
+<span class="go">strptime.3 -&gt; po4a/time/po/ja.po</span>
+</pre></div>
+</div>
+<p>上記の場合、strptime.3 が含まれる po ファイル (ja.po) は time 以下にあります。
+po4a/time/po/ja.po を翻訳することになります。</p>
+</section>
+<section id="id3">
+<h4>翻訳<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h4>
+<p>上記で特定した ja.po を翻訳します。</p>
+<p>エディタは po ファイルに対応しているものが便利です。</p>
+<ul class="simple">
+<li><p>Emacs を使っていれば Emacs の po-mode が便利です。</p></li>
+<li><p>gedit も PO ファイルをきれいに色付けしてくれるので、作業しやすいと思います。</p></li>
+</ul>
+</section>
+<section id="draft-page">
+<h4>draft page の生成<a class="headerlink" href="#draft-page" title="Link to this heading">¶</a></h4>
+<p>ja.po から draft を生成するには以下のいずれかを実行します (どちらも同じです)。
+更新を行った PO ファイルのみが変換されます。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make
+</pre></div>
+</div>
+<p>または</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>translate
+</pre></div>
+</div>
+<p>どのファイルが更新されたかは git status で確認して下さい。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>status<span class="w"> </span>.
+</pre></div>
+</div>
+<p>デフォルトでは、翻訳率 80% 以上のページが生成されます。
+80% にしている理由は、ある程度日本語混じりの draft page を見ながら翻訳する方が
+全体の文脈をつかみやすいためです。全部翻訳できたかは、下記の「翻訳状況の確認」
+の方法で確認できるので、翻訳率 100% を閾値にする必要はないと考えています。</p>
+<p>生成された draft page を man コマンドで整形して、内容を確認します。
+修正を行う際は、 ja.po を更新 -&gt; draft page の生成 -&gt; 内容の確認、を繰り返します。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>man<span class="w"> </span>-l<span class="w"> </span>draft/man3/strptime.3
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id4">
+<h3>翻訳状況の確認<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<section id="id5">
+<h4>ページ毎の翻訳状況<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h4>
+<p>上記の draft page の生成の際に、翻訳状況のページ untrans.html が更新されます。
+このページを表示すると、ページ毎の翻訳状況が確認できます。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">w3m untrans.html</span>
+</pre></div>
+</div>
+</section>
+<section id="po">
+<h4>PO ファイル単位の翻訳状況<a class="headerlink" href="#po" title="Link to this heading">¶</a></h4>
+<p>PO ファイル毎の翻訳状況も表示できます。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">make postats</span>
+</pre></div>
+</div>
+<p>未翻訳項目がある PO ファイルのみを表示することもできます。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">make untrans-postats</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id6">
+<h3>レビュー<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<p>JM ML に翻訳を投稿する場合は、以下のファイルを投稿して下さい。</p>
+<ul class="simple">
+<li><p>ja.po から生成された draft page</p></li>
+<li><p>翻訳した ja.po ファイルの git diff
+(または ja.po ファイルそのもの)</p></li>
+</ul>
+<p>ja.po の diff は以下のコマンドで取得できます。 time の ja.po を翻訳した場合。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">git diff po4a/time/po/ja.po</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>レビュー方法は改善の余地がいろいろあると思います。
+たとえば、プルリクエストを使うなど。</p>
+</div>
+</section>
+<section id="id7">
+<h3>リリース<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<p>まとめてリリースを行う場合の手順です。
+通常は JM ML でレビューを行います。</p>
+<p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">release</span></code> を実行すると、以下を行います。</p>
+<ul class="simple">
+<li><p>draft page を release フォルダにコピー</p></li>
+<li><p>translation_list を更新し、 PO ファイルで翻訳率が 100% になっているページのステータスを「☆」
+リリース済に変更します。</p></li>
+</ul>
+<p>更新後は通常のリリース手順と同じです。</p>
+<ul class="simple">
+<li><p>release ファイルを git add → git commit</p></li>
+<li><p>(必要に応じて) www/index.m4, www/news/index.m4 を更新</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../">目次</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">LDP man-pages 翻訳ガイド</a><ul>
+<li><a class="reference internal" href="#ldp-preparation">準備</a></li>
+<li><a class="reference internal" href="#id2">翻訳方法</a><ul>
+<li><a class="reference internal" href="#draft">翻訳と draft への変換</a><ul>
+<li><a class="reference internal" href="#ja-po-man-page">ja.po と man page の関係</a></li>
+<li><a class="reference internal" href="#id3">翻訳</a></li>
+<li><a class="reference internal" href="#draft-page">draft page の生成</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">翻訳状況の確認</a><ul>
+<li><a class="reference internal" href="#id5">ページ毎の翻訳状況</a></li>
+<li><a class="reference internal" href="#po">PO ファイル単位の翻訳状況</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6">レビュー</a></li>
+<li><a class="reference internal" href="#id7">リリース</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>前のトピックへ</h4>
+    <p class="topless"><a href="../translation_update/"
+                          title="前の章へ">翻訳更新方法</a></p>
+  </div>
+  <div>
+    <h4>次のトピックへ</h4>
+    <p class="topless"><a href="../GNU_coreutils/"
+                          title="次の章へ">GNU coreutils 翻訳ガイド</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>このページ</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/LDP_man-pages.rst.txt"
+            rel="nofollow">ソースコードを表示</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">クイック検索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search/" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="検索" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex/" title="総合索引"
+             >索引</a></li>
+        <li class="right" >
+          <a href="../GNU_coreutils/" title="GNU coreutils 翻訳ガイド"
+             >次へ</a> |</li>
+        <li class="right" >
+          <a href="../translation_update/" title="翻訳更新方法"
+             >前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../">Linux JM Guide master ドキュメント</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">LDP man-pages 翻訳ガイド</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; 著作権 2016-2021, Linux JM project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

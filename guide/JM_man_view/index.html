@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html lang="ja" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>JM-man-view.el の使い方 &#8212; Linux JM Guide master ドキュメント</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/nature.css?v=279e0f84" />
+    <script src="../_static/documentation_options.js?v=8e17ca2f"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/translations.js?v=4755f45a"></script>
+    <link rel="index" title="索引" href="../genindex/" />
+    <link rel="search" title="検索" href="../search/" />
+    <link rel="next" title="リポジトリの構成" href="../git_repository/" />
+    <link rel="prev" title="作業メールのフォーマット" href="../mail_format/" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex/" title="総合索引"
+             accesskey="I">索引</a></li>
+        <li class="right" >
+          <a href="../git_repository/" title="リポジトリの構成"
+             accesskey="N">次へ</a> |</li>
+        <li class="right" >
+          <a href="../mail_format/" title="作業メールのフォーマット"
+             accesskey="P">前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../">Linux JM Guide master ドキュメント</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">JM-man-view.el の使い方</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="jm-man-view-el">
+<h1>JM-man-view.el の使い方<a class="headerlink" href="#jm-man-view-el" title="Link to this heading">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">JM-man-view</span></code> とは、メール本文が man page のファイルのものを整形して表示するための Emacs Lisp です (Emacs 上で動くメーラを使っている人は特に便利です)。</p>
+<section id="id1">
+<h2>必要なもの<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="http://git.sourceforge.jp/view?p=linuxjm/jm.git;a=blob_plain;f=admin/JM-man-view.el;hb=HEAD">JM-man-view.el</a></p></li>
+<li><p><a class="reference external" href="https://sites.google.com/site/fjwcentaur/emacs">woman.el</a> (emacs21 以降では標準添付になっており、特に入手の必要はありません)</p></li>
+<li><p>Emacs (woman.el が XEmacs 上では動かないので XEmacs はダメです)</p></li>
+</ul>
+</section>
+<section id="id3">
+<h2>設定方法<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
+<ol class="arabic">
+<li><p><code class="docutils literal notranslate"><span class="pre">woman.el</span></code> と <code class="docutils literal notranslate"><span class="pre">JM-man-view.el</span></code> を <code class="docutils literal notranslate"><span class="pre">load-path</span></code> に置きます。 具体的には、例えば ~/elisp/ に両者を置き、 .emacs に</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(setq load-path (cons (expand-file-name &quot;~/elisp&quot;) load-path))
+</pre></div>
+</div>
+<p>と追記するとよいでしょう。</p>
+</li>
+<li><p>.emacs に以下を追記します。</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>;; woman
+(autoload &#39;woman &quot;woman&quot;
+  &quot;Decode and browse a UN*X man page.&quot; t)
+(autoload &#39;woman-find-file &quot;woman&quot;
+  &quot;Find, decode and browse a specific UN*X man-page file.&quot; t)
+;; JM-man-view
+(autoload &#39;JM-man-view &quot;JM-man-view&quot; nil t)
+(autoload &#39;JM-man-mail-view &quot;JM-man-view&quot; nil t)
+</pre></div>
+</div>
+</li>
+</ol>
+<p>以上で設定は終わりです。</p>
+</section>
+<section id="id4">
+<h2>使いかた<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h2>
+<p>メールが表示されているバッファに移動して、
+<code class="docutils literal notranslate"><span class="pre">M-x</span> <span class="pre">JM-man-view</span></code> とすれば、 <code class="docutils literal notranslate"><span class="pre">woman</span></code> によって整形されたマニュアルが
+別フレーム (X ならウィンドウ) に表示されます。
+Wanderlust/Mew を使っている場合は、 Summary モードで <code class="docutils literal notranslate"><span class="pre">M-x</span> <span class="pre">JM-man-mail-view</span></code> とすれ
+ばマニュアルが表示されます。</p>
+</section>
+<section id="id5">
+<h2>メールの条件<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">JM-man-view.el</span></code> は、整形対象とするバッファにおける roff 文書に対して、以下の仮定を置いています。</p>
+<ul class="simple">
+<li><p>マニュアル部分の先頭行は、roffのコメントである .&quot; で始まる (行頭が .&quot;)</p></li>
+<li><p>メール本文の最後まで manual である(= 本文の末尾にコメント等がない)</p></li>
+</ul>
+<p>JMpost で投げられるマニュアルは上の条件を満たしますので、 特に意識しなくともかまいません。</p>
+</section>
+<section id="id6">
+<h2>制限<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h2>
+<p>現在のところ、<code class="docutils literal notranslate"><span class="pre">woman.el</span></code> は mdoc 形式のマニュアルの変換ができないようです。
+したがって <code class="docutils literal notranslate"><span class="pre">JM-man-view.el</span></code> でも、 この形式のマニュアルは閲覧できないことになります。</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../">目次</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">JM-man-view.el の使い方</a><ul>
+<li><a class="reference internal" href="#id1">必要なもの</a></li>
+<li><a class="reference internal" href="#id3">設定方法</a></li>
+<li><a class="reference internal" href="#id4">使いかた</a></li>
+<li><a class="reference internal" href="#id5">メールの条件</a></li>
+<li><a class="reference internal" href="#id6">制限</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>前のトピックへ</h4>
+    <p class="topless"><a href="../mail_format/"
+                          title="前の章へ">作業メールのフォーマット</a></p>
+  </div>
+  <div>
+    <h4>次のトピックへ</h4>
+    <p class="topless"><a href="../git_repository/"
+                          title="次の章へ">リポジトリの構成</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>このページ</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/JM_man_view.rst.txt"
+            rel="nofollow">ソースコードを表示</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">クイック検索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search/" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="検索" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex/" title="総合索引"
+             >索引</a></li>
+        <li class="right" >
+          <a href="../git_repository/" title="リポジトリの構成"
+             >次へ</a> |</li>
+        <li class="right" >
+          <a href="../mail_format/" title="作業メールのフォーマット"
+             >前へ</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../">Linux JM Guide master ドキュメント</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">JM-man-view.el の使い方</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; 著作権 2016-2021, Linux JM project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>
