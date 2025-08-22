@@ -1,0 +1,21 @@
+name: SSH
+# 手動実行用のトリガー
+on:
+  push:
+    branches:
+      - action
+  workflow_dispatch: {}
+jobs:
+  ssh:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: generate key
+      run: |
+        mkdir -p .ssh && chmod 700 .ssh
+        echo "$SSH_KEY" > .ssh/id_rsa && chmod 600 .ssh/id_rsa
+      env:
+        SSH_KEY: ${{ secrets.RSYNC_KEY }}
+    - name: rsync
+      run: |
+         rsync -avP --delete --exclude=.git -e 'ssh -o "StrictHostKeyChecking=no"' -n . jmb@web.sourceforge.net:/home/project-web/linuxjm/htdocs/
