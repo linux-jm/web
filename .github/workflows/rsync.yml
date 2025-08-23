@@ -1,21 +1,17 @@
-name: SSH
-# 手動実行用のトリガー
+name: rsync to sourceforge.net
 on:
-  push:
-    branches:
-      - master
-  workflow_dispatch: {}
+  workflow_dispatch:
 jobs:
-  ssh:
+  rsync:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: generate key
+    - name: setup key
       run: |
-        mkdir -p .ssh && chmod 700 .ssh
-        echo "$SSH_KEY" > .ssh/id_rsa && chmod 600 .ssh/id_rsa
+        mkdir -p ~/.ssh && chmod 700 ~/.ssh
+        echo "$SSH_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
       env:
         SSH_KEY: ${{ secrets.RSYNC_KEY }}
     - name: rsync
       run: |
-         rsync -avP --delete --exclude=.git -e 'ssh -o "StrictHostKeyChecking=no"' -n . jmb@web.sourceforge.net:/home/project-web/linuxjm/htdocs/
+         rsync -avPzc --delete --exclude=.git --exclude=.github -e 'ssh -o "StrictHostKeyChecking=no"' . jmb@web.sourceforge.net:/home/project-web/linuxjm/htdocs/
