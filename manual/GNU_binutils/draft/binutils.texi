@@ -1,0 +1,4398 @@
+\input texinfo       @c                    -*- Texinfo -*-
+@setfilename binutils.info
+@settitle @sc{gnu} Binary Utilities
+@finalout
+@synindex ky cp
+
+@c man begin INCLUDE
+@include bfdver.texi
+@c man end
+
+@copying
+@c man begin COPYRIGHT
+Copyright @copyright{} 1991-2025 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with no Invariant Sections, with no Front-Cover Texts, and with no
+Back-Cover Texts.  A copy of the license is included in the
+section entitled ``GNU Free Documentation License''.
+
+@c man end
+@end copying
+
+@dircategory Software development
+@direntry
+* Binutils: (binutils).         The GNU binary utilities.
+@end direntry
+
+@dircategory Individual utilities
+@direntry
+* addr2line: (binutils)addr2line. Convert addresses to file and line.
+* ar: (binutils)ar.               Create, modify, and extract from archives.
+* c++filt: (binutils)c++filt.	  Filter to demangle encoded C++ symbols.
+* cxxfilt: (binutils)c++filt.     MS-DOS name for c++filt.
+* dlltool: (binutils)dlltool.	  Create files needed to build and use DLLs.
+* nm: (binutils)nm.               List symbols from object files.
+* objcopy: (binutils)objcopy.	  Copy and translate object files.
+* objdump: (binutils)objdump.     Display information from object files.
+* ranlib: (binutils)ranlib.       Generate index to archive contents.
+* readelf: (binutils)readelf.	  Display the contents of ELF format files.
+* size: (binutils)size.           List section sizes and total size.
+* strings: (binutils)strings.     List printable strings from files.
+* strip: (binutils)strip.         Discard symbols.
+* elfedit: (binutils)elfedit.     Update ELF header and property of ELF files.
+* windmc: (binutils)windmc.	  Generator for Windows message resources.
+* windres: (binutils)windres.	  Manipulate Windows resources.
+@end direntry
+
+@titlepage
+@title The @sc{gnu} Binary Utilities
+@ifset VERSION_PACKAGE
+@subtitle @value{VERSION_PACKAGE}
+@end ifset
+@subtitle Version @value{VERSION}
+@sp 1
+@subtitle @value{UPDATED}
+@author Roland H. Pesch
+@author Jeffrey M. Osier
+@author Cygnus Support
+@page
+
+@tex
+{\parskip=0pt \hfill Cygnus Support\par \hfill
+Texinfo \texinfoversion\par }
+@end tex
+
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+@contents
+
+@node Top
+@top Introduction
+
+@cindex version
+This brief manual contains documentation for the @sc{gnu} binary
+utilities
+@ifset VERSION_PACKAGE
+@value{VERSION_PACKAGE}
+@end ifset
+version @value{VERSION}:
+
+@iftex
+@table @code
+@item ar
+Create, modify, and extract from archives
+
+@item nm
+List symbols from object files
+
+@item objcopy
+Copy and translate object files
+
+@item objdump
+Display information from object files
+
+@item ranlib
+Generate index to archive contents
+
+@item readelf
+Display the contents of ELF format files.
+
+@item size
+List file section sizes and total size
+
+@item strings
+List printable strings from files
+
+@item strip
+Discard symbols
+
+@item elfedit
+Update the ELF header and program property of ELF files.
+
+@item c++filt
+Demangle encoded C++ symbols (on MS-DOS, this program is named
+@code{cxxfilt})
+
+@item addr2line
+Convert addresses or symbol+offset into file names and line numbers
+
+@item windres
+Manipulate Windows resources
+
+@item windmc
+Generator for Windows message resources
+
+@item dlltool
+Create the files needed to build and use Dynamic Link Libraries
+@end table
+@end iftex
+
+This document is distributed under the terms of the GNU Free
+Documentation License version 1.3.  A copy of the license is included
+in the section entitled ``GNU Free Documentation License''.
+
+@menu
+* ar::                          Create, modify, and extract from archives
+* nm::                          List symbols from object files
+* objcopy::			Copy and translate object files
+* objdump::                     Display information from object files
+* ranlib::                      Generate index to archive contents
+* size::                        List section sizes and total size
+* strings::                     List printable strings from files
+* strip::                       Discard symbols
+* c++filt::			Filter to demangle encoded C++ symbols
+* cxxfilt: c++filt.             MS-DOS name for c++filt
+* addr2line::			Convert addresses or symbol+offset to file and line
+* windmc::			Generator for Windows message resources
+* windres::			Manipulate Windows resources
+* dlltool::			Create files needed to build and use DLLs
+* readelf::                     Display the contents of ELF format files
+* elfedit::                     Update ELF header and property of ELF files
+* Common Options::              Command-line options for all utilities
+* Selecting the Target System:: How these utilities determine the target
+* debuginfod::                  Using binutils with debuginfod
+* Reporting Bugs::              Reporting Bugs
+* GNU Free Documentation License::  GNU Free Documentation License
+* Binutils Index::              Binutils Index
+@end menu
+
+@node ar
+@chapter ar
+
+@kindex ar
+@cindex archives
+@cindex collections of files
+
+@c man title ar アーカイブの作成、変更、および抽出
+
+@smallexample
+ar [-]@var{p}[@var{mod}] [@option{--plugin} @var{name}] [@option{--target} @var{bfdname}] [@option{--output} @var{dirname}] [@option{--record-libdeps} @var{libdeps}] [@var{relpos}] [@var{count}] @var{archive} [@var{member}@dots{}]
+ar -M [ <mri-script ]
+@end smallexample
+
+@c man begin DESCRIPTION ar
+
+@sc{gnu}@command{ar} プログラムは、書庫(アーカイブ)を作成、変更、および抽出します。@dfn{archive} は、元の個々のファイル(アーカイブの @dfn{メンバー}と呼ばれる)を取得できる構造で他のファイルのコレクションを保持する単一のファイルです。 
+
+元のファイルの 内容、モード(権限)、タイムスタンプ、所有者、グループはアーカイブに保存され、解凍時に復元できます。
+
+@sc{gnu}@command{ar} は、メンバーが任意の長さの名前を持つアーカイブを保持できます。ただし、@command{ar} がシステムでどのように構成されているかによっては、他のツールで保持されるアーカイブ形式との互換性のために、member-name の長さに制限が課される場合があります。これが存在する場合、多くの場合、制限は15文字(a.out に関連するフォーマットでは一般的)または16文字(coff に関連するフォーマットでは一般的)です。
+
+@cindex libraries
+@command{ar} はバイナリユーティリティと考えられています。なぜなら、このソートのアーカイブは、一般的に必要とされるサブルーチンを保持する @dfn{libraries} として最も頻繁に使用されるからです。ライブラリは他のライブラリに依存することが多いため、@option{--record-libdeps} オプションが指定されている場合、@command{ar} は、ライブラリの依存関係を記録することもできます。
+
+@cindex symbol index
+@command{ar} は、修飾子 @samp{s} を指定したときに、アーカイブ内の再配置可能オブジェクトモジュールで定義されたシンボルへのインデックスを作成します。
+作成されたインデックスは、 @command{ar} がその内容を変更するたびにアーカイブ内で更新されます (@samp{q} 更新操作用に保存)。
+このようなインデックスを持つアーカイブは、ライブラリへのリンクを高速化し、ライブラリ内のルーチンがアーカイブ内の配置に関係なく相互に呼び出すことを可能にします。
+
+このインデックステーブルを表示するには、@samp{nm -s} または @samp{nm --print-armap} を使用できます。アーカイブにテーブルがない場合は、@command{ar} と呼ばれる別の形式の @command{ranlib} を使用してテーブルだけを追加できます。
+
+@cindex thin archives
+@sc{gnu} @command{ar} は、オプションで @emph{thin} アーカイブを作成できます。このアーカイブには、シンボルインデックスと、アーカイブのメンバーファイルの元のコピーへの参照が含まれています。これは、再配置可能なオブジェクトが使用可能なままであることが期待され、各オブジェクトの内容をコピーしても時間とスペースを無駄にするだけであるローカル構築ツリー内で使用するライブラリを構築する場合に便利です。
+
+
+アーカイブは @emph{thin} の場合もあれば、通常の場合もあります。両方を同時に使用することはできません。.  アーカイブが作成されると、まずそのアーカイブを削除し、次にその場所に新しいアーカイブを作成しない限り、その形式を変更することはできません。
+
+Thin アーカイブも @emph{フラット化} されているため、ある thin アーカイブを別のthin アーカイブに追加しても、通常のアーカイブのようにネストされることはありません。代わりに、最初のアーカイブの要素が2番目のアーカイブに個別に追加されます。
+
+アーカイブの要素へのパスは、アーカイブ自体に対して相対的に保存されます。
+
+@cindex compatibility, @command{ar}
+@cindex @command{ar} 互換性
+@sc{gnu} @command{ar} は 2つの異なるファシリティと互換性があるように設計されています。Unix システム上のさまざまな種類の @command{ar} のように、コマンドラインオプションを使ってその動作を制御することができます。あるいは、単一のコマンドラインオプション @option{-M} を指定した場合、MRI の「librarian」プログラムのように、標準入力で提供されるスクリプトを使って制御することができます。
+
+@c man end
+
+@menu
+* ar cmdline::                  コマンドラインで @command{ar} を制御
+* ar scripts::                  スクリプトで @command{ar} を制御する
+@end menu
+
+@page
+@node ar cmdline
+@section コマンドラインで @command{ar} を制御
+
+@smallexample
+@c man begin SYNOPSIS ar
+ar [@option{-X32_64}] [@option{-}]@var{p}[@var{mod}] [@option{--plugin} @var{name}] [@option{--target} @var{bfdname}] [@option{--output} @var{dirname}] [@option{--record-libdeps} @var{libdeps}] [@option{--thin}] [@var{relpos}] [@var{count}] @var{archive} [@var{member}@dots{}]
+@c man end
+@end smallexample
+
+@cindex Unix compatibility, @command{ar}
+@command{ar} を Unix スタイルで使用する場合、@command{ar} は少なくとも2つの引数を実行する必要があります。1つは @emph{operation} を指定するキー文字(オプションで@emph{modifiers} を指定する他のキー文字を伴う)、もう1つは作用するアーカイブ名です。 
+
+ほとんどの操作では、さらに @var{member} 引数を受け入れて、操作する特定のファイルを指定することもできます。
+
+@c man begin OPTIONS ar
+
+@sc{gnu} @command{ar} を使用すると、最初のコマンドライン引数内で、操作コード @var{p} と修飾子フラグ @var{mod} を任意の順序で混在させることができます。
+
+必要に応じて、最初のコマンドライン引数をダッシュ (-) で始めることができます。 
+
+@cindex operations on archive
+@var{p} キー文字は、実行する操作を指定します。次のいずれかを指定できますが、指定する必要があるのは 1つだけです:
+
+@table @samp
+@item d
+@cindex deleting from archive
+モジュールをアーカイブから @emph{Delete} します。.  削除するモジュールの名前を @var{member}@dots{} として指定します。削除するファイルを指定しない場合、アーカイブは変更されません。
+
+@samp{v} 修飾子を指定すると、削除された各モジュールが @command{ar} で一覧表示されます。
+
+@item m
+@cindex moving in archive
+この操作を使用して、アーカイブ内のメンバーを@emph{移動}します。
+
+シンボルが複数のメンバーで定義されている場合、アーカイブ内のメンバーの順序によって、ライブラリを使用したプログラムのリンク方法が異なる場合があります。
+
+@code{m} で修飾子が使用されていない場合、@var{member} 引数で指定した任意のメンバはアーカイブの @emph{最後尾} に移動されます。代わりに、 @samp{a}、@samp{b}、または @samp{i} 修飾子を使用して、指定した場所にも移動できます。
+
+@item p
+@cindex printing from archive
+アーカイブの指定されたメンバーを標準出力ファイルに@emph{出力}します。@samp{v} 修飾子が指定されている場合は、メンバー名を表示してからその内容を標準の出力にコピーします。
+
+@var{member} 引数を指定しない場合、アーカイブ内のすべてのファイルが印刷されます。
+
+@item q
+@cindex quick append to archive
+@emph{Quick append}; 従来は、置換を確認せずに、@var{member}@dots{} の最後に@var{archive}ファイルを追加していました。
+
+修飾子 @samp{a}、 @samp{b}、 @samp{i} はこの操作に@emph{影響を与えません}。新しいメンバーは常にアーカイブの最後に配置されます。
+
+@samp{v} 修飾子は、追加された各ファイルを@command{ar} にリストさせます。
+
+この操作のポイントは速度であるため、@command{ar} の実装には、アーカイブのシンボルテーブルが存在する場合、それを更新しないオプションがあります。しかし、あまりにも多くの異なるシステムがシンボルテーブルが常に最新であることを前提としているため、 @sc{gnu} @command{ar} は quick append を行ってもテーブルを再構築します。
+
+注意 - @sc{gnu} @command{ar} は、コマンド @samp{qs} を @samp{r} の同義語として扱います。アーカイブ内の既存のファイルを置き換え、最後に新しいファイルを追加します。
+
+@item r
+@cindex replacement in archive
+@var{member}@dots{} のファイルを @var{archive} に挿入します(@emph{置換}を使用して)。この操作は、追加されるメンバーと名前が一致する既存のメンバーが削除されるという点で、 @samp{q} とは異なります。
+
+@var{member}@dots{} で指定されたファイルのいずれかが存在しない場合、@command{ar} はエラーメッセージを表示し、その名前に一致するアーカイブの既存のメンバーをそのまま残します。
+
+デフォルトでは、新しいメンバーはファイルの最後に追加されますが、 @samp{a}、@samp{b}、または @samp{i} のいずれかの修飾子を使用して、既存のメンバーに対して相対的な配置を要求できます。
+
+この操作で使用される修飾子 @samp{v} は、挿入された各ファイルの出力の行と、ファイルが追加された(古いメンバーが削除されていない)か置換されたかを示す @samp{a} または @samp{r} の文字の1つを引き出します。
+
+@item s
+@cindex ranlib
+アーカイブにインデックスを追加するか、すでに存在する場合は更新します。注意
+このコマンドは、コマンドまたは修飾子として使用できるため、1つのコマンド文字しか使用できないという規則の例外です。どちらの場合も同じことを行います。
+
+@item t
+@cindex contents of archive
+@var{archive}の内容、またはアーカイブに存在する @var{member}@dots{} にリストされたファイルの内容をリストする@emph{テーブル}を表示します。通常はメンバー名のみが表示されますが、修飾子 @samp{O} が指定されている場合は、メンバーの対応するオフセットも表示されます。最後に、モード(パーミッション)、タイムスタンプ、所有者、グループ、サイズを表示するには、 @samp{v} 修飾子を含める必要があります。
+
+@var{member} を指定しない場合は、アーカイブ内のすべてのファイルが一覧表示されます。
+
+@cindex repeated names in archive
+@cindex name duplication in archive
+アーカイブ(たとえば、@samp{b.a}) 内に同じ名前のファイル(たとえば、@samp{fie})  が複数ある場合、@samp{ar t b.a fie} は最初のもののみをリストします。これらすべてを表示するには、完全なリスト(この例では、@samp{ar t b.a}) を指定する必要があります。
+@c WRS only; per Gumby, this is implementation-dependent, and in a more
+@c recent case in fact works the other way.
+
+@item x
+@cindex extract from archive
+アーカイブから@var{member}) という名前のメンバーを@emph{抽出} します。この操作で @samp{v} 修飾子を使用すると、@command{ar} が抽出するときに個々の名前をリストするように要求できます。
+
+ @var{member} を指定しない場合、アーカイブ内のすべてのファイルが展開されます。
+
+thin アーカイブからファイルを抽出することはできません。また、 @option{P} で作成されたアーカイブからの抽出には制限があります。パスは絶対パスであってはならず、 @code{..} を含んではならず、パス内のサブディレクトリが存在している必要があります。これらの制限を避けたい場合は、@option{--output} オプションを使用して、出力するディレクトリを指定します。
+@end table
+
+操作の動作を調整するために、@var{mod}キー文字の直後にいくつかの修飾子( @var{p})を指定できます。
+
+@table @samp
+@item a
+@cindex relative placement in archive
+アーカイブの既存のメンバーの@emph{後}に新しいファイルを追加します。 @samp{a}修飾子を使用する場合、既存のアーカイブ・メンバーの名前は、@var{archive} の前に @var{relpos} 引数として存在する必要があります。
+
+@item b
+新しいファイルをアーカイブの既存のメンバーの@emph{前}に追加します。@samp{b} 修飾子を使用する場合、既存のアーカイブ・メンバーの名前は、@var{archive} の前に @var{relpos} 引数として存在する必要があります(@samp{i} と同じ)。
+
+@item c
+@cindex creating archives
+アーカイブを@emph{作成} します。指定された@var{archive} が存在しない場合は、更新を要求したときに常に作成されます。ただし、この修飾子を使用して作成することを事前に指定しない限り、警告が表示されます。
+
+@item D
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+@emph{deterministic}モードで操作します。ファイルとアーカイブインデックスを追加するときは、UID、GID、タイムスタンプ にゼロを使用し、すべてのファイルに一貫したファイルモードを使用します。このオプションを使用する場合、@command{ar} を同一のオプションおよび同一の入力ファイルとともに使用すると、入力ファイルの所有者、グループ、ファイルモード、または変更時刻に関係なく、複数の実行によって同一の出力ファイルが作成されます。
+
+@file{binutils} が @option{--enable-deterministic-archives} と設定されている場合、このモードはデフォルトで有効になります。
+下記の @samp{U} 修飾子で無効にすることができます。
+
+アーカイブ内の名前を切り詰めます。@sc{gnu} @command{ar} は通常、任意の長さのファイル名を許可します。これにより、一部のシステムではネイティブの @command{ar} プログラムと互換性のないアーカイブが作成されます。これが懸念される場合は、 @samp{f} 修飾子を使用して、ファイル名をアーカイブに入れるときにファイル名を切り捨てることができます。
+
+@item i
+アーカイブの既存のメンバーの@emph{前}に新しいファイルを挿入します。修飾子 @samp{i}を使用する場合、既存のアーカイブ・メンバーの名前は、@var{archive} の前に @var{relpos} 引数として存在する必要があります。(@samp{b} と同じ)。
+
+@item l
+@c This modifier was accepted but not used.
+@c whaffor ar l modifier???presumably compat; with
+@c what???---doc@@cygnus.com, 25jan91
+Specify dependencies of this library.  依存関係は、このオプション文字の直後に記述し、リンカーのコマンド行と同じ構文を使用し、単一の引数内で指定する必要があります。つまり、複数の項目が必要な場合は、それらを引用して 1つのコマンドライン引数を形成する必要があります。例 @samp{l "-L/usr/local/lib -lmydep1 -lmydep2"}
+
+@item N
+@var{count} パラメータを使用します。これは、アーカイブ内に同じ名前のエントリが複数ある場合に使用されます。指定された名前のインスタンス @var{count} をアーカイブから抽出または削除します。
+
+@item o
+@cindex dates in archive
+メンバーを抽出するときに、メンバーの@emph{オリジナル}日付を保持します。この修飾子を指定しない場合、アーカイブから抽出されたファイルには、抽出時刻がスタンプされます。
+
+@item O
+@cindex offsets of files
+アーカイブ内のメンバー・オフセットを表示します。@samp{t} オプションと一緒に使用します。
+
+@item P
+アーカイブ内の名前を照合または保存する場合は、フルパス名を使用します。
+フルパス名で作成されたアーカイブはPOSIXに準拠していないため、最新の @sc{gnu} ツール以外のツールでは動作しない可能性があります。
+@sc{gnu} @command{ar} を使用せずにこのようなアーカイブを@option{P} で変更すると、アーカイブが thin アーカイブでない限り、フルパス名が削除されます。 @option{P} を使用しない @option{r} では、置換する要素を選択するときにパスが無視されるため、 @option{P} はthin アーカイブにファイルを追加する場合に便利です。そのため、
+
+@smallexample
+ar rcST archive.a subdir/file1 subdir/file2 file1
+@end smallexample
+は、現在のディレクトリの最初の @code{subdir/file1} が @code{file1} に置き換えられます。 @option{P} を追加すると、この置換が防止されます。
+
+@item s
+@cindex writing archive index
+アーカイブに対して他の変更が行われていない場合でも、オブジェクトファイルインデックスをアーカイブに書き込むか、既存のインデックスを更新します。この修飾子フラグは、任意の操作と一緒に使用することも、単独で使用することもできます。アーカイブに対して@samp{ar s}を実行することは、アーカイブに対して@samp{ranlib} を実行することと同じです。
+
+@item S
+@cindex not writing archive index
+アーカイブシンボルテーブルを生成しません。これにより、いくつかのステップで大規模なライブラリの構築をスピードアップできます。結果のアーカイブはリンカでは使用できません。シンボルテーブルを構築するには、 @samp{S} の最後の実行で @samp{ar} 修飾子を省略するか、アーカイブに対して @samp{ranlib} を実行する必要があります。
+
+@item T
+@option{--thin} の廃止されたエイリアス。@option{T} は、X/Open System Interface で指定されているように、多くの ar 実装では @option{T} が異なる意味を持つため、推奨されません。
+
+@item u
+@cindex updating an archive
+通常、@samp{ar r}@dots{} はリストされたすべてのファイルをアーカイブに挿入します。同じ名前の既存のメンバーよりも新しい、リストしたファイルの@emph{only} を挿入したい場合は、この修飾子を使用します。@samp{u} 修飾子は、 @samp{r} (置換)操作でのみ使用できます。特に、タイムスタンプをチェックすると、@samp{q}の操作の、速度の利点が失われるため、 @samp{qu}の組み合わせは許可されません。
+
+注意: アーカイブが確定的な方法で作成された場合、たとえば、 @option{D} 修飾子を使用して作成された場合、置換は常に行われ、 @option{u} 修飾子は無効になります。
+
+@item U
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+@emph{deterministic}モードで@emph{動作}しません。これは、上記の @samp{D} 修飾子の逆です。追加されたファイルとアーカイブインデックスは、実際のUID、GID、タイムスタンプ、ファイルモードの値を取得します。
+
+@file{binutils} が @option{--enable-deterministic-archives} で設定されていない限り、これがデフォルトです。
+
+@item v
+この修飾子は、@emph{verbose}バージョンの操作を要求します。多くの操作では、修飾子 @samp{v} が追加されると、処理されたファイル名などの追加情報が表示されます。
+
+@item V
+この修飾子は @command{ar}のバージョン番号を表示します。
+@end table
+
+
+@command{ar} プログラムは、修飾子でもアクションでもない いくつかのコマンドラインオプションもサポートしていますが、特定の方法で動作を変更します。
+
+@table @samp
+@item --help
+@command{ar}でサポートされているコマンドラインオプションの一覧を表示して終了します。
+
+@item --version
+@command{ar} のバージョン情報を表示して終了します。
+
+@item -X32_64
+@command{ar} は、AIXとの互換のために、 @samp{-X32_64}と綴られた最初のオプションを無視します。このオプションによって生成される動作は、@sc{gnu} @command{ar}のデフォルトです。@command{ar} は、他の @samp{-X} オプションをサポートしていません。特に、AIX  @command{ar}のデフォルトである@option{-X32} はサポートしていません。
+
+@item --plugin @var{name}
+@cindex plugins
+オプションのコマンドラインスイッチ @option{--plugin @var{name}} を使用すると、@command{ar} は @var{name} と呼ばれるプラグインをロードします。 これにより、リンク時の最適化情報を含むオブジェクトファイルなど、より多くのファイル形式のサポートが追加されます。
+
+このオプションは、ツールチェーンがプラグインサポートを有効にして構築されている場合にのみ使用できます。
+
+@option{--plugin} が指定されていないが、プラグインサポートが有効になっている場合、 @command{ar} は @file{$@{libdir@}/bfd-plugins} 内のファイルをアルファベット順に繰り返し、問題のオブジェクトを要求する最初のプラグインが使用されます。
+
+このプラグイン検索ディレクトリは、@command{ld} の @option{-plugin} オプションで使用されるもの@emph{ではない}ことに注意してください。@command{ar} にリンカープラグインを使用させるには、@file{$@{libdir@}/bfd-plugins}ディレクトリにコピーする必要があります。GCC ベースのコンパイルでは、リンカープラグインは @file{liblto_plugin.so.0.0.0} と呼ばれます。Clang ベースのコンパイルでは、@file{LLVMgold.so} と呼ばれます。GCC プラグインは常に以前のバージョンと下位互換性があるため、最新のものをコピーするだけで十分です。
+
+@item --target @var{target}
+オプションのコマンドラインスイッチ @option{--target @var{bfdname}} は、アーカイブメンバーがシステムのデフォルトフォーマットとは異なるオブジェクトコードフォーマットであることを指定します。詳細は Target Selection(訳注: infoファイル内のみ) を参照してください。
+
+@item --output @var{dirname}
+@option{--output} オプションを使用すると、アーカイブ・メンバーを抽出するディレクトリへのパスを指定できます。このオプションを指定しない場合は、現在のディレクトリが使用されます。
+
+注意: このオプションの存在は @option{x} の抽出操作を仮定しますが、コマンドラインにはこのオプションを含める必要があります。
+
+@item --record-libdeps @var{libdeps}
+@option{--record-libdeps} オプションは @option{l} 修飾子と同じですが、長い形式で処理されます。
+
+@item --thin
+@cindex creating thin archive
+指定された@var{archive}を@emph{thin}アーカイブにします。すでに存在し、通常のアーカイブである場合、既存のメンバーは@var{archive}と同じディレクトリに存在する必要があります。
+
+@end table
+@c man end
+
+@ignore
+@c man begin SEEALSO ar
+nm(1), ranlib(1), と@file{binutils} 用の Info エントリ。
+@c man end
+@end ignore
+
+@node ar scripts
+@section Controlling @command{ar} with a Script
+
+@smallexample
+ar -M [ <@var{script} ]
+@end smallexample
+
+@cindex MRI compatibility, @command{ar}
+@cindex scripts, @command{ar}
+@samp{-M} で単一のコマンドラインオプション @command{ar} を使用すると、基本的なコマンド言語でその操作を制御できます。この形式の @command{ar} は、標準入力がターミナルから直接入力される場合に対話的に動作します。対話的に使用している場合、 @command{ar} は入力を求めるプロンプトを表示し(プロンプトは @samp{AR >})、エラーが発生した後も実行を継続します。標準入力をスクリプトファイルにリダイレクトする場合、プロンプトは表示されず、 @command{ar} はエラーが発生すると(ゼロ以外の終了コードで)実行を放棄します。
+
+ @command{ar} コマンド言語は、コマンドラインオプションと同等になるように設計されて@emph{いません}。実際、アーカイブに対する制御はやや少なくなっています。コマンド言語の唯一の目的は、MRI ``librarian'' プログラム用に書かれているスクリプトをすでに持っている開発者向けに、@sc{gnu} @command{ar} への変換を容易にすることです。
+
+@command{ar}コマンド言語の構文は簡単です:
+@itemize @bullet
+@item
+コマンドは大文字または小文字で認識されます。たとえば、 @code{LIST} は@code{list}と同じです。以下の説明では、わかりやすくするためにコマンドは大文字で示されています。
+
+@item
+1つのコマンドが各行に表示される場合があります。これは行の最初の単語です。
+
+@item
+空行は使用できますが、意味を持ちません。
+
+@item
+コメントを使用できます。 @samp{*}または @samp{;} の後のテキストは無視されます。
+
+@item
+@command{ar}コマンドの引き数の一部として名前のリストを使用する場合は、個々の名前をコンマまたは空白で区切ることができます。以下の説明では、わかりやすくするためにカンマが使用されています。
+
+@item
+@samp{+} は行継続文字として使用されます。 @samp{+} が行の末尾に表示される場合、次の行のテキストは現在のコマンドの一部とみなされます。
+@end itemize
+
+ここでは、@command{ar} スクリプトで使用できるコマンド、または@command{ar} を対話的に使用する場合に使用できるコマンドを示します。そのうち3つは特別な意味を持ちます:
+
+@code{OPEN} または@code{CREATE} は @dfn{current archive} を指定します。これは、他のほとんどのコマンドに必要なテンポラリファイルです。
+
+@code{SAVE} は、スクリプトによって指定された時点までの変更をコミットします。@code{SAVE} より前のコマンドは、現在のアーカイブの一時コピーにのみ影響します。
+
+@table @code
+@item ADDLIB @var{archive}
+@itemx ADDLIB @var{archive} (@var{module}, @var{module}, @dots{} @var{module})
+@var{archive} のすべての内容 (または、指定されている場合は、@var{archive} の各@var{module}) を現在のアーカイブに追加します。
+
+事前に @code{OPEN} または @code{CREATE} を使用する必要があります。
+
+@item ADDMOD @var{member}, @var{member}, @dots{} @var{member}
+@c FIXME! w/Replacement??  If so, like "ar r @var{archive} @var{names}"
+@c        else like "ar q..."
+Add each named @var{member} as a module in the current archive.
+
+事前に @code{OPEN} または @code{CREATE} を使用する必要があります。
+
+@item CLEAR
+現在のアーカイブの内容を破棄し、最後の @code{SAVE} 以降の操作の効果をキャンセルします。現在のアーカイブが指定されていなくても実行できます(影響はありません)。
+
+@item CREATE @var{archive}
+アーカイブを作成し、それを現在のアーカイブにします (他の多くのコマンドで必要です)。新しいアーカイブは一時的な名前で作成されます。 @var{archive} を使用するまで、実際には @code{SAVE} として保存されません。
+既存のアーカイブを上書きすることもできます。同様に、 @var{archive} という名前の既存のファイルの内容は、 @code{SAVE} まで破棄されません。
+
+リストされた各 @var{module} を現在のアーカイブから削除します。@samp{ar-d@var{archive}@var{module}@dots{}@var{module}} と同じです。
+
+事前に @code{OPEN} または @code{CREATE} を使用する必要があります。
+
+@item DIRECTORY @var{archive} (@var{module}, @dots{} @var{module})
+@itemx DIRECTORY @var{archive} (@var{module}, @dots{} @var{module}) @var{outputfile}
+@var{archive} に存在する名前付きの @var{module} を一覧表示します。個別のコマンド @code{VERBOSE} は、出力の形式を指定します。詳細出力がオフの場合、出力は @samp{ar-t@var{archive}@var{module}@dots{}} のようになります。詳細出力がオンの場合、リストは @samp{ar-tv@var{archive}@var{module}@dots{}} のようになります。
+
+出力は通常、標準の出力ストリームに送られますが、最後の引き数として @var{outputfile} を指定すると、 @command{ar}  はそのファイルに出力を送ります。
+
+@item END
+@command{ar} を終了します。@code{0} の終了コードは、補完の成功を示します。このコマンドは出力ファイルを保存しません;最後の @code{SAVE} コマンド以降に現在のアーカイブを変更した場合、それらの変更は失われます。
+
+@item EXTRACT @var{module}, @var{module}, @dots{} @var{module}
+現在のアーカイブから @var{module} という名前の各モジュールを抽出し、個別のファイルとして現在のディレクトリに書き込みます。@samp{ar -x@var{archive} @var{module}@dots{}} と同じです。
+
+事前に @code{OPEN} または @code{CREATE} を使用する必要があります。
+
+@ignore
+@c FIXME Tokens but no commands???
+@item FULLDIR
+
+@item HELP
+@end ignore
+
+@item LIST
+@code{VERBOSE} の状態に関係なく、現在のアーカイブの全内容を 「verbose」 形式で表示します。@samp{ar tv@var{archive}} のような効果があります。(この単一のコマンドは、MRI 互換性のために存在するのではなく、 @sc{gnu} @command{ar} の拡張です。
+
+事前に @code{OPEN} または @code{CREATE} を使用する必要があります。
+
+@item OPEN @var{archive}
+現在のアーカイブとして使用するために既存のアーカイブを開きます(他の多くのコマンドで必要)。後続のコマンドの結果としての変更は、次に @code{SAVE} を使用するまでは、実際に @var{archive} に影響しません。 
+
+@item REPLACE @var{module}, @var{module}, @dots{} @var{module}
+現在のアーカイブで、現在の作業ディレクトリ内のファイルから、 (@code{REPLACE} 引数で指定された) 既存の各 @var{module}を置き換えます。
+このコマンドをエラーなしで実行するには、ファイルと現在のアーカイブ内のモジュールの両方が存在している必要があります。
+
+事前に @code{OPEN} または @code{CREATE} を使用する必要があります。
+
+@item VERBOSE
+@code{DIRECTORY} からの出力を制御する内部フラグを切り替えます。
+フラグがオンの場合、 @code{DIRECTORY} の出力は @samp{ar -tv }@dots{} の出力と一致します。
+
+@item SAVE
+現在のアーカイブに変更をコミットし、最後の @code{CREATE} または @code{OPEN} コマンドで指定された名前のファイルとして実際に保存します。
+
+事前に @code{OPEN} または @code{CREATE} を使用する必要があります。
+
+@end table
+
+@iftex
+@node ld
+@chapter ld
+@cindex linker
+@kindex ld
+@sc{gnu}linker@command{ld} は、別のマニュアルで説明されています。
+xrefなので削る
+@end iftex
+
+@node nm
+@chapter nm
+@cindex symbols
+@kindex nm
+
+@c man title nm オブジェクトファイルのシンボルを一覧表示
+
+@smallexample
+@c man begin SYNOPSIS nm
+nm [@option{-A}|@option{-o}|@option{--print-file-name}]
+   [@option{-a}|@option{--debug-syms}]
+   [@option{-B}|@option{--format=bsd}]
+   [@option{-C}|@option{--demangle}[=@var{style}]]
+   [@option{-D}|@option{--dynamic}]
+   [@option{-f}@var{format}|@option{--format=}@var{format}]
+   [@option{-g}|@option{--extern-only}]
+   [@option{-h}|@option{--help}]
+   [@option{--ifunc-chars=@var{CHARS}}]
+   [@option{-j}|@option{--format=just-symbols}]
+   [@option{-l}|@option{--line-numbers}] [@option{--inlines}]
+   [@option{-n}|@option{-v}|@option{--numeric-sort}]
+   [@option{-P}|@option{--portability}]
+   [@option{-p}|@option{--no-sort}]
+   [@option{-r}|@option{--reverse-sort}]
+   [@option{-S}|@option{--print-size}]
+   [@option{-s}|@option{--print-armap}]
+   [@option{-t} @var{radix}|@option{--radix=}@var{radix}]
+   [@option{-u}|@option{--undefined-only}]
+   [@option{-U}|@option{--defined-only}]
+   [@option{-V}|@option{--version}]
+   [@option{-W}|@option{--no-weak}]
+   [@option{-X 32_64}]
+   [@option{--no-demangle}]
+   [@option{--no-recurse-limit}|@option{--recurse-limit}]]
+   [@option{--plugin} @var{name}]
+   [@option{--size-sort}]
+   [@option{--special-syms}]
+   [@option{--synthetic}]
+   [@option{--target=}@var{bfdname}]
+   [@option{--unicode=}@var{method}]
+   [@option{--with-symbol-versions}]
+   [@option{--without-symbol-versions}]
+   [@var{objfile}@dots{}]
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION nm
+@sc{gnu} @command{nm} は、オブジェクトファイル @var{objfile}@dots{} のシンボルの一覧を示します。
+引数としてオブジェクトファイルが指定されていない場合、 @command{nm} はファイルを @file{a.out} と見なします。
+
+各シンボルに対して@command{nm} は以下を表示します:
+
+@itemize @bullet
+@item
+オプション(以下を参照)によって選択された基数のシンボル値、またはデフォルトでは16進数。
+
+@item
+シンボルのタイプ。少なくとも次のタイプが使用されます。オブジェクトファイルの形式によっては、他のタイプも使用されます。小文字の場合、シンボルは通常ローカルです。大文字の場合、シンボルはグローバル(外部)です。ただし、特別なグローバルシンボル (@code{u} 、 @code{v} 、 @code{w}) には小文字のシンボルがいくつか表示されます。
+
+@c Some more detail on exactly what these symbol types are used for
+@c would be nice.
+@table @code
+@item A
+シンボルの値は絶対値であり、それ以上リンクしても変更されません。
+
+@item B
+@itemx b
+シンボルは、BSS データセクションにあります。通常、このセクションにはゼロで初期化されたか、初期化されていないデータが含まれますが、実際の動作はシステムに依存します。
+
+@item C
+@itemx c
+シンボルは共通です。共通シンボルは初期化されていないデータです。リンクする場合、複数の共通シンボルが同じ名前で表示されることがあります。シンボルがどこかに定義されている場合、共通のシンボルは未定義の参照として扱われます。
+@ifclear man
+一般的なシンボルの詳細については、@ref{Options,,Linker options,ld,The GNU linker} の --warn-common の議論を参照してください。
+@end ifclear
+小文字の @var{c} 文字は、シンボルが小さなコモンズの特別なセクションにある場合に使用されます。
+
+@item D
+@itemx d
+シンボルは初期化されたデータセクション中にあります。
+
+@item G
+@itemx g
+シンボルは、小さいオブジェクトの初期化されたデータセクション内にあります。一部のオブジェクトファイル形式では、大規模なグローバル配列ではなく、グローバル int 変数などの小さなデータオブジェクトへのより効率的なアクセスが可能になります。
+
+@item i
+PE 形式のファイルの場合、これはシンボルが DLL の実装に固有のセクションにあることを示します。
+
+ELF フォーマットのファイルでは、シンボルが間接的な機能であることを示します。これは、 ELF シンボルタイプの標準セットに対する GNU 拡張です。これは、再配置によって参照された場合にそのアドレスに評価されず、実行時に呼び出される必要があるシンボルを示します。
+ランタイム実行形式は、再配置で使用される値を返します。.
+
+注意 - GNU 間接シンボルの実際のシンボル表示は、 @option{--ifunc-chars} コマンドラインオプションで制御されます。このオプションが指定されている場合、文字列の最初の文字がグローバル間接関数シンボルに使用されます。文字列に2番目の文字が含まれている場合、その文字はローカル間接関数シンボルに使用されます。
+
+@item I
+シンボルは、別のシンボルへの間接的参照です。
+
+@item N
+シンボルはデバッグ用シンボルです。
+
+@item n
+シンボルが非データ、非コード、非デバッグの読み取り専用セクションにあります。
+
+@item p
+シンボルは stack unwind セクションにあります。
+
+@item R
+@itemx r
+シンボルは読み取り専用データセクションにあります。
+
+@item S
+@itemx s
+シンボルは、小さいオブジェクト用の初期化されていない、またはゼロで初期化されているデータセクション内にあります。
+
+@item T
+@itemx t
+シンボルはテキスト (コード) セクションにあります。
+
+@item U
+シンボルは未定義です。
+
+@item u
+シンボルは一意のグローバルシンボルです。これは、ELF シンボルバインディングの標準セットに対する GNU 拡張です。このようなシンボルの場合、動的リンカーは、プロセス全体でこの名前とタイプを持つシンボルが 1つだけ使用されていることを確認します。
+
+@item V
+@itemx v
+シンボルはウィークオブジェクトです。ウィーク定義シンボルを通常の定義シンボルにリンクすると、通常の定義シンボルがエラーなしで使用されます。
+ウィーク未定義シンボルがリンクされていて、そのシンボルが未定義の場合、ウィークシンボルの値はエラーなしでゼロになります。一部のシステムでは、大文字はデフォルト値が指定されていることを示します。
+
+@item W
+@itemx w
+このシンボルは、ウィークオブジェクトシンボルとして特にタグ付けされていないウィークシンボルです。ウィーク定義シンボルを通常の定義シンボルにリンクすると、通常の定義シンボルがエラーなしで使用されます。
+weak undefinedシンボルがリンクされ、そのシンボルが未定義の場合、シンボルの値はシステム固有の方法で決定され、エラーは発生しません。一部のシステムでは、大文字はデフォルト値が指定されていることを示します。
+
+@item -
+シンボルは、a.out オブジェクトファイル内のスタブシンボルです。この場合、出力される次の値は stabs other フィールドと stabs desc フィールドと stab タイプです。スタブシンボルは、デバッグ情報を保持するために使用されます。
+
+@item ?
+シンボルタイプが不明であるか、オブジェクトファイル形式固有です。
+@end table
+
+@item
+シンボル名。シンボルにバージョン情報が関連付けられている場合は、そのバージョン情報も表示されます。バージョン管理されたシンボルが未定義であるか、リンカから隠されている場合、バージョン文字列はシンボル名の接尾辞として表示され、先頭に @@ 文字が付きます。例
+@samp{foo@@VER_1}.  バージョンが、シンボルへのバージョン化されていない参照を解決するときに使用されるデフォルトのバージョンである場合、2つの @@ 文字の後に接尾辞として表示されます。例 @samp{foo@@@@VER_2}。
+@end itemize
+
+@c man end
+
+@c man begin OPTIONS nm
+ここで選択肢として示されているオプションの長い形式と短い形式は同等です。
+
+@table @env
+@item -A
+@itemx -o
+@itemx --print-file-name
+@cindex input file name
+@cindex file name
+@cindex source file name
+すべての記号の前に、入力ファイルを一度だけ指定するのではなく、各記号の前に、その記号が見つかった入力ファイル(またはアーカイブメンバー)の名前を指定します。
+
+@item -a
+@itemx --debug-syms
+@cindex debugging symbols
+デバッガ専用のシンボルも含め、すべてのシンボルを表示します。通常、これらのシンボルはリストされません。
+
+@item -B
+@cindex @command{nm} format
+@cindex @command{nm} compatibility
+@option{--format=bsd} と同じです (MIPS @command{nm} との互換用)。
+
+低レベルのシンボル名をユーザーレベルの名前にデコード(@dfn{demangle})します。
+これにより、システムによって先頭に追加されたアンダースコアが削除されるだけでなく、C++ 関数名が読みやすくなります。コンパイラが異なれば、操作スタイルも異なります。オプションの demangling style 引数を使用すると、コンパイラに適した デコード(demangling) スタイルを選択できます。xrefなので削る
+
+@item --no-demangle
+下位レベルのシンボル名をデコード (demangle) しません。これがデフォルトです。
+
+@item --recurse-limit
+@itemx --no-recurse-limit
+@itemx --recursion-limit
+@itemx --no-recursion-limit
+文字列のデコード (demangling) 中に実行される反復の量に対する制限を有効または無効にします。名前をエンコード (mangling) する形式は無限レベルの再帰を許すので、デコード操作がホストマシンで利用可能なスタック空間の量を使い果たし、メモリ障害を引き起こすような文字列を作成する可能性があります。この制限では、再帰を 2048レベルまでのネストに制限することで、これが発生しないようにしています。
+
+デフォルトでは、この制限は有効になっていますが、本当に複雑な名前をデコード (demangle) するには無効にする必要がある場合があります。ただし、再帰制限が無効になっている場合は、スタックが枯渇する可能性があり、そのようなイベントに関するバグレポートは拒否されることに注意してください。
+
+@item -D
+@itemx --dynamic
+@cindex dynamic symbols
+通常のシンボルではなく動的シンボルを表示します。これは、特定のタイプの共有ライブラリなどの動的オブジェクトに対してのみ意味があります。
+
+@item -f @var{format}
+@itemx --format=@var{format}
+@cindex @command{nm} format
+@cindex @command{nm} compatibility
+@var{format}の出力形式を使用します。@code{bsd} 、@code{sysv} 、@code{posix} 、@code{just-symbols} のいずれかです。デフォルトは @code{bsd} です。
+@var{format} の最初の文字のみが重要です。大文字または小文字のいずれかになります。
+
+@item -g
+@itemx --extern-only
+@cindex external symbols
+外部シンボルのみを表示します。
+
+ 
+
+GNU 間接ファンクションシンボルを表示する場合、 @command{nm} はデフォルトでローカル間接ファンクションとグローバル間接ファンクションの両方に @code{i} 文字を使用します。@option{--ifunc-chars} オプションを使用すると、ユーザは1文字または2文字を含む文字列を指定できます。最初の文字はグローバル間接機能シンボルに使用され、2番目の文字 (存在する場合) はローカル間接機能シンボルに使用されます。
+
+@item j
+@option{--format=just-symbols} と同じです。
+
+@item -l
+@itemx --line-numbers
+@cindex symbol line numbers
+各シンボルについて、デバッグ情報を使用してファイル名と行番号を検索します。定義されたシンボルの場合は、シンボルのアドレスの行番号を検索します。未定義シンボルの場合、シンボルを参照する再配置エントリの行番号を検索します。行番号情報が見つかれば、他のシンボル情報の後にそれを表示します。
+
+@item --inlines
+@cindex objdump inlines
+オプション @option{-l} を有効にすると、アドレスがインライン化されたファンクションに属している場合、このオプションによって、すべての包含スコープのソース情報が、最初のインライン化されていないファンクションに戻されて表示されます。たとえば、 @code{main} が @code{callee2} をインライン化する @code{callee1} をインライン化し、アドレスが @code{callee2} からの場合、 @code{callee1} と @code{main} のソース情報も表示されます。
+
+@item -n
+@itemx -v
+@itemx --numeric-sort
+シンボルを名前のアルファベット順ではなく、アドレスの数値順に並べ替えます。 
+
+@item -p
+@itemx --no-sort
+@cindex sorting symbols
+シンボルを任意の順序で整列する必要はありません。検出された順序で出力します。
+
+@item -P
+@itemx --portability
+デフォルトフォーマットの代わりに POSIX.2 標準出力フォーマットを使用します。
+@samp{-f posix} と同じです。
+
+@item -r
+@itemx --reverse-sort
+整列の順序を逆にします(数値またはアルファベット)。最後のものを最初にします。
+
+@item -S
+@itemx --print-size
+@code{bsd} 形式で出力するシンボルの値とサイズの両方を表示します。
+このオプションは、計算されたサイズが表示される @samp{--size-sort} も使用されない限り、シンボルサイズを記録しないオブジェクト形式には影響しません。
+
+@item -s
+@itemx --print-armap
+@cindex symbol index, listing
+アーカイブメンバーからシンボルをリストする場合は、インデックスを含めます。インデックスとは、どのモジュールにどの名前の定義が含まれているかを示すマッピング( @command{ar} または @command{ranlib}別にアーカイブに保存されています)です。
+
+@item -t @var{radix}
+@itemx --radix=@var{radix}
+シンボル値を表示するための基数として@var{radix} を使用します。10進数は @samp{d}、8進数は @samp{o} 、16進数は@samp{x} である必要があります。
+
+@item -u
+@itemx --undefined-only
+@cindex external symbols
+@cindex undefined symbols
+未定義のシンボル(各オブジェクトファイルの外部にあるシンボル)のみを表示します。
+デフォルトでは、定義済みシンボルと未定義シンボルの両方が表示されます。
+
+@item -U
+@itemx --defined-only
+@cindex external symbols
+@cindex undefined symbols
+各オブジェクトファイルに定義されたシンボルのみを表示します。
+デフォルトでは、定義済みシンボルと未定義シンボルの両方が表示されます。
+
+@item -V
+@itemx --version
+@command{nm} のバージョンを表示して終了します。
+
+このオプションは、@command{nm} の AIX バージョンとの互換のために無視されます。これはパラメーターを 1つ取りますが、これは文字列 @option{32_64} でなければなりません。AIX @command{nm} のデフォルト・モードは @option{-X 32} に対応していますが、これは @sc{gnu} @command{nm} ではサポートされていません。
+
+@item --plugin @var{name}
+@cindex plugins
+@var{name} というプラグインをロードして、追加のターゲット・タイプのサポートを追加します。このオプションは、プラグインサポートを有効にしてツールチェーンを構築した場合にのみ使用できます。
+
+@option{--plugin} が指定されていないが、プラグインサポートが有効になっている場合、@command{nm} は@file{$@{libdir@}/bfd-plugins} 内のファイルをアルファベット順に繰り返し、問題のオブジェクトを要求する最初のプラグインが使用されます。
+
+このプラグイン検索ディレクトリは、@command{ld} の @option{-plugin} オプションで使用されるもの@emph{ではない}ことに注意してください。@command{nm} でリンカープラグインを使用するには、それを@file{$@{libdir@}/bfd-plugins} ディレクトリにコピーする必要があります。GCC ベースのコンパイルでは、リンカープラグインは @file{liblto_plugin.so.0.0.0} と呼ばれます。Clang ベースのコンパイルでは、@file{LLVMgold.so} と呼ばれます。GCC プラグインは常に以前のバージョンと下位互換性があるため、最新のものをコピーするだけで十分です。
+
+@item --size-sort
+サイズでシンボルを整列します。ELF オブジェクトの場合、シンボルサイズは EL Fから読み込まれます。その他のオブジェクトタイプの場合、シンボルサイズは、シンボルの値と次に大きい値を持つシンボルの値との差として計算されます。@code{bsd} フォーマットを使用する場合は、値ではなくシンボルのサイズが出力されます。サイズと値の両方を出力するには、@samp{-S} フォーマットを使用する必要があります。
+
+注意 - 未定義シンボルにはサイズがないため、@option{--undefined-only} が有効になっている場合、このオプションは機能しません。
+
+@item --special-syms
+ターゲット固有の特別な意味を持つシンボルを表示します。これらのシンボルは通常、何らかの特別な処理のためにターゲットによって使用され、通常のシンボルリストに含まれている場合、通常は役に立ちません。
+たとえば、ARM ターゲットの場合、このオプションは ARM コード、THUMB コード、およびデータ間の遷移を示すために使用されるマッピングシンボルをスキップします。
+
+@item --synthetic
+出力に Synthetic シンボルを含めます。これらは、さまざまな目的のためにリンカーによって作成された特別なシンボルです。これらはバイナリの元のソースコードの一部ではないため、デフォルトでは表示されません。
+
+@item --unicode=@var{[default|invalid|locale|escape|hex|highlight]}
+文字列内の UTF-8 エンコード・マルチバイト文字の表示を制御します。
+デフォルト(@option{--unicode=default})では、特別な処理は行われません。@option{--unicode=locale} オプションを選択すると、シーケンスが現在のロケールで表示されます。ロケールによっては、サポートされない場合もあります。オプション @option{--unicode=hex} および @option{--unicode=invalid} では、不等号括弧または波括弧で囲まれた 16進バイト列として表示されます。
+
+@option{--unicode=escape} オプションを選択すると、これらはエスケープシーケンス(@var{\uxxxx}) として表示され、@option{--unicode=highlight} オプションを選択すると、赤色で強調表示されたエスケープシーケンスとして表示されます (出力デバイスでサポートされている場合)。色分けは、ユニコード配列の存在が予期されない場合に注意を引くことを目的としています。
+
+@item -W
+@itemx --no-weak
+ウィークシンボルを表示しません。
+
+@item --with-symbol-versions
+@item --without-symbol-versions
+シンボルのバージョン情報の表示を有効または無効にします.  バージョン文字列は、シンボル名の接尾辞として表示され、先頭に @@ 文字が付きます。例 @samp{foo@@VER_1}。バージョンが、シンボルへのバージョン化されていない参照を解決するときに使用されるデフォルトのバージョンである場合、2つの @@ 文字の後に接尾辞として表示されます。例 @samp{foo@@@@VER_2}。デフォルトでは、シンボルのバージョン情報が表示されます。
+
+@item --target=@var{bfdname}
+@cindex object code format
+システムのデフォルト形式以外のオブジェクトコード形式を指定します。
+Xrefなので削る
+
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO nm
+ar(1), objdump(1), ranlib(1), と @file{binutils} の Info エントリ。
+@c man end
+@end ignore
+
+@node objcopy
+@chapter objcopy
+
+@c man title objcopy オブジェクトファイルのコピーや変換を行う
+
+@smallexample
+@c man begin SYNOPSIS objcopy
+objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
+        [@option{-I} @var{bfdname}|@option{--input-target=}@var{bfdname}]
+        [@option{-O} @var{bfdname}|@option{--output-target=}@var{bfdname}]
+        [@option{-B} @var{bfdarch}|@option{--binary-architecture=}@var{bfdarch}]
+        [@option{-S}|@option{--strip-all}]
+        [@option{-g}|@option{--strip-debug}]
+        [@option{--strip-unneeded}]
+        [@option{-K} @var{symbolname}|@option{--keep-symbol=}@var{symbolname}]
+        [@option{--keep-file-symbols}]
+        [@option{--keep-section-symbols}]
+        [@option{-N} @var{symbolname}|@option{--strip-symbol=}@var{symbolname}]
+        [@option{--strip-unneeded-symbol=}@var{symbolname}]
+        [@option{-G} @var{symbolname}|@option{--keep-global-symbol=}@var{symbolname}]
+        [@option{--localize-hidden}]
+        [@option{-L} @var{symbolname}|@option{--localize-symbol=}@var{symbolname}]
+        [@option{--globalize-symbol=}@var{symbolname}]
+        [@option{--globalize-symbols=}@var{filename}]
+        [@option{-W} @var{symbolname}|@option{--weaken-symbol=}@var{symbolname}]
+        [@option{-w}|@option{--wildcard}]
+        [@option{-x}|@option{--discard-all}]
+        [@option{-X}|@option{--discard-locals}]
+        [@option{-b} @var{byte}|@option{--byte=}@var{byte}]
+        [@option{-i} [@var{breadth}]|@option{--interleave}[=@var{breadth}]]
+        [@option{--interleave-width=}@var{width}]
+        [@option{-j} @var{sectionpattern}|@option{--only-section=}@var{sectionpattern}]
+        [@option{-R} @var{sectionpattern}|@option{--remove-section=}@var{sectionpattern}]
+        [@option{--keep-section=}@var{sectionpattern}]
+        [@option{--remove-relocations=}@var{sectionpattern}]
+        [@option{--strip-section-headers}]
+        [@option{-p}|@option{--preserve-dates}]
+        [@option{-D}|@option{--enable-deterministic-archives}]
+        [@option{-U}|@option{--disable-deterministic-archives}]
+        [@option{--debugging}]
+        [@option{--gap-fill=}@var{val}]
+        [@option{--pad-to=}@var{address}]
+        [@option{--set-start=}@var{val}]
+        [@option{--adjust-start=}@var{incr}]
+        [@option{--change-addresses=}@var{incr}]
+        [@option{--change-section-address} @var{sectionpattern}@{=,+,-@}@var{val}]
+        [@option{--change-section-lma} @var{sectionpattern}@{=,+,-@}@var{val}]
+        [@option{--change-section-vma} @var{sectionpattern}@{=,+,-@}@var{val}]
+        [@option{--change-warnings}] [@option{--no-change-warnings}]
+        [@option{--set-section-flags} @var{sectionpattern}=@var{flags}]
+        [@option{--set-section-alignment} @var{sectionpattern}=@var{align}]
+        [@option{--add-section} @var{sectionname}=@var{filename}]
+        [@option{--dump-section} @var{sectionname}=@var{filename}]
+        [@option{--update-section} @var{sectionname}=@var{filename}]
+        [@option{--rename-section} @var{oldname}=@var{newname}[,@var{flags}]]
+        [@option{--long-section-names} @{enable,disable,keep@}]
+        [@option{--change-leading-char}] [@option{--remove-leading-char}]
+        [@option{--reverse-bytes=}@var{num}]
+        [@option{--srec-len=}@var{ival}] [@option{--srec-forceS3}]
+        [@option{--redefine-sym} @var{old}=@var{new}]
+        [@option{--redefine-syms=}@var{filename}]
+        [@option{--weaken}]
+        [@option{--keep-symbols=}@var{filename}]
+        [@option{--strip-symbols=}@var{filename}]
+        [@option{--strip-unneeded-symbols=}@var{filename}]
+        [@option{--keep-global-symbols=}@var{filename}]
+        [@option{--localize-symbols=}@var{filename}]
+        [@option{--weaken-symbols=}@var{filename}]
+        [@option{--add-symbol} @var{name}=[@var{section}:]@var{value}[,@var{flags}]]
+        [@option{--alt-machine-code=}@var{index}]
+        [@option{--prefix-symbols=}@var{string}]
+        [@option{--prefix-sections=}@var{string}]
+        [@option{--prefix-alloc-sections=}@var{string}]
+        [@option{--add-gnu-debuglink=}@var{path-to-file}]
+        [@option{--only-keep-debug}]
+        [@option{--strip-dwo}]
+        [@option{--extract-dwo}]
+        [@option{--extract-symbol}]
+        [@option{--writable-text}]
+        [@option{--readonly-text}]
+        [@option{--pure}]
+        [@option{--impure}]
+        [@option{--file-alignment=}@var{num}]
+        [@option{--heap=}@var{reserve}[,@var{commit}]]
+        [@option{--image-base=}@var{address}]
+        [@option{--section-alignment=}@var{num}]
+        [@option{--stack=}@var{reserve}[,@var{commit}]]
+        [@option{--subsystem=}@var{which}:@var{major}.@var{minor}]
+        [@option{--compress-debug-sections}]
+        [@option{--decompress-debug-sections}]
+        [@option{--elf-stt-common=@var{val}}]
+        [@option{--merge-notes}]
+        [@option{--no-merge-notes}]
+        [@option{--verilog-data-width=@var{val}}]
+        [@option{-v}|@option{--verbose}]
+        [@option{-V}|@option{--version}]
+        [@option{--help}] [@option{--info}]
+        @var{infile} [@var{outfile}]
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION objcopy
+The @sc{gnu} @command{objcopy} ユーティリティはオブジェクトファイルの内容を別ファイルにコピーします。@command{objcopy} はオブジェクトファイルの読み書きに @sc{gnu} @sc{bfd} ライブラリを使用します。
+これによって、書き込み先のオブジェクトファイルの形式を、元のオブジェクトファイルのものから変更できます。@command{objcopy} の詳細な動作はコマンドラインオプションによって決定されます。
+@command{objcopy} は、2つの形式間で完全にリンクされたファイルをコピーできる必要があることに注意してください。ただし、再配置可能オブジェクトファイルを2つの形式間でコピーすると、予想どおりに動作しない場合があります。
+
+@command{objcopy} は変換を行う際に一時ファイルを作成し、動作後にこれを消去します。@command{objcopy} 変換作業はすべて @sc{bfd} によって行われます @sc{bfd}で記述されているすべてのフォーマットにアクセスできるため、明示的に指示されなくてもほとんどのフォーマットを認識できます。xrefなので削る
+
+@command{objcopy} は、 @samp{srec} の出力ターゲットを使用してSレコードを生成するために使用できます(例えば、@samp{-O srec} を使用)。
+
+@command{objcopy} は、@samp{binary} の出力ターゲットを使用して raw バイナリ・ファイルを生成するために使用できます(例: @option{-O binary} を使用)。@command{objcopy} が生のバイナリー・ファイルを生成する場合、基本的には入力されたオブジェクト・ファイルの内容のメモリー・ダンプを生成します。すべてのシンボルと再配置情報は破棄されます。メモリダンプは、出力ファイルにコピーされた最下位セクションのロードアドレスから開始されます。
+
+Sレコードまたは生のバイナリファイルを生成する場合、@option{-S} を使用してデバッグ情報を含むセクションを削除すると便利な場合があります。場合によっては、 @option{-R} は、バイナリファイルに必要のない情報を含むセクションを削除するのに便利です。
+
+注意--- @command{objcopy} は入力ファイルのエンディアンを変更できません。入力フォーマットにエンディアンが設定されている場合 (一部のフォーマットでは設定されていない) 、@command{objcopy} は入力を同じエンディアンのファイルフォーマットまたはエンディアンのないファイルフォーマット (@samp{srec} など) にコピーすることしかできません。
+(ただし、@option{--reverse-bytes} オプションを参照してください) 。
+
+@c man end
+
+@c man begin OPTIONS objcopy
+
+@table @env
+@item @var{infile}
+@itemx @var{outfile}
+は、それぞれ入力ファイルと出力ファイルです。
+@var{outfile} を指定しない場合、@command{objcopy} はテンポラリ・ファイルを作成し、その結果を @var{infile} という名前にリネームします。
+
+@item -I @var{bfdname}
+@itemx --input-target=@var{bfdname}
+入力ファイルのオブジェクト形式を  @var{bfdname} として取り扱います。通常は自動的に推測します。Xrefなので削る
+
+出力ファイルのオブジェクト形式を@var{bfdname} とします。
+Xrefなので削る
+
+@item -F @var{bfdname}
+@itemx --target=@var{bfdname}
+入出力ファイルのオブジェクト形式に @var{bfdname} を使用します。すなわち、入力ファイルを変換せずに単に出力ファイルにコピーします。Xrefなので削る
+
+@item -B @var{bfdarch}
+@itemx --binary-architecture=@var{bfdarch}
+アーキテクチャのない入力ファイルをオブジェクトファイルに変換する場合に便利です。
+この場合、出力のアーキテクチャは@var{bfdarch}に設定できます。入力されるファイルに既知の @var{bfdarch} が含まれている場合、このオプションは無視されます。プログラム内でこのバイナリデータにアクセスするには、変換処理で作成された特殊記号を参照します。これらのシンボルは、 _binary_@var{objfile} _start 、binary_@var{objfile}_end 、_binary_@var{objfile}_size と呼ばれています。たとえば、画像ファイルをオブジェクトファイルに変換し、これらのシンボルを使用してコード内でアクセスできます。
+
+@item -j @var{sectionpattern}
+@itemx --only-section=@var{sectionpattern}
+指定されたセクションのみを入力ファイルから出力ファイルにコピーします。
+このオプションは複数回指定できます。このオプションを不適切に使用すると、出力ファイルが使用できなくなる可能性があることに注意してください。@var{sectionpattern} では、ワイルドカード文字を使用できます。
+
+@var{sectionpattern} の最初の文字が感嘆符(!)の場合、同じコマンドラインで以前に @option{--only-section} を使用していた場合でも、一致するセクションはコピーされません。たとえば以下のようなものです:
+
+@smallexample
+  --only-section=.text.* --only-section=!.text.foo
+@end smallexample
+
+上記は '.text.*' に一致するすべてのセクションがコピーされますが、'.text.foo' セクションはコピーされません。
+
+@item -R @var{sectionpattern}
+@itemx --remove-section=@var{sectionpattern}
+@var{sectionpattern} に一致するセクションを出力から削除します。
+このオプションは複数回指定できます。このオプションを不適切に使用すると、出力ファイルが使用できなくなる可能性があることに注意してください。@var{sectionpattern} では、ワイルドカード文字を使用できます。@option{-j} と @option{-R} の両方のオプションを一緒に使用すると、動作が不定になります。
+
+@var{sectionpattern} の最初の文字が感嘆符 (!) の場合、同じコマンドラインで以前に@option{--remove-section} を使用して削除されたとしても、一致するセクションは削除されません。たとえば以下のようなものです:
+
+@smallexample
+  --remove-section=.text.* --remove-section=!.text.foo
+@end smallexample
+
+パターン '.text.*' に一致するすべてのセクションが削除されますが、セクション '.text.foo' は削除されません。
+
+@item --keep-section=@var{sectionpattern}
+出力ファイルからセクションを削除する場合は、@var{sectionpattern} と一致するセクションを保持します。
+
+@item --remove-relocations=@var{sectionpattern}
+@var{sectionpattern} に一致するセクションの非動的再配置を出力から削除します。このオプションは、複数回指定できます。このオプションを不適切に使用すると、出力されたファイルが使用できなくなる可能性があることに注意してください。また、 @samp{.rela.plt} を使用して実行可能ファイルまたは共有ライブラリから @option{--remove-relocations=.plt} などの動的再配置セクションを削除しようとしても機能しません。@var{sectionpattern} では、ワイルドカード文字を使用できます。
+たとえば以下のようなものです:
+
+@smallexample
+  --remove-relocations=.text.*
+@end smallexample
+
+これは パターン '.text.*' に一致するすべてのセクションの再配置を削除します。
+
+@var{sectionpattern} の最初の文字が感嘆符(!)の場合、同じコマンドラインで以前に @option{--remove-relocations} を使用したときに再配置が削除されたとしても、一致するセクションの再配置は削除されません。
+たとえば以下のようなものです:
+
+@smallexample
+  --remove-relocations=.text.* --remove-relocations=!.text.foo
+@end smallexample
+
+パターン '.text.*' に一致するセクションの再配置はすべて削除されますが、セクション '.text.foo' の再配置は削除されません。
+
+@item --strip-section-headers
+セクションヘッダーを削除します。このオプションは、ELFファイルに固有です。
+@option{--strip-all} と @option{--merge-notes}を仮定します。
+
+再配置およびシンボル情報をソースファイルからコピーしません。
+また、デバッグセクションも削除します。
+
+@item -g
+@itemx --strip-debug
+デバッグシンボルを入力ファイルからコピーしません。
+
+@item --strip-unneeded
+@option{--strip-debug} によって除去されたセクションとデバッグシンボルに加えて、再配置処理に不要なすべてのシンボルを削除します。
+
+@item -K @var{symbolname}
+@itemx --keep-symbol=@var{symbolname}
+シンボルを除去するときは、通常除去される場合でも、シンボル @var{symbolname} をそのままにします。このオプションは複数回指定できます。
+
+@item -N @var{symbolname}
+@itemx --strip-symbol=@var{symbolname}
+ソースファイルからシンボル@var{symbolname} をコピーしません。このオプションは、複数回指定できます
+
+@item --strip-unneeded-symbol=@var{symbolname}
+再配置で必要になる場合を除き、ソースファイルからシンボル @var{symbolname} をコピーしません。このオプションは複数回指定できます。
+
+@item -G @var{symbolname}
+@itemx --keep-global-symbol=@var{symbolname}
+シンボル @var{symbolname} のみをグローバルに保持します。他のすべてのシンボルをファイルに対してローカルにし、外部から見えないようにします。このオプションは、複数回指定できます。注意: このオプションは、 @option{--globalize-symbol} または @option{--globalize-symbols} オプションと一緒に使用することはできません。
+
+@item --localize-hidden
+ELF オブジェクトで、非表示または内部可視性を持つすべてのシンボルをローカルとしてマークします。このオプションは、最上位のシンボル固有のローカライズオプション( @option{-L}など)に適用されます。
+
+@item -L @var{symbolname}
+@itemx --localize-symbol=@var{symbolname}
+@var{symbolname} というグローバルシンボルまたはウィークシンボルをローカルシンボルに変換して、外部から見えないようにします。このオプションは、複数回指定できます。注意 - 一意のシンボルは変換されません。
+
+@item -W @var{symbolname}
+@itemx --weaken-symbol=@var{symbolname}
+シンボル @var{symbolname} を weakにします。このオプションは複数回指定できます。
+
+@item --globalize-symbol=@var{symbolname}
+シンボル @var{symbolname} にグローバルスコープを指定して、シンボルを定義したファイルの外から見えるようにします。<このオプションは、複数回指定できます注記:このオプションは、 @option{-G} または @option{--keep-global-symbol} のオプションと組み合わせて使用することはできません。
+
+@item -w
+@itemx --wildcard
+他のコマンドラインオプションで使用される @var{symbolname}で正規表現を許可します。疑問符 (?) 、アスタリスク (*) 、バックスラッシュ (\) 、および角カッコ ([]) の演算子は、シンボル名のどこにでも使用できます。シンボル名の最初の文字が感嘆符 (!) の場合は、そのシンボルの真偽値が逆になります。
+たとえば以下のようなものです:
+
+@smallexample
+  -w -W !foo -W fo*
+@end smallexample
+
+これは objcopy が「foo」以外の「fo」で始まるすべてのシンボルを弱くする原因となります。
+
+@item -x
+@itemx --discard-all
+入力ファイルのグローバルでないシンボルはコピーしません。
+@c FIXME any reason to prefer "non-global" to "local" here?
+
+@item -X
+@itemx --discard-locals
+コンパイラが生成したローカルなシンボルはコピーしません。
+  (通常 "L" または "." ではじまるシンボルです) 。
+
+@item -b @var{byte}
+@itemx --byte=@var{byte}
+@option{--interleave} オプションでインタリーブが有効になっている場合は、@var{byte} 番目のバイトから保持するバイト範囲を開始します。
+@var{byte} は 0 から @var{breadth} -1 の範囲で、@var{breadth} は @option{--interleave} オプションで指定された値です。
+
+@item -i [@var{breadth}]
+@itemx --interleave[=@var{breadth}]
+すべての @var{breadth} バイトからのみ範囲をコピーします。(ヘッダーデータは影響を受けません)。@option{--byte} オプションを使用して、コピーを開始する範囲内のバイトを選択します。@option{--interleave-width} オプションを使用して、範囲の幅を選択します。
+
+このオプションは、 @sc{rom} プログラムへのファイルを作成する場合に便利です。通常は @code{srec} 出力ターゲットとともに使用されます。@option{--byte} オプションも指定しないと、 @command{objcopy} はエラーになることに注意してください。
+
+デフォルトのインタリーブ幅は 4 であるため、 @option{--byte} が 0 に設定されている場合、 @command{objcopy} は 4 バイトごとに最初のバイトを入力から出力にコピーします。
+
+@item --interleave-width=@var{width}
+@option{--interleave} オプションとともに使用する場合は、@var{width} バイトを一度にコピーします。コピーするバイト範囲の開始位置は @option{--byte} オプションで設定し、範囲の大きさは @option{--interleave} オプションで設定します。
+
+このオプションのデフォルト値は 1 です。@var{width} オプションで設定された @var{byte} 値に @option{--byte} を加えた値は、@option{--interleave} オプションで設定されたインタリーブ幅を超えてはなりません。
+
+このオプションは、@option{-b 0 -i 4 --interleave-width=2} と @option{-b 2 -i 4 --interleave-width=2} を 2 つの@command{objcopy} コマンドに渡すことで、32ビットバスにインターリーブされた 2 つ の 16ビットフラッシュのイメージを作成するために使用できます。入力が「12345678」の場合、出力はそれぞれ「1256」と「3478」になります。
+
+@item -p
+@itemx --preserve-dates
+出力ファイルのアクセス日付と修正日付を、入力ファイルと同じ日付に設定します。
+
+このオプションは、 SOURCE_DATE_EPOCH 環境変数が定義されていない限り、PE フォーマット・ファイルのヘッダーに格納されているデータもコピーします。これが定義されている場合、この変数はヘッダーに保存されている日付として使用され、Unix エポックからの秒数として解釈されます。
+
+@item -D
+@itemx --enable-deterministic-archives
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+@emph{deterministic} モードで動作します。アーカイブメンバーをコピーしてアーカイブインデックスを書き込む場合は、UID、GID、タイムスタンプにゼロを使用し、すべてのファイルに対して一貫したファイルモードを使用します。
+
+@file{binutils} が @option{--enable-deterministic-archives} と設定されている場合、このモードはデフォルトで有効になります。
+以下の @samp{-U} オプションで無効にできます。
+
+@item -U
+@itemx --disable-deterministic-archives
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+@emph{not} を @emph{deterministic} モードで動作させます。これは、上記の @option{-D} オプションの逆です。アーカイブメンバーをコピーしてアーカイブインデックスを書き込む場合は、実際の UID、GID、タイムスタンプ、およびファイルモードの値を使用します。
+
+@file{binutils} が @option{--enable-deterministic-archives} で設定されていない限り、これがデフォルトです。
+
+@item --debugging
+可能ならばデバッグ情報を変換します。特定のデバッグ形式のみがサポートされており、変換プロセスには時間がかかる可能性があるため、これはデフォルトではありません。
+
+@item --gap-fill @var{val}
+@var{val} でセクション間のギャップを埋めます。この操作は、セクションの @emph{load address} (LMA) に適用されます。これは、下位アドレスのセクションサイズを拡大することにより行われ、作成された余分なスペースを @var{val} で埋めます。
+
+@item --pad-to @var{address}
+ロード・アドレス @var{address}まで出力ファイルを埋めます。これは、最後のセクションのサイズを大きくすることによって行われます。余分なスペースは、 @option{--gap-fill} で指定された値で埋められます(既定はゼロ)。
+
+@item --set-start @var{val}
+新しいファイルの開始アドレス (エントリアドレスとも呼びます) を @var{val} に設定します。すべてのオブジェクトファイルフォーマットが開始アドレスの設定をサポートしているわけではありません。
+
+@item --change-start @var{incr}
+@itemx --adjust-start @var{incr}
+@cindex changing start address
+@var{incr} を追加して、開始アドレス (エントリアドレスとも呼びます) を変更します。すべてのオブジェクトファイルフォーマットがエントリアドレスの設定をサポートしているわけではありません。
+
+@item --change-addresses @var{incr}
+@itemx --adjust-vma @var{incr}
+@cindex changing object addresses
+@var{incr} を追加して、すべてのセクションの VMA と LMA アドレス、およびエントリアドレスを変更します。オブジェクトファイルのフォーマットによっては、セクションアドレスを任意に変更できない場合があります。これはセクションを再配置しないことに注意してください。プログラムがセクションを特定のアドレスにロードすることを想定している場合、このオプションを使用してセクションを別のアドレスにロードするように変更すると、プログラムが失敗する可能性があります。
+
+@item --change-section-address @var{sectionpattern}@{=,+,-@}@var{val}
+@itemx --adjust-section-vma @var{sectionpattern}@{=,+,-@}@var{val}
+@cindex changing section address
+@var{sectionpattern} に一致するセクションの VMA アドレスと LMA アドレスの両方を設定または変更します。@samp{=} を使用する場合、セクション・アドレスは @var{val} に設定されます。それ以外の場合は、セクションアドレスに@var{val} が加算または減算されます。上記の@option{--change-addresses} にあるコメントを参照してください。@var{sectionpattern} が入力ファイルのどのセクションとも一致しない場合は、@option{--no-change-warnings} を使用しない限り、警告が発行されます。
+
+@item --change-section-lma @var{sectionpattern}@{=,+,-@}@var{val}
+@cindex changing section LMA
+@var{sectionpattern} に一致するセクションの LMA アドレスを設定または変更します。LMA アドレスは、プログラムのロード時にセクションがメモリにロードされるアドレスです。通常、これはプログラム実行時のセクションのアドレスである VMA アドレスと同じですが、一部のシステム、特にプログラムが ROM に保持されているシステムでは、この 2 つが異なる場合があります。@samp{=} を使用する場合、セクション・アドレスは @var{val} に設定されます。それ以外の場合は、セクションアドレスに@var{val} が加算または減算されます。上記の @option{--change-addresses} にあるコメントを参照してください。@var{sectionpattern} が入力ファイルのどのセクションとも一致しない場合は、@option{--no-change-warnings} を使用しない限り、警告が発行されます。
+
+@item --change-section-vma @var{sectionpattern}@{=,+,-@}@var{val}
+@cindex changing section VMA
+@var{sectionpattern} に一致するセクションの VMA アドレスを設定または変更します。VMA アドレスは、プログラムが実行を開始した後にセクションが配置されるアドレスです。
+通常、これはセクションがメモリにロードされるアドレスである LMA アドレスと同じですが、一部のシステム、特にプログラムが ROM に保持されているシステムでは、この 2 つが異なる場合があります。@samp{=} を使用する場合、セクション・アドレスは @var{val} に設定されます。それ以外の場合は、セクションアドレスに @var{val} が加算または減算されます。上記の@option{--change-addresses} にあるコメントを参照してください。@var{sectionpattern} が入力ファイルのどのセクションとも一致しない場合は、@option{--no-change-warnings} を使用しない限り、警告が発行されます。
+
+注:完全にリンクされたバイナリ内のセクションの VMA を変更すると、そのセクションが古いアドレスにあることを期待するコードが存在する可能性があるため、危険な場合があります。
+
+@item --change-warnings
+@itemx --adjust-warnings
+@option{--change-section-address} 、 @option{--change-section-lma} 、または @option{--change-section-vma} を使用していて、セクションパターンがどのセクションとも一致しない場合は、警告が表示されます。これがデフォルトです。
+
+@item --no-change-warnings
+@itemx --no-adjust-warnings
+@option{--change-section-address} 、 @option{--adjust-section-lma} 、または @option{--adjust-section-vma} を使用している場合は、セクションパターンがどのセクションとも一致しない場合でも、警告は表示されません。
+
+@item --set-section-flags @var{sectionpattern}=@var{flags}
+@var{sectionpattern} に一致するセクションのフラグを設定します。@var{flags} 引数は、フラグ名をコンマで区切った文字列です。認識される名前は、 @samp{alloc}、 @samp{contents}、 @samp{load}、
+@samp{noload}、 @samp{readonly}、 @samp{code}、 @samp{data}、 @samp{rom}、
+@samp{exclude}、 @samp{share}、 @samp{debug}、と @samp{large} です。
+内容を持たないセクションに対して @samp{contents} フラグを設定することはできますが、内容を持つセクションの @samp{contents} フラグをクリアしても意味がありません。代わりにセクションを削除してください。すべてのフラグがすべてのオブジェクトファイルフォーマットで意味を持つわけではありません。特に @samp{share} フラグは COFF 形式ファイルでのみ意味があり、ELF 形式ファイルでは意味がありません。ELF X86-64 固有のフラグ @samp{large} は、SHF_X86_64_LARGE に対応します。
+
+@item --set-section-alignment @var{sectionpattern}=@var{align}
+@var{sectionpattern} に一致するセクションのアラインメントを設定します。
+@var{align} はアラインメントをバイト単位で指定し、2のべき乗、つまり1、2、4、8@dots{} でなければなりません。
+
+注意:セクションの位置合わせを設定しても、その LMA または VMA アドレスは自動的には位置合わせされません。これらも変更する必要がある場合は、@option{--change-section-lma} および/または @option{--change-section-vma} オプションを使用する必要があります。また、VMA を変更すると、完全にリンクされたバイナリで問題が発生する可能性があることにも注意してください。この場合、セクションの内容が古いアドレスにあることを期待するコードが存在する可能性があります。
+
+@item --add-section @var{sectionname}=@var{filename}
+ファイルのコピー中に @var{sectionname} という名前の新しいセクションを追加します。新しいセクションの内容は、ファイル @var{filename} から取得されます。セクションのサイズはファイルのサイズになります。このオプションは、任意の名前のセクションをサポートできるファイル形式でのみ機能します。
+注意-新しく作成されたセクションの属性を設定するには、@option{--set-section-flags} オプションを使用する必要がある場合があります。
+
+@item --dump-section @var{sectionname}=@var{filename}
+@var{sectionname}という名前のセクションの内容をファイルを @var{filename} に配置し、以前にそこにあった可能性のある内容を上書きします。このオプションは @option{--add-section} の逆です。
+このオプションは @option{--only-section} オプションと似ていますが、フォーマットされたファイルを作成せず、再配置を適用せずに内容を生のバイナリデータとしてダンプするだけである点が異なります。このオプションは、複数回指定できます。
+
+@item --update-section @var{sectionname}=@var{filename}
+@var{sectionname} という名前のセクションの既存の内容を @var{filename} ファイルの内容に置き換えます。セクションのサイズは、ファイルのサイズに合わせて調整されます。@var{sectionname} のセクションフラグは変更されません。ELF 形式のファイルでは、セクションからセグメントへのマッピングも変更されません。@option{--remove-section} の後に @option{--add-section} を使用することはできません。このオプションは、複数回指定できます。
+
+注意- @option{--rename-section} と @option{--update-section} を使用して、 1つのコマンドラインからセクションの更新と名前変更の両方を行うことができます。この場合、元のセクション名を @option{--update-section} に渡し、元のセクション名と新しいセクション名を @option{--rename-section} に渡します。
+
+@item --add-symbol @var{name}=[@var{section}:]@var{value}[,@var{flags}]
+ファイルのコピー中に @var{name} という名前の新しいシンボルを追加します。このオプションは、複数回指定できます。@var{section} が指定されている場合、シンボルはそのセクションに関連付けられます。指定されていない場合は、 ABS シンボルになります。未定義のセクションを指定すると、致命的なエラーが発生します。値のチェックは行われず、指定したとおりに扱われます。シンボルフラグを指定できますが、すべてのフラグがすべてのオブジェクトファイルフォーマットで意味を持つわけではありません。デフォルトでは、シンボルはグローバルになります。特殊なフラグ 'before=@var{othersym}' は、指定された @var{othersym} の前に新しいシンボルを挿入します。それ以外の場合、シンボルはシンボルテーブルの最後に出現順に追加されます。
+
+@item --rename-section @var{oldname}=@var{newname}[,@var{flags}]
+セクション名を @var{oldname} から @var{newname} に変更します。オプションで、その過程でセクションのフラグを @var{flags} に変更できます。これは、出力がオブジェクトファイルのままであり、リンクされた実行可能ファイルにならないという点で、名前変更を実行するためにリンカースクリプトを使用するよりも有利です。このオプションは@option{--set-section-flags}オプションと同じフラグを受け付けます。
+
+このオプションは、入力形式がバイナリの場合に特に役立ちます。これにより、常に .data というセクションが作成されるためです。たとえば、バイナリデータを含む .rodata というセクションを作成する場合は、次のコマンドラインを使用して実行できます:
+
+@smallexample
+  objcopy -I binary -O <output_format> -B <architecture> \
+   --rename-section .data=.rodata,alloc,load,readonly,data,contents \
+   <input_binary_file> <output_object_file>
+@end smallexample
+
+@item --long-section-names @{enable,disable,keep@}
+@code{COFF} および @code{PE-COFF} オブジェクト形式を処理する際の長いセクション名の処理を制御します。デフォルトの動作は @samp{keep} で、入力ファイルに長いセクション名がある場合は、それを保持します。
+@samp{enable} および @samp{disable} オプションは、出力オブジェクトでの長いセクション名の使用を強制的に有効または無効にします。 @samp{disable} が有効な場合、入力オブジェクトの長いセクション名は切り捨てられます。
+@samp{enable} オプションは、入力に長いセクション名がある場合にのみ出力します。これはほとんど @samp{keep} と同じですが、 @samp{enable} オプションが出力ファイルに空の文字列テーブルを強制的に作成するかどうかは定義されていません。
+
+@item --change-leading-char
+一部のオブジェクトファイル形式では、シンボルの先頭に特殊文字が使用されます。最も一般的なこのような文字はアンダースコアで、コンパイラがすべてのシンボルの前に追加することがよくあります。このオプションは、@command{objcopy} に対して、オブジェクト・ファイル・フォーマット間の変換時に各シンボルの先頭文字を変更するように指示します。オブジェクトファイル形式で同じ先頭文字が使用されている場合、このオプションは無効です。それ以外の場合は、必要に応じて文字を追加、削除、または変更します。
+
+@item --remove-leading-char
+大域シンボルの最初の文字がオブジェクトファイルフォーマットで使用される特殊なシンボル先頭文字である場合は、その文字を削除します。最も一般的な記号の先頭文字はアンダースコアです。このオプションは、すべての大域シンボルから先頭のアンダースコアを削除します。これは、シンボル名の規則が異なるさまざまなファイル形式のオブジェクトをリンクする場合に便利です。これは、出力されるファイルのフォーマットに関係なく、必要に応じて常にシンボル名を変更するという点で、@option{--change-leading-char} とは異なります。
+
+@item --reverse-bytes=@var{num}
+出力内容を含むセクション内のバイトを反転します。スワップを実行するには、セクションの長さが指定された値で均等に割り切れる必要があります。インターリーブが実行される前に、リバースが行われます。
+
+このオプションは、通常、問題のあるターゲットシステムの ROM イメージを生成するときに使用されます。例えば、一部のターゲットボードでは、 8ビット ROM からフェッチされ た 32ビットワードは、CPU のバイト順序に関係なく、リトルエンディアンのバイト順序で再構成されます。プログラミングモデルによっては、ROM のエンディアンを変更する必要があります。
+
+@code{12345678} という 8バイトを含むセクションを持つ単純なファイルを考えてみましょう。
+
+上記の例で@samp{--reverse-bytes=2} を使用すると、出力ファイルのバイトは @code{21436587} の順になります。
+
+上記の例で @samp{--reverse-bytes=4} を使用すると、出力ファイルのバイトは @code{43218765} の順になります。
+
+上記の例で@samp{--reverse-bytes=2} を使用し、その後に出力ファイルで @samp{--reverse-bytes=4} を使用すると、 2番目の出力ファイルのバイトは @code{34127856} の順序になります。
+
+@item --srec-len=@var{ival}
+srec 出力に対してのみ有効。生成される Srecord の最大長を @var{ival} に設定します。この長さは、アドレス、データおよび CRC フィールドの両方をカバーします。
+
+@item --srec-forceS3
+srec 出力に対してのみ有効です。S1/S2 レコードの生成を避け、S3 のみのレコード形式を作成します。
+
+@item --redefine-sym @var{old}=@var{new}
+シンボル名 @var{old} を @var{new} に変更します。これは、ソースがなく、名前の競合がある 2つのものをリンクしようとする場合に便利です。
+
+@item --redefine-syms=@var{filename}
+ファイル @var{filename} にリストされている各シンボルペア「@var{old} @var{new}」に @option{--redefine-sym} を適用します。@var{filename} は、1行に 1つのシンボルペアを持つ単純な平文ファイルです。行コメントはハッシュ文字(井桁文字)で始めることができます。このオプションは複数回指定できます。
+
+@item --weaken
+ファイル内のすべてのグローバルシンボルをウィークシンボルに変更します。これは、リンカに対して @option{-R} オプションを使用し、他のオブジェクトに対してリンクされるオブジェクトを構築する場合に便利です。このオプションは、ウィークシンボルをサポートするオブジェクトファイルフォーマットを使用する場合にのみ有効です。
+
+@item --keep-symbols=@var{filename}
+@var{filename} ファイルにリストされている各シンボルに @option{--keep-symbol} オプションを適用します。@var{filename}は単なる平文ファイルで、1行に 1つのシンボル名が含まれています。行コメントはハッシュ文字(井桁文字)で始めることができます。
+このオプションは複数回指定できます。
+
+@item --strip-symbols=@var{filename}
+ファイル@var{filename} にリストされている各シンボルに @option{--strip-symbol} オプションを適用します。@var{filename}は単なる平文ファイルで、1行に 1つのシンボル名が含まれています。行コメントはハッシュ文字(井桁文字)で始めることができます。
+このオプションは複数回指定できます。
+
+@item --strip-unneeded-symbols=@var{filename}
+@var{filename} ファイルにリストされている各シンボルに @option{--strip-unneeded-symbol} オプションを適用します。@var{filename} は単なる平文ファイルで、 1行に 1つのシンボル名が含まれています。行コメントはハッシュ文字(井桁文字)で始めることができます。このオプションは複数回指定できます。
+
+@item --keep-global-symbols=@var{filename}
+@var{filename}ファイルにリストされている各シンボルに @option{--keep-global-symbol} オプションを適用します。@var{filename} は単なる平文ファイルで、 1行に 1つのシンボル名が含まれています。行コメントはハッシュ文字(井桁文字)で始めることができます。このオプションは複数回指定できます。
+
+@item --localize-symbols=@var{filename}
+@var{filename} ファイルにリストされている各シンボルに @option{--localize-symbol} オプションを適用します。@var{filename}は単なる平文ファイルで、1行に 1つのシンボル名が含まれています。行コメントはハッシュ文字(井桁文字)で始めることができます。
+このオプションは複数回指定できます。
+
+@item --globalize-symbols=@var{filename}
+@var{filename} ファイルにリストされている各シンボルに @option{--globalize-symbol} オプションを適用します。@var{filename}は単なる平文ファイルで、1行に 1つのシンボル名が含まれています。行コメントはハッシュ文字(井桁文字)で始めることができます。
+このオプションは複数回指定できます。注意:このオプションは、@option{-G} または @option{--keep-global-symbol} オプションと一緒に使用することはできません。
+
+@item --weaken-symbols=@var{filename}
+@var{filename} ファイルにリストされている各シンボルに @option{--weaken-symbol} オプションを適用します。@var{filename}は単なる平文ファイルで、1行に 1つのシンボル名が含まれています。行コメントはハッシュ文字(井桁文字)で始めることができます。
+このオプションは複数回指定できます。
+
+@item --alt-machine-code=@var{index}
+出力のアーキテクチャに代替マシンコードがある場合は、デフォルトのコードの代わりに @var{index} のコードを使用します。これは、マシンに正式なコードが割り当てられ、ツールチェーンが新しいコードを採用しているが、他のアプリケーションが使用されている元のコードに依存している場合に便利です。ELF ベースのアーキテクチャでは、 @var{index} の選択肢が存在しない場合、値は絶対数として扱われ、ELF ヘッダの e_machine フィールドに格納されます。
+
+@item --writable-text
+出力テキストを書き込み可能にします。このオプションは、すべてのオブジェクトファイル形式に対して有効なわけではありません。
+
+@item --readonly-text
+出力テキストを書き込み禁止にします。このオプションは、すべてのオブジェクトファイル形式に対して有効なわけではありません。
+
+@item --pure
+出力ファイルをデマンドページとしてマークします。このオプションは、すべてのオブジェクトファイル形式に対して有効なわけではありません。
+
+@item --impure
+出力ファイルを impure とマークします。このオプションは、すべてのオブジェクトファイル形式に対して有効なわけではありません。
+
+@item --prefix-symbols=@var{string}
+出力ファイルのすべてのシンボルの前に @var{string} を付けます。
+
+@item --prefix-sections=@var{string}
+出力ファイルのすべてのセクション名の前に @var{string} を付けます。
+
+@item --prefix-alloc-sections=@var{string}
+出力ファイル内のすべての割り当てられたセクションの名前の前に @var{string} を付けます。
+
+@item --add-gnu-debuglink=@var{path-to-file}
+@var{path-to-file} への参照を含む .gnu_debuglink セクションを作成し、出力ファイルに追加します。注意:@var{path-to-file} にファイルが存在する必要があります。.gnu_debuglink セクションを追加するプロセスには、デバッグ情報ファイルの内容のチェックサムをセクションに埋め込むことが含まれます。
+
+デバッグ情報ファイルがある場所で構築され、後で別の場所にインストールされる場合は、インストールされた場所へのパスを使用しないでください。インストールされたファイルがまだ存在しないため、@option{--add-gnu-debuglink} オプションは失敗します。
+代わりに、デバッグ情報ファイルを現在のディレクトリに置き、次のようにディレクトリコンポーネントなしで @option{--add-gnu-debuglink} オプションを使用します:
+
+@smallexample
+ objcopy --add-gnu-debuglink=foo.debug
+@end smallexample
+
+デバッグ時に、デバッガは一連の既知の場所で個別のデバッグ情報ファイルを検索しようとします。これらの場所の正確なセットは、使用されているディストリビューションによって異なりますが、通常は次の場所が含まれます:
+
+@table @code
+
+@item * 実行可能ファイルと同じディレクトリ。
+
+@item * 実行可能ファイル .debug を含むディレクトリのサブディレクトリ
+
+@item * グローバルデバッグディレクトリ(/usr/lib/debugなど)。
+@end table
+
+デバッガが実行される前に、デバッグ情報ファイルがこれらの場所のいずれかにインストールされていれば、すべてが正しく動作するはずです。
+
+@item --keep-section-symbols
+@option{--strip-debug} や @option{--strip-unneeded} などを使用してファイルをストリップする場合、通常はストリップされるセクション名を指定する記号が保持されます。
+
+@item --keep-file-symbols
+@option{--strip-debug} や @option{--strip-unneeded} などを使用してファイルをストリップする場合、ソースファイル名を指定する記号を保持します。これらの記号を使用しない場合はストリップされます。
+
+@item --only-keep-debug
+ファイルをストリップし、@option{--strip-debug}でストリップされないセクションの内容を削除し、デバッグセクションをそのままにします。ELF ファイルでは、すべての note セクションが出力に保持されます。
+
+注意:除去されたセクションのセクションヘッダーはサイズも含めて保持されますが、セクションの内容は破棄されます。
+実行可能ファイルが別のアドレス空間に再配置された場合でも、他のツールが debuginfo ファイルと実際の実行可能ファイルを照合できるように、セクションヘッダーは保持されます。
+
+このオプションを @option{--add-gnu-debuglink} と組み合わせて使用して、 2つの部分からなる実行可能ファイルを作成することを目的としています。1つはストリップされたバイナリで、 RAM やディストリビューションで占有するスペースが少なくなります。もう 1つはデバッグ機能が必要な場合にのみ必要となるデバッグ情報ファイルです。これらのファイルを作成する推奨手順は、次のとおりです:
+
+@enumerate
+@item 実行可能ファイルを通常どおりリンクします。@code{foo} と呼ばれていると仮定すると、 
+@item @code{objcopy--only-keep-debug foo foo.dbg} を実行して、デバッグ情報を含むファイルを作成します。
+@item @code{objcopy--strip-debug foo} を実行して、ストリップされた実行可能ファイルを作成します。
+@item @code{objcopy--add-gnu-debuglink=foo.dbg foo} を実行して、デバッグ情報へのリンクを、ストリップされた実行可能ファイルに追加します。
+@end enumerate
+
+注意 --- デバッグ情報ファイルの拡張子としての @code{.dbg} の選択は任意です。また、 @code{--only-keep-debug} ステップは任意です。代わりに次のようにすることもできます:
+
+@enumerate
+@item 実行可能ファイルを通常どおりリンクします。
+@item Copy @code{foo} to  @code{foo.full}
+@item Run @code{objcopy --strip-debug foo}
+@item Run @code{objcopy --add-gnu-debuglink=foo.full foo}
+@end enumerate
+
+つまり、 @option{--add-gnu-debuglink} によってポイントされるファイルが完全な実行形式になります。@option{--only-keep-debug} スイッチで作成されたファイルである必要はありません。
+
+注意 --- このスイッチは、完全にリンクされたファイルでの使用のみを目的としています。デバッグ情報が不完全な可能性があるオブジェクトファイルに対してこれを使用しても意味がありません。加えて、gnu_debuglink 機能は現在、デバッグ情報を含む 1つのファイル名の存在のみをサポートしており、オブジェクトファイルごとに複数のファイル名をサポートしていません。
+
+@item --strip-dwo
+すべてのDWARF.dwo セクションの内容を削除し、残りのデバッグセクションとすべてのシンボルはそのままにします。
+このオプションは、コンパイラがデバッグ情報を .o ファイルと別の .dwo ファイルに分割する @option{-gsplit-dwarf} オプションの一部として使用することを意図しています。コンパイラはすべてのデバッグ情報を同じファイルに生成し、次に @option{--extract-dwo} オプションを使用して .dwo セクションを .dwo ファイルにコピーし、次に @option{--strip-dwo} オプションを使用して元の .o ファイルからこれらのセクションを削除します。
+
+@item --extract-dwo
+すべての DWARF.dwo セクションの内容を抽出します。詳細については、@option{--strip-dwo} オプションを参照してください。
+
+@item --file-alignment @var{num}
+ファイルのアラインメントを指定します。ファイル内のセクションは、常にこの番号の倍数であるファイルオフセットから始まります。デフォルト値は 512 です。
+[このオプションは PE ターゲットに固有です。]
+
+@item --heap @var{reserve}
+@itemx --heap @var{reserve},@var{commit}
+このプログラムのヒープとして使用するために予約 (およびオプションでコミット) するメモリーのバイト数を指定します。
+[このオプションは PE ターゲットに固有です。]
+
+@item --image-base @var{value}
+プログラムまたは DLL のベースアドレスとして @var{value} を使用します。これは、プログラムまたは dll が読み込まれるときに使用される最小のメモリ位置です。再配置の必要性を減らし、dll のパフォーマンスを向上させるには、各 dll に一意のベースアドレスを指定し、他の dll と重複しないようにする必要があります。デフォルトは、実行可能ファイルの場合は 0x400000、 dll の場合は 0x10000000 です。
+[このオプションは PE ターゲットに固有です。]
+
+@item --section-alignment @var{num}
+[このオプションは PE ターゲットに固有です。]
+
+PE ヘッダーのセクションアラインメントフィールドを設定します (バイナリに存在する場合)。メモリ内のセクションは、常にこの数の倍数であるアドレスから始まります。デフォルト値は 0x1000 です。
+
+注意:セクションの LMA または VMA アドレスが調整されなくなり、それらのアドレスが @option{--set-section-lma} または @option{--set-section-vma} オプションを使用して設定されておらず、ファイルが完全に再配置された場合は、警告メッセージが発行されます。その後、LMA と VMA を更新する必要があるかどうかはユーザーの判断に委ねられます。
+
+@item --stack @var{reserve}
+@itemx --stack @var{reserve},@var{commit}
+このプログラムのスタックとして使用するために予約(およびオプションでコミット)するメモリのバイト数を指定します。
+[このオプションは PE ターゲットに固有です。]
+
+@item --subsystem @var{which}
+@itemx --subsystem @var{which}:@var{major}
+@itemx --subsystem @var{which}:@var{major}.@var{minor}
+プログラムが実行されるサブシステムを指定します。@var{which} の有効な値は @code{native}、 @code{windows} 、
+@code{console} 、 @code{posix} 、 @code{efi-app} 、 @code{efi-bsd} 、
+@code{efi-rtd} 、 @code{sal-rtd} と @code{xbox} です。オプションで、サブシステムのバージョンも設定できます。@var{which} には数値も使用できます。
+[このオプションは PE ターゲットに固有です。]
+
+@item --extract-symbol
+ファイルのセクションフラグとシンボルを保持し、セクションデータをすべて削除します。
+具体的なオプションは以下のとおりです:
+
+@itemize
+@item すべてのセクションの内容を削除します。
+@item 各セクションのサイズをゼロに設定し
+@item ファイルの先頭アドレスを0に設定します。
+@end itemize
+
+このオプションは、VxWorks カーネルの @file{.sym} ファイルを構築するために使用されます。
+また、 @option{--just-symbols} リンカーの入力ファイルのサイズを削減するのにも役立ちます。
+
+@item --compress-debug-sections
+ELF ABI の zlib with SHF_COMPRESSED を使用して、DWARF デバッグセクションを圧縮します。注意:圧縮によって実際にセクションが @emph{より大きく}なる場合、そのセクションは圧縮されません。
+
+@item --compress-debug-sections=none
+@itemx --compress-debug-sections=zlib
+@itemx --compress-debug-sections=zlib-gnu
+@itemx --compress-debug-sections=zlib-gabi
+@itemx --compress-debug-sections=zstd
+ELF ファイルの場合、これらのオプションは DWARF デバッグセクションの圧縮方法を制御します。@option{--compress-debug-sections=none} は @option{--decompress-debug-sections}と同じです。
+@option{--compress-debug-sections=zlib} と
+@option{--compress-debug-sections=zlib-gabi} は
+@option{--compress-debug-sections} と同じです。
+@option{--compress-debug-sections=zlib-gnu} は、廃止された zlib-gnu 形式を使用してDWARF デバッグセクションを圧縮します。デバッグセクションは @samp{.zdebug} で始まるように名前が変更されます。
+@option{--compress-debug-sections=zstd} は、zstd を使用して DWARF デバッグセクションを圧縮します。注意:圧縮によって実際にセクションが@emph{より大きく}なった場合、そのセクションは圧縮も名前変更もされません。
+
+@item --decompress-debug-sections
+DWARF デバッグセクションを解凍します。@samp{.zdebug} セクションの場合、元の名前がリストアされます。
+
+@item --elf-stt-common=yes
+@itemx --elf-stt-common=no
+ELF ファイルの場合、共通シンボルを @code{STT_COMMON} 型と @code{STT_OBJECT} 型のどちらに変換するかを制御します。
+@option{--elf-stt-common=yes} は、共通のシンボルタイプを @code{STT_COMMON} に変換します。@option{--elf-stt-common=no} は、共通のシンボルタイプを @code{STT_OBJECT} に変換します。
+
+@item --merge-notes
+@itemx --no-merge-notes
+ELF ファイルでは、重複する注記を削除して SHT_NOTE タイプのセクションのサイズを小さくします(または小さくしません)。
+
+@item -V
+@itemx --version
+@command{objcopy} のバージョン番号を表示します。
+
+@item --verilog-data-width=@var{bytes}
+Verilog 出力の場合、このオプションは各出力データ要素に変換されるバイト数を制御します。入力ターゲットは、変換のエンディアンを制御します。
+
+@item -v
+@itemx --verbose
+詳細出力:変更されたすべてのオブジェクトファイルをリストします。アーカイブの場合、 @samp{objcopy -V} はアーカイブのすべてのメンバーをリストします。
+
+@item --help
+@command{objcopy} のオプションの要約を表示します。
+
+@item --info
+使用可能なすべてのアーキテクチャとオブジェクトフォーマットを示すリストを表示します。
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO objcopy
+ld(1) 、objdump(1) 、と @file{binutils} のInfo エントリ。
+@c man end
+@end ignore
+
+@node objdump
+@chapter objdump
+
+@cindex object file information
+@kindex objdump
+
+@c man title objdump オブジェクトファイルの情報を表示
+
+@smallexample
+@c man begin SYNOPSIS objdump
+objdump [@option{-a}|@option{--archive-headers}]
+        [@option{-b} @var{bfdname}|@option{--target=@var{bfdname}}]
+        [@option{-C}|@option{--demangle}[=@var{style}] ]
+        [@option{-d}|@option{--disassemble}[=@var{symbol}]]
+        [@option{-D}|@option{--disassemble-all}]
+        [@option{-z}|@option{--disassemble-zeroes}]
+        [@option{-EB}|@option{-EL}|@option{--endian=}@{big | little @}]
+        [@option{-f}|@option{--file-headers}]
+        [@option{-F}|@option{--file-offsets}]
+        [@option{--file-start-context}]
+        [@option{-g}|@option{--debugging}]
+        [@option{-e}|@option{--debugging-tags}]
+        [@option{-h}|@option{--section-headers}|@option{--headers}]
+        [@option{-i}|@option{--info}]
+        [@option{-j} @var{section}|@option{--section=}@var{section}]
+        [@option{-l}|@option{--line-numbers}]
+        [@option{-S}|@option{--source}]
+        [@option{--source-comment}[=@var{text}]]
+        [@option{-m} @var{machine}|@option{--architecture=}@var{machine}]
+        [@option{-M} @var{options}|@option{--disassembler-options=}@var{options}]
+        [@option{-p}|@option{--private-headers}]
+        [@option{-P} @var{options}|@option{--private=}@var{options}]
+        [@option{-r}|@option{--reloc}]
+        [@option{-R}|@option{--dynamic-reloc}]
+        [@option{-s}|@option{--full-contents}]
+        [@option{-Z}|@option{--decompress}]
+        [@option{-W[lLiaprmfFsoORtUuTgAck]}|
+         @option{--dwarf}[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames-interp,=str,=str-offsets,=loc,=Ranges,=pubtypes,=trace_info,=trace_abbrev,=trace_aranges,=gdb_index,=addr,=cu_index,=links]]
+        [@option{-WK}|@option{--dwarf=follow-links}]
+        [@option{-WN}|@option{--dwarf=no-follow-links}]
+        [@option{-wD}|@option{--dwarf=use-debuginfod}]
+        [@option{-wE}|@option{--dwarf=do-not-use-debuginfod}]
+        [@option{-L}|@option{--process-links}]
+        [@option{--ctf=}@var{section}]
+        [@option{--sframe=}@var{section}]
+        [@option{-G}|@option{--stabs}]
+        [@option{-t}|@option{--syms}]
+        [@option{-T}|@option{--dynamic-syms}]
+        [@option{-x}|@option{--all-headers}]
+        [@option{-w}|@option{--wide}]
+        [@option{--start-address=}@var{address}]
+        [@option{--stop-address=}@var{address}]
+        [@option{--no-addresses}]
+        [@option{--prefix-addresses}]
+        [@option{--[no-]show-raw-insn}]
+        [@option{--adjust-vma=}@var{offset}]
+        [@option{--show-all-symbols}]
+        [@option{--dwarf-depth=@var{n}}]
+        [@option{--dwarf-start=@var{n}}]
+        [@option{--ctf-parent=}@var{section}]
+        [@option{--no-recurse-limit}|@option{--recurse-limit}]
+        [@option{--special-syms}]
+        [@option{--prefix=}@var{prefix}]
+        [@option{--prefix-strip=}@var{level}]
+        [@option{--insn-width=}@var{width}]
+        [@option{--visualize-jumps[=color|=extended-color|=off]}
+        [@option{--disassembler-color=[off|terminal|on|extended]}
+        [@option{-U} @var{method}] [@option{--unicode=}@var{method}]
+        [@option{-V}|@option{--version}]
+        [@option{-H}|@option{--help}]
+        @var{objfile}@dots{}
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION objdump
+
+@command{objdump} は指定されたひとつ以上のオブジェクトファイルについて、その情報を表示します。
+オプションは、表示する特定の情報を制御します。この情報は、プログラムをコンパイルして動作させたいだけのプログラマーとは対照的に、コンパイルツールに取り組んでいるプログラマーにとって主に役立ちます。
+
+@var{objfile}@dots{}は、検査されるオブジェクトファイルです。アーカイブを指定すると、 @command{objdump} は各メンバー・オブジェクト・ファイルに関する情報を表示します。
+
+@c man end
+
+@c man begin OPTIONS objdump
+
+ここで選択肢として示されているオプションの、長い形式と短い形式は同等です。少なくとも @option{-a,-d,-D,-e,-f,-g,-G,-h,-H,-p,-P,-r,-R,-s,-S,-t,-T,-V,-x} のどれかから 1つのオプションを指定する必要があります。
+
+@table @env
+@item -a
+@itemx --archive-header
+@cindex archive headers
+@var{objfile} ファイルのいずれかがアーカイブの場合は、アーカイブ・ヘッダー情報を表示します (@samp{ls-l}のような形式)。@samp{ar tv} でリストできる情報の他に、@samp{objdump-a} は各アーカイブ・メンバーのオブジェクト・ファイル・フォーマットを表示します。
+
+@item --adjust-vma=@var{offset}
+@cindex section addresses in objdump
+@cindex VMA in objdump
+情報をダンプするときは、まずすべてのセクション・アドレスに @var{offset} を追加します。これは、セクションアドレスがシンボルテーブルに対応していない場合に便利です。これは、 a.out などのセクションアドレスを表現できない形式を使用して特定のアドレスにセクションを配置する場合に発生する可能性があります。
+
+@item -b @var{bfdname}
+@itemx --target=@var{bfdname}
+@cindex object code format
+オブジェクトファイルのオブジェクトコード形式が @var{bfdname} であることを指定します。@var{objdump} は多くのフォーマットを自動的に認識するので、このオプションは必要ないかもしれません。
+
+たとえば、
+@example
+objdump -b oasys -m vax -h fu.o
+@end example
+@noindent
+は、Oasys コンパイラによって生成された形式の VAX オブジェクトファイルとして明示的に識別される @file{fu.o} のセクションヘッダー (@option{-h}) からの概要情報を表示します。@option{-i} オプションを使用して、使用可能なフォーマットをリストできます。
+Xrefなので削る
+
+@item -C
+@itemx --demangle[=@var{style}]
+@cindex demangling in objdump
+(@dfn{demangle})低レベルシンボル名をユーザレベルの名前にデコードします。
+これにより、システムによって先頭に追加されたアンダースコアが削除されるだけでなく、C++ 関数名が読みやすくなります。コンパイラが異なれば、操作スタイルも異なります。オプションの demangling style 引数を使用すると、コンパイラに適した デコード(demangling) スタイルを選択できます。xrefなので削る
+
+@item --recurse-limit
+@itemx --no-recurse-limit
+@itemx --recursion-limit
+@itemx --no-recursion-limit
+文字列のデコード (demangling) 中に実行される反復の量に対する制限を有効または無効にします。名前をエンコード (mangling) する形式は無限レベルの再帰を許すので、デコード操作がホストマシンで利用可能なスタック空間の量を使い果たし、メモリ障害を引き起こすような文字列を作成する可能性があります。この制限では、再帰を 2048レベルまでのネストに制限することで、これが発生しないようにしています。
+
+デフォルトでは、この制限は有効になっていますが、本当に複雑な名前をデコード (demangle) するには無効にする必要がある場合があります。ただし、再帰制限が無効になっている場合は、スタックが枯渇する可能性があり、そのようなイベントに関するバグレポートは拒否されることに注意してください。
+
+@item -g
+@itemx --debugging
+デバッグ情報を表示します。これは、ファイルに保存されている STABS デバッグ形式情報の解析をこころみ、C のような構文を使用して出力します。STABS デバッグが見つからない場合、このオプションは @option{-W} オプションに戻り、ファイル内の DWARF 情報を出力します。
+
+@item -e
+@itemx --debugging-tags
+@option{-g} と似ていますが、情報は ctags ツールと互換性のある形式で生成されます。
+
+@item -d
+@itemx --disassemble
+@itemx --disassemble=@var{symbol}
+@cindex disassembling object code
+@cindex machine instructions
+入力ファイルからマシン命令のアセンブラニーモニックを表示します。このオプションは、命令が含まれているはずのセクションだけを逆アセンブルします。オプションの @var{symbol} 引数が (場合によっては複数回) 指定された場合は、(すべての) @var{symbol} で始まるアセンブラニーモニックが表示されます。@var{symbol} が関数名の場合、逆アセンブルは関数の最後で停止します。それ以外の場合は、次のシンボルが出現した時点で停止します。@var{symbol} に一致するものがない場合は、何も表示されません。
+
+@option{--dwarf=follow-links} オプションが有効になっている場合、リンクされたデバッグ情報ファイル内のシンボルテーブルが読み込まれ、逆アセンブル時に使用されることに注意してください。
+
+@item -D
+@itemx --disassemble-all
+@option{-d} と同様ですが、命令を含むことが期待されるセクションだけでなく、空でない non-bss セクションの内容をすべて逆アセンブルします。
+@option{-j} を使用すると、特定のセクションを選択できます。
+
+このオプションは、コードセクション内の命令の逆アセンブルにも微妙な影響を与えます。オプション @option{-d} が有効な場合、 objdump はコードセクションに存在するシンボルが命令間の境界で発生すると想定し、そのような境界を越えて逆アセンブルすることを拒否します。ただし、オプション @option{-D} が有効な場合、この仮定は省略されます。これは、例えば、データがコードセクションに格納されている場合、@option{-d} と @option{-D} の出力が異なる可能性があることを意味します。
+
+ターゲットが ARM アーキテクチャである場合、このスイッチは、逆アセンブラに対して、コードセクションにあるデータの断片を命令であるかのようにデコードさせる効果もあります。
+
+@option{--dwarf=follow-links} オプションが有効になっている場合、リンクされたデバッグ情報ファイル内のシンボルテーブルが読み込まれ、逆アセンブル時に使用されることに注意してください。
+
+@item --no-addresses
+逆アセンブル時に、各行毎にアドレスまたは、シンボルと再配置オフセットを出力しません。@option{--no-show-raw-insn}と組み合わせて使用すると、コンパイラの出力を比較する場合に便利です。
+
+@item --prefix-addresses
+逆アセンブルするとき、各行ごとに完全なアドレスを表示します。これは古い逆アセンブル形式です。
+
+@item -EB
+@itemx -EL
+@itemx --endian=@{big|little@}
+@cindex endianness
+@cindex disassembly endianness
+オブジェクトファイルのエンディアンを指定します。これは逆アセンブリにのみ影響します。これは、S レコードなどのエンディアン情報を記述していないファイル形式を逆アセンブルする場合に便利です。
+
+@item -f
+@itemx --file-headers
+@cindex object file header
+各@var{objfile} ファイルのヘッダー全体のサマリー情報を表示します。
+
+@item -F
+@itemx --file-offsets
+@cindex object file offsets
+セクションを逆アセンブルするときは、シンボルが表示されるたびに、ダンプしようとしているデータの領域のファイルオフセットも表示します。ゼロがスキップされている場合は、逆アセンブルが再開されたときに、スキップされたゼロの数と、逆アセンブルが再開される場所のファイルオフセットをユーザに通知します。セクションをダンプするときに、ダンプの開始位置からのファイルオフセットを表示します。
+
+@item --file-start-context
+@cindex source code context
+まだ表示されていないファイルからインターリスト化されたソースコード/逆アセンブル (@option{-S}を想定) を表示するときに、コンテキストをファイルの先頭まで拡張することを指定します。
+
+@item -h
+@itemx --section-headers
+@itemx --headers
+@cindex section headers
+オブジェクトファイルのセクションヘッダーから概要情報を表示します。
+
+ファイルセグメントは、たとえば @command{ld} に対して @option{-Ttext}、 @option{-Tdata}、または @option{-Tbss} のオプションを使用することによって、非標準のアドレスに再配置される場合があります。ただし、a.out などの一部のオブジェクトファイル形式には、ファイルセグメントの開始アドレスが格納されません。このような状況では、 @command{ld} はセクションを正しく再配置しますが、@samp{objdump -h} を使用してファイルセクションヘッダーをリストすると、正しいアドレスを表示できません。
+代わりに、ターゲットに対して暗黙的な通常のアドレスが表示されます。
+
+場合によっては、セクションに READONLY 属性と NOREAD 属性の両方を設定できることに注意してください。このような場合、NOREAD アトリビュートが優先されますが、フラグビットの正確な設定が重要な場合があるため、 @command{objdump} は両方を報告します。
+
+@item -H
+@itemx --help
+オプションの概要を @command{objdump} に出力して終了します。
+
+@item -i
+@itemx --info
+@cindex architectures available
+@cindex object formats available
+@option{-b} または @option{-m} を使用して指定できるすべてのアーキテクチャとオブジェクトフォーマットを示すリストを表示します。
+
+@item -j @var{name}
+@itemx --section=@var{name}
+@cindex section information
+セクション @var{name} の情報を表示します。このオプションは、複数回指定できます。
+
+@item -L
+@itemx --process-links
+メインファイルにリンクされている個別のdebuginfoファイルにあるデバッグ以外のセクションの内容を表示します。このオプションは自動的に @option{-WK} オプションを仮定し、他のコマンドラインオプションによって要求されたセクションのみが表示されます。
+
+@item -l
+@itemx --line-numbers
+@cindex source filenames for object files
+表示されたオブジェクトコードまたは再配置に対応するファイル名とソース行番号を使用して、 (デバッグ情報を使用して) 表示にラベルを付けます。
+@option{-d}、 @option{-D}、 @option{-r} とともに使うときにのみ便利です。
+
+@item -m @var{machine}
+@itemx --architecture=@var{machine}
+@cindex architecture
+@cindex disassembly architecture
+オブジェクトファイルを逆アセンブルする際に使用するアーキテクチャを指定します。これは、S レコードなどのアーキテクチャ情報を記述していないオブジェクトファイルを逆アセンブルする場合に便利です。@option{-i} オプションを使用して、使用可能なアーキテクチャを一覧表示できます。
+
+ほとんどのアーキテクチャでは、アーキテクチャ名とマシン名をコロンで区切って指定できます。たとえば、@samp{foo:bar} は、@samp{foo} アーキテクチャの @samp{bar} マシンタイプを参照します。これは、objdump が複数のアーキテクチャをサポートするように設定されている場合に役立ちます。
+
+ターゲットが ARM アーキテクチャの場合、この切り替えには追加の効果があります。逆アセンブルは、 @var{machine} で指定されたアーキテクチャでサポートされている命令のみに制限されます。
+入力ファイルにアーキテクチャ情報が含まれていないためにこのスイッチを使用する必要がありますが、すべての命令を逆アセンブルすることも望ましい場合は、@option{-marm} を使用します。
+
+@item -M @var{options}
+@itemx --disassembler-options=@var{options}
+ターゲット固有の情報を逆アセンブラに渡します。いくつかのターゲットのみサポートしています。複数の逆アセンブラオプションを指定する必要がある場合は、複数の @option{-M} オプションを使用するか、カンマ区切りのリストにまとめることができます。
+
+ARCでは、 @option{dsp} は DSP 命令の表示を制御し、 @option{spfp} は FPX 単精度 FP 命令の表示を選択し、@option{dpfp} は FPX 倍精度 FP 命令の表示を選択し、 @option{quarkse_em} は特殊な TakeNE-EM 命令の表示を選択し、 @option{fpuda} は倍精度アシスト命令の表示を選択し、@option{fpus} は FPU 単精度 FP 命令の表示を選択し、 @option{fpud} はFPU 倍精度 FP 命令の表示を選択します。
+さらに、@option{hex} を使用して、すべての即値を 16進数で出力することもできます。デフォルトでは、short immediate 値は 10進数で出力され、long immediate 値は 16進数で出力されます。
+
+@option{cpu=.} を使用すると、命令を逆アセンブルするときに特定の ISA を適用し、@option{-m} の値や ELF ファイル内の値を上書きすることができます。
+ARC EM または HS ISA を選択すると便利な場合があります。これらのアーキテクチャは同じであり、逆アセンブラはコードが EM 用か HS 用かを決定するためにプライベート ELF ヘッダーデータに依存しているためです。このオプションは複数回指定できます。しかし、最新の値のみが使用されます。有効な値は、アセンブラの @option{-mcpu=.} オプションと同じです。
+
+ターゲットが ARM アーキテクチャの場合、このスイッチを使用して、逆アセンブラ時に使用するレジスタ名セットを選択できます。@option{-M reg-names-std} (デフォルト) を指定すると、ARM の命令セットドキュメントで使用されているレジスタ名が選択されますが、レジスタ 13は「sp」、レジスタ 14は「lr」、レジスタ 15は「pc」と呼ばれます。@option{-M reg-names-apcs} を指定すると、ARM Procedure Call Standard で使用される名前セットが選択されます。一方、 @option{-M reg-names-raw} を指定すると、 @samp{r} の後に登録番号が続くだけの名前セットが使用されます。
+
+また、 @option{-M reg-names-atpcs} と @option{-M reg-names-special-atpcs} で使用可能な APCS レジスタ命名方式には、ARM/Thumb Procedure Call Standard 命名規則を使用する 2つのバリエーションがあります。(ノーマルレジスタ名または特殊レジスタ名)
+
+このオプションは、ARM アーキテクチャでも使用できます。スイッチ @option{--disassembler-options=force-thumb} を使用して、逆アセンブラにすべての命令を Thumb 命令として解釈させることができます。これは、他のコンパイラで生成された thumb コードを逆アセンブルしようとする場合に便利です。
+
+AArch64 ターゲットの場合、このスイッチを使用して、 @option{-M no-aliases} オプションを使用して命令を最も一般的な命令として逆アセンブルするかどうか、または @option{-M notes} を使用して命令ノートをコメントとして生成するかどうかを設定できます。
+
+x86 では、一部のオプションは @option{-m} スイッチの機能と重複しますが、細かく制御できます。
+@table @code
+@item x86-64
+@itemx i386
+@itemx i8086
+特定のアーキテクチャの逆アセンブリを選択します。
+
+@item intel
+@itemx att
+intel 構文モードと AT&T 構文モードを選択します。
+
+@item amd64
+@itemx intel64
+AMD64 ISAx とI ntel64 ISA から選択します。
+
+@item intel-mnemonic
+@itemx att-mnemonic
+インテルニーモニックモードと AT&T ニーモニックモードを選択します。
+注意:@code{intel-mnemonic} は @code{intel} を意味し、 @code{att-mnemonic} は @code{att} を意味します。
+
+@item addr64
+@itemx addr32
+@itemx addr16
+@itemx data32
+@itemx data16
+デフォルトのアドレスサイズとオペランドサイズを指定します。これらの 5つのオプションは、オプション文字列の後半に @code{x86-64}、 @code{i386} 、または @code{i8086} が出現する場合に上書きされます。
+
+@item suffix
+AT&T モードの場合、および Intel モードの限られた命令セットの場合、オペランドによってサフィックスが推測される場合でも、または特定の命令の場合は逆アセンブラモードのデフォルトでも、ニーモニックサフィックスを出力するように実行に指示します。
+@end table
+
+PowerPCの場合、 @option{-M} の引数 @option{raw} は、エイリアスではなくハードウェア命令を選択します。例えば、 @code{clrlwi}ではなく @code{rlwinm} 、 @code{li}ではなく @code{addi} が見えます。CPU を選択する @command{gas} の @option{-m} 引数はすべてサポートされています。それらは:
+@option{403}, @option{405}, @option{440}, @option{464}, @option{476},
+@option{601}, @option{603}, @option{604}, @option{620}, @option{7400},
+@option{7410}, @option{7450}, @option{7455}, @option{750cl},
+@option{821}, @option{850}, @option{860}, @option{a2}, @option{booke},
+@option{booke32}, @option{cell}, @option{com}, @option{e200z2}, @option{e200z4},
+@option{e300}, @option{e500}, @option{e500mc}, @option{e500mc64},
+@option{e500x2}, @option{e5500}, @option{e6500}, @option{efs},
+@option{power4}, @option{power5}, @option{power6}, @option{power7},
+@option{power8}, @option{power9}, @option{power10}, @option{power11},
+@option{ppc}, @option{ppc32}, @option{ppc64}, @option{ppc64bridge},
+@option{ppcps}, @option{pwr}, @option{pwr2}, @option{pwr4}, @option{pwr5},
+@option{pwr5x}, @option{pwr6}, @option{pwr7}, @option{pwr8}, @option{pwr9},
+@option{pwr10}, @option{pwr11}, @option{pwrx}, @option{titan}, @option{vle},
+と @option{future} です。
+@option{32} および @option{64} は、デフォルトまたは以前のプロセッサ選択を変更し、 64ビット命令をそれぞれ無効または有効にします。さらに、 @option{altivec}、 @option{any}、@option{lsp}、 @option{htm}、 @option{vsx}、@option{spe}、 @option{spe2}では、以前の @emph{あるいはそれ以降} のプロセッサ選択に機能が追加されています。
+@option{any} は binutils が知っている opcode を逆アセンブルしますが、opcode が 2つの異なる意味を持っていたり、異なる引数を持っていたりすると、期待したような逆アセンブルは行われません。
+CPU を選択せずに逆アセンブルした場合、BFD によってオブジェクトファイルヘッダーから収集された情報からデフォルトが選択されますが、結果は期待どおりにならない可能性があります。
+
+RISC-V では、次のオプションがサポートされています:
+
+@table @code
+@item max
+アーキテクチャ文字列をチェックしない逆アセンブル。これはベストエフォートモードであるため、重複する ISA 拡張の場合、最初の一致(特定のコンテキストでは正しくない可能性がある)が命令のデコードに使用されます。これは、ELF ファイルが ISA 文字列を公開せず、自動 ISA サブセット推論を防止し、デフォルトのフォールバック ISA 文字列 (@code{rv64gc}) がバイナリ内のすべての命令をカバーしない場合に便利です。
+
+@item numeric
+ABI 名ではなく、数値のレジスタ名を出力します(例:@code{sp} の代わりに @code{x2} を出力します)。
+
+@item no-aliases
+標準的な命令にのみ逆アセンブルします。例えば、圧縮された命令はそのように表現されます (@code{addi sp,sp,-128} は @code{c.addi16sp sp,-128} となります)。
+
+@item priv-spec=@var{SPEC}
+選択した特権仕様バージョン (例: @code{1.10}, @code{1.11}, @code{1.12}, @code{1.13}) に従ってレポートを表示します。
+@end table
+
+MIPS の場合、このオプションは逆アセンブルされた命令内の命令ニーモニック名とレジスタ名の表示を制御します。次の複数の選択肢をカンマ区切りの文字列として指定できます。無効なオプションは無視されます:
+
+@table @code
+@item no-aliases
+擬似命令ニーモニックの代わりに「生の」命令ニーモニックを出力します。つまり、 「move」の代わりに 「daddu」または 「or」、 「nop」の代わりに 「sll」などを出力します。 
+
+@item msa
+MSA 命令を逆アセンブルします。
+
+@item virt
+仮想化 ASE 命令を逆アセンブルします。
+
+@item xpa
+eXtended Physical Address (XPA) ASE命令を逆アセンブルします。
+
+@item gpr-names=@var{ABI}
+指定された ABI に適切な GPR(汎用レジスタ) 名を出力します。デフォルトでは、逆アセンブルされるバイナリの ABI に従って GPR 名が選択されます。
+
+@item fpr-names=@var{ABI}
+指定された ABI に適切な FPR(浮動小数点レジスタ) 名を出力します。デフォルトでは、名前ではなくFPR番号が表示されます。
+
+@item cp0-names=@var{ARCH}
+@var{ARCH} で指定した CPU またはアーキテクチャに応じて、CP0 (system control coprocessor;coprocessor 0) レジスタ名を出力します。デフォルトでは、CP0 レジスタ名は、逆アセンブルされるバイナリのアーキテクチャと CPU に従って選択されます。
+
+@item hwr-names=@var{ARCH}
+@var{ARCH} で指定された CPU またはアーキテクチャに応じて、HWR (@code{rdhwr} 命令で使用されるハードウェア・レジスタ) 名を出力します。デフォルトでは、HWR 名は、逆アセンブルされるバイナリのアーキテクチャと CPU に従って選択されます。
+
+@item reg-names=@var{ABI}
+選択したABIに適切な GPR 名と FPR 名を出力します。
+
+@item reg-names=@var{ARCH}
+選択したCPU またはアーキテクチャに応じて、CPU 固有のレジスタ名 (CP0 レジスタ名、HWR 名) を表示します。
+@end table
+
+上記のいずれのオプションでも、@var{ABI} または @var{ARCH} を @samp{numeric} として指定すると、選択したタイプのレジスタに対して、名前ではなく番号が表示されます。
+@option{--help} オプションを使用すると、@var{ABI} と @var{ARCH} の使用可能な値を一覧表示できます。
+
+VAX の場合は、@option{-M entry:0xf00ba} でファンクションエントリアドレスを指定できます。これを複数回使用して、シンボルテーブルを含まない VAX バイナリファイル(ROM ダンプなど) を適切に逆アセンブルすることができます。これらの場合、関数エントリは VAX 命令としてデコードされるため、これにより関数の残りの部分が誤って逆アセンブルされる可能性があります。(訳注:原文を確認してください)
+
+@item -p
+@itemx --private-headers
+オブジェクトファイル形式に固有の情報を出力します。出力される情報は、オブジェクトファイルの形式によって異なります。一部のオブジェクトファイル形式では、追加情報は出力されません。
+
+@item -P @var{options}
+@itemx --private=@var{options}
+オブジェクトファイル形式に固有の情報を出力します。引数 @var{options} は、形式に応じたカンマ区切りのリストです (オプションのリストはヘルプとともに表示されます)。
+
+XCOFF で有効なオプションは以下のとおりです:
+@table @code
+@item header
+@item aout
+@item sections
+@item syms
+@item relocs
+@item lineno,
+@item loader
+@item except
+@item typchk
+@item traceback
+@item toc
+@item ldinfo
+@end table
+
+PE で有効なオプションは以下のとおりです:
+@table @code
+@item header
+@item sections
+@end table
+
+すべてのオブジェクトフォーマットがこのオプションをサポートしているわけではありません。特に ELF 形式では使用されません。
+
+@item -r
+@itemx --reloc
+@cindex relocation entries, in object file
+ファイルの再配置エントリを出力します。@option{-d} または @option{-D} とともに使用する場合、再配置情報は逆アセンブルの合間に出力されます。
+
+@item -R
+@itemx --dynamic-reloc
+@cindex dynamic relocation entries, in object file
+ファイルの動的再配置エントリを出力します。これは、特定のタイプの共有ライブラリなどの動的オブジェクトに対してのみ意味があります。@option{-r} に関しては、@option{-d} または @option{-D} で使用される場合、再配置は逆アセンブルの合間に出力されます。
+
+注意:@command{objdump} は、RELR タイプの再配置の表示をサポートしていません。これらは @command{readelf} プログラムで表示できます。
+
+@item -s
+@itemx --full-contents
+@cindex sections, full contents
+@cindex object file sections
+セクションの完全な内容を表示します。特定のセクションを要求するために @option{-j} と組み合わせて使用されることがよくあります。デフォルトでは、空でない non-bss セクションがすべて表示されます。デフォルトでは、圧縮されたセクションは圧縮形式で表示されます。解凍された形式で内容を表示するには、コマンドラインに @option{-Z} オプションを追加します。
+
+@item -S
+@itemx --source
+@cindex source disassembly
+@cindex disassembly, with source
+可能であれば、逆アセンブルされたソースコードを表示します。@option{-d} を仮定します。
+
+@item --show-all-symbols
+逆アセンブルするときは、最初のアドレスだけでなく、指定されたアドレスに一致するすべてのシンボルを表示します。
+
+@item --source-comment[=@var{txt}]
+@cindex source disassembly
+@cindex disassembly, with source
+@option{-S} オプションと同様ですが、すべてのソース・コード行は接頭辞 @var{txt} で表示されます。通常、@var{txt} はコメント文字列であり、アセンブラコードとソースコードを区別するために使用できます。@var{txt} が指定されない場合は、デフォルトの文字列 @var{`#``} (ハッシュの後にスペース) が使用されます。
+
+@item --prefix=@var{prefix}
+@cindex Add prefix to absolute paths
+@option{-S} とともに使用する場合、絶対パスに追加するには @var{prefix} を指定します。
+
+@item --prefix-strip=@var{level}
+@cindex Strip absolute paths
+固定された絶対パスを削除する初期ディレクトリ名の数を指定します。 @option{--prefix=}@var{prefix} がない場合は無効です。
+
+@item --show-raw-insn
+命令を逆アセンブルするときは、命令をシンボル形式だけでなく 16進数形式でも出力します。@option{--prefix-addresses} が使われる時を除いて、これはデフォルトです。
+
+@item --no-show-raw-insn
+命令を逆アセンブルする場合、命令バイトを表示しません。
+これは @option{--prefix-addresses} が使われる時のデフォルトです。
+
+@item --insn-width=@var{width}
+@cindex Instruction width
+命令を逆アセンブルするときに、@var{width} バイトを 1行で表示します。
+
+@item --visualize-jumps[=color|=extended-color|=off]
+開始アドレスとターゲットアドレスの間に ASCII アートを描画することで、関数内に留まるジャンプを視覚化します。オプションの @option{=color} 引数は、単純な端末の色を使用して出力に色を追加します。代わりに @option{=extended-color} 引数 は8ビットの色を追加しますが、全ての端末で動作するとは限りません。
+
+@option{visualize-jumps} オプションを有効にした後で無効にする必要がある場合は、 @option{visualize-jumps=off} を使用します。
+
+@item --disassembler-color=off
+@itemx --disassembler-color=terminal
+@itemx --disassembler-color=on|color|colour
+@itemx --disassembler-color=extended|extended-color|extended-colour
+逆アセンブル出力での色付き構文強調表示の使用を有効または無効にします。デフォルトの動作は configure time オプションによって決定されます。すべてのアーキテクチャが色付きの構文強調表示をサポートしているわけではなく、使用する端末によっては、色付きの出力が実際には判読できない場合があることに注意してください。
+
+@option{on} 引数は、単純な端末色を使用して色を追加します。
+
+@option{terminal} 引数も同様ですが、出力デバイスが端末の場合に限ります。
+
+@option{extended-color }引数は @option{on} 引数と似ていますが、 8ビットカラーを使用します。これらは全ての端末で動作するとは限りません。
+
+@option{off} 引数は色付き逆アセンブルを無効にします。
+
+@item -W[lLiaprmfFsoORtUuTgAckK]
+@itemx --dwarf[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames-interp,=str,=str-offsets,=loc,=Ranges,=pubtypes,=trace_info,=trace_abbrev,=trace_aranges,=gdb_index,=addr,=cu_index,=links,=follow-links]
+@include debug.options.texi
+
+@item --dwarf-check
+Dwarf 情報における一貫性の追加チェックを有効にします。
+
+@include ctf.options.texi
+
+@include sframe.options.texi
+
+@item -G
+@itemx --stabs
+@cindex stab
+@cindex .stab
+@cindex debug symbols
+@cindex ELF object file format
+要求されたセクションの内容をすべて表示します。ELF ファイルの .stab セクション、.stab.index セクション、および .stab.excl セクションの内容を表示します。@code{.stab} デバッグシンボルテーブルエントリが ELF セクションに含まれているシステム (Solaris 2.0など) でのみ有効です。その他のほとんどのファイル形式では、デバッグシンボルテーブルエントリはリンケージシンボルとインターリーブされ、@option{--syms} の出力に表示されます。
+
+@item --start-address=@var{address}
+@cindex start-address
+指定したアドレスからデータの表示を開始します。これは、 @option{-d}、 @option{-r} 、および@option{-s}オプションの出力に影響します。
+
+@item --stop-address=@var{address}
+@cindex stop-address
+指定されたアドレスのデータの表示を停止します。これは、 @option{-d}、 @option{-r} 、および@option{-s}オプションの出力に影響します。
+
+@item -t
+@itemx --syms
+@cindex symbol table entries, printing
+ファイルのシンボルテーブルエントリを出力します。
+これは @samp{nm} プログラムで提供される情報に似ていますが、表示形式が異なります。出力の形式は、ダンプされるファイルの形式によって異なりますが、主に 2つのタイプがあります。1つ目は以下のようになります:
+
+@smallexample
+[  4](sec  3)(fl 0x00)(ty   0)(scl   3) (nx 1) 0x00000000 .bss
+[  6](sec  1)(fl 0x00)(ty   0)(scl   2) (nx 0) 0x00000000 fred
+@end smallexample
+
+ここで、角括弧内の数字はシンボルテーブル内のエントリの番号、 @var{sec} 番号はセクション番号、 @var{fl} 値はシンボルのフラグビット、 @var{ty} 番号はシンボルのタイプ、 @var{scl} 番号はシンボルのストレージクラス、 @var{nx} 値はシンボルに関連付けられた補助エントリの数です。最後の 2つのフィールドは、シンボルの値と名前です。
+
+もう 1つの一般的な出力形式は、通常 ELF ベースのファイルに見られるもので、次のようなものです:
+
+@smallexample
+00000000 l    d  .bss   00000000 .bss
+00000000 g       .text  00000000 fred
+@end smallexample
+
+ここで、最初の数字はシンボルの値(アドレスと呼ばれることもあります)です。次のフィールドは、実際には、シンボルに設定されているフラグビットを示す文字とスペースのセットです。これらの文字については、以下で説明します。次はシンボルが関連付けられているセクションです。セクションが絶対である (つまりどのセクションとも接続されていない) 場合は @emph{*ABS*} 、セクションがダンプされるファイル内で参照されているが、そこで定義されていない場合は @emph{*UND*} です。
+
+セクション名の後には別のフィールドがあります。番号は、一般的なシンボルの場合はアラインメント、その他のシンボルの場合はサイズです。最後にシンボルの名前が表示されます。
+
+フラグ文字は 7つのグループに分かれ、それは以下のとおりです:
+@table @code
+@item l
+@itemx g
+@itemx u
+@itemx !
+シンボルが ローカル(l)、 グローバル(g)、 一意のグローバル(u) であり、グローバルでもローカルでもない (スペース) か、グローバルとローカルの両方(!) です。シンボルは、デバッグに使用されるなど、さまざまな理由でローカルにもグローバルにもできませんが、ローカルとグローバルの両方にある場合は、おそらくバグを示しています。一意大域シンボルは、 ELF シンボルバインディングの標準セットに対する GNU 拡張です。このようなシンボルの場合、動的リンカーは、プロセス全体でこの名前とタイプを持つシンボルが 1つだけ使用されていることを確認します。
+
+@item w
+シンボルは弱 (w) または強 (スペース) です。
+
+@item C
+記号は、コンストラクタ (C) または通常の記号 (スペース) です。
+
+@item W
+シンボルは、警告 (W) または通常のシンボル (スペース) です。警告シンボルの名前は、警告シンボルの後に続くシンボルが参照された場合に表示されるメッセージです。
+
+@item I
+@item i
+シンボルは、別のシンボルへの間接参照 (I) 、再配置処理中に評価される関数 (i) 、または通常のシンボル (スペース) です。
+
+@item d
+@itemx D
+シンボルは、デバッグシンボル (d) 、ダイナミックシンボル (D) 、または通常のシンボル (スペース) です。
+
+@item F
+@item f
+@item O
+シンボルは、関数 (F) 、ファイル (f) 、オブジェクト (O) の名前、または通常のシンボル (スペース) です。
+@end table
+
+@item -T
+@itemx --dynamic-syms
+@cindex dynamic symbol table entries, printing
+ファイルの動的シンボルテーブルエントリを出力します。これは、特定のタイプの共有ライブラリなどの動的オブジェクトに対してのみ意味があります。これは、 @samp{nm} プログラムで @option{-D} (@option{--dynamic}) オプションが指定された場合に提供される情報に似ています。
+
+出力形式は @option{--syms} オプションで生成される形式と似ていますが、シンボル名の前に追加フィールドが挿入され、シンボルに関連付けられたバージョン情報が提供される点が異なります。
+バージョンが、シンボルへのバージョン化されていない参照を解決するときに使用されるデフォルトのバージョンである場合はそのまま表示され、そうでない場合は括弧で囲まれます。
+
+@item --special-syms
+シンボルを表示する場合、ターゲットが何らかの形で特別であると考え、通常はユーザーが興味を持たないシンボルも含まれます。
+
+@item -U @var{[d|i|l|e|x|h]}
+@itemx --unicode=@var{[default|invalid|locale|escape|hex|highlight]}
+文字列内の UTF-8 エンコード・マルチバイト文字の表示を制御します。
+デフォルト(@option{--unicode=default})では、特別な処理は行われません。@option{--unicode=locale} オプションを選択すると、シーケンスが現在のロケールで表示されます。ロケールによっては、サポートされない場合もあります。オプション @option{--unicode=hex} および @option{--unicode=invalid} では、不等号括弧または波括弧で囲まれた 16進バイト列として表示されます。
+
+@option{--unicode=escape} オプションを選択すると、これらはエスケープシーケンス(@var{\uxxxx}) として表示され、@option{--unicode=highlight} オプションを選択すると、赤色で強調表示されたエスケープシーケンスとして表示されます (出力デバイスでサポートされている場合)。色分けは、ユニコード配列の存在が予期されない場合に注意を引くことを目的としています。
+
+@item -V
+@itemx --version
+@command{objdump} のバージョン番号を表示して終了します。
+
+@item -x
+@itemx --all-headers
+@cindex all header information, object file
+@cindex header information, all
+シンボルテーブルや再配置エントリなど、使用可能なすべてのヘッダ情報を表示します。 @option{-x} を使用すると、 @option{-a -f -h -p -r -t}全体を指定したことになります。
+
+@item -w
+@itemx --wide
+@cindex wide output, printing
+列数が 80 を超える出力デバイス用に一部の行をフォーマットします。
+また、シンボル名が表示されるときに切り詰めません。
+
+@item -z
+@itemx --disassemble-zeroes
+通常、逆アセンブル出力はゼロのブロックをスキップします。このオプションは、他のデータと同様に、逆アセンブラがこれらのブロックを逆アセンブルするように指示します。
+
+@item -Z
+@itemx --decompress
+@cindex sections, full contents
+@cindex object file sections
+@cindex compressed section contents
+@option{-Z} オプションは、 @option{-s} オプションと組み合わせて使用します。@command{objdump} に対して、内容を表示する前に圧縮されたセクションを解凍するように指示します。
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO objdump
+nm(1), readelf(1), と @file{binutils} のInfo エントリ。
+@c man end
+@end ignore
+
+@node ranlib
+@chapter ranlib
+
+@kindex ranlib
+@cindex archive contents
+@cindex symbol index
+
+@c man title ranlib 書庫のインデックスを作成
+
+@smallexample
+@c man begin SYNOPSIS ranlib
+ranlib [@option{--plugin} @var{name}] [@option{-DhHvVt}] @var{archive}
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION ranlib
+
+@command{ranlib} は、アーカイブの内容に対するインデックスを生成し、アーカイブに保存します。インデックスは、再配置可能なオブジェクトファイルであるアーカイブのメンバーによって定義された各シンボルをリストします。
+
+このインデックスを表示するには、@samp{nm-s} または @samp{nm--print-armap} を使用します。
+
+このようなインデックスを持つアーカイブは、ライブラリへのリンクを高速化し、ライブラリ内のルーチンがアーカイブ内の配置に関係なく互いに呼び出すことを可能にします。
+
+@sc{gnu} @command{ranlib} プログラムは @sc{gnu} @command{ar} の別形式で、 @command{ranlib} を実行することは @samp{ar -s} を実行することと完全に等価です。
+xrefなので削る
+
+@c man end
+
+@c man begin OPTIONS ranlib
+
+@table @env
+@item -h
+@itemx -H
+@itemx --help
+@command{ranlib} の使用情報を表示します。
+
+@item -v
+@itemx -V
+@itemx --version
+@command{ranlib} のバージョン番号を表示します。
+
+@item -D
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+@emph{deterministic} モードで処理します。シンボルマップアーカイブメンバーのヘッダーには、 UID、 GID、およびタイムスタンプとしてゼロが表示されます。このオプションを使用すると、複数回実行しても同一の出力ファイルが生成されます。
+
+@file{binutils} が @option{--enable-deterministic-archives} で構成されている場合、このモードはデフォルトでオンになります。後述の @samp{-U} オプションで無効にできます。
+
+@item -t
+アーカイブのシンボルマップのタイムスタンプを更新します。
+
+@item -U
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+@emph{deterministic} モードで実行@emph{しません}。これは上記の @samp{-D} オプションの逆です。アーカイブインデックスは実際の UID、 GID、タイムスタンプ、ファイルモードの値を取得します。
+
+@file{binutils} が @option{--enable-deterministic-archives} @emph{なし} で設定された場合、このモードはデフォルトで オンになります。
+
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO ranlib
+ar(1), nm(1), と@file{binutils} のInfo エントリ。
+@c man end
+@end ignore
+
+@node size
+@chapter size
+
+@kindex size
+@cindex section sizes
+
+@c man title size バイナリファイルのセクションの大きさとその合計を一覧表示
+
+@smallexample
+@c man begin SYNOPSIS size
+size [@option{-A}|@option{-B}|@option{-G}|@option{--format=}@var{compatibility}]
+     [@option{--help}]
+     [@option{-d}|@option{-o}|@option{-x}|@option{--radix=}@var{number}]
+     [@option{--common}]
+     [@option{-t}|@option{--totals}]
+     [@option{--target=}@var{bfdname}] [@option{-V}|@option{--version}]
+     [@option{-f}]
+     [@var{objfile}@dots{}]
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION size
+
+@sc{gnu} @command{size} ユーティリティは、引数リストに @var{objfile} の各バイナリファイルのセクションサイズと合計サイズを一覧表示します。
+デフォルトでは、ファイルごと、またはファイルがアーカイブの場合はモジュールごとに 1行の出力が生成されます。
+
+@var{objfile}@dots{} は、検査されるファイルです。何も指定しない場合は、 @code{a.out} ファイルが代わりに使用されます。
+
+@c man end
+
+@c man begin OPTIONS size
+
+コマンドラインオプションには次の意味があります:
+
+@table @env
+@item -A
+@itemx -B
+@itemx -G
+@itemx --format=@var{compatibility}
+@cindex @command{size} display format
+これらのオプションのいずれかを使用して、@sc{gnu} @command{size} の出力をSystem V の @command{size} (@option{-A} または @option{--format=sysv} を使用) または Berkeley の @command{size} (@option{-B} または @option{--format=berkeley} を使用) の出力に類似させるかどうかを選択できます。デフォルトは、 Berkeley の形式に似た 1行形式です。あるいは、GNU 形式の出力を選択することもできます (@option{-G} または @option{--format=gnu} を使用)。これは Berkeley の出力形式に似ていますが、サイズのカウント方法が異なります。
+@c Bonus for doc-source readers: you can also say --format=strange (or
+@c anything else that starts with 's') for sysv, and --format=boring (or
+@c anything else that starts with 'b') for Berkeley.
+
+以下は、@command{size} の Berkeley(デフォルト) 形式の出力例です:
+@smallexample
+$ size --format=Berkeley ranlib size
+   text    data     bss     dec     hex filename
+ 294880   81920   11592  388392   5ed28 ranlib
+ 294880   81920   11888  388688   5ee50 size
+@end smallexample
+
+Berkeley スタイルの出力では、 @code{text} カラムの読み込み専用データがカウントされ、 @code{data} カラムのデータはカウントされません。 @code{dec} カラムと @code{hex} カラムでは、 @code{text} カラム、 @code{data} カラム、 @code{bss} カラムの合計がそれぞれ 10進数と 16進数で表示されます。
+
+GNU 形式では、 @code{text} カラムではなく @code{data} カラムの読み込み専用データがカウントされ、 @code{text} カラム、 @code{data} カラム、 @code{bss} カラムの合計が @code{total} カラムに一度だけ表示されます。
+@option{--radix} オプションを使用すると、すべての列の基数を変更できます。同じデータを GNU 方式で表示すると、次のようになります:
+
+@smallexample
+$ size --format=GNU ranlib size
+      text       data        bss      total filename
+    279880      96920      11592     388392 ranlib
+    279880      96920      11888     388688 size
+@end smallexample
+
+@noindent
+これは同じデータですが、System V の慣習に近い形で表示されています。
+
+@smallexample
+$ size --format=SysV ranlib size
+ranlib  :
+section         size         addr
+.text         294880         8192
+.data          81920       303104
+.bss           11592       385024
+Total         388392
+
+
+size  :
+section         size         addr
+.text         294880         8192
+.data          81920       303104
+.bss           11888       385024
+Total         388688
+@end smallexample
+
+@item --help
+@itemx -h
+@itemx -H
+@item -?
+使用可能な引数とオプションの要約を表示します。
+
+@item -d
+@itemx -o
+@itemx -x
+@itemx --radix=@var{number}
+@cindex @command{size} number format
+@cindex radix for section sizes
+これらのオプションのいずれかを使用して、各セクションのサイズ を10進数 (@option{-d} または @option{--radix=10})、 8進数 (@option{-o} または @option{--radix=8})、 16進数 (@option{-x} または @option{--radix=16}) のいずれで指定するかを制御できます。@option{--radix=@var{number}} では、 3つの値(8、10、16) のみがサポートされます。合計サイズは常に 2つの基数で指定されます。@option{-d} または @option{-x} 出力の場合は 10進数と 16進数、@option{-o} を使用している場合は 8進数と 16進数です。
+
+@item --common
+各ファイルの共通シンボルの合計サイズを表示します。Berkeley または GNU 形式を使用する場合、これらは bss サイズに含まれます。
+
+@item -t
+@itemx --totals
+リストされたすべてのオブジェクトの合計を表示します (Berkeley または GNU フォーマットモードのみ)。
+
+@item --target=@var{bfdname}
+@cindex object code format
+@var{objfile} のオブジェクトコード形式を @var{bfdname} と指定します。このオプションは必要ないかもしれません。@command{size} は自動的に多くのフォーマットを認識します。
+Xrefなので削る
+
+@item -v
+@item -V
+@itemx --version
+@command{size} のバージョン番号を表示します。
+
+@item -f
+無視します。このオプションは @command{size} プログラムの他のバージョンで使用されますが、 GNU Binutils バージョンではサポートされていません。
+
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO size
+ar(1), objdump(1), readelf(1) と @file{binutils} の Info エントリ。
+@c man end
+@end ignore
+
+@node strings
+@chapter strings
+@kindex strings
+@cindex listings strings
+@cindex printing strings
+@cindex strings, printing
+
+@c man title strings ファイル中の表示可能な文字列を表示
+
+@smallexample
+@c man begin SYNOPSIS strings
+strings [@option{-afovV}] [@option{-}@var{min-len}]
+        [@option{-n} @var{min-len}] [@option{--bytes=}@var{min-len}]
+        [@option{-t} @var{radix}] [@option{--radix=}@var{radix}]
+        [@option{-e} @var{encoding}] [@option{--encoding=}@var{encoding}]
+        [@option{-U} @var{method}] [@option{--unicode=}@var{method}]
+        [@option{-}] [@option{--all}] [@option{--print-file-name}]
+        [@option{-T} @var{bfdname}] [@option{--target=}@var{bfdname}]
+        [@option{-w}] [@option{--include-all-whitespace}]
+        [@option{-s}] [@option{--output-separator} @var{sep_string}]
+        [@option{--help}] [@option{--version}] @var{file}@dots{}
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION strings
+
+与えられた @var{file} ごとに、 @sc{gnu} @command{strings} は少なくとも 4文字 (または以下のオプションで指定された数) の印刷可能な文字シーケンスを印刷し、その後に印刷不可能な文字が続きます。
+
+文字列プログラムがどのように設定されたかに応じて、デフォルトでは、各ファイル内で見つけられるすべての印刷可能なシーケンスを表示するか、ロード可能な初期化されたデータセクション内のシーケンスのみを表示するかのいずれかになります。ファイルタイプが認識できない場合、または文字列が stdin から読み込まれている場合は、検出されたすべての印刷可能なシーケンスが常に表示されます。
+
+下位互換性のため、 @option{-} オプションの有無に関わらず、 @option{-d} のコマンドラインオプションの後に指定されたファイルもすべてスキャンされます。
+
+@command{strings} は、主にテキスト以外のファイルの内容を決定する場合に便利です。
+
+@c man end
+
+@c man begin OPTIONS strings
+
+@table @env
+@item -a
+@itemx --all
+@itemx -
+どのセクションが含まれているか、またはそれらのセクションがロードまたは初期化されているかに関係なく、ファイル全体をスキャンします。通常、これはデフォルトの動作ですが、代わりに @option{-d} がデフォルトになるように文字列を設定できます。
+
+@option{-} オプションは位置に依存し、 @option{-} オプションが指定されている場合でも、文字列はコマンドラインで @option{-d} の後に指定されているファイルを強制的にフルスキャンします。
+
+@item -d
+@itemx --data
+ファイル内の初期化され、ロードされたデータセクションからの文字列のみを出力します。これにより出力のゴミの量を減らすことができますが、文字列プログラムが、セクションのスキャンとロードに使用される BFD ライブラリに存在する可能性のあるセキュリティ上の欠陥にさらされることにもなります。文字列は、このオプションがデフォルトの動作になるように設定できます。このような場合、 @option{-a} オプションを使用すると、 BFD ライブラリを使用せずに、ファイル内で見つかったすべての文字列を出力できます。
+
+@item -f
+@itemx --print-file-name
+各文字列の前にファイル名を出力します。
+
+@item --help
+プログラムの使用方法の概要を標準出力に表示して終了します。
+
+@item -@var{min-len}
+@itemx -n @var{min-len}
+@itemx --bytes=@var{min-len}
+@var{min-len} 文字以上の表示可能な文字のシーケンスを出力します。指定しない場合は、デフォルトの最小長 4が使用されます。表示可能な文字と表示不可能な文字の区別は、 @option{-e} および @option{-U}オプションの設定によって異なります。シーケンスは常に改行や復帰などの制御文字で終了しますが、タブ文字では終了しません。
+
+@item -o
+@samp{-t o} と似ています。@command{strings} の他のバージョンでは、代わりに @option{-o} が @samp{-td} のように動作します。両方の方法に対応することはできないので、単純に 2つのどちらかとなります。
+
+@item -t @var{radix}
+@itemx --radix=@var{radix}
+各文字列の前にファイル内のオフセットを表示します。1文字の引き数はオフセットの基数を指定します --- 8進数なら @samp{o} 、 16進数なら @samp{x} 、 10進数なら @samp{d} です 。
+
+@item -e @var{encoding}
+@itemx --encoding=@var{encoding}
+検索する文字列の文字エンコーディングを選択します。
+@var{encoding} で使用可能な値は、 @samp{s} = 単一 7ビット・バイト文字 (デフォルト)、 @samp{S} = 単一 8ビット・バイト文字、 @samp{b} = 16ビット bigendian、 @samp{l} = 16ビットlittleendian、@samp{B} = 32ビットbigendian、@samp{L} = 32ビットlittleendianです。ワイド文字列を検索するのに便利です。(@samp{l} と @samp{b} は、Unicode UTF-16/UCS-2 エンコーディングなどに適用されます)。
+
+@item -U @var{[d|i|l|e|x|h]}
+@itemx --unicode=@var{[default|invalid|locale|escape|hex|highlight]}
+文字列内の UTF-8 エンコード・マルチバイト文字の表示を制御します。
+デフォルトの (@option{--unicode=default}) は、特別な処理を行わず、代わりに @option{--encoding} オプションの設定に依存します。このオプションの他の値は自動的に @option{--encoding=S} を有効にします。
+
+@option{--unicode=invalid} オプションは、これらを非グラフィック文字として処理するため、有効な文字列の一部ではありません。残りのすべてのオプションは、これらを有効な文字列として扱います。
+
+@option{--unicode=locale} オプションを使用すると、現在のロケールで表示されます。現在のロケールでは、UTF-8 エンコーディングがサポートされている場合とサポートされていない場合があります。 @option{--unicode=hex} オプションを指定すると、 @var{<>} 文字で囲まれた16進バイト列として表示されます。@option{--unicode=escape} オプションを指定すると、これらの文字は (@var{\uxxxx}) のエスケープシーケンスとして表示されます。 @option{--unicode=highlight} オプションを指定すると、これらの文字は赤で強調表示されます (出力デバイスでサポートされている場合) 。色分けは、unicode 配列の存在が予期されない場合に注意を引くことを目的としています。
+
+@item -T @var{bfdname}
+@itemx --target=@var{bfdname}
+@cindex object code format
+システムのデフォルト形式以外のオブジェクトコード形式を指定します。
+Xrefなので削る
+
+@item -v
+@itemx -V
+@itemx --version
+プログラムのバージョン番号を標準出力に表示して終了します。
+
+@item -w
+@itemx --include-all-whitespace
+デフォルトでは、タブ文字と空白文字は表示される文字列に含まれますが、改行や復帰などの他の空白文字は含まれません。@option{-w} オプションはこれを変更し、すべての空白文字が文字列の一部と見なされるようにします。
+
+@item -s
+@itemx --output-separator
+デフォルトでは、出力文字列は改行で区切られます。このオプションを使用すると、出力レコードセパレータとして使用する任意の文字列を指定できます。文字列の内部に改行を含めることができる --include-all-whitespace とともに使用すると便利です。
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO strings
+ar(1), nm(1), objdump(1), ranlib(1), readelf(1)
+と @file{binutils} の Info エントリ。
+@c man end
+@end ignore
+
+@node strip
+@chapter strip
+
+@kindex strip
+@cindex removing symbols
+@cindex discarding symbols
+@cindex symbols, discarding
+
+@c man title strip オブジェクトファイルからシンボルやその他のデータを削除
+
+@smallexample
+@c man begin SYNOPSIS strip
+strip [@option{-F} @var{bfdname} |@option{--target=}@var{bfdname}]
+      [@option{-I} @var{bfdname} |@option{--input-target=}@var{bfdname}]
+      [@option{-O} @var{bfdname} |@option{--output-target=}@var{bfdname}]
+      [@option{-s}|@option{--strip-all}]
+      [@option{-S}|@option{-g}|@option{-d}|@option{--strip-debug}]
+      [@option{--strip-dwo}]
+      [@option{-K} @var{symbolname}|@option{--keep-symbol=}@var{symbolname}]
+      [@option{-M}|@option{--merge-notes}][@option{--no-merge-notes}]
+      [@option{-N} @var{symbolname} |@option{--strip-symbol=}@var{symbolname}]
+      [@option{-w}|@option{--wildcard}]
+      [@option{-x}|@option{--discard-all}] [@option{-X} |@option{--discard-locals}]
+      [@option{-R} @var{sectionname} |@option{--remove-section=}@var{sectionname}]
+      [@option{--keep-section=}@var{sectionpattern}]
+      [@option{--remove-relocations=}@var{sectionpattern}]
+      [@option{--strip-section-headers}]
+      [@option{-o} @var{file}] [@option{-p}|@option{--preserve-dates}]
+      [@option{-D}|@option{--enable-deterministic-archives}]
+      [@option{-U}|@option{--disable-deterministic-archives}]
+      [@option{--keep-section-symbols}]
+      [@option{--keep-file-symbols}]
+      [@option{--only-keep-debug}]
+      [@option{--plugin} @var{name}]
+      [@option{-v} |@option{--verbose}] [@option{-V}|@option{--version}]
+      [@option{--help}] [@option{--info}]
+      @var{objfile}@dots{}
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION strip
+
+@sc{gnu}@command{strip} は、オブジェクトファイル @var{objfile} からすべてのシンボルを削除します。オブジェクトファイルのリストには、アーカイブも使えます。
+少なくとも 1つのオブジェクトファイルを指定する必要があります。
+
+@command{strip} は、引数で指定されたファイルを変更します。変更されたコピーを別の名前で書き込むのではありません。
+
+@c man end
+
+@c man begin OPTIONS strip
+
+@table @env
+@item -F @var{bfdname}
+@itemx --target=@var{bfdname}
+元の @var{objfile} をオブジェクトコード形式 @var{bfdname} のファイルとして扱い、同じ形式に書き直します。
+Xrefなので削る
+
+@item --help
+@command{strip} のオプションの概要を表示して終了します。
+
+@item --info
+使用可能なすべてのアーキテクチャとオブジェクトフォーマットを示すリストを表示します。
+
+@item -I @var{bfdname}
+@itemx --input-target=@var{bfdname}
+元の @var{objfile} をオブジェクトコード形式 @var{bfdname} のファイルとして扱います。
+Xrefなので削る
+
+@item -O @var{bfdname}
+@itemx --output-target=@var{bfdname}
+@var{objfile} を出力形式 @var{bfdname} のファイルに置き換えます。
+Xrefなので削る
+
+@item -R @var{sectionname}
+@itemx --remove-section=@var{sectionname}
+@var{sectionname} という名前のセクションを、本来ならば削除されるセクションに加えて、出力ファイルから削除します。このオプションは、複数回指定できます。このオプションを不適切に使用すると、出力ファイルが使用できなくなる可能性があることに注意してください。ワイルドカード文字 @samp{*} は、@var{sectionname} の最後に指定できます。その場合、 @var{sectionname} で始まるセクションはすべて削除されます。
+
+@var{sectionpattern} の最初の文字が感嘆符 (!) の場合、同じコマンドラインで以前に@option{--remove-section} を使用して削除されたとしても、一致するセクションは削除されません。たとえば以下のようなものです:
+
+@smallexample
+  --remove-section=.text.* --remove-section=!.text.foo
+@end smallexample
+
+パターン '.text.*' に一致するすべてのセクションが削除されますが、セクション '.text.foo' は削除されません。
+
+@item --keep-section=@var{sectionpattern}
+出力ファイルからセクションを削除する場合は、@var{sectionpattern} と一致するセクションを保持します。
+
+@item --remove-relocations=@var{sectionpattern}
+@var{sectionpattern} に一致するセクションの出力ファイルから再配置情報を削除します。このオプションは複数回指定できます。このオプションを不適切に使用すると、出力ファイルが使用できなくなる可能性があることに注意してください。@var{sectionpattern} では、ワイルドカード文字を使用できます。
+たとえば以下のようなものです:
+
+@smallexample
+  --remove-relocations=.text.*
+@end smallexample
+
+パターン 「.text.* 」に一致するすべてのセクションの再配置情報を削除します。
+
+@var{sectionpattern} の最初の文字が感嘆符(!)の場合、同じコマンドラインで以前に @option{--remove-relocations} を使用したときに再配置が削除されたとしても、一致するセクションの再配置は削除されません。
+たとえば以下のようなものです:
+
+@smallexample
+  --remove-relocations=.text.* --remove-relocations=!.text.foo
+@end smallexample
+
+パターン '.text.*' に一致するセクションの再配置はすべて削除されますが、セクション '.text.foo' の再配置は削除されません。
+
+@item --strip-section-headers
+セクションヘッダを削除します。このオプションは ELF ファイルに固有です。@option{--strip-all} と @option{--merge-notes} を意味します。
+
+@item -s
+@itemx --strip-all
+すべてのシンボルを削除します。
+
+@item -g
+@itemx -S
+@itemx -d
+@itemx --strip-debug
+デバッグシンボルのみ削除します。
+
+@item --strip-dwo
+すべてのDWARF.dwo セクションの内容を削除し、残りのデバッグセクションとすべてのシンボルはそのままにします。
+詳細については、 @command{objcopy} セクションのこのオプションの説明を参照してください。
+
+@item --strip-unneeded
+@option{--strip-debug} によって除去されたセクションとデバッグシンボルに加えて、再配置処理に不要なすべてのシンボルを削除します。
+
+@item -K @var{symbolname}
+@itemx --keep-symbol=@var{symbolname}
+シンボルを除去するときは、通常除去される場合でも、シンボル @var{symbolname} をそのままにします。このオプションは複数回指定できます。
+
+@item -M
+@itemx --merge-notes
+@itemx --no-merge-notes
+EL Fファイルでは、重複する注記を削除して SHT_NOT Eタイプのセクションのサイズを小さくします (または小さくしません)。デフォルトでは、デバッグまたは DWO 情報を除去しない限り、この削減が試行されます。
+
+@item -N @var{symbolname}
+@itemx --strip-symbol=@var{symbolname}
+ソースファイルから symbol@var{symbolname} を削除します。このオプションは複数回指定することができ、 @option{-K} 以外のストリップオプションと組み合わせることもできます。
+
+@item -o @var{file}
+既存のファイルを置き換えるのではなく、ストリップされた出力を @var{file} に書き込みます。この引数を使用する場合、指定できる @var{objfile} 引数は1つだけです。
+
+@item -p
+@itemx --preserve-dates
+ファイルのアクセス日と変更日を保持します。
+
+@item -D
+@itemx --enable-deterministic-archives
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+@emph{deterministic} モードで動作します。アーカイブメンバーをコピーしてアーカイブインデックスを書き込む場合は、UID、GID、タイムスタンプにゼロを使用し、すべてのファイルに対して一貫したファイルモードを使用します。
+
+@file{binutils} が @option{--enable-deterministic-archives} と設定されている場合、このモードはデフォルトで有効になります。
+以下の @samp{-U} オプションで無効にできます。
+
+@item -U
+@itemx --disable-deterministic-archives
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+@emph{not} を @emph{deterministic} モードで動作させます。これは、上記の @option{-D} オプションの逆です。アーカイブメンバーをコピーしてアーカイブインデックスを書き込む場合は、実際の UID、GID、タイムスタンプ、およびファイルモードの値を使用します。
+
+@file{binutils} が @option{--enable-deterministic-archives} で設定されていない限り、これがデフォルトです。
+
+@item -w
+@itemx --wildcard
+他のコマンドラインオプションで使用される @var{symbolname}で正規表現を許可します。疑問符 (?) 、アスタリスク (*) 、バックスラッシュ (\) 、および角カッコ ([]) の演算子は、シンボル名のどこにでも使用できます。シンボル名の最初の文字が感嘆符 (!) の場合は、そのシンボルの真偽値が逆になります。
+たとえば以下のようなものです:
+
+@smallexample
+  -w -K !foo -K fo*
+@end smallexample
+
+これは strip に「fo」という文字で始まるシンボルだけを保持し、「foo」というシンボルを破棄させます。
+
+@item -x
+@itemx --discard-all
+非グローバルなシンボルを削除します。
+
+@item -X
+@itemx --discard-locals
+コンパイラが生成したローカルシンボルを削除します。
+  (通常 "L" または "." ではじまるシンボルです) 。
+
+@item --keep-section-symbols
+@option{--strip-debug} や @option{--strip-unneeded} などを使用してファイルをストリップする場合、通常はストリップされるセクション名を指定する記号が保持されます。
+
+@item --keep-file-symbols
+@option{--strip-debug} や @option{--strip-unneeded} などを使用してファイルをストリップする場合、ソースファイル名を指定する記号を保持します。これらの記号を使用しない場合はストリップされます。
+
+@item --only-keep-debug
+ファイルをストリップし、@option{--strip-debug} ではストリップされないセクションの内容を空にし、デバッグセクションをそのままにします。ELF ファイルでは、すべての注記セクションが出力にも保持されます。
+
+注意:除去されたセクションのセクションヘッダーはサイズも含めて保持されますが、セクションの内容は破棄されます。
+実行可能ファイルが別のアドレス空間に再配置された場合でも、他のツールが debuginfo ファイルと実際の実行可能ファイルを照合できるように、セクションヘッダーは保持されます。
+
+このオプションを @option{--add-gnu-debuglink} と組み合わせて使用して、 2つの部分からなる実行可能ファイルを作成することを目的としています。1つはストリップされたバイナリで、 RAM やディストリビューションで占有するスペースが少なくなります。もう 1つはデバッグ機能が必要な場合にのみ必要となるデバッグ情報ファイルです。これらのファイルを作成する推奨手順は、次のとおりです:
+
+@enumerate
+@item 実行可能ファイルを通常どおりリンクします。@code{foo} と呼ばれていると仮定すると、 
+@item @code{objcopy--only-keep-debug foo foo.dbg} を実行して、デバッグ情報を含むファイルを作成します。
+@item @code{objcopy--strip-debug foo} を実行して、ストリップされた実行可能ファイルを作成します。
+@item @code{objcopy--add-gnu-debuglink=foo.dbg foo} を実行して、デバッグ情報へのリンクを、ストリップされた実行可能ファイルに追加します。
+@end enumerate
+
+注意 --- デバッグ情報ファイルの拡張子としての @code{.dbg} の選択は任意です。また、 @code{--only-keep-debug} ステップは任意です。代わりに次のようにすることもできます:
+
+@enumerate
+@item 実行可能ファイルを通常どおりリンクします。
+@item Copy @code{foo} to @code{foo.full}
+@item Run @code{strip --strip-debug foo}
+@item Run @code{objcopy --add-gnu-debuglink=foo.full foo}
+@end enumerate
+
+つまり、 @option{--add-gnu-debuglink} によってポイントされるファイルが完全な実行形式になります。@option{--only-keep-debug} スイッチで作成されたファイルである必要はありません。
+
+注意 --- このスイッチは、完全にリンクされたファイルでの使用のみを目的としています。デバッグ情報が不完全な可能性があるオブジェクトファイルに対してこれを使用しても意味がありません。加えて、gnu_debuglink 機能は現在、デバッグ情報を含む 1つのファイル名の存在のみをサポートしており、オブジェクトファイルごとに複数のファイル名をサポートしていません。
+
+@item --plugin @var{name}
+@cindex plugins
+@var{name} というプラグインをロードして、追加のターゲット・タイプのサポートを追加します。このオプションは、プラグインサポートを有効にしてツールチェーンを構築した場合にのみ使用できます。
+
+@option{--plugin} が指定されていないが、プラグインサポートが有効になっている場合、@command{strip} は @file{$@{libdir@}/bfd-plugins} 内のファイルをアルファベット順に繰り返し、問題のオブジェクトを要求する最初のプラグインが使用されます。
+
+このプラグイン検索ディレクトリは、@command{ld} の @option{-plugin} オプションで使用されるもの@emph{ではない}ことに注意してください。@command{strip}にリンカ・プラグインを使わせるには、 @file{$@{libdir@}/bfd-plugins} のディレクトリにコピーする必要があります。GCC ベースのコンパイルでは、リンカープラグインは @file{liblto_plugin.so.0.0.0} と呼ばれます。Clang ベースのコンパイルでは、@file{LLVMgold.so} と呼ばれます。GCC プラグインは常に以前のバージョンと下位互換性があるため、最新のものをコピーするだけで十分です。
+
+@item -V
+@itemx --version
+@command{strip} のバージョン番号を表示します。
+
+@item -v
+@itemx --verbose
+詳細出力:変更されたすべてのオブジェクトファイルをリストします。アーカイブの場合、 @samp{strip -v} はアーカイブのすべてのメンバーをリストします。
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO strip
+@file{binutils} のInfo エントリ。
+@c man end
+@end ignore
+
+@node c++filt, addr2line, strip, Top
+@chapter c++filt
+
+@kindex c++filt
+@cindex demangling C++ symbols
+
+@c man title cxxfilt C++ と Java シンボルの デコード(demangle)
+
+@smallexample
+@c man begin SYNOPSIS cxxfilt
+c++filt [@option{-_}|@option{--strip-underscore}]
+        [@option{-n}|@option{--no-strip-underscore}]
+        [@option{-p}|@option{--no-params}]
+        [@option{-t}|@option{--types}]
+        [@option{-i}|@option{--no-verbose}]
+        [@option{-r}|@option{--no-recurse-limit}]
+        [@option{-R}|@option{--recurse-limit}]
+        [@option{-s} @var{format}|@option{--format=}@var{format}]
+        [@option{--help}]  [@option{--version}]  [@var{symbol}@dots{}]
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION cxxfilt
+
+@kindex cxxfilt
+C++言語とJava言語には関数オーバーロードが用意されています。つまり、各関数が異なる型のパラメータを取る場合、同じ名前で多くの関数を記述できます。これらの似たような名前の関数を区別できるように、C++ と Java はそれらを、それぞれの異なるバージョンを一意に識別する低レベルのアセンブラ名にエンコードします。
+このプロセスは @dfn{mangling (訳注: エンコード)} として知られています。@command{c++filt} @footnote{ MS-DOSではファイル名に @kbd{+} 文字を使用できないため、このプログラムは @command{CXXFILT} という名前になります。}プログラムは逆のマッピングを行います。これはローレベルの名前をユーザーレベルの名前にデコード (@dfn{demangles}) して、読み取り可能にします。
+
+入力含まれるすべての英数字の単語 (文字、数字、アンダースコア、ドル記号 ($) 、またはピリオドで構成される) は、潜在的にエンコード (mangled) された名前です。
+名前が C++ 名にデコードされた場合、出力中のローレベルの名前が C++ 名に置き換えられます。それ以外の場合は、元の単語が出力されます。
+このようにして、エンコード (mangled) された名前を含むアセンブラソースファイル全体を @command{c++filt} 経由で渡すことができ、デコード (demangled) された名前を含んだ同じソースファイルを見ることができます。
+
+@command{c++filt} を使用して、以下のようにコマンドラインに渡すことで、個々のシンボルを解読することもできます。
+
+@example
+c++filt @var{symbol}
+@end example
+
+@var{symbol} 引数がない場合、 @command{c++filt} はシンボル名を標準入力から読み込みます。すべての結果は標準出力に表示されます。コマンドラインから名前を読み込むことと、標準入力から名前を読み込むことの違いは、コマンドライン引数はエンコード (mangled) された名前であることが期待され、前後のテキストと区別するためのチェックが行われないことです。たとえば、次のようになります:
+
+@smallexample
+c++filt -n _Z1fv
+@end smallexample
+
+これは機能し、名前を ``f()'' にデコード (demangle) しますが、一方:
+
+@smallexample
+c++filt -n _Z1fv,
+@end smallexample
+
+は動きません。(エンコード (mangled) された名前の最後に余分なコンマがあるため、無効になっていることに注意してください)。ただし、次のコマンドは機能します:
+
+@smallexample
+echo _Z1fv, | c++filt -n
+@end smallexample
+
+は ``f(),'' を表示します。すなわち、デコード (demangled) された名前の後にコンマが続きます。これは、標準入力から読み込まれた名前がアセンブラソースファイルの一部であることを想定しているためです。アセンブラソースファイルでは、エンコード (mangled) された名前の後に余分な文字が続くことがあります。たとえば以下のようなものです:
+
+@smallexample
+    .type   _Z1fv, @@function
+@end smallexample
+
+@c man end
+
+@c man begin OPTIONS cxxfilt
+
+@table @env
+@item -_
+@itemx --strip-underscore
+一部のシステムでは、 C コンパイラと C++ コンパイラの両方で、すべての名前の前にアンダースコアが付けられます。.  たとえば、C での名前 @code{foo} は、ローレベルの名前 @code{_foo} を取得します。このオプションを使用すると、最初のアンダースコアが削除されます。@command{c++filt} がデフォルトでアンダースコアを削除するかどうかは、ターゲットに依存します。
+
+@item -n
+@itemx --no-strip-underscore
+先頭のアンダースコアを削除しません。.
+
+@item -p
+@itemx --no-params
+関数名を デコード (demangling) するときに、関数のパラメータの型を表示しません。
+
+@item -t
+@itemx --types
+タイプと関数名をデコード (demangle) しようとします。これはデフォルトで無効になっています。なぜなら、エンコード (mangled) された型は通常、コンパイラの内部でのみ使用され、 非エンコード (non-mangled) の名前と混同される可能性があるからです。例えば、 ``a'' という名前の関数がエンコード (mangled) された型の名前として扱われる場合、 ``signed char'' にデコード (demangled) されることになります。
+
+@item -i
+@itemx --no-verbose
+実装の詳細(存在する場合)を、デコード (demangled) した出力に含めません。
+
+
+@item -r
+@itemx -R
+@itemx --recurse-limit
+@itemx --no-recurse-limit
+@itemx --recursion-limit
+@itemx --no-recursion-limit
+文字列の削除中に実行される再帰の量の制限を有効または無効にします。名前をエンコード (mangling) する形式は無限レベルの再帰を許すので、デコード操作がホストマシンで利用可能なスタック空間の量を使い果たし、メモリ障害を引き起こすような文字列を作成する可能性があります。この制限では、再帰を 2048レベルまでのネストに制限することで、これが発生しないようにしています。
+
+デフォルトでは、この制限は有効になっていますが、本当に複雑な名前をデコード (demangle) するには無効にする必要がある場合があります。ただし、再帰制限が無効になっている場合は、スタックが枯渇する可能性があり、そのようなイベントに関するバグレポートは拒否されることに注意してください。
+
+@option{-r} オプションは、@option{--no-recurse-limit} オプションの同義語です。@option{-R} オプションは、@option{--recurse-limit} オプションの同義語です。
+
+@item -s @var{format}
+@itemx --format=@var{format}
+@command{c++filt} は、異なるコンパイラによって使用されるさまざまなエンコード (mangling) メソッドをデコードできます。このオプションの引数は、以下のように使用する方式を選択します:
+
+@table @code
+@item auto
+実行可能ファイルに基づく自動選択(デフォルトの方式)
+@item gnu
+@sc{gnu} C++ コンパイラ (g++) で使われているもの
+@item lucid
+Lucid コンパイラ (lcc) で使われているもの
+@item arm
+C++ Annotated Reference Manual で規定されたもの
+@item hp
+HP コンパイラ (aCC) で使われるもの
+@item edg
+EDG のコンパイラで使われるもの
+@item gnu-v3
+@sc{gnu} C++ のコンパイラ (g++) が V3 ABI とともに使われるもの
+@item java
+@sc{gnu} Java コンパイラ (gcj) で使われるもの
+@item gnat
+@sc{gnu} Ada コンパイラ (GNAT) で使われるもの。
+@end table
+
+@item --help
+オプションの概要を @command{c++filt} に出力して終了します。
+
+@item --version
+@command{c++filt} のバージョンを表示して終了します。
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO cxxfilt
+@file{binutils} の Info エントリ.
+@c man end
+@end ignore
+
+@quotation
+@emph{警告:} @command{c++filt} は新しいユーティリティであり、そのユーザーインターフェイスの詳細は将来のリリースで変更される可能性があります。.  特に、コマンドラインで引数として渡された名前をデコードするために、コマンドラインオプションが将来必要になる可能性があります。
+
+@example
+c++filt @var{symbol}
+@end example
+
+@noindent
+将来のリリースにおいては。
+
+@example
+c++filt @var{option} @var{symbol}
+@end example
+@end quotation
+
+@node addr2line
+@chapter addr2line
+
+@kindex addr2line
+@cindex address to file name and line number
+
+@c man title addr2line アドレスまたはシンボル+オフセットをファイル名と行番号に変換
+
+@smallexample
+@c man begin SYNOPSIS addr2line
+addr2line [@option{-a}|@option{--addresses}]
+          [@option{-b} @var{bfdname}|@option{--target=}@var{bfdname}]
+          [@option{-C}|@option{--demangle}[=@var{style}]]
+          [@option{-r}|@option{--no-recurse-limit}]
+          [@option{-R}|@option{--recurse-limit}]
+          [@option{-e} @var{filename}|@option{--exe=}@var{filename}]
+          [@option{-f}|@option{--functions}] [@option{-s}|@option{--basename}]
+          [@option{-i}|@option{--inlines}]
+          [@option{-p}|@option{--pretty-print}]
+          [@option{-j}|@option{--section=}@var{name}]
+          [@option{-H}|@option{--help}] [@option{-V}|@option{--version}]
+          [addr addr @dots{}]
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION addr2line
+
+@command{addr2line} は、アドレスまたはシンボル+オフセットをファイル名と行番号に変換します。
+実行可能ファイル内のアドレスまたはシンボル+オフセット、または再配置可能オブジェクトのセクション内のオフセットを指定すると、デバッグ情報を使用して、どのファイル名と行番号が関連付けられているかを判断します。
+
+使用する実行可能ファイルまたは再配置可能オブジェクトは、@option{-e} オプションで指定します。デフォルトは@file{a.out} ファイルです。使用する再配置可能オブジェクトのセクションは、@option{-j} オプションで指定されます。
+
+@command{addr2line} には2つの操作モードがあります。
+
+最初のモードは、コマンドラインで16進数のアドレスまたはシンボル+オフセットが指定し、 @command{addr2line} は各アドレスのファイルの名前と行番号を表示します。
+
+2番目のモードは、 @command{addr2line} は標準入力から16進アドレスまたはシンボル+オフセットを読み取り、各アドレスのファイルの名前と行番号を標準出力に表示します。このモードでは、 @command{addr2line} は動的に選択されたアドレスを変換するパイプとして用いることができます。
+
+出力の形式は @samp{ファイル名:行番号} です。デフォルトでは、各入力アドレスごとに 1行出力を生成します。
+
+2つのオプションは、各 @samp{ファイル名:行番号} 行の前に追加の行を(この順序で)生成できます。
+
+@option{-a} オプションを使用すると、入力されたアドレスの行が表示されます。
+
+@option{-f} オプションを使用すると、@samp{FUNCTIONNAME} の行が表示されます。これは、アドレスを含む関数の名前です。
+
+このオプションでは、@samp{ファイル名:行番号} 行の後に追加の行を生成できます。
+
+@option{-i} オプションが使用され、コンパイラによるインライン化のために指定されたアドレスのコードがそこに存在する場合、追加の行が後で表示されます。インライン化された機能ごとに、1つまたは2つの追加行 (@option{-f} オプションが使用されている場合) が表示されます。
+
+あるいは、 @option{-p} オプションが使用される場合、各入力アドレスは、アドレス、関数名、ファイル名 および行番号を含む単一の長い出力行を生成します。@option{-i} オプションも使用されている場合、インライン化された関数は同じ方法で表示されますが、別々の行に表示され、先頭に@samp{(inlined by)}というテキストが付きます。
+
+ファイル名または機能名が特定できない場合、@command{addr2line} は代わりに2つの疑問符を印刷します。行番号が判別できない場合、@command{addr2line} は 0 を表示します。
+
+シンボル+オフセットを使用する場合、シンボルが 16進数であいまいな場合を除き、+オフセット はオプションです。解決されたシンボルは、エンコード状態(mangled) または デコード状態 (unmangled) にすることができます。ただし、エンコード状態(mangled) 以外のシンボルに + を使用することはできません。
+
+@c man end
+
+@c man begin OPTIONS addr2line
+
+ここで選択肢として示されているオプションの、長い形式と短い形式は同等です。
+
+@table @env
+@item -a
+@itemx --addresses
+関数名、ファイル、行番号情報の前にアドレスを表示します。アドレスは簡単に識別できるように@samp{0x} の接頭辞が付いて表示されます。
+
+@item -b @var{bfdname}
+@itemx --target=@var{bfdname}
+@cindex object code format
+オブジェクトファイルのオブジェクトコード形式が @var{bfdname} であることを指定します。
+
+@item -C
+@itemx --demangle[=@var{style}]
+@cindex demangling in objdump
+(@dfn{demangle})低レベルシンボル名をユーザレベルの名前にデコードします。
+これにより、システムによって先頭に追加されたアンダースコアが削除されるだけでなく、C++ 関数名が読みやすくなります。コンパイラが異なれば、操作スタイルも異なります。オプションの demangling style 引数を使用すると、コンパイラに適した デコード(demangling) スタイルを選択できます。xrefなので削る
+
+@item -e @var{filename}
+@itemx --exe=@var{filename}
+アドレスを変換したい実行ファイルの名前を指定します。デフォルトのファイルは @file{a.out} です。
+
+@item -f
+@itemx --functions
+ファイル名や行番号の情報と共に関数の名前も表示します。
+
+それぞれのファイル名のベースのみを表示します(訳注: ディレクトリを表示しません)。
+
+@item -i
+@itemx --inlines
+アドレスがインライン化された関数に属している場合、最初のインライン化されていない関数までのすべての包含スコープのソース情報も出力されます。たとえば、 @code{main} が @code{callee2} をインライン化する @code{callee1} をインライン化し、アドレスが @code{callee2} からの場合、 @code{callee1} と @code{main} のソース情報も表示されます。
+
+@item -j
+@itemx --section
+絶対アドレスではなく、指定されたセクションに相対的なオフセットを読み込みます。
+
+@item -p
+@itemx --pretty-print
+出力をより人間に優しいものにします。各位置が1行に印刷されます。
+@option{-i} オプションが指定された場合、すべての包含範囲の行に @samp{(inlined by)} という接頭辞が付きます。
+
+@item -r
+@itemx -R
+@itemx --recurse-limit
+@itemx --no-recurse-limit
+@itemx --recursion-limit
+@itemx --no-recursion-limit
+文字列の削除中に実行される再帰の量の制限を有効または無効にします。名前をエンコード (mangling) する形式は無限レベルの再帰を許すので、デコード操作がホストマシンで利用可能なスタック空間の量を使い果たし、メモリ障害を引き起こすような文字列を作成する可能性があります。この制限では、再帰を 2048レベルまでのネストに制限することで、これが発生しないようにしています。
+
+デフォルトでは、この制限は有効になっていますが、本当に複雑な名前をデコード (demangle) するには無効にする必要がある場合があります。ただし、再帰制限が無効になっている場合は、スタックが枯渇する可能性があり、そのようなイベントに関するバグレポートは拒否されることに注意してください。
+
+@option{-r} オプションは、@option{--no-recurse-limit} オプションの同義語です。@option{-R} オプションは、@option{--recurse-limit} オプションの同義語です。
+
+このオプションは、@option{-C} または @option{--demangle} オプションが有効になっている場合にのみ有効であることに注意してください。
+
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO addr2line
+@file{binutils 用の Info エントリ。
+@c man end
+@end ignore
+
+@node windmc
+@chapter windmc
+
+@command{windmc} may be used to generator Windows message resources.
+
+@quotation
+@emph{Warning:} @command{windmc} is not always built as part of the binary
+utilities, since it is only useful for Windows targets.
+@end quotation
+
+@c man title windmc generates Windows message resources
+
+@smallexample
+@c man begin SYNOPSIS windmc
+windmc [options] input-file
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION windmc
+
+@command{windmc} reads message definitions from an input file (.mc) and
+translate them into a set of output files.  The output files may be of
+four kinds:
+
+@table @code
+@item h
+A C header file containing the message definitions.
+
+@item rc
+A resource file compilable by the @command{windres} tool.
+
+@item bin
+One or more binary files containing the resource data for a specific
+message language.
+
+@item dbg
+A C include file that maps message id's to their symbolic name.
+@end table
+
+The exact description of these different formats is available in
+documentation from Microsoft.
+
+When @command{windmc} converts from the @code{mc} format to the @code{bin}
+format, @code{rc}, @code{h}, and optional @code{dbg} it is acting like the
+Windows Message Compiler.
+
+@c man end
+
+@c man begin OPTIONS windmc
+
+@table @env
+@item -a
+@itemx --ascii_in
+Specifies that the input file specified is ASCII. これがデフォルトの動作です。
+
+@item -A
+@itemx --ascii_out
+Specifies that messages in the output @code{bin} files should be in ASCII
+format.
+
+@item -b
+@itemx --binprefix
+Specifies that @code{bin} filenames should have to be prefixed by the
+basename of the source file.
+
+@item -c
+@itemx --customflag
+Sets the customer bit in all message id's.
+
+@item -C @var{codepage}
+@itemx --codepage_in @var{codepage}
+Sets the default codepage to be used to convert input file to UTF16. The
+default is ocdepage 1252.
+
+@item -d
+@itemx --decimal_values
+Outputs the constants in the header file in decimal. Default is using
+hexadecimal output.
+
+@item -e @var{ext}
+@itemx --extension @var{ext}
+The extension for the header file. The default is .h extension.
+
+@item -F @var{target}
+@itemx --target @var{target}
+Specify the BFD format to use for a bin file as output.  This
+is a BFD target name; you can use the @option{--help} option to see a list
+of supported targets.  Normally @command{windmc} will use the default
+format, which is the first one listed by the @option{--help} option.
+@ifclear man
+@ref{Target Selection}.
+@end ifclear
+
+@item -h @var{path}
+@itemx --headerdir @var{path}
+The target directory of the generated header file. The default is the
+current directory.
+
+@item -H
+@itemx --help
+Displays a list of command-line options and then exits.
+
+@item -m @var{characters}
+@itemx --maxlength @var{characters}
+Instructs @command{windmc} to generate a warning if the length
+of any message exceeds the number specified.
+
+@item -n
+@itemx --nullterminate
+Terminate message text in @code{bin} files by zero. By default they are
+terminated by CR/LF.
+
+@item -o
+@itemx --hresult_use
+Not yet implemented. Instructs @code{windmc} to generate an OLE2 header
+file, using HRESULT definitions. Status codes are used if the flag is not
+specified.
+
+@item -O @var{codepage}
+@itemx --codepage_out @var{codepage}
+Sets the default codepage to be used to output text files. The default
+is ocdepage 1252.
+
+@item -r @var{path}
+@itemx --rcdir @var{path}
+The target directory for the generated @code{rc} script and the generated
+@code{bin} files that the resource compiler script includes. The default
+is the current directory.
+
+@item -u
+@itemx --unicode_in
+Specifies that the input file is UTF16.
+
+@item -U
+@itemx --unicode_out
+Specifies that messages in the output @code{bin} file should be in UTF16
+format. これがデフォルトの動作です。
+
+@item -v
+@item --verbose
+Enable verbose mode.
+
+@item -V
+@item --version
+Prints the version number for @command{windmc}.
+
+@item -x @var{path}
+@itemx --xdgb @var{path}
+The path of the @code{dbg} C include file that maps message id's to the
+symbolic name. No such file is generated without specifying the switch.
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO windmc
+the Info entries for @file{binutils}.
+@c man end
+@end ignore
+
+@node windres
+@chapter windres
+
+@command{windres} may be used to manipulate Windows resources.
+
+@quotation
+@emph{Warning:} @command{windres} is not always built as part of the binary
+utilities, since it is only useful for Windows targets.
+@end quotation
+
+@c man title windres manipulate Windows resources
+
+@smallexample
+@c man begin SYNOPSIS windres
+windres [options] [input-file] [output-file]
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION windres
+
+@command{windres} reads resources from an input file and copies them into
+an output file.  Either file may be in one of three formats:
+
+@table @code
+@item rc
+A text format read by the Resource Compiler.
+
+@item res
+A binary format generated by the Resource Compiler.
+
+@item coff
+A COFF object or executable.
+@end table
+
+The exact description of these different formats is available in
+documentation from Microsoft.
+
+When @command{windres} converts from the @code{rc} format to the @code{res}
+format, it is acting like the Windows Resource Compiler.  When
+@command{windres} converts from the @code{res} format to the @code{coff}
+format, it is acting like the Windows @code{CVTRES} program.
+
+When @command{windres} generates an @code{rc} file, the output is similar
+but not identical to the format expected for the input.  When an input
+@code{rc} file refers to an external filename, an output @code{rc} file
+will instead include the file contents.
+
+If the input or output format is not specified, @command{windres} will
+guess based on the file name, or, for the input file, the file contents.
+A file with an extension of @file{.rc} will be treated as an @code{rc}
+file, a file with an extension of @file{.res} will be treated as a
+@code{res} file, and a file with an extension of @file{.o} or
+@file{.exe} will be treated as a @code{coff} file.
+
+If no output file is specified, @command{windres} will print the resources
+in @code{rc} format to standard output.
+
+The normal use is for you to write an @code{rc} file, use @command{windres}
+to convert it to a COFF object file, and then link the COFF file into
+your application.  This will make the resources described in the
+@code{rc} file available to Windows.
+
+@c man end
+
+@c man begin OPTIONS windres
+
+@table @env
+@item -i @var{filename}
+@itemx --input @var{filename}
+The name of the input file.  If this option is not used, then
+@command{windres} will use the first non-option argument as the input file
+name.  If there are no non-option arguments, then @command{windres} will
+read from standard input.  @command{windres} can not read a COFF file from
+standard input.
+
+@item -o @var{filename}
+@itemx --output @var{filename}
+The name of the output file.  If this option is not used, then
+@command{windres} will use the first non-option argument, after any used
+for the input file name, as the output file name.  If there is no
+non-option argument, then @command{windres} will write to standard output.
+@command{windres} can not write a COFF file to standard output.  Note,
+for compatibility with @command{rc} the option @option{-fo} is also
+accepted, but its use is not recommended.
+
+@item -J @var{format}
+@itemx --input-format @var{format}
+The input format to read.  @var{format} may be @samp{res}, @samp{rc}, or
+@samp{coff}.  If no input format is specified, @command{windres} will
+guess, as described above.
+
+@item -O @var{format}
+@itemx --output-format @var{format}
+The output format to generate.  @var{format} may be @samp{res},
+@samp{rc}, or @samp{coff}.  If no output format is specified,
+@command{windres} will guess, as described above.
+
+@item -F @var{target}
+@itemx --target @var{target}
+Specify the BFD format to use for a COFF file as input or output.  This
+is a BFD target name; you can use the @option{--help} option to see a list
+of supported targets.  Normally @command{windres} will use the default
+format, which is the first one listed by the @option{--help} option.
+@ifclear man
+@ref{Target Selection}.
+@end ifclear
+
+@item --preprocessor @var{program}
+When @command{windres} reads an @code{rc} file, it runs it through the C
+preprocessor first.  This option may be used to specify the preprocessor
+to use.  The default preprocessor is @code{gcc}.
+
+@item --preprocessor-arg @var{option}
+When @command{windres} reads an @code{rc} file, it runs it through
+the C preprocessor first.  This option may be used to specify additional
+text to be passed to preprocessor on its command line.
+This option can be used multiple times to add multiple options to the
+preprocessor command line.
+If the @option{--preprocessor} option has not been specified then a
+default set of preprocessor arguments will be used, with any
+@option{--preprocessor-arg} options being placed after them on the
+command line.  These default arguments are @code{-E},
+@code{-xc-header} and @code{-DRC_INVOKED}.
+
+@item -I @var{directory}
+@itemx --include-dir @var{directory}
+Specify an include directory to use when reading an @code{rc} file.
+@command{windres} will pass this to the preprocessor as an @option{-I}
+option.  @command{windres} will also search this directory when looking for
+files named in the @code{rc} file.  If the argument passed to this command
+matches any of the supported @var{formats} (as described in the @option{-J}
+option), it will issue a deprecation warning, and behave just like the
+@option{-J} option.  New programs should not use this behaviour.  If a
+directory happens to match a @var{format}, simple prefix it with @samp{./}
+to disable the backward compatibility.
+
+@item -D @var{target}
+@itemx --define @var{sym}[=@var{val}]
+Specify a @option{-D} option to pass to the preprocessor when reading an
+@code{rc} file.
+
+@item -U @var{target}
+@itemx --undefine @var{sym}
+Specify a @option{-U} option to pass to the preprocessor when reading an
+@code{rc} file.
+
+@item -r
+Ignored for compatibility with rc.
+
+@item -v
+Enable verbose mode.  This tells you what the preprocessor is if you
+didn't specify one.
+
+@item -c @var{val}
+@item --codepage @var{val}
+Specify the default codepage to use when reading an @code{rc} file.
+@var{val} should be a hexadecimal prefixed by @samp{0x} or decimal
+codepage code. The valid range is from zero up to 0xffff, but the
+validity of the codepage is host and configuration dependent.
+
+@item -l @var{val}
+@item --language @var{val}
+Specify the default language to use when reading an @code{rc} file.
+@var{val} should be a hexadecimal language code.  The low eight bits are
+the language, and the high eight bits are the sublanguage.
+
+@item --use-temp-file
+Use a temporary file to instead of using popen to read the output of
+the preprocessor. Use this option if the popen implementation is buggy
+on the host (eg., certain non-English language versions of Windows 95 and
+Windows 98 are known to have buggy popen where the output will instead
+go the console).
+
+@item --no-use-temp-file
+Use popen, not a temporary file, to read the output of the preprocessor.
+これがデフォルトの動作です。
+
+@item -h
+@item --help
+Prints a usage summary.
+
+@item -V
+@item --version
+Prints the version number for @command{windres}.
+
+@item --yydebug
+If @command{windres} is compiled with @code{YYDEBUG} defined as @code{1},
+this will turn on parser debugging.
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO windres
+the Info entries for @file{binutils}.
+@c man end
+@end ignore
+
+@node dlltool
+@chapter dlltool
+@cindex DLL
+@kindex dlltool
+
+@command{dlltool} は、Windows などの PE 形式のイメージファイルを認識するシステム上でダイナミックリンクライブラリ (DLL) を作成するために必要なファイルを作成するために使用されます。DLLには、参照元プログラムからの参照を解決するためにランタイムローダが必要とする情報を含むエクスポートテーブルが含まれます。
+
+エクスポートテーブルは、このプログラムが @file{.def} ファイルを読み込むか、DLLファイル中にある @file{.a} および @file{.o} をスキャンすることによって生成されます。@file{.o} ファイルには、特別な @samp{.drectve} セクションの情報とエクスポート情報を含めることができます。
+
+@quotation
+@emph{注意:} @command{dlltool}は、 DLL をサポートするターゲットに対してのみ有用であるため、必ずしもバイナリユーティリティの一部としてビルドされるとは限りません。
+@end quotation
+
+@c man title dlltool DLL の構築と使用に必要なファイルを作成
+
+@smallexample
+@c man begin SYNOPSIS dlltool
+dlltool [@option{-d}|@option{--input-def} @var{def-file-name}]
+        [@option{-b}|@option{--base-file} @var{base-file-name}]
+        [@option{-e}|@option{--output-exp} @var{exports-file-name}]
+        [@option{-z}|@option{--output-def} @var{def-file-name}]
+        [@option{-l}|@option{--output-lib} @var{library-file-name}]
+        [@option{-y}|@option{--output-delaylib} @var{library-file-name}]
+        q[@option{--export-all-symbols}] [@option{--no-export-all-symbols}]
+        [@option{--exclude-symbols} @var{list}]
+        [@option{--no-default-excludes}]
+        [@option{-S}|@option{--as} @var{path-to-assembler}] [@option{-f}|@option{--as-flags} @var{options}]
+        [@option{-D}|@option{--dllname} @var{name}] [@option{-m}|@option{--machine} @var{machine}]
+        [@option{-a}|@option{--add-indirect}]
+        [@option{-U}|@option{--add-underscore}] [@option{--add-stdcall-underscore}]
+        [@option{-k}|@option{--kill-at}] [@option{-A}|@option{--add-stdcall-alias}]
+        [@option{-p}|@option{--ext-prefix-alias} @var{prefix}]
+        [@option{-x}|@option{--no-idata4}] [@option{-c}|@option{--no-idata5}]
+        [@option{--use-nul-prefixed-import-tables}]
+        [@option{-I}|@option{--identify} @var{library-file-name}] [@option{--identify-strict}]
+        [@option{-i}|@option{--interwork}]
+        [@option{-n}|@option{--nodelete}] [@option{-t}|@option{--temp-prefix} @var{prefix}]
+        [@option{-v}|@option{--verbose}]
+        [@option{-h}|@option{--help}] [@option{-V}|@option{--version}]
+        [@option{--no-leading-underscore}] [@option{--leading-underscore}]
+        [@option{--deterministic-libraries}] [@option{--non-deterministic-libraries}]
+        [object-file @dots{}]
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION dlltool
+
+@command{dlltool} は、@option{-d} オプションと @option{-b} オプション、およびコマンドラインで指定されたオブジェクトファイルからの入力を読み取ります。次に、これらの入力を処理し、 @option{-e} オプションが指定されている場合は、エクスポートファイルを作成します。@option{-l} オプションが指定されている場合はライブラリファイルが作成され、 @option{-z} オプションが指定されている場合は定義ファイルが作成されます。1回の dlltool の呼び出しで、 @option{-e}、@option{-l} 、 @option{-z} のオプションのいずれかまたはすべてを指定できます。
+
+DLL を作成する場合、DLL のソースとともに、他に 3つのファイルが必要です。@command{dlltool} は、これらのファイルの作成を支援できます。
+
+最初のファイルは @file{.def} ファイルで、DLL からエクスポートされる関数、DLL がインポートする関数などを指定します。これはテキストファイルであり、手動で作成することも、 @command{dlltool} を使用して@option{-z} オプションを使用して作成することもできます。この場合、 @command{dlltool} はコマンドラインで指定されたオブジェクトファイルをスキャンして、エクスポートされるように特別にマークされた関数を探し、作成する @file{.def} ファイルにそれらのエントリを入力します。
+
+関数を DLL からエクスポートされるようにマークするには、オブジェクトファイルの @samp{.drectve} セクションに @option{-export:<name_of_function>} エントリが必要です。これは、 C で asm() オペレーターを使用して行うことができます。
+
+@smallexample
+  asm (".section .drectve");
+  asm (".ascii \"-export:my_func\"");
+
+  int my_func (void) @{ @dots{} @}
+@end smallexample
+
+DLL の作成に必要な 2番目のファイルは、エクスポートファイルです。このファイルは、 DLL の本体を構成するオブジェクトファイルとリンクされ、 DLL と外部との間のインターフェイスを処理します。これはバイナリファイルであり、 @file{.def} ファイルの作成時または読み取り時に、@command{dlltool} にオプション @option{-e} を指定することで作成できます。
+
+DLL の作成に必要な 3番目のファイルは、プログラムが DLL 内の関数にアクセスするためにリンクするライブラリファイル(「インポートライブラリ」)です。このファイルは、 @file{.def} ファイルを作成または読み取るときに、dlltoolに @option{-l} オプションを指定することで作成できます。
+
+@option{-y} オプションが指定されている場合、dlltool は、通常のインポートライブラリの代わりに使用できる遅延インポートライブラリを生成します。これにより、インポートされた機能が最初に呼び出されたときにのみ、プログラムが dll にリンクできるようになります。生成された実行ファイルは、 __delayLoadHelper2() を含むスタティックな delayimp ライブラリにリンクする必要があります。これにより、kernel32 から LoadLibraryA と GetProcAddress がインポートされます。
+
+@command{dlltool} はライブラリファイルを手動で構築しますが、exports ファイルは、アセンブラ文を含む一時ファイルを作成してからアセンブルすることで構築します。@option{-S} コマンドラインオプションを使用して、 dlltool が使用するアセンブラへのパスを指定できます。また、 @option{-f} オプションを使用して、特定のフラグをそのアセンブラに渡すことができます。@option{-n} を使用すると、 dlltool が完了したときにこれらの一時アセンブラファイルを削除しないようにすることができます。また、@option{-n} を2回指定すると、 dlltool がライブラリの構築に使用した一時オブジェクトファイルを削除しないようにすることができます。
+
+ソースファイル @samp{dll.c} から DLL を作成し、その @samp{program.o}) を使用するプログラムを( DLLというオブジェクトファイルから)作成する例を次に示します。
+
+@smallexample
+  gcc -c dll.c
+  dlltool -e exports.o -l dll.lib dll.o
+  gcc dll.o exports.o -o dll.dll
+  gcc program.o dll.lib -o program
+@end smallexample
+
+
+@command{dlltool} は、既存のインポートライブラリを照会して、それが関連付けられている DLL の名前を決定するためにも使用できます。@option{-I} または @option{--identify} オプションの説明を参照してください。
+
+@c man end
+
+@c man begin OPTIONS dlltool
+
+コマンドラインオプションには次の意味があります:
+
+@table @env
+
+@item -d @var{filename}
+@itemx --input-def @var{filename}
+@cindex input .def file
+読み込んで処理する @file{.def} ファイルの名前を指定します。
+
+@item -b @var{filename}
+@itemx --base-file @var{filename}
+@cindex base files
+読み込んで処理するベースファイルの名前を指定します。このファイルの内容は、 dlltool によって生成されたエクスポート・ファイルの再配置セクションに追加されます。
+
+@item -e @var{filename}
+@itemx --output-exp @var{filename}
+dlltool で作成するエクスポートファイルの名前を指定します。
+
+@item -z @var{filename}
+@itemx --output-def @var{filename}
+dlltool で作成する @file{.def} ファイルの名前を指定します。
+
+@item -l @var{filename}
+@itemx --output-lib @var{filename}
+dlltool で作成するライブラリファイルの名前を指定します。
+
+@item -y @var{filename}
+@itemx --output-delaylib @var{filename}
+dlltool で作成する遅延インポートライブラリファイルの名前を指定します。
+
+@item --deterministic-libraries
+@itemx --non-deterministic-libraries
+@option{--output-lib} または@option{--output-delaylib} のいずれかのオプションに応答して出力ライブラリーを作成するときには、すべてのタイムスタンプ、ユーザーID、およびグループIDにゼロの値を使用するか (@option{--deterministic-libraries}の場合) 、あるいは実際のタイムスタンプ、ユーザーID、およびグループID (@option{--non-deterministic-libraries}の場合)の値を使用します。
+
+@item --export-all-symbols
+入力オブジェクトファイルにあるグローバルシンボルと weak 定義シンボルをすべて、エクスポートするシンボルとして扱います。デフォルト時にはエクスポートされない小さなシンボルのリストがあります。@option{--no-default-excludes} オプションを参照してください。@option{--exclude-symbols} オプションを使用すると、エクスポートしないシンボルのリストに追加できます。
+
+@item --no-export-all-symbols
+入力された @file{.def} ファイルまたはオブジェクトファイルの@samp{.drectve} セクションに明示的にリストされているシンボルのみを書き出します。これがデフォルトの動作です。@samp{.drectve} セクションは、ソース・コードの @samp{dllexport} 属性によって作成されます。
+
+@item --exclude-symbols @var{list}
+シンボルを @var{list} にエクスポートしません。これはコンマまたはコロンで区切られたシンボル名のリストです。シンボル名の先頭にアンダースコアを付けることはできません。これは、 @option{--export-all-symbols} が使用されている場合にのみ意味があります。
+
+@item --no-default-excludes
+@option{--export-all-symbols} を使用すると、デフォルトで特定の特殊シンボルのエクスポートが回避されます。現在、エクスポートを避けるべきシンボルのリストは、 @samp{DllMain@@12}、@samp{DllEntryPoint@@0}、@samp{impure_ptr}です。@option{--no-default-excludes} オプションを使用して、これらの特殊シンボルをエクスポートすることもできます。これは、 @option{--export-all-symbols} が使用されている場合にのみ意味があります。
+
+@item -S @var{path}
+@itemx --as @var{path}
+エクスポートファイルの作成に使用するアセンブラのパス (ファイル名を含む) を指定します。
+
+@item -f @var{options}
+@itemx --as-flags @var{options}
+エクスポートファイルを構築する際にアセンブラに渡すコマンドラインオプションを指定します。このオプションは、 @option{-S} オプションが使用されていない場合でも機能します。このオプションに指定できる引数は 1つだけです。コマンドラインで引数が複数回指定された場合は、後から指定された引数が先に指定された引数を上書きします。したがって、アセンブラに複数のオプションを渡す必要がある場合は、それらを二重引用符で囲む必要があります。
+
+@item -D @var{name}
+@itemx --dll-name @var{name}
+@option{-e} オプションを使用するときに、DLLの名前として @file{.def} ファイルに格納される名前を指定します。このオプションが存在しない場合、 @option{-e} オプションに指定されたファイル名が DLL の名前として使用されます。
+
+@item -m @var{machine}
+@itemx -machine @var{machine}
+ライブラリファイルを構築するマシンのタイプを指定します。@command{dlltool} には、作成方法に応じてデフォルトのタイプが組み込まれていますが、このオプションを使用してそれを上書きできます。これは通常、ARM プロセッサ用の DLL を作成する場合、つまり DLL の内容が実際に Thumb 命令を使用してエンコードされる場合にのみ役立ちます。
+
+@item -a
+@itemx --add-indirect
+@command{dlltool} がエクスポートファイルを作成するときに、インポートライブラリを使用せずにエクスポートされた関数を参照できるセクションを追加する必要があることを指定します。それが何を意味するにせよ!
+
+@item -U
+@itemx --add-underscore
+@command{dlltool} がエクスポートファイルを作成するときに、 @emph{all} のエクスポートされたシンボルの名前の先頭にアンダースコアを付加する必要があることを指定します。
+
+@item --no-leading-underscore
+@item --leading-underscore
+標準シンボルを強制的に接頭表記するかどうかを指定します。
+
+@item --add-stdcall-underscore
+@command{dlltool} がエクスポートファイルを作成するときに、エクスポートされた@emph{stdcall} 関数の名前の先頭にアンダースコアを付ける必要があることを指定します。. 変数名と、非 stdcall な関数名は変更されません。
+このオプションは、MS-Windows ツールでビルドされたサードパーティ DLL 用の GNU 互換インポートライブラリを作成する場合に便利です。
+
+@item -k
+@itemx --kill-at
+DLL からインポートされる stdcall 関数の名前から @samp{@@<number>} サフィックスを省略するように指定します。これは、stdcall 関数をエクスポートする DLL のインポートライブラリを作成するときに便利ですが、通常の @samp{@@<number>} シンボル名の接尾辞は付きません。
+
+これにより、インポートライブラリがリンクしているプログラムによって提供されるシンボルの名前を変更することはなく、インポートテーブル内のエントリ(つまり、 .idata セクション)のみが変更されます。
+
+@item -A
+@itemx --add-stdcall-alias
+@command{dlltool} がエクスポートファイルを作成するときに、 @samp{@@ <number>} を持つシンボルに加えて、@samp{@@ <number>} を持たない stdcall シンボルのエイリアスを追加するように指定します。
+
+@item -p
+@itemx --ext-prefix-alias @var{prefix}
+@command{dlltool} に、指定した接頭辞を持つすべての DLL インポートの外部別名を作成させます。外部シンボルとインポートシンボルの両方に、先頭にアンダースコアのないエイリアスが作成されます。
+
+@item -x
+@itemx --no-idata4
+@command{dlltool} がエクスポートファイルとライブラリファイルを作成するときに、@code{.idata4} セクションを省略するように指定します。これは、特定のオペレーティングシステムとの互換性のためです。
+
+@item --use-nul-prefixed-import-tables
+@command{dlltool} がエクスポートファイルとライブラリファイルを作成するときに、@code{.idata4} と@code{.idata5} の前にゼロ要素を付ける必要があることを指定します。これは古い gnu import ライブラリ世代の @code{dlltool} をエミュレートします。既定では、このオプションはオフになっています。
+
+@item -c
+@itemx --no-idata5
+@command{dlltool} がエクスポートファイルとライブラリファイルを作成するときに、 @code{.idata5} セクションを省略するように指定します。これは、特定のオペレーティングシステムとの互換性のためです。
+
+@item -I @var{filename}
+@itemx --identify @var{filename}
+@command{dlltool} が @var{filename} から指示されたエクスポートライブラリを検査し、関連する DLL の名前を @code{stdout} に出力することを指定します。これは、他のオプションと引数で示される他の操作に加えて実行できます。
+インポートライブラリがが存在しないか、実際にはインポートライブラリでない場合、@command{dlltool} は失敗します。@option{--identify-strict} も参照してください。
+
+@item --identify-strict
+@option{--identify} オプションの動作を変更して、@var{filename} が複数の DLL に関連付けられている場合にエラーを報告するようにします。
+
+@item -i
+@itemx --interwork
+@command{dlltool} がライブラリファイル内のオブジェクトをマークし、 ARM と Thumb のコード間のインターワーキングをサポートするために生成するファイルをエクスポートするように指定します。
+
+@item -n
+@itemx --nodelete
+@command{dlltool} に、エクスポートファイルの作成に使用した一時的なアセンブラファイルを保存させます。このオプションを繰り返すと、 dlltool はライブラリファイルの作成に使用する一時オブジェクトファイルも保存します。
+
+@item -t @var{prefix}
+@itemx --temp-prefix @var{prefix}
+一時的なアセンブラファイルとオブジェクトファイルの名前を作成するときに、 @command{dlltool} が @var{prefix} を使用するようにします。デフォルトでは、一時ファイルの接頭辞は pid から生成されます。
+
+@item -v
+@itemx --verbose
+dlltool に何をしているのか表示させます。
+
+@item -h
+@itemx --help
+コマンドラインオプションの一覧を表示し終了します。
+
+@item -V
+@itemx --version
+dlltool のバージョン番号を表示し終了します。
+
+@end table
+
+@c man end
+
+@menu
+* def file format::             The format of the dlltool @file{.def} file
+@end menu
+
+@node def file format
+@section @command{dlltool}  @file{.def} ファイルの形式
+
+ @file{.def} ファイルには、次のコマンドが必要な数だけ含まれています:
+
+@table @asis
+
+@item @code{NAME} @var{name} @code{[ ,} @var{base} @code{]}
+The result is going to be named @var{name}@code{.exe}.
+
+@item @code{LIBRARY} @var{name} @code{[ ,} @var{base} @code{]}
+The result is going to be named @var{name}@code{.dll}.
+Note: If you want to use LIBRARY as name then you need to quote.  Otherwise
+this will fail due a necessary hack for libtool (see PR binutils/13710 for more
+details).
+
+@item @code{EXPORTS ( ( (} @var{name1} @code{[ = } @var{name2} @code{] ) | ( } @var{name1} @code{=} @var{module-name} @code{.} @var{external-name} @code{) ) [ == } @var{its_name} @code{]}
+@item @code{[} @var{integer} @code{] [ NONAME ] [ CONSTANT ] [ DATA ] [ PRIVATE ] ) *}
+Declares @var{name1} as an exported symbol from the DLL, with optional
+ordinal number @var{integer}, or declares @var{name1} as an alias
+(forward) of the function @var{external-name} in the DLL.
+If @var{its_name} is specified, this name is used as string in export table.
+@var{module-name}.
+Note: The @code{EXPORTS} has to be the last command in .def file, as keywords
+are treated - beside @code{LIBRARY} - as simple name-identifiers.
+If you want to use LIBRARY as name then you need to quote it.
+
+@item @code{IMPORTS ( (} @var{internal-name} @code{=} @var{module-name} @code{.} @var{integer} @code{) | [} @var{internal-name} @code{= ]} @var{module-name} @code{.} @var{external-name} @code{) [ == ) @var{its_name} @code{]} *}
+Declares that @var{external-name} or the exported function whose
+ordinal number is @var{integer} is to be imported from the file
+@var{module-name}.  If @var{internal-name} is specified then this is
+the name that the imported function will be referred to in the body of
+the DLL.
+If @var{its_name} is specified, this name is used as string in import table.
+Note: The @code{IMPORTS} has to be the last command in .def file, as keywords
+are treated - beside @code{LIBRARY} - as simple name-identifiers.
+If you want to use LIBRARY as name then you need to quote it.
+
+@item @code{DESCRIPTION} @var{string}
+Puts @var{string} into the output @file{.exp} file in the
+@code{.rdata} section.
+
+@item @code{STACKSIZE} @var{number-reserve} @code{[, } @var{number-commit} @code{]}
+@item @code{HEAPSIZE} @var{number-reserve} @code{[, } @var{number-commit} @code{]}
+Generates @code{--stack} or @code{--heap}
+@var{number-reserve},@var{number-commit} in the output @code{.drectve}
+section.  The linker will see this and act upon it.
+
+@item @code{CODE} @var{attr} @code{+}
+@item @code{DATA} @var{attr} @code{+}
+@item @code{SECTIONS (} @var{section-name} @var{attr}@code{ + ) *}
+Generates @code{--attr} @var{section-name} @var{attr} in the output
+@code{.drectve} section, where @var{attr} is one of @code{READ},
+@code{WRITE}, @code{EXECUTE} or @code{SHARED}.  The linker will see
+this and act upon it.
+
+@end table
+
+@ignore
+@c man begin SEEALSO dlltool
+@file{binutils} の Info ページ。
+@c man end
+@end ignore
+
+@node readelf
+@chapter readelf
+
+@cindex ELF file information
+@kindex readelf
+
+@c man title readelf ELF ファイルの情報を表示
+
+@smallexample
+@c man begin SYNOPSIS readelf
+readelf [@option{-a}|@option{--all}]
+        [@option{-h}|@option{--file-header}]
+        [@option{-l}|@option{--program-headers}|@option{--segments}]
+        [@option{-S}|@option{--section-headers}|@option{--sections}]
+        [@option{-g}|@option{--section-groups}]
+        [@option{-t}|@option{--section-details}]
+        [@option{-e}|@option{--headers}]
+        [@option{-s}|@option{--syms}|@option{--symbols}]
+        [@option{--dyn-syms}|@option{--lto-syms}]
+        [@option{--sym-base=[0|8|10|16]}]
+        [@option{--demangle@var{=style}}|@option{--no-demangle}]
+        [@option{--quiet}]
+        [@option{--recurse-limit}|@option{--no-recurse-limit}]
+        [@option{-U} @var{method}|@option{--unicode=}@var{method}]
+        [@option{-X}|@option{--extra-sym-info}|@option{--no-extra-sym-info}]
+        [@option{-n}|@option{--notes}]
+        [@option{-r}|@option{--relocs}]
+        [@option{-u}|@option{--unwind}]
+        [@option{-d}|@option{--dynamic}]
+        [@option{-V}|@option{--version-info}]
+        [@option{-A}|@option{--arch-specific}]
+        [@option{-D}|@option{--use-dynamic}]
+        [@option{-L}|@option{--lint}|@option{--enable-checks}]
+        [@option{-x} <number or name>|@option{--hex-dump=}<number or name>]
+        [@option{-p} <number or name>|@option{--string-dump=}<number or name>]
+        [@option{-R} <number or name>|@option{--relocated-dump=}<number or name>]
+        [@option{-j} <number or name>|@option{--display-section=}<number or name>]
+        [@option{-z}|@option{--decompress}]
+        [@option{-c}|@option{--archive-index}]
+        [@option{-w[lLiaprmfFsoORtUuTgAck]}|
+         @option{--debug-dump}[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames-interp,=str,=str-offsets,=loc,=Ranges,=pubtypes,=trace_info,=trace_abbrev,=trace_aranges,=gdb_index,=addr,=cu_index,=links]]
+        [@option{-wK}|@option{--debug-dump=follow-links}]
+        [@option{-wN}|@option{--debug-dump=no-follow-links}]
+        [@option{-wD}|@option{--debug-dump=use-debuginfod}]
+        [@option{-wE}|@option{--debug-dump=do-not-use-debuginfod}]
+        [@option{-P}|@option{--process-links}]
+        [@option{--dwarf-depth=@var{n}}]
+        [@option{--dwarf-start=@var{n}}]
+        [@option{--ctf=}@var{section}]
+        [@option{--ctf-parent=}@var{section}]
+        [@option{--ctf-symbols=}@var{section}]
+        [@option{--ctf-strings=}@var{section}]
+        [@option{--sframe=}@var{section}]
+        [@option{-I}|@option{--histogram}]
+        [@option{-v}|@option{--version}]
+        [@option{-W}|@option{--wide}]
+        [@option{-T}|@option{--silent-truncation}]
+        [@option{-H}|@option{--help}]
+        @var{elffile}@dots{}
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION readelf
+
+@command{readelf}　は、1つまたは複数の　ELF　形式のオブジェクトファイルに関する情報を表示します。オプションは、表示する特定の情報を制御します。
+
+@var{elffile}@dots{}　は検査されるオブジェクトファイルです。32ビット と64ビットの ELF ファイル、および ELF ファイルを含むアーカイブがサポートされています。
+
+このプログラムは@command{objdump}　と同様の機能を実行しますが、より詳細であり、 @sc{bfd} ライブラリとは独立して存在するため、 @sc{bfd} にバグがあっても readelf は影響を受けません。
+
+@c man end
+
+@c man begin OPTIONS readelf
+
+ここで選択肢として示されているオプションの、長い形式と短い形式は同等です。 @samp{-v} または @samp{-H} 以外に少なくとも 1つのオプションを指定する必要があります。
+
+@table @env
+@item -a
+@itemx --all
+@option{--file-header},
+@option{--program-headers}, @option{--sections}, @option{--symbols},
+@option{--relocs}, @option{--dynamic}, @option{--notes},
+@option{--version-info}, @option{--arch-specific}, @option{--unwind},
+@option{--section-groups} and @option{--histogram} を指定するのと同じです。
+
+注意 - このオプションは @option{--use-dynamic} 自体を有効にしません。そのため、このオプションがコマンドラインに存在しない場合、動的シンボルと動的再配置は表示されません。
+
+@item -h
+@itemx --file-header
+@cindex ELF file header information
+ファイルの先頭にある ELF ヘッダーに含まれる情報を表示します。
+
+@item -l
+@itemx --program-headers
+@itemx --segments
+@cindex ELF program header information
+@cindex ELF segment information
+ファイルのセグメントヘッダーに含まれる情報を表示します (セグメントヘッダーがある場合)。
+
+@item --quiet
+@cindex quiet
+"no symbols" 診断表示を省略します。
+
+@item -S
+@itemx --sections
+@itemx --section-headers
+@cindex ELF section information
+ファイルのセクションヘッダーに含まれる情報を表示します (セクションヘッダーがある場合)。
+
+@item -g
+@itemx --section-groups
+@cindex ELF section group information
+ファイルのセクショングループに含まれる情報を表示します (セクショングループがある場合)。
+
+セクションの詳細情報を表示します。@option{-S} を仮定します。
+
+@item -s
+@itemx --symbols
+@itemx --syms
+@cindex ELF symbol table information
+ファイルのシンボルテーブルセクションにエントリがある場合、そのエントリを表示します。
+シンボルにバージョン情報が関連付けられている場合は、その情報も表示されます。バージョン文字列はシンボル名の接尾辞として表示され、先頭に @@ 文字が付きます。例
+@samp{foo@@VER_1}.  バージョンが、シンボルへのバージョン化されていない参照を解決する際に使用されるデフォルトのバージョンである場合、 2つの @@ 文字の後に接尾辞として表示されます。例は次のようになります
+@samp{foo@@@@VER_2} 。
+
+@item --dyn-syms
+@cindex ELF dynamic symbol table information
+ファイルの動的シンボルテーブルセクションにエントリがある場合、そのエントリを表示します。出力の形式は、 @option{--syms} オプションで使用される形式と同じです。
+
+@item --lto-syms
+@cindex LTO symbol table
+ファイル内の LTO シンボルテーブルの内容が表示されます。
+
+@item --sym-base=[0|8|10|16]
+@cindex symbol table size base
+シンボルテーブルのサイズフィールドで、指定した基数が強制的に使用されます。認識できないオプションは @samp{0} として扱われます。@option{--sym-base=0} は、デフォルトおよび従来の動作を表します。これにより、 100000未満の数値のサイズが 10進数として出力されます。サイズについては、 100000以上の 16進数表記が 0x プレフィックスとともに使用されます。
+@option{--sym-base=8} は、シンボルのサイズを 8進数で表示します。
+@option{--sym-base=10} は、常にシンボルサイズを 10進数で表示します。
+@option{--sym-base=16} は、常に 0x の接頭辞を持つ 16進数のシンボルサイズを与えます。
+
+低レベルのシンボル名をユーザーレベルの名前にデコード(@dfn{demangle})します。
+これにより、C++ 関数名が読みやすくなります。コンパイラが異なれば、 mangle スタイルも異なります。オプションの demangling style 引数を使用して、コンパイラに適した demangling スタイルを選択できます。demangling の詳細については c++filt を参照してください。
+
+@item --no-demangle
+下位レベルのシンボル名をデコード (demangle) しません。これがデフォルトです。
+
+@item --recurse-limit
+@itemx --no-recurse-limit
+@itemx --recursion-limit
+@itemx --no-recursion-limit
+文字列のデコード (demangling) 中に実行される反復の量に対する制限を有効または無効にします。名前をエンコード (mangling) する形式は無限レベルの再帰を許すので、デコード操作がホストマシンで利用可能なスタック空間の量を使い果たし、メモリ障害を引き起こすような文字列を作成する可能性があります。この制限では、再帰を 2048レベルまでのネストに制限することで、これが発生しないようにしています。
+
+デフォルトでは、この制限は有効になっていますが、本当に複雑な名前をデコード (demangle) するには無効にする必要がある場合があります。ただし、再帰制限が無効になっている場合は、スタックが枯渇する可能性があり、そのようなイベントに関するバグレポートは拒否されることに注意してください。
+
+@item -U @var{[d|i|l|e|x|h]}
+@itemx --unicode=[default|invalid|locale|escape|hex|highlight]
+識別子名の非 ASCII 文字の表示を制御します。
+デフォルト (@option{--unicode=locale} または @option{--unicode=default}) では、マルチバイト文字として扱われ、現在のロケールで表示されます。このオプションの他のすべてのバージョンは、バイトを UTF-8 エンコード値として扱い、それらを解釈しようとします。解釈できない場合、または @option{--unicode=invalid} オプションが使用されている場合は、 16進数バイトのシーケンスとして表示され、折り畳まれた置換文字で囲まれます。
+
+@option{--unicode=escape} オプションを使用すると、文字は Unicode エスケープ・シーケンス (@var{\uxxxx}) として表示されます。@option{--unicode=hex} を使用すると、山括弧で囲まれた 16進バイト列として文字が表示されます。
+
+@option{--unicode=highlight} を使用すると、文字は unicode のエスケープシーケンスとして表示されますが、出力デバイスで色付けがサポートされている場合は、赤で強調表示されます。色分けは、 unicode シーケンスの存在が予期されない場合に注意を引くことを目的としています。
+
+@item -X
+@itemx --extra-sym-info
+シンボルの詳細を表示する場合は、通常は表示されない追加情報を含めます。現在は、シンボルのインデックスフィールドで参照されるセクションの名前を追加するだけです (存在する場合)。今後、このオプションを有効にすると、より多くの情報が表示される可能性があります。
+
+このオプションを有効にすると、少なくともシンボル情報を表示する場合には、 @option{--wide} オプションも有効になります。
+
+@item --no-extra-sym-info
+@option{--extra-sym-info} オプションの効果を無効にします。これはデフォルトです。
+
+@item -e
+@itemx --headers
+ファイル中のすべてのヘッダを表示します。@option{-h -l -S} と同じです。
+
+@item -n
+@itemx --notes
+@cindex ELF notes
+NOTE セグメントやセクションの内容を表示します (存在する場合)。
+
+@item -r
+@itemx --relocs
+@cindex ELF reloc information
+ファイルの再配置セクションがあれば、その内容が表示されます。
+
+@item -u
+@itemx --unwind
+@cindex unwind information
+ファイルの巻き戻しセクションがある場合は、その内容を表示します。現在サポートされているのは、 IA64 ELF ファイルの巻き戻しセクションと ARM 巻き戻しテーブル (@code{.ARM.exidx} / @code{.ARM.extab}) のみです。お使いのアーキテクチャでまだサポートされていない場合は、 @option{--debug-dump=frames} または @option{--debug-dump=frames-interp} オプションを使用して、 @var{.eh_frames} セクションの内容をダンプしてみてください。
+
+@item -d
+@itemx --dynamic
+@cindex ELF dynamic section information
+ファイルの動的セクションがある場合は、その内容を表示します。
+
+@item -V
+@itemx --version-info
+@cindex ELF version sections information
+ファイルの動的セクションがある場合は、その内容を表示します。
+
+@item -A
+@itemx --arch-specific
+ファイルの動的セクションがある場合は、その内容を表示します。
+
+@item -D
+@itemx --use-dynamic
+シンボルを表示する場合、このオプションを使用すると、 @command{readelf} はシンボルテーブルセクションではなく、ファイルの動的セクションのシンボルハッシュテーブルを使用します。
+
+このオプションを指定すると、 @command{readelf} は静的再配置ではなく動的再配置を表示します。
+
+@item -L
+@itemx --lint
+@itemx --enable-checks
+調査中のファイルで発生する可能性がある問題についての警告メッセージを表示します。単独で使用すると、ファイルのすべての内容が検査されます。いずれかのダンプオプションと一緒に使用すると、警告メッセージは表示されているものに対してのみ生成されます。
+
+@item -x <number or name>
+@itemx --hex-dump=<number or name>
+指定されたセクションの内容を 16進数バイトで表示します。
+番号は、セクションテーブル内のインデックスによって特定のセクションを識別します。その他の文字列は、オブジェクトファイル内のその名前を持つすべてのセクションを識別します。
+このオプションは、複数の 16進数ダンプを要求するために、コマンドラインで複数回繰り返すことができます。
+
+@item -R <number or name>
+@itemx --relocated-dump=<number or name>
+指定されたセクションの内容を 16進数バイトで表示します。番号は、セクションテーブル内のインデックスによって特定のセクションを識別します。その他の文字列は、オブジェクトファイル内のその名前を持つすべてのセクションを識別します。セクションの内容は、表示される前に再配置されます。
+このオプションは、複数の再配置ダンプを要求するために、コマンド・ラインで複数回繰り返すことができます。
+
+@item -p <number or name>
+@itemx --string-dump=<number or name>
+指定されたセクションの内容を印刷可能な文字列として表示します。
+番号は、セクションテーブル内のインデックスによって特定のセクションを識別します。その他の文字列は、オブジェクトファイル内のその名前を持つすべてのセクションを識別します。
+このオプションは、複数の文字列ダンプを要求するために、コマンドラインで複数回繰り返すことができます。
+
+@item -j <number or name>
+@itemx --display-section
+セクションヘッダーのタイプに従って、指定されたセクションの内容を表示します。再配置を含むセクションは @option{--relocations} オプションが使用されたかのように表示され、シンボルを含むセクションは @option{--syms} オプションが使用されたかのように表示されます。
+
+セクションテーブル内のインデックスによって、番号が特定のセクションを識別します。その他の文字列は、入力ファイル内のその名前を持つすべてのセクションを識別します。
+
+このオプションは、複数のセクションのダンプを要求するために、コマンドラインで複数回繰り返すことができます。
+
+@item -z
+@itemx --decompress
+@option{x}、@option{R}、または @option{p} のオプションによってダンプされるセクションを表示する前に解凍するように要求します。セクションが圧縮されていない場合は、そのまま表示されます。
+
+@item -c
+@itemx --archive-index
+@cindex Archive file symbol index information
+バイナリアーカイブのヘッダ部分に含まれるファイルシンボルインデックス情報を表示します。@command{ar} に対する @option{t} コマンドと同じ機能を実行しますが、 BFD ライブラリを使用しません。xrefなので削る
+
+@item -w[lLiaprmfFsOoRtUuTgAckK]
+@itemx --debug-dump[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames-interp,=str,=str-offsets,=loc,=Ranges,=pubtypes,=trace_info,=trace_abbrev,=trace_aranges,=gdb_index,=addr,=cu_index,=links,=follow-links]
+@include debug.options.texi
+
+@item -P
+@itemx --process-links
+メインファイルにリンクされている個別の debuginfo ファイルにあるデバッグ以外のセクションの内容を表示します。このオプションは自動的に @option{-wK} オプションを意味し、他のコマンドラインオプションによって要求されたセクションのみが表示されます。
+
+@include ctf.options.texi
+@item --ctf-symbols=@var{section}
+@item --ctf-strings=@var{section}
+CTF ファイルが文字列とシンボルを継承できる別のセクションの名前を指定します。既定では、 @code{.symtab} とそれにリンクされた文字列テーブルが使用されます。
+
+@option{--ctf-symbols} または @option{--ctf-strings} のいずれかを指定する場合は、もう一方も指定する必要があります。
+
+@item -I
+@itemx --histogram
+シンボルテーブルの内容を表示するときに、バケットリストの長さのヒストグラムを表示します。
+
+@item -v
+@itemx --version
+readelf のバージョン番号を表示します。
+
+@item -W
+@itemx --wide
+80 カラムに収まるように出力行を分割しません。デフォルトで @command{readelf} は、 64ビット ELF ファイルのセクションヘッダとセグメントリスト行を、 80カラムに収まるように分割します。このオプションを指定すると @command{readelf} は各セクションヘッダと各セグメントをそれぞれ 1行に表示します。これは 80カラムよりも幅の広い端末ではずっと読みやすくなります。
+
+@item -T
+@itemx --silent-truncation
+通常、readelf がシンボル名を表示していて、 80桁の表示に収まるように名前を切り詰める必要がある場合、 @code{[.]} のサフィックスが名前に追加されます。このコマンドラインオプションはこの動作を無効にし、さらに 5文字の名前を表示できるようにし、 readelf の以前の動作 (リリース2.35より前) を復元します。
+
+@item -H
+@itemx --help
+@command{readelf} が解釈できるコマンドラインオプションを表示します。
+
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO readelf
+objdump(1) と @file{binutils} の Info エントリ。
+@c man end
+@end ignore
+
+@node elfedit
+@chapter elfedit
+
+@cindex Update ELF header
+@kindex elfedit
+
+@c man title elfedit ELFヘッダーとELFファイルのプログラムプロパティーの更新
+
+@smallexample
+@c man begin SYNOPSIS elfedit
+elfedit [@option{--input-mach=}@var{machine}]
+        [@option{--input-type=}@var{type}]
+        [@option{--input-osabi=}@var{osabi}]
+        [@option{--input-abiversion=}@var{version}]
+        @option{--output-mach=}@var{machine}
+        @option{--output-type=}@var{type}
+        @option{--output-osabi=}@var{osabi}
+        @option{--output-abiversion=}@var{version}
+        @option{--enable-x86-feature=}@var{feature}
+        @option{--disable-x86-feature=}@var{feature}
+        [@option{-v}|@option{--version}]
+        [@option{-h}|@option{--help}]
+        @var{elffile}@dots{}
+@c man end
+@end smallexample
+
+@c man begin DESCRIPTION elfedit
+
+@command{elfedit} は、ELF マシンとファイル・タイプが一致する ELF ファイルの ELF ヘッダーとプログラム・プロパティを更新します。このオプションは、ELF ヘッダーおよびプログラムプロパティーのフィールドの更新方法と更新対象を制御します。
+
+@var{elffile}@dots{} は更新される ELF ファイルです。32ビット と64ビットの ELF ファイル、および ELF ファイルを含むアーカイブがサポートされています。
+@c man end
+
+@c man begin OPTIONS elfedit
+
+ここで選択肢として示されているオプションの、長い形式と短い形式は同等です。少なくとも @option{--output-mach},
+@option{--output-type}, @option{--output-osabi},
+@option{--output-abiversion},
+@option{--enable-x86-feature} と @option{--disable-x86-feature}
+オプションの 1つは指定しなければなりません。
+
+@table @env
+
+@item --input-mach=@var{machine}
+一致する入力 ELF マシン・タイプを @var{machine} に設定します。@option{--input-mach} が指定されていない場合、任意の ELF マシンタイプにマッチします。
+
+サポートされている ELF マシンタイプは @var{i386}, @var{IAMCU}, @var{L1OM},
+@var{K1OM} と @var{x86-64} です。
+
+@item --output-mach=@var{machine}
+ELF ヘッダーの ELF マシン・タイプを @var{machine} に変更します。サポートされている ELF マシンタイプは @option{--input-mach} と同じです。
+
+@item --input-type=@var{type}
+一致する入力 ELF ファイル・タイプを @var{type} に設定します。@option{--input-type} が指定されていない場合は、任意の ELF ファイルタイプと一致します。
+
+サポートされている ELF ファイルタイプは @var{rel}, @var{exec} と @var{dyn} です。
+
+@item --output-type=@var{type}
+ELF ヘッダーの ELF ファイル・タイプを @var{type} に変更します。サポートされている ELF タイプは @option{--input-type} と同じです。
+
+@item --input-osabi=@var{osabi}
+一致する入 力 ELF ファイル OSABI を @var{osabi} に設定します。 @option{--input-osabi} が指定されていない場合は、あらゆる ELF OSABI  にマッチします。
+
+サポートされている ELF OSABIs は @var{none}, @var{HPUX}, @var{NetBSD},
+@var{GNU}, @var{Linux} (alias for @var{GNU}),
+@var{Solaris}, @var{AIX}, @var{Irix},
+@var{FreeBSD}, @var{TRU64}, @var{Modesto}, @var{OpenBSD}, @var{OpenVMS},
+@var{NSK}, @var{AROS} と @var{FenixOS} です。
+
+@item --output-osabi=@var{osabi}
+ELF ヘッダーの ELF OSABI を @var{osabi} に変更します。サポートされている ELF OSABI は @option{--input-osabi} と同じです。
+
+@item --input-abiversion=@var{version}
+一致する入力 ELF ファイル ABIVERSION を @var{version} に設定します。
+@var{version} は 0から 255の間でなければなりません。@option{--input-abiversion} を指定しない場合は、すべての ELF ABIVERSION に一致します。
+
+@item --output-abiversion=@var{version}
+ELF ヘッダーの ELF ABIVERSION を @var{version} に変更します。
+@var{version} は 0から 255の間でなければなりません。
+
+@item --enable-x86-feature=@var{feature}
+マシンタイプが @var{i386} または @var{x86-64} の @var{exec} または @var{dyn}ELF ファイルのプログラムプロパティで @var{feature} ビットを設定します。サポートされている機能は  @var{ibt}, @var{shstk}, @var{lam_u48} と
+@var{lam_u57} です。
+
+@item --disable-x86-feature=@var{feature}
+マシンタイプが @var{i386} または @var{x86-64} の @var{exec} または @var{dyn}ELF ファイルのプログラムプロパティの @var{feature} ビットをクリアします。
+サポートされる機能は、 @option{--enable-x86-feature} と同じです。
+
+注意: @option{--enable-x86-feature} および @option{--disable-x86-feature} は、 @samp{mmap} がサポートされているホストでのみ使用できます。
+
+@item -v
+@itemx --version
+@command{elfedit} のバージョン番号を表示します。
+
+@item -h
+@itemx --help
+@command{elfedit} で解釈されるコマンドラインオプションを表示します。
+
+@end table
+
+@c man end
+
+@ignore
+@c man begin SEEALSO elfedit
+readelf(1) と@file{binutils} の Infoエントリ。
+@c man end
+@end ignore
+
+@node Common Options
+@chapter Common Options
+
+The following command-line options are supported by all of the
+programs described in this manual.
+
+@c man begin OPTIONS
+@table @env
+@include at-file.texi
+@c man end
+
+@item --help
+Display the command-line options supported by the program.
+
+@item --version
+Display the version number of the program.
+
+@c man begin OPTIONS
+@end table
+@c man end
+
+@node Selecting the Target System
+@chapter Selecting the Target System
+
+You can specify two aspects of the target system to the @sc{gnu}
+binary file utilities, each in several ways:
+
+@itemize @bullet
+@item
+the target
+
+@item
+the architecture
+@end itemize
+
+In the following summaries, the lists of ways to specify values are in
+order of decreasing precedence.  The ways listed first override those
+listed later.
+
+The commands to list valid values only list the values for which the
+programs you are running were configured.  If they were configured with
+@option{--enable-targets=all}, the commands list most of the available
+values, but a few are left out; not all targets can be configured in at
+once because some of them can only be configured @dfn{native} (on hosts
+with the same type as the target system).
+
+@menu
+* Target Selection::
+* Architecture Selection::
+@end menu
+
+@node Target Selection
+@section Target Selection
+
+A @dfn{target} is an object file format.  A given target may be
+supported for multiple architectures (@pxref{Architecture Selection}).
+A target selection may also have variations for different operating
+systems or architectures.
+
+The command to list valid target values is @samp{objdump -i}
+(the first column of output contains the relevant information).
+
+Some sample values are: @samp{a.out-hp300bsd}, @samp{ecoff-littlemips},
+@samp{a.out-sunos-big}.
+
+You can also specify a target using a configuration triplet.  This is
+the same sort of name that is passed to @file{configure} to specify a
+target.  When you use a configuration triplet as an argument, it must be
+fully canonicalized.  You can see the canonical version of a triplet by
+running the shell script @file{config.sub} which is included with the
+sources.
+
+Some sample configuration triplets are: @samp{m68k-hp-bsd},
+@samp{mips-dec-ultrix}, @samp{sparc-sun-sunos}.
+
+@subheading @command{objdump} Target
+
+Ways to specify:
+
+@enumerate
+@item
+command-line option: @option{-b} or @option{--target}
+
+@item
+environment variable @code{GNUTARGET}
+
+@item
+deduced from the input file
+@end enumerate
+
+@subheading @command{objcopy} and @command{strip} Input Target
+
+Ways to specify:
+
+@enumerate
+@item
+command-line options: @option{-I} or @option{--input-target}, or @option{-F} or @option{--target}
+
+@item
+environment variable @code{GNUTARGET}
+
+@item
+deduced from the input file
+@end enumerate
+
+@subheading @command{objcopy} and @command{strip} Output Target
+
+Ways to specify:
+
+@enumerate
+@item
+command-line options: @option{-O} or @option{--output-target}, or @option{-F} or @option{--target}
+
+@item
+the input target (see ``@command{objcopy} and @command{strip} Input Target'' above)
+
+@item
+environment variable @code{GNUTARGET}
+
+@item
+deduced from the input file
+@end enumerate
+
+@subheading @command{nm}, @command{size}, and @command{strings} Target
+
+Ways to specify:
+
+@enumerate
+@item
+command-line option: @option{--target}
+
+@item
+environment variable @code{GNUTARGET}
+
+@item
+deduced from the input file
+@end enumerate
+
+@node Architecture Selection
+@section Architecture Selection
+
+An @dfn{architecture} is a type of @sc{cpu} on which an object file is
+to run.  Its name may contain a colon, separating the name of the
+processor family from the name of the particular @sc{cpu}.
+
+The command to list valid architecture values is @samp{objdump -i} (the
+second column contains the relevant information).
+
+Sample values: @samp{m68k:68020}, @samp{mips:3000}, @samp{sparc}.
+
+@subheading @command{objdump} Architecture
+
+Ways to specify:
+
+@enumerate
+@item
+command-line option: @option{-m} or @option{--architecture}
+
+@item
+deduced from the input file
+@end enumerate
+
+@subheading @command{objcopy}, @command{nm}, @command{size}, @command{strings} Architecture
+
+Ways to specify:
+
+@enumerate
+@item
+deduced from the input file
+@end enumerate
+
+@node debuginfod
+@chapter debuginfod
+@cindex separate debug files
+
+debuginfod is a web service that indexes ELF/DWARF debugging resources
+by build-id and serves them over HTTP.  For more information see:
+@emph{https://sourceware.org/elfutils/Debuginfod.html}
+
+Binutils can be built with the debuginfod client library
+@code{libdebuginfod} using the @option{--with-debuginfod} configure option.
+This option is enabled by default if @code{libdebuginfod} is installed
+and found at configure time. This allows @command{objdump} and
+@command{readelf} to automatically query debuginfod servers for
+separate debug files when the files are otherwise not found.
+
+debuginfod is packaged with elfutils, starting with version 0.178.
+You can get the latest version from `https://sourceware.org/elfutils/'.
+
+The DWARF info dumping tools (@command{readelf} and @command{objdump})
+have options to control when they should access the debuginfod
+servers.  By default this access is enabled.
+
+@node Reporting Bugs
+@chapter Reporting Bugs
+@cindex bugs
+@cindex reporting bugs
+
+Your bug reports play an essential role in making the binary utilities
+reliable.
+
+Reporting a bug may help you by bringing a solution to your problem, or
+it may not.  But in any case the principal function of a bug report is
+to help the entire community by making the next version of the binary
+utilities work better.  Bug reports are your contribution to their
+maintenance.
+
+In order for a bug report to serve its purpose, you must include the
+information that enables us to fix the bug.
+
+@menu
+* Bug Criteria::                Have you found a bug?
+* Bug Reporting::               How to report bugs
+@end menu
+
+@node Bug Criteria
+@section Have You Found a Bug?
+@cindex bug criteria
+
+If you are not sure whether you have found a bug, here are some guidelines:
+
+@itemize @bullet
+@cindex fatal signal
+@cindex crash
+@item
+If a binary utility gets a fatal signal, for any input whatever, that is
+a bug.  Reliable utilities never crash.
+
+@cindex error on valid input
+@item
+If a binary utility produces an error message for valid input, that is a
+bug.
+
+@item
+If you are an experienced user of binary utilities, your suggestions for
+improvement are welcome in any case.
+@end itemize
+
+@node Bug Reporting
+@section How to Report Bugs
+@cindex bug reports
+@cindex bugs, reporting
+
+A number of companies and individuals offer support for @sc{gnu}
+products.  If you obtained the binary utilities from a support
+organization, we recommend you contact that organization first.
+
+You can find contact information for many support companies and
+individuals in the file @file{etc/SERVICE} in the @sc{gnu} Emacs
+distribution.
+
+@ifset BUGURL
+In any event, we also recommend that you send bug reports for the binary
+utilities to @value{BUGURL}.
+@end ifset
+
+The fundamental principle of reporting bugs usefully is this:
+@strong{report all the facts}.  If you are not sure whether to state a
+fact or leave it out, state it!
+
+Often people omit facts because they think they know what causes the
+problem and assume that some details do not matter.  Thus, you might
+assume that the name of a file you use in an example does not matter.
+Well, probably it does not, but one cannot be sure.  Perhaps the bug is
+a stray memory reference which happens to fetch from the location where
+that pathname is stored in memory; perhaps, if the pathname were
+different, the contents of that location would fool the utility into
+doing the right thing despite the bug.  Play it safe and give a
+specific, complete example.  That is the easiest thing for you to do,
+and the most helpful.
+
+Keep in mind that the purpose of a bug report is to enable us to fix the bug if
+it is new to us.  Therefore, always write your bug reports on the assumption
+that the bug has not been reported previously.
+
+Sometimes people give a few sketchy facts and ask, ``Does this ring a
+bell?''  This cannot help us fix a bug, so it is basically useless.  We
+respond by asking for enough details to enable us to investigate.
+You might as well expedite matters by sending them to begin with.
+
+To enable us to fix the bug, you should include all these things:
+
+@itemize @bullet
+@item
+The version of the utility.  Each utility announces it if you start it
+with the @option{--version} argument.
+
+Without this, we will not know whether there is any point in looking for
+the bug in the current version of the binary utilities.
+
+@item
+Any patches you may have applied to the source, including any patches
+made to the @code{BFD} library.
+
+@item
+The type of machine you are using, and the operating system name and
+version number.
+
+@item
+What compiler (and its version) was used to compile the utilities---e.g.
+``@code{gcc-2.7}''.
+
+@item
+The command arguments you gave the utility to observe the bug.  To
+guarantee you will not omit something important, list them all.  A copy
+of the Makefile (or the output from make) is sufficient.
+
+If we were to try to guess the arguments, we would probably guess wrong
+and then we might not encounter the bug.
+
+@item
+A complete input file, or set of input files, that will reproduce the
+bug.  If the utility is reading an object file or files, then it is
+generally most helpful to send the actual object files.
+
+If the source files were produced exclusively using @sc{gnu} programs
+(e.g., @command{gcc}, @command{gas}, and/or the @sc{gnu} @command{ld}), then it
+may be OK to send the source files rather than the object files.  In
+this case, be sure to say exactly what version of @command{gcc}, or
+whatever, was used to produce the object files.  Also say how
+@command{gcc}, or whatever, was configured.
+
+@item
+A description of what behavior you observe that you believe is
+incorrect.  For example, ``It gets a fatal signal.''
+
+Of course, if the bug is that the utility gets a fatal signal, then we
+will certainly notice it.  But if the bug is incorrect output, we might
+not notice unless it is glaringly wrong.  You might as well not give us
+a chance to make a mistake.
+
+Even if the problem you experience is a fatal signal, you should still
+say so explicitly.  Suppose something strange is going on, such as your
+copy of the utility is out of sync, or you have encountered a bug in
+the C library on your system.  (This has happened!)  Your copy might
+crash and ours would not.  If you told us to expect a crash, then when
+ours fails to crash, we would know that the bug was not happening for
+us.  If you had not told us to expect a crash, then we would not be able
+to draw any conclusion from our observations.
+
+@item
+If you wish to suggest changes to the source, send us context diffs, as
+generated by @command{diff} with the @option{-u}, @option{-c}, or @option{-p}
+option.  Always send diffs from the old file to the new file.  If you
+wish to discuss something in the @command{ld} source, refer to it by
+context, not by line number.
+
+The line numbers in our development sources will not match those in your
+sources.  Your line numbers would convey no useful information to us.
+@end itemize
+
+Here are some things that are not necessary:
+
+@itemize @bullet
+@item
+A description of the envelope of the bug.
+
+Often people who encounter a bug spend a lot of time investigating
+which changes to the input file will make the bug go away and which
+changes will not affect it.
+
+This is often time consuming and not very useful, because the way we
+will find the bug is by running a single example under the debugger
+with breakpoints, not by pure deduction from a series of examples.
+We recommend that you save your time for something else.
+
+Of course, if you can find a simpler example to report @emph{instead}
+of the original one, that is a convenience for us.  Errors in the
+output will be easier to spot, running under the debugger will take
+less time, and so on.
+
+However, simplification is not vital; if you do not want to do this,
+report the bug anyway and send us the entire test case you used.
+
+@item
+A patch for the bug.
+
+A patch for the bug does help us if it is a good one.  But do not omit
+the necessary information, such as the test case, on the assumption that
+a patch is all we need.  We might see problems with your patch and decide
+to fix the problem another way, or we might not understand it at all.
+
+Sometimes with programs as complicated as the binary utilities it is
+very hard to construct an example that will make the program follow a
+certain path through the code.  If you do not send us the example, we
+will not be able to construct one, so we will not be able to verify that
+the bug is fixed.
+
+And if we cannot understand what bug you are trying to fix, or why your
+patch should be an improvement, we will not install it.  A test case will
+help us to understand.
+
+@item
+A guess about what the bug is or what it depends on.
+
+Such guesses are usually wrong.  Even we cannot guess right about such
+things without first using the debugger to find the facts.
+@end itemize
+
+@node GNU Free Documentation License
+@appendix GNU Free Documentation License
+
+@include fdl.texi
+
+@node Binutils Index
+@unnumbered Binutils Index
+
+@printindex cp
+
+@bye
