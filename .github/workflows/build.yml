@@ -1,0 +1,38 @@
+name: build html
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "13 0 * * *"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        path: web
+        ref: build
+    - uses: actions/checkout@v5
+      with:
+        repository: linux-jm/manual
+        path: manual
+    - name: initialize
+      run: |
+        sudo apt-get install nkf
+    - name: man2html
+      run: |
+        gh release download -R linux-jm/man-1.6g-mod latest
+        chmod a+x man2html
+      env:
+        GH_TOKEN: ${{ github.token }}
+    - name: build
+      run: |
+        cd manual
+        make JMHOME=`pwd`/../web MAN2HTML=../man2html
+        cd ../web
+        git add -A
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git commit -m "update manual" || echo "no changes"
+        git push origin build
+      env:
+        GH_TOKEN: ${{ github.token }}
