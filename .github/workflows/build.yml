@@ -1,4 +1,4 @@
-name: build html
+name: build html and publish
 on:
   workflow_dispatch:
   schedule:
@@ -10,7 +10,6 @@ jobs:
     - uses: actions/checkout@v5
       with:
         path: web
-        ref: build
     - uses: actions/checkout@v5
       with:
         repository: linux-jm/manual
@@ -30,9 +29,23 @@ jobs:
         make JMHOME=`pwd`/../web MAN2HTML=../man2html
         cd ../web
         git add -A
+        if git diff --cached --quiet; then
+          echo "No changes."
+          exit 0
+        fi
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git commit -m "update manual" || echo "no changes"
+        git commit -m "update manual"
         git push origin build
       env:
         GH_TOKEN: ${{ github.token }}
+    - name: setup key
+      run: |
+        mkdir -p ~/.ssh && chmod 700 ~/.ssh
+        echo "$SSH_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+      env:
+        SSH_KEY: ${{ secrets.RSYNC_KEY }}
+    - name: rsync
+      working-directory: web
+      run: |
+         rsync -avPzc --delete --exclude=.git --exclude=.github -e 'ssh -o "StrictHostKeyChecking=no"' . jmb@web.sourceforge.net:/home/project-web/linuxjm/htdocs/
