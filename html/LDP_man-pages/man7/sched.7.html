@@ -48,6 +48,7 @@ Linux のスケジューリング API は以下のとおりである。
 <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2) と <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2) の両方の機能を持つ。
 <DT><B><A HREF="../man2/sched_getattr.2.html">sched_getattr</A></B>(2)<DD>
 
+
 指定されたスレッドのスケジューリングポリシーとパラメーターを取得する。 この (Linux 固有の) システムコールは
 <B><A HREF="../man2/sched_getscheduler.2.html">sched_getscheduler</A></B>(2) と <B><A HREF="../man2/sched_getparam.2.html">sched_getparam</A></B>(2) の両方の機能を持つ。
 </DL>
@@ -95,6 +96,8 @@ Linux のスケジューリング API は以下のとおりである。
 <DT>*<DD>
 
 
+
+
 <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2), <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2), <B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2) は <I>pid</I>
 で指定された <B>SCHED_FIFO</B> (または <B>SCHED_RR</B>) スレッドが 実行可能な場合、リストの最初に置く。
 結果として、もし優先度が同じだった場合、 現在実行中のスレッドに先んじるかもしれない。 (POSIX.1-2001
@@ -111,6 +114,9 @@ Linux のスケジューリング API は以下のとおりである。
 <B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2)  を呼び出すまで実行を続ける。
 <A NAME="lbAG">&nbsp;</A>
 <H3>SCHED_RR: ラウンドロビン (round-robin) スケジューリング</H3>
+
+
+
 
 
 
@@ -178,6 +184,9 @@ arrival/wakeup                    absolute deadline
 
 
 
+
+
+
 3 つのデッドラインスケジューリングパラメーターは <I>sched_attr</I> 構造体の <I>sched_runtime</I>,
 <I>sched_deadline</I>, <I>sched_period</I> フィールドに対応する。 これらのフィールドはナノ秒単位の値である。
 <I>sched_period</I> に 0 が指定された場合 <I>sched_deadline</I> と同じ値になる。
@@ -186,6 +195,7 @@ arrival/wakeup                    absolute deadline
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;sched_runtime&nbsp;&lt;=&nbsp;sched_deadline&nbsp;&lt;=&nbsp;sched_period
 <P>
+
 
 これに加えて、 現在の実装では、 すべてのパラメーター値は少なくとも 1024 (実装の粒度である 1 マイクロ秒よりも少しだけ大きな値) で 2^63
 よりも小さくなければならない。 これらのチェックのいずれかが失敗すると、 <B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2) はエラー <B>EINVAL</B>
@@ -214,10 +224,16 @@ reset-on-fork フラグがセットされている場合 (下記参照) を除�
 
 
 
+
+
+
+
+
 <B>SCHED_DEADLINE</B> スレッドが <B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2) を呼び出すと、 現在のジョブが CPU
 を明け渡し、新しい期間が開始するのを待つ。
 <A NAME="lbAI">&nbsp;</A>
 <H3>SCHED_OTHER: Linux のデフォルトの時分割スケジューリング</H3>
+
 
 
 <B>SCHED_OTHER</B> は静的優先度 0 でのみ使用できる。 <B>SCHED_OTHER</B> は Linux 標準の時分割スケジューラで、
@@ -240,6 +256,11 @@ reset-on-fork フラグがセットされている場合 (下記参照) を除�
 
 
 
+
+
+
+
+
 このポリシーは、非対話的な処理だがその nice 値を下げたくない処理や、 (処理のタスク間で) 余計なタスクの置き換えの原因とある対話的な処理なしで
 確定的な (deterministic) スケジューリングポリシーを適用したい処理に 対して有効である。
 <A NAME="lbAK">&nbsp;</A>
@@ -248,6 +269,7 @@ reset-on-fork フラグがセットされている場合 (下記参照) を除�
 (Linux 2.6.23 以降)  <B>SCHED_IDLE</B> は静的優先度 0 でのみ使用できる。 このポリシーではプロセスの nice
 値はスケジューリングに影響を与えない。
 <P>
+
 
 非常に低い優先度でのジョブの実行を目的としたものである (非常に低い優先度とは、ポリシー <B>SCHED_OTHER</B> か <B>SCHED_BATCH</B>
 での nice 値 +19 よりさらに低い優先度である)。
@@ -283,6 +305,7 @@ reset-on-fork 機能はメディア再生アプリケーションでの利用を
 <P>
 
 
+
 一度 reset-on-fork フラグが有効にされた後は、このフラグをリセットできるのは、スレッドが <B>CAP_SYS_NICE</B>
 ケーパビリティを持つ場合だけである。このフラグは <B><A HREF="../man2/fork.2.html">fork</A></B>(2) で作成された子プロセスでは無効になる。
 <A NAME="lbAM">&nbsp;</A>
@@ -309,6 +332,7 @@ Linux 2.6.12 以降では、リソース制限 <B>RLIMIT_RTPRIO</B> が定義さ
 ある非特権スレッドが別のスレッドに対してこれらの変更を行う際にも、 同じルールが適用される。変更を行えるのは、変更を行おうとするスレッド の実効ユーザー
 ID が変更対象のスレッドの実ユーザー ID か実効ユーザー ID と 一致している場合に限られる。
 <DT>*<DD>
+
 
 <B>SCHED_IDLE</B> ポリシーの場合には特別なルールが適用される。 2.6.39 より前の Linux
 カーネルでは、このポリシーで動作する非特権スレッドは、 <B>RLIMIT_RTPRIO</B>
@@ -357,6 +381,8 @@ Linux 2.6.25 以降では、 2 つの <I>/proc</I> ファイルを使って、�
 
 
 
+
+
 I/O 待ちで停止したより高い優先度のスレッドは再びスケジューリングされる 前にいくらかの応答時間がかかる。デバイスドライバーを書く場合には &quot;slow
 interrupt&quot; 割り込みハンドラーを使用することで この応答時間を劇的に減少させることができる。
 <A NAME="lbAP">&nbsp;</A>
@@ -379,6 +405,8 @@ interrupt&quot; 割り込みハンドラーを使用することで この応答
 であることが保証されている。 それにも関わらず、カーネル 2.6.17 までは 真のリアルタイムコンピューティングは実現できなかった。
 <A NAME="lbAR">&nbsp;</A>
 <H3>本流の Linux カーネルでのリアルタイム機能</H3>
+
+
 
 
 

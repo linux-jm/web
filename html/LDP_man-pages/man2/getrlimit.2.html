@@ -75,6 +75,7 @@ struct rlimit {
 <DL COMPACT>
 <DT><B>RLIMIT_AS</B><DD>
 
+
 This is the maximum size of the process's virtual memory (address space).
 The limit is specified in bytes, and is rounded down to the system page
 size.  This limit affects calls to <B><A HREF="../man2/brk.2.html">brk</A></B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), and <B><A HREF="../man2/mremap.2.html">mremap</A></B>(2),
@@ -104,6 +105,10 @@ of <B>SIGXCPU</B>.)
 
 
 
+
+
+
+
 This is the maximum size of the process's data segment (initialized data,
 uninitialized data, and heap).  The limit is specified in bytes, and is
 rounded down to the system page size.  This limit affects calls to
@@ -114,6 +119,7 @@ the error <B>ENOMEM</B> upon encountering the soft limit of this resource.
 シグナルを送る。 デフォルトでは、このシグナルはプロセスを終了する。 プロセスをキャッチすることもできるが、 関連するシステムコール
 (<B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man2/truncate.2.html">truncate</A></B>(2)  など) はエラー <B>EFBIG</B> で失敗する。
 <DT><B>RLIMIT_LOCKS</B> (Linux 2.4.0 から 2.4.24 まで)<DD>
+
 
 このプロセスが実行できる <B><A HREF="../man2/flock.2.html">flock</A></B>(2)  ロック数と <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  リース数の合計値の上限である。
 <DT><B>RLIMIT_MEMLOCK</B><DD>
@@ -196,6 +202,9 @@ The <B>RLIMIT_NPROC</B> limit is not enforced for processes that have either the
 
 
 
+
+
+
 プロセスの resident set (RAM 上に存在する仮想ページの数) の 上限である (バイト単位)。 この制限は 2.4.30
 より前でしか影響がなく、 <B><A HREF="../man2/madvise.2.html">madvise</A></B>(2)  に <B>MADV_WILLNEED</B> を指定した関数コールにしか影響しない。
 <DT><B>RLIMIT_RTPRIO</B> (Linux 2.6.12 以降, バグの節も参照)<DD>
@@ -218,6 +227,8 @@ CPU 時間のカウントは 0 にリセットされる。 プロセスが CPU �
 <DT><DD>
 For further details on real-time scheduling policies, see <B><A HREF="../man7/sched.7.html">sched</A></B>(7)
 <DT><B>RLIMIT_SIGPENDING</B> (Linux 2.6.8 以降)<DD>
+
+
 
 
 呼び出し元プロセスの実ユーザー ID に対して キューに入れられるシグナルの
@@ -248,6 +259,18 @@ Linux 2.6.23 以降では、この制限はプロセスのコマンドライン�
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 Linux 固有の <B>prlimit</B>() システムコールは、 <B>setrlimit</B>() と <B>getrlimit</B>
 の機能を合わせて拡張したものである。 このシステムコールを使って、任意のプロセスのリソース上限の設定と取得を行うことができる。
 <P>
@@ -260,6 +283,9 @@ Linux 固有の <B>prlimit</B>() システムコールは、 <B>setrlimit</B>() 
 の呼び出しが成功すると、 <I>resource</I> の直前のソフトリミットとハードリミットが <I>old_limit</I> が指す <I>rlimit</I>
 構造体に格納される。
 <P>
+
+
+
 
 
 
@@ -371,20 +397,30 @@ system call is <B>prlimit64</B>().
 <P>
 
 
+
 2.6.17 より前の 2.6.x カーネルでは、 <B>RLIMIT_CPU</B> リミットが 0 の場合、 (<B>RLIM_INFINITY</B>
 と同じように) 「制限なし」と間違って解釈されていた。 Linux 2.6.17 以降では、リミットを 0 に設定した場合にも
 効果を持つようになっているが、実際にはリミットの値は 1 秒となる。
 <P>
 
 
+
 カーネル 2.6.12 には、 <B>RLIMIT_RTPRIO</B> が動作しないというバグがある。この問題はカーネル 2.6.13 で修正されている。
 <P>
+
 
 
 カーネル 2.6.12 では、 <B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2)  と <B>RLIMIT_NICE</B>
 が返す優先度の範囲が一つずれていた。このため、nice 値の実際の上限が <I>19&nbsp;-&nbsp;rlim_cur</I>
 になってしまうという影響があった。これはカーネル 2.6.13 で修正された。
 <P>
+
+
+
+
+
+
+
 
 
 
@@ -402,15 +438,23 @@ CPU 時間を消費し続けている限り、 ハードリミットに達する
 <P>
 
 
+
 2.4.22 より前のカーネルでは、 <I>rlim-&gt;rlim_cur</I> が <I>rlim-&gt;rlim_max</I> より大きかった場合、
 <B>setrlimit</B>()  での <B>EINVAL</B> エラーを検出できない。
 <P>
+
 
 
 Linux doesn't return an error when an attempt to set <B>RLIMIT_CPU</B> has
 failed, for compatibility reasons.
 <A NAME="lbAN">&nbsp;</A>
 <H3>32 ビットプラットフォームにおける「大きな」リソース上限値の表現</H3>
+
+
+
+
+
+
 
 
 
@@ -431,6 +475,7 @@ glibc の <B>getrlimit</B>() と <B>setrlimit</B>() ラッパー関数は、32 �
 で表現できる値よりも大きな値に設定しようとした際には、 glibc の <B>setrlimit</B>() ラッパー関数はこの上限値を黙って
 <B>RLIM_INFINITY</B> に変換していた。 言い換えると、指定されたリソース上限値は黙って無視されていた。
 <P>
+
 
 
 バージョン 2.13 以降の glibc では、 <B>getrlimit</B>() と <B>setrlimit</B>()

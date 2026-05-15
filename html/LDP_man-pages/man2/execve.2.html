@@ -121,6 +121,7 @@ are unchanged by a call to <B>execve</B>().
 <P>
 
 
+
 実行ファイルがダイナミックリンクされた ELF 実行形式だった場合、
 PT_INTERP セグメントに指定されたインタープリターが必要な 共有オブジェクト
 (shared library) を読み込むのに使用される。
@@ -207,6 +208,9 @@ POSIX.1 は、動作が無視かデフォルトに設定されている全ての
 
 
 
+
+
+
 デフォルトでは、ファイルディスクリプターは <B>execve</B>()  を行った後でもオープンされたままである。 close-on-exec
 の印が付いているファイルディスクリプターはクローズされる。 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  の <B>FD_CLOEXEC</B> の説明を参照。
 (ファイルディスクリプターがクローズされると、このプロセスが ファイルディスクリプターに対応するファイルに対して獲得していた
@@ -246,6 +250,9 @@ The <I>interpreter</I> must be a valid pathname for an executable file.
 
 
 
+
+
+
 where <I>pathname</I> is the absolute pathname of the file specified as the
 first argument of <B>execve</B>(), and <I>arg...</I> is the series of words pointed
 to by the <I>argv</I> argument of <B>execve</B>(), starting at <I>argv[1]</I>.  Note
@@ -256,6 +263,7 @@ that there is no way to get the <I>argv[0]</I> that was passed to the
 移植性を持たすには、 <I>optional-arg</I> は空か 1ワードだけにすべきである (つまり、ホワイトスペースを含めるべきではない)。
 下記の「注意」の節を参照。
 <P>
+
 
 
 Since Linux 2.6.28, the kernel permits the interpreter of a script to itself
@@ -275,6 +283,14 @@ a script, and so on.
 ページというのはカーネル定数 <B>MAX_ARG_PAGES</B> で定義される)。したがって、 ページサイズが 4&nbsp;kB のアーキテクチャーでは、
 最大サイズは 128&nbsp;kB ということになる。
 <P>
+
+
+
+
+
+
+
+
 
 
 
@@ -321,6 +337,7 @@ the maximum number of strings is 0x7FFFFFFF.
 ファイルシステムが <I>noexec</I> でマウントされている。
 <DT><B>EAGAIN</B> (Linux 3.1 以降)<DD>
 
+
 <B>set*uid</B>() のいずれかの呼び出しでプロセスの実 UID が変更されたとすると、呼び出し元の <B>RLIMIT_NPROC</B> リソース上限
 (<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2) 参照) を超えてしまう、 現在もまだ超えている。 このエラーの詳細な説明については「注意」の節を参照。
 <DT><B>EFAULT</B><DD>
@@ -336,6 +353,7 @@ ELF インタープリターが理解できるフォーマットでなかった�
 <DT><B>ELOOP</B><DD>
 <I>pathname</I> やスクリプトや ELF のインタープリターを解決する際に遭遇した シンボリックリンクが多過ぎる。
 <DT><B>ELOOP</B><DD>
+
 
 The maximum recursion limit was reached during recursive script
 interpretation (see &quot;Interpreter scripts&quot;, above).  Before Linux 3.8, the
@@ -374,6 +392,10 @@ capabilities granted by the executable file.  See <B><A HREF="../man7/capabiliti
 
 
 
+
+
+
+
 POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.  POSIX does not document the #!
 behavior, but it exists (with some variations) on other UNIX systems.
 <A NAME="lbAK">&nbsp;</A>
@@ -401,6 +423,11 @@ set-user-id プロセスと set-group-ID プロセスは <B>ptrace</B>(2)  で�
 
 
 
+
+
+
+
+
 On Linux, <I>argv</I> and <I>envp</I> can be specified as NULL.  In both cases, this
 has the same effect as specifying the argument as a pointer to a list
 containing a single null pointer.  <B>Do not take advantage of this
@@ -416,6 +443,8 @@ POSIX.1 は、 <B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)  が返す
 
 
 
+
+
 <B>execve</B>() が失敗するほとんどの場合、 制御は元の実行可能イメージに戻り、 <B>execve</B>()
 の呼び出し元がエラーを処理することができる。 しかしながら、 (リソース枯渇が原因となった場合など、まれに)
 呼び出し元に制御が戻る時点を過ぎてからエラーが発生する場合がある。 元の実行可能イメージはすでに破棄されているが、
@@ -425,11 +454,14 @@ POSIX.1 は、 <B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)  が返す
 <H3>インタープリタースクリプト</H3>
 
 
+
 The kernel imposes a maximum length on the text that follows the &quot;#!&quot;
 characters at the start of a script; characters beyond the limit are
 ignored.  Before Linux 5.1, the limit is 127 characters.  Since Linux 5.1,
 the limit is 255 characters.
 <P>
+
+
 
 
 
@@ -448,6 +480,15 @@ the limit is 255 characters.
 
 
 
+
+
+
+
+
+
+
+
+
 Linux (like most other modern UNIX systems)  ignores the set-user-ID and
 set-group-ID bits on scripts.
 <A NAME="lbAM">&nbsp;</A>
@@ -455,6 +496,7 @@ set-group-ID bits on scripts.
 
 <B>execve</B>() を呼び出した際に (Linux 3.1 以降で) 起こり得る <B>EAGAIN</B> エラーの詳細な説明を以下で行う。
 <P>
+
 
 
 <I>直前の</I> <B><A HREF="../man2/setuid.2.html">setuid</A></B>(2), <B><A HREF="../man2/setreuid.2.html">setreuid</A></B>(2), <B><A HREF="../man2/setresuid.2.html">setresuid</A></B>(2) の呼び出しで、 そのプロセスの実ユーザー ID
@@ -479,6 +521,15 @@ Linux 3.1 以降では、上で説明したシナリオでは <B>set*uid</B>() �
 プロセスフラグをクリアする。 同じプロセスによって <B><A HREF="../man2/fork.2.html">fork</A></B>(2) の呼び出しが後で行われた場合にも、このフラグはクリアされる。
 <A NAME="lbAN">&nbsp;</A>
 <H3>歴史</H3>
+
+
+
+
+
+
+
+
+
 
 
 

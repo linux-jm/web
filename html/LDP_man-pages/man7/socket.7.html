@@ -153,6 +153,12 @@ POLLOUT
 
 
 
+
+
+
+
+
+
 これらのソケットオプションは、 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  を用いれば設定でき、 <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)  を用いれば取得できる。
 但し、どのソケットの場合も ソケットレベルには <B>SOL_SOCKET</B> を指定すること。 注釈がない限り、 <I>optval</I> は <I>int</I>
 へのポインターである。
@@ -263,6 +269,8 @@ extended BPF program attached to a socket with either <B>SO_ATTACH_FILTER</B> or
 <DT><B>SO_INCOMING_CPU</B> (gettable since Linux 3.19, settable since Linux 4.4)<DD>
 
 
+
+
 Sets or gets the CPU affinity of a socket.  Expects an integer flag.
 <DT><DD>
 
@@ -291,6 +299,24 @@ setsockopt(fd, SOL_SOCKET, SO_INCOMING_CPU, &amp;cpu,
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Because all of the packets for a single stream (i.e., all packets for the
 same 4-tuple)  arrive on the single RX queue that is associated with a
 particular CPU, the typical use case is to employ one listening process per
@@ -298,6 +324,7 @@ RX queue, with the incoming flow being handled by a listener on the same CPU
 that is handling the RX queue.  This provides optimal NUMA behavior and
 keeps CPU caches hot.
 <DT><B>SO_INCOMING_NAPI_ID</B> (gettable since Linux 4.12)<DD>
+
 
 Returns a system-level unique ID called NAPI ID that is associated with a RX
 queue on which the last packet associated with that socket is received.
@@ -328,6 +355,7 @@ struct linger {
 の一部として行った場合には、残っているソケットの クローズ動作は必ずバックグラウンドに送られる。
 <DT><B>SO_LOCK_FILTER</B><DD>
 
+
 When set, this option will prevent changing the filters associated with the
 socket.  These filters include any set using the socket options
 <B>SO_ATTACH_FILTER</B>, <B>SO_ATTACH_BPF</B>, <B>SO_ATTACH_REUSEPORT_CBPF</B>, and
@@ -345,10 +373,21 @@ option will fail with the error <B>EPERM</B>.
 <DT><B>SO_MARK</B> (Linux 2.6.25 以降)<DD>
 
 
+
+
 このソケットから送信される各パケットにマークをセットする (netfilter の MARK ターゲットと似ているが、ソケット単位である点が異なる)。
 マークの変更は、 netfilter なしでのマークに基づいてのルーティングや、 パケットフィルタリングに使うことができる。
 このオプションを変更するには <B>CAP_NET_ADMIN</B> ケーパビリティが必要である。
 <DT><B>SO_OOBINLINE</B><DD>
+
+
+
+
+
+
+
+
+
 
 
 
@@ -365,6 +404,7 @@ option will fail with the error <B>EPERM</B>.
 <DT><B>SO_PASSSEC</B><DD>
 <B>SCM_SECURITY</B> 制御メッセージの受信を有効/無効にする。詳細は <B><A HREF="../man7/unix.7.html">unix</A></B>(7)  を参照のこと。
 <DT><B>SO_PEEK_OFF</B> (Linux 3.4 以降)<DD>
+
 
 <B>MSG_PEEK</B> フラグと一緒に使用された場合 <B><A HREF="../man2/recv.2.html">recv</A></B>(2) システムコールの &quot;peek offset&quot;
 にこのオプションの値が設定される。現在のところ、このオプションは <B><A HREF="../man7/unix.7.html">unix</A></B>(7) ソケットでのみサポートされている。
@@ -412,6 +452,9 @@ For further details, see <B><A HREF="../man7/unix.7.html">unix</A></B>(7)  and <
 
 
 
+
+
+
 プロトコルで定義された優先度を、このソケットから 送信される全てのパケットにセットする。 Linux はネットワークキュー内部の
 整列にこの値を用いる。高い優先度を持っているパケットは先に処理される。 ただしそのデバイスのキュー処理のやり方に依存する。 0 から 6
 以外の優先度をセットするには <B>CAP_NET_ADMIN</B> ケーパビリティが必要である。
@@ -419,6 +462,11 @@ For further details, see <B><A HREF="../man7/unix.7.html">unix</A></B>(7)  and <
 ソケットのプロトコルを整数で取得する。 <B>IPPROTO_SCTP</B> のような値が返される。
 詳細は <B><A HREF="../man2/socket.2.html">socket</A></B>(2) を参照。このソケットオプションは読み込み専用である。
 <DT><B>SO_RCVBUF</B><DD>
+
+
+
+
+
 
 
 
@@ -440,6 +488,8 @@ error <B>ENOPROTOOPT</B>).  <B>SO_RCVLOWAT</B> is changeable only since Linux 2.
 <DT><DD>
 
 
+
+
 Before Linux 2.6.28 <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), and <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  did not
 respect the <B>SO_RCVLOWAT</B> setting on Linux, and indicated a socket as
 readable when even a single byte of data was available.  A subsequent read
@@ -447,6 +497,10 @@ from the socket would then block until <B>SO_RCVLOWAT</B> bytes are available.
 Since Linux 2.6.28, <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), and <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  indicate a
 socket as readable only if at least <B>SO_RCVLOWAT</B> bytes are available.
 <DT><B>SO_RCVTIMEO</B> と <B>SO_SNDTIMEO</B><DD>
+
+
+
+
 
 
 
@@ -459,6 +513,8 @@ socket as readable only if at least <B>SO_RCVLOWAT</B> bytes are available.
 を実行するシステムコールだけ (例えば <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2), <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2))
 である。 <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  などにはタイムアウトは影響を及ぼさない。
 <DT><B>SO_REUSEADDR</B><DD>
+
+
 
 
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)  コールに与えられたアドレスが正しいかを判断するルールで、 ローカルアドレスの再利用を可能にする。 つまり <B>AF_INET</B>
@@ -486,10 +542,14 @@ traditional technique of having multiple processes compete to receive
 datagrams on the same socket.
 <DT><B>SO_RXQ_OVFL</B> (Linux 2.6.33 以降)<DD>
 
+
 Indicates that an unsigned 32-bit value ancillary message (cmsg)  should be
 attached to received skbs indicating the number of packets dropped by the
 socket since its creation.
 <DT><B>SO_SELECT_ERR_QUEUE</B> (Linux 3.10 以降)<DD>
+
+
+
 
 
 
@@ -498,6 +558,8 @@ notification not only via the <I>exceptfds</I> set of <B><A HREF="../man2/select
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2)  also returns a <B>POLLPRI</B> whenever an <B>POLLERR</B> event is
 returned.
 <DT><DD>
+
+
 
 
 Background: this option was added when waking up on an error condition
@@ -509,6 +571,8 @@ changes in Linux 4.16, the use of this flag to achieve the desired
 notifications is no longer necessary.  This option is nevertheless retained
 for backwards compatibility.
 <DT><B>SO_SNDBUF</B><DD>
+
+
 
 
 ソケットの送信バッファーの最大サイズを設定・取得する (バイト単位)。 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)  を使って値が設定されたときに
@@ -525,6 +589,7 @@ timestamp control message is sent with level <B>SOL_SOCKET</B> and a
 timeval</I> indicating the reception time of the last packet passed to the user
 in this call.  See <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)  for details on control messages.
 <DT><B>SO_TIMESTAMPNS</B> (Linux 2.6.22 以降)<DD>
+
 
 Enable or disable the receiving of the <B>SO_TIMESTAMPNS</B> control message.
 The timestamp control message is sent with level <B>SOL_SOCKET</B> and a
@@ -569,6 +634,7 @@ busy polling により遅延が改善されるはアプリケーションもあ�
 <P>
 
 
+
 状況によっては (例えば複数のプロセスが一つのソケットにアクセスしているなど)、 <B>SIGIO</B>
 の原因となった状態は、プロセスがそのシグナルへの対応を行ったときには 消えてしまっているかもしれない。
 この場合は、プロセスは再び待つようにすべきである。 Linux は同じシグナルを後で再送するからである。
@@ -591,6 +657,7 @@ core のソケットのネットワーキングパラメーターには、 <I>/p
 グローバルな入力キューにおける最大のパケット数。
 <DT><I>optmem_max</I><DD>
 
+
 ソケットあたりの、補助データ (ancillary data) とユーザー制御データ (iovecs のようなもの) との和の最大長。
 </DL>
 <A NAME="lbAJ">&nbsp;</A>
@@ -606,6 +673,7 @@ core のソケットのネットワーキングパラメーターには、 <I>/p
 
 <DL COMPACT>
 <DT><B>SIOCGSTAMP</B><DD>
+
 
 Return a <I>struct timeval</I> with the receive timestamp of the last packet
 passed to the user.  This is useful for accurate round trip time
@@ -624,6 +692,7 @@ is a pointer to a <I>pid_t</I>.  For further details, see the description of
 <B>O_ASYNC</B> フラグを変更し、ソケットの非同期 (asynchronous) I/O モードを 有効/無効にする。非同期 I/O モードでは、
 新しい I/O イベントが起きたときに、 <B>SIGIO</B> シグナルや <B>F_SETSIG</B> で設定されたシグナルセットが発行される。
 <DT><DD>
+
 
 引数はブール整数のフラグである。 (この操作は <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  を使って <B>O_ASYNC</B> フラグをセットするのと同じ意味である。)
 <DT><B>SIOCGPGRP</B><DD>
@@ -650,6 +719,8 @@ is a pointer to a <I>pid_t</I>.  For further details, see the description of
 Linux は、送受信バッファーの半分を内部のカーネル構造体で用いると仮定している。 したがって、対応する <I>/proc</I>
 ファイルはネットワーク回線上での大きさの 2 倍になる。
 <P>
+
+
 
 
 

@@ -89,6 +89,7 @@ Sends a signal to a process identified by a PID file descriptor.
 何かシグナルが捕捉されるまで実行を停止する。
 <DT><B><A HREF="../man2/sigsuspend.2.html">sigsuspend</A></B>(2)<DD>
 
+
 一時的にシグナルマスク (下記参照) を変更し、 マスクされていないシグナルのいずれかが捕捉されるまで 実行を中断する。
 </DL>
 <A NAME="lbAG">&nbsp;</A>
@@ -154,6 +155,24 @@ targeted at a specific thread using interfaces such as <B><A HREF="../man2/tgkil
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 A process-directed signal may be delivered to any one of the threads that
 does not currently have the signal blocked.  If more than one of the threads
 has the signal unblocked, then the kernel chooses an arbitrary thread to
@@ -163,6 +182,7 @@ which to deliver the signal.
 スレッドは、 <B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2)  を使って、現在処理待ちのシグナル集合を取得することができる。
 この集合は、プロセス宛ての処理待ちシグナルと 呼び出したスレッド宛てのシグナルの両方から構成される。
 <P>
+
 
 
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  経由で作成された子プロセスでは、処理待ちのシグナル集合は空の集合で初期化される。 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
@@ -254,6 +274,7 @@ specified in the corresponding call to <B><A HREF="../man3/sigsetjmp.3.html">sig
 <P>
 
 
+
 From the kernel's point of view, execution of the signal handler code is
 exactly the same as the execution of any other user-space code.  That is to
 say, the kernel does not record any special state information indicating
@@ -339,6 +360,7 @@ Linux 2.2 以前では、 <B>SIGSYS</B>, <B>SIGXCPU</B>, <B>SIGXFSZ</B> およ�
 <P>
 
 
+
 <B>SIGIO</B> は (POSIX.1-2001 に規定されていないが) いくつかの他の UNIX システムでは デフォルト動作は無視である。
 <A NAME="lbAK">&nbsp;</A>
 <H3>Queueing and delivery semantics for standard signals</H3>
@@ -346,6 +368,7 @@ Linux 2.2 以前では、 <B>SIGSYS</B>, <B>SIGXCPU</B>, <B>SIGXFSZ</B> およ�
 If multiple standard signals are pending for a process, the order in which
 the signals are delivered is unspecified.
 <P>
+
 
 
 Standard signals do not queue.  If multiple instances of a standard signal
@@ -417,6 +440,7 @@ Note the following:
 Where defined, <B>SIGUNUSED</B> is synonymous with <B>SIGSYS</B>.  Since glibc 2.26,
 <B>SIGUNUSED</B> is no longer defined on any architecture.
 <DT>*<DD>
+
 
 Signal 29 is <B>SIGINFO</B>/<B>SIGPWR</B> (synonyms for the same value) on Alpha but
 <B>SIGLOST</B> on SPARC.
@@ -498,6 +522,7 @@ sets.  The old and new system calls are as follows:
 </TABLE>
 
 
+
 <A NAME="lbAN">&nbsp;</A>
 <H3>シグナルハンドラーによるシステムコールやライブラリ関数への割り込み</H3>
 
@@ -514,6 +539,8 @@ sets.  The old and new system calls are as follows:
 (<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)  参照) を使って設定されていたかにも依存する。 詳細は UNIX システムによって異なる。 Linux
 における詳細を以下で説明する。
 <P>
+
+
 
 
 
@@ -541,6 +568,11 @@ devices are not interrupted by signals.
 
 
 
+
+
+
+
+
 ソケットインターフェイス: <B><A HREF="../man2/accept.2.html">accept</A></B>(2), <B><A HREF="../man2/connect.2.html">connect</A></B>(2), <B><A HREF="../man2/recv.2.html">recv</A></B>(2), <B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2),
 <B><A HREF="../man2/recvmmsg.2.html">recvmmsg</A></B>(2), <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2), <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2), <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2).
 但し、ソケットにタイムアウトが設定されていない場合 (下記参照)。
@@ -552,6 +584,7 @@ POSIX メッセージキューインターフェイス: <B><A HREF="../man3/mq_r
 <B><A HREF="../man3/mq_send.3.html">mq_send</A></B>(3), <B><A HREF="../man3/mq_timedsend.3.html">mq_timedsend</A></B>(3).
 <DT>*<DD>
 
+
 <B><A HREF="../man2/futex.2.html">futex</A></B>(2)  <B>FUTEX_WAIT</B> (Linux 2.6.22 以降; それ以前は常に <B>EINTR</B> で失敗していた)。
 <DT>*<DD>
 <B>getrandom</B>(2).
@@ -561,14 +594,18 @@ POSIX メッセージキューインターフェイス: <B><A HREF="../man3/mq_r
 <B><A HREF="../man2/futex.2.html">futex</A></B>(2)  <B>FUTEX_WAIT_BITSET</B>.
 <DT>*<DD>
 
+
 POSIX セマフォインターフェイス: <B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3), <B><A HREF="../man3/sem_timedwait.3.html">sem_timedwait</A></B>(3)  (Linux 2.6.22 以降;
 それ以前は常に <B>EINTR</B> で失敗していた)。
 <DT>*<DD>
+
 
 <B><A HREF="../man2/read.2.html">read</A></B>(2)  from an <B><A HREF="../man7/inotify.7.html">inotify</A></B>(7)  file descriptor (since Linux 3.8;
 beforehand, always failed with <B>EINTR</B>).
 </DL>
 <P>
+
+
 
 
 
@@ -581,6 +618,7 @@ beforehand, always failed with <B>EINTR</B>).
 <I>timeout</I> 引数も指定されている場合), <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)
 <DT>*<DD>
 
+
 &quot;Output&quot; socket interfaces, when a timeout (<B>SO_RCVTIMEO</B>)  has been set on
 the socket using <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2): <B><A HREF="../man2/connect.2.html">connect</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2), <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2),
 and <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2).
@@ -591,6 +629,7 @@ and <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2).
 ファイルディスクリプター多重インターフェイス: <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2), <B><A HREF="../man2/epoll_pwait.2.html">epoll_pwait</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2),
 <B><A HREF="../man2/ppoll.2.html">ppoll</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/pselect.2.html">pselect</A></B>(2).
 <DT>*<DD>
+
 
 System V IPC インターフェイス: <B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2), <B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2), <B><A HREF="../man2/semop.2.html">semop</A></B>(2),
 <B><A HREF="../man2/semtimedop.2.html">semtimedop</A></B>(2).
@@ -618,6 +657,7 @@ POSIX.1 で認められておらず、他のシステムでは起こらない。
 <I>timeout</I> 引数も指定されている場合), <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)
 <DT>*<DD>
 
+
 &quot;Output&quot; socket interfaces, when a timeout (<B>SO_RCVTIMEO</B>)  has been set on
 the socket using <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2): <B><A HREF="../man2/connect.2.html">connect</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2), <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2),
 and <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2), if a send timeout (<B>SO_SNDTIMEO</B>)  has been set.
@@ -628,6 +668,7 @@ and <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2), if a send timeout (<
 <DT>*<DD>
 <B><A HREF="../man2/sigtimedwait.2.html">sigtimedwait</A></B>(2), <B><A HREF="../man2/sigwaitinfo.2.html">sigwaitinfo</A></B>(2).
 <DT>*<DD>
+
 
 Linux 3.7 and earlier: <B><A HREF="../man2/read.2.html">read</A></B>(2)  from an <B><A HREF="../man7/inotify.7.html">inotify</A></B>(7)  file descriptor
 <DT>*<DD>

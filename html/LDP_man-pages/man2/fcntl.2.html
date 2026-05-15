@@ -86,6 +86,8 @@ ignored.
 
 
 
+
+
 オープンファイル記述 (open file description) には、 ファイル記述毎に設定される状態フラグがいくつかある。これらのフラグは
 <B><A HREF="../man2/open.2.html">open</A></B>(2)  によって初期化され、 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  により変更することもできる。これらは、 (<B><A HREF="../man2/dup.2.html">dup</A></B>(2),
 <B>fcntl</B>(F_DUPFD), <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  などで) 複製されたファイルディスクリプター同士は 同じオープンファイル記述を参照する。
@@ -218,6 +220,9 @@ POSIX.1-2001 では、負の値の <I>l_len</I> をサポートする実装を�
 
 
 
+
+
+
 プロセスがロックが適用されているファイルを参照しているファイルディスクリプターの「いずれか」をクローズした場合、
 そのファイルに対するそのプロセスのすべてのロックが解放される。 この動作はまずい。 あるプロセスが <I>/etc/passwd</I> や
 <I>/etc/mtab</I> といったファイルにロックを適用しているときに、 あるライブラリ関数が何かの理由で同じファイルを open, read,
@@ -231,6 +236,8 @@ close すると、そのファイルへのロックが失われることにな�
 オープンファイル記述ロックを使うとこれらの問題が解決できる。
 <A NAME="lbAI">&nbsp;</A>
 <H3>オープンファイル記述ロック (非 POSIX)</H3>
+
+
 
 
 
@@ -293,6 +300,8 @@ same process on the same file descriptor.
 
 
 
+
+
 現在の実装では、 オープンファイル記述ロクではデッドロックの検出は行われない。 (これがプロセスと関連付けられるレコードロックとは異なる点である。
 プロセスと関連付けられるレコードロックではカーネルはデッドロックの検出を行う。)
 <A NAME="lbAJ">&nbsp;</A>
@@ -326,6 +335,7 @@ this feature completely.
 <P>
 
 
+
 強制ロックは POSIX では規定されていない。 他のいくつかのシステムでも強制ロックはサポートされているが、
 強制ロックをどのようにして有効にするかの詳細はシステムより異なる。
 <A NAME="lbAK">&nbsp;</A>
@@ -339,11 +349,13 @@ the server to assume that the client is no longer functioning.
 <P>
 
 
+
 When the filesystem determines that a lock has been lost, future <B><A HREF="../man2/read.2.html">read</A></B>(2)
 or <B><A HREF="../man2/write.2.html">write</A></B>(2)  requests may fail with the error <B>EIO</B>.  This error will
 persist until the lock is removed or the file descriptor is closed.  Since
 Linux 3.12, this happens at least for NFSv4 (including all minor versions).
 <P>
+
 
 
 Some versions of UNIX send a signal (<B>SIGLOST</B>)  in this circumstance.
@@ -392,6 +404,16 @@ credentials that are used for the permission checks.
 
 
 
+
+
+
+
+
+
+
+
+
+
 ファイルディスクリプターがソケットを参照している場合は、 <B>F_SETOWN</B> を使用して、ソケットに帯域外 (out-of-band)
 データが届いた時に <B>SIGURG</B> シグナルを配送する相手を選択することもできる (<B>SIGURG</B> が送られた場合には <B><A HREF="../man2/select.2.html">select</A></B>(2)
 がソケットが「特別な状態」にあると報告することだろう)。
@@ -400,6 +422,12 @@ credentials that are used for the permission checks.
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT><DD>
+
+
+
+
+
+
 
 
 
@@ -470,6 +498,16 @@ ID が <I>pid</I> で指定された値のプロセスグループにそのシ�
 
 
 
+
+
+
+
+
+
+
+
+
+
 入力や出力が可能になった場合に送るシグナルを <I>arg</I> に指定された値に設定する。 値ゼロは <B>SIGIO</B> を送ることを意味する。
 (<B>SIGIO</B> を含む) 他の値はいずれも、 <B>SIGIO</B> の代わりに送るシグナル番号を表す。 後者の場合、シグナルハンドラーを
 <B>SA_SIGINFO</B> フラグ付きで設定すれば、 ハンドラーで追加の情報を得ることができる。
@@ -492,6 +530,7 @@ closed file descriptor.
 イベントがキューに入ることがある (キューに入れるかどうかは利用可能なメモリーに依存している)。 上記と同様、 <B>SA_SIGINFO</B>
 が設定されている場合、シグナルハンドラーのための追加の情報が得られる。
 <DT><DD>
+
 
 以下の点に注意すること。 Linux では一つのプロセスに対してキューに入れられるリアルタイム シグナルの数に上限が設けられており
 (<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)  と <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  を参照)、この上限に達するとカーネルは <B>SIGIO</B> シグナルを配送する。この
@@ -522,6 +561,8 @@ breaker&quot;) がそのファイルディスクリプターが参照 してい�
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT><B>F_RDLCK</B><DD>
+
+
 
 
 読み出しリースを取得する。これにより、 そのファイルが書き込み用にオープンされたり、ファイルが切り詰められた場合に、
@@ -642,6 +683,7 @@ lease holder への通知に使われるデフォルトのシグナルは <B>SIG
 変更通知は明示的に解除されるまで有効状態が継続する。
 <DT><DD>
 
+
 <B>F_NOTIFY</B> 要求は積算されていく。つまり、 <I>arg</I> で指定されたイベントがすでにモニタされている イベント集合に加算される形になる。
 すべてのイベントの通知を無効にするには、 <I>arg</I> に 0 を指定して <B>F_NOTIFY</B> を呼び出す必要がある。
 <DT><DD>
@@ -687,6 +729,7 @@ Note that because of the way the pages of the pipe buffer are employed when
 data is written to the pipe, the number of bytes that can be written may be
 less than the nominal size, depending on the size of the writes.
 <DT><B>F_GETPIPE_SZ</B> (<I>void</I>; Linux 2.6.35 以降)<DD>
+
 
 <I>fd</I> が参照するパイプの容量を (関数の結果として) 返す。
 </DL>
@@ -745,6 +788,14 @@ seal を設定するには、 ファイルディスクリプター <I>fd</I> が
 
 
 
+
+
+
+
+
+
+
+
 この seal が設定されていると、 ファイルの内容を変更できない。 ファイルのサイズを縮小したり伸張したりすることは可能で許可されている。
 したがって、 この seal は通常は他の seal のいずれかと組み合わせて使用される。 この seal は <B><A HREF="../man2/write.2.html">write</A></B>(2) と
 <B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2) (<B>FALLOC_FL_PUNCH_HOLE</B> フラグとの組み合わせの場合のみ) に影響する。 この seal
@@ -761,6 +812,7 @@ created prior to the seal being set.  Any attempt to create a new writable
 mapping on the file via <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)  will fail with <B>EPERM</B>.  Likewise, an
 attempt to write to the file via <B><A HREF="../man2/write.2.html">write</A></B>(2)  will fail with <B>EPERM</B>.
 <DT><DD>
+
 
 Using this seal, one process can create a memory buffer that it can continue
 to modify while sharing that buffer on a &quot;read-only&quot; basis with other
@@ -929,6 +981,8 @@ SVr4, 4.3BSD, POSIX.1-2001.  POSIX.1-2001 で規定されている操作は、
 
 
 
+
+
 <B>F_GETOWN</B> と <B>F_SETOWN</B> は POSIX.1-2001 で規定されている。 (これら定義するには、
 <B>_XOPEN_SOURCE</B> を 500 以上の値で定義するか、 <B>_POSIX_C_SOURCE</B> を 200809L 以上の値で定義するか、
 のいずれが必要である。)
@@ -939,6 +993,8 @@ SVr4, 4.3BSD, POSIX.1-2001.  POSIX.1-2001 で規定されている操作は、
 <B>_POSIX_C_SOURCE</B> を 200809L 以上の値で定義するか、
 <B>_XOPEN_SOURCE</B> を 700 以上の値で定義すること。)
 <P>
+
+
 
 
 
@@ -953,14 +1009,17 @@ SVr4, 4.3BSD, POSIX.1-2001.  POSIX.1-2001 で規定されている操作は、
 <P>
 
 
+
 <B>F_ADD_SEALS</B> と <B>F_GET_SEALS</B> は Linux 固有である。
 <A NAME="lbAU">&nbsp;</A>
 <H2>注意</H2>
 
 
+
 エラーの際の返り値が <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2)  と <B>F_DUPFD</B> では異なっている。
 <A NAME="lbAV">&nbsp;</A>
 <H3>ファイルロック</H3>
+
 
 
 元々の Linux の <B>fcntl</B>() システムコールは (<I>flock</I> 構造体で) 大きな
@@ -977,6 +1036,9 @@ SVr4, 4.3BSD, POSIX.1-2001.  POSIX.1-2001 で規定されている操作は、
 
 カーネル 2.0 以降では、 <B><A HREF="../man2/flock.2.html">flock</A></B>(2)  と <B>fcntl</B>()  が設定するロック種別の間に相互作用はない。
 <P>
+
+
+
 
 
 
@@ -1014,12 +1076,28 @@ architectures (such as MIPS32), this field is not used.
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Linux 3.12 より前では、 NFSv4 クライアントが一定時間サーバーと通信がなかった場合 (90 秒間通信がない場合と定義されている)、
 クライアントが気付かずにロックを失い再獲得する場合がある。 (通信がなくなったみなす時間は NFSv4 leastime と呼ばれる。 Linux
 NFS サーバーでは、 この値は <I>/proc/fs/nfsd/nfsv4leasetime</I> を見て決定される。 このファイルの値の単位は秒であり、
 このファイルのデフォルト値は 90 である。) この状況では潜在的にデータ破壊が起こる危険性がある。
 通信がなかった間に他のプロセスがロックを獲得しファイル入出力を行う場合があるからである。
 <P>
+
+
 
 
 
@@ -1038,10 +1116,18 @@ Linux 3.12 以降、 NFSv4 クライアントがサーバーと通信がなか�
 
 
 
+
+
+
 <B>F_SETFL</B> を使って、 フラグ <B>O_DSYNC</B> と <B>O_SYNC</B>
 の状態を変更することはできない。これらのフラグの状態を変更しようとした場合には、黙って無視される。
 <A NAME="lbBA">&nbsp;</A>
 <H3>F_GETOWN</H3>
+
+
+
+
+
 
 
 
@@ -1060,12 +1146,14 @@ glibc バージョン 2.11 以降では、glibc では <B>F_GETOWN_EX</B> を使
 <H3>F_SETOWN</H3>
 
 
+
 Linux 2.4 以前では、非特権プロセスが <B>F_SETOWN</B> を使って、ソケットのファイルディスクリプターの所有者に 呼び出し元以外のプロセス
 (やプロセスグループ) を指定すると 発生するバグがある。この場合、 呼び出し元が所有者として指定したプロセス (やプロセスグループ) に
 シグナルを送る許可を持っていたとしても、 <B>fcntl</B>()  が -1 を返し <I>errno</I> に <B>EPERM</B> を設定することがある。
 このエラーが返ったにもかかわらず、ファイルディスクリプターの所有者 は設定され、シグナルはその所有者に送られる。
 <A NAME="lbBC">&nbsp;</A>
 <H3>デッドロックの検出</H3>
+
 
 
 <B>F_SETLKW</B> 要求を処理する際にカーネルが使用するデッドロック検出アルゴリズムは、 false negative になる場合
@@ -1075,6 +1163,14 @@ Linux 2.4 以前では、非特権プロセスが <B>F_SETOWN</B> を使って�
 2 つ以上のプロセスが (カーネルにとって) 衝突するように見えるロックを適用した場合、 カーネルはデッドロックを誤って検出する。
 <A NAME="lbBD">&nbsp;</A>
 <H3>強制ロック (mandatory locking)</H3>
+
+
+
+
+
+
+
+
 
 
 
