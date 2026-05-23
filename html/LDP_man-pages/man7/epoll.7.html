@@ -173,55 +173,56 @@ epoll が消費するカーネルメモリーの量を制限するために、 �
 <P>
 
 
-
+<PRE>
 #define MAX_EVENTS 10
 struct epoll_event ev, events[MAX_EVENTS];
 int listen_sock, conn_sock, nfds, epollfd;
-<P>
+
 /* Code to set up listening socket, 'listen_sock',
-<BR>&nbsp;&nbsp;&nbsp;(socket(),&nbsp;bind(),&nbsp;listen())&nbsp;omitted&nbsp;*/
-<P>
+   (socket(), bind(), listen()) omitted */
+
 epollfd = epoll_create1(0);
 if (epollfd == -1) {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;epoll_create1&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+    perror(&quot;epoll_create1&quot;);
+    exit(EXIT_FAILURE);
 }
-<P>
+
 ev.events = EPOLLIN;
 ev.data.fd = listen_sock;
 if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_sock, &amp;ev) == -1) {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;epoll_ctl:&nbsp;listen_sock&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+    perror(&quot;epoll_ctl: listen_sock&quot;);
+    exit(EXIT_FAILURE);
 }
-<P>
+
 for (;;) {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;nfds&nbsp;=&nbsp;epoll_wait(epollfd,&nbsp;events,&nbsp;MAX_EVENTS,&nbsp;-1);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nfds&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;epoll_wait&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(n&nbsp;=&nbsp;0;&nbsp;n&nbsp;&lt;&nbsp;nfds;&nbsp;++n)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(events[n].data.fd&nbsp;==&nbsp;listen_sock)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;conn_sock&nbsp;=&nbsp;accept(listen_sock,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;addr,&nbsp;&amp;addrlen);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(conn_sock&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;accept&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setnonblocking(conn_sock);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ev.events&nbsp;=&nbsp;EPOLLIN&nbsp;|&nbsp;EPOLLET;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ev.data.fd&nbsp;=&nbsp;conn_sock;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(epoll_ctl(epollfd,&nbsp;EPOLL_CTL_ADD,&nbsp;conn_sock,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;ev)&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;epoll_ctl:&nbsp;conn_sock&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do_use_fd(events[n].data.fd);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+    nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
+    if (nfds == -1) {
+        perror(&quot;epoll_wait&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    for (n = 0; n &lt; nfds; ++n) {
+        if (events[n].data.fd == listen_sock) {
+            conn_sock = accept(listen_sock,
+                               (struct sockaddr *) &amp;addr, &amp;addrlen);
+            if (conn_sock == -1) {
+                perror(&quot;accept&quot;);
+                exit(EXIT_FAILURE);
+            }
+            setnonblocking(conn_sock);
+            ev.events = EPOLLIN | EPOLLET;
+            ev.data.fd = conn_sock;
+            if (epoll_ctl(epollfd, EPOLL_CTL_ADD, conn_sock,
+                        &amp;ev) == -1) {
+                perror(&quot;epoll_ctl: conn_sock&quot;);
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            do_use_fd(events[n].data.fd);
+        }
+    }
 }
+</PRE>
 
 
 <P>

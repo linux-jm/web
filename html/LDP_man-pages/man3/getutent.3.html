@@ -182,9 +182,8 @@ POSIX.1-2008 では、もはやこれらの関数はなく、 代わりに以下
 <P>
 
 <DL COMPACT><DT><DD>
-
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/utmpx.h">utmpx.h</A>&gt;</B>
-<P>
 
 <B>struct utmpx *getutxent(void);</B>
 <B>struct utmpx *getutxid(const struct utmpx *);</B>
@@ -192,6 +191,7 @@ POSIX.1-2008 では、もはやこれらの関数はなく、 代わりに以下
 <B>struct utmpx *pututxline(const struct utmpx *);</B>
 <B>void setutxent(void);</B>
 <B>void endutxent(void);</B>
+</PRE>
 
 </DL>
 
@@ -255,47 +255,48 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 の戻り値を検査するべきである。
 <P>
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;utmp&nbsp;entry;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;system(&quot;echo&nbsp;before&nbsp;adding&nbsp;entry:;who&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;entry.ut_type&nbsp;=&nbsp;USER_PROCESS;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;entry.ut_pid&nbsp;=&nbsp;getpid();
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;strcpy(entry.ut_line,&nbsp;ttyname(STDIN_FILENO)&nbsp;+&nbsp;strlen(&quot;/dev/&quot;));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;only&nbsp;correct&nbsp;for&nbsp;ptys&nbsp;named&nbsp;/dev/tty[pqr][0-9a-z]&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;strcpy(entry.ut_id,&nbsp;ttyname(STDIN_FILENO)&nbsp;+&nbsp;strlen(&quot;/dev/tty&quot;));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;time(&amp;entry.ut_time);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;strcpy(entry.ut_user,&nbsp;getpwuid(getuid())-&gt;pw_name);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(entry.ut_host,&nbsp;0,&nbsp;UT_HOSTSIZE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;entry.ut_addr&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;setutent();
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pututline(&amp;entry);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;system(&quot;echo&nbsp;after&nbsp;adding&nbsp;entry:;who&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;entry.ut_type&nbsp;=&nbsp;DEAD_PROCESS;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(entry.ut_line,&nbsp;0,&nbsp;UT_LINESIZE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;entry.ut_time&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(entry.ut_user,&nbsp;0,&nbsp;UT_NAMESIZE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;setutent();
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pututline(&amp;entry);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;system(&quot;echo&nbsp;after&nbsp;removing&nbsp;entry:;who&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;endutent();
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    struct utmp entry;
+
+    system(&quot;echo before adding entry:;who&quot;);
+
+    entry.ut_type = USER_PROCESS;
+    entry.ut_pid = getpid();
+    strcpy(entry.ut_line, ttyname(STDIN_FILENO) + strlen(&quot;/dev/&quot;));
+    /* only correct for ptys named /dev/tty[pqr][0-9a-z] */
+    strcpy(entry.ut_id, ttyname(STDIN_FILENO) + strlen(&quot;/dev/tty&quot;));
+    time(&amp;entry.ut_time);
+    strcpy(entry.ut_user, getpwuid(getuid())-&gt;pw_name);
+    memset(entry.ut_host, 0, UT_HOSTSIZE);
+    entry.ut_addr = 0;
+    setutent();
+    pututline(&amp;entry);
+
+    system(&quot;echo after adding entry:;who&quot;);
+
+    entry.ut_type = DEAD_PROCESS;
+    memset(entry.ut_line, 0, UT_LINESIZE);
+    entry.ut_time = 0;
+    memset(entry.ut_user, 0, UT_NAMESIZE);
+    setutent();
+    pututline(&amp;entry);
+
+    system(&quot;echo after removing entry:;who&quot;);
+
+    endutent();
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>

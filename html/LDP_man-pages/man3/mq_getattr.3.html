@@ -42,13 +42,14 @@ mq_getattr, mq_setattr - メッセージキューの属性を設定/取得する
 <P>
 
 
-
+<PRE>
 struct mq_attr {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;mq_flags;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;フラグ:&nbsp;0&nbsp;か&nbsp;O_NONBLOCK&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;mq_maxmsg;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;キューの最大メッセージ数&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;mq_msgsize;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;最大メッセージサイズ&nbsp;(バイト単位)&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;mq_curmsgs;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;キューに現在入っているメッセージ数&nbsp;*/
+    long mq_flags;       /* フラグ: 0 か O_NONBLOCK */
+    long mq_maxmsg;      /* キューの最大メッセージ数 */
+    long mq_msgsize;     /* 最大メッセージサイズ (バイト単位) */
+    long mq_curmsgs;     /* キューに現在入っているメッセージ数 */
 };
+</PRE>
 
 
 <P>
@@ -116,10 +117,11 @@ Linux では、 <B>mq_getattr</B>()  と <B>mq_setattr</B>()  はライブラリ
 <P>
 
 
-
+<PRE>
 $ <B>./a.out /testq</B>
 Maximum # of messages on queue:   10
 Maximum message size:             8192
+</PRE>
 
 
 <P>
@@ -129,56 +131,58 @@ Linux 3.5 以降では、 (<B><A HREF="../man7/mq_overview.7.html">mq_overview</
 <P>
 
 
-
+<PRE>
 $ <B>uname -sr</B>
 Linux 3.8.0
 $ <B>cat /proc/sys/fs/mqueue/msg_default</B>
 10
 $ <B>cat /proc/sys/fs/mqueue/msgsize_default</B>
 8192
+</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/mqueue.h">mqueue.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-<P>
+
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        } while (0)
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mqd_t&nbsp;mqd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;mq_attr&nbsp;attr;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;mq-name\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mqd&nbsp;=&nbsp;mq_open(argv[1],&nbsp;O_CREAT&nbsp;|&nbsp;O_EXCL,&nbsp;S_IRUSR&nbsp;|&nbsp;S_IWUSR,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mqd&nbsp;==&nbsp;(mqd_t)&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;mq_open&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mq_getattr(mqd,&nbsp;&amp;attr)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;mq_getattr&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Maximum&nbsp;#&nbsp;of&nbsp;messages&nbsp;on&nbsp;queue:&nbsp;&nbsp;&nbsp;%ld\n&quot;,&nbsp;attr.mq_maxmsg);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Maximum&nbsp;message&nbsp;size:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%ld\n&quot;,&nbsp;attr.mq_msgsize);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mq_unlink(argv[1])&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;mq_unlink&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    mqd_t mqd;
+    struct mq_attr attr;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s mq-name\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    mqd = mq_open(argv[1], O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, NULL);
+    if (mqd == (mqd_t) -1)
+        errExit(&quot;mq_open&quot;);
+
+    if (mq_getattr(mqd, &amp;attr) == -1)
+        errExit(&quot;mq_getattr&quot;);
+
+    printf(&quot;Maximum # of messages on queue:   %ld\n&quot;, attr.mq_maxmsg);
+    printf(&quot;Maximum message size:             %ld\n&quot;, attr.mq_msgsize);
+
+    if (mq_unlink(argv[1]) == -1)
+        errExit(&quot;mq_unlink&quot;);
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

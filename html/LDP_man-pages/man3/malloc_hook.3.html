@@ -48,8 +48,9 @@ GNU C ライブラリでは、適切なフック関数 (hook function) を指定
 <P>
 
 
-
+<PRE>
 void (*__malloc_initialize_hook)(void) = my_init_hook;
+</PRE>
 
 
 <P>
@@ -87,51 +88,52 @@ defining and exporting functions such as &quot;malloc&quot; and &quot;free&quot;
 これらの変数の使い方の簡単な例を以下に示す。
 <P>
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/malloc.h">malloc.h</A>&gt;
-<P>
+
 /* 使おうとするフックのプロトタイプ宣言 */
 static void my_init_hook(void);
 static void *my_malloc_hook(size_t, const void *);
-<P>
+
 /* 元々のフックを保存するための変数 */
 static void *(*old_malloc_hook)(size_t, const void *);
-<P>
+
 /* C ライブラリから呼ばれる初期化フックを上書きする */
 void (*__malloc_initialize_hook) (void) = my_init_hook;
-<P>
+
 static void
 my_init_hook(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;old_malloc_hook&nbsp;=&nbsp;__malloc_hook;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__malloc_hook&nbsp;=&nbsp;my_malloc_hook;
+    old_malloc_hook = __malloc_hook;
+    __malloc_hook = my_malloc_hook;
 }
-<P>
+
 static void *
 my_malloc_hook(size_t size, const void *caller)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;*result;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;元々のフックを全て戻す&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__malloc_hook&nbsp;=&nbsp;old_malloc_hook;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;malloc&nbsp;の再帰的呼び出し&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;result&nbsp;=&nbsp;malloc(size);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;現在設定されているフック&nbsp;(underlying&nbsp;hook)&nbsp;を保存する&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;old_malloc_hook&nbsp;=&nbsp;__malloc_hook;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;printf()&nbsp;は&nbsp;malloc()&nbsp;を呼び出す可能性があるので
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ここでもガードを行う&nbsp;(元々のフックのままにしておく)&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;malloc(%zu)&nbsp;called&nbsp;from&nbsp;%p&nbsp;returns&nbsp;%p\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size,&nbsp;caller,&nbsp;result);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ユーザーが使おうとするフックを再設定する&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__malloc_hook&nbsp;=&nbsp;my_malloc_hook;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;result;
+    void *result;
+
+    /* 元々のフックを全て戻す */
+    __malloc_hook = old_malloc_hook;
+
+    /* malloc の再帰的呼び出し */
+    result = malloc(size);
+
+    /* 現在設定されているフック (underlying hook) を保存する */
+    old_malloc_hook = __malloc_hook;
+
+    /* printf() は malloc() を呼び出す可能性があるので
+        ここでもガードを行う (元々のフックのままにしておく) */
+    printf(&quot;malloc(%zu) called from %p returns %p\n&quot;,
+            size, caller, result);
+
+    /* ユーザーが使おうとするフックを再設定する */
+    __malloc_hook = my_malloc_hook;
+
+    return result;
 }
+</PRE>
 
 <A NAME="lbAH">&nbsp;</A>
 <H2>関連項目</H2>

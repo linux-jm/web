@@ -50,11 +50,12 @@ bind - ソケットに名前をつける
 <P>
 
 
-
+<PRE>
 struct sockaddr {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa_family_t&nbsp;sa_family;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sa_data[14];
+    sa_family_t sa_family;
+    char        sa_data[14];
 }
+</PRE>
 
 
 <P>
@@ -166,57 +167,58 @@ For background on the <I>socklen_t</I> type, see <B><A HREF="../man2/accept.2.ht
 以下の例は、UNIX ドメイン (<B>AF_UNIX</B>)  でストリームソケットを bind する方法を示したものである。
 <P>
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/un.h">sys/un.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-<P>
+
 #define MY_SOCK_PATH &quot;/somepath&quot;
 #define LISTEN_BACKLOG 50
-<P>
+
 #define handle_error(msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sfd,&nbsp;cfd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_un&nbsp;my_addr,&nbsp;peer_addr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;socklen_t&nbsp;peer_addr_size;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sfd&nbsp;=&nbsp;socket(AF_UNIX,&nbsp;SOCK_STREAM,&nbsp;0);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sfd&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;socket&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;my_addr,&nbsp;0,&nbsp;sizeof(my_addr));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Clear&nbsp;structure&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;my_addr.sun_family&nbsp;=&nbsp;AF_UNIX;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;strncpy(my_addr.sun_path,&nbsp;MY_SOCK_PATH,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(my_addr.sun_path)&nbsp;-&nbsp;1);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(bind(sfd,&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;my_addr,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(my_addr))&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;bind&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(listen(sfd,&nbsp;LISTEN_BACKLOG)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;listen&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Now&nbsp;we&nbsp;can&nbsp;accept&nbsp;incoming&nbsp;connections&nbsp;one
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;a&nbsp;time&nbsp;using&nbsp;<A HREF="../man2/accept.2.html">accept</A>(2)&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;peer_addr_size&nbsp;=&nbsp;sizeof(peer_addr);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cfd&nbsp;=&nbsp;accept(sfd,&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;peer_addr,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;peer_addr_size);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cfd&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;accept&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Code&nbsp;to&nbsp;deal&nbsp;with&nbsp;incoming&nbsp;connection(s)...&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;When&nbsp;no&nbsp;longer&nbsp;required,&nbsp;the&nbsp;socket&nbsp;pathname,&nbsp;MY_SOCK_PATH
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;should&nbsp;be&nbsp;deleted&nbsp;using&nbsp;<A HREF="../man2/unlink.2.html">unlink</A>(2)&nbsp;or&nbsp;<A HREF="../man3/remove.3.html">remove</A>(3)&nbsp;*/
+    int sfd, cfd;
+    struct sockaddr_un my_addr, peer_addr;
+    socklen_t peer_addr_size;
+
+    sfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sfd == -1)
+        handle_error(&quot;socket&quot;);
+
+    memset(&amp;my_addr, 0, sizeof(my_addr));
+                        /* Clear structure */
+    my_addr.sun_family = AF_UNIX;
+    strncpy(my_addr.sun_path, MY_SOCK_PATH,
+            sizeof(my_addr.sun_path) - 1);
+
+    if (bind(sfd, (struct sockaddr *) &amp;my_addr,
+            sizeof(my_addr)) == -1)
+        handle_error(&quot;bind&quot;);
+
+    if (listen(sfd, LISTEN_BACKLOG) == -1)
+        handle_error(&quot;listen&quot;);
+
+    /* Now we can accept incoming connections one
+       at a time using <A HREF="../man2/accept.2.html">accept</A>(2) */
+
+    peer_addr_size = sizeof(peer_addr);
+    cfd = accept(sfd, (struct sockaddr *) &amp;peer_addr,
+                 &amp;peer_addr_size);
+    if (cfd == -1)
+        handle_error(&quot;accept&quot;);
+
+    /* Code to deal with incoming connection(s)... */
+
+    /* When no longer required, the socket pathname, MY_SOCK_PATH
+       should be deleted using <A HREF="../man2/unlink.2.html">unlink</A>(2) or <A HREF="../man3/remove.3.html">remove</A>(3) */
 }
+</PRE>
 
 <A NAME="lbAK">&nbsp;</A>
 <H2>関連項目</H2>

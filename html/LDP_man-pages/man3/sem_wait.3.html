@@ -58,11 +58,12 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 
-
+<PRE>
 struct timespec {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Seconds&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;tv_nsec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Nanoseconds&nbsp;[0&nbsp;..&nbsp;999999999]&nbsp;*/
+    time_t tv_sec;      /* Seconds */
+    long   tv_nsec;     /* Nanoseconds [0 .. 999999999] */
 };
+</PRE>
 
 
 <P>
@@ -133,7 +134,7 @@ POSIX.1-2001, POSIX.1-2008.
 <P>
 
 
-
+<PRE>
 $<B> ./a.out 2 3</B>
 About to call sem_timedwait()
 sem_post() from handler
@@ -141,13 +142,14 @@ sem_timedwait() succeeded
 $<B> ./a.out 2 1</B>
 About to call sem_timedwait()
 sem_timedwait() timed out
+</PRE>
 
 
 <A NAME="lbAJ">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
@@ -156,72 +158,73 @@ sem_timedwait() timed out
 #include &lt;<A HREF="file:///usr/include/assert.h">assert.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
-<P>
+
 sem_t sem;
-<P>
+
 #define handle_error(msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 static void
 handler(int sig)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;write(STDOUT_FILENO,&nbsp;&quot;sem_post()&nbsp;from&nbsp;handler\n&quot;,&nbsp;24);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_post(&amp;sem)&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write(STDERR_FILENO,&nbsp;&quot;sem_post()&nbsp;failed\n&quot;,&nbsp;18);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+    write(STDOUT_FILENO, &quot;sem_post() from handler\n&quot;, 24);
+    if (sem_post(&amp;sem) == -1) {
+        write(STDERR_FILENO, &quot;sem_post() failed\n&quot;, 18);
+        _exit(EXIT_FAILURE);
+    }
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sigaction&nbsp;sa;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;timespec&nbsp;ts;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;3)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;alarm-secs&gt;&nbsp;&lt;wait-secs&gt;\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_init(&amp;sem,&nbsp;0,&nbsp;0)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;sem_init&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Establish&nbsp;SIGALRM&nbsp;handler;&nbsp;set&nbsp;alarm&nbsp;timer&nbsp;using&nbsp;argv[1]&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_handler&nbsp;=&nbsp;handler;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;sa.sa_mask);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_flags&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sigaction(SIGALRM,&nbsp;&amp;sa,&nbsp;NULL)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;sigaction&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;alarm(atoi(argv[1]));
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Calculate&nbsp;relative&nbsp;interval&nbsp;as&nbsp;current&nbsp;time&nbsp;plus
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;number&nbsp;of&nbsp;seconds&nbsp;given&nbsp;argv[2]&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(clock_gettime(CLOCK_REALTIME,&nbsp;&amp;ts)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;clock_gettime&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ts.tv_sec&nbsp;+=&nbsp;atoi(argv[2]);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;main()&nbsp;about&nbsp;to&nbsp;call&nbsp;sem_timedwait()\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((s&nbsp;=&nbsp;sem_timedwait(&amp;sem,&nbsp;&amp;ts))&nbsp;==&nbsp;-1&nbsp;&amp;&amp;&nbsp;errno&nbsp;==&nbsp;EINTR)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Restart&nbsp;if&nbsp;interrupted&nbsp;by&nbsp;handler&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Check&nbsp;what&nbsp;happened&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errno&nbsp;==&nbsp;ETIMEDOUT)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;sem_timedwait()&nbsp;timed&nbsp;out\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;sem_timedwait&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;sem_timedwait()&nbsp;succeeded\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit((s&nbsp;==&nbsp;0)&nbsp;?&nbsp;EXIT_SUCCESS&nbsp;:&nbsp;EXIT_FAILURE);
+    struct sigaction sa;
+    struct timespec ts;
+    int s;
+
+    if (argc != 3) {
+        fprintf(stderr, &quot;Usage: %s &lt;alarm-secs&gt; &lt;wait-secs&gt;\n&quot;,
+                argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    if (sem_init(&amp;sem, 0, 0) == -1)
+        handle_error(&quot;sem_init&quot;);
+
+    /* Establish SIGALRM handler; set alarm timer using argv[1] */
+
+    sa.sa_handler = handler;
+    sigemptyset(&amp;sa.sa_mask);
+    sa.sa_flags = 0;
+    if (sigaction(SIGALRM, &amp;sa, NULL) == -1)
+        handle_error(&quot;sigaction&quot;);
+
+    alarm(atoi(argv[1]));
+
+    /* Calculate relative interval as current time plus
+       number of seconds given argv[2] */
+
+    if (clock_gettime(CLOCK_REALTIME, &amp;ts) == -1)
+        handle_error(&quot;clock_gettime&quot;);
+
+    ts.tv_sec += atoi(argv[2]);
+
+    printf(&quot;main() about to call sem_timedwait()\n&quot;);
+    while ((s = sem_timedwait(&amp;sem, &amp;ts)) == -1 &amp;&amp; errno == EINTR)
+        continue;       /* Restart if interrupted by handler */
+
+    /* Check what happened */
+
+    if (s == -1) {
+        if (errno == ETIMEDOUT)
+            printf(&quot;sem_timedwait() timed out\n&quot;);
+        else
+            perror(&quot;sem_timedwait&quot;);
+    } else
+        printf(&quot;sem_timedwait() succeeded\n&quot;);
+
+    exit((s == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
 }
+</PRE>
 
 <A NAME="lbAK">&nbsp;</A>
 <H2>関連項目</H2>

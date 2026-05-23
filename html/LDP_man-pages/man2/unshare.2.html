@@ -268,12 +268,13 @@ nested user namespaces would be exceeded.  See the discussion of the
 <P>
 
 
-
+<PRE>
 $ <B>readlink /proc/$$/ns/mnt</B>
 mnt:[4026531840]
 $ <B>sudo ./unshare -m /bin/bash</B>
 # <B>readlink /proc/$$/ns/mnt</B>
 mnt:[4026532325]
+</PRE>
 
 
 <P>
@@ -283,70 +284,71 @@ mnt:[4026532325]
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 /* unshare.c
-<P>
-<BR>&nbsp;&nbsp;&nbsp;A&nbsp;simple&nbsp;implementation&nbsp;of&nbsp;the&nbsp;unshare(1)&nbsp;command:&nbsp;unshare
-<BR>&nbsp;&nbsp;&nbsp;namespaces&nbsp;and&nbsp;execute&nbsp;a&nbsp;command.
+
+   A simple implementation of the unshare(1) command: unshare
+   namespaces and execute a command.
 */
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-<P>
+
 /* A simple error-handling function: print an error message based
-<BR>&nbsp;&nbsp;&nbsp;on&nbsp;the&nbsp;value&nbsp;in&nbsp;'errno'&nbsp;and&nbsp;terminate&nbsp;the&nbsp;calling&nbsp;process&nbsp;*/
-<P>
+   on the value in 'errno' and terminate the calling process */
+
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        } while (0)
+
 static void
 usage(char *pname)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;[options]&nbsp;program&nbsp;[arg...]\n&quot;,&nbsp;pname);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Options&nbsp;can&nbsp;be:\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-C&nbsp;&nbsp;&nbsp;unshare&nbsp;cgroup&nbsp;namespace\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-i&nbsp;&nbsp;&nbsp;unshare&nbsp;IPC&nbsp;namespace\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-m&nbsp;&nbsp;&nbsp;unshare&nbsp;mount&nbsp;namespace\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-n&nbsp;&nbsp;&nbsp;unshare&nbsp;network&nbsp;namespace\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-p&nbsp;&nbsp;&nbsp;unshare&nbsp;PID&nbsp;namespace\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-t&nbsp;&nbsp;&nbsp;unshare&nbsp;time&nbsp;namespace\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-u&nbsp;&nbsp;&nbsp;unshare&nbsp;UTS&nbsp;namespace\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-U&nbsp;&nbsp;&nbsp;unshare&nbsp;user&nbsp;namespace\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+    fprintf(stderr, &quot;Usage: %s [options] program [arg...]\n&quot;, pname);
+    fprintf(stderr, &quot;Options can be:\n&quot;);
+    fprintf(stderr, &quot;    -C   unshare cgroup namespace\n&quot;);
+    fprintf(stderr, &quot;    -i   unshare IPC namespace\n&quot;);
+    fprintf(stderr, &quot;    -m   unshare mount namespace\n&quot;);
+    fprintf(stderr, &quot;    -n   unshare network namespace\n&quot;);
+    fprintf(stderr, &quot;    -p   unshare PID namespace\n&quot;);
+    fprintf(stderr, &quot;    -t   unshare time namespace\n&quot;);
+    fprintf(stderr, &quot;    -u   unshare UTS namespace\n&quot;);
+    fprintf(stderr, &quot;    -U   unshare user namespace\n&quot;);
+    exit(EXIT_FAILURE);
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;flags,&nbsp;opt;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;flags&nbsp;=&nbsp;0;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((opt&nbsp;=&nbsp;getopt(argc,&nbsp;argv,&nbsp;&quot;CimnptuU&quot;))&nbsp;!=&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(opt)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'C':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWCGROUP;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'i':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWIPC;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'m':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWNS;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'n':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWNET;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'p':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWPID;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'t':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWTIME;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'u':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWUTS;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'U':&nbsp;flags&nbsp;|=&nbsp;CLONE_NEWUSER;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:&nbsp;&nbsp;usage(argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(optind&nbsp;&gt;=&nbsp;argc)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;usage(argv[0]);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(unshare(flags)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;unshare&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;execvp(argv[optind],&nbsp;&amp;argv[optind]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;execvp&quot;);
+    int flags, opt;
+
+    flags = 0;
+
+    while ((opt = getopt(argc, argv, &quot;CimnptuU&quot;)) != -1) {
+        switch (opt) {
+        case 'C': flags |= CLONE_NEWCGROUP;      break;
+        case 'i': flags |= CLONE_NEWIPC;        break;
+        case 'm': flags |= CLONE_NEWNS;         break;
+        case 'n': flags |= CLONE_NEWNET;        break;
+        case 'p': flags |= CLONE_NEWPID;        break;
+        case 't': flags |= CLONE_NEWTIME;        break;
+        case 'u': flags |= CLONE_NEWUTS;        break;
+        case 'U': flags |= CLONE_NEWUSER;       break;
+        default:  usage(argv[0]);
+        }
+    }
+
+    if (optind &gt;= argc)
+        usage(argv[0]);
+
+    if (unshare(flags) == -1)
+        errExit(&quot;unshare&quot;);
+
+    execvp(argv[optind], &amp;argv[optind]);
+    errExit(&quot;execvp&quot;);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

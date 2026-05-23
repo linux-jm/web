@@ -203,18 +203,19 @@ sets using <B>ipcs</B>(1):
 <P>
 
 
-
+<PRE>
 $ <B>touch mykey mykey2</B>
 $ <B>./t_semget -c mykey p 1</B>
 ID = 9
 $ <B>./t_semget -c mykey2 p 2</B>
 ID = 10
 $ <B>ipcs -s</B>
-<P>
+
 ------ Semaphore Arrays --------
 key        semid      owner      perms      nsems
 0x7004136d 9          mtk        600        1
 0x70041368 10         mtk        600        2
+</PRE>
 
 
 <P>
@@ -225,9 +226,10 @@ already existing semaphore set:
 <P>
 
 
-
+<PRE>
 $ <B>./t_semget -c mykey p 1</B>
 ID = 9
+</PRE>
 
 
 <P>
@@ -237,23 +239,24 @@ is given different <I>pathname</I> arguments that have the same inode number:
 <P>
 
 
-
+<PRE>
 $ <B>ln mykey link</B>
 $ <B>ls -i1 link mykey</B>
 2233197 link
 2233197 mykey
 $ <B>./t_semget link p 1</B>       # Generates same key as 'mykey'
 ID = 9
+</PRE>
 
 
 <A NAME="lbAM">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 /* t_semget.c
-<P>
-<BR>&nbsp;&nbsp;&nbsp;Licensed&nbsp;under&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;v2&nbsp;or&nbsp;later.
+
+   Licensed under GNU General Public License v2 or later.
 */
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;
@@ -262,53 +265,54 @@ ID = 9
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-<P>
+
 static void
 usage(const char *pname)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;[-cx]&nbsp;pathname&nbsp;proj-id&nbsp;num-sems\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pname);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Use&nbsp;IPC_CREAT&nbsp;flag\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;&nbsp;&nbsp;&nbsp;&nbsp;-x&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Use&nbsp;IPC_EXCL&nbsp;flag\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+    fprintf(stderr, &quot;Usage: %s [-cx] pathname proj-id num-sems\n&quot;,
+            pname);
+    fprintf(stderr, &quot;    -c           Use IPC_CREAT flag\n&quot;);
+    fprintf(stderr, &quot;    -x           Use IPC_EXCL flag\n&quot;);
+    exit(EXIT_FAILURE);
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;semid,&nbsp;nsems,&nbsp;flags,&nbsp;opt;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;key_t&nbsp;key;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;flags&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((opt&nbsp;=&nbsp;getopt(argc,&nbsp;argv,&nbsp;&quot;cx&quot;))&nbsp;!=&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(opt)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'c':&nbsp;flags&nbsp;|=&nbsp;IPC_CREAT;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'x':&nbsp;flags&nbsp;|=&nbsp;IPC_EXCL;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:&nbsp;&nbsp;usage(argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;optind&nbsp;+&nbsp;3)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;usage(argv[0]);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;key&nbsp;=&nbsp;ftok(argv[optind],&nbsp;argv[optind&nbsp;+&nbsp;1][0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(key&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;ftok&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;nsems&nbsp;=&nbsp;atoi(argv[optind&nbsp;+&nbsp;2]);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;semid&nbsp;=&nbsp;semget(key,&nbsp;nsems,&nbsp;flags&nbsp;|&nbsp;0600);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(semid&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;semget&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;ID&nbsp;=&nbsp;%d\n&quot;,&nbsp;semid);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int semid, nsems, flags, opt;
+    key_t key;
+
+    flags = 0;
+    while ((opt = getopt(argc, argv, &quot;cx&quot;)) != -1) {
+        switch (opt) {
+        case 'c': flags |= IPC_CREAT;   break;
+        case 'x': flags |= IPC_EXCL;    break;
+        default:  usage(argv[0]);
+        }
+    }
+
+    if (argc != optind + 3)
+        usage(argv[0]);
+
+    key = ftok(argv[optind], argv[optind + 1][0]);
+    if (key == -1) {
+        perror(&quot;ftok&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    nsems = atoi(argv[optind + 2]);
+
+    semid = semget(key, nsems, flags | 0600);
+    if (semid == -1) {
+        perror(&quot;semget&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;ID = %d\n&quot;, semid);
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>

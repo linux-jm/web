@@ -136,7 +136,7 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 
-
+<PRE>
 $<B> ./a.out 7 tcp 1</B>
 ERANGE! Retrying with larger buffer
 getservbyport_r() returned: 0 (success)  (buflen=87)
@@ -144,13 +144,14 @@ s_name=echo; s_proto=tcp; s_port=7; aliases=
 $<B> ./a.out 77777 tcp</B>
 getservbyport_r() returned: 0 (success)  (buflen=1024)
 Call failed/record not found
+</PRE>
 
 
 <A NAME="lbAJ">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/ctype.h">ctype.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
@@ -158,75 +159,76 @@ Call failed/record not found
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-<P>
+
 #define MAX_BUF 10000
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;buflen,&nbsp;erange_cnt,&nbsp;port,&nbsp;s;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;servent&nbsp;result_buf;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;servent&nbsp;*result;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[MAX_BUF];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*protop;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;3)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Usage:&nbsp;%s&nbsp;port-num&nbsp;proto-name&nbsp;[buflen]\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;port&nbsp;=&nbsp;htons(atoi(argv[1]));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;protop&nbsp;=&nbsp;(strcmp(argv[2],&nbsp;&quot;null&quot;)&nbsp;==&nbsp;0&nbsp;||
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;strcmp(argv[2],&nbsp;&quot;NULL&quot;)&nbsp;==&nbsp;0)&nbsp;?&nbsp;&nbsp;NULL&nbsp;:&nbsp;argv[2];
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;buflen&nbsp;=&nbsp;1024;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;3)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buflen&nbsp;=&nbsp;atoi(argv[3]);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buflen&nbsp;&gt;&nbsp;MAX_BUF)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Exceeded&nbsp;buffer&nbsp;limit&nbsp;(%d)\n&quot;,&nbsp;MAX_BUF);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;erange_cnt&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;getservbyport_r(port,&nbsp;protop,&nbsp;&amp;result_buf,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf,&nbsp;buflen,&nbsp;&amp;result);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;ERANGE)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(erange_cnt&nbsp;==&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;ERANGE!&nbsp;Retrying&nbsp;with&nbsp;larger&nbsp;buffer\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;erange_cnt++;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Increment&nbsp;a&nbsp;byte&nbsp;at&nbsp;a&nbsp;time&nbsp;so&nbsp;we&nbsp;can&nbsp;see&nbsp;exactly
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;what&nbsp;size&nbsp;buffer&nbsp;was&nbsp;required&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buflen++;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buflen&nbsp;&gt;&nbsp;MAX_BUF)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Exceeded&nbsp;buffer&nbsp;limit&nbsp;(%d)\n&quot;,&nbsp;MAX_BUF);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(s&nbsp;==&nbsp;ERANGE);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;getservbyport_r()&nbsp;returned:&nbsp;%s&nbsp;&nbsp;(buflen=%d)\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(s&nbsp;==&nbsp;0)&nbsp;?&nbsp;&quot;0&nbsp;(success)&quot;&nbsp;:&nbsp;(s&nbsp;==&nbsp;ENOENT)&nbsp;?&nbsp;&quot;ENOENT&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;strerror(s),&nbsp;buflen);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0&nbsp;||&nbsp;result&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Call&nbsp;failed/record&nbsp;not&nbsp;found\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;s_name=%s;&nbsp;s_proto=%s;&nbsp;s_port=%d;&nbsp;aliases=&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result_buf.s_name,&nbsp;result_buf.s_proto,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntohs(result_buf.s_port));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(char&nbsp;**p&nbsp;=&nbsp;result_buf.s_aliases;&nbsp;*p&nbsp;!=&nbsp;NULL;&nbsp;p++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s&nbsp;&quot;,&nbsp;*p);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int buflen, erange_cnt, port, s;
+    struct servent result_buf;
+    struct servent *result;
+    char buf[MAX_BUF];
+    char *protop;
+
+    if (argc &lt; 3) {
+        printf(&quot;Usage: %s port-num proto-name [buflen]\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    port = htons(atoi(argv[1]));
+    protop = (strcmp(argv[2], &quot;null&quot;) == 0 ||
+              strcmp(argv[2], &quot;NULL&quot;) == 0) ?  NULL : argv[2];
+
+    buflen = 1024;
+    if (argc &gt; 3)
+        buflen = atoi(argv[3]);
+
+    if (buflen &gt; MAX_BUF) {
+        printf(&quot;Exceeded buffer limit (%d)\n&quot;, MAX_BUF);
+        exit(EXIT_FAILURE);
+    }
+
+    erange_cnt = 0;
+    do {
+        s = getservbyport_r(port, protop, &amp;result_buf,
+                     buf, buflen, &amp;result);
+        if (s == ERANGE) {
+            if (erange_cnt == 0)
+                printf(&quot;ERANGE! Retrying with larger buffer\n&quot;);
+            erange_cnt++;
+
+            /* Increment a byte at a time so we can see exactly
+               what size buffer was required */
+
+            buflen++;
+
+            if (buflen &gt; MAX_BUF) {
+                printf(&quot;Exceeded buffer limit (%d)\n&quot;, MAX_BUF);
+                exit(EXIT_FAILURE);
+            }
+        }
+    } while (s == ERANGE);
+
+    printf(&quot;getservbyport_r() returned: %s  (buflen=%d)\n&quot;,
+            (s == 0) ? &quot;0 (success)&quot; : (s == ENOENT) ? &quot;ENOENT&quot; :
+            strerror(s), buflen);
+
+    if (s != 0 || result == NULL) {
+        printf(&quot;Call failed/record not found\n&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;s_name=%s; s_proto=%s; s_port=%d; aliases=&quot;,
+                result_buf.s_name, result_buf.s_proto,
+                ntohs(result_buf.s_port));
+    for (char **p = result_buf.s_aliases; *p != NULL; p++)
+        printf(&quot;%s &quot;, *p);
+    printf(&quot;\n&quot;);
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAK">&nbsp;</A>
 <H2>関連項目</H2>

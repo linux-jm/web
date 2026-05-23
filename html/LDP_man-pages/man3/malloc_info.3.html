@@ -95,7 +95,7 @@ malloc_info - malloc の状態をストリームに出力する
 <P>
 
 
-
+<PRE>
 $ <B>getconf GNU_LIBC_VERSION</B>
 glibc 2.13
 $ <B>./a.out 1 10000 100</B>
@@ -118,7 +118,7 @@ $ <B>./a.out 1 10000 100</B>
 &lt;aspace type=&quot;total&quot; size=&quot;135168&quot;/&gt;
 &lt;aspace type=&quot;mprotect&quot; size=&quot;135168&quot;/&gt;
 &lt;/malloc&gt;
-<P>
+
 ============ After allocating blocks ============
 &lt;malloc version=&quot;1&quot;&gt;
 &lt;heap nr=&quot;0&quot;&gt;
@@ -148,95 +148,97 @@ $ <B>./a.out 1 10000 100</B>
 &lt;aspace type=&quot;total&quot; size=&quot;2113536&quot;/&gt;
 &lt;aspace type=&quot;mprotect&quot; size=&quot;2113536&quot;/&gt;
 &lt;/malloc&gt;
+</PRE>
 
 
 <A NAME="lbAL">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/malloc.h">malloc.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-<P>
+
 static size_t blockSize;
 static int numThreads, numBlocks;
-<P>
+
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        } while (0)
+
 static void *
 thread_func(void *arg)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tn&nbsp;=&nbsp;(int)&nbsp;arg;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;The&nbsp;multiplier&nbsp;'(2&nbsp;+&nbsp;tn)'&nbsp;ensures&nbsp;that&nbsp;each&nbsp;thread&nbsp;(including
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;main&nbsp;thread)&nbsp;allocates&nbsp;a&nbsp;different&nbsp;amount&nbsp;of&nbsp;memory&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;numBlocks;&nbsp;j++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(malloc(blockSize&nbsp;*&nbsp;(2&nbsp;+&nbsp;tn))&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc-thread&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sleep(100);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Sleep&nbsp;until&nbsp;main&nbsp;thread&nbsp;terminates&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
+    int tn = (int) arg;
+
+    /* The multiplier '(2 + tn)' ensures that each thread (including
+       the main thread) allocates a different amount of memory */
+
+    for (int j = 0; j &lt; numBlocks; j++)
+        if (malloc(blockSize * (2 + tn)) == NULL)
+            errExit(&quot;malloc-thread&quot;);
+
+    sleep(100);         /* Sleep until main thread terminates */
+    return NULL;
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sleepTime;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;4)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;%s&nbsp;num-threads&nbsp;num-blocks&nbsp;block-size&nbsp;[sleep-time]\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;numThreads&nbsp;=&nbsp;atoi(argv[1]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;numBlocks&nbsp;=&nbsp;atoi(argv[2]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;blockSize&nbsp;=&nbsp;atoi(argv[3]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sleepTime&nbsp;=&nbsp;(argc&nbsp;&gt;&nbsp;4)&nbsp;?&nbsp;atoi(argv[4])&nbsp;:&nbsp;0;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;*thr&nbsp;=&nbsp;calloc(numThreads,&nbsp;sizeof(*thr));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(thr&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;calloc&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;============&nbsp;Before&nbsp;allocating&nbsp;blocks&nbsp;============\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;malloc_info(0,&nbsp;stdout);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;threads&nbsp;that&nbsp;allocate&nbsp;different&nbsp;amounts&nbsp;of&nbsp;memory&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;tn&nbsp;=&nbsp;0;&nbsp;tn&nbsp;&lt;&nbsp;numThreads;&nbsp;tn++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errno&nbsp;=&nbsp;pthread_create(&amp;thr[tn],&nbsp;NULL,&nbsp;thread_func,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(void&nbsp;*)&nbsp;tn);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errno&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;pthread_create&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;If&nbsp;we&nbsp;add&nbsp;a&nbsp;sleep&nbsp;interval&nbsp;after&nbsp;the&nbsp;start-up&nbsp;of&nbsp;each
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;thread,&nbsp;the&nbsp;threads&nbsp;likely&nbsp;won't&nbsp;contend&nbsp;for&nbsp;malloc
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mutexes,&nbsp;and&nbsp;therefore&nbsp;additional&nbsp;arenas&nbsp;won't&nbsp;be
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allocated&nbsp;(see&nbsp;<A HREF="../man3/malloc.3.html">malloc</A>(3)).&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sleepTime&nbsp;&gt;&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sleep(sleepTime);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;The&nbsp;main&nbsp;thread&nbsp;also&nbsp;allocates&nbsp;some&nbsp;memory&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;numBlocks;&nbsp;j++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(malloc(blockSize)&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sleep(2);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Give&nbsp;all&nbsp;threads&nbsp;a&nbsp;chance&nbsp;to
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;complete&nbsp;allocations&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n============&nbsp;After&nbsp;allocating&nbsp;blocks&nbsp;============\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;malloc_info(0,&nbsp;stdout);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int sleepTime;
+
+    if (argc &lt; 4) {
+        fprintf(stderr,
+                &quot;%s num-threads num-blocks block-size [sleep-time]\n&quot;,
+                argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    numThreads = atoi(argv[1]);
+    numBlocks = atoi(argv[2]);
+    blockSize = atoi(argv[3]);
+    sleepTime = (argc &gt; 4) ? atoi(argv[4]) : 0;
+
+    pthread_t *thr = calloc(numThreads, sizeof(*thr));
+    if (thr == NULL)
+        errExit(&quot;calloc&quot;);
+
+    printf(&quot;============ Before allocating blocks ============\n&quot;);
+    malloc_info(0, stdout);
+
+    /* Create threads that allocate different amounts of memory */
+
+    for (int tn = 0; tn &lt; numThreads; tn++) {
+        errno = pthread_create(&amp;thr[tn], NULL, thread_func,
+                               (void *) tn);
+        if (errno != 0)
+            errExit(&quot;pthread_create&quot;);
+
+        /* If we add a sleep interval after the start-up of each
+           thread, the threads likely won't contend for malloc
+           mutexes, and therefore additional arenas won't be
+           allocated (see <A HREF="../man3/malloc.3.html">malloc</A>(3)). */
+
+        if (sleepTime &gt; 0)
+            sleep(sleepTime);
+    }
+
+    /* The main thread also allocates some memory */
+
+    for (int j = 0; j &lt; numBlocks; j++)
+        if (malloc(blockSize) == NULL)
+            errExit(&quot;malloc&quot;);
+
+    sleep(2);           /* Give all threads a chance to
+                           complete allocations */
+
+    printf(&quot;\n============ After allocating blocks ============\n&quot;);
+    malloc_info(0, stdout);
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>

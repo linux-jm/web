@@ -51,12 +51,13 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 
-
+<PRE>
 struct rlimit {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;rlim_t&nbsp;rlim_cur;&nbsp;&nbsp;/*&nbsp;ソフトリミット&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;rlim_t&nbsp;rlim_max;&nbsp;&nbsp;/*&nbsp;ハードリミット
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rlim_cur&nbsp;より小さくない)&nbsp;*/
+    rlim_t rlim_cur;  /* ソフトリミット */
+    rlim_t rlim_max;  /* ハードリミット
+                         (rlim_cur より小さくない) */
 };
+</PRE>
 
 
 <P>
@@ -147,22 +148,24 @@ enforced for <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3).  Each messa
 <DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;Linux&nbsp;3.5:
 <DT><DD>
-
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bytes&nbsp;=&nbsp;attr.mq_maxmsg&nbsp;*&nbsp;sizeof(struct&nbsp;msg_msg)&nbsp;+
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;min(attr.mq_maxmsg,&nbsp;MQ_PRIO_MAX)&nbsp;*
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(struct&nbsp;posix_msg_tree_node)+
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;オーバーヘッド分&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attr.mq_maxmsg&nbsp;*&nbsp;attr.mq_msgsize;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;メッセージデータ分&nbsp;*/
+<PRE>
+        bytes = attr.mq_maxmsg * sizeof(struct msg_msg) +
+                min(attr.mq_maxmsg, MQ_PRIO_MAX) *
+                      sizeof(struct posix_msg_tree_node)+
+                                /* オーバーヘッド分 */
+                attr.mq_maxmsg * attr.mq_msgsize;
+                                /* メッセージデータ分 */
+</PRE>
 
 <DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;Linux&nbsp;3.4&nbsp;and&nbsp;earlier:
 <DT><DD>
-
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bytes&nbsp;=&nbsp;attr.mq_maxmsg&nbsp;*&nbsp;sizeof(struct&nbsp;msg_msg&nbsp;*)&nbsp;+
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;オーバーヘッド分&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attr.mq_maxmsg&nbsp;*&nbsp;attr.mq_msgsize;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;メッセージデータ分&nbsp;*/
+<PRE>
+        bytes = attr.mq_maxmsg * sizeof(struct msg_msg *) +
+                                /* オーバーヘッド分 */
+                attr.mq_maxmsg * attr.mq_msgsize;
+                                /* メッセージデータ分 */
+</PRE>
 
 <DT><DD>
 ここで <I>attr</I> は <I>mq_attr</I> 構造体であり、 <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3)  の第 4 引数として指定される。 また、構造体
@@ -487,7 +490,7 @@ glibc の <B>getrlimit</B>() と <B>setrlimit</B>() ラッパー関数は、32 �
 以下のプログラムに <B>prlimit</B>() の使用例を示す。
 <P>
 
-
+<PRE>
 #define _GNU_SOURCE
 #define _FILE_OFFSET_BITS 64
 #include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
@@ -496,49 +499,50 @@ glibc の <B>getrlimit</B>() と <B>setrlimit</B>() ラッパー関数は、32 �
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;
-<P>
+
 #define errExit(msg) do { perror(msg); exit(EXIT_FAILURE); \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        } while (0)
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;rlimit&nbsp;old,&nbsp;new;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;rlimit&nbsp;*newp;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;pid;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!(argc&nbsp;==&nbsp;2&nbsp;||&nbsp;argc&nbsp;==&nbsp;4))&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;pid&gt;&nbsp;[&lt;new-soft-limit&gt;&nbsp;&quot;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&lt;new-hard-limit&gt;]\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid&nbsp;=&nbsp;atoi(argv[1]);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;PID&nbsp;of&nbsp;target&nbsp;process&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;newp&nbsp;=&nbsp;NULL;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;==&nbsp;4)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new.rlim_cur&nbsp;=&nbsp;atoi(argv[2]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new.rlim_max&nbsp;=&nbsp;atoi(argv[3]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;newp&nbsp;=&nbsp;&amp;new;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Set&nbsp;CPU&nbsp;time&nbsp;limit&nbsp;of&nbsp;target&nbsp;process;&nbsp;retrieve&nbsp;and&nbsp;display
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;previous&nbsp;limit&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(prlimit(pid,&nbsp;RLIMIT_CPU,&nbsp;newp,&nbsp;&amp;old)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;prlimit-1&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Previous&nbsp;limits:&nbsp;soft=%jd;&nbsp;hard=%jd\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(intmax_t)&nbsp;old.rlim_cur,&nbsp;(intmax_t)&nbsp;old.rlim_max);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Retrieve&nbsp;and&nbsp;display&nbsp;new&nbsp;CPU&nbsp;time&nbsp;limit&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(prlimit(pid,&nbsp;RLIMIT_CPU,&nbsp;NULL,&nbsp;&amp;old)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;prlimit-2&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;New&nbsp;limits:&nbsp;soft=%jd;&nbsp;hard=%jd\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(intmax_t)&nbsp;old.rlim_cur,&nbsp;(intmax_t)&nbsp;old.rlim_max);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    struct rlimit old, new;
+    struct rlimit *newp;
+    pid_t pid;
+
+    if (!(argc == 2 || argc == 4)) {
+        fprintf(stderr, &quot;Usage: %s &lt;pid&gt; [&lt;new-soft-limit&gt; &quot;
+                &quot;&lt;new-hard-limit&gt;]\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    pid = atoi(argv[1]);        /* PID of target process */
+
+    newp = NULL;
+    if (argc == 4) {
+        new.rlim_cur = atoi(argv[2]);
+        new.rlim_max = atoi(argv[3]);
+        newp = &amp;new;
+    }
+
+    /* Set CPU time limit of target process; retrieve and display
+       previous limit */
+
+    if (prlimit(pid, RLIMIT_CPU, newp, &amp;old) == -1)
+        errExit(&quot;prlimit-1&quot;);
+    printf(&quot;Previous limits: soft=%jd; hard=%jd\n&quot;,
+            (intmax_t) old.rlim_cur, (intmax_t) old.rlim_max);
+
+    /* Retrieve and display new CPU time limit */
+
+    if (prlimit(pid, RLIMIT_CPU, NULL, &amp;old) == -1)
+        errExit(&quot;prlimit-2&quot;);
+    printf(&quot;New limits: soft=%jd; hard=%jd\n&quot;,
+            (intmax_t) old.rlim_cur, (intmax_t) old.rlim_max);
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAP">&nbsp;</A>
 <H2>関連項目</H2>

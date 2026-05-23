@@ -119,7 +119,7 @@ beforehand.
 <P>
 
 
-
+<PRE>
 $<B> cc -rdynamic prog.c -o prog</B>
 $<B> ./prog 3</B>
 backtrace() returned 8 addresses
@@ -131,71 +131,73 @@ backtrace() returned 8 addresses
 ./prog(main+0x65) [0x80488fb]
 /lib/libc.so.6(__libc_start_main+0xdc) [0xb7e38f9c]
 ./prog [0x8048711]
+</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/execinfo.h">execinfo.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-<P>
+
 #define BT_BUF_SIZE 100
-<P>
+
 void
 myfunc3(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;nptrs;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;*buffer[BT_BUF_SIZE];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;**strings;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;nptrs&nbsp;=&nbsp;backtrace(buffer,&nbsp;BT_BUF_SIZE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;backtrace()&nbsp;returned&nbsp;%d&nbsp;addresses\n&quot;,&nbsp;nptrs);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;backtrace_symbols_fd(buffer,&nbsp;nptrs,&nbsp;STDOUT_FILENO)&nbsp;を
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;呼び出しても、以下と同様の出力が得られる。&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;strings&nbsp;=&nbsp;backtrace_symbols(buffer,&nbsp;nptrs);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(strings&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;backtrace_symbols&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;nptrs;&nbsp;j++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s\n&quot;,&nbsp;strings[j]);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(strings);
+    int nptrs;
+    void *buffer[BT_BUF_SIZE];
+    char **strings;
+
+    nptrs = backtrace(buffer, BT_BUF_SIZE);
+    printf(&quot;backtrace() returned %d addresses\n&quot;, nptrs);
+
+    /* backtrace_symbols_fd(buffer, nptrs, STDOUT_FILENO) を
+       呼び出しても、以下と同様の出力が得られる。 */
+
+    strings = backtrace_symbols(buffer, nptrs);
+    if (strings == NULL) {
+        perror(&quot;backtrace_symbols&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    for (int j = 0; j &lt; nptrs; j++)
+        printf(&quot;%s\n&quot;, strings[j]);
+
+    free(strings);
 }
-<P>
+
 static void   /* &quot;static&quot; はシンボルを公開しないことを意味する */
 myfunc2(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;myfunc3();
+    myfunc3();
 }
-<P>
+
 void
 myfunc(int ncalls)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ncalls&nbsp;&gt;&nbsp;1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myfunc(ncalls&nbsp;-&nbsp;1);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myfunc2();
+    if (ncalls &gt; 1)
+        myfunc(ncalls - 1);
+    else
+        myfunc2();
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s&nbsp;num-calls\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;myfunc(atoi(argv[1]));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    if (argc != 2) {
+        fprintf(stderr, &quot;%s num-calls\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    myfunc(atoi(argv[1]));
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

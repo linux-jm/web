@@ -107,21 +107,21 @@ pthreads 関数経由以外でのオブジェクトへのアクセスは移植�
 <P>
 
 
-
-
+<PRE>
 
 $<B> ulimit -s</B>       # No stack limit ==&gt; default stack size is 2 MB
 unlimited
 $<B> ./a.out</B>
 Thread attributes:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Detach&nbsp;state&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;PTHREAD_CREATE_JOINABLE
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Scope&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;PTHREAD_SCOPE_SYSTEM
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Inherit&nbsp;scheduler&nbsp;&nbsp;&nbsp;=&nbsp;PTHREAD_INHERIT_SCHED
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Scheduling&nbsp;policy&nbsp;&nbsp;&nbsp;=&nbsp;SCHED_OTHER
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Scheduling&nbsp;priority&nbsp;=&nbsp;0
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Guard&nbsp;size&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;4096&nbsp;bytes
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Stack&nbsp;address&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0x40196000
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Stack&nbsp;size&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0x201000&nbsp;bytes
+        Detach state        = PTHREAD_CREATE_JOINABLE
+        Scope               = PTHREAD_SCOPE_SYSTEM
+        Inherit scheduler   = PTHREAD_INHERIT_SCHED
+        Scheduling policy   = SCHED_OTHER
+        Scheduling priority = 0
+        Guard size          = 4096 bytes
+        Stack address       = 0x40196000
+        Stack size          = 0x201000 bytes
+</PRE>
 
 
 <P>
@@ -135,172 +135,173 @@ Thread attributes:
 <P>
 
 
-
-
+<PRE>
 
 $<B> ./a.out 0x3000000</B>
 posix_memalign() allocated at 0x40197000
 Thread attributes:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Detach&nbsp;state&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;PTHREAD_CREATE_DETACHED
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Scope&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;PTHREAD_SCOPE_SYSTEM
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Inherit&nbsp;scheduler&nbsp;&nbsp;&nbsp;=&nbsp;PTHREAD_EXPLICIT_SCHED
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Scheduling&nbsp;policy&nbsp;&nbsp;&nbsp;=&nbsp;SCHED_OTHER
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Scheduling&nbsp;priority&nbsp;=&nbsp;0
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Guard&nbsp;size&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0&nbsp;bytes
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Stack&nbsp;address&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0x40197000
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Stack&nbsp;size&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0x3000000&nbsp;bytes
+        Detach state        = PTHREAD_CREATE_DETACHED
+        Scope               = PTHREAD_SCOPE_SYSTEM
+        Inherit scheduler   = PTHREAD_EXPLICIT_SCHED
+        Scheduling policy   = SCHED_OTHER
+        Scheduling priority = 0
+        Guard size          = 0 bytes
+        Stack address       = 0x40197000
+        Stack size          = 0x3000000 bytes
+</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #define _GNU_SOURCE     /* To get pthread_getattr_np() declaration */
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-<P>
+
 #define handle_error_en(en, msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;errno&nbsp;=&nbsp;en;&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+
 static void
 display_pthread_attr(pthread_attr_t *attr, char *prefix)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s,&nbsp;i;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;v;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;*stkaddr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sched_param&nbsp;sp;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_getdetachstate(attr,&nbsp;&amp;i);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_getdetachstate&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%sDetach&nbsp;state&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;%s\n&quot;,&nbsp;prefix,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(i&nbsp;==&nbsp;PTHREAD_CREATE_DETACHED)&nbsp;?&nbsp;&quot;PTHREAD_CREATE_DETACHED&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(i&nbsp;==&nbsp;PTHREAD_CREATE_JOINABLE)&nbsp;?&nbsp;&quot;PTHREAD_CREATE_JOINABLE&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;???&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_getscope(attr,&nbsp;&amp;i);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_getscope&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%sScope&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;%s\n&quot;,&nbsp;prefix,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(i&nbsp;==&nbsp;PTHREAD_SCOPE_SYSTEM)&nbsp;&nbsp;?&nbsp;&quot;PTHREAD_SCOPE_SYSTEM&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(i&nbsp;==&nbsp;PTHREAD_SCOPE_PROCESS)&nbsp;?&nbsp;&quot;PTHREAD_SCOPE_PROCESS&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;???&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_getinheritsched(attr,&nbsp;&amp;i);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_getinheritsched&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%sInherit&nbsp;scheduler&nbsp;&nbsp;&nbsp;=&nbsp;%s\n&quot;,&nbsp;prefix,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(i&nbsp;==&nbsp;PTHREAD_INHERIT_SCHED)&nbsp;&nbsp;?&nbsp;&quot;PTHREAD_INHERIT_SCHED&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(i&nbsp;==&nbsp;PTHREAD_EXPLICIT_SCHED)&nbsp;?&nbsp;&quot;PTHREAD_EXPLICIT_SCHED&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;???&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_getschedpolicy(attr,&nbsp;&amp;i);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_getschedpolicy&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%sScheduling&nbsp;policy&nbsp;&nbsp;&nbsp;=&nbsp;%s\n&quot;,&nbsp;prefix,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(i&nbsp;==&nbsp;SCHED_OTHER)&nbsp;?&nbsp;&quot;SCHED_OTHER&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(i&nbsp;==&nbsp;SCHED_FIFO)&nbsp;&nbsp;?&nbsp;&quot;SCHED_FIFO&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(i&nbsp;==&nbsp;SCHED_RR)&nbsp;&nbsp;&nbsp;&nbsp;?&nbsp;&quot;SCHED_RR&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;???&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_getschedparam(attr,&nbsp;&amp;sp);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_getschedparam&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%sScheduling&nbsp;priority&nbsp;=&nbsp;%d\n&quot;,&nbsp;prefix,&nbsp;sp.sched_priority);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_getguardsize(attr,&nbsp;&amp;v);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_getguardsize&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%sGuard&nbsp;size&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;%zu&nbsp;bytes\n&quot;,&nbsp;prefix,&nbsp;v);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_getstack(attr,&nbsp;&amp;stkaddr,&nbsp;&amp;v);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_getstack&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%sStack&nbsp;address&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;%p\n&quot;,&nbsp;prefix,&nbsp;stkaddr);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%sStack&nbsp;size&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;%#zx&nbsp;bytes\n&quot;,&nbsp;prefix,&nbsp;v);
+    int s, i;
+    size_t v;
+    void *stkaddr;
+    struct sched_param sp;
+
+    s = pthread_attr_getdetachstate(attr, &amp;i);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_attr_getdetachstate&quot;);
+    printf(&quot;%sDetach state        = %s\n&quot;, prefix,
+            (i == PTHREAD_CREATE_DETACHED) ? &quot;PTHREAD_CREATE_DETACHED&quot; :
+            (i == PTHREAD_CREATE_JOINABLE) ? &quot;PTHREAD_CREATE_JOINABLE&quot; :
+            &quot;???&quot;);
+
+    s = pthread_attr_getscope(attr, &amp;i);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_attr_getscope&quot;);
+    printf(&quot;%sScope               = %s\n&quot;, prefix,
+            (i == PTHREAD_SCOPE_SYSTEM)  ? &quot;PTHREAD_SCOPE_SYSTEM&quot; :
+            (i == PTHREAD_SCOPE_PROCESS) ? &quot;PTHREAD_SCOPE_PROCESS&quot; :
+            &quot;???&quot;);
+
+    s = pthread_attr_getinheritsched(attr, &amp;i);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_attr_getinheritsched&quot;);
+    printf(&quot;%sInherit scheduler   = %s\n&quot;, prefix,
+            (i == PTHREAD_INHERIT_SCHED)  ? &quot;PTHREAD_INHERIT_SCHED&quot; :
+            (i == PTHREAD_EXPLICIT_SCHED) ? &quot;PTHREAD_EXPLICIT_SCHED&quot; :
+            &quot;???&quot;);
+
+    s = pthread_attr_getschedpolicy(attr, &amp;i);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_attr_getschedpolicy&quot;);
+    printf(&quot;%sScheduling policy   = %s\n&quot;, prefix,
+            (i == SCHED_OTHER) ? &quot;SCHED_OTHER&quot; :
+            (i == SCHED_FIFO)  ? &quot;SCHED_FIFO&quot; :
+            (i == SCHED_RR)    ? &quot;SCHED_RR&quot; :
+            &quot;???&quot;);
+
+    s = pthread_attr_getschedparam(attr, &amp;sp);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_attr_getschedparam&quot;);
+    printf(&quot;%sScheduling priority = %d\n&quot;, prefix, sp.sched_priority);
+
+    s = pthread_attr_getguardsize(attr, &amp;v);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_attr_getguardsize&quot;);
+    printf(&quot;%sGuard size          = %zu bytes\n&quot;, prefix, v);
+
+    s = pthread_attr_getstack(attr, &amp;stkaddr, &amp;v);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_attr_getstack&quot;);
+    printf(&quot;%sStack address       = %p\n&quot;, prefix, stkaddr);
+    printf(&quot;%sStack size          = %#zx bytes\n&quot;, prefix, v);
 }
-<P>
+
 static void *
 thread_start(void *arg)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_attr_t&nbsp;gattr;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;pthread_getattr_np()&nbsp;is&nbsp;a&nbsp;non-standard&nbsp;GNU&nbsp;extension&nbsp;that
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;retrieves&nbsp;the&nbsp;attributes&nbsp;of&nbsp;the&nbsp;thread&nbsp;specified&nbsp;in&nbsp;its
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;first&nbsp;argument&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_getattr_np(pthread_self(),&nbsp;&amp;gattr);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_getattr_np&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Thread&nbsp;attributes:\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;display_pthread_attr(&amp;gattr,&nbsp;&quot;\t&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Terminate&nbsp;all&nbsp;threads&nbsp;*/
+    int s;
+    pthread_attr_t gattr;
+
+    /* pthread_getattr_np() is a non-standard GNU extension that
+       retrieves the attributes of the thread specified in its
+       first argument */
+
+    s = pthread_getattr_np(pthread_self(), &amp;gattr);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_getattr_np&quot;);
+
+    printf(&quot;Thread attributes:\n&quot;);
+    display_pthread_attr(&amp;gattr, &quot;\t&quot;);
+
+    exit(EXIT_SUCCESS);         /* Terminate all threads */
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;thr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_attr_t&nbsp;attr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_attr_t&nbsp;*attrp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;NULL&nbsp;or&nbsp;&amp;attr&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;attrp&nbsp;=&nbsp;NULL;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;If&nbsp;a&nbsp;command-line&nbsp;argument&nbsp;was&nbsp;supplied,&nbsp;use&nbsp;it&nbsp;to&nbsp;set&nbsp;the
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stack-size&nbsp;attribute&nbsp;and&nbsp;set&nbsp;a&nbsp;few&nbsp;other&nbsp;thread&nbsp;attributes,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;set&nbsp;attrp&nbsp;pointing&nbsp;to&nbsp;thread&nbsp;attributes&nbsp;object&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;stack_size;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;*sp;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attrp&nbsp;=&nbsp;&amp;attr;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_init(&amp;attr);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_init&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_setdetachstate(&amp;attr,&nbsp;PTHREAD_CREATE_DETACHED);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_setdetachstate&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_setinheritsched(&amp;attr,&nbsp;PTHREAD_EXPLICIT_SCHED);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_setinheritsched&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stack_size&nbsp;=&nbsp;strtoul(argv[1],&nbsp;NULL,&nbsp;0);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;posix_memalign(&amp;sp,&nbsp;sysconf(_SC_PAGESIZE),&nbsp;stack_size);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;posix_memalign&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;posix_memalign()&nbsp;allocated&nbsp;at&nbsp;%p\n&quot;,&nbsp;sp);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_setstack(&amp;attr,&nbsp;sp,&nbsp;stack_size);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_setstack&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_create(&amp;thr,&nbsp;attrp,&nbsp;&amp;thread_start,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_create&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(attrp&nbsp;!=&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_destroy(attrp);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_destroy&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pause();&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Terminates&nbsp;when&nbsp;other&nbsp;thread&nbsp;calls&nbsp;exit()&nbsp;*/
+    pthread_t thr;
+    pthread_attr_t attr;
+    pthread_attr_t *attrp;      /* NULL or &amp;attr */
+    int s;
+
+    attrp = NULL;
+
+    /* If a command-line argument was supplied, use it to set the
+       stack-size attribute and set a few other thread attributes,
+       and set attrp pointing to thread attributes object */
+
+    if (argc &gt; 1) {
+        size_t stack_size;
+        void *sp;
+
+        attrp = &amp;attr;
+
+        s = pthread_attr_init(&amp;attr);
+        if (s != 0)
+            handle_error_en(s, &quot;pthread_attr_init&quot;);
+
+        s = pthread_attr_setdetachstate(&amp;attr, PTHREAD_CREATE_DETACHED);
+        if (s != 0)
+            handle_error_en(s, &quot;pthread_attr_setdetachstate&quot;);
+
+        s = pthread_attr_setinheritsched(&amp;attr, PTHREAD_EXPLICIT_SCHED);
+        if (s != 0)
+            handle_error_en(s, &quot;pthread_attr_setinheritsched&quot;);
+
+        stack_size = strtoul(argv[1], NULL, 0);
+
+        s = posix_memalign(&amp;sp, sysconf(_SC_PAGESIZE), stack_size);
+        if (s != 0)
+            handle_error_en(s, &quot;posix_memalign&quot;);
+
+        printf(&quot;posix_memalign() allocated at %p\n&quot;, sp);
+
+        s = pthread_attr_setstack(&amp;attr, sp, stack_size);
+        if (s != 0)
+            handle_error_en(s, &quot;pthread_attr_setstack&quot;);
+    }
+
+    s = pthread_create(&amp;thr, attrp, &amp;thread_start, NULL);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_create&quot;);
+
+    if (attrp != NULL) {
+        s = pthread_attr_destroy(attrp);
+        if (s != 0)
+            handle_error_en(s, &quot;pthread_attr_destroy&quot;);
+    }
+
+    pause();    /* Terminates when other thread calls exit() */
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

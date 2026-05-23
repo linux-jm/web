@@ -119,8 +119,9 @@ desired argument, indexed starting from 1.  Thus,
 <P>
 
 
-
+<PRE>
 printf(&quot;%*d&quot;, width, num);
+</PRE>
 
 
 <P>
@@ -129,8 +130,9 @@ printf(&quot;%*d&quot;, width, num);
 <P>
 
 
-
+<PRE>
 printf(&quot;%2$*1$d&quot;, width, num);
+</PRE>
 
 
 <P>
@@ -147,8 +149,9 @@ printf(&quot;%2$*1$d&quot;, width, num);
 <P>
 
 
-
+<PRE>
 printf(&quot;%'.2f&quot;, 1234567.89);
+</PRE>
 
 
 <P>
@@ -606,10 +609,11 @@ glibc の <B>snprintf</B>()  と <B>vsnprintf</B>()  の実装は、バージョ
 <P>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 fprintf(stdout, &quot;pi = %.5f\n&quot;, 4 * atan(1.0));
+</PRE>
 
 
 <P>
@@ -619,10 +623,11 @@ fprintf(stdout, &quot;pi = %.5f\n&quot;, 4 * atan(1.0));
 <P>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 fprintf(stdout, &quot;%s, %s %d, %.2d:%.2d\n&quot;,
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>weekday, month, day, hour, min);<BR>
+        weekday, month, day, hour, min);
+</PRE>
 
 
 <P>
@@ -631,10 +636,11 @@ fprintf(stdout, &quot;%s, %s %d, %.2d:%.2d\n&quot;,
 <P>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 fprintf(stdout, format,
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>weekday, month, day, hour, min);<BR>
+        weekday, month, day, hour, min);
+</PRE>
 
 
 <P>
@@ -643,8 +649,9 @@ fprintf(stdout, format,
 <P>
 
 
-
+<PRE>
 &quot;%1$s, %3$d. %2$s, %4$d:%5$.2d\n&quot;
+</PRE>
 
 
 <P>
@@ -655,46 +662,47 @@ fprintf(stdout, format,
 十分に大きな文字列領域を確保して、そこにメッセージを格納するには (glibc 2.0 と glibc 2.1 の両方で正しく動作するコード):
 <P>
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdarg.h">stdarg.h</A>&gt;
-<P>
+
 char *
 make_message(const char *fmt, ...)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;n&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;size&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*p&nbsp;=&nbsp;NULL;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;va_list&nbsp;ap;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Determine&nbsp;required&nbsp;size&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;va_start(ap,&nbsp;fmt);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;n&nbsp;=&nbsp;vsnprintf(p,&nbsp;size,&nbsp;fmt,&nbsp;ap);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;va_end(ap);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(n&nbsp;&lt;&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;One&nbsp;extra&nbsp;byte&nbsp;for&nbsp;'\0'&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;(size_t)&nbsp;n&nbsp;+&nbsp;1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;p&nbsp;=&nbsp;malloc(size);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(p&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;va_start(ap,&nbsp;fmt);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;n&nbsp;=&nbsp;vsnprintf(p,&nbsp;size,&nbsp;fmt,&nbsp;ap);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;va_end(ap);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(n&nbsp;&lt;&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;free(p);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;p;
+    int n = 0;
+    size_t size = 0;
+    char *p = NULL;
+    va_list ap;
+
+    /* Determine required size */
+
+    va_start(ap, fmt);
+    n = vsnprintf(p, size, fmt, ap);
+    va_end(ap);
+
+    if (n &lt; 0)
+        return NULL;
+
+    /* One extra byte for '\0' */
+
+    size = (size_t) n + 1;
+    p = malloc(size);
+    if (p == NULL)
+        return NULL;
+
+    va_start(ap, fmt);
+    n = vsnprintf(p, size, fmt, ap);
+    va_end(ap);
+
+    if (n &lt; 0) {
+        free(p);
+        return NULL;
+    }
+
+    return p;
 }
+</PRE>
 
 <P>
 

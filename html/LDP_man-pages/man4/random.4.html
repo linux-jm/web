@@ -112,10 +112,11 @@ will block until the entropy pool is initialized.
 <P>
 
 
-
-<BR>&nbsp;mknod&nbsp;-m&nbsp;666&nbsp;/dev/random&nbsp;c&nbsp;1&nbsp;8
+<PRE>
+ mknod -m 666 /dev/random c 1 8
 mknod -m 666 /dev/urandom c 1 9
 chown root:root /dev/random /dev/urandom
+</PRE>
 
 
 <P>
@@ -127,21 +128,22 @@ chown root:root /dev/random /dev/urandom
 <P>
 
 
-
+<PRE>
 echo &quot;Initializing random number generator...&quot;
 random_seed=/var/run/random-seed
 # 乱数種を今回のスタートアップから次回のスタートアップまで持ち越す。
 # ロードを行い、その後、全てのエントロピープールを保存する。
 if [ -f $random_seed ]; then
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cat&nbsp;$random_seed&nbsp;&gt;/dev/urandom
+    cat $random_seed &gt;/dev/urandom
 else
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;touch&nbsp;$random_seed
+    touch $random_seed
 fi
 chmod 600 $random_seed
 poolfile=/proc/sys/kernel/random/poolsize
 [ -r $poolfile ] &amp;&amp; bits=$(cat $poolfile) || bits=4096
 bytes=$(expr $bits / 8)
 dd if=/dev/urandom of=$random_seed count=1 bs=$bytes
+</PRE>
 
 
 <P>
@@ -150,7 +152,7 @@ dd if=/dev/urandom of=$random_seed count=1 bs=$bytes
 <P>
 
 
-
+<PRE>
 # 乱数種を今回のシャットダウンから次回のスタートアップまで持ち越す。
 # 全てのエントロピープールを保存する。
 echo &quot;Saving random seed...&quot;
@@ -161,6 +163,7 @@ poolfile=/proc/sys/kernel/random/poolsize
 [ -r $poolfile ] &amp;&amp; bits=$(cat $poolfile) || bits=4096
 bytes=$(expr $bits / 8)
 dd if=/dev/urandom of=$random_seed count=1 bs=$bytes
+</PRE>
 
 
 <P>
@@ -225,12 +228,13 @@ Linux 2.6.9 で削除された。
 エントロピーカウントは増やされない。 以下の構造体が使用される。
 <DT><DD>
 
-
-<BR>&nbsp;struct&nbsp;rand_pool_info&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;entropy_count;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;buf_size;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;buf[0];
+<PRE>
+ struct rand_pool_info {
+    int    entropy_count;
+    int    buf_size;
+    __u32  buf[0];
 };
+</PRE>
 
 
 <DT><DD>

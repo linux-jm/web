@@ -148,66 +148,67 @@ the process.
 <A NAME="lbAL">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/mqueue.h">mqueue.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-<P>
+
 #define handle_error(msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 static void                     /* スレッド開始関数 */
 tfunc(union sigval sv)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;mq_attr&nbsp;attr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;*buf;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mqd_t&nbsp;mqdes&nbsp;=&nbsp;*((mqd_t&nbsp;*)&nbsp;sv.sival_ptr);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;最大メッセージサイズを決定し、
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;メッセージ受信用のバッファーを確保する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mq_getattr(mqdes,&nbsp;&amp;attr)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;mq_getattr&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;buf&nbsp;=&nbsp;malloc(attr.mq_msgsize);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buf&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;malloc&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;nr&nbsp;=&nbsp;mq_receive(mqdes,&nbsp;buf,&nbsp;attr.mq_msgsize,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nr&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;mq_receive&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Read&nbsp;%zd&nbsp;bytes&nbsp;from&nbsp;MQ\n&quot;,&nbsp;nr);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(buf);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;プロセスを終了する&nbsp;*/
+    struct mq_attr attr;
+    ssize_t nr;
+    void *buf;
+    mqd_t mqdes = *((mqd_t *) sv.sival_ptr);
+
+    /* 最大メッセージサイズを決定し、
+       メッセージ受信用のバッファーを確保する */
+
+    if (mq_getattr(mqdes, &amp;attr) == -1)
+        handle_error(&quot;mq_getattr&quot;);
+    buf = malloc(attr.mq_msgsize);
+    if (buf == NULL)
+        handle_error(&quot;malloc&quot;);
+
+    nr = mq_receive(mqdes, buf, attr.mq_msgsize, NULL);
+    if (nr == -1)
+        handle_error(&quot;mq_receive&quot;);
+
+    printf(&quot;Read %zd bytes from MQ\n&quot;, nr);
+    free(buf);
+    exit(EXIT_SUCCESS);         /* プロセスを終了する */
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mqd_t&nbsp;mqdes;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sigevent&nbsp;sev;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;mq-name&gt;\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mqdes&nbsp;=&nbsp;mq_open(argv[1],&nbsp;O_RDONLY);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mqdes&nbsp;==&nbsp;(mqd_t)&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;mq_open&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sev.sigev_notify&nbsp;=&nbsp;SIGEV_THREAD;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sev.sigev_notify_function&nbsp;=&nbsp;tfunc;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sev.sigev_notify_attributes&nbsp;=&nbsp;NULL;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sev.sigev_value.sival_ptr&nbsp;=&nbsp;&amp;mqdes;&nbsp;&nbsp;&nbsp;/*&nbsp;スレッド関数に渡す引数&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mq_notify(mqdes,&nbsp;&amp;sev)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;mq_notify&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pause();&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;プロセスはスレッド関数により終了される&nbsp;*/
+    mqd_t mqdes;
+    struct sigevent sev;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s &lt;mq-name&gt;\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    mqdes = mq_open(argv[1], O_RDONLY);
+    if (mqdes == (mqd_t) -1)
+        handle_error(&quot;mq_open&quot;);
+
+    sev.sigev_notify = SIGEV_THREAD;
+    sev.sigev_notify_function = tfunc;
+    sev.sigev_notify_attributes = NULL;
+    sev.sigev_value.sival_ptr = &amp;mqdes;   /* スレッド関数に渡す引数 */
+    if (mq_notify(mqdes, &amp;sev) == -1)
+        handle_error(&quot;mq_notify&quot;);
+
+    pause();    /* プロセスはスレッド関数により終了される */
 }
+</PRE>
 
 <A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>

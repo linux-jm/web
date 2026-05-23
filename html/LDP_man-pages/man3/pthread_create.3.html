@@ -200,7 +200,7 @@ pthreads API の他のいろいろな関数の使用例を示している。
 <P>
 
 
-
+<PRE>
 $<B> ulimit -s</B>
 8192            # The stack size limit is 8 MB (0x800000 bytes)
 $<B> ./a.out hola salut servus</B>
@@ -210,6 +210,7 @@ Thread 3: top of stack near 0xb6dce3b8; argv_string=servus
 Joined with thread 1; returned value was HOLA
 Joined with thread 2; returned value was SALUT
 Joined with thread 3; returned value was SERVUS
+</PRE>
 
 
 <P>
@@ -219,7 +220,7 @@ Joined with thread 3; returned value was SERVUS
 <P>
 
 
-
+<PRE>
 $<B> ./a.out -s 0x100000 hola salut servus</B>
 Thread 1: top of stack near 0xb7d723b8; argv_string=hola
 Thread 2: top of stack near 0xb7c713b8; argv_string=salut
@@ -227,13 +228,14 @@ Thread 3: top of stack near 0xb7b703b8; argv_string=servus
 Joined with thread 1; returned value was HOLA
 Joined with thread 2; returned value was SALUT
 Joined with thread 3; returned value was SERVUS
+</PRE>
 
 
 <A NAME="lbAM">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
@@ -241,122 +243,123 @@ Joined with thread 3; returned value was SERVUS
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/ctype.h">ctype.h</A>&gt;
-<P>
+
 #define handle_error_en(en, msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;errno&nbsp;=&nbsp;en;&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+
 #define handle_error(msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+        do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 struct thread_info {    /* Used as argument to thread_start() */
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;thread_id;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ID&nbsp;returned&nbsp;by&nbsp;pthread_create()&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;thread_num;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Application-defined&nbsp;thread&nbsp;#&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*argv_string;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;From&nbsp;command-line&nbsp;argument&nbsp;*/
+    pthread_t thread_id;        /* ID returned by pthread_create() */
+    int       thread_num;       /* Application-defined thread # */
+    char     *argv_string;      /* From command-line argument */
 };
-<P>
+
 /* Thread start function: display address near top of our stack,
-<BR>&nbsp;&nbsp;&nbsp;and&nbsp;return&nbsp;upper-cased&nbsp;copy&nbsp;of&nbsp;argv_string&nbsp;*/
-<P>
+   and return upper-cased copy of argv_string */
+
 static void *
 thread_start(void *arg)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;thread_info&nbsp;*tinfo&nbsp;=&nbsp;arg;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*uargv;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Thread&nbsp;%d:&nbsp;top&nbsp;of&nbsp;stack&nbsp;near&nbsp;%p;&nbsp;argv_string=%s\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tinfo-&gt;thread_num,&nbsp;&amp;p,&nbsp;tinfo-&gt;argv_string);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;uargv&nbsp;=&nbsp;strdup(tinfo-&gt;argv_string);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(uargv&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;strdup&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(char&nbsp;*p&nbsp;=&nbsp;uargv;&nbsp;*p&nbsp;!=&nbsp;'\0';&nbsp;p++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*p&nbsp;=&nbsp;toupper(*p);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;uargv;
+    struct thread_info *tinfo = arg;
+    char *uargv;
+
+    printf(&quot;Thread %d: top of stack near %p; argv_string=%s\n&quot;,
+            tinfo-&gt;thread_num, &amp;p, tinfo-&gt;argv_string);
+
+    uargv = strdup(tinfo-&gt;argv_string);
+    if (uargv == NULL)
+        handle_error(&quot;strdup&quot;);
+
+    for (char *p = uargv; *p != '\0'; p++)
+        *p = toupper(*p);
+
+    return uargv;
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s,&nbsp;opt,&nbsp;num_threads;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_attr_t&nbsp;attr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;stack_size;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;*res;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;The&nbsp;&quot;-s&quot;&nbsp;option&nbsp;specifies&nbsp;a&nbsp;stack&nbsp;size&nbsp;for&nbsp;our&nbsp;threads&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;stack_size&nbsp;=&nbsp;-1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((opt&nbsp;=&nbsp;getopt(argc,&nbsp;argv,&nbsp;&quot;s:&quot;))&nbsp;!=&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(opt)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'s':
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stack_size&nbsp;=&nbsp;strtoul(optarg,&nbsp;NULL,&nbsp;0);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;[-s&nbsp;stack-size]&nbsp;arg...\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;num_threads&nbsp;=&nbsp;argc&nbsp;-&nbsp;optind;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Initialize&nbsp;thread&nbsp;creation&nbsp;attributes&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_init(&amp;attr);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_init&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(stack_size&nbsp;&gt;&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_setstacksize(&amp;attr,&nbsp;stack_size);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_setstacksize&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allocate&nbsp;memory&nbsp;for&nbsp;pthread_create()&nbsp;arguments&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;thread_info&nbsp;*tinfo&nbsp;=&nbsp;calloc(num_threads,&nbsp;sizeof(*tinfo));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(tinfo&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;calloc&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;one&nbsp;thread&nbsp;for&nbsp;each&nbsp;command-line&nbsp;argument&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;tnum&nbsp;=&nbsp;0;&nbsp;tnum&nbsp;&lt;&nbsp;num_threads;&nbsp;tnum++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tinfo[tnum].thread_num&nbsp;=&nbsp;tnum&nbsp;+&nbsp;1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tinfo[tnum].argv_string&nbsp;=&nbsp;argv[optind&nbsp;+&nbsp;tnum];
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;The&nbsp;pthread_create()&nbsp;call&nbsp;stores&nbsp;the&nbsp;thread&nbsp;ID&nbsp;into
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;corresponding&nbsp;element&nbsp;of&nbsp;tinfo[]&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_create(&amp;tinfo[tnum].thread_id,&nbsp;&amp;attr,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;thread_start,&nbsp;&amp;tinfo[tnum]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_create&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Destroy&nbsp;the&nbsp;thread&nbsp;attributes&nbsp;object,&nbsp;since&nbsp;it&nbsp;is&nbsp;no
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;longer&nbsp;needed&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_attr_destroy(&amp;attr);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_attr_destroy&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Now&nbsp;join&nbsp;with&nbsp;each&nbsp;thread,&nbsp;and&nbsp;display&nbsp;its&nbsp;returned&nbsp;value&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;tnum&nbsp;=&nbsp;0;&nbsp;tnum&nbsp;&lt;&nbsp;num_threads;&nbsp;tnum++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_join(tinfo[tnum].thread_id,&nbsp;&amp;res);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_join&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Joined&nbsp;with&nbsp;thread&nbsp;%d;&nbsp;returned&nbsp;value&nbsp;was&nbsp;%s\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tinfo[tnum].thread_num,&nbsp;(char&nbsp;*)&nbsp;res);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;free(res);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Free&nbsp;memory&nbsp;allocated&nbsp;by&nbsp;thread&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(tinfo);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int s, opt, num_threads;
+    pthread_attr_t attr;
+    size_t stack_size;
+    void *res;
+
+    /* The &quot;-s&quot; option specifies a stack size for our threads */
+
+    stack_size = -1;
+    while ((opt = getopt(argc, argv, &quot;s:&quot;)) != -1) {
+        switch (opt) {
+        case 's':
+            stack_size = strtoul(optarg, NULL, 0);
+            break;
+
+        default:
+            fprintf(stderr, &quot;Usage: %s [-s stack-size] arg...\n&quot;,
+                    argv[0]);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    num_threads = argc - optind;
+
+    /* Initialize thread creation attributes */
+
+    s = pthread_attr_init(&amp;attr);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_attr_init&quot;);
+
+    if (stack_size &gt; 0) {
+        s = pthread_attr_setstacksize(&amp;attr, stack_size);
+        if (s != 0)
+            handle_error_en(s, &quot;pthread_attr_setstacksize&quot;);
+    }
+
+    /* Allocate memory for pthread_create() arguments */
+
+    struct thread_info *tinfo = calloc(num_threads, sizeof(*tinfo));
+    if (tinfo == NULL)
+        handle_error(&quot;calloc&quot;);
+
+    /* Create one thread for each command-line argument */
+
+    for (int tnum = 0; tnum &lt; num_threads; tnum++) {
+        tinfo[tnum].thread_num = tnum + 1;
+        tinfo[tnum].argv_string = argv[optind + tnum];
+
+        /* The pthread_create() call stores the thread ID into
+           corresponding element of tinfo[] */
+
+        s = pthread_create(&amp;tinfo[tnum].thread_id, &amp;attr,
+                           &amp;thread_start, &amp;tinfo[tnum]);
+        if (s != 0)
+            handle_error_en(s, &quot;pthread_create&quot;);
+    }
+
+    /* Destroy the thread attributes object, since it is no
+       longer needed */
+
+    s = pthread_attr_destroy(&amp;attr);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_attr_destroy&quot;);
+
+    /* Now join with each thread, and display its returned value */
+
+    for (int tnum = 0; tnum &lt; num_threads; tnum++) {
+        s = pthread_join(tinfo[tnum].thread_id, &amp;res);
+        if (s != 0)
+            handle_error_en(s, &quot;pthread_join&quot;);
+
+        printf(&quot;Joined with thread %d; returned value was %s\n&quot;,
+                tinfo[tnum].thread_num, (char *) res);
+        free(res);      /* Free memory allocated by thread */
+    }
+
+    free(tinfo);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>

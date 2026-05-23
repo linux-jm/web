@@ -146,48 +146,49 @@ CPU 0 から 7 が含まれるように設定し
 スレッドに実際に設定された CPU affinity マスクを確認している。
 <P>
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-<P>
+
 #define handle_error_en(en, msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;errno&nbsp;=&nbsp;en;&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cpu_set_t&nbsp;cpuset;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;thread;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;thread&nbsp;=&nbsp;pthread_self();
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Set&nbsp;affinity&nbsp;mask&nbsp;to&nbsp;include&nbsp;CPUs&nbsp;0&nbsp;to&nbsp;7&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;CPU_ZERO(&amp;cpuset);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;8;&nbsp;j++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CPU_SET(j,&nbsp;&amp;cpuset);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_setaffinity_np(thread,&nbsp;sizeof(cpuset),&nbsp;&amp;cpuset);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_setaffinity_np&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Check&nbsp;the&nbsp;actual&nbsp;affinity&nbsp;mask&nbsp;assigned&nbsp;to&nbsp;the&nbsp;thread&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_getaffinity_np(thread,&nbsp;sizeof(cpuset),&nbsp;&amp;cpuset);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_getaffinity_np&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Set&nbsp;returned&nbsp;by&nbsp;pthread_getaffinity_np()&nbsp;contained:\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;CPU_SETSIZE;&nbsp;j++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(CPU_ISSET(j,&nbsp;&amp;cpuset))
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;CPU&nbsp;%d\n&quot;,&nbsp;j);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int s;
+    cpu_set_t cpuset;
+    pthread_t thread;
+
+    thread = pthread_self();
+
+    /* Set affinity mask to include CPUs 0 to 7 */
+
+    CPU_ZERO(&amp;cpuset);
+    for (int j = 0; j &lt; 8; j++)
+        CPU_SET(j, &amp;cpuset);
+
+    s = pthread_setaffinity_np(thread, sizeof(cpuset), &amp;cpuset);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_setaffinity_np&quot;);
+
+    /* Check the actual affinity mask assigned to the thread */
+
+    s = pthread_getaffinity_np(thread, sizeof(cpuset), &amp;cpuset);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_getaffinity_np&quot;);
+
+    printf(&quot;Set returned by pthread_getaffinity_np() contained:\n&quot;);
+    for (int j = 0; j &lt; CPU_SETSIZE; j++)
+        if (CPU_ISSET(j, &amp;cpuset))
+            printf(&quot;    CPU %d\n&quot;, j);
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

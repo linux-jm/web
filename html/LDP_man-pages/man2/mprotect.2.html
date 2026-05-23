@@ -197,17 +197,18 @@ called this way, the operation of <B>pkey_mprotect</B>()  is equivalent to
 <P>
 
 
-
+<PRE>
 $<B> ./a.out</B>
 Start of region:        0x804c000
 Got SIGSEGV at address: 0x804e000
+</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
@@ -215,60 +216,61 @@ Got SIGSEGV at address: 0x804e000
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
-<P>
+
 #define handle_error(msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 static char *buffer;
-<P>
+
 static void
 handler(int sig, siginfo_t *si, void *unused)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Note:&nbsp;calling&nbsp;printf()&nbsp;from&nbsp;a&nbsp;signal&nbsp;handler&nbsp;is&nbsp;not&nbsp;safe
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(and&nbsp;should&nbsp;not&nbsp;be&nbsp;done&nbsp;in&nbsp;production&nbsp;programs),&nbsp;since
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf()&nbsp;is&nbsp;not&nbsp;async-signal-safe;&nbsp;see&nbsp;signal-safety(7).
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nevertheless,&nbsp;we&nbsp;use&nbsp;printf()&nbsp;here&nbsp;as&nbsp;a&nbsp;simple&nbsp;way&nbsp;of
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;showing&nbsp;that&nbsp;the&nbsp;handler&nbsp;was&nbsp;called.&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Got&nbsp;SIGSEGV&nbsp;at&nbsp;address:&nbsp;%p\n&quot;,&nbsp;si-&gt;si_addr);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+    /* Note: calling printf() from a signal handler is not safe
+       (and should not be done in production programs), since
+       printf() is not async-signal-safe; see signal-safety(7).
+       Nevertheless, we use printf() here as a simple way of
+       showing that the handler was called. */
+
+    printf(&quot;Got SIGSEGV at address: %p\n&quot;, si-&gt;si_addr);
+    exit(EXIT_FAILURE);
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;pagesize;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sigaction&nbsp;sa;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_flags&nbsp;=&nbsp;SA_SIGINFO;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;sa.sa_mask);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_sigaction&nbsp;=&nbsp;handler;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sigaction(SIGSEGV,&nbsp;&amp;sa,&nbsp;NULL)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;sigaction&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pagesize&nbsp;=&nbsp;sysconf(_SC_PAGE_SIZE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pagesize&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;sysconf&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allocate&nbsp;a&nbsp;buffer&nbsp;aligned&nbsp;on&nbsp;a&nbsp;page&nbsp;boundary;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;initial&nbsp;protection&nbsp;is&nbsp;PROT_READ&nbsp;|&nbsp;PROT_WRITE&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;buffer&nbsp;=&nbsp;memalign(pagesize,&nbsp;4&nbsp;*&nbsp;pagesize);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buffer&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;memalign&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Start&nbsp;of&nbsp;region:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%p\n&quot;,&nbsp;buffer);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mprotect(buffer&nbsp;+&nbsp;pagesize&nbsp;*&nbsp;2,&nbsp;pagesize,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROT_READ)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;mprotect&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(char&nbsp;*p&nbsp;=&nbsp;buffer&nbsp;;&nbsp;;&nbsp;)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*(p++)&nbsp;=&nbsp;'a';
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Loop&nbsp;completed\n&quot;);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Should&nbsp;never&nbsp;happen&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int pagesize;
+    struct sigaction sa;
+
+    sa.sa_flags = SA_SIGINFO;
+    sigemptyset(&amp;sa.sa_mask);
+    sa.sa_sigaction = handler;
+    if (sigaction(SIGSEGV, &amp;sa, NULL) == -1)
+        handle_error(&quot;sigaction&quot;);
+
+    pagesize = sysconf(_SC_PAGE_SIZE);
+    if (pagesize == -1)
+        handle_error(&quot;sysconf&quot;);
+
+    /* Allocate a buffer aligned on a page boundary;
+       initial protection is PROT_READ | PROT_WRITE */
+
+    buffer = memalign(pagesize, 4 * pagesize);
+    if (buffer == NULL)
+        handle_error(&quot;memalign&quot;);
+
+    printf(&quot;Start of region:        %p\n&quot;, buffer);
+
+    if (mprotect(buffer + pagesize * 2, pagesize,
+                PROT_READ) == -1)
+        handle_error(&quot;mprotect&quot;);
+
+    for (char *p = buffer ; ; )
+        *(p++) = 'a';
+
+    printf(&quot;Loop completed\n&quot;);     /* Should never happen */
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

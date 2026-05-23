@@ -43,12 +43,13 @@ Linux で 利用可能である)。 値は <B><A HREF="../man2/ioctl.2.html">ioc
 <P>
 
 
-
-<BR>&nbsp;for&nbsp;x&nbsp;in&nbsp;0&nbsp;1&nbsp;2&nbsp;3&nbsp;4&nbsp;5&nbsp;6&nbsp;7&nbsp;8;&nbsp;do
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mknod&nbsp;-m&nbsp;644&nbsp;/dev/vcs$x&nbsp;c&nbsp;7&nbsp;$x;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mknod&nbsp;-m&nbsp;644&nbsp;/dev/vcsa$x&nbsp;c&nbsp;7&nbsp;$[$x+128];
+<PRE>
+ for x in 0 1 2 3 4 5 6 7 8; do
+    mknod -m 644 /dev/vcs$x c 7 $x;
+    mknod -m 644 /dev/vcsa$x c 7 $[$x+128];
 done
 chown root:tty /dev/vcs*
+</PRE>
 
 
 <P>
@@ -76,8 +77,9 @@ vt1 に移って以下を実行すると、vt3 のスクリーンダンプを取
 <P>
 
 
-
-<BR>&nbsp;cat&nbsp;/dev/vcs3&nbsp;&gt;foo
+<PRE>
+ cat /dev/vcs3 &gt;foo
+</PRE>
 
 
 <P>
@@ -86,8 +88,9 @@ vt1 に移って以下を実行すると、vt3 のスクリーンダンプを取
 <P>
 
 
-
-<BR>&nbsp;fold&nbsp;-w&nbsp;81&nbsp;/dev/vcs3&nbsp;|&nbsp;lpr
+<PRE>
+ fold -w 81 /dev/vcs3 | lpr
+</PRE>
 
 
 <P>
@@ -96,8 +99,9 @@ vt1 に移って以下を実行すると、vt3 のスクリーンダンプを取
 <P>
 
 
-
-<BR>&nbsp;setterm&nbsp;-dump&nbsp;3&nbsp;-file&nbsp;/proc/self/fd/1
+<PRE>
+ setterm -dump 3 -file /proc/self/fd/1
+</PRE>
 
 
 <P>
@@ -108,54 +112,55 @@ vt1 に移って以下を実行すると、vt3 のスクリーンダンプを取
 以下のプログラムは、 二つ目の仮想コンソールのカーソル位置のスクリーン属性と文字を表示した後、 カーソル位置の背景色を変更する。
 <P>
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/ioctl.h">sys/ioctl.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/linux/vt.h">linux/vt.h</A>&gt;
-<P>
-<BR>&nbsp;int
+
+ int
 main(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*device&nbsp;=&nbsp;&quot;/dev/vcsa2&quot;;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*console&nbsp;=&nbsp;&quot;/dev/tty2&quot;;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;{unsigned&nbsp;char&nbsp;lines,&nbsp;cols,&nbsp;x,&nbsp;y;}&nbsp;scrn;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;s;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;mask;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;attrib;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ch;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open(console,&nbsp;O_RDWR);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;&lt;&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(console);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ioctl(fd,&nbsp;VT_GETHIFONTMASK,&nbsp;&amp;mask)&nbsp;&lt;&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;VT_GETHIFONTMASK&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;close(fd);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open(device,&nbsp;O_RDWR);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;&lt;&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(device);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;read(fd,&nbsp;&amp;scrn,&nbsp;4);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;lseek(fd,&nbsp;4&nbsp;+&nbsp;2*(scrn.y*scrn.cols&nbsp;+&nbsp;scrn.x),&nbsp;SEEK_SET);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;read(fd,&nbsp;&amp;s,&nbsp;2);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ch&nbsp;=&nbsp;s&nbsp;&amp;&nbsp;0xff;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;&amp;&nbsp;mask)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ch&nbsp;|=&nbsp;0x100;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;attrib&nbsp;=&nbsp;((s&nbsp;&amp;&nbsp;~mask)&nbsp;&gt;&gt;&nbsp;8);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;ch=%#03x&nbsp;attrib=%#02x\n&quot;,&nbsp;ch,&nbsp;attrib);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;^=&nbsp;0x1000;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;lseek(fd,&nbsp;-2,&nbsp;SEEK_CUR);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;write(fd,&nbsp;&amp;s,&nbsp;2);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int fd;
+    char *device = &quot;/dev/vcsa2&quot;;
+    char *console = &quot;/dev/tty2&quot;;
+    struct {unsigned char lines, cols, x, y;} scrn;
+    unsigned short s;
+    unsigned short mask;
+    unsigned char attrib;
+    int ch;
+
+     fd = open(console, O_RDWR);
+    if (fd &lt; 0) {
+        perror(console);
+        exit(EXIT_FAILURE);
+    }
+    if (ioctl(fd, VT_GETHIFONTMASK, &amp;mask) &lt; 0) {
+        perror(&quot;VT_GETHIFONTMASK&quot;);
+        exit(EXIT_FAILURE);
+    }
+    (void) close(fd);
+    fd = open(device, O_RDWR);
+    if (fd &lt; 0) {
+        perror(device);
+        exit(EXIT_FAILURE);
+    }
+    (void) read(fd, &amp;scrn, 4);
+    (void) lseek(fd, 4 + 2*(scrn.y*scrn.cols + scrn.x), SEEK_SET);
+    (void) read(fd, &amp;s, 2);
+    ch = s &amp; 0xff;
+    if (s &amp; mask)
+        ch |= 0x100;
+    attrib = ((s &amp; ~mask) &gt;&gt; 8);
+    printf(&quot;ch=%#03x attrib=%#02x\n&quot;, ch, attrib);
+    s ^= 0x1000;
+    (void) lseek(fd, -2, SEEK_CUR);
+    (void) write(fd, &amp;s, 2);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAG">&nbsp;</A>
 <H2>関連項目</H2>

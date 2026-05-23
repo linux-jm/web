@@ -64,16 +64,17 @@ NIS, LDAP)。
 <P>
 
 
-
+<PRE>
 struct passwd {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*pw_name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ユーザー名&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*pw_passwd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ユーザーのパスワード&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid_t&nbsp;&nbsp;&nbsp;pw_uid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ユーザー&nbsp;ID&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;&nbsp;&nbsp;pw_gid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループ&nbsp;ID&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*pw_gecos;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ユーザー情報&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*pw_dir;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ホームディレクトリ&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*pw_shell;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;シェルプログラム&nbsp;*/
+    char   *pw_name;       /* ユーザー名 */
+    char   *pw_passwd;     /* ユーザーのパスワード */
+    uid_t   pw_uid;        /* ユーザー ID */
+    gid_t   pw_gid;        /* グループ ID */
+    char   *pw_gecos;      /* ユーザー情報 */
+    char   *pw_dir;        /* ホームディレクトリ */
+    char   *pw_shell;      /* シェルプログラム */
 };
+</PRE>
 
 
 <P>
@@ -207,53 +208,54 @@ POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.  <I>pw_gecos</I> フィールドは PO
 ID を探すものである。
 <P>
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;passwd&nbsp;pwd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;passwd&nbsp;*result;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*buf;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;bufsize;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;username\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;bufsize&nbsp;=&nbsp;sysconf(_SC_GETPW_R_SIZE_MAX);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(bufsize&nbsp;==&nbsp;-1)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;値を決定できなかった&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bufsize&nbsp;=&nbsp;16384;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;十分大きな値にすべき&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;buf&nbsp;=&nbsp;malloc(bufsize);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buf&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;getpwnam_r(argv[1],&nbsp;&amp;pwd,&nbsp;buf,&nbsp;bufsize,&nbsp;&amp;result);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(result&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Not&nbsp;found\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errno&nbsp;=&nbsp;s;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;getpwnam_r&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Name:&nbsp;%s;&nbsp;UID:&nbsp;%jd\n&quot;,&nbsp;pwd.pw_gecos,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(intmax_t)&nbsp;pwd.pw_uid);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    struct passwd pwd;
+    struct passwd *result;
+    char *buf;
+    size_t bufsize;
+    int s;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s username\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (bufsize == -1)          /* 値を決定できなかった */
+        bufsize = 16384;        /* 十分大きな値にすべき */
+
+    buf = malloc(bufsize);
+    if (buf == NULL) {
+        perror(&quot;malloc&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    s = getpwnam_r(argv[1], &amp;pwd, buf, bufsize, &amp;result);
+    if (result == NULL) {
+        if (s == 0)
+            printf(&quot;Not found\n&quot;);
+        else {
+            errno = s;
+            perror(&quot;getpwnam_r&quot;);
+        }
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;Name: %s; UID: %jd\n&quot;, pwd.pw_gecos,
+            (intmax_t) pwd.pw_uid);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

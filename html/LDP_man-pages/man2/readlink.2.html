@@ -186,69 +186,70 @@ buffer of size <B>PATH_MAX</B> in cases where <B><A HREF="../man2/lstat.2.html">
 zero.
 <P>
 
-
-<BR>&nbsp;#include&nbsp;&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+<PRE>
+ #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-<P>
-<BR>&nbsp;int
+
+ int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;stat&nbsp;sb;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*buf;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nbytes,&nbsp;bufsiz;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;pathname&gt;\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(lstat(argv[1],&nbsp;&amp;sb)&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;lstat&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Add&nbsp;one&nbsp;to&nbsp;the&nbsp;link&nbsp;size,&nbsp;so&nbsp;that&nbsp;we&nbsp;can&nbsp;determine&nbsp;whether
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;buffer&nbsp;returned&nbsp;by&nbsp;readlink()&nbsp;was&nbsp;truncated.&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;bufsiz&nbsp;=&nbsp;sb.st_size&nbsp;+&nbsp;1;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Some&nbsp;magic&nbsp;symlinks&nbsp;under&nbsp;(for&nbsp;example)&nbsp;/proc&nbsp;and&nbsp;/sys
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;report&nbsp;'st_size'&nbsp;as&nbsp;zero.&nbsp;In&nbsp;that&nbsp;case,&nbsp;take&nbsp;PATH_MAX&nbsp;as
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;&quot;good&nbsp;enough&quot;&nbsp;estimate.&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sb.st_size&nbsp;==&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bufsiz&nbsp;=&nbsp;PATH_MAX;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf&nbsp;=&nbsp;malloc(bufsiz);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buf&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;readlink(argv[1],&nbsp;buf,&nbsp;bufsiz);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;readlink&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;'%s'&nbsp;points&nbsp;to&nbsp;'%.*s'\n&quot;,&nbsp;argv[1],&nbsp;(int)&nbsp;nbytes,&nbsp;buf);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;If&nbsp;the&nbsp;return&nbsp;value&nbsp;was&nbsp;equal&nbsp;to&nbsp;the&nbsp;buffer&nbsp;size,&nbsp;then&nbsp;the
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;link&nbsp;target&nbsp;was&nbsp;larger&nbsp;than&nbsp;expected&nbsp;(perhaps&nbsp;because&nbsp;the
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;target&nbsp;was&nbsp;changed&nbsp;between&nbsp;the&nbsp;call&nbsp;to&nbsp;lstat()&nbsp;and&nbsp;the&nbsp;call&nbsp;to
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readlink()).&nbsp;Warn&nbsp;the&nbsp;user&nbsp;that&nbsp;the&nbsp;returned&nbsp;target&nbsp;may&nbsp;have
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;been&nbsp;truncated.&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;==&nbsp;bufsiz)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;(Returned&nbsp;buffer&nbsp;may&nbsp;have&nbsp;been&nbsp;truncated)\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;free(buf);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    struct stat sb;
+    char *buf;
+    ssize_t nbytes, bufsiz;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s &lt;pathname&gt;\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    if (lstat(argv[1], &amp;sb) == -1) {
+        perror(&quot;lstat&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Add one to the link size, so that we can determine whether
+       the buffer returned by readlink() was truncated. */
+
+    bufsiz = sb.st_size + 1;
+
+    /* Some magic symlinks under (for example) /proc and /sys
+       report 'st_size' as zero. In that case, take PATH_MAX as
+       a &quot;good enough&quot; estimate. */
+
+    if (sb.st_size == 0)
+        bufsiz = PATH_MAX;
+
+     buf = malloc(bufsiz);
+    if (buf == NULL) {
+        perror(&quot;malloc&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+     nbytes = readlink(argv[1], buf, bufsiz);
+    if (nbytes == -1) {
+        perror(&quot;readlink&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+     printf(&quot;'%s' points to '%.*s'\n&quot;, argv[1], (int) nbytes, buf);
+
+    /* If the return value was equal to the buffer size, then the
+       the link target was larger than expected (perhaps because the
+       target was changed between the call to lstat() and the call to
+       readlink()). Warn the user that the returned target may have
+       been truncated. */
+
+    if (nbytes == bufsiz)
+        printf(&quot;(Returned buffer may have been truncated)\n&quot;);
+
+     free(buf);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>

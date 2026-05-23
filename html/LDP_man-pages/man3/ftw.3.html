@@ -116,11 +116,12 @@ The fourth argument (<I>ftwbuf</I>)  that <B>nftw</B>()  supplies when calling
 <P>
 
 
-
+<PRE>
 struct FTW {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;base;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;level;
+    int base;
+    int level;
 };
+</PRE>
 
 
 <P>
@@ -292,54 +293,55 @@ more) follows the POSIX specification.
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #define _XOPEN_SOURCE 500
 #include &lt;<A HREF="file:///usr/include/ftw.h">ftw.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
-<P>
+
 static int
 display_info(const char *fpath, const struct stat *sb,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tflag,&nbsp;struct&nbsp;FTW&nbsp;*ftwbuf)
+             int tflag, struct FTW *ftwbuf)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%-3s&nbsp;%2d&nbsp;&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tflag&nbsp;==&nbsp;FTW_D)&nbsp;?&nbsp;&nbsp;&nbsp;&quot;d&quot;&nbsp;&nbsp;&nbsp;:&nbsp;(tflag&nbsp;==&nbsp;FTW_DNR)&nbsp;?&nbsp;&quot;dnr&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tflag&nbsp;==&nbsp;FTW_DP)&nbsp;?&nbsp;&nbsp;&quot;dp&quot;&nbsp;&nbsp;:&nbsp;(tflag&nbsp;==&nbsp;FTW_F)&nbsp;?&nbsp;&nbsp;&nbsp;&quot;f&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tflag&nbsp;==&nbsp;FTW_NS)&nbsp;?&nbsp;&nbsp;&quot;ns&quot;&nbsp;&nbsp;:&nbsp;(tflag&nbsp;==&nbsp;FTW_SL)&nbsp;?&nbsp;&nbsp;&quot;sl&quot;&nbsp;:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tflag&nbsp;==&nbsp;FTW_SLN)&nbsp;?&nbsp;&quot;sln&quot;&nbsp;:&nbsp;&quot;???&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ftwbuf-&gt;level);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(tflag&nbsp;==&nbsp;FTW_NS)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;-------&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%7jd&quot;,&nbsp;(intmax_t)&nbsp;sb-&gt;st_size);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;%-40s&nbsp;%d&nbsp;%s\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fpath,&nbsp;ftwbuf-&gt;base,&nbsp;fpath&nbsp;+&nbsp;ftwbuf-&gt;base);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;To&nbsp;tell&nbsp;nftw()&nbsp;to&nbsp;continue&nbsp;*/
+    printf(&quot;%-3s %2d &quot;,
+            (tflag == FTW_D) ?   &quot;d&quot;   : (tflag == FTW_DNR) ? &quot;dnr&quot; :
+            (tflag == FTW_DP) ?  &quot;dp&quot;  : (tflag == FTW_F) ?   &quot;f&quot; :
+            (tflag == FTW_NS) ?  &quot;ns&quot;  : (tflag == FTW_SL) ?  &quot;sl&quot; :
+            (tflag == FTW_SLN) ? &quot;sln&quot; : &quot;???&quot;,
+            ftwbuf-&gt;level);
+
+    if (tflag == FTW_NS)
+        printf(&quot;-------&quot;);
+    else
+        printf(&quot;%7jd&quot;, (intmax_t) sb-&gt;st_size);
+
+    printf(&quot;   %-40s %d %s\n&quot;,
+            fpath, ftwbuf-&gt;base, fpath + ftwbuf-&gt;base);
+
+    return 0;           /* To tell nftw() to continue */
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;flags&nbsp;=&nbsp;0;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;2&nbsp;&amp;&amp;&nbsp;strchr(argv[2],&nbsp;'d')&nbsp;!=&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flags&nbsp;|=&nbsp;FTW_DEPTH;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;2&nbsp;&amp;&amp;&nbsp;strchr(argv[2],&nbsp;'p')&nbsp;!=&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flags&nbsp;|=&nbsp;FTW_PHYS;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nftw((argc&nbsp;&lt;&nbsp;2)&nbsp;?&nbsp;&quot;.&quot;&nbsp;:&nbsp;argv[1],&nbsp;display_info,&nbsp;20,&nbsp;flags)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;nftw&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int flags = 0;
+
+    if (argc &gt; 2 &amp;&amp; strchr(argv[2], 'd') != NULL)
+        flags |= FTW_DEPTH;
+    if (argc &gt; 2 &amp;&amp; strchr(argv[2], 'p') != NULL)
+        flags |= FTW_PHYS;
+
+    if (nftw((argc &lt; 2) ? &quot;.&quot; : argv[1], display_info, 20, flags)
+            == -1) {
+        perror(&quot;nftw&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>

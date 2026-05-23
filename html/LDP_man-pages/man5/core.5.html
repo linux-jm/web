@@ -323,9 +323,10 @@ thus displayed as 33.)
 <P>
 
 
-
+<PRE>
 $<B> echo 0x7 &gt; /proc/self/coredump_filter</B>
 $<B> ./some_program</B>
+</PRE>
 
 
 <P>
@@ -344,9 +345,10 @@ to the <B>systemd-coredump</B>(8)  program:
 <P>
 
 
-
+<PRE>
 $ <B>cat /proc/sys/kernel/core_pattern</B>
 |/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %e
+</PRE>
 
 
 <P>
@@ -357,13 +359,14 @@ directory <I>/var/lib/systemd/coredump/</I>.  One can list the core dumps that
 have been recorded by <B>systemd-coredump</B>(8)  using <B>coredumpctl</B>(1):
 <P>
 
-
+<PRE>
 $ <B>coredumpctl list | tail -5</B>
 Wed 2017-10-11 22:25:30 CEST  2748 1000 1000 3 present  /usr/bin/sleep
 Thu 2017-10-12 06:29:10 CEST  2716 1000 1000 3 present  /usr/bin/sleep
 Thu 2017-10-12 06:30:50 CEST  2767 1000 1000 3 present  /usr/bin/sleep
 Thu 2017-10-12 06:37:40 CEST  2918 1000 1000 3 present  /usr/bin/cat
 Thu 2017-10-12 08:13:07 CEST  2955 1000 1000 3 present  /usr/bin/cat
+</PRE>
 
 <P>
 
@@ -377,8 +380,9 @@ above to a file named <I>core</I> in the current directory, one could use:
 <P>
 
 
-
+<PRE>
 $ <B>coredumpctl dump 2955 -o core</B>
+</PRE>
 
 
 <P>
@@ -392,10 +396,11 @@ set an override for the <B>systemd</B>(1)  mechanism, using something like:
 <P>
 
 
-
+<PRE>
 # <B>echo &quot;kernel.core_pattern=core.%p&quot; &gt; \</B>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>/etc/sysctl.d/50-coredump.conf</B>
+               <B>/etc/sysctl.d/50-coredump.conf</B>
 # <B>/lib/systemd/systemd-sysctl</B>
+</PRE>
 
 
 <P>
@@ -407,8 +412,9 @@ number of the signal which triggered the core dump):
 <P>
 
 
-
+<PRE>
 # <B>sysctl -w kernel.core_pattern=&quot;%e-%s.core&quot;</B>
+</PRE>
 
 
 
@@ -451,8 +457,8 @@ number of the signal which triggered the core dump):
 <P>
 
 
-
-<BR>&nbsp;$<B>&nbsp;cc&nbsp;-o&nbsp;core_pattern_pipe_test&nbsp;core_pattern_pipe_test.c</B>
+<PRE>
+ $<B> cc -o core_pattern_pipe_test core_pattern_pipe_test.c</B>
 $<B> su</B>
 Password:
 #<B> echo &quot;|$PWD/core_pattern_pipe_test %p UID=%u GID=%g sig=%s&quot; &gt; \</B>
@@ -469,15 +475,16 @@ argc[2]=&lt;UID=1000&gt;
 argc[3]=&lt;GID=100&gt;
 argc[4]=&lt;sig=3&gt;
 Total bytes in core dump: 282624
+</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 /* core_pattern_pipe_test.c */
-<P>
+
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
@@ -485,46 +492,47 @@ Total bytes in core dump: 282624
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-<P>
+
 #define BUF_SIZE 1024
-<P>
-<BR>&nbsp;int
+
+ int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nread,&nbsp;tot;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[BUF_SIZE];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;FILE&nbsp;*fp;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;cwd[PATH_MAX];
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Change&nbsp;our&nbsp;current&nbsp;working&nbsp;directory&nbsp;to&nbsp;that&nbsp;of&nbsp;the
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;crashing&nbsp;process&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;snprintf(cwd,&nbsp;PATH_MAX,&nbsp;&quot;/proc/%s/cwd&quot;,&nbsp;argv[1]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;chdir(cwd);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Write&nbsp;output&nbsp;to&nbsp;file&nbsp;&quot;core.info&quot;&nbsp;in&nbsp;that&nbsp;directory&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fp&nbsp;=&nbsp;fopen(&quot;core.info&quot;,&nbsp;&quot;w+&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fp&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Display&nbsp;command-line&nbsp;arguments&nbsp;given&nbsp;to&nbsp;core_pattern
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pipe&nbsp;program&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(fp,&nbsp;&quot;argc=%d\n&quot;,&nbsp;argc);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;argc;&nbsp;j++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(fp,&nbsp;&quot;argc[%d]=&lt;%s&gt;\n&quot;,&nbsp;j,&nbsp;argv[j]);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Count&nbsp;bytes&nbsp;in&nbsp;standard&nbsp;input&nbsp;(the&nbsp;core&nbsp;dump)&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tot&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((nread&nbsp;=&nbsp;read(STDIN_FILENO,&nbsp;buf,&nbsp;BUF_SIZE))&nbsp;&gt;&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tot&nbsp;+=&nbsp;nread;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(fp,&nbsp;&quot;Total&nbsp;bytes&nbsp;in&nbsp;core&nbsp;dump:&nbsp;%zd\n&quot;,&nbsp;tot);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fclose(fp);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    ssize_t nread, tot;
+    char buf[BUF_SIZE];
+    FILE *fp;
+    char cwd[PATH_MAX];
+
+    /* Change our current working directory to that of the
+       crashing process */
+
+    snprintf(cwd, PATH_MAX, &quot;/proc/%s/cwd&quot;, argv[1]);
+    chdir(cwd);
+
+    /* Write output to file &quot;core.info&quot; in that directory */
+
+    fp = fopen(&quot;core.info&quot;, &quot;w+&quot;);
+    if (fp == NULL)
+        exit(EXIT_FAILURE);
+
+    /* Display command-line arguments given to core_pattern
+       pipe program */
+
+     fprintf(fp, &quot;argc=%d\n&quot;, argc);
+    for (int j = 0; j &lt; argc; j++)
+        fprintf(fp, &quot;argc[%d]=&lt;%s&gt;\n&quot;, j, argv[j]);
+
+    /* Count bytes in standard input (the core dump) */
+
+     tot = 0;
+    while ((nread = read(STDIN_FILENO, buf, BUF_SIZE)) &gt; 0)
+        tot += nread;
+    fprintf(fp, &quot;Total bytes in core dump: %zd\n&quot;, tot);
+
+    fclose(fp);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

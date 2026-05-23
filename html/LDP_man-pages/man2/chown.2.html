@@ -296,43 +296,44 @@ Linux 2.1.81 以降では <B>chown</B>()  はシンボリックリンクを追�
 <A NAME="lbAP">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid_t&nbsp;uid;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;passwd&nbsp;*pwd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*endptr;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;3&nbsp;||&nbsp;argv[1][0]&nbsp;==&nbsp;'\0')&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s&nbsp;&lt;owner&gt;&nbsp;&lt;file&gt;\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid&nbsp;=&nbsp;strtol(argv[1],&nbsp;&amp;endptr,&nbsp;10);&nbsp;&nbsp;/*&nbsp;Allow&nbsp;a&nbsp;numeric&nbsp;string&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(*endptr&nbsp;!=&nbsp;'\0')&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Was&nbsp;not&nbsp;pure&nbsp;numeric&nbsp;string&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pwd&nbsp;=&nbsp;getpwnam(argv[1]);&nbsp;&nbsp;&nbsp;/*&nbsp;Try&nbsp;getting&nbsp;UID&nbsp;for&nbsp;username&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pwd&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;getpwnam&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uid&nbsp;=&nbsp;pwd-&gt;pw_uid;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(chown(argv[2],&nbsp;uid,&nbsp;-1)&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;chown&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    uid_t uid;
+    struct passwd *pwd;
+    char *endptr;
+
+    if (argc != 3 || argv[1][0] == '\0') {
+        fprintf(stderr, &quot;%s &lt;owner&gt; &lt;file&gt;\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    uid = strtol(argv[1], &amp;endptr, 10);  /* Allow a numeric string */
+
+    if (*endptr != '\0') {         /* Was not pure numeric string */
+        pwd = getpwnam(argv[1]);   /* Try getting UID for username */
+        if (pwd == NULL) {
+            perror(&quot;getpwnam&quot;);
+            exit(EXIT_FAILURE);
+        }
+
+        uid = pwd-&gt;pw_uid;
+    }
+
+    if (chown(argv[2], uid, -1) == -1) {
+        perror(&quot;chown&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAQ">&nbsp;</A>
 <H2>関連項目</H2>

@@ -80,8 +80,9 @@ glibc 2.25 以前:
 <P>
 
 
-
+<PRE>
 waitpid(-1, &amp;wstatus, 0);
+</PRE>
 
 
 <P>
@@ -392,7 +393,7 @@ POSIX.1-2008 によると、 <B>waitid</B>() を呼び出すアプリケーシ�
 <P>
 
 
-
+<PRE>
 $<B> ./a.out &amp;</B>
 Child PID is 32360
 [1] 32359
@@ -404,58 +405,60 @@ $<B> kill -TERM 32360</B>
 killed by signal 15
 [1]+  Done                    ./a.out
 $
+</PRE>
 
 
 <A NAME="lbAO">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;cpid,&nbsp;w;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;wstatus;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cpid&nbsp;=&nbsp;fork();
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cpid&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fork&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cpid&nbsp;==&nbsp;0)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Code&nbsp;executed&nbsp;by&nbsp;child&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Child&nbsp;PID&nbsp;is&nbsp;%jd\n&quot;,&nbsp;(intmax_t)&nbsp;getpid());
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;==&nbsp;1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pause();&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;signals&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_exit(atoi(argv[1]));
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Code&nbsp;executed&nbsp;by&nbsp;parent&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;w&nbsp;=&nbsp;waitpid(cpid,&nbsp;&amp;wstatus,&nbsp;WUNTRACED&nbsp;|&nbsp;WCONTINUED);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(w&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;waitpid&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(WIFEXITED(wstatus))&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;exited,&nbsp;status=%d\n&quot;,&nbsp;WEXITSTATUS(wstatus));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;if&nbsp;(WIFSIGNALED(wstatus))&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;killed&nbsp;by&nbsp;signal&nbsp;%d\n&quot;,&nbsp;WTERMSIG(wstatus));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;if&nbsp;(WIFSTOPPED(wstatus))&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;stopped&nbsp;by&nbsp;signal&nbsp;%d\n&quot;,&nbsp;WSTOPSIG(wstatus));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;if&nbsp;(WIFCONTINUED(wstatus))&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;continued\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(!WIFEXITED(wstatus)&nbsp;&amp;&amp;&nbsp;!WIFSIGNALED(wstatus));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+    pid_t cpid, w;
+    int wstatus;
+
+    cpid = fork();
+    if (cpid == -1) {
+        perror(&quot;fork&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    if (cpid == 0) {            /* Code executed by child */
+        printf(&quot;Child PID is %jd\n&quot;, (intmax_t) getpid());
+        if (argc == 1)
+            pause();                    /* Wait for signals */
+        _exit(atoi(argv[1]));
+
+    } else {                    /* Code executed by parent */
+        do {
+            w = waitpid(cpid, &amp;wstatus, WUNTRACED | WCONTINUED);
+            if (w == -1) {
+                perror(&quot;waitpid&quot;);
+                exit(EXIT_FAILURE);
+            }
+
+            if (WIFEXITED(wstatus)) {
+                printf(&quot;exited, status=%d\n&quot;, WEXITSTATUS(wstatus));
+            } else if (WIFSIGNALED(wstatus)) {
+                printf(&quot;killed by signal %d\n&quot;, WTERMSIG(wstatus));
+            } else if (WIFSTOPPED(wstatus)) {
+                printf(&quot;stopped by signal %d\n&quot;, WSTOPSIG(wstatus));
+            } else if (WIFCONTINUED(wstatus)) {
+                printf(&quot;continued\n&quot;);
+            }
+        } while (!WIFEXITED(wstatus) &amp;&amp; !WIFSIGNALED(wstatus));
+        exit(EXIT_SUCCESS);
+    }
 }
+</PRE>
 
 <A NAME="lbAP">&nbsp;</A>
 <H2>関連項目</H2>

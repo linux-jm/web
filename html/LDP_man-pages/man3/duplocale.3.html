@@ -100,56 +100,58 @@ POSIX.1-2008.
 <P>
 
 
-
+<PRE>
 $ <B>./a.out abc</B>
 ABC
+</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #define _XOPEN_SOURCE 700
 #include &lt;<A HREF="file:///usr/include/ctype.h">ctype.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/locale.h">locale.h</A>&gt;
-<P>
+
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        } while (0)
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;locale_t&nbsp;loc,&nbsp;nloc;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;string\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;この一連の処理は必要である。&nbsp;uselocale()&nbsp;は&nbsp;toupper_l()&nbsp;の
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;引数として渡すことができない値&nbsp;LC_GLOBAL_LOCALE&nbsp;を返す
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;可能性があるからである。&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;loc&nbsp;=&nbsp;uselocale((locale_t)&nbsp;0);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(loc&nbsp;==&nbsp;(locale_t)&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;uselocale&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;nloc&nbsp;=&nbsp;duplocale(loc);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nloc&nbsp;==&nbsp;(locale_t)&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;duplocale&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(char&nbsp;*p&nbsp;=&nbsp;argv[1];&nbsp;*p;&nbsp;p++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;putchar(toupper_l(*p,&nbsp;nloc));
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;freelocale(nloc);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    locale_t loc, nloc;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s string\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    /* この一連の処理は必要である。 uselocale() は toupper_l() の
+       引数として渡すことができない値 LC_GLOBAL_LOCALE を返す
+       可能性があるからである。 */
+
+    loc = uselocale((locale_t) 0);
+    if (loc == (locale_t) 0)
+        errExit(&quot;uselocale&quot;);
+
+    nloc = duplocale(loc);
+    if (nloc == (locale_t) 0)
+        errExit(&quot;duplocale&quot;);
+
+    for (char *p = argv[1]; *p; p++)
+        putchar(toupper_l(*p, nloc));
+
+    printf(&quot;\n&quot;);
+
+    freelocale(nloc);
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

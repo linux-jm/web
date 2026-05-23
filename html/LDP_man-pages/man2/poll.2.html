@@ -44,12 +44,13 @@ found in <B>poll</B>().
 <P>
 
 
-
+<PRE>
 struct pollfd {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;fd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;file&nbsp;descriptor&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;events;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;requested&nbsp;events&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;short&nbsp;revents;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;returned&nbsp;events&nbsp;*/
+    int   fd;         /* file descriptor */
+    short events;     /* requested events */
+    short revents;    /* returned events */
 };
+</PRE>
 
 
 <P>
@@ -165,8 +166,9 @@ Linux では <B>POLLMSG</B> も定義されているが、使用されていな�
 <P>
 
 
-
+<PRE>
 ready = ppoll(&amp;fds, nfds, tmo_p, &amp;sigmask);
+</PRE>
 
 
 <P>
@@ -175,15 +177,16 @@ ready = ppoll(&amp;fds, nfds, tmo_p, &amp;sigmask);
 <P>
 
 
-
+<PRE>
 sigset_t origmask;
 int timeout;
-<P>
+
 timeout = (tmo_p == NULL) ? -1 :
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tmo_p-&gt;tv_sec&nbsp;*&nbsp;1000&nbsp;+&nbsp;tmo_p-&gt;tv_nsec&nbsp;/&nbsp;1000000);
+          (tmo_p-&gt;tv_sec * 1000 + tmo_p-&gt;tv_nsec / 1000000);
 pthread_sigmask(SIG_SETMASK, &amp;sigmask, &amp;origmask);
 ready = poll(&amp;fds, nfds, timeout);
 pthread_sigmask(SIG_SETMASK, &amp;origmask, NULL);
+</PRE>
 
 
 <P>
@@ -205,11 +208,12 @@ timeout, a negative value expressed in <I>*tmo_p</I> results in an error from
 <P>
 
 
-
+<PRE>
 struct timespec {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;seconds&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;&nbsp;tv_nsec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;nanoseconds&nbsp;*/
+    long    tv_sec;         /* seconds */
+    long    tv_nsec;        /* nanoseconds */
 };
+</PRE>
 
 
 <P>
@@ -327,9 +331,10 @@ Suppose we run the program in one terminal, asking it to open a FIFO:
 <P>
 
 
-
+<PRE>
 $ <B>mkfifo myfifo</B>
 $ <B>./poll_input myfifo</B>
+</PRE>
 
 
 <P>
@@ -339,8 +344,9 @@ data to it, and close the FIFO:
 <P>
 
 
-
+<PRE>
 $ <B>echo aaaaabbbbbccccc &gt; myfifo</B>
+</PRE>
 
 
 <P>
@@ -349,22 +355,23 @@ In the terminal where we are running the program, we would then see:
 <P>
 
 
-
+<PRE>
 Opened &quot;myfifo&quot; on fd 3
 About to poll()
 Ready: 1
-<BR>&nbsp;&nbsp;fd=3;&nbsp;events:&nbsp;POLLIN&nbsp;POLLHUP
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;read&nbsp;10&nbsp;bytes:&nbsp;aaaaabbbbb
+  fd=3; events: POLLIN POLLHUP
+    read 10 bytes: aaaaabbbbb
 About to poll()
 Ready: 1
-<BR>&nbsp;&nbsp;fd=3;&nbsp;events:&nbsp;POLLIN&nbsp;POLLHUP
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;read&nbsp;6&nbsp;bytes:&nbsp;ccccc
-<P>
+  fd=3; events: POLLIN POLLHUP
+    read 6 bytes: ccccc
+
 About to poll()
 Ready: 1
-<BR>&nbsp;&nbsp;fd=3;&nbsp;events:&nbsp;POLLHUP
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;closing&nbsp;fd&nbsp;3
+  fd=3; events: POLLHUP
+    closing fd 3
 All file descriptors closed; bye
+</PRE>
 
 
 <P>
@@ -389,10 +396,10 @@ which point the file descriptor was closed and the program terminated.
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 /* poll_input.c
-<P>
-<BR>&nbsp;&nbsp;&nbsp;Licensed&nbsp;under&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;v2&nbsp;or&nbsp;later.
+
+   Licensed under GNU General Public License v2 or later.
 */
 #include &lt;<A HREF="file:///usr/include/poll.h">poll.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
@@ -400,81 +407,82 @@ which point the file descriptor was closed and the program terminated.
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-<P>
+
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        } while (0)
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;nfds,&nbsp;num_open_fds;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;pollfd&nbsp;*pfds;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;file...\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;num_open_fds&nbsp;=&nbsp;nfds&nbsp;=&nbsp;argc&nbsp;-&nbsp;1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pfds&nbsp;=&nbsp;calloc(nfds,&nbsp;sizeof(struct&nbsp;pollfd));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pfds&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Open&nbsp;each&nbsp;file&nbsp;on&nbsp;command&nbsp;line,&nbsp;and&nbsp;add&nbsp;it&nbsp;'pfds'&nbsp;array&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;nfds;&nbsp;j++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pfds[j].fd&nbsp;=&nbsp;open(argv[j&nbsp;+&nbsp;1],&nbsp;O_RDONLY);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pfds[j].fd&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;open&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Opened&nbsp;\&quot;%s\&quot;&nbsp;on&nbsp;fd&nbsp;%d\n&quot;,&nbsp;argv[j&nbsp;+&nbsp;1],&nbsp;pfds[j].fd);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pfds[j].events&nbsp;=&nbsp;POLLIN;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Keep&nbsp;calling&nbsp;poll()&nbsp;as&nbsp;long&nbsp;as&nbsp;at&nbsp;least&nbsp;one&nbsp;file&nbsp;descriptor&nbsp;is
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;open&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(num_open_fds&nbsp;&gt;&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ready;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;About&nbsp;to&nbsp;poll()\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ready&nbsp;=&nbsp;poll(pfds,&nbsp;nfds,&nbsp;-1);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ready&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;poll&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Ready:&nbsp;%d\n&quot;,&nbsp;ready);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Deal&nbsp;with&nbsp;array&nbsp;returned&nbsp;by&nbsp;poll()&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;nfds;&nbsp;j++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[10];
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pfds[j].revents&nbsp;!=&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;fd=%d;&nbsp;events:&nbsp;%s%s%s\n&quot;,&nbsp;pfds[j].fd,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(pfds[j].revents&nbsp;&amp;&nbsp;POLLIN)&nbsp;&nbsp;?&nbsp;&quot;POLLIN&nbsp;&quot;&nbsp;&nbsp;:&nbsp;&quot;&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(pfds[j].revents&nbsp;&amp;&nbsp;POLLHUP)&nbsp;?&nbsp;&quot;POLLHUP&nbsp;&quot;&nbsp;:&nbsp;&quot;&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(pfds[j].revents&nbsp;&amp;&nbsp;POLLERR)&nbsp;?&nbsp;&quot;POLLERR&nbsp;&quot;&nbsp;:&nbsp;&quot;&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pfds[j].revents&nbsp;&amp;&nbsp;POLLIN)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;s&nbsp;=&nbsp;read(pfds[j].fd,&nbsp;buf,&nbsp;sizeof(buf));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;read&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;read&nbsp;%zd&nbsp;bytes:&nbsp;%.*s\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s,&nbsp;(int)&nbsp;s,&nbsp;buf);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;POLLERR&nbsp;|&nbsp;POLLHUP&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;closing&nbsp;fd&nbsp;%d\n&quot;,&nbsp;pfds[j].fd);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(close(pfds[j].fd)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;close&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;num_open_fds--;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;All&nbsp;file&nbsp;descriptors&nbsp;closed;&nbsp;bye\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int nfds, num_open_fds;
+    struct pollfd *pfds;
+
+    if (argc &lt; 2) {
+       fprintf(stderr, &quot;Usage: %s file...\n&quot;, argv[0]);
+       exit(EXIT_FAILURE);
+    }
+
+    num_open_fds = nfds = argc - 1;
+    pfds = calloc(nfds, sizeof(struct pollfd));
+    if (pfds == NULL)
+        errExit(&quot;malloc&quot;);
+
+    /* Open each file on command line, and add it 'pfds' array */
+
+    for (int j = 0; j &lt; nfds; j++) {
+        pfds[j].fd = open(argv[j + 1], O_RDONLY);
+        if (pfds[j].fd == -1)
+            errExit(&quot;open&quot;);
+
+        printf(&quot;Opened \&quot;%s\&quot; on fd %d\n&quot;, argv[j + 1], pfds[j].fd);
+
+        pfds[j].events = POLLIN;
+    }
+
+    /* Keep calling poll() as long as at least one file descriptor is
+       open */
+
+    while (num_open_fds &gt; 0) {
+        int ready;
+
+        printf(&quot;About to poll()\n&quot;);
+        ready = poll(pfds, nfds, -1);
+        if (ready == -1)
+            errExit(&quot;poll&quot;);
+
+        printf(&quot;Ready: %d\n&quot;, ready);
+
+        /* Deal with array returned by poll() */
+
+        for (int j = 0; j &lt; nfds; j++) {
+            char buf[10];
+
+            if (pfds[j].revents != 0) {
+                printf(&quot;  fd=%d; events: %s%s%s\n&quot;, pfds[j].fd,
+                        (pfds[j].revents &amp; POLLIN)  ? &quot;POLLIN &quot;  : &quot;&quot;,
+                        (pfds[j].revents &amp; POLLHUP) ? &quot;POLLHUP &quot; : &quot;&quot;,
+                        (pfds[j].revents &amp; POLLERR) ? &quot;POLLERR &quot; : &quot;&quot;);
+
+                if (pfds[j].revents &amp; POLLIN) {
+                    ssize_t s = read(pfds[j].fd, buf, sizeof(buf));
+                    if (s == -1)
+                        errExit(&quot;read&quot;);
+                    printf(&quot;    read %zd bytes: %.*s\n&quot;,
+                            s, (int) s, buf);
+                } else {                /* POLLERR | POLLHUP */
+                    printf(&quot;    closing fd %d\n&quot;, pfds[j].fd);
+                    if (close(pfds[j].fd) == -1)
+                        errExit(&quot;close&quot;);
+                    num_open_fds--;
+                }
+            }
+        }
+    }
+
+    printf(&quot;All file descriptors closed; bye\n&quot;);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAO">&nbsp;</A>
 <H2>関連項目</H2>

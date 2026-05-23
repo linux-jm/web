@@ -109,16 +109,17 @@ instead of file descriptors.
 <P>
 
 
-
+<PRE>
 struct fanotify_event_metadata {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;event_len;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u8&nbsp;vers;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u8&nbsp;reserved;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u16&nbsp;metadata_len;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__aligned_u64&nbsp;mask;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__s32&nbsp;fd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__s32&nbsp;pid;
+    __u32 event_len;
+    __u8 vers;
+    __u8 reserved;
+    __u16 metadata_len;
+    __aligned_u64 mask;
+    __s32 fd;
+    __s32 pid;
 };
+</PRE>
 
 
 <P>
@@ -130,18 +131,19 @@ information records of the structure detailed below following the generic
 <P>
 
 
-
+<PRE>
 struct fanotify_event_info_header {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u8&nbsp;info_type;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u8&nbsp;pad;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u16&nbsp;len;
+    __u8 info_type;
+    __u8 pad;
+    __u16 len;
 };
-<P>
+
 struct fanotify_event_info_fid {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;fanotify_event_info_header&nbsp;hdr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__kernel_fsid_t&nbsp;fsid;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;file_handle[0];
+    struct fanotify_event_info_header hdr;
+    __kernel_fsid_t fsid;
+    unsigned char file_handle[0];
 };
+</PRE>
 
 
 <P>
@@ -367,11 +369,12 @@ fanotify イベントが発生すると、 <B><A HREF="../man7/epoll.7.html">epo
 <P>
 
 
-
+<PRE>
 struct fanotify_response {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__s32&nbsp;fd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;response;
+    __s32 fd;
+    __u32 response;
 };
+</PRE>
 
 
 <P>
@@ -514,21 +517,22 @@ user presses the ENTER key.
 <P>
 
 
-
+<PRE>
 # <B>./fanotify_example /home</B>
 Press enter key to terminate.
 Listening for events.
 FAN_OPEN_PERM: File /home/user/temp/notes
 FAN_CLOSE_WRITE: File /home/user/temp/notes
-<P>
+
 Listening for events stopped.
+</PRE>
 
 
 <A NAME="lbAS">&nbsp;</A>
 <H3>プログラムのソース: fanotify_example.c</H3>
 
 
-
+<PRE>
 #define _GNU_SOURCE     /* O_LARGEFILE の定義を得るために必要 */
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
@@ -538,190 +542,191 @@ Listening for events stopped.
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/fanotify.h">sys/fanotify.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-<P>
+
 /* ファイルディスクリプター 'fd' から読み出しできる全 fanotify イベントを読み出す */
-<P>
+
 static void
 handle_events(int fd)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;struct&nbsp;fanotify_event_metadata&nbsp;*metadata;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;fanotify_event_metadata&nbsp;buf[200];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;len;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;path[PATH_MAX];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;path_len;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;procfd_path[PATH_MAX];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;fanotify_response&nbsp;response;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;fanotify&nbsp;ファイルディスクリプターからイベントが読み出せる間はループする&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;イベントを読み出す&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;len&nbsp;=&nbsp;read(fd,&nbsp;buf,&nbsp;sizeof(buf));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;==&nbsp;-1&nbsp;&amp;&amp;&nbsp;errno&nbsp;!=&nbsp;EAGAIN)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;read&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;読み出せるデータの最後に達しているかチェックする&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;&lt;=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;バッファーの最初のイベントを参照する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;metadata&nbsp;=&nbsp;buf;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;バッファー内の全イベントを処理する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(FAN_EVENT_OK(metadata,&nbsp;len))&nbsp;{
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;実行時とコンパイル時の構造体が一致するか確認する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(metadata-&gt;vers&nbsp;!=&nbsp;FANOTIFY_METADATA_VERSION)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;Mismatch&nbsp;of&nbsp;fanotify&nbsp;metadata&nbsp;version.\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;metadata-&gt;fd&nbsp;には、キューのオーバーフローを示す&nbsp;FAN_NOFD&nbsp;か、
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ファイルディスクリプター&nbsp;(負でない整数)&nbsp;のいずれかが入っている。
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ここではキューのオーバーフローは無視している。&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(metadata-&gt;fd&nbsp;&gt;=&nbsp;0)&nbsp;{
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;オープン許可イベントを処理する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(metadata-&gt;mask&nbsp;&amp;&nbsp;FAN_OPEN_PERM)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;FAN_OPEN_PERM:&nbsp;&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ファイルのオープンを許可する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;response.fd&nbsp;=&nbsp;metadata-&gt;fd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;response.response&nbsp;=&nbsp;FAN_ALLOW;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write(fd,&nbsp;&amp;response,&nbsp;sizeof(response));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;書き込み可能ファイルのクローズイベントを処理する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(metadata-&gt;mask&nbsp;&amp;&nbsp;FAN_CLOSE_WRITE)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;FAN_CLOSE_WRITE:&nbsp;&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;アクセスされたファイルのパス名を取得し表示する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;snprintf(procfd_path,&nbsp;sizeof(procfd_path),
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;/proc/self/fd/%d&quot;,&nbsp;metadata-&gt;fd);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path_len&nbsp;=&nbsp;readlink(procfd_path,&nbsp;path,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(path)&nbsp;-&nbsp;1);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(path_len&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;readlink&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path[path_len]&nbsp;=&nbsp;'\0';
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;File&nbsp;%s\n&quot;,&nbsp;path);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;イベントのファイルディスクリプターをクローズする&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(metadata-&gt;fd);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;次のイベントに進む&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;metadata&nbsp;=&nbsp;FAN_EVENT_NEXT(metadata,&nbsp;len);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+    const struct fanotify_event_metadata *metadata;
+    struct fanotify_event_metadata buf[200];
+    ssize_t len;
+    char path[PATH_MAX];
+    ssize_t path_len;
+    char procfd_path[PATH_MAX];
+    struct fanotify_response response;
+
+    /* fanotify ファイルディスクリプターからイベントが読み出せる間はループする */
+
+    for (;;) {
+
+        /* イベントを読み出す */
+
+        len = read(fd, buf, sizeof(buf));
+        if (len == -1 &amp;&amp; errno != EAGAIN) {
+            perror(&quot;read&quot;);
+            exit(EXIT_FAILURE);
+        }
+
+        /* 読み出せるデータの最後に達しているかチェックする */
+
+        if (len &lt;= 0)
+            break;
+
+        /* バッファーの最初のイベントを参照する */
+
+        metadata = buf;
+
+        /* バッファー内の全イベントを処理する */
+
+        while (FAN_EVENT_OK(metadata, len)) {
+
+            /* 実行時とコンパイル時の構造体が一致するか確認する */
+
+            if (metadata-&gt;vers != FANOTIFY_METADATA_VERSION) {
+                fprintf(stderr,
+                        &quot;Mismatch of fanotify metadata version.\n&quot;);
+                exit(EXIT_FAILURE);
+            }
+
+            /* metadata-&gt;fd には、キューのオーバーフローを示す FAN_NOFD か、
+               ファイルディスクリプター (負でない整数) のいずれかが入っている。
+               ここではキューのオーバーフローは無視している。 */
+
+            if (metadata-&gt;fd &gt;= 0) {
+
+                /* オープン許可イベントを処理する */
+
+                if (metadata-&gt;mask &amp; FAN_OPEN_PERM) {
+                    printf(&quot;FAN_OPEN_PERM: &quot;);
+
+                    /* ファイルのオープンを許可する */
+
+                    response.fd = metadata-&gt;fd;
+                    response.response = FAN_ALLOW;
+                    write(fd, &amp;response, sizeof(response));
+                }
+
+                /* 書き込み可能ファイルのクローズイベントを処理する */
+
+                if (metadata-&gt;mask &amp; FAN_CLOSE_WRITE)
+                    printf(&quot;FAN_CLOSE_WRITE: &quot;);
+
+                /* アクセスされたファイルのパス名を取得し表示する */
+
+                snprintf(procfd_path, sizeof(procfd_path),
+                         &quot;/proc/self/fd/%d&quot;, metadata-&gt;fd);
+                path_len = readlink(procfd_path, path,
+                                    sizeof(path) - 1);
+                if (path_len == -1) {
+                    perror(&quot;readlink&quot;);
+                    exit(EXIT_FAILURE);
+                }
+
+                path[path_len] = '\0';
+                printf(&quot;File %s\n&quot;, path);
+
+                /* イベントのファイルディスクリプターをクローズする */
+
+                close(metadata-&gt;fd);
+            }
+
+            /* 次のイベントに進む */
+
+            metadata = FAN_EVENT_NEXT(metadata, len);
+        }
+    }
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd,&nbsp;poll_num;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;nfds_t&nbsp;nfds;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;pollfd&nbsp;fds[2];
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;マウントポイントが指定されたか確認する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;MOUNT\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Press&nbsp;enter&nbsp;key&nbsp;to&nbsp;terminate.\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;fanotify&nbsp;API&nbsp;にアクセスするためのファイルディスクリプターを作成する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;fanotify_init(FAN_CLOEXEC&nbsp;|&nbsp;FAN_CLASS_CONTENT&nbsp;|&nbsp;FAN_NONBLOCK,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;O_RDONLY&nbsp;|&nbsp;O_LARGEFILE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fanotify_init&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;指定されたマウントに対して以下を監視するようにマークを付ける:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;ファイルのオープン前のアクセス許可イベント
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;書き込み可能なファイルディスクリプターのクローズ後の
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;通知イベント&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fanotify_mark(fd,&nbsp;FAN_MARK_ADD&nbsp;|&nbsp;FAN_MARK_MOUNT,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FAN_OPEN_PERM&nbsp;|&nbsp;FAN_CLOSE_WRITE,&nbsp;AT_FDCWD,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[1])&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fanotify_mark&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ポーリングの準備&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;nfds&nbsp;=&nbsp;2;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;コンソールの入力&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fds[0].fd&nbsp;=&nbsp;STDIN_FILENO;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fds[0].events&nbsp;=&nbsp;POLLIN;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;fanotify&nbsp;の入力&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fds[1].fd&nbsp;=&nbsp;fd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fds[1].events&nbsp;=&nbsp;POLLIN;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;イベントの発生を待つループ&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Listening&nbsp;for&nbsp;events.\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poll_num&nbsp;=&nbsp;poll(fds,&nbsp;nfds,&nbsp;-1);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(poll_num&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errno&nbsp;==&nbsp;EINTR)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;シグナルに割り込まれた場合&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;poll()&nbsp;を再開する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;poll&quot;);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;予期しないエラー&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(poll_num&nbsp;&gt;&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fds[0].revents&nbsp;&amp;&nbsp;POLLIN)&nbsp;{
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;コンソールからの入力がある場合:&nbsp;空の標準入力であれば終了&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(read(STDIN_FILENO,&nbsp;&amp;buf,&nbsp;1)&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf&nbsp;!=&nbsp;'\n')
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fds[1].revents&nbsp;&amp;&nbsp;POLLIN)&nbsp;{
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;fanotify&nbsp;イベントがある場合&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_events(fd);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Listening&nbsp;for&nbsp;events&nbsp;stopped.\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    char buf;
+    int fd, poll_num;
+    nfds_t nfds;
+    struct pollfd fds[2];
+
+    /* マウントポイントが指定されたか確認する */
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s MOUNT\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;Press enter key to terminate.\n&quot;);
+
+    /* fanotify API にアクセスするためのファイルディスクリプターを作成する */
+
+    fd = fanotify_init(FAN_CLOEXEC | FAN_CLASS_CONTENT | FAN_NONBLOCK,
+                       O_RDONLY | O_LARGEFILE);
+    if (fd == -1) {
+        perror(&quot;fanotify_init&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* 指定されたマウントに対して以下を監視するようにマークを付ける:
+       - ファイルのオープン前のアクセス許可イベント
+       - 書き込み可能なファイルディスクリプターのクローズ後の
+         通知イベント */
+
+    if (fanotify_mark(fd, FAN_MARK_ADD | FAN_MARK_MOUNT,
+                      FAN_OPEN_PERM | FAN_CLOSE_WRITE, AT_FDCWD,
+                      argv[1]) == -1) {
+        perror(&quot;fanotify_mark&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* ポーリングの準備 */
+
+    nfds = 2;
+
+    /* コンソールの入力 */
+
+    fds[0].fd = STDIN_FILENO;
+    fds[0].events = POLLIN;
+
+    /* fanotify の入力 */
+
+    fds[1].fd = fd;
+    fds[1].events = POLLIN;
+
+    /* イベントの発生を待つループ */
+
+    printf(&quot;Listening for events.\n&quot;);
+
+    while (1) {
+        poll_num = poll(fds, nfds, -1);
+        if (poll_num == -1) {
+            if (errno == EINTR)     /* シグナルに割り込まれた場合 */
+                continue;           /* poll() を再開する */
+
+            perror(&quot;poll&quot;);         /* 予期しないエラー */
+            exit(EXIT_FAILURE);
+        }
+
+        if (poll_num &gt; 0) {
+            if (fds[0].revents &amp; POLLIN) {
+
+                /* コンソールからの入力がある場合: 空の標準入力であれば終了 */
+
+                while (read(STDIN_FILENO, &amp;buf, 1) &gt; 0 &amp;&amp; buf != '\n')
+                    continue;
+                break;
+            }
+
+            if (fds[1].revents &amp; POLLIN) {
+
+                /* fanotify イベントがある場合 */
+
+                handle_events(fd);
+            }
+        }
+    }
+
+    printf(&quot;Listening for events stopped.\n&quot;);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 
 
@@ -750,15 +755,16 @@ processed.
 <P>
 
 
-
+<PRE>
 # <B>./fanotify_fid /home/user</B>
 Listening for events.
 FAN_CREATE (file created):
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Directory&nbsp;/home/user&nbsp;has&nbsp;been&nbsp;modified.
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Entry&nbsp;'testfile.txt'&nbsp;is&nbsp;not&nbsp;a&nbsp;subdirectory.
+        Directory /home/user has been modified.
+        Entry 'testfile.txt' is not a subdirectory.
 All events processed successfully. Program exiting.
-<P>
+
 $ <B>touch /home/user/testfile.txt</B>              # In another terminal
+</PRE>
 
 
 <P>
@@ -770,22 +776,23 @@ reported with the <B>FAN_ONDIR</B> flag set and with the created directory name.
 <P>
 
 
-
+<PRE>
 # <B>./fanotify_fid /home/user</B>
 Listening for events.
 FAN_CREATE | FAN_ONDIR (subdirectory created):
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Directory&nbsp;/home/user&nbsp;has&nbsp;been&nbsp;modified.
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Entry&nbsp;'testdir'&nbsp;is&nbsp;a&nbsp;subdirectory.
+        Directory /home/user has been modified.
+        Entry 'testdir' is a subdirectory.
 All events processed successfully. Program exiting.
-<P>
+
 $ <B>mkdir -p /home/user/testdir</B>          # In another terminal
+</PRE>
 
 
 <A NAME="lbAU">&nbsp;</A>
 <H3>プログラムのソース: fanotify_fid.c</H3>
 
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
@@ -796,151 +803,152 @@ $ <B>mkdir -p /home/user/testdir</B>          # In another terminal
 #include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/fanotify.h">sys/fanotify.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-<P>
+
 #define BUF_SIZE 256
-<P>
+
 int
 main(int argc, char **argv)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd,&nbsp;ret,&nbsp;event_fd,&nbsp;mount_fd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;len,&nbsp;path_len;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;path[PATH_MAX];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;procfd_path[PATH_MAX];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;events_buf[BUF_SIZE];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;file_handle&nbsp;*file_handle;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;fanotify_event_metadata&nbsp;*metadata;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;fanotify_event_info_fid&nbsp;*fid;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;char&nbsp;*file_name;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;stat&nbsp;sb;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Invalid&nbsp;number&nbsp;of&nbsp;command&nbsp;line&nbsp;arguments.\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mount_fd&nbsp;=&nbsp;open(argv[1],&nbsp;O_DIRECTORY&nbsp;|&nbsp;O_RDONLY);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mount_fd&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(argv[1]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;an&nbsp;fanotify&nbsp;file&nbsp;descriptor&nbsp;with&nbsp;FAN_REPORT_DFID_NAME&nbsp;as
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;flag&nbsp;so&nbsp;that&nbsp;program&nbsp;can&nbsp;receive&nbsp;fid&nbsp;events&nbsp;with&nbsp;directory
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;entry&nbsp;name.&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;fanotify_init(FAN_CLASS_NOTIF&nbsp;|&nbsp;FAN_REPORT_DFID_NAME,&nbsp;0);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fanotify_init&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Place&nbsp;a&nbsp;mark&nbsp;on&nbsp;the&nbsp;filesystem&nbsp;object&nbsp;supplied&nbsp;in&nbsp;argv[1].&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;fanotify_mark(fd,&nbsp;FAN_MARK_ADD&nbsp;|&nbsp;FAN_MARK_ONLYDIR,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FAN_CREATE&nbsp;|&nbsp;FAN_ONDIR,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AT_FDCWD,&nbsp;argv[1]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fanotify_mark&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Listening&nbsp;for&nbsp;events.\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Read&nbsp;events&nbsp;from&nbsp;the&nbsp;event&nbsp;queue&nbsp;into&nbsp;a&nbsp;buffer&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;len&nbsp;=&nbsp;read(fd,&nbsp;events_buf,&nbsp;sizeof(events_buf));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;==&nbsp;-1&nbsp;&amp;&amp;&nbsp;errno&nbsp;!=&nbsp;EAGAIN)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;read&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;バッファー内の全イベントを処理する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(metadata&nbsp;=&nbsp;(struct&nbsp;fanotify_event_metadata&nbsp;*)&nbsp;events_buf;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FAN_EVENT_OK(metadata,&nbsp;len);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;metadata&nbsp;=&nbsp;FAN_EVENT_NEXT(metadata,&nbsp;len))&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fid&nbsp;=&nbsp;(struct&nbsp;fanotify_event_info_fid&nbsp;*)&nbsp;(metadata&nbsp;+&nbsp;1);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_handle&nbsp;=&nbsp;(struct&nbsp;file_handle&nbsp;*)&nbsp;fid-&gt;handle;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Ensure&nbsp;that&nbsp;the&nbsp;event&nbsp;info&nbsp;is&nbsp;of&nbsp;the&nbsp;correct&nbsp;type&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fid-&gt;hdr.info_type&nbsp;==&nbsp;FAN_EVENT_INFO_TYPE_FID&nbsp;||
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fid-&gt;hdr.info_type&nbsp;==&nbsp;FAN_EVENT_INFO_TYPE_DFID)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_name&nbsp;=&nbsp;NULL;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;if&nbsp;(fid-&gt;hdr.info_type&nbsp;==&nbsp;FAN_EVENT_INFO_TYPE_DFID_NAME)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_name&nbsp;=&nbsp;file_handle-&gt;f_handle&nbsp;+
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_handle-&gt;handle_bytes;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Received&nbsp;unexpected&nbsp;event&nbsp;info&nbsp;type.\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(metadata-&gt;mask&nbsp;==&nbsp;FAN_CREATE)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;FAN_CREATE&nbsp;(file&nbsp;created):\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(metadata-&gt;mask&nbsp;==&nbsp;(FAN_CREATE&nbsp;|&nbsp;FAN_ONDIR))
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;FAN_CREATE&nbsp;|&nbsp;FAN_ONDIR&nbsp;(subdirectory&nbsp;created):\n&quot;);
-<P>
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* metadata-&gt;fd is set to FAN_NOFD when the group identifies<BR>
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>   objects by file handles.  To obtain a file descriptor for<BR>
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>   the file object corresponding to an event you can use the<BR>
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>   struct file_handle that's provided within the<BR>
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>   fanotify_event_info_fid in conjunction with the<BR>
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>   <A HREF="../man2/open_by_handle_at.2.html">open_by_handle_at</A>(2) system call.  A check for ESTALE is<BR>
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>   done to accommodate for the situation where the file handle<BR>
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>   for the object was deleted prior to this system call. */<BR>
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event_fd&nbsp;=&nbsp;open_by_handle_at(mount_fd,&nbsp;file_handle,&nbsp;O_RDONLY);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(event_fd&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errno&nbsp;==&nbsp;ESTALE)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;File&nbsp;handle&nbsp;is&nbsp;no&nbsp;longer&nbsp;valid.&nbsp;&quot;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;File&nbsp;has&nbsp;been&nbsp;deleted\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;open_by_handle_at&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;snprintf(procfd_path,&nbsp;sizeof(procfd_path),&nbsp;&quot;/proc/self/fd/%d&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event_fd);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;変更された&nbsp;dentry&nbsp;のパスを取得し表示する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path_len&nbsp;=&nbsp;readlink(procfd_path,&nbsp;path,&nbsp;sizeof(path)&nbsp;-&nbsp;1);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(path_len&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;readlink&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path[path_len]&nbsp;=&nbsp;'\0';
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\tDirectory&nbsp;'%s'&nbsp;has&nbsp;been&nbsp;modified.\n&quot;,&nbsp;path);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(file_name)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;fstatat(event_fd,&nbsp;file_name,&nbsp;&amp;sb,&nbsp;0);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errno&nbsp;!=&nbsp;ENOENT)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fstatat&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\tEntry&nbsp;'%s'&nbsp;does&nbsp;not&nbsp;exist.\n&quot;,&nbsp;file_name);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;if&nbsp;((sb.st_mode&nbsp;&amp;&nbsp;S_IFMT)&nbsp;==&nbsp;S_IFDIR)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\tEntry&nbsp;'%s'&nbsp;is&nbsp;a&nbsp;subdirectory.\n&quot;,&nbsp;file_name);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\tEntry&nbsp;'%s'&nbsp;is&nbsp;not&nbsp;a&nbsp;subdirectory.\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_name);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Close&nbsp;associated&nbsp;file&nbsp;descriptor&nbsp;for&nbsp;this&nbsp;event&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(event_fd);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;All&nbsp;events&nbsp;processed&nbsp;successfully.&nbsp;Program&nbsp;exiting.\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int fd, ret, event_fd, mount_fd;
+    ssize_t len, path_len;
+    char path[PATH_MAX];
+    char procfd_path[PATH_MAX];
+    char events_buf[BUF_SIZE];
+    struct file_handle *file_handle;
+    struct fanotify_event_metadata *metadata;
+    struct fanotify_event_info_fid *fid;
+    const char *file_name;
+    struct stat sb;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Invalid number of command line arguments.\n&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    mount_fd = open(argv[1], O_DIRECTORY | O_RDONLY);
+    if (mount_fd == -1) {
+        perror(argv[1]);
+        exit(EXIT_FAILURE);
+    }
+
+
+    /* Create an fanotify file descriptor with FAN_REPORT_DFID_NAME as
+       a flag so that program can receive fid events with directory
+       entry name. */
+
+    fd = fanotify_init(FAN_CLASS_NOTIF | FAN_REPORT_DFID_NAME, 0);
+    if (fd == -1) {
+        perror(&quot;fanotify_init&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Place a mark on the filesystem object supplied in argv[1]. */
+
+    ret = fanotify_mark(fd, FAN_MARK_ADD | FAN_MARK_ONLYDIR,
+                        FAN_CREATE | FAN_ONDIR,
+                        AT_FDCWD, argv[1]);
+    if (ret == -1) {
+        perror(&quot;fanotify_mark&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;Listening for events.\n&quot;);
+
+    /* Read events from the event queue into a buffer */
+
+    len = read(fd, events_buf, sizeof(events_buf));
+    if (len == -1 &amp;&amp; errno != EAGAIN) {
+        perror(&quot;read&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+        /* バッファー内の全イベントを処理する */
+
+    for (metadata = (struct fanotify_event_metadata *) events_buf;
+            FAN_EVENT_OK(metadata, len);
+            metadata = FAN_EVENT_NEXT(metadata, len)) {
+        fid = (struct fanotify_event_info_fid *) (metadata + 1);
+        file_handle = (struct file_handle *) fid-&gt;handle;
+
+        /* Ensure that the event info is of the correct type */
+
+        if (fid-&gt;hdr.info_type == FAN_EVENT_INFO_TYPE_FID ||
+            fid-&gt;hdr.info_type == FAN_EVENT_INFO_TYPE_DFID) {
+            file_name = NULL;
+        } else if (fid-&gt;hdr.info_type == FAN_EVENT_INFO_TYPE_DFID_NAME) {
+            file_name = file_handle-&gt;f_handle +
+                        file_handle-&gt;handle_bytes;
+        } else {
+            fprintf(stderr, &quot;Received unexpected event info type.\n&quot;);
+            exit(EXIT_FAILURE);
+        }
+
+        if (metadata-&gt;mask == FAN_CREATE)
+            printf(&quot;FAN_CREATE (file created):\n&quot;);
+
+        if (metadata-&gt;mask == (FAN_CREATE | FAN_ONDIR))
+            printf(&quot;FAN_CREATE | FAN_ONDIR (subdirectory created):\n&quot;);
+
+        /* metadata-&gt;fd is set to FAN_NOFD when the group identifies
+           objects by file handles.  To obtain a file descriptor for
+           the file object corresponding to an event you can use the
+           struct file_handle that's provided within the
+           fanotify_event_info_fid in conjunction with the
+           <A HREF="../man2/open_by_handle_at.2.html">open_by_handle_at</A>(2) system call.  A check for ESTALE is
+           done to accommodate for the situation where the file handle
+           for the object was deleted prior to this system call. */
+
+        event_fd = open_by_handle_at(mount_fd, file_handle, O_RDONLY);
+        if (event_fd == -1) {
+            if (errno == ESTALE) {
+                printf(&quot;File handle is no longer valid. &quot;
+                        &quot;File has been deleted\n&quot;);
+                continue;
+            } else {
+                perror(&quot;open_by_handle_at&quot;);
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        snprintf(procfd_path, sizeof(procfd_path), &quot;/proc/self/fd/%d&quot;,
+                event_fd);
+
+                /* 変更された dentry のパスを取得し表示する */
+
+        path_len = readlink(procfd_path, path, sizeof(path) - 1);
+        if (path_len == -1) {
+            perror(&quot;readlink&quot;);
+            exit(EXIT_FAILURE);
+        }
+
+        path[path_len] = '\0';
+        printf(&quot;\tDirectory '%s' has been modified.\n&quot;, path);
+
+        if (file_name) {
+            ret = fstatat(event_fd, file_name, &amp;sb, 0);
+            if (ret == -1) {
+                if (errno != ENOENT) {
+                    perror(&quot;fstatat&quot;);
+                    exit(EXIT_FAILURE);
+                }
+                printf(&quot;\tEntry '%s' does not exist.\n&quot;, file_name);
+            } else if ((sb.st_mode &amp; S_IFMT) == S_IFDIR) {
+                printf(&quot;\tEntry '%s' is a subdirectory.\n&quot;, file_name);
+            } else {
+                printf(&quot;\tEntry '%s' is not a subdirectory.\n&quot;,
+                        file_name);
+            }
+        }
+
+        /* Close associated file descriptor for this event */
+
+        close(event_fd);
+    }
+
+    printf(&quot;All events processed successfully. Program exiting.\n&quot;);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAV">&nbsp;</A>
 <H2>関連項目</H2>

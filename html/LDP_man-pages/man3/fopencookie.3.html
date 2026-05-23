@@ -66,13 +66,14 @@ fopencookie - 独自のストリームをオープンする
 <P>
 
 
-
+<PRE>
 typedef struct {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie_read_function_t&nbsp;&nbsp;*read;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie_write_function_t&nbsp;*write;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie_seek_function_t&nbsp;&nbsp;*seek;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie_close_function_t&nbsp;*close;
+    cookie_read_function_t  *read;
+    cookie_write_function_t *write;
+    cookie_seek_function_t  *seek;
+    cookie_close_function_t *close;
 } cookie_io_functions_t;
+</PRE>
 
 
 <P>
@@ -166,12 +167,13 @@ typedef struct {
 <P>
 
 
-
+<PRE>
 $<B> ./a.out 'hello world'</B>
 /he/
 / w/
 /d/
 Reached end of file
+</PRE>
 
 
 <P>
@@ -182,167 +184,168 @@ Reached end of file
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-<P>
+
 #define INIT_BUF_SIZE 4
-<P>
+
 struct memfile_cookie {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*buf;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Dynamically&nbsp;sized&nbsp;buffer&nbsp;for&nbsp;data&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;allocated;&nbsp;&nbsp;/*&nbsp;Size&nbsp;of&nbsp;buf&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;endpos;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;characters&nbsp;in&nbsp;buf&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;off_t&nbsp;&nbsp;&nbsp;offset;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Current&nbsp;file&nbsp;offset&nbsp;in&nbsp;buf&nbsp;*/
+    char   *buf;        /* Dynamically sized buffer for data */
+    size_t  allocated;  /* Size of buf */
+    size_t  endpos;     /* Number of characters in buf */
+    off_t   offset;     /* Current file offset in buf */
 };
-<P>
+
 ssize_t
 memfile_write(void *c, const char *buf, size_t size)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*new_buff;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;memfile_cookie&nbsp;*cookie&nbsp;=&nbsp;c;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Buffer&nbsp;too&nbsp;small?&nbsp;Keep&nbsp;doubling&nbsp;size&nbsp;until&nbsp;big&nbsp;enough&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(size&nbsp;+&nbsp;cookie-&gt;offset&nbsp;&gt;&nbsp;cookie-&gt;allocated)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new_buff&nbsp;=&nbsp;realloc(cookie-&gt;buf,&nbsp;cookie-&gt;allocated&nbsp;*&nbsp;2);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(new_buff&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;allocated&nbsp;*=&nbsp;2;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;buf&nbsp;=&nbsp;new_buff;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;memcpy(cookie-&gt;buf&nbsp;+&nbsp;cookie-&gt;offset,&nbsp;buf,&nbsp;size);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;offset&nbsp;+=&nbsp;size;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cookie-&gt;offset&nbsp;&gt;&nbsp;cookie-&gt;endpos)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;endpos&nbsp;=&nbsp;cookie-&gt;offset;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;size;
+    char *new_buff;
+    struct memfile_cookie *cookie = c;
+
+    /* Buffer too small? Keep doubling size until big enough */
+
+    while (size + cookie-&gt;offset &gt; cookie-&gt;allocated) {
+        new_buff = realloc(cookie-&gt;buf, cookie-&gt;allocated * 2);
+        if (new_buff == NULL) {
+            return -1;
+        } else {
+            cookie-&gt;allocated *= 2;
+            cookie-&gt;buf = new_buff;
+        }
+    }
+
+    memcpy(cookie-&gt;buf + cookie-&gt;offset, buf, size);
+
+    cookie-&gt;offset += size;
+    if (cookie-&gt;offset &gt; cookie-&gt;endpos)
+        cookie-&gt;endpos = cookie-&gt;offset;
+
+    return size;
 }
-<P>
+
 ssize_t
 memfile_read(void *c, char *buf, size_t size)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;xbytes;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;memfile_cookie&nbsp;*cookie&nbsp;=&nbsp;c;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Fetch&nbsp;minimum&nbsp;of&nbsp;bytes&nbsp;requested&nbsp;and&nbsp;bytes&nbsp;available&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;xbytes&nbsp;=&nbsp;size;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cookie-&gt;offset&nbsp;+&nbsp;size&nbsp;&gt;&nbsp;cookie-&gt;endpos)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;xbytes&nbsp;=&nbsp;cookie-&gt;endpos&nbsp;-&nbsp;cookie-&gt;offset;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(xbytes&nbsp;&lt;&nbsp;0)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;offset&nbsp;may&nbsp;be&nbsp;past&nbsp;endpos&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;xbytes&nbsp;=&nbsp;0;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;memcpy(buf,&nbsp;cookie-&gt;buf&nbsp;+&nbsp;cookie-&gt;offset,&nbsp;xbytes);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;offset&nbsp;+=&nbsp;xbytes;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;xbytes;
+    ssize_t xbytes;
+    struct memfile_cookie *cookie = c;
+
+    /* Fetch minimum of bytes requested and bytes available */
+
+    xbytes = size;
+    if (cookie-&gt;offset + size &gt; cookie-&gt;endpos)
+        xbytes = cookie-&gt;endpos - cookie-&gt;offset;
+    if (xbytes &lt; 0)     /* offset may be past endpos */
+       xbytes = 0;
+
+    memcpy(buf, cookie-&gt;buf + cookie-&gt;offset, xbytes);
+
+    cookie-&gt;offset += xbytes;
+    return xbytes;
 }
-<P>
+
 int
 memfile_seek(void *c, off64_t *offset, int whence)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;off64_t&nbsp;new_offset;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;memfile_cookie&nbsp;*cookie&nbsp;=&nbsp;c;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(whence&nbsp;==&nbsp;SEEK_SET)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new_offset&nbsp;=&nbsp;*offset;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;if&nbsp;(whence&nbsp;==&nbsp;SEEK_END)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new_offset&nbsp;=&nbsp;cookie-&gt;endpos&nbsp;+&nbsp;*offset;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;if&nbsp;(whence&nbsp;==&nbsp;SEEK_CUR)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new_offset&nbsp;=&nbsp;cookie-&gt;offset&nbsp;+&nbsp;*offset;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(new_offset&nbsp;&lt;&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;offset&nbsp;=&nbsp;new_offset;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;*offset&nbsp;=&nbsp;new_offset;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;
+    off64_t new_offset;
+    struct memfile_cookie *cookie = c;
+
+    if (whence == SEEK_SET)
+        new_offset = *offset;
+    else if (whence == SEEK_END)
+        new_offset = cookie-&gt;endpos + *offset;
+    else if (whence == SEEK_CUR)
+        new_offset = cookie-&gt;offset + *offset;
+    else
+        return -1;
+
+    if (new_offset &lt; 0)
+        return -1;
+
+    cookie-&gt;offset = new_offset;
+    *offset = new_offset;
+    return 0;
 }
-<P>
+
 int
 memfile_close(void *c)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;memfile_cookie&nbsp;*cookie&nbsp;=&nbsp;c;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(cookie-&gt;buf);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;allocated&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie-&gt;buf&nbsp;=&nbsp;NULL;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;
+    struct memfile_cookie *cookie = c;
+
+    free(cookie-&gt;buf);
+    cookie-&gt;allocated = 0;
+    cookie-&gt;buf = NULL;
+
+    return 0;
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cookie_io_functions_t&nbsp;&nbsp;memfile_func&nbsp;=&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.read&nbsp;&nbsp;=&nbsp;memfile_read,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.write&nbsp;=&nbsp;memfile_write,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.seek&nbsp;&nbsp;=&nbsp;memfile_seek,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.close&nbsp;=&nbsp;memfile_close
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;};
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;FILE&nbsp;*stream;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;memfile_cookie&nbsp;mycookie;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;nread;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[1000];
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Set&nbsp;up&nbsp;the&nbsp;cookie&nbsp;before&nbsp;calling&nbsp;fopencookie()&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mycookie.buf&nbsp;=&nbsp;malloc(INIT_BUF_SIZE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mycookie.buf&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mycookie.allocated&nbsp;=&nbsp;INIT_BUF_SIZE;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mycookie.offset&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mycookie.endpos&nbsp;=&nbsp;0;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;stream&nbsp;=&nbsp;fopencookie(&amp;mycookie,&quot;w+&quot;,&nbsp;memfile_func);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(stream&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fopencookie&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Write&nbsp;command-line&nbsp;arguments&nbsp;to&nbsp;our&nbsp;file&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;1;&nbsp;j&nbsp;&lt;&nbsp;argc;&nbsp;j++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fputs(argv[j],&nbsp;stream)&nbsp;==&nbsp;EOF)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fputs&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Read&nbsp;two&nbsp;bytes&nbsp;out&nbsp;of&nbsp;every&nbsp;five,&nbsp;until&nbsp;EOF&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(long&nbsp;p&nbsp;=&nbsp;0;&nbsp;;&nbsp;p&nbsp;+=&nbsp;5)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fseek(stream,&nbsp;p,&nbsp;SEEK_SET)&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fseek&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nread&nbsp;=&nbsp;fread(buf,&nbsp;1,&nbsp;2,&nbsp;stream);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nread&nbsp;==&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ferror(stream)&nbsp;!=&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;fread&nbsp;failed\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Reached&nbsp;end&nbsp;of&nbsp;file\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;/%.*s/\n&quot;,&nbsp;(int)&nbsp;nread,&nbsp;buf);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    cookie_io_functions_t  memfile_func = {
+        .read  = memfile_read,
+        .write = memfile_write,
+        .seek  = memfile_seek,
+        .close = memfile_close
+    };
+    FILE *stream;
+    struct memfile_cookie mycookie;
+    size_t nread;
+    char buf[1000];
+
+    /* Set up the cookie before calling fopencookie() */
+
+    mycookie.buf = malloc(INIT_BUF_SIZE);
+    if (mycookie.buf == NULL) {
+        perror(&quot;malloc&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    mycookie.allocated = INIT_BUF_SIZE;
+    mycookie.offset = 0;
+    mycookie.endpos = 0;
+
+    stream = fopencookie(&amp;mycookie,&quot;w+&quot;, memfile_func);
+    if (stream == NULL) {
+        perror(&quot;fopencookie&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Write command-line arguments to our file */
+
+    for (int j = 1; j &lt; argc; j++)
+        if (fputs(argv[j], stream) == EOF) {
+            perror(&quot;fputs&quot;);
+            exit(EXIT_FAILURE);
+        }
+
+    /* Read two bytes out of every five, until EOF */
+
+    for (long p = 0; ; p += 5) {
+        if (fseek(stream, p, SEEK_SET) == -1) {
+            perror(&quot;fseek&quot;);
+            exit(EXIT_FAILURE);
+        }
+        nread = fread(buf, 1, 2, stream);
+        if (nread == 0) {
+            if (ferror(stream) != 0) {
+                fprintf(stderr, &quot;fread failed\n&quot;);
+                exit(EXIT_FAILURE);
+            }
+            printf(&quot;Reached end of file\n&quot;);
+            break;
+        }
+
+        printf(&quot;/%.*s/\n&quot;, (int) nread, buf);
+    }
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAJ">&nbsp;</A>
 <H2>関連項目</H2>

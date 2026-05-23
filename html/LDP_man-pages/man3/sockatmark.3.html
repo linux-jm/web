@@ -97,34 +97,35 @@ glibc 2.4 より前のバージョンでは、 <B>sockatmark</B>()  は動作し
 マークされたデータのバイトを読み込むのに使用できる。
 <P>
 
+<PRE>
+    char buf[BUF_LEN];
+    char oobdata;
+    int atmark, s;
 
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[BUF_LEN];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;oobdata;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;atmark,&nbsp;s;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;atmark&nbsp;=&nbsp;sockatmark(sockfd);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(atmark&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;sockatmark&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(atmark)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;read(sockfd,&nbsp;buf,&nbsp;BUF_LEN);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;read&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;&lt;=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(atmark&nbsp;==&nbsp;1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(recv(sockfd,&nbsp;&amp;oobdata,&nbsp;1,&nbsp;MSG_OOB)&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;recv&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+    for (;;) {
+        atmark = sockatmark(sockfd);
+        if (atmark == -1) {
+            perror(&quot;sockatmark&quot;);
+            break;
+        }
+
+        if (atmark)
+            break;
+
+        s = read(sockfd, buf, BUF_LEN);
+        if (s == -1)
+            perror(&quot;read&quot;);
+        if (s &lt;= 0)
+            break;
+    }
+
+    if (atmark == 1) {
+        if (recv(sockfd, &amp;oobdata, 1, MSG_OOB) == -1) {
+            perror(&quot;recv&quot;);
+            ...
+        }
+    }
+</PRE>
 
 <A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>

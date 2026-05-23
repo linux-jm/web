@@ -36,19 +36,20 @@ The returned structure is defined as follows:
 <P>
 
 
-
+<PRE>
 struct mallinfo {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;arena;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Non-mmapped&nbsp;space&nbsp;allocated&nbsp;(bytes)&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ordblks;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;free&nbsp;chunks&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;smblks;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;free&nbsp;fastbin&nbsp;blocks&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;hblks;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;mmapped&nbsp;regions&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;hblkhd;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Space&nbsp;allocated&nbsp;in&nbsp;mmapped&nbsp;regions&nbsp;(bytes)&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;usmblks;&nbsp;&nbsp;&nbsp;/*&nbsp;See&nbsp;below&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fsmblks;&nbsp;&nbsp;&nbsp;/*&nbsp;Space&nbsp;in&nbsp;freed&nbsp;fastbin&nbsp;blocks&nbsp;(bytes)&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;uordblks;&nbsp;&nbsp;/*&nbsp;Total&nbsp;allocated&nbsp;space&nbsp;(bytes)&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fordblks;&nbsp;&nbsp;/*&nbsp;Total&nbsp;free&nbsp;space&nbsp;(bytes)&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;keepcost;&nbsp;&nbsp;/*&nbsp;Top-most,&nbsp;releasable&nbsp;space&nbsp;(bytes)&nbsp;*/
+    int arena;     /* Non-mmapped space allocated (bytes) */
+    int ordblks;   /* Number of free chunks */
+    int smblks;    /* Number of free fastbin blocks */
+    int hblks;     /* Number of mmapped regions */
+    int hblkhd;    /* Space allocated in mmapped regions (bytes) */
+    int usmblks;   /* See below */
+    int fsmblks;   /* Space in freed fastbin blocks (bytes) */
+    int uordblks;  /* Total allocated space (bytes) */
+    int fordblks;  /* Total free space (bytes) */
+    int keepcost;  /* Top-most, releasable space (bytes) */
 };
+</PRE>
 
 
 <P>
@@ -157,7 +158,7 @@ enough, others modify with non-atomically maybe not.
 <P>
 
 
-
+<PRE>
 $ <B>./a.out 1000 100 2</B>
 ============== Before allocating blocks ==============
 Total non-mmapped bytes (arena):       0
@@ -170,7 +171,7 @@ Free bytes held in fastbins (fsmblks): 0
 Total allocated space (uordblks):      0
 Total free space (fordblks):           0
 Topmost releasable block (keepcost):   0
-<P>
+
 ============== After allocating blocks ==============
 Total non-mmapped bytes (arena):       135168
 # of free chunks (ordblks):            1
@@ -182,7 +183,7 @@ Free bytes held in fastbins (fsmblks): 0
 Total allocated space (uordblks):      104000
 Total free space (fordblks):           31168
 Topmost releasable block (keepcost):   31168
-<P>
+
 ============== After freeing blocks ==============
 Total non-mmapped bytes (arena):       135168
 # of free chunks (ordblks):            501
@@ -194,83 +195,85 @@ Free bytes held in fastbins (fsmblks): 0
 Total allocated space (uordblks):      52000
 Total free space (fordblks):           83168
 Topmost releasable block (keepcost):   31168
+</PRE>
 
 
 <A NAME="lbAI">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/malloc.h">malloc.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-<P>
+
 static void
 display_mallinfo(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;mallinfo&nbsp;mi;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mi&nbsp;=&nbsp;mallinfo();
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Total&nbsp;non-mmapped&nbsp;bytes&nbsp;(arena):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.arena);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;#&nbsp;of&nbsp;free&nbsp;chunks&nbsp;(ordblks):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.ordblks);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;#&nbsp;of&nbsp;free&nbsp;fastbin&nbsp;blocks&nbsp;(smblks):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.smblks);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;#&nbsp;of&nbsp;mapped&nbsp;regions&nbsp;(hblks):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.hblks);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Bytes&nbsp;in&nbsp;mapped&nbsp;regions&nbsp;(hblkhd):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.hblkhd);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Max.&nbsp;total&nbsp;allocated&nbsp;space&nbsp;(usmblks):&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.usmblks);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Free&nbsp;bytes&nbsp;held&nbsp;in&nbsp;fastbins&nbsp;(fsmblks):&nbsp;%d\n&quot;,&nbsp;mi.fsmblks);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Total&nbsp;allocated&nbsp;space&nbsp;(uordblks):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.uordblks);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Total&nbsp;free&nbsp;space&nbsp;(fordblks):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.fordblks);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Topmost&nbsp;releasable&nbsp;block&nbsp;(keepcost):&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;mi.keepcost);
+    struct mallinfo mi;
+
+    mi = mallinfo();
+
+    printf(&quot;Total non-mmapped bytes (arena):       %d\n&quot;, mi.arena);
+    printf(&quot;# of free chunks (ordblks):            %d\n&quot;, mi.ordblks);
+    printf(&quot;# of free fastbin blocks (smblks):     %d\n&quot;, mi.smblks);
+    printf(&quot;# of mapped regions (hblks):           %d\n&quot;, mi.hblks);
+    printf(&quot;Bytes in mapped regions (hblkhd):      %d\n&quot;, mi.hblkhd);
+    printf(&quot;Max. total allocated space (usmblks):  %d\n&quot;, mi.usmblks);
+    printf(&quot;Free bytes held in fastbins (fsmblks): %d\n&quot;, mi.fsmblks);
+    printf(&quot;Total allocated space (uordblks):      %d\n&quot;, mi.uordblks);
+    printf(&quot;Total free space (fordblks):           %d\n&quot;, mi.fordblks);
+    printf(&quot;Topmost releasable block (keepcost):   %d\n&quot;, mi.keepcost);
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
 #define MAX_ALLOCS 2000000
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*alloc[MAX_ALLOCS];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;numBlocks,&nbsp;freeBegin,&nbsp;freeEnd,&nbsp;freeStep;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;blockSize;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;3&nbsp;||&nbsp;strcmp(argv[1],&nbsp;&quot;--help&quot;)&nbsp;==&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s&nbsp;num-blocks&nbsp;block-size&nbsp;[free-step&nbsp;&quot;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;[start-free&nbsp;[end-free]]]\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;numBlocks&nbsp;=&nbsp;atoi(argv[1]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;blockSize&nbsp;=&nbsp;atoi(argv[2]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;freeStep&nbsp;=&nbsp;(argc&nbsp;&gt;&nbsp;3)&nbsp;?&nbsp;atoi(argv[3])&nbsp;:&nbsp;1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;freeBegin&nbsp;=&nbsp;(argc&nbsp;&gt;&nbsp;4)&nbsp;?&nbsp;atoi(argv[4])&nbsp;:&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;freeEnd&nbsp;=&nbsp;(argc&nbsp;&gt;&nbsp;5)&nbsp;?&nbsp;atoi(argv[5])&nbsp;:&nbsp;numBlocks;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;==============&nbsp;Before&nbsp;allocating&nbsp;blocks&nbsp;==============\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;display_mallinfo();
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;numBlocks;&nbsp;j++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(numBlocks&nbsp;&gt;=&nbsp;MAX_ALLOCS)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Too&nbsp;many&nbsp;allocations\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;alloc[j]&nbsp;=&nbsp;malloc(blockSize);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(alloc[j]&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n==============&nbsp;After&nbsp;allocating&nbsp;blocks&nbsp;==============\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;display_mallinfo();
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;freeBegin;&nbsp;j&nbsp;&lt;&nbsp;freeEnd;&nbsp;j&nbsp;+=&nbsp;freeStep)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;free(alloc[j]);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n==============&nbsp;After&nbsp;freeing&nbsp;blocks&nbsp;==============\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;display_mallinfo();
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    char *alloc[MAX_ALLOCS];
+    int numBlocks, freeBegin, freeEnd, freeStep;
+    size_t blockSize;
+
+    if (argc &lt; 3 || strcmp(argv[1], &quot;--help&quot;) == 0) {
+        fprintf(stderr, &quot;%s num-blocks block-size [free-step &quot;
+                &quot;[start-free [end-free]]]\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    numBlocks = atoi(argv[1]);
+    blockSize = atoi(argv[2]);
+    freeStep = (argc &gt; 3) ? atoi(argv[3]) : 1;
+    freeBegin = (argc &gt; 4) ? atoi(argv[4]) : 0;
+    freeEnd = (argc &gt; 5) ? atoi(argv[5]) : numBlocks;
+
+    printf(&quot;============== Before allocating blocks ==============\n&quot;);
+    display_mallinfo();
+
+    for (int j = 0; j &lt; numBlocks; j++) {
+        if (numBlocks &gt;= MAX_ALLOCS) {
+            fprintf(stderr, &quot;Too many allocations\n&quot;);
+            exit(EXIT_FAILURE);
+        }
+
+        alloc[j] = malloc(blockSize);
+        if (alloc[j] == NULL) {
+            perror(&quot;malloc&quot;);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    printf(&quot;\n============== After allocating blocks ==============\n&quot;);
+    display_mallinfo();
+
+    for (int j = freeBegin; j &lt; freeEnd; j += freeStep)
+        free(alloc[j]);
+
+    printf(&quot;\n============== After freeing blocks ==============\n&quot;);
+    display_mallinfo();
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAJ">&nbsp;</A>
 <H2>関連項目</H2>

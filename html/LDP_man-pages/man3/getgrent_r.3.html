@@ -57,14 +57,15 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 
-
+<PRE>
 struct group {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*gr_name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループ名&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*gr_passwd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループのパスワード&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;&nbsp;&nbsp;gr_gid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループ&nbsp;ID&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;**gr_mem;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;グループのメンバ名へのポインター
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;の配列&nbsp;(配列はヌルで終端する)&nbsp;*/
+    char   *gr_name;        /* グループ名 */
+    char   *gr_passwd;      /* グループのパスワード */
+    gid_t   gr_gid;         /* グループ ID */
+    char  **gr_mem;         /* グループのメンバ名へのポインター
+                               の配列 (配列はヌルで終端する) */
 };
+</PRE>
 
 
 <P>
@@ -118,9 +119,10 @@ could occur.
 <P>
 
 
-
+<PRE>
 struct group *getgrent_r(struct group *grp, char *buf,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;buflen);
+                         int buflen);
+</PRE>
 
 
 <P>
@@ -129,9 +131,10 @@ struct group *getgrent_r(struct group *grp, char *buf,
 <P>
 
 
-
+<PRE>
 int getgrent_r(struct group *grp, char *buf, int buflen,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FILE&nbsp;**gr_fp);
+               FILE **gr_fp);
+</PRE>
 
 
 <A NAME="lbAI">&nbsp;</A>
@@ -142,38 +145,39 @@ int getgrent_r(struct group *grp, char *buf, int buflen,
 <A NAME="lbAJ">&nbsp;</A>
 <H2>例</H2>
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #define BUFLEN 4096
-<P>
+
 int
 main(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;group&nbsp;grp;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;group&nbsp;*grpp;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[BUFLEN];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;i;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;setgrent();
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i&nbsp;=&nbsp;getgrent_r(&amp;grp,&nbsp;buf,&nbsp;sizeof(buf),&nbsp;&amp;grpp);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(i)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s&nbsp;(%jd):&quot;,&nbsp;grpp-&gt;gr_name,&nbsp;(intmax_t)&nbsp;grpp-&gt;gr_gid);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;;&nbsp;j++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(grpp-&gt;gr_mem[j]&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;%s&quot;,&nbsp;grpp-&gt;gr_mem[j]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;endgrent();
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    struct group grp;
+    struct group *grpp;
+    char buf[BUFLEN];
+    int i;
+
+    setgrent();
+    while (1) {
+        i = getgrent_r(&amp;grp, buf, sizeof(buf), &amp;grpp);
+        if (i)
+            break;
+        printf(&quot;%s (%jd):&quot;, grpp-&gt;gr_name, (intmax_t) grpp-&gt;gr_gid);
+        for (int j = 0; ; j++) {
+            if (grpp-&gt;gr_mem[j] == NULL)
+                break;
+            printf(&quot; %s&quot;, grpp-&gt;gr_mem[j]);
+        }
+        printf(&quot;\n&quot;);
+    }
+    endgrent();
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 
 

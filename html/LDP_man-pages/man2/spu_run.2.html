@@ -140,54 +140,55 @@ glibc はこのシステムコールに対するラッパー関数を提供し�
 以下は、簡単な 1 命令の SPU プログラムを <B>spu_run</B>()  システムコールを使って実行させる例である。
 <P>
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
-<P>
+
 #define handle_error(msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 int main(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;context,&nbsp;fd,&nbsp;spu_status;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;instruction,&nbsp;npc;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;context&nbsp;=&nbsp;spu_create(&quot;/spu/example-context&quot;,&nbsp;0,&nbsp;0755);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(context&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;spu_create&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;write&nbsp;a&nbsp;'stop&nbsp;0x1234'&nbsp;instruction&nbsp;to&nbsp;the&nbsp;SPU's
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;local&nbsp;store&nbsp;memory
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;instruction&nbsp;=&nbsp;0x00001234;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open(&quot;/spu/example-context/mem&quot;,&nbsp;O_RDWR);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;open&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;write(fd,&nbsp;&amp;instruction,&nbsp;sizeof(instruction));
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;set&nbsp;npc&nbsp;to&nbsp;the&nbsp;starting&nbsp;instruction&nbsp;address&nbsp;of&nbsp;the
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;SPU&nbsp;program.&nbsp;Since&nbsp;we&nbsp;wrote&nbsp;the&nbsp;instruction&nbsp;at&nbsp;the
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;start&nbsp;of&nbsp;the&nbsp;mem&nbsp;file,&nbsp;the&nbsp;entry&nbsp;point&nbsp;will&nbsp;be&nbsp;0x0
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;npc&nbsp;=&nbsp;0;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;spu_status&nbsp;=&nbsp;spu_run(context,&nbsp;&amp;npc,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(spu_status&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;open&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;we&nbsp;should&nbsp;see&nbsp;a&nbsp;status&nbsp;code&nbsp;of&nbsp;0x1234002:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;&nbsp;&nbsp;0x00000002&nbsp;(spu&nbsp;was&nbsp;stopped&nbsp;due&nbsp;to&nbsp;stop-and-signal)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;|&nbsp;0x12340000&nbsp;(the&nbsp;stop-and-signal&nbsp;code)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;SPU&nbsp;Status:&nbsp;%#08x\n&quot;,&nbsp;spu_status);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int context, fd, spu_status;
+    uint32_t instruction, npc;
+
+    context = spu_create(&quot;/spu/example-context&quot;, 0, 0755);
+    if (context == -1)
+        handle_error(&quot;spu_create&quot;);
+
+    /* write a 'stop 0x1234' instruction to the SPU's
+     * local store memory
+     */
+    instruction = 0x00001234;
+
+    fd = open(&quot;/spu/example-context/mem&quot;, O_RDWR);
+    if (fd == -1)
+        handle_error(&quot;open&quot;);
+    write(fd, &amp;instruction, sizeof(instruction));
+
+    /* set npc to the starting instruction address of the
+     * SPU program. Since we wrote the instruction at the
+     * start of the mem file, the entry point will be 0x0
+     */
+    npc = 0;
+
+    spu_status = spu_run(context, &amp;npc, NULL);
+    if (spu_status == -1)
+        handle_error(&quot;open&quot;);
+
+    /* we should see a status code of 0x1234002:
+     *   0x00000002 (spu was stopped due to stop-and-signal)
+     * | 0x12340000 (the stop-and-signal code)
+     */
+    printf(&quot;SPU Status: %#08x\n&quot;, spu_status);
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 
 

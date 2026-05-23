@@ -237,10 +237,11 @@ mappings).
 <P>
 
 
-
+<PRE>
 $ <B>./t_memfd_create my_memfd_file 4096 sw &amp;</B>
 [1] 11775
 PID: 11775; fd: 3; /proc/11775/fd/3
+</PRE>
 
 
 <P>
@@ -252,18 +253,19 @@ PID: 11775; fd: 3; /proc/11775/fd/3
 <P>
 
 
-
+<PRE>
 $ <B>readlink /proc/11775/fd/3</B>
 /memfd:my_memfd_file (deleted)
 $ <B>./t_get_seals /proc/11775/fd/3</B>
 Existing seals: WRITE SHRINK
+</PRE>
 
 
 <A NAME="lbAL">&nbsp;</A>
 <H3>プログラムのソース: t_memfd_create.c</H3>
 
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
@@ -272,87 +274,88 @@ Existing seals: WRITE SHRINK
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-<P>
+
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        } while (0)
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;seals;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*addr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*name,&nbsp;*seals_arg;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;len;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;3)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s&nbsp;name&nbsp;size&nbsp;[seals]\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;\t'seals'&nbsp;can&nbsp;contain&nbsp;any&nbsp;of&nbsp;the&nbsp;&quot;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;following&nbsp;characters:\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;\t\tg&nbsp;-&nbsp;F_SEAL_GROW\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;\t\ts&nbsp;-&nbsp;F_SEAL_SHRINK\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;\t\tw&nbsp;-&nbsp;F_SEAL_WRITE\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;\t\tW&nbsp;-&nbsp;F_SEAL_FUTURE_WRITE\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;\t\tS&nbsp;-&nbsp;F_SEAL_SEAL\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;=&nbsp;argv[1];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;len&nbsp;=&nbsp;atoi(argv[2]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;seals_arg&nbsp;=&nbsp;argv[3];
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;an&nbsp;anonymous&nbsp;file&nbsp;in&nbsp;tmpfs;&nbsp;allow&nbsp;seals&nbsp;to&nbsp;be
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;placed&nbsp;on&nbsp;the&nbsp;file&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;memfd_create(name,&nbsp;MFD_ALLOW_SEALING);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;memfd_create&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Size&nbsp;the&nbsp;file&nbsp;as&nbsp;specified&nbsp;on&nbsp;the&nbsp;command&nbsp;line&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ftruncate(fd,&nbsp;len)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;truncate&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;PID:&nbsp;%jd;&nbsp;fd:&nbsp;%d;&nbsp;/proc/%jd/fd/%d\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(intmax_t)&nbsp;getpid(),&nbsp;fd,&nbsp;(intmax_t)&nbsp;getpid(),&nbsp;fd);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Code&nbsp;to&nbsp;map&nbsp;the&nbsp;file&nbsp;and&nbsp;populate&nbsp;the&nbsp;mapping&nbsp;with&nbsp;data
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;omitted&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;If&nbsp;a&nbsp;'seals'&nbsp;command-line&nbsp;argument&nbsp;was&nbsp;supplied,&nbsp;set&nbsp;some
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seals&nbsp;on&nbsp;the&nbsp;file&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(seals_arg&nbsp;!=&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seals&nbsp;=&nbsp;0;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(strchr(seals_arg,&nbsp;'g')&nbsp;!=&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seals&nbsp;|=&nbsp;F_SEAL_GROW;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(strchr(seals_arg,&nbsp;'s')&nbsp;!=&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seals&nbsp;|=&nbsp;F_SEAL_SHRINK;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(strchr(seals_arg,&nbsp;'w')&nbsp;!=&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seals&nbsp;|=&nbsp;F_SEAL_WRITE;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(strchr(seals_arg,&nbsp;'W')&nbsp;!=&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seals&nbsp;|=&nbsp;F_SEAL_FUTURE_WRITE;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(strchr(seals_arg,&nbsp;'S')&nbsp;!=&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seals&nbsp;|=&nbsp;F_SEAL_SEAL;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fcntl(fd,&nbsp;F_ADD_SEALS,&nbsp;seals)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;fcntl&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Keep&nbsp;running,&nbsp;so&nbsp;that&nbsp;the&nbsp;file&nbsp;created&nbsp;by&nbsp;memfd_create()
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continues&nbsp;to&nbsp;exist&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pause();
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int fd;
+    unsigned int seals;
+    char *addr;
+    char *name, *seals_arg;
+    ssize_t len;
+
+    if (argc &lt; 3) {
+        fprintf(stderr, &quot;%s name size [seals]\n&quot;, argv[0]);
+        fprintf(stderr, &quot;\t'seals' can contain any of the &quot;
+                &quot;following characters:\n&quot;);
+        fprintf(stderr, &quot;\t\tg - F_SEAL_GROW\n&quot;);
+        fprintf(stderr, &quot;\t\ts - F_SEAL_SHRINK\n&quot;);
+        fprintf(stderr, &quot;\t\tw - F_SEAL_WRITE\n&quot;);
+        fprintf(stderr, &quot;\t\tW - F_SEAL_FUTURE_WRITE\n&quot;);
+        fprintf(stderr, &quot;\t\tS - F_SEAL_SEAL\n&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    name = argv[1];
+    len = atoi(argv[2]);
+    seals_arg = argv[3];
+
+    /* Create an anonymous file in tmpfs; allow seals to be
+       placed on the file */
+
+    fd = memfd_create(name, MFD_ALLOW_SEALING);
+    if (fd == -1)
+        errExit(&quot;memfd_create&quot;);
+
+    /* Size the file as specified on the command line */
+
+    if (ftruncate(fd, len) == -1)
+        errExit(&quot;truncate&quot;);
+
+    printf(&quot;PID: %jd; fd: %d; /proc/%jd/fd/%d\n&quot;,
+            (intmax_t) getpid(), fd, (intmax_t) getpid(), fd);
+
+    /* Code to map the file and populate the mapping with data
+       omitted */
+
+    /* If a 'seals' command-line argument was supplied, set some
+       seals on the file */
+
+    if (seals_arg != NULL) {
+        seals = 0;
+
+        if (strchr(seals_arg, 'g') != NULL)
+            seals |= F_SEAL_GROW;
+        if (strchr(seals_arg, 's') != NULL)
+            seals |= F_SEAL_SHRINK;
+        if (strchr(seals_arg, 'w') != NULL)
+            seals |= F_SEAL_WRITE;
+        if (strchr(seals_arg, 'W') != NULL)
+            seals |= F_SEAL_FUTURE_WRITE;
+        if (strchr(seals_arg, 'S') != NULL)
+            seals |= F_SEAL_SEAL;
+
+        if (fcntl(fd, F_ADD_SEALS, seals) == -1)
+            errExit(&quot;fcntl&quot;);
+    }
+
+    /* Keep running, so that the file created by memfd_create()
+       continues to exist */
+
+    pause();
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAM">&nbsp;</A>
 <H3>プログラムのソース: t_get_seals.c</H3>
 
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
@@ -360,47 +363,48 @@ main(int argc, char *argv[])
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-<P>
+
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        } while (0)
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;seals;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s&nbsp;/proc/PID/fd/FD\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open(argv[1],&nbsp;O_RDWR);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;open&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;seals&nbsp;=&nbsp;fcntl(fd,&nbsp;F_GET_SEALS);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(seals&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;fcntl&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Existing&nbsp;seals:&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(seals&nbsp;&amp;&nbsp;F_SEAL_SEAL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;SEAL&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(seals&nbsp;&amp;&nbsp;F_SEAL_GROW)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;GROW&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(seals&nbsp;&amp;&nbsp;F_SEAL_WRITE)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;WRITE&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(seals&nbsp;&amp;&nbsp;F_SEAL_FUTURE_WRITE)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;FUTURE_WRITE&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(seals&nbsp;&amp;&nbsp;F_SEAL_SHRINK)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;SHRINK&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Code&nbsp;to&nbsp;map&nbsp;the&nbsp;file&nbsp;and&nbsp;access&nbsp;the&nbsp;contents&nbsp;of&nbsp;the
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resulting&nbsp;mapping&nbsp;omitted&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int fd;
+    unsigned int seals;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;%s /proc/PID/fd/FD\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    fd = open(argv[1], O_RDWR);
+    if (fd == -1)
+        errExit(&quot;open&quot;);
+
+    seals = fcntl(fd, F_GET_SEALS);
+    if (seals == -1)
+        errExit(&quot;fcntl&quot;);
+
+    printf(&quot;Existing seals:&quot;);
+    if (seals &amp; F_SEAL_SEAL)
+        printf(&quot; SEAL&quot;);
+    if (seals &amp; F_SEAL_GROW)
+        printf(&quot; GROW&quot;);
+    if (seals &amp; F_SEAL_WRITE)
+        printf(&quot; WRITE&quot;);
+    if (seals &amp; F_SEAL_FUTURE_WRITE)
+        printf(&quot; FUTURE_WRITE&quot;);
+    if (seals &amp; F_SEAL_SHRINK)
+        printf(&quot; SHRINK&quot;);
+    printf(&quot;\n&quot;);
+
+    /* Code to map the file and access the contents of the
+       resulting mapping omitted */
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>

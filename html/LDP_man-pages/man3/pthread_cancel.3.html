@@ -129,90 +129,92 @@ LinuxThreads では、リアルタイムシグナルが利用可能な場合は2
 <P>
 
 
-
+<PRE>
 $ ./a.out
 thread_func(): started; cancellation disabled
 main(): sending cancellation request
 thread_func(): about to enable cancellation
 main(): thread was canceled
+</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-<P>
+
 #define handle_error_en(en, msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;errno&nbsp;=&nbsp;en;&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+
 static void *
 thread_func(void *ignored_argument)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Disable&nbsp;cancellation&nbsp;for&nbsp;a&nbsp;while,&nbsp;so&nbsp;that&nbsp;we&nbsp;don't
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;immediately&nbsp;react&nbsp;to&nbsp;a&nbsp;cancellation&nbsp;request&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_setcancelstate(PTHREAD_CANCEL_DISABLE,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_setcancelstate&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;thread_func():&nbsp;started;&nbsp;cancellation&nbsp;disabled\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sleep(5);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;thread_func():&nbsp;about&nbsp;to&nbsp;enable&nbsp;cancellation\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_setcancelstate&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;sleep()&nbsp;is&nbsp;a&nbsp;cancellation&nbsp;point&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sleep(1000);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Should&nbsp;get&nbsp;canceled&nbsp;while&nbsp;we&nbsp;sleep&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Should&nbsp;never&nbsp;get&nbsp;here&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;thread_func():&nbsp;not&nbsp;canceled!\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
+    int s;
+
+    /* Disable cancellation for a while, so that we don't
+       immediately react to a cancellation request */
+
+    s = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_setcancelstate&quot;);
+
+    printf(&quot;thread_func(): started; cancellation disabled\n&quot;);
+    sleep(5);
+    printf(&quot;thread_func(): about to enable cancellation\n&quot;);
+
+    s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_setcancelstate&quot;);
+
+    /* sleep() is a cancellation point */
+
+    sleep(1000);        /* Should get canceled while we sleep */
+
+    /* Should never get here */
+
+    printf(&quot;thread_func(): not canceled!\n&quot;);
+    return NULL;
 }
-<P>
+
 int
 main(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;thr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;*res;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Start&nbsp;a&nbsp;thread&nbsp;and&nbsp;then&nbsp;send&nbsp;it&nbsp;a&nbsp;cancellation&nbsp;request&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_create(&amp;thr,&nbsp;NULL,&nbsp;&amp;thread_func,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_create&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sleep(2);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Give&nbsp;thread&nbsp;a&nbsp;chance&nbsp;to&nbsp;get&nbsp;started&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;main():&nbsp;sending&nbsp;cancellation&nbsp;request\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_cancel(thr);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_cancel&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Join&nbsp;with&nbsp;thread&nbsp;to&nbsp;see&nbsp;what&nbsp;its&nbsp;exit&nbsp;status&nbsp;was&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_join(thr,&nbsp;&amp;res);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_join&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(res&nbsp;==&nbsp;PTHREAD_CANCELED)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;main():&nbsp;thread&nbsp;was&nbsp;canceled\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;main():&nbsp;thread&nbsp;wasn't&nbsp;canceled&nbsp;(shouldn't&nbsp;happen!)\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    pthread_t thr;
+    void *res;
+    int s;
+
+    /* Start a thread and then send it a cancellation request */
+
+    s = pthread_create(&amp;thr, NULL, &amp;thread_func, NULL);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_create&quot;);
+
+    sleep(2);           /* Give thread a chance to get started */
+
+    printf(&quot;main(): sending cancellation request\n&quot;);
+    s = pthread_cancel(thr);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_cancel&quot;);
+
+    /* Join with thread to see what its exit status was */
+
+    s = pthread_join(thr, &amp;res);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_join&quot;);
+
+    if (res == PTHREAD_CANCELED)
+        printf(&quot;main(): thread was canceled\n&quot;);
+    else
+        printf(&quot;main(): thread wasn't canceled (shouldn't happen!)\n&quot;);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

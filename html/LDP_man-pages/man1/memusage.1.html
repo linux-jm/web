@@ -125,68 +125,70 @@ X 軸の目盛として (関数呼び出し数ではなく) 時間を使用す�
 <P>
 
 
-
+<PRE>
 $ <B>memusage --data=memusage.dat ./a.out</B>
 ...
 Memory usage summary: heap total: 45200, heap peak: 6440, stack peak: 224
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;total&nbsp;calls&nbsp;&nbsp;total&nbsp;memory&nbsp;&nbsp;failed&nbsp;calls
-<BR>&nbsp;malloc|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0
+        total calls  total memory  failed calls
+ malloc|         1           400             0
 realloc|        40         44800             0  (nomove:40, dec:19, free:0)
-<BR>&nbsp;calloc|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0
-<BR>&nbsp;&nbsp;&nbsp;free|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;440
+ calloc|         0             0             0
+   free|         1           440
 Histogram for block sizes:
-<BR>&nbsp;&nbsp;192-207&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;2%&nbsp;================
+  192-207             1   2% ================
 ...
-<BR>&nbsp;2192-2207&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;2%&nbsp;================
-<BR>&nbsp;2240-2255&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;4%&nbsp;=================================
-<BR>&nbsp;2832-2847&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;4%&nbsp;=================================
-<BR>&nbsp;3440-3455&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;4%&nbsp;=================================
-<BR>&nbsp;4032-4047&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;4%&nbsp;=================================
-<BR>&nbsp;4640-4655&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;4%&nbsp;=================================
-<BR>&nbsp;5232-5247&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;4%&nbsp;=================================
-<BR>&nbsp;5840-5855&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;4%&nbsp;=================================
-<BR>&nbsp;6432-6447&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;2%&nbsp;================
+ 2192-2207            1   2% ================
+ 2240-2255            2   4% =================================
+ 2832-2847            2   4% =================================
+ 3440-3455            2   4% =================================
+ 4032-4047            2   4% =================================
+ 4640-4655            2   4% =================================
+ 5232-5247            2   4% =================================
+ 5840-5855            2   4% =================================
+ 6432-6447            1   2% ================
 $ <B>memusagestat memusage.dat memusage.png</B>
+</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-<P>
+
 #define CYCLES 20
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;i,&nbsp;j;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;size;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;*p;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;sizeof(*p)&nbsp;*&nbsp;100;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;malloc:&nbsp;%zu\n&quot;,&nbsp;size);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;p&nbsp;=&nbsp;malloc(size);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;CYCLES;&nbsp;i++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(i&nbsp;&lt;&nbsp;CYCLES&nbsp;/&nbsp;2)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;j&nbsp;=&nbsp;i;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;j--;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;sizeof(*p)&nbsp;*&nbsp;(j&nbsp;*&nbsp;50&nbsp;+&nbsp;110);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;realloc:&nbsp;%zu\n&quot;,&nbsp;size);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p&nbsp;=&nbsp;realloc(p,&nbsp;size);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;sizeof(*p)&nbsp;*&nbsp;((j&nbsp;+&nbsp;1)&nbsp;*&nbsp;150&nbsp;+&nbsp;110);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;realloc:&nbsp;%zu\n&quot;,&nbsp;size);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p&nbsp;=&nbsp;realloc(p,&nbsp;size);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(p);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int i, j;
+    size_t size;
+    int *p;
+
+    size = sizeof(*p) * 100;
+    printf(&quot;malloc: %zu\n&quot;, size);
+    p = malloc(size);
+
+    for (i = 0; i &lt; CYCLES; i++) {
+        if (i &lt; CYCLES / 2)
+            j = i;
+        else
+            j--;
+
+        size = sizeof(*p) * (j * 50 + 110);
+        printf(&quot;realloc: %zu\n&quot;, size);
+        p = realloc(p, size);
+
+        size = sizeof(*p) * ((j + 1) * 150 + 110);
+        printf(&quot;realloc: %zu\n&quot;, size);
+        p = realloc(p, size);
+    }
+
+    free(p);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

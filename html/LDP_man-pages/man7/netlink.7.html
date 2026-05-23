@@ -138,14 +138,15 @@ netlink メッセージはバイトストリームからなり、 一つ以上�
 <P>
 
 
-
+<PRE>
 struct nlmsghdr {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;nlmsg_len;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ヘッダーを含むメッセージの長さ&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u16&nbsp;nlmsg_type;&nbsp;&nbsp;&nbsp;/*&nbsp;メッセージの内容のタイプ&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u16&nbsp;nlmsg_flags;&nbsp;&nbsp;/*&nbsp;追加フラグ&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;nlmsg_seq;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;シーケンス番号&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;nlmsg_pid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;送信者のポート&nbsp;ID&nbsp;*/
+    __u32 nlmsg_len;    /* ヘッダーを含むメッセージの長さ */
+    __u16 nlmsg_type;   /* メッセージの内容のタイプ */
+    __u16 nlmsg_flags;  /* 追加フラグ */
+    __u32 nlmsg_seq;    /* シーケンス番号 */
+    __u32 nlmsg_pid;    /* 送信者のポート ID */
 };
+</PRE>
 
 
 <P>
@@ -156,11 +157,12 @@ struct nlmsghdr {
 <P>
 
 
-
+<PRE>
 struct nlmsgerr {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;error;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;負または&nbsp;0&nbsp;の&nbsp;errno&nbsp;は応答を表す&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;nlmsghdr&nbsp;msg;&nbsp;&nbsp;/*&nbsp;エラーを起こしたメッセージのヘッダー&nbsp;*/
+    int error;        /* 負または 0 の errno は応答を表す */
+    struct nlmsghdr msg;  /* エラーを起こしたメッセージのヘッダー */
 };
+</PRE>
 
 
 <P>
@@ -245,13 +247,14 @@ netlink は信頼性の高いプロトコルではない。 netlink はメッセ
 <P>
 
 
-
+<PRE>
 struct sockaddr_nl {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa_family_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nl_family;&nbsp;&nbsp;/*&nbsp;AF_NETLINK&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;&nbsp;nl_pad;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;0&nbsp;である&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nl_pid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ポート&nbsp;ID&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nl_groups;&nbsp;&nbsp;/*&nbsp;マルチキャストグループマスク&nbsp;*/
+    sa_family_t     nl_family;  /* AF_NETLINK */
+    unsigned short  nl_pad;     /* 0 である */
+    pid_t           nl_pid;     /* ポート ID */
+    __u32           nl_groups;  /* マルチキャストグループマスク */
 };
+</PRE>
 
 
 <P>
@@ -380,15 +383,16 @@ Linux 2.0 は、もっと原始的なデバイスベースの netlink インタ�
 <P>
 
 
-
+<PRE>
 struct sockaddr_nl sa;
-<P>
+
 memset(&amp;sa, 0, sizeof(sa));
 sa.nl_family = AF_NETLINK;
 sa.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR;
-<P>
+
 fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
 bind(fd, (struct sockaddr *) &amp;sa, sizeof(sa));
+</PRE>
 
 
 <P>
@@ -398,12 +402,12 @@ bind(fd, (struct sockaddr *) &amp;sa, sizeof(sa));
 <P>
 
 
-
+<PRE>
 struct nlmsghdr *nh;    /* 送信する nlmsghdr とペイロード */
 struct sockaddr_nl sa;
 struct iovec iov = { nh, nh-&gt;nlmsg_len };
 struct msghdr msg;
-<P>
+
 msg = { &amp;sa, sizeof(sa), &amp;iov, 1, NULL, 0, 0 };
 memset(&amp;sa, 0, sizeof(sa));
 sa.nl_family = AF_NETLINK;
@@ -411,8 +415,9 @@ nh-&gt;nlmsg_pid = 0;
 nh-&gt;nlmsg_seq = ++sequence_number;
 /* NLM_F_ACK を設定することで、カーネルに応答を要求する */
 nh-&gt;nlmsg_flags |= NLM_F_ACK;
-<P>
+
 sendmsg(fd, &amp;msg, 0);
+</PRE>
 
 
 <P>
@@ -421,32 +426,33 @@ sendmsg(fd, &amp;msg, 0);
 <P>
 
 
-
+<PRE>
 int len;
 /* 8192 to avoid message truncation on platforms with
-<BR>&nbsp;&nbsp;&nbsp;page&nbsp;size&nbsp;&gt;&nbsp;4096&nbsp;*/
+   page size &gt; 4096 */
 struct nlmsghdr buf[8192/sizeof(struct nlmsghdr)];
 struct iovec iov = { buf, sizeof(buf) };
 struct sockaddr_nl sa;
 struct msghdr msg;
 struct nlmsghdr *nh;
-<P>
+
 msg = { &amp;sa, sizeof(sa), &amp;iov, 1, NULL, 0, 0 };
 len = recvmsg(fd, &amp;msg, 0);
-<P>
+
 for (nh = (struct nlmsghdr *) buf; NLMSG_OK (nh, len);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nh&nbsp;=&nbsp;NLMSG_NEXT&nbsp;(nh,&nbsp;len))&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;マルチパートメッセージの終わり&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nh-&gt;nlmsg_type&nbsp;==&nbsp;NLMSG_DONE)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nh-&gt;nlmsg_type&nbsp;==&nbsp;NLMSG_ERROR)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;何らかのエラー処理を行う&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;...
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ペイロードの解析を続ける&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;...
+     nh = NLMSG_NEXT (nh, len)) {
+    /* マルチパートメッセージの終わり */
+    if (nh-&gt;nlmsg_type == NLMSG_DONE)
+        return;
+
+    if (nh-&gt;nlmsg_type == NLMSG_ERROR)
+        /* 何らかのエラー処理を行う */
+    ...
+
+    /* ペイロードの解析を続ける */
+    ...
 }
+</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>

@@ -93,7 +93,7 @@ implementation.  See <B>nptl</B>(7)  for details.
 <P>
 
 
-
+<PRE>
 $<B> ./a.out &amp;</B>
 [1] 5423
 $<B> kill -QUIT %1</B>
@@ -102,65 +102,67 @@ $<B> kill -USR1 %1</B>
 Signal handling thread got signal 10
 $<B> kill -TERM %1</B>
 [1]+  Terminated              ./a.out
+</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-<P>
+
 /* Simple error handling functions */
-<P>
+
 #define handle_error_en(en, msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;errno&nbsp;=&nbsp;en;&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+
 static void *
 sig_thread(void *arg)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigset_t&nbsp;*set&nbsp;=&nbsp;arg;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s,&nbsp;sig;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;sigwait(set,&nbsp;&amp;sig);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;sigwait&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Signal&nbsp;handling&nbsp;thread&nbsp;got&nbsp;signal&nbsp;%d\n&quot;,&nbsp;sig);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+    sigset_t *set = arg;
+    int s, sig;
+
+    for (;;) {
+        s = sigwait(set, &amp;sig);
+        if (s != 0)
+            handle_error_en(s, &quot;sigwait&quot;);
+        printf(&quot;Signal handling thread got signal %d\n&quot;, sig);
+    }
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;thread;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigset_t&nbsp;set;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Block&nbsp;SIGQUIT&nbsp;and&nbsp;SIGUSR1;&nbsp;other&nbsp;threads&nbsp;created&nbsp;by&nbsp;main()
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;inherit&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;signal&nbsp;mask.&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;set);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigaddset(&amp;set,&nbsp;SIGQUIT);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigaddset(&amp;set,&nbsp;SIGUSR1);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_sigmask(SIG_BLOCK,&nbsp;&amp;set,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_sigmask&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_create(&amp;thread,&nbsp;NULL,&nbsp;&amp;sig_thread,&nbsp;&amp;set);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_create&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Main&nbsp;thread&nbsp;carries&nbsp;on&nbsp;to&nbsp;create&nbsp;other&nbsp;threads&nbsp;and/or&nbsp;do
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;other&nbsp;work&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pause();&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Dummy&nbsp;pause&nbsp;so&nbsp;we&nbsp;can&nbsp;test&nbsp;program&nbsp;*/
+    pthread_t thread;
+    sigset_t set;
+    int s;
+
+    /* Block SIGQUIT and SIGUSR1; other threads created by main()
+       will inherit a copy of the signal mask. */
+
+    sigemptyset(&amp;set);
+    sigaddset(&amp;set, SIGQUIT);
+    sigaddset(&amp;set, SIGUSR1);
+    s = pthread_sigmask(SIG_BLOCK, &amp;set, NULL);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_sigmask&quot;);
+
+    s = pthread_create(&amp;thread, NULL, &amp;sig_thread, &amp;set);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_create&quot;);
+
+    /* Main thread carries on to create other threads and/or do
+       other work */
+
+    pause();            /* Dummy pause so we can test program */
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

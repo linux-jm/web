@@ -52,13 +52,14 @@ name_to_handle_at, open_by_handle_at - パス名に対するハンドルの取�
 <P>
 
 
-
+<PRE>
 struct file_handle {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;handle_bytes;&nbsp;&nbsp;&nbsp;/*&nbsp;Size&nbsp;of&nbsp;f_handle&nbsp;[in,&nbsp;out]&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_type;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Handle&nbsp;type&nbsp;[out]&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;f_handle[0];&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;File&nbsp;identifier&nbsp;(sized&nbsp;by
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caller)&nbsp;[out]&nbsp;*/
+    unsigned int  handle_bytes;   /* Size of f_handle [in, out] */
+    int           handle_type;    /* Handle type [out] */
+    unsigned char f_handle[0];    /* File identifier (sized by
+                                     caller) [out] */
 };
+</PRE>
 
 
 <P>
@@ -288,7 +289,7 @@ ID が永続的ではない点についての対処は行わない。)
 <P>
 
 
-
+<PRE>
 $ <B>echo 'Can you please think about it?' &gt; cecilia.txt</B>
 $ <B>./t_name_to_handle_at cecilia.txt &gt; fh</B>
 $ <B>./t_open_by_handle_at &lt; fh</B>
@@ -296,6 +297,7 @@ open_by_handle_at: Operation not permitted
 $ <B>sudo ./t_open_by_handle_at &lt; fh</B>      # Need CAP_SYS_ADMIN
 Read 31 bytes
 $ <B>rm cecilia.txt</B>
+</PRE>
 
 
 <P>
@@ -309,7 +311,7 @@ $ <B>rm cecilia.txt</B>
 <P>
 
 
-
+<PRE>
 $ <B>stat --printf=&quot;%i\n&quot; cecilia.txt</B>     # Display inode number
 4072121
 $ <B>rm cecilia.txt</B>
@@ -318,13 +320,14 @@ $ <B>stat --printf=&quot;%i\n&quot; cecilia.txt</B>     # Check inode number
 4072121
 $ <B>sudo ./t_open_by_handle_at &lt; fh</B>
 open_by_handle_at: Stale NFS file handle
+</PRE>
 
 
 <A NAME="lbAN">&nbsp;</A>
 <H3>プログラムのソース: t_name_to_handle_at.c</H3>
 
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
@@ -334,72 +337,73 @@ open_by_handle_at: Stale NFS file handle
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-<P>
+
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        } while (0)
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;file_handle&nbsp;*fhp;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;mount_id,&nbsp;fhsize,&nbsp;flags,&nbsp;dirfd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*pathname;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;pathname\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pathname&nbsp;=&nbsp;argv[1];
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;file_handle&nbsp;構造体を確保する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhsize&nbsp;=&nbsp;sizeof(*fhp);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhp&nbsp;=&nbsp;malloc(fhsize);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fhp&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;name_to_handle_at()&nbsp;を最初に呼び出して
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ファイルハンドルに必要なサイズを入手する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;dirfd&nbsp;=&nbsp;AT_FDCWD;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;For&nbsp;name_to_handle_at()&nbsp;calls&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;flags&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;For&nbsp;name_to_handle_at()&nbsp;calls&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhp-&gt;handle_bytes&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(name_to_handle_at(dirfd,&nbsp;pathname,&nbsp;fhp,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;mount_id,&nbsp;flags)&nbsp;!=&nbsp;-1&nbsp;||&nbsp;errno&nbsp;!=&nbsp;EOVERFLOW)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Unexpected&nbsp;result&nbsp;from&nbsp;name_to_handle_at()\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;file_handle&nbsp;構造体を正しいサイズに確保し直す&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhsize&nbsp;=&nbsp;sizeof(*fhp)&nbsp;+&nbsp;fhp-&gt;handle_bytes;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhp&nbsp;=&nbsp;realloc(fhp,&nbsp;fhsize);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Copies&nbsp;fhp-&gt;handle_bytes&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fhp&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;realloc&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;コマンドラインで指定されたパス名からファイルハンドルを取得&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(name_to_handle_at(dirfd,&nbsp;pathname,&nbsp;fhp,&nbsp;&amp;mount_id,&nbsp;flags)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;name_to_handle_at&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;t_open_by_handle_at.c&nbsp;で後で再利用できるように、マウント&nbsp;ID、
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ファイルハンドルのサイズ、ファイルハンドルを標準出力に書き出す&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%d\n&quot;,&nbsp;mount_id);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%u&nbsp;%d&nbsp;&nbsp;&nbsp;&quot;,&nbsp;fhp-&gt;handle_bytes,&nbsp;fhp-&gt;handle_type);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;fhp-&gt;handle_bytes;&nbsp;j++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;%02x&quot;,&nbsp;fhp-&gt;f_handle[j]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    struct file_handle *fhp;
+    int mount_id, fhsize, flags, dirfd;
+    char *pathname;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s pathname\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    pathname = argv[1];
+
+    /* file_handle 構造体を確保する */
+
+    fhsize = sizeof(*fhp);
+    fhp = malloc(fhsize);
+    if (fhp == NULL)
+        errExit(&quot;malloc&quot;);
+
+    /* name_to_handle_at() を最初に呼び出して
+       ファイルハンドルに必要なサイズを入手する */
+
+    dirfd = AT_FDCWD;           /* For name_to_handle_at() calls */
+    flags = 0;                  /* For name_to_handle_at() calls */
+    fhp-&gt;handle_bytes = 0;
+    if (name_to_handle_at(dirfd, pathname, fhp,
+                &amp;mount_id, flags) != -1 || errno != EOVERFLOW) {
+        fprintf(stderr, &quot;Unexpected result from name_to_handle_at()\n&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* file_handle 構造体を正しいサイズに確保し直す */
+
+    fhsize = sizeof(*fhp) + fhp-&gt;handle_bytes;
+    fhp = realloc(fhp, fhsize);         /* Copies fhp-&gt;handle_bytes */
+    if (fhp == NULL)
+        errExit(&quot;realloc&quot;);
+
+    /* コマンドラインで指定されたパス名からファイルハンドルを取得 */
+
+    if (name_to_handle_at(dirfd, pathname, fhp, &amp;mount_id, flags) == -1)
+        errExit(&quot;name_to_handle_at&quot;);
+
+    /* t_open_by_handle_at.c で後で再利用できるように、マウント ID、
+       ファイルハンドルのサイズ、ファイルハンドルを標準出力に書き出す */
+
+    printf(&quot;%d\n&quot;, mount_id);
+    printf(&quot;%u %d   &quot;, fhp-&gt;handle_bytes, fhp-&gt;handle_type);
+    for (int j = 0; j &lt; fhp-&gt;handle_bytes; j++)
+        printf(&quot; %02x&quot;, fhp-&gt;f_handle[j]);
+    printf(&quot;\n&quot;);
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAO">&nbsp;</A>
 <H3>プログラムのソース: t_open_by_handle_at.c</H3>
 
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
@@ -409,133 +413,134 @@ main(int argc, char *argv[])
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-<P>
+
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        } while (0)
+
 /* /proc/self/mountinfo をスキャンして、マウント ID が 'mount_id' に
-<BR>&nbsp;&nbsp;&nbsp;一致する行を探す。&nbsp;(もっと簡単な方法は&nbsp;'util-linux'&nbsp;プロジェクト
-<BR>&nbsp;&nbsp;&nbsp;が提供する&nbsp;'libmount'&nbsp;ライブラリをインストールして使うことである)
-<BR>&nbsp;&nbsp;&nbsp;対応するマウントパスをオープンし、得られたファイルディスクリプターを返す。&nbsp;*/
-<P>
+   一致する行を探す。 (もっと簡単な方法は 'util-linux' プロジェクト
+   が提供する 'libmount' ライブラリをインストールして使うことである)
+   対応するマウントパスをオープンし、得られたファイルディスクリプターを返す。 */
+
 static int
 open_mount_path_by_id(int mount_id)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*linep;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;lsize;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;mount_path[PATH_MAX];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;mi_mount_id,&nbsp;found;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nread;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;FILE&nbsp;*fp;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fp&nbsp;=&nbsp;fopen(&quot;/proc/self/mountinfo&quot;,&nbsp;&quot;r&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fp&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;fopen&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;found&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;linep&nbsp;=&nbsp;NULL;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(!found)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nread&nbsp;=&nbsp;getline(&amp;linep,&nbsp;&amp;lsize,&nbsp;fp);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nread&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nread&nbsp;=&nbsp;sscanf(linep,&nbsp;&quot;%d&nbsp;%*d&nbsp;%*s&nbsp;%*s&nbsp;%s&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;mi_mount_id,&nbsp;mount_path);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nread&nbsp;!=&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Bad&nbsp;sscanf()\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mi_mount_id&nbsp;==&nbsp;mount_id)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;found&nbsp;=&nbsp;1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(linep);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fclose(fp);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!found)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Could&nbsp;not&nbsp;find&nbsp;mount&nbsp;point\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;open(mount_path,&nbsp;O_RDONLY);
+    char *linep;
+    size_t lsize;
+    char mount_path[PATH_MAX];
+    int mi_mount_id, found;
+    ssize_t nread;
+    FILE *fp;
+
+    fp = fopen(&quot;/proc/self/mountinfo&quot;, &quot;r&quot;);
+    if (fp == NULL)
+        errExit(&quot;fopen&quot;);
+
+    found = 0;
+    linep = NULL;
+    while (!found) {
+        nread = getline(&amp;linep, &amp;lsize, fp);
+        if (nread == -1)
+            break;
+
+        nread = sscanf(linep, &quot;%d %*d %*s %*s %s&quot;,
+                       &amp;mi_mount_id, mount_path);
+        if (nread != 2) {
+            fprintf(stderr, &quot;Bad sscanf()\n&quot;);
+            exit(EXIT_FAILURE);
+        }
+
+        if (mi_mount_id == mount_id)
+            found = 1;
+    }
+    free(linep);
+
+    fclose(fp);
+
+    if (!found) {
+        fprintf(stderr, &quot;Could not find mount point\n&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    return open(mount_path, O_RDONLY);
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;file_handle&nbsp;*fhp;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;mount_id,&nbsp;fd,&nbsp;mount_fd,&nbsp;handle_bytes;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nread;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[1000];
+    struct file_handle *fhp;
+    int mount_id, fd, mount_fd, handle_bytes;
+    ssize_t nread;
+    char buf[1000];
 #define LINE_SIZE 100
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;line1[LINE_SIZE],&nbsp;line2[LINE_SIZE];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*nextp;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;((argc&nbsp;&gt;&nbsp;1&nbsp;&amp;&amp;&nbsp;strcmp(argv[1],&nbsp;&quot;--help&quot;)&nbsp;==&nbsp;0)&nbsp;||&nbsp;argc&nbsp;&gt;&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;[mount-path]\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;マウント&nbsp;ID&nbsp;とファイルハンドル情報が入った標準入力:
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Line&nbsp;1:&nbsp;&lt;mount_id&gt;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Line&nbsp;2:&nbsp;&lt;handle_bytes&gt;&nbsp;&lt;handle_type&gt;&nbsp;&nbsp;&nbsp;&lt;bytes&nbsp;of&nbsp;handle&nbsp;in&nbsp;hex&gt;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;((fgets(line1,&nbsp;sizeof(line1),&nbsp;stdin)&nbsp;==&nbsp;NULL)&nbsp;||
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fgets(line2,&nbsp;sizeof(line2),&nbsp;stdin)&nbsp;==&nbsp;NULL))&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Missing&nbsp;mount_id&nbsp;/&nbsp;file&nbsp;handle\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;mount_id&nbsp;=&nbsp;atoi(line1);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;handle_bytes&nbsp;=&nbsp;strtoul(line2,&nbsp;&amp;nextp,&nbsp;0);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;handle_bytes&nbsp;があれば、
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_handle&nbsp;構造体をここで割り当てできる&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhp&nbsp;=&nbsp;malloc(sizeof(*fhp)&nbsp;+&nbsp;handle_bytes);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fhp&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhp-&gt;handle_bytes&nbsp;=&nbsp;handle_bytes;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fhp-&gt;handle_type&nbsp;=&nbsp;strtoul(nextp,&nbsp;&amp;nextp,&nbsp;0);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;fhp-&gt;handle_bytes;&nbsp;j++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fhp-&gt;f_handle[j]&nbsp;=&nbsp;strtoul(nextp,&nbsp;&amp;nextp,&nbsp;16);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;マウントポイントのファイルディスクリプターを取得する。
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;取得は、コマンドラインで指定されたパス名をオープンするか、
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/proc/self/mounts&nbsp;をスキャンして標準入力から受け取った
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'mount_id'&nbsp;に一致するマウントを探すことで行う。&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mount_fd&nbsp;=&nbsp;open(argv[1],&nbsp;O_RDONLY);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mount_fd&nbsp;=&nbsp;open_mount_path_by_id(mount_id);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mount_fd&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;opening&nbsp;mount&nbsp;fd&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ハンドルとマウントポイントを使ってファイルをオープンする&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open_by_handle_at(mount_fd,&nbsp;fhp,&nbsp;O_RDONLY);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;open_by_handle_at&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;そのファイルからバイトを読み出す&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;nread&nbsp;=&nbsp;read(fd,&nbsp;buf,&nbsp;sizeof(buf));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nread&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;read&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Read&nbsp;%zd&nbsp;bytes\n&quot;,&nbsp;nread);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    char line1[LINE_SIZE], line2[LINE_SIZE];
+    char *nextp;
+
+    if ((argc &gt; 1 &amp;&amp; strcmp(argv[1], &quot;--help&quot;) == 0) || argc &gt; 2) {
+        fprintf(stderr, &quot;Usage: %s [mount-path]\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    /* マウント ID とファイルハンドル情報が入った標準入力:
+
+         Line 1: &lt;mount_id&gt;
+         Line 2: &lt;handle_bytes&gt; &lt;handle_type&gt;   &lt;bytes of handle in hex&gt;
+    */
+
+    if ((fgets(line1, sizeof(line1), stdin) == NULL) ||
+           (fgets(line2, sizeof(line2), stdin) == NULL)) {
+        fprintf(stderr, &quot;Missing mount_id / file handle\n&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    mount_id = atoi(line1);
+
+    handle_bytes = strtoul(line2, &amp;nextp, 0);
+
+    /* handle_bytes があれば、
+       file_handle 構造体をここで割り当てできる */
+
+    fhp = malloc(sizeof(*fhp) + handle_bytes);
+    if (fhp == NULL)
+        errExit(&quot;malloc&quot;);
+
+    fhp-&gt;handle_bytes = handle_bytes;
+
+    fhp-&gt;handle_type = strtoul(nextp, &amp;nextp, 0);
+
+    for (int j = 0; j &lt; fhp-&gt;handle_bytes; j++)
+        fhp-&gt;f_handle[j] = strtoul(nextp, &amp;nextp, 16);
+
+    /* マウントポイントのファイルディスクリプターを取得する。
+       取得は、コマンドラインで指定されたパス名をオープンするか、
+       /proc/self/mounts をスキャンして標準入力から受け取った
+       'mount_id' に一致するマウントを探すことで行う。 */
+
+    if (argc &gt; 1)
+        mount_fd = open(argv[1], O_RDONLY);
+    else
+        mount_fd = open_mount_path_by_id(mount_id);
+
+    if (mount_fd == -1)
+        errExit(&quot;opening mount fd&quot;);
+
+    /* ハンドルとマウントポイントを使ってファイルをオープンする */
+
+    fd = open_by_handle_at(mount_fd, fhp, O_RDONLY);
+    if (fd == -1)
+        errExit(&quot;open_by_handle_at&quot;);
+
+    /* そのファイルからバイトを読み出す */
+
+    nread = read(fd, buf, sizeof(buf));
+    if (nread == -1)
+        errExit(&quot;read&quot;);
+
+    printf(&quot;Read %zd bytes\n&quot;, nread);
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAP">&nbsp;</A>
 <H2>関連項目</H2>

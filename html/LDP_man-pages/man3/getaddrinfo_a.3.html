@@ -57,13 +57,14 @@ getaddrinfo_a, gai_suspend, gai_error, gai_cancel - 非同期のネットワー�
 <P>
 
 
-
+<PRE>
 struct gaicb {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ar_name;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ar_service;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;struct&nbsp;addrinfo&nbsp;*ar_request;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ar_result;
+    const char            *ar_name;
+    const char            *ar_service;
+    const struct addrinfo *ar_request;
+    struct addrinfo       *ar_result;
 };
+</PRE>
 
 
 <P>
@@ -204,11 +205,12 @@ struct gaicb {
 <P>
 
 
-
+<PRE>
 $ <B>./a.out <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A> enoent.linuxfoundation.org gnu.cz</B>
 <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A>: 128.30.2.36
 enoent.linuxfoundation.org: Name or service not known
 gnu.cz: 87.236.197.13
+</PRE>
 
 
 <P>
@@ -216,65 +218,66 @@ gnu.cz: 87.236.197.13
 プログラムのソースコードは以下のとおりである。
 <P>
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;gaicb&nbsp;*reqs[argc&nbsp;-&nbsp;1];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;host[NI_MAXHOST];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;*res;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;HOST...\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;argc&nbsp;-&nbsp;1;&nbsp;i++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reqs[i]&nbsp;=&nbsp;malloc(sizeof(*reqs[0]));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(reqs[i]&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memset(reqs[i],&nbsp;0,&nbsp;sizeof(*reqs[0]));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reqs[i]-&gt;ar_name&nbsp;=&nbsp;argv[i&nbsp;+&nbsp;1];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;getaddrinfo_a(GAI_WAIT,&nbsp;reqs,&nbsp;argc&nbsp;-&nbsp;1,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;!=&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getaddrinfo_a()&nbsp;failed:&nbsp;%s\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gai_strerror(ret));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;argc&nbsp;-&nbsp;1;&nbsp;i++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s:&nbsp;&quot;,&nbsp;reqs[i]-&gt;ar_name);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;gai_error(reqs[i]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res&nbsp;=&nbsp;reqs[i]-&gt;ar_result;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;getnameinfo(res-&gt;ai_addr,&nbsp;res-&gt;ai_addrlen,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;host,&nbsp;sizeof(host),
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NULL,&nbsp;0,&nbsp;NI_NUMERICHOST);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;!=&nbsp;0)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getnameinfo()&nbsp;failed:&nbsp;%s\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gai_strerror(ret));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;puts(host);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;puts(gai_strerror(ret));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    int ret;
+    struct gaicb *reqs[argc - 1];
+    char host[NI_MAXHOST];
+    struct addrinfo *res;
+
+    if (argc &lt; 2) {
+        fprintf(stderr, &quot;Usage: %s HOST...\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i &lt; argc - 1; i++) {
+        reqs[i] = malloc(sizeof(*reqs[0]));
+        if (reqs[i] == NULL) {
+            perror(&quot;malloc&quot;);
+            exit(EXIT_FAILURE);
+        }
+        memset(reqs[i], 0, sizeof(*reqs[0]));
+        reqs[i]-&gt;ar_name = argv[i + 1];
+    }
+
+    ret = getaddrinfo_a(GAI_WAIT, reqs, argc - 1, NULL);
+    if (ret != 0) {
+        fprintf(stderr, &quot;getaddrinfo_a() failed: %s\n&quot;,
+                gai_strerror(ret));
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i &lt; argc - 1; i++) {
+        printf(&quot;%s: &quot;, reqs[i]-&gt;ar_name);
+        ret = gai_error(reqs[i]);
+        if (ret == 0) {
+            res = reqs[i]-&gt;ar_result;
+
+            ret = getnameinfo(res-&gt;ai_addr, res-&gt;ai_addrlen,
+                    host, sizeof(host),
+                    NULL, 0, NI_NUMERICHOST);
+            if (ret != 0) {
+                fprintf(stderr, &quot;getnameinfo() failed: %s\n&quot;,
+                        gai_strerror(ret));
+                exit(EXIT_FAILURE);
+            }
+            puts(host);
+
+        } else {
+            puts(gai_strerror(ret));
+        }
+    }
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>非同期型の例</H3>
@@ -286,7 +289,7 @@ main(int argc, char *argv[])
 <P>
 
 
-
+<PRE>
 $ <B>./a.out</B>
 &gt; a <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A> enoent.linuxfoundation.org gnu.cz
 &gt; c 2
@@ -301,6 +304,7 @@ $ <B>./a.out</B>
 [00] <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A>: 216.165.129.139
 [01] enoent.linuxfoundation.org: Name or service not known
 [02] gnu.cz: 87.236.197.13
+</PRE>
 
 
 <P>
@@ -308,181 +312,182 @@ $ <B>./a.out</B>
 プログラムのソースは以下のとおりである。
 <P>
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-<P>
+
 static struct gaicb **reqs = NULL;
 static int nreqs = 0;
-<P>
+
 static char *
 getcmd(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;static&nbsp;char&nbsp;buf[256];
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fputs(&quot;&gt;&nbsp;&quot;,&nbsp;stdout);&nbsp;fflush(stdout);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fgets(buf,&nbsp;sizeof(buf),&nbsp;stdin)&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buf[strlen(buf)&nbsp;-&nbsp;1]&nbsp;==&nbsp;'\n')
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf[strlen(buf)&nbsp;-&nbsp;1]&nbsp;=&nbsp;0;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;buf;
+    static char buf[256];
+
+    fputs(&quot;&gt; &quot;, stdout); fflush(stdout);
+    if (fgets(buf, sizeof(buf), stdin) == NULL)
+        return NULL;
+
+    if (buf[strlen(buf) - 1] == '\n')
+        buf[strlen(buf) - 1] = 0;
+
+    return buf;
 }
-<P>
+
 /* Add requests for specified hostnames */
 static void
 add_requests(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;nreqs_base&nbsp;=&nbsp;nreqs;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*host;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((host&nbsp;=&nbsp;strtok(NULL,&nbsp;&quot;&nbsp;&quot;)))&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nreqs++;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reqs&nbsp;=&nbsp;realloc(reqs,&nbsp;sizeof(reqs[0])&nbsp;*&nbsp;nreqs);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reqs[nreqs&nbsp;-&nbsp;1]&nbsp;=&nbsp;calloc(1,&nbsp;sizeof(*reqs[0]));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reqs[nreqs&nbsp;-&nbsp;1]-&gt;ar_name&nbsp;=&nbsp;strdup(host);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Queue&nbsp;nreqs_base..nreqs&nbsp;requests.&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;getaddrinfo_a(GAI_NOWAIT,&nbsp;&amp;reqs[nreqs_base],
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nreqs&nbsp;-&nbsp;nreqs_base,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getaddrinfo_a()&nbsp;failed:&nbsp;%s\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gai_strerror(ret));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+    int nreqs_base = nreqs;
+    char *host;
+    int ret;
+
+    while ((host = strtok(NULL, &quot; &quot;))) {
+        nreqs++;
+        reqs = realloc(reqs, sizeof(reqs[0]) * nreqs);
+
+        reqs[nreqs - 1] = calloc(1, sizeof(*reqs[0]));
+        reqs[nreqs - 1]-&gt;ar_name = strdup(host);
+    }
+
+    /* Queue nreqs_base..nreqs requests. */
+
+    ret = getaddrinfo_a(GAI_NOWAIT, &amp;reqs[nreqs_base],
+                        nreqs - nreqs_base, NULL);
+    if (ret) {
+        fprintf(stderr, &quot;getaddrinfo_a() failed: %s\n&quot;,
+                gai_strerror(ret));
+        exit(EXIT_FAILURE);
+    }
 }
-<P>
+
 /* Wait until at least one of specified requests completes */
 static void
 wait_requests(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*id;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret,&nbsp;n;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;gaicb&nbsp;const&nbsp;**wait_reqs&nbsp;=&nbsp;calloc(nreqs,&nbsp;sizeof(*wait_reqs));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;NULL&nbsp;elements&nbsp;are&nbsp;ignored&nbsp;by&nbsp;gai_suspend().&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((id&nbsp;=&nbsp;strtok(NULL,&nbsp;&quot;&nbsp;&quot;))&nbsp;!=&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n&nbsp;=&nbsp;atoi(id);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(n&nbsp;&gt;=&nbsp;nreqs)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Bad&nbsp;request&nbsp;number:&nbsp;%s\n&quot;,&nbsp;id);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wait_reqs[n]&nbsp;=&nbsp;reqs[n];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;gai_suspend(wait_reqs,&nbsp;nreqs,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;gai_suspend():&nbsp;%s\n&quot;,&nbsp;gai_strerror(ret));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;nreqs;&nbsp;i++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(wait_reqs[i]&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;gai_error(reqs[i]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;EAI_INPROGRESS)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;[%02d]&nbsp;%s:&nbsp;%s\n&quot;,&nbsp;i,&nbsp;reqs[i]-&gt;ar_name,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;==&nbsp;0&nbsp;?&nbsp;&quot;Finished&quot;&nbsp;:&nbsp;gai_strerror(ret));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+    char *id;
+    int ret, n;
+    struct gaicb const **wait_reqs = calloc(nreqs, sizeof(*wait_reqs));
+                /* NULL elements are ignored by gai_suspend(). */
+
+    while ((id = strtok(NULL, &quot; &quot;)) != NULL) {
+        n = atoi(id);
+
+        if (n &gt;= nreqs) {
+            printf(&quot;Bad request number: %s\n&quot;, id);
+            return;
+        }
+
+        wait_reqs[n] = reqs[n];
+    }
+
+    ret = gai_suspend(wait_reqs, nreqs, NULL);
+    if (ret) {
+        printf(&quot;gai_suspend(): %s\n&quot;, gai_strerror(ret));
+        return;
+    }
+
+    for (int i = 0; i &lt; nreqs; i++) {
+        if (wait_reqs[i] == NULL)
+            continue;
+
+        ret = gai_error(reqs[i]);
+        if (ret == EAI_INPROGRESS)
+            continue;
+
+        printf(&quot;[%02d] %s: %s\n&quot;, i, reqs[i]-&gt;ar_name,
+               ret == 0 ? &quot;Finished&quot; : gai_strerror(ret));
+    }
 }
-<P>
+
 /* Cancel specified requests */
 static void
 cancel_requests(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*id;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret,&nbsp;n;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((id&nbsp;=&nbsp;strtok(NULL,&nbsp;&quot;&nbsp;&quot;))&nbsp;!=&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n&nbsp;=&nbsp;atoi(id);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(n&nbsp;&gt;=&nbsp;nreqs)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Bad&nbsp;request&nbsp;number:&nbsp;%s\n&quot;,&nbsp;id);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;gai_cancel(reqs[n]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;[%s]&nbsp;%s:&nbsp;%s\n&quot;,&nbsp;id,&nbsp;reqs[atoi(id)]-&gt;ar_name,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gai_strerror(ret));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+    char *id;
+    int ret, n;
+
+    while ((id = strtok(NULL, &quot; &quot;)) != NULL) {
+        n = atoi(id);
+
+        if (n &gt;= nreqs) {
+            printf(&quot;Bad request number: %s\n&quot;, id);
+            return;
+        }
+
+        ret = gai_cancel(reqs[n]);
+        printf(&quot;[%s] %s: %s\n&quot;, id, reqs[atoi(id)]-&gt;ar_name,
+               gai_strerror(ret));
+    }
 }
-<P>
+
 /* List all requests */
 static void
 list_requests(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;host[NI_MAXHOST];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;*res;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;nreqs;&nbsp;i++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;[%02d]&nbsp;%s:&nbsp;&quot;,&nbsp;i,&nbsp;reqs[i]-&gt;ar_name);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;gai_error(reqs[i]);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!ret)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res&nbsp;=&nbsp;reqs[i]-&gt;ar_result;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;getnameinfo(res-&gt;ai_addr,&nbsp;res-&gt;ai_addrlen,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;host,&nbsp;sizeof(host),
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NULL,&nbsp;0,&nbsp;NI_NUMERICHOST);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getnameinfo()&nbsp;failed:&nbsp;%s\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gai_strerror(ret));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;puts(host);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;puts(gai_strerror(ret));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+    int ret;
+    char host[NI_MAXHOST];
+    struct addrinfo *res;
+
+    for (int i = 0; i &lt; nreqs; i++) {
+        printf(&quot;[%02d] %s: &quot;, i, reqs[i]-&gt;ar_name);
+        ret = gai_error(reqs[i]);
+
+        if (!ret) {
+            res = reqs[i]-&gt;ar_result;
+
+            ret = getnameinfo(res-&gt;ai_addr, res-&gt;ai_addrlen,
+                              host, sizeof(host),
+                              NULL, 0, NI_NUMERICHOST);
+            if (ret) {
+                fprintf(stderr, &quot;getnameinfo() failed: %s\n&quot;,
+                        gai_strerror(ret));
+                exit(EXIT_FAILURE);
+            }
+            puts(host);
+        } else {
+            puts(gai_strerror(ret));
+        }
+    }
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*cmdline;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*cmd;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((cmdline&nbsp;=&nbsp;getcmd())&nbsp;!=&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmd&nbsp;=&nbsp;strtok(cmdline,&nbsp;&quot;&nbsp;&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cmd&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list_requests();
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(cmd[0])&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'a':
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_requests();
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'w':
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wait_requests();
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'c':
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cancel_requests();
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'l':
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list_requests();
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Bad&nbsp;command:&nbsp;%c\n&quot;,&nbsp;cmd[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    char *cmdline;
+    char *cmd;
+
+    while ((cmdline = getcmd()) != NULL) {
+        cmd = strtok(cmdline, &quot; &quot;);
+
+        if (cmd == NULL) {
+            list_requests();
+        } else {
+            switch (cmd[0]) {
+            case 'a':
+                add_requests();
+                break;
+            case 'w':
+                wait_requests();
+                break;
+            case 'c':
+                cancel_requests();
+                break;
+            case 'l':
+                list_requests();
+                break;
+            default:
+                fprintf(stderr, &quot;Bad command: %c\n&quot;, cmd[0]);
+                break;
+            }
+        }
+    }
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

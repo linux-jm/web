@@ -63,23 +63,20 @@ inotify インスタンスを指している 全てのファイルディスク�
 <P>
 
 
-
-
-
-
-
+<PRE>
 
 
 
 
 struct inotify_event {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;監視対象ディスクリプター&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;mask;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;イベントを示すマスク&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;cookie;&nbsp;&nbsp;&nbsp;/*&nbsp;関連するイベント群を関連づける
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;一意なクッキー&nbsp;(<A HREF="../man2/rename.2.html">rename</A>(2)&nbsp;用)&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint32_t&nbsp;len;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;'name'&nbsp;フィールドのサイズ&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name[];&nbsp;&nbsp;&nbsp;/*&nbsp;ヌルで終端された任意の名前&nbsp;*/
+    int      wd;       /* 監視対象ディスクリプター */
+    uint32_t mask;     /* イベントを示すマスク */
+    uint32_t cookie;   /* 関連するイベント群を関連づける
+                          一意なクッキー (<A HREF="../man2/rename.2.html">rename</A>(2) 用) */
+    uint32_t len;      /* 'name' フィールドのサイズ */
+    char     name[];   /* ヌルで終端された任意の名前 */
 };
+</PRE>
 
 
 <P>
@@ -521,7 +518,7 @@ inotify キューで処理待ちの未読み出しイベントがあるかの確
 <H3>出力例</H3>
 
 
-
+<PRE>
 $ <B>./a.out /tmp /home/user/temp</B>
 Press enter key to terminate.
 Listening for events.
@@ -529,15 +526,16 @@ IN_OPEN: /home/user/temp/foo [file]
 IN_CLOSE_WRITE: /home/user/temp/foo [file]
 IN_OPEN: /tmp/ [directory]
 IN_CLOSE_NOWRITE: /tmp/ [directory]
-<P>
+
 Listening for events stopped.
+</PRE>
 
 
 <A NAME="lbAP">&nbsp;</A>
 <H3>プログラムソース</H3>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/poll.h">poll.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
@@ -545,187 +543,188 @@ Listening for events stopped.
 #include &lt;<A HREF="file:///usr/include/sys/inotify.h">sys/inotify.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-<P>
+
 /* Read all available inotify events from the file descriptor 'fd'.
-<BR>&nbsp;&nbsp;&nbsp;wd&nbsp;is&nbsp;the&nbsp;table&nbsp;of&nbsp;watch&nbsp;descriptors&nbsp;for&nbsp;the&nbsp;directories&nbsp;in&nbsp;argv.
-<BR>&nbsp;&nbsp;&nbsp;argc&nbsp;is&nbsp;the&nbsp;length&nbsp;of&nbsp;wd&nbsp;and&nbsp;argv.
-<BR>&nbsp;&nbsp;&nbsp;argv&nbsp;is&nbsp;the&nbsp;list&nbsp;of&nbsp;watched&nbsp;directories.
-<BR>&nbsp;&nbsp;&nbsp;Entry&nbsp;0&nbsp;of&nbsp;wd&nbsp;and&nbsp;argv&nbsp;is&nbsp;unused.&nbsp;*/
-<P>
+   wd is the table of watch descriptors for the directories in argv.
+   argc is the length of wd and argv.
+   argv is the list of watched directories.
+   Entry 0 of wd and argv is unused. */
+
 static void
 handle_events(int fd, int *wd, int argc, char* argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Some&nbsp;systems&nbsp;cannot&nbsp;read&nbsp;integer&nbsp;variables&nbsp;if&nbsp;they&nbsp;are&nbsp;not
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;properly&nbsp;aligned.&nbsp;On&nbsp;other&nbsp;systems,&nbsp;incorrect&nbsp;alignment&nbsp;may
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decrease&nbsp;performance.&nbsp;Hence,&nbsp;the&nbsp;buffer&nbsp;used&nbsp;for&nbsp;reading&nbsp;from
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;inotify&nbsp;file&nbsp;descriptor&nbsp;should&nbsp;have&nbsp;the&nbsp;same&nbsp;alignment&nbsp;as
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;inotify_event.&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[4096]
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__attribute__&nbsp;((aligned(__alignof__(struct&nbsp;inotify_event))));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;struct&nbsp;inotify_event&nbsp;*event;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;len;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Loop&nbsp;while&nbsp;events&nbsp;can&nbsp;be&nbsp;read&nbsp;from&nbsp;inotify&nbsp;file&nbsp;descriptor.&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Read&nbsp;some&nbsp;events.&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;len&nbsp;=&nbsp;read(fd,&nbsp;buf,&nbsp;sizeof(buf));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;==&nbsp;-1&nbsp;&amp;&amp;&nbsp;errno&nbsp;!=&nbsp;EAGAIN)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;read&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;If&nbsp;the&nbsp;nonblocking&nbsp;read()&nbsp;found&nbsp;no&nbsp;events&nbsp;to&nbsp;read,&nbsp;then
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it&nbsp;returns&nbsp;-1&nbsp;with&nbsp;errno&nbsp;set&nbsp;to&nbsp;EAGAIN.&nbsp;In&nbsp;that&nbsp;case,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;we&nbsp;exit&nbsp;the&nbsp;loop.&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;&lt;=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;バッファー内の全イベントを処理する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(char&nbsp;*ptr&nbsp;=&nbsp;buf;&nbsp;ptr&nbsp;&lt;&nbsp;buf&nbsp;+&nbsp;len;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ptr&nbsp;+=&nbsp;sizeof(struct&nbsp;inotify_event)&nbsp;+&nbsp;event-&gt;len)&nbsp;{
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event&nbsp;=&nbsp;(const&nbsp;struct&nbsp;inotify_event&nbsp;*)&nbsp;ptr;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Print&nbsp;event&nbsp;type&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(event-&gt;mask&nbsp;&amp;&nbsp;IN_OPEN)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;IN_OPEN:&nbsp;&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(event-&gt;mask&nbsp;&amp;&nbsp;IN_CLOSE_NOWRITE)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;IN_CLOSE_NOWRITE:&nbsp;&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(event-&gt;mask&nbsp;&amp;&nbsp;IN_CLOSE_WRITE)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;IN_CLOSE_WRITE:&nbsp;&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Print&nbsp;the&nbsp;name&nbsp;of&nbsp;the&nbsp;watched&nbsp;directory&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;1;&nbsp;i&nbsp;&lt;&nbsp;argc;&nbsp;++i)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(wd[i]&nbsp;==&nbsp;event-&gt;wd)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s/&quot;,&nbsp;argv[i]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Print&nbsp;the&nbsp;name&nbsp;of&nbsp;the&nbsp;file&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(event-&gt;len)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s&quot;,&nbsp;event-&gt;name);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Print&nbsp;type&nbsp;of&nbsp;filesystem&nbsp;object&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(event-&gt;mask&nbsp;&amp;&nbsp;IN_ISDIR)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;[directory]\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;[file]\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+    /* Some systems cannot read integer variables if they are not
+       properly aligned. On other systems, incorrect alignment may
+       decrease performance. Hence, the buffer used for reading from
+       the inotify file descriptor should have the same alignment as
+       struct inotify_event. */
+
+    char buf[4096]
+        __attribute__ ((aligned(__alignof__(struct inotify_event))));
+    const struct inotify_event *event;
+    ssize_t len;
+
+    /* Loop while events can be read from inotify file descriptor. */
+
+    for (;;) {
+
+        /* Read some events. */
+
+        len = read(fd, buf, sizeof(buf));
+        if (len == -1 &amp;&amp; errno != EAGAIN) {
+            perror(&quot;read&quot;);
+            exit(EXIT_FAILURE);
+        }
+
+        /* If the nonblocking read() found no events to read, then
+           it returns -1 with errno set to EAGAIN. In that case,
+           we exit the loop. */
+
+        if (len &lt;= 0)
+            break;
+
+        /* バッファー内の全イベントを処理する */
+
+        for (char *ptr = buf; ptr &lt; buf + len;
+                ptr += sizeof(struct inotify_event) + event-&gt;len) {
+
+            event = (const struct inotify_event *) ptr;
+
+            /* Print event type */
+
+            if (event-&gt;mask &amp; IN_OPEN)
+                printf(&quot;IN_OPEN: &quot;);
+            if (event-&gt;mask &amp; IN_CLOSE_NOWRITE)
+                printf(&quot;IN_CLOSE_NOWRITE: &quot;);
+            if (event-&gt;mask &amp; IN_CLOSE_WRITE)
+                printf(&quot;IN_CLOSE_WRITE: &quot;);
+
+            /* Print the name of the watched directory */
+
+            for (int i = 1; i &lt; argc; ++i) {
+                if (wd[i] == event-&gt;wd) {
+                    printf(&quot;%s/&quot;, argv[i]);
+                    break;
+                }
+            }
+
+            /* Print the name of the file */
+
+            if (event-&gt;len)
+                printf(&quot;%s&quot;, event-&gt;name);
+
+            /* Print type of filesystem object */
+
+            if (event-&gt;mask &amp; IN_ISDIR)
+                printf(&quot; [directory]\n&quot;);
+            else
+                printf(&quot; [file]\n&quot;);
+        }
+    }
 }
-<P>
+
 int
 main(int argc, char* argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd,&nbsp;i,&nbsp;poll_num;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;*wd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;nfds_t&nbsp;nfds;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;pollfd&nbsp;fds[2];
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Usage:&nbsp;%s&nbsp;PATH&nbsp;[PATH&nbsp;...]\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Press&nbsp;ENTER&nbsp;key&nbsp;to&nbsp;terminate.\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;the&nbsp;file&nbsp;descriptor&nbsp;for&nbsp;accessing&nbsp;the&nbsp;inotify&nbsp;API&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;inotify_init1(IN_NONBLOCK);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;inotify_init1&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allocate&nbsp;memory&nbsp;for&nbsp;watch&nbsp;descriptors&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;wd&nbsp;=&nbsp;calloc(argc,&nbsp;sizeof(int));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(wd&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;calloc&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Mark&nbsp;directories&nbsp;for&nbsp;events
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;file&nbsp;was&nbsp;opened
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;file&nbsp;was&nbsp;closed&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(i&nbsp;=&nbsp;1;&nbsp;i&nbsp;&lt;&nbsp;argc;&nbsp;i++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wd[i]&nbsp;=&nbsp;inotify_add_watch(fd,&nbsp;argv[i],
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN_OPEN&nbsp;|&nbsp;IN_CLOSE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(wd[i]&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Cannot&nbsp;watch&nbsp;'%s':&nbsp;%s\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[i],&nbsp;strerror(errno));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;ポーリングの準備&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;nfds&nbsp;=&nbsp;2;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;コンソールの入力&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fds[0].fd&nbsp;=&nbsp;STDIN_FILENO;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fds[0].events&nbsp;=&nbsp;POLLIN;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Inotify&nbsp;input&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fds[1].fd&nbsp;=&nbsp;fd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;fds[1].events&nbsp;=&nbsp;POLLIN;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;events&nbsp;and/or&nbsp;terminal&nbsp;input&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Listening&nbsp;for&nbsp;events.\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poll_num&nbsp;=&nbsp;poll(fds,&nbsp;nfds,&nbsp;-1);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(poll_num&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errno&nbsp;==&nbsp;EINTR)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;poll&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(poll_num&nbsp;&gt;&nbsp;0)&nbsp;{
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fds[0].revents&nbsp;&amp;&nbsp;POLLIN)&nbsp;{
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Console&nbsp;input&nbsp;is&nbsp;available.&nbsp;Empty&nbsp;stdin&nbsp;and&nbsp;quit&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(read(STDIN_FILENO,&nbsp;&amp;buf,&nbsp;1)&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf&nbsp;!=&nbsp;'\n')
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fds[1].revents&nbsp;&amp;&nbsp;POLLIN)&nbsp;{
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Inotify&nbsp;events&nbsp;are&nbsp;available&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_events(fd,&nbsp;wd,&nbsp;argc,&nbsp;argv);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Listening&nbsp;for&nbsp;events&nbsp;stopped.\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Close&nbsp;inotify&nbsp;file&nbsp;descriptor&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;close(fd);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(wd);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    char buf;
+    int fd, i, poll_num;
+    int *wd;
+    nfds_t nfds;
+    struct pollfd fds[2];
+
+    if (argc &lt; 2) {
+        printf(&quot;Usage: %s PATH [PATH ...]\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;Press ENTER key to terminate.\n&quot;);
+
+    /* Create the file descriptor for accessing the inotify API */
+
+    fd = inotify_init1(IN_NONBLOCK);
+    if (fd == -1) {
+        perror(&quot;inotify_init1&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Allocate memory for watch descriptors */
+
+    wd = calloc(argc, sizeof(int));
+    if (wd == NULL) {
+        perror(&quot;calloc&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Mark directories for events
+       - file was opened
+       - file was closed */
+
+    for (i = 1; i &lt; argc; i++) {
+        wd[i] = inotify_add_watch(fd, argv[i],
+                                  IN_OPEN | IN_CLOSE);
+        if (wd[i] == -1) {
+            fprintf(stderr, &quot;Cannot watch '%s': %s\n&quot;,
+                    argv[i], strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    /* ポーリングの準備 */
+
+    nfds = 2;
+
+    /* コンソールの入力 */
+
+    fds[0].fd = STDIN_FILENO;
+    fds[0].events = POLLIN;
+
+    /* Inotify input */
+
+    fds[1].fd = fd;
+    fds[1].events = POLLIN;
+
+    /* Wait for events and/or terminal input */
+
+    printf(&quot;Listening for events.\n&quot;);
+    while (1) {
+        poll_num = poll(fds, nfds, -1);
+        if (poll_num == -1) {
+            if (errno == EINTR)
+                continue;
+            perror(&quot;poll&quot;);
+            exit(EXIT_FAILURE);
+        }
+
+        if (poll_num &gt; 0) {
+
+            if (fds[0].revents &amp; POLLIN) {
+
+                /* Console input is available. Empty stdin and quit */
+
+                while (read(STDIN_FILENO, &amp;buf, 1) &gt; 0 &amp;&amp; buf != '\n')
+                    continue;
+                break;
+            }
+
+            if (fds[1].revents &amp; POLLIN) {
+
+                /* Inotify events are available */
+
+                handle_events(fd, wd, argc, argv);
+            }
+        }
+    }
+
+    printf(&quot;Listening for events stopped.\n&quot;);
+
+    /* Close inotify file descriptor */
+
+    close(fd);
+
+    free(wd);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAQ">&nbsp;</A>
 <H2>関連項目</H2>

@@ -100,7 +100,7 @@ POSIX.1-2001, POSIX.1-2008.
 <P>
 
 
-
+<PRE>
 $ <B>./a.out</B>
 Main thread sleeping
 Subthread starting infinite loop
@@ -108,15 +108,16 @@ Main thread consuming some CPU time...
 Process total CPU time:    1.368
 Main thread CPU time:      0.376
 Subthread CPU time:        0.992
+</PRE>
 
 
 <A NAME="lbAL">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 /* &quot;-lrt&quot; でリンクする */
-<P>
+
 #include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
@@ -125,67 +126,68 @@ Subthread CPU time:        0.992
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-<P>
+
 #define handle_error(msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+        do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 #define handle_error_en(en, msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;errno&nbsp;=&nbsp;en;&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+
 static void *
 thread_start(void *arg)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Subthread&nbsp;starting&nbsp;infinite&nbsp;loop\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+    printf(&quot;Subthread starting infinite loop\n&quot;);
+    for (;;)
+        continue;
 }
-<P>
+
 static void
 pclock(char *msg, clockid_t cid)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;timespec&nbsp;ts;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s&quot;,&nbsp;msg);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(clock_gettime(cid,&nbsp;&amp;ts)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;clock_gettime&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%4jd.%03ld\n&quot;,&nbsp;(intmax_t)&nbsp;ts.tv_sec,&nbsp;ts.tv_nsec&nbsp;/&nbsp;1000000);
+    struct timespec ts;
+
+    printf(&quot;%s&quot;, msg);
+    if (clock_gettime(cid, &amp;ts) == -1)
+        handle_error(&quot;clock_gettime&quot;);
+    printf(&quot;%4jd.%03ld\n&quot;, (intmax_t) ts.tv_sec, ts.tv_nsec / 1000000);
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;thread;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;clockid_t&nbsp;cid;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_create(&amp;thread,&nbsp;NULL,&nbsp;thread_start,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_create&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Main&nbsp;thread&nbsp;sleeping\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="../../0MultiFileIdx/man1/sleep.1.html">sleep</A>(1);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Main&nbsp;thread&nbsp;consuming&nbsp;some&nbsp;CPU&nbsp;time...\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;2000000;&nbsp;j++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;getppid();
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pclock(&quot;Process&nbsp;total&nbsp;CPU&nbsp;time:&nbsp;&quot;,&nbsp;CLOCK_PROCESS_CPUTIME_ID);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_getcpuclockid(pthread_self(),&nbsp;&amp;cid);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_getcpuclockid&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pclock(&quot;Main&nbsp;thread&nbsp;CPU&nbsp;time:&nbsp;&nbsp;&nbsp;&quot;,&nbsp;cid);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;The&nbsp;preceding&nbsp;4&nbsp;lines&nbsp;of&nbsp;code&nbsp;could&nbsp;have&nbsp;been&nbsp;replaced&nbsp;by:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pclock(&quot;Main&nbsp;thread&nbsp;CPU&nbsp;time:&nbsp;&nbsp;&nbsp;&quot;,&nbsp;CLOCK_THREAD_CPUTIME_ID);&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_getcpuclockid(thread,&nbsp;&amp;cid);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_getcpuclockid&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pclock(&quot;Subthread&nbsp;CPU&nbsp;time:&nbsp;1&nbsp;&nbsp;&nbsp;&nbsp;&quot;,&nbsp;cid);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Terminates&nbsp;both&nbsp;threads&nbsp;*/
+    pthread_t thread;
+    clockid_t cid;
+    int s;
+
+    s = pthread_create(&amp;thread, NULL, thread_start, NULL);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_create&quot;);
+
+    printf(&quot;Main thread sleeping\n&quot;);
+    <A HREF="../../0MultiFileIdx/man1/sleep.1.html">sleep</A>(1);
+
+    printf(&quot;Main thread consuming some CPU time...\n&quot;);
+    for (int j = 0; j &lt; 2000000; j++)
+        getppid();
+
+    pclock(&quot;Process total CPU time: &quot;, CLOCK_PROCESS_CPUTIME_ID);
+
+    s = pthread_getcpuclockid(pthread_self(), &amp;cid);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_getcpuclockid&quot;);
+    pclock(&quot;Main thread CPU time:   &quot;, cid);
+
+    /* The preceding 4 lines of code could have been replaced by:
+       pclock(&quot;Main thread CPU time:   &quot;, CLOCK_THREAD_CPUTIME_ID); */
+
+    s = pthread_getcpuclockid(thread, &amp;cid);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_getcpuclockid&quot;);
+    pclock(&quot;Subthread CPU time: 1    &quot;, cid);
+
+    exit(EXIT_SUCCESS);         /* Terminates both threads */
 }
+</PRE>
 
 <A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>

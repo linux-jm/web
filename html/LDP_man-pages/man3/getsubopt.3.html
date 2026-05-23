@@ -52,8 +52,9 @@ _XOPEN_SOURCE&nbsp;&gt;= 500
 <P>
 
 
-
+<PRE>
 <B>ro,name=xyz</B>
+</PRE>
 
 
 <P>
@@ -111,91 +112,92 @@ POSIX.1-2001, POSIX.1-2008.
 以下のプログラムは &quot;-o&quot; オプションに続いてサブオプションがあることを 期待している。
 <P>
 
-
+<PRE>
 #define _XOPEN_SOURCE 500
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/assert.h">assert.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-<P>
+
 int
 main(int argc, char **argv)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;enum&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RO_OPT&nbsp;=&nbsp;0,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RW_OPT,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NAME_OPT
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;};
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*const&nbsp;token[]&nbsp;=&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[RO_OPT]&nbsp;&nbsp;&nbsp;=&nbsp;&quot;ro&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[RW_OPT]&nbsp;&nbsp;&nbsp;=&nbsp;&quot;rw&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[NAME_OPT]&nbsp;=&nbsp;&quot;name&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NULL
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;};
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*subopts;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*value;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;opt;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;readonly&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;readwrite&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*name&nbsp;=&nbsp;NULL;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;errfnd&nbsp;=&nbsp;0;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((opt&nbsp;=&nbsp;getopt(argc,&nbsp;argv,&nbsp;&quot;o:&quot;))&nbsp;!=&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(opt)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'o':
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subopts&nbsp;=&nbsp;optarg;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(*subopts&nbsp;!=&nbsp;'\0'&nbsp;&amp;&amp;&nbsp;!errfnd)&nbsp;{
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(getsubopt(&amp;subopts,&nbsp;token,&nbsp;&amp;value))&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;RO_OPT:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readonly&nbsp;=&nbsp;1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;RW_OPT:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readwrite&nbsp;=&nbsp;1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;NAME_OPT:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(value&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Missing&nbsp;value&nbsp;for&nbsp;&quot;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;suboption&nbsp;'%s'\n&quot;,&nbsp;token[NAME_OPT]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errfnd&nbsp;=&nbsp;1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;=&nbsp;value;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;No&nbsp;match&nbsp;found&nbsp;&quot;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;for&nbsp;token:&nbsp;/%s/\n&quot;,&nbsp;value);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errfnd&nbsp;=&nbsp;1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(readwrite&nbsp;&amp;&amp;&nbsp;readonly)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Only&nbsp;one&nbsp;of&nbsp;'%s'&nbsp;and&nbsp;'%s'&nbsp;can&nbsp;be&nbsp;&quot;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;specified\n&quot;,&nbsp;token[RO_OPT],&nbsp;token[RW_OPT]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errfnd&nbsp;=&nbsp;1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errfnd&nbsp;=&nbsp;1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errfnd&nbsp;||&nbsp;argc&nbsp;==&nbsp;1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;\nUsage:&nbsp;%s&nbsp;-o&nbsp;&lt;suboptstring&gt;\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;suboptions&nbsp;are&nbsp;'ro',&nbsp;'rw',&nbsp;&quot;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;and&nbsp;'name=&lt;value&gt;'\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Remainder&nbsp;of&nbsp;program...&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    enum {
+        RO_OPT = 0,
+        RW_OPT,
+        NAME_OPT
+    };
+    char *const token[] = {
+        [RO_OPT]   = &quot;ro&quot;,
+        [RW_OPT]   = &quot;rw&quot;,
+        [NAME_OPT] = &quot;name&quot;,
+        NULL
+    };
+    char *subopts;
+    char *value;
+    int opt;
+
+    int readonly = 0;
+    int readwrite = 0;
+    char *name = NULL;
+    int errfnd = 0;
+
+    while ((opt = getopt(argc, argv, &quot;o:&quot;)) != -1) {
+        switch (opt) {
+        case 'o':
+            subopts = optarg;
+            while (*subopts != '\0' &amp;&amp; !errfnd) {
+
+            switch (getsubopt(&amp;subopts, token, &amp;value)) {
+            case RO_OPT:
+                readonly = 1;
+                break;
+
+            case RW_OPT:
+                readwrite = 1;
+                break;
+
+            case NAME_OPT:
+                if (value == NULL) {
+                    fprintf(stderr, &quot;Missing value for &quot;
+                            &quot;suboption '%s'\n&quot;, token[NAME_OPT]);
+                    errfnd = 1;
+                    continue;
+                }
+
+                name = value;
+                break;
+
+            default:
+                fprintf(stderr, &quot;No match found &quot;
+                        &quot;for token: /%s/\n&quot;, value);
+                errfnd = 1;
+                break;
+            }
+        }
+        if (readwrite &amp;&amp; readonly) {
+            fprintf(stderr, &quot;Only one of '%s' and '%s' can be &quot;
+                    &quot;specified\n&quot;, token[RO_OPT], token[RW_OPT]);
+            errfnd = 1;
+        }
+        break;
+
+        default:
+            errfnd = 1;
+        }
+    }
+
+    if (errfnd || argc == 1) {
+        fprintf(stderr, &quot;\nUsage: %s -o &lt;suboptstring&gt;\n&quot;, argv[0]);
+        fprintf(stderr, &quot;suboptions are 'ro', 'rw', &quot;
+                &quot;and 'name=&lt;value&gt;'\n&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Remainder of program... */
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAJ">&nbsp;</A>
 <H2>関連項目</H2>

@@ -149,7 +149,7 @@ POSIX.1 には、括弧を含む <B>pthread_cleanup_push</B>() と
 <P>
 
 
-
+<PRE>
 $ <B>./a.out</B>
 New thread started
 cnt = 0
@@ -157,6 +157,7 @@ cnt = 1
 Canceling thread
 Called clean-up handler
 Thread was canceled; cnt = 0
+</PRE>
 
 
 <P>
@@ -171,12 +172,13 @@ Thread was canceled; cnt = 0
 <P>
 
 
-
+<PRE>
 $ <B>./a.out x</B>
 New thread started
 cnt = 0
 cnt = 1
 Thread terminated normally; cnt = 2
+</PRE>
 
 
 <P>
@@ -192,13 +194,14 @@ Thread terminated normally; cnt = 2
 <P>
 
 
-
+<PRE>
 $ <B>./a.out x 1</B>
 New thread started
 cnt = 0
 cnt = 1
 Called clean-up handler
 Thread terminated normally; cnt = 0
+</PRE>
 
 
 <P>
@@ -209,87 +212,88 @@ Thread terminated normally; cnt = 0
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-<P>
+
 #define handle_error_en(en, msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;errno&nbsp;=&nbsp;en;&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+
 static int done = 0;
 static int cleanup_pop_arg = 0;
 static int cnt = 0;
-<P>
+
 static void
 cleanup_handler(void *arg)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Called&nbsp;clean-up&nbsp;handler\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cnt&nbsp;=&nbsp;0;
+    printf(&quot;Called clean-up handler\n&quot;);
+    cnt = 0;
 }
-<P>
+
 static void *
 thread_start(void *arg)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;start,&nbsp;curr;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;New&nbsp;thread&nbsp;started\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_cleanup_push(cleanup_handler,&nbsp;NULL);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;curr&nbsp;=&nbsp;start&nbsp;=&nbsp;time(NULL);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(!done)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pthread_testcancel();&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;A&nbsp;cancellation&nbsp;point&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(curr&nbsp;&lt;&nbsp;time(NULL))&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;curr&nbsp;=&nbsp;time(NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;cnt&nbsp;=&nbsp;%d\n&quot;,&nbsp;cnt);&nbsp;&nbsp;/*&nbsp;A&nbsp;cancellation&nbsp;point&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cnt++;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_cleanup_pop(cleanup_pop_arg);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
+    time_t start, curr;
+
+    printf(&quot;New thread started\n&quot;);
+
+    pthread_cleanup_push(cleanup_handler, NULL);
+
+    curr = start = time(NULL);
+
+    while (!done) {
+        pthread_testcancel();           /* A cancellation point */
+        if (curr &lt; time(NULL)) {
+            curr = time(NULL);
+            printf(&quot;cnt = %d\n&quot;, cnt);  /* A cancellation point */
+            cnt++;
+        }
+    }
+
+    pthread_cleanup_pop(cleanup_pop_arg);
+    return NULL;
 }
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;thr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;*res;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_create(&amp;thr,&nbsp;NULL,&nbsp;thread_start,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_create&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sleep(2);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allow&nbsp;new&nbsp;thread&nbsp;to&nbsp;run&nbsp;a&nbsp;while&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;2)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cleanup_pop_arg&nbsp;=&nbsp;atoi(argv[2]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;done&nbsp;=&nbsp;1;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Canceling&nbsp;thread\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_cancel(thr);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_cancel&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;pthread_join(thr,&nbsp;&amp;res);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error_en(s,&nbsp;&quot;pthread_join&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(res&nbsp;==&nbsp;PTHREAD_CANCELED)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Thread&nbsp;was&nbsp;canceled;&nbsp;cnt&nbsp;=&nbsp;%d\n&quot;,&nbsp;cnt);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Thread&nbsp;terminated&nbsp;normally;&nbsp;cnt&nbsp;=&nbsp;%d\n&quot;,&nbsp;cnt);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    pthread_t thr;
+    int s;
+    void *res;
+
+    s = pthread_create(&amp;thr, NULL, thread_start, NULL);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_create&quot;);
+
+    sleep(2);           /* Allow new thread to run a while */
+
+    if (argc &gt; 1) {
+        if (argc &gt; 2)
+            cleanup_pop_arg = atoi(argv[2]);
+        done = 1;
+
+    } else {
+        printf(&quot;Canceling thread\n&quot;);
+        s = pthread_cancel(thr);
+        if (s != 0)
+            handle_error_en(s, &quot;pthread_cancel&quot;);
+    }
+
+    s = pthread_join(thr, &amp;res);
+    if (s != 0)
+        handle_error_en(s, &quot;pthread_join&quot;);
+
+    if (res == PTHREAD_CANCELED)
+        printf(&quot;Thread was canceled; cnt = %d\n&quot;, cnt);
+    else
+        printf(&quot;Thread terminated normally; cnt = %d\n&quot;, cnt);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

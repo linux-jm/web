@@ -190,11 +190,12 @@ the two programs is the following:
 <P>
 
 
-
+<PRE>
 $ <B>./pshm_ucase_bounce /myshm &amp;</B>
 [1] 270171
 $ <B>./pshm_ucase_send /myshm hello</B>
 HELLO
+</PRE>
 
 
 <P>
@@ -211,7 +212,7 @@ that is shared between the two programs.
 <P>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/semaphore.h">semaphore.h</A>&gt;
@@ -219,21 +220,22 @@ that is shared between the two programs.
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-<P>
+
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        } while (0)
+
 #define BUF_SIZE 1024   /* Maximum size for exchanged string */
-<P>
+
 /* Define a structure that will be imposed on the shared
-<BR>&nbsp;&nbsp;&nbsp;memory&nbsp;object&nbsp;*/
-<P>
+   memory object */
+
 struct shmbuf {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sem_t&nbsp;&nbsp;sem1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;POSIX&nbsp;unnamed&nbsp;semaphore&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sem_t&nbsp;&nbsp;sem2;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;POSIX&nbsp;unnamed&nbsp;semaphore&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;cnt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;bytes&nbsp;used&nbsp;in&nbsp;'buf'&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;buf[BUF_SIZE];&nbsp;&nbsp;&nbsp;/*&nbsp;Data&nbsp;being&nbsp;transferred&nbsp;*/
+    sem_t  sem1;            /* POSIX unnamed semaphore */
+    sem_t  sem2;            /* POSIX unnamed semaphore */
+    size_t cnt;             /* Number of bytes used in 'buf' */
+    char   buf[BUF_SIZE];   /* Data being transferred */
 };
+</PRE>
 
 
 
@@ -255,75 +257,76 @@ program that it may now access the shared memory.
 <P>
 
 
-
+<PRE>
 /* pshm_ucase_bounce.c
-<P>
-<BR>&nbsp;&nbsp;&nbsp;Licensed&nbsp;under&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;v2&nbsp;or&nbsp;later.
+
+   Licensed under GNU General Public License v2 or later.
 */
 #include &lt;<A HREF="file:///usr/include/ctype.h">ctype.h</A>&gt;
 #include &quot;pshm_ucase.h&quot;
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;/shm-path\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*shmpath&nbsp;=&nbsp;argv[1];
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;shared&nbsp;memory&nbsp;object&nbsp;and&nbsp;set&nbsp;its&nbsp;size&nbsp;to&nbsp;the&nbsp;size
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;our&nbsp;structure&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd&nbsp;=&nbsp;shm_open(shmpath,&nbsp;O_CREAT&nbsp;|&nbsp;O_EXCL&nbsp;|&nbsp;O_RDWR,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_IRUSR&nbsp;|&nbsp;S_IWUSR);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shm_open&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ftruncate(fd,&nbsp;sizeof(struct&nbsp;shmbuf))&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;ftruncate&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Map&nbsp;the&nbsp;object&nbsp;into&nbsp;the&nbsp;caller's&nbsp;address&nbsp;space&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;shmbuf&nbsp;*shmp&nbsp;=&nbsp;mmap(NULL,&nbsp;sizeof(*shmp),
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROT_READ&nbsp;|&nbsp;PROT_WRITE,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MAP_SHARED,&nbsp;fd,&nbsp;0);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(shmp&nbsp;==&nbsp;MAP_FAILED)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;mmap&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Initialize&nbsp;semaphores&nbsp;as&nbsp;process-shared,&nbsp;with&nbsp;value&nbsp;0&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_init(&amp;shmp-&gt;sem1,&nbsp;1,&nbsp;0)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_init-sem1&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_init(&amp;shmp-&gt;sem2,&nbsp;1,&nbsp;0)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_init-sem2&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;'sem1'&nbsp;to&nbsp;be&nbsp;posted&nbsp;by&nbsp;peer&nbsp;before&nbsp;touching
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shared&nbsp;memory&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_wait(&amp;shmp-&gt;sem1)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_wait&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Convert&nbsp;data&nbsp;in&nbsp;shared&nbsp;memory&nbsp;into&nbsp;upper&nbsp;case&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;shmp-&gt;cnt;&nbsp;j++)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shmp-&gt;buf[j]&nbsp;=&nbsp;toupper((unsigned&nbsp;char)&nbsp;shmp-&gt;buf[j]);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Post&nbsp;'sem2'&nbsp;to&nbsp;tell&nbsp;the&nbsp;to&nbsp;tell&nbsp;peer&nbsp;that&nbsp;it&nbsp;can&nbsp;now
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access&nbsp;the&nbsp;modified&nbsp;data&nbsp;in&nbsp;shared&nbsp;memory&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_post(&amp;shmp-&gt;sem2)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_post&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Unlink&nbsp;the&nbsp;shared&nbsp;memory&nbsp;object.&nbsp;Even&nbsp;if&nbsp;the&nbsp;peer&nbsp;process
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;still&nbsp;using&nbsp;the&nbsp;object,&nbsp;this&nbsp;is&nbsp;okay.&nbsp;The&nbsp;object&nbsp;will
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;removed&nbsp;only&nbsp;after&nbsp;all&nbsp;open&nbsp;references&nbsp;are&nbsp;closed.&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;shm_unlink(shmpath);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s /shm-path\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    char *shmpath = argv[1];
+
+    /* Create shared memory object and set its size to the size
+       of our structure */
+
+    int fd = shm_open(shmpath, O_CREAT | O_EXCL | O_RDWR,
+                      S_IRUSR | S_IWUSR);
+    if (fd == -1)
+        errExit(&quot;shm_open&quot;);
+
+    if (ftruncate(fd, sizeof(struct shmbuf)) == -1)
+        errExit(&quot;ftruncate&quot;);
+
+    /* Map the object into the caller's address space */
+
+    struct shmbuf *shmp = mmap(NULL, sizeof(*shmp),
+                               PROT_READ | PROT_WRITE,
+                               MAP_SHARED, fd, 0);
+    if (shmp == MAP_FAILED)
+        errExit(&quot;mmap&quot;);
+
+    /* Initialize semaphores as process-shared, with value 0 */
+
+    if (sem_init(&amp;shmp-&gt;sem1, 1, 0) == -1)
+        errExit(&quot;sem_init-sem1&quot;);
+    if (sem_init(&amp;shmp-&gt;sem2, 1, 0) == -1)
+        errExit(&quot;sem_init-sem2&quot;);
+
+    /* Wait for 'sem1' to be posted by peer before touching
+       shared memory */
+
+    if (sem_wait(&amp;shmp-&gt;sem1) == -1)
+        errExit(&quot;sem_wait&quot;);
+
+    /* Convert data in shared memory into upper case */
+
+    for (int j = 0; j &lt; shmp-&gt;cnt; j++)
+        shmp-&gt;buf[j] = toupper((unsigned char) shmp-&gt;buf[j]);
+
+    /* Post 'sem2' to tell the to tell peer that it can now
+       access the modified data in shared memory */
+
+    if (sem_post(&amp;shmp-&gt;sem2) == -1)
+        errExit(&quot;sem_post&quot;);
+
+    /* Unlink the shared memory object. Even if the peer process
+       is still using the object, this is okay. The object will
+       be removed only after all open references are closed. */
+
+    shm_unlink(shmpath);
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 
 
@@ -345,67 +348,68 @@ of the shared memory on standard output.
 <P>
 
 
-
+<PRE>
 /* pshm_ucase_send.c
-<P>
-<BR>&nbsp;&nbsp;&nbsp;Licensed&nbsp;under&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;v2&nbsp;or&nbsp;later.
+
+   Licensed under GNU General Public License v2 or later.
 */
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &quot;pshm_ucase.h&quot;
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;3)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;/shm-path&nbsp;string\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*shmpath&nbsp;=&nbsp;argv[1];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*string&nbsp;=&nbsp;argv[2];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;len&nbsp;=&nbsp;strlen(string);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;&gt;&nbsp;BUF_SIZE)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;String&nbsp;is&nbsp;too&nbsp;long\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Open&nbsp;the&nbsp;existing&nbsp;shared&nbsp;memory&nbsp;object&nbsp;and&nbsp;map&nbsp;it
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;into&nbsp;the&nbsp;caller's&nbsp;address&nbsp;space&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd&nbsp;=&nbsp;shm_open(shmpath,&nbsp;O_RDWR,&nbsp;0);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shm_open&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;shmbuf&nbsp;*shmp&nbsp;=&nbsp;mmap(NULL,&nbsp;sizeof(*shmp),
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROT_READ&nbsp;|&nbsp;PROT_WRITE,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MAP_SHARED,&nbsp;fd,&nbsp;0);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(shmp&nbsp;==&nbsp;MAP_FAILED)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;mmap&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Copy&nbsp;data&nbsp;into&nbsp;the&nbsp;shared&nbsp;memory&nbsp;object&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;shmp-&gt;cnt&nbsp;=&nbsp;len;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;memcpy(&amp;shmp-&gt;buf,&nbsp;string,&nbsp;len);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Tell&nbsp;peer&nbsp;that&nbsp;it&nbsp;can&nbsp;now&nbsp;access&nbsp;shared&nbsp;memory&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_post(&amp;shmp-&gt;sem1)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_post&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;until&nbsp;peer&nbsp;says&nbsp;that&nbsp;it&nbsp;has&nbsp;finished&nbsp;accessing
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;shared&nbsp;memory&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_wait(&amp;shmp-&gt;sem2)&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_wait&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Write&nbsp;modified&nbsp;data&nbsp;in&nbsp;shared&nbsp;memory&nbsp;to&nbsp;standard&nbsp;output&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;write(STDOUT_FILENO,&nbsp;&amp;shmp-&gt;buf,&nbsp;len);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;write(STDOUT_FILENO,&nbsp;&quot;\n&quot;,&nbsp;1);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    if (argc != 3) {
+        fprintf(stderr, &quot;Usage: %s /shm-path string\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    char *shmpath = argv[1];
+    char *string = argv[2];
+    size_t len = strlen(string);
+
+    if (len &gt; BUF_SIZE) {
+        fprintf(stderr, &quot;String is too long\n&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Open the existing shared memory object and map it
+       into the caller's address space */
+
+    int fd = shm_open(shmpath, O_RDWR, 0);
+    if (fd == -1)
+        errExit(&quot;shm_open&quot;);
+
+    struct shmbuf *shmp = mmap(NULL, sizeof(*shmp),
+                               PROT_READ | PROT_WRITE,
+                               MAP_SHARED, fd, 0);
+    if (shmp == MAP_FAILED)
+        errExit(&quot;mmap&quot;);
+
+    /* Copy data into the shared memory object */
+
+    shmp-&gt;cnt = len;
+    memcpy(&amp;shmp-&gt;buf, string, len);
+
+    /* Tell peer that it can now access shared memory */
+
+    if (sem_post(&amp;shmp-&gt;sem1) == -1)
+        errExit(&quot;sem_post&quot;);
+
+    /* Wait until peer says that it has finished accessing
+       the shared memory */
+
+    if (sem_wait(&amp;shmp-&gt;sem2) == -1)
+        errExit(&quot;sem_wait&quot;);
+
+    /* Write modified data in shared memory to standard output */
+
+    write(STDOUT_FILENO, &amp;shmp-&gt;buf, len);
+    write(STDOUT_FILENO, &quot;\n&quot;, 1);
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 
 <A NAME="lbAO">&nbsp;</A>

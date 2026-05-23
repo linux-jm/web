@@ -184,11 +184,12 @@ NULL 終端された表記形式の文字列は <I>pres</I> が指すバッフ�
 <P>
 
 
-
+<PRE>
 $ <B>./a.out 193.168</B>
 inet_net_pton() returned: 24
 inet_net_ntop() yielded:  193.168.0/24
 Raw address:              c1a80000
+</PRE>
 
 
 <P>
@@ -197,11 +198,12 @@ Raw address:              c1a80000
 <P>
 
 
-
+<PRE>
 $ <B>./a.out 193.168 0xffffffff</B>
 inet_net_pton() returned: 24
 inet_net_ntop() yielded:  193.168.0/24
 Raw address:              c1a800ff
+</PRE>
 
 
 <P>
@@ -211,11 +213,12 @@ Raw address:              c1a800ff
 <P>
 
 
-
+<PRE>
 $ <B>./a.out 193.168.1.128</B>
 inet_net_pton() returned: 32
 inet_net_ntop() yielded:  193.168.1.128/32
 Raw address:              c1a80180
+</PRE>
 
 
 <P>
@@ -225,73 +228,75 @@ Raw address:              c1a80180
 <P>
 
 
-
+<PRE>
 $ <B>./a.out 193.168.1.128/24</B>
 inet_net_pton() returned: 24
 inet_net_ntop() yielded:  193.168.1/24
 Raw address:              c1a80180
+</PRE>
 
 
 <A NAME="lbAN">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
-
+<PRE>
 /* &quot;-lresolv&quot; でリンクする */
-<P>
+
 #include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-<P>
+
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        } while (0)
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[100];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;in_addr&nbsp;addr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;bits;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;Usage:&nbsp;%s&nbsp;presentation-form&nbsp;[addr-init-value]\n&quot;,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;argv[2]&nbsp;(数値)&nbsp;が指定されると、その数字を使って&nbsp;inet_net_pton()
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;に渡す出力バッファーを初期化する。これにより&nbsp;inet_net_pton()&nbsp;が
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ネットワーク番号に必要なバイトだけを書き込むことを確認できるよう
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;にする。&nbsp;argv[2]&nbsp;が指定されなかった場合、バッファーは&nbsp;0&nbsp;で初期化
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;する&nbsp;(これが推奨される方法である)。&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.s_addr&nbsp;=&nbsp;(argc&nbsp;&gt;&nbsp;2)&nbsp;?&nbsp;strtod(argv[2],&nbsp;NULL)&nbsp;:&nbsp;0;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;argv[1]&nbsp;の表記形式のネットワーク番号をバイナリー形式に変換する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;bits&nbsp;=&nbsp;inet_net_pton(AF_INET,&nbsp;argv[1],&nbsp;&amp;addr,&nbsp;sizeof(addr));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(bits&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;inet_net_ntop&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;inet_net_pton()&nbsp;returned:&nbsp;%d\n&quot;,&nbsp;bits);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;inet_net_pton()&nbsp;が返した&nbsp;'bits'&nbsp;を使って、
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;バイナリー形式を表記形式に変換する&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(inet_net_ntop(AF_INET,&nbsp;&amp;addr,&nbsp;bits,&nbsp;buf,&nbsp;sizeof(buf))&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;inet_net_ntop&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;inet_net_ntop()&nbsp;yielded:&nbsp;&nbsp;%s\n&quot;,&nbsp;buf);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;'addr'&nbsp;を名前の形で&nbsp;(ネットワークバイトオーダーで)&nbsp;表示する。
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;これにより&nbsp;inet_net_ntop()&nbsp;が表示しないバイトを確認できる。
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;これらのバイトの一部は&nbsp;inet_net_ntop()&nbsp;では変更されない場合があり、
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;その場合&nbsp;argv[2]&nbsp;で指定された初期値のままになる。&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Raw&nbsp;address:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%x\n&quot;,&nbsp;htonl(addr.s_addr));
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    char buf[100];
+    struct in_addr addr;
+    int bits;
+
+    if (argc &lt; 2) {
+        fprintf(stderr,
+                &quot;Usage: %s presentation-form [addr-init-value]\n&quot;,
+                argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    /* argv[2] (数値) が指定されると、その数字を使って inet_net_pton()
+       に渡す出力バッファーを初期化する。これにより inet_net_pton() が
+       ネットワーク番号に必要なバイトだけを書き込むことを確認できるよう
+       にする。 argv[2] が指定されなかった場合、バッファーは 0 で初期化
+       する (これが推奨される方法である)。 */
+
+    addr.s_addr = (argc &gt; 2) ? strtod(argv[2], NULL) : 0;
+
+    /* argv[1] の表記形式のネットワーク番号をバイナリー形式に変換する */
+
+    bits = inet_net_pton(AF_INET, argv[1], &amp;addr, sizeof(addr));
+    if (bits == -1)
+        errExit(&quot;inet_net_ntop&quot;);
+
+    printf(&quot;inet_net_pton() returned: %d\n&quot;, bits);
+
+    /* inet_net_pton() が返した 'bits' を使って、
+       バイナリー形式を表記形式に変換する */
+
+    if (inet_net_ntop(AF_INET, &amp;addr, bits, buf, sizeof(buf)) == NULL)
+        errExit(&quot;inet_net_ntop&quot;);
+
+    printf(&quot;inet_net_ntop() yielded:  %s\n&quot;, buf);
+
+    /* 'addr' を名前の形で (ネットワークバイトオーダーで) 表示する。
+       これにより inet_net_ntop() が表示しないバイトを確認できる。
+       これらのバイトの一部は inet_net_ntop() では変更されない場合があり、
+       その場合 argv[2] で指定された初期値のままになる。 */
+
+    printf(&quot;Raw address:              %x\n&quot;, htonl(addr.s_addr));
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAO">&nbsp;</A>
 <H2>関連項目</H2>

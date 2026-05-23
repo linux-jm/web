@@ -107,27 +107,28 @@ pthread_setname_np, pthread_getname_np - スレッド名の設定/取得を行�
 <P>
 
 
-
+<PRE>
 $<B> ./a.out</B>
 Created a thread. Default name is: a.out
 The thread name after setting it is THREADFOO.
 <B>^Z</B>                           # Suspend the program
 [1]+  Stopped           ./a.out
 $ <B>ps H -C a.out -o 'pid tid cmd comm'</B>
-<BR>&nbsp;&nbsp;PID&nbsp;&nbsp;&nbsp;TID&nbsp;CMD&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COMMAND
-<BR>&nbsp;5990&nbsp;&nbsp;5990&nbsp;./a.out&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.out
-<BR>&nbsp;5990&nbsp;&nbsp;5991&nbsp;./a.out&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;THREADFOO
+  PID   TID CMD                         COMMAND
+ 5990  5990 ./a.out                     a.out
+ 5990  5991 ./a.out                     THREADFOO
 $ <B>cat /proc/5990/task/5990/comm</B>
 a.out
 $ <B>cat /proc/5990/task/5991/comm</B>
 THREADFOO
+</PRE>
 
 
 <A NAME="lbAL">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
@@ -135,55 +136,56 @@ THREADFOO
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-<P>
+
 #define NAMELEN 16
-<P>
+
 #define errExitEN(en, msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;errno&nbsp;=&nbsp;en;&nbsp;perror(msg);&nbsp;\
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+                        do { errno = en; perror(msg); \
+                             exit(EXIT_FAILURE); } while (0)
+
 static void *
 threadfunc(void *parm)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sleep(5);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//&nbsp;allow&nbsp;main&nbsp;program&nbsp;to&nbsp;set&nbsp;the&nbsp;thread&nbsp;name
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;NULL;
+    sleep(5);          // allow main program to set the thread name
+    return NULL;
 }
-<P>
+
 int
 main(int argc, char **argv)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pthread_t&nbsp;thread;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;rc;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;thread_name[NAMELEN];
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;rc&nbsp;=&nbsp;pthread_create(&amp;thread,&nbsp;NULL,&nbsp;threadfunc,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(rc&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExitEN(rc,&nbsp;&quot;pthread_create&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;rc&nbsp;=&nbsp;pthread_getname_np(thread,&nbsp;thread_name,&nbsp;NAMELEN);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(rc&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExitEN(rc,&nbsp;&quot;pthread_getname_np&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Created&nbsp;a&nbsp;thread.&nbsp;Default&nbsp;name&nbsp;is:&nbsp;%s\n&quot;,&nbsp;thread_name);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;rc&nbsp;=&nbsp;pthread_setname_np(thread,&nbsp;(argc&nbsp;&gt;&nbsp;1)&nbsp;?&nbsp;argv[1]&nbsp;:&nbsp;&quot;THREADFOO&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(rc&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExitEN(rc,&nbsp;&quot;pthread_setname_np&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sleep(2);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;rc&nbsp;=&nbsp;pthread_getname_np(thread,&nbsp;thread_name,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(argc&nbsp;&gt;&nbsp;2)&nbsp;?&nbsp;atoi(argv[1])&nbsp;:&nbsp;NAMELEN);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(rc&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExitEN(rc,&nbsp;&quot;pthread_getname_np&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;The&nbsp;thread&nbsp;name&nbsp;after&nbsp;setting&nbsp;it&nbsp;is&nbsp;%s.\n&quot;,&nbsp;thread_name);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;rc&nbsp;=&nbsp;pthread_join(thread,&nbsp;NULL);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(rc&nbsp;!=&nbsp;0)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExitEN(rc,&nbsp;&quot;pthread_join&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Done\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    pthread_t thread;
+    int rc;
+    char thread_name[NAMELEN];
+
+    rc = pthread_create(&amp;thread, NULL, threadfunc, NULL);
+    if (rc != 0)
+        errExitEN(rc, &quot;pthread_create&quot;);
+
+    rc = pthread_getname_np(thread, thread_name, NAMELEN);
+    if (rc != 0)
+        errExitEN(rc, &quot;pthread_getname_np&quot;);
+
+    printf(&quot;Created a thread. Default name is: %s\n&quot;, thread_name);
+    rc = pthread_setname_np(thread, (argc &gt; 1) ? argv[1] : &quot;THREADFOO&quot;);
+    if (rc != 0)
+        errExitEN(rc, &quot;pthread_setname_np&quot;);
+
+    sleep(2);
+
+    rc = pthread_getname_np(thread, thread_name,
+                            (argc &gt; 2) ? atoi(argv[1]) : NAMELEN);
+    if (rc != 0)
+        errExitEN(rc, &quot;pthread_getname_np&quot;);
+    printf(&quot;The thread name after setting it is %s.\n&quot;, thread_name);
+
+    rc = pthread_join(thread, NULL);
+    if (rc != 0)
+        errExitEN(rc, &quot;pthread_join&quot;);
+
+    printf(&quot;Done\n&quot;);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>

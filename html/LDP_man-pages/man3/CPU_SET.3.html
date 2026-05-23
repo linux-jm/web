@@ -211,45 +211,46 @@ glibc 2.8 以前の 32 ビットプラットフォームでは、 <B>CPU_ALLOC</
 以下のプログラムは、動的に割り当てた CPU 集合に対していくつかのマクロを使用する例を示している。
 <P>
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/assert.h">assert.h</A>&gt;
-<P>
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cpu_set_t&nbsp;*cpusetp;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;size;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;num_cpus;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;num-cpus&gt;\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;num_cpus&nbsp;=&nbsp;atoi(argv[1]);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;cpusetp&nbsp;=&nbsp;CPU_ALLOC(num_cpus);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cpusetp&nbsp;==&nbsp;NULL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;CPU_ALLOC&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;CPU_ALLOC_SIZE(num_cpus);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;CPU_ZERO_S(size,&nbsp;cpusetp);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;cpu&nbsp;=&nbsp;0;&nbsp;cpu&nbsp;&lt;&nbsp;num_cpus;&nbsp;cpu&nbsp;+=&nbsp;2)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CPU_SET_S(cpu,&nbsp;size,&nbsp;cpusetp);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;CPU_COUNT()&nbsp;of&nbsp;set:&nbsp;&nbsp;&nbsp;&nbsp;%d\n&quot;,&nbsp;CPU_COUNT_S(size,&nbsp;cpusetp));
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;CPU_FREE(cpusetp);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    cpu_set_t *cpusetp;
+    size_t size;
+    int num_cpus;
+
+    if (argc &lt; 2) {
+        fprintf(stderr, &quot;Usage: %s &lt;num-cpus&gt;\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    num_cpus = atoi(argv[1]);
+
+    cpusetp = CPU_ALLOC(num_cpus);
+    if (cpusetp == NULL) {
+        perror(&quot;CPU_ALLOC&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    size = CPU_ALLOC_SIZE(num_cpus);
+
+    CPU_ZERO_S(size, cpusetp);
+    for (int cpu = 0; cpu &lt; num_cpus; cpu += 2)
+        CPU_SET_S(cpu, size, cpusetp);
+
+    printf(&quot;CPU_COUNT() of set:    %d\n&quot;, CPU_COUNT_S(size, cpusetp));
+
+    CPU_FREE(cpusetp);
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

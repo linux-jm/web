@@ -213,11 +213,12 @@ GNU C ライブラリは、eventfd ファイルディスクリプターの読み
 <P>
 
 
-
+<PRE>
 typedef uint64_t eventfd_t;
-<P>
+
 int eventfd_read(int fd, eventfd_t *value);
 int eventfd_write(int fd, eventfd_t value);
+</PRE>
 
 
 <P>
@@ -236,7 +237,7 @@ sleep する間に、子プロセスは プログラムのコマンドライン�
 <P>
 
 
-
+<PRE>
 $<B> ./a.out 1 2 4 7 14</B>
 Child writing 1 to efd
 Child writing 2 to efd
@@ -246,67 +247,69 @@ Child writing 14 to efd
 Child completed write loop
 Parent about to read
 Parent read 28 (0x1c) from efd
+</PRE>
 
 
 <A NAME="lbAN">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/sys/eventfd.h">sys/eventfd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/inttypes.h">inttypes.h</A>&gt;           /* Definition of PRIu64 &amp; PRIx64 */
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;             /* Definition of uint64_t */
-<P>
+
 #define handle_error(msg) \
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
-<P>
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 int
 main(int argc, char *argv[])
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;efd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;uint64_t&nbsp;u;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;s;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;num&gt;...\n&quot;,&nbsp;argv[0]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;efd&nbsp;=&nbsp;eventfd(0,&nbsp;0);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(efd&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;eventfd&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(fork())&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;0:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;1;&nbsp;j&nbsp;&lt;&nbsp;argc;&nbsp;j++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Child&nbsp;writing&nbsp;%s&nbsp;to&nbsp;efd\n&quot;,&nbsp;argv[j]);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;u&nbsp;=&nbsp;strtoull(argv[j],&nbsp;NULL,&nbsp;0);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;strtoull()&nbsp;allows&nbsp;various&nbsp;bases&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;write(efd,&nbsp;&amp;u,&nbsp;sizeof(uint64_t));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;sizeof(uint64_t))
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;write&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Child&nbsp;completed&nbsp;write&nbsp;loop\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;default:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sleep(2);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Parent&nbsp;about&nbsp;to&nbsp;read\n&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;read(efd,&nbsp;&amp;u,&nbsp;sizeof(uint64_t));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;sizeof(uint64_t))
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;read&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Parent&nbsp;read&nbsp;%&quot;PRIu64&quot;&nbsp;(%#&quot;PRIx64&quot;)&nbsp;from&nbsp;efd\n&quot;,&nbsp;u,&nbsp;u);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;-1:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;fork&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+    int efd;
+    uint64_t u;
+    ssize_t s;
+
+    if (argc &lt; 2) {
+        fprintf(stderr, &quot;Usage: %s &lt;num&gt;...\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    efd = eventfd(0, 0);
+    if (efd == -1)
+        handle_error(&quot;eventfd&quot;);
+
+    switch (fork()) {
+    case 0:
+        for (int j = 1; j &lt; argc; j++) {
+            printf(&quot;Child writing %s to efd\n&quot;, argv[j]);
+            u = strtoull(argv[j], NULL, 0);
+                    /* strtoull() allows various bases */
+            s = write(efd, &amp;u, sizeof(uint64_t));
+            if (s != sizeof(uint64_t))
+                handle_error(&quot;write&quot;);
+        }
+        printf(&quot;Child completed write loop\n&quot;);
+
+        exit(EXIT_SUCCESS);
+
+    default:
+        sleep(2);
+
+        printf(&quot;Parent about to read\n&quot;);
+        s = read(efd, &amp;u, sizeof(uint64_t));
+        if (s != sizeof(uint64_t))
+            handle_error(&quot;read&quot;);
+        printf(&quot;Parent read %&quot;PRIu64&quot; (%#&quot;PRIx64&quot;) from efd\n&quot;, u, u);
+        exit(EXIT_SUCCESS);
+
+    case -1:
+        handle_error(&quot;fork&quot;);
+    }
 }
+</PRE>
 
 <A NAME="lbAO">&nbsp;</A>
 <H2>関連項目</H2>

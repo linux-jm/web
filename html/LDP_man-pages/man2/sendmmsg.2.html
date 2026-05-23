@@ -45,11 +45,12 @@ sendmmsg - 複数のメッセージをソケットへ送信する
 <P>
 
 
-
+<PRE>
 struct mmsghdr {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;msghdr&nbsp;msg_hdr;&nbsp;&nbsp;/*&nbsp;メッセージヘッダー&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;msg_len;&nbsp;&nbsp;/*&nbsp;送信されたバイト数&nbsp;*/
+    struct msghdr msg_hdr;  /* メッセージヘッダー */
+    unsigned int  msg_len;  /* 送信されたバイト数 */
 };
+</PRE>
 
 
 <P>
@@ -141,7 +142,7 @@ as the one that was lost on the previous call.
 データグラムで送信する。 一つ目のデータグラムの内容は、二つのバッファーから取得される。
 <P>
 
-
+<PRE>
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/netinet/ip.h">netinet/ip.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
@@ -149,55 +150,56 @@ as the one that was lost on the previous call.
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
-<P>
+
 int
 main(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sockfd;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_in&nbsp;addr;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;mmsghdr&nbsp;msg[2];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;iovec&nbsp;msg1[2],&nbsp;msg2;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;retval;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sockfd&nbsp;=&nbsp;socket(AF_INET,&nbsp;SOCK_DGRAM,&nbsp;0);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sockfd&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;socket()&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_family&nbsp;=&nbsp;AF_INET;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_addr.s_addr&nbsp;=&nbsp;htonl(INADDR_LOOPBACK);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_port&nbsp;=&nbsp;htons(1234);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(connect(sockfd,&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;addr,&nbsp;sizeof(addr))&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;connect()&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(msg1,&nbsp;0,&nbsp;sizeof(msg1));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg1[0].iov_base&nbsp;=&nbsp;&quot;one&quot;;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg1[0].iov_len&nbsp;=&nbsp;3;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg1[1].iov_base&nbsp;=&nbsp;&quot;two&quot;;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg1[1].iov_len&nbsp;=&nbsp;3;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;msg2,&nbsp;0,&nbsp;sizeof(msg2));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg2.iov_base&nbsp;=&nbsp;&quot;three&quot;;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg2.iov_len&nbsp;=&nbsp;5;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(msg,&nbsp;0,&nbsp;sizeof(msg));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg[0].msg_hdr.msg_iov&nbsp;=&nbsp;msg1;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg[0].msg_hdr.msg_iovlen&nbsp;=&nbsp;2;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg[1].msg_hdr.msg_iov&nbsp;=&nbsp;&amp;msg2;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;msg[1].msg_hdr.msg_iovlen&nbsp;=&nbsp;1;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;retval&nbsp;=&nbsp;sendmmsg(sockfd,&nbsp;msg,&nbsp;2,&nbsp;0);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(retval&nbsp;==&nbsp;-1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;sendmmsg()&quot;);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%d&nbsp;messages&nbsp;sent\n&quot;,&nbsp;retval);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(0);
+    int sockfd;
+    struct sockaddr_in addr;
+    struct mmsghdr msg[2];
+    struct iovec msg1[2], msg2;
+    int retval;
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd == -1) {
+        perror(&quot;socket()&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = htons(1234);
+    if (connect(sockfd, (struct sockaddr *) &amp;addr, sizeof(addr)) == -1) {
+        perror(&quot;connect()&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    memset(msg1, 0, sizeof(msg1));
+    msg1[0].iov_base = &quot;one&quot;;
+    msg1[0].iov_len = 3;
+    msg1[1].iov_base = &quot;two&quot;;
+    msg1[1].iov_len = 3;
+
+    memset(&amp;msg2, 0, sizeof(msg2));
+    msg2.iov_base = &quot;three&quot;;
+    msg2.iov_len = 5;
+
+    memset(msg, 0, sizeof(msg));
+    msg[0].msg_hdr.msg_iov = msg1;
+    msg[0].msg_hdr.msg_iovlen = 2;
+
+    msg[1].msg_hdr.msg_iov = &amp;msg2;
+    msg[1].msg_hdr.msg_iovlen = 1;
+
+    retval = sendmmsg(sockfd, msg, 2, 0);
+    if (retval == -1)
+        perror(&quot;sendmmsg()&quot;);
+    else
+        printf(&quot;%d messages sent\n&quot;, retval);
+
+    exit(0);
 }
+</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>

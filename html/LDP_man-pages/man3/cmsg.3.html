@@ -48,15 +48,16 @@ CMSG_ALIGN, CMSG_SPACE, CMSG_NXTHDR, CMSG_FIRSTHDR - 補助データにアクセ
 <P>
 
 
-
+<PRE>
 struct cmsghdr {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;cmsg_len;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Data&nbsp;byte&nbsp;count,&nbsp;including&nbsp;header
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(type&nbsp;is&nbsp;socklen_t&nbsp;in&nbsp;POSIX)&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;cmsg_level;&nbsp;&nbsp;/*&nbsp;Originating&nbsp;protocol&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;cmsg_type;&nbsp;&nbsp;&nbsp;/*&nbsp;Protocol-specific&nbsp;type&nbsp;*/
+    size_t cmsg_len;    /* Data byte count, including header
+                           (type is socklen_t in POSIX) */
+    int    cmsg_level;  /* Originating protocol */
+    int    cmsg_type;   /* Protocol-specific type */
 /* followed by
-<BR>&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;cmsg_data[];&nbsp;*/
+   unsigned char cmsg_data[]; */
 };
+</PRE>
 
 
 <P>
@@ -129,25 +130,26 @@ portable, however.
 <P>
 
 
-
+<PRE>
 struct msghdr msgh;
 struct cmsghdr *cmsg;
 int received_ttl;
-<P>
+
 /* Receive auxiliary data in msgh */
-<P>
+
 for (cmsg = CMSG_FIRSTHDR(&amp;msgh); cmsg != NULL;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmsg&nbsp;=&nbsp;CMSG_NXTHDR(&amp;msgh,&nbsp;cmsg))&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cmsg-&gt;cmsg_level&nbsp;==&nbsp;IPPROTO_IP
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;&amp;&nbsp;cmsg-&gt;cmsg_type&nbsp;==&nbsp;IP_TTL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memcpy(&amp;receive_ttl,&nbsp;CMSG_DATA(cmsg),&nbsp;sizeof(received_ttl));
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+        cmsg = CMSG_NXTHDR(&amp;msgh, cmsg)) {
+    if (cmsg-&gt;cmsg_level == IPPROTO_IP
+            &amp;&amp; cmsg-&gt;cmsg_type == IP_TTL) {
+        memcpy(&amp;receive_ttl, CMSG_DATA(cmsg), sizeof(received_ttl));
+        break;
+    }
 }
-<P>
+
 if (cmsg == NULL) {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Error:&nbsp;IP_TTL&nbsp;not&nbsp;enabled&nbsp;or&nbsp;small&nbsp;buffer&nbsp;or&nbsp;I/O&nbsp;error&nbsp;*/
+    /* Error: IP_TTL not enabled or small buffer or I/O error */
 }
+</PRE>
 
 
 <P>
@@ -156,21 +158,21 @@ if (cmsg == NULL) {
 <P>
 
 
-
+<PRE>
 struct msghdr msg = { 0 };
 struct cmsghdr *cmsg;
 int myfds[NUM_FD];  /* Contains the file descriptors to pass */
 char iobuf[1];
 struct iovec io = {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;.iov_base&nbsp;=&nbsp;iobuf,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;.iov_len&nbsp;=&nbsp;sizeof(iobuf)
+    .iov_base = iobuf,
+    .iov_len = sizeof(iobuf)
 };
 union {         /* Ancillary data buffer, wrapped in a union
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;order&nbsp;to&nbsp;ensure&nbsp;it&nbsp;is&nbsp;suitably&nbsp;aligned&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[CMSG_SPACE(sizeof(myfds))];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;cmsghdr&nbsp;align;
+                   in order to ensure it is suitably aligned */
+    char buf[CMSG_SPACE(sizeof(myfds))];
+    struct cmsghdr align;
 } u;
-<P>
+
 msg.msg_iov = &amp;io;
 msg.msg_iovlen = 1;
 msg.msg_control = u.buf;
@@ -180,6 +182,7 @@ cmsg-&gt;cmsg_level = SOL_SOCKET;
 cmsg-&gt;cmsg_type = SCM_RIGHTS;
 cmsg-&gt;cmsg_len = CMSG_LEN(sizeof(myfds));
 memcpy(CMSG_DATA(cmsg), myfds, sizeof(myfds));
+</PRE>
 
 
 <A NAME="lbAH">&nbsp;</A>

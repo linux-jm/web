@@ -103,11 +103,12 @@ processing.  This flag is a BSD extension, not present in POSIX.
 <P>
 
 
-
+<PRE>
 typedef struct {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;regoff_t&nbsp;rm_so;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;regoff_t&nbsp;rm_eo;
+    regoff_t rm_so;
+    regoff_t rm_eo;
 } regmatch_t;
+</PRE>
 
 
 <P>
@@ -197,47 +198,48 @@ POSIX.1-2001, POSIX.1-2008.
 <A NAME="lbAN">&nbsp;</A>
 <H2>例</H2>
 
-
+<PRE>
 #include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/regex.h">regex.h</A>&gt;
-<P>
+
 #define ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr)[0]))
-<P>
+
 static const char *const str =
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;1)&nbsp;John&nbsp;Driverhacker;\n2)&nbsp;John&nbsp;Doe;\n3)&nbsp;John&nbsp;Foo;\n&quot;;
+        &quot;1) John Driverhacker;\n2) John Doe;\n3) John Foo;\n&quot;;
 static const char *const re = &quot;John.*o&quot;;
-<P>
+
 int main(void)
 {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;static&nbsp;const&nbsp;char&nbsp;*s&nbsp;=&nbsp;str;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;regex_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;regex;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;regmatch_t&nbsp;&nbsp;pmatch[1];
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;regoff_t&nbsp;&nbsp;&nbsp;&nbsp;off,&nbsp;len;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(regcomp(&amp;regex,&nbsp;re,&nbsp;REG_NEWLINE))
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;String&nbsp;=&nbsp;\&quot;%s\&quot;\n&quot;,&nbsp;str);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Matches:\n&quot;);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;i&nbsp;=&nbsp;0;&nbsp;;&nbsp;i++)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(regexec(&amp;regex,&nbsp;s,&nbsp;ARRAY_SIZE(pmatch),&nbsp;pmatch,&nbsp;0))
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;off&nbsp;=&nbsp;pmatch[0].rm_so&nbsp;+&nbsp;(s&nbsp;-&nbsp;str);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;len&nbsp;=&nbsp;pmatch[0].rm_eo&nbsp;-&nbsp;pmatch[0].rm_so;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;#%d:\n&quot;,&nbsp;i);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;offset&nbsp;=&nbsp;%jd;&nbsp;length&nbsp;=&nbsp;%jd\n&quot;,&nbsp;(intmax_t)&nbsp;off,
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(intmax_t)&nbsp;len);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;substring&nbsp;=&nbsp;\&quot;%.*s\&quot;\n&quot;,&nbsp;len,&nbsp;s&nbsp;+&nbsp;pmatch[0].rm_so);
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;+=&nbsp;pmatch[0].rm_eo;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+    static const char *s = str;
+    regex_t     regex;
+    regmatch_t  pmatch[1];
+    regoff_t    off, len;
+
+    if (regcomp(&amp;regex, re, REG_NEWLINE))
+        exit(EXIT_FAILURE);
+
+    printf(&quot;String = \&quot;%s\&quot;\n&quot;, str);
+    printf(&quot;Matches:\n&quot;);
+
+    for (int i = 0; ; i++) {
+        if (regexec(&amp;regex, s, ARRAY_SIZE(pmatch), pmatch, 0))
+            break;
+
+        off = pmatch[0].rm_so + (s - str);
+        len = pmatch[0].rm_eo - pmatch[0].rm_so;
+        printf(&quot;#%d:\n&quot;, i);
+        printf(&quot;offset = %jd; length = %jd\n&quot;, (intmax_t) off,
+                (intmax_t) len);
+        printf(&quot;substring = \&quot;%.*s\&quot;\n&quot;, len, s + pmatch[0].rm_so);
+
+        s += pmatch[0].rm_eo;
+    }
+
+    exit(EXIT_SUCCESS);
 }
+</PRE>
 
 <A NAME="lbAO">&nbsp;</A>
 <H2>関連項目</H2>
