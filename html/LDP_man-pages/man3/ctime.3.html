@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of CTIME</TITLE>
+<HTML><HEAD><TITLE>Man page of ctime</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>CTIME</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated:  2020-12-21<BR><A HREF="#index">Index</A>
+<H1>ctime</H1>
+Section: C Library Functions (3)<BR>Updated:  2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/ctime.3">roff page</A><HR>
 
@@ -17,22 +17,30 @@ Section: Linux Programmer's Manual (3)<BR>Updated:  2020-12-21<BR><A HREF="#inde
 asctime, ctime, gmtime, localtime, mktime, asctime_r, ctime_r, gmtime_r,
 localtime_r - 日付と時刻を要素別の時刻や ASCII に変換する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,&nbsp;<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</B>
 
- <B>char *asctime(const struct tm *</B><I>tm</I><B>);</B>
-<B>char *asctime_r(const struct tm *</B><I>tm</I><B>, char *</B><I>buf</I><B>);</B>
+<B>char *asctime(const struct tm *</B><I>tm</I><B>);</B>
+<B>char *asctime_r(const struct tm *restrict </B><I>tm</I><B>,</B>
+<B>                    char </B><I>buf</I><B>[restrict 26]);</B>
 
- <B>char *ctime(const time_t *</B><I>timep</I><B>);</B>
-<B>char *ctime_r(const time_t *</B><I>timep</I><B>, char *</B><I>buf</I><B>);</B>
+<B>char *ctime(const time_t *</B><I>timep</I><B>);</B>
+<B>char *ctime_r(const time_t *restrict </B><I>timep</I><B>,</B>
+<B>                    char </B><I>buf</I><B>[restrict 26]);</B>
 
- <B>struct tm *gmtime(const time_t *</B><I>timep</I><B>);</B>
-<B>struct tm *gmtime_r(const time_t *</B><I>timep</I><B>, struct tm *</B><I>result</I><B>);</B>
+<B>struct tm *gmtime(const time_t *</B><I>timep</I><B>);</B>
+<B>struct tm *gmtime_r(const time_t *restrict </B><I>timep</I><B>,</B>
+<B>                    struct tm *restrict </B><I>result</I><B>);</B>
 
- <B>struct tm *localtime(const time_t *</B><I>timep</I><B>);</B>
-<B>struct tm *localtime_r(const time_t *</B><I>timep</I><B>, struct tm *</B><I>result</I><B>);</B>
+<B>struct tm *localtime(const time_t *</B><I>timep</I><B>);</B>
+<B>struct tm *localtime_r(const time_t *restrict </B><I>timep</I><B>,</B>
+<B>                    struct tm *restrict </B><I>result</I><B>);</B>
 
 <B>time_t mktime(struct tm *</B><I>tm</I><B>);</B>
 </PRE>
@@ -42,260 +50,464 @@ localtime_r - 日付と時刻を要素別の時刻や ASCII に変換する
 
 glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
 
-
 <P>
 
 <B>asctime_r</B>(), <B>ctime_r</B>(), <B>gmtime_r</B>(), <B>localtime_r</B>():
-<DL COMPACT><DT><DD>
-_POSIX_C_SOURCE
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以前:&nbsp;*/&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
-</DL>
+<PRE>
+    _POSIX_C_SOURCE
+        || /* glibc &lt;= 2.19: */ _BSD_SOURCE || _SVID_SOURCE
+</PRE>
 
-
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
-関数 <B>ctime</B>(), <B>gmtime</B>(), <B>localtime</B>()  は <I>time_t</I> 型のカレンダー時刻を引数にとる。
-引数が絶対値として解釈される場合は、時刻紀元 (Epoch; 1970-01-01 00:00:00 +0000 (UTC))
-からの経過秒数と解釈される。
+関数 <B>ctime</B>(), <B>gmtime</B>(), <B>localtime</B>()  は <I>time_t</I>
+型のカレンダー時刻を引数にとります。引数が絶対値として解釈される場合は、時刻紀元 (Epoch; 1970-01-01 00:00:00 +0000
+(UTC)) からの経過秒数と解釈されます。
 <P>
 
-関数 <B>asctime</B>()  と <B>mktime</B>()  は 年・月・日などに分離された要素別の時刻を引数とする。
+関数 <B>asctime</B>()  と <B>mktime</B>()  は 年・月・日などに分離された要素別の時刻を引数とします。
 <P>
 
-要素別の時刻は <I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I> で以下のように定義されている <I>tm</I> 構造体に保持される。
+要素別の時刻は <B>tm</B>(3type)で定義されている <I>tm</I> 構造体に保持されます。
+<P>
+
+<B>ctime(</B><I>t</I><B>)</B> 関数の呼び出しは、 <B>asctime(localtime(</B><I>t</I><B>))</B> と等価です。カレンダー時刻
+<I>t</I> を
 <P>
 
 
 <PRE>
-struct tm {
-    int tm_sec;        /* 秒 (0-60) */
-    int tm_min;        /* 分 (0-59) */
-    int tm_hour;       /* 時間 (0-23) */
-    int tm_mday;       /* 月内の日付 (1-31) */
-    int tm_mon;        /* 月 (0-11) */
-    int tm_year;       /* 年 - 1900 */
-    int tm_wday;       /* 曜日 (0-6, 日曜 = 0) */
-    int tm_yday;       /* 年内通算日 (0-365, 1 月 1 日 = 0) */
-    int tm_isdst;      /* 夏時間 */
-};
+&quot;Wed Jun 30 21:49:08 1993\n&quot;
 </PRE>
 
 
 <P>
 
-<I>tm</I> 構造体のメンバーは以下の通り:
-<DL COMPACT>
-<DT><I>tm_sec</I><DD>
-秒数、ふつうは 0 から 59 までの値、 しかし閏秒のため 60 までの値は許される。
-<DT><I>tm_min</I><DD>
-分数、0 から 59 までの値。
-<DT><I>tm_hour</I><DD>
-真夜中からの通算時間、0 から 23 までの値。
-<DT><I>tm_mday</I><DD>
-月はじめからの日数、1 から 31 までの値。
-<DT><I>tm_mon</I><DD>
-1月からの通算月数、0 から 11 までの値。
-<DT><I>tm_year</I><DD>
-1900 年からの通算年数。
-<DT><I>tm_wday</I><DD>
-日曜日からの通算日数(曜日)。0 から 6 までの値。
-<DT><I>tm_yday</I><DD>
-1 月 1 日からの通算日数、0 から 365 までの値。
-<DT><I>tm_isdst</I><DD>
-夏時間が有効かどうかのフラグ。 正の値ならば夏時間は有効になり、0 ならば無効、負の値ならばこの情報には 意味がない。
-</DL>
+という形式のヌル終端された文字列へ変換します。曜日の略称は &quot;Sun&quot;, &quot;Mon&quot;, &quot;Tue&quot;, &quot;Wed&quot;, &quot;Thu&quot;, &quot;Fri&quot;,
+&quot;Sat&quot; です。月の略称は &quot;Jan&quot;, &quot;Feb&quot;, &quot;Mar&quot;, &quot;Apr&quot;, &quot;May&quot;, &quot;Jun&quot;, &quot;Jul&quot;, &quot;Aug&quot;,
+&quot;Sep&quot;, &quot;Oct&quot;, &quot;Nov&quot;, &quot;Dec&quot; です。戻り値は、静的 (static)
+に割り当てられた文字列へのポインターで、この文字列は、日付・時刻関数のいずれかが呼び出されると上書きされることがあります。またこの関数は
+<B><A HREF="../man3/tzset.3.html">tzset</A></B>(3) として呼び出された時、大域変数 <I>tzname</I>, <I>timezone</I>, <I>daylight</I>
+に現在のタイムゾーンの情報を設定します。リエントラント版である <B>ctime_r</B>()
+も同様ですが、文字列はユーザーが用意したバッファに格納されます。バッファのサイズは 少なくとも 26 バイト以上必要です。この関数は
+<I>tzname</I>, <I>timezone</I>, and <I>daylight</I> を設定する必要はありません。
 <P>
 
-<B>ctime(</B><I>t</I><B>)</B> 関数は、 <B>asctime(localtime(</B><I>t</I><B>))</B> と等価である。 カレンダー時刻 <I>t</I> を
+関数 <B>gmtime</B>()  は、カレンダー時刻 <I>timep</I> を 協定世界時 (UTC)
+での要素別の時刻へ変換します。年が整数型に収まらない場合、NULL
+を返します。戻り値は静的に確保された構造体を指しており、この後で日付や時刻に関する関数のいずれかが呼び出されると上書きされる可能性があります。<B>gmtime_r</B>()
+も同様ですが、データはユーザーが用意した構造体に格納されます。
 <P>
 
-
-<PRE>
- &quot;Wed Jun 30 21:49:08 1993\n&quot;
-</PRE>
-
-
+関数 <B>localtime</B>() は、カレンダー時刻 <I>timep</I> を ユーザーが指定したタイムゾーンでの時刻要素別の表現へ変換します。この関数は
+<B><A HREF="../man3/tzset.3.html">tzset</A></B>(3) を呼び出したかのように振舞い、大域変数 <I>tzname</I>、<I>timezone</I> と <I>daylight</I>
+に現在のタイムゾーンの情報を設定します。返り値は静的に確保された構造体を指しており、この後で 日付や時刻に関する関数のいずれかが呼び出されると
+上書きされる可能性があります。<B>localtime_r</B>() も同様ですが、データはユーザーが用意した構造体に格納されます。この関数は
+<I>tzname</I>, <I>timezone</I>, and <I>daylight</I> を設定する必要はありません。
 <P>
 
-という形式のヌル終端された文字列へ変換する。 曜日の略称は &quot;Sun&quot;, &quot;Mon&quot;, &quot;Tue&quot;, &quot;Wed&quot;, &quot;Thu&quot;, &quot;Fri&quot;,
-&quot;Sat&quot; である。 月の略称は &quot;Jan&quot;, &quot;Feb&quot;, &quot;Mar&quot;, &quot;Apr&quot;, &quot;May&quot;, &quot;Jun&quot;, &quot;Jul&quot;, &quot;Aug&quot;,
-&quot;Sep&quot;, &quot;Oct&quot;, &quot;Nov&quot;, &quot;Dec&quot; である。 返り値は、静的 (static) に割り当てられた文字列へのポインターである。
-この文字列は、日付・時刻関数のいずれかが呼び出されると上書きされることがある。 またこの関数は大域変数 <I>tzname</I>, <I>timezone</I>,
-<I>daylight</I> に現在のタイムゾーンの情報を設定する (<B><A HREF="../man3/tzset.3.html">tzset</A></B>(3)  参照)。 リエントラント版である <B>ctime_r</B>()
-も同様だが、 文字列はユーザーが用意したバッファーに格納される。バッファーのサイズは 少なくとも 26 バイト以上でなければならない。 この関数は
-<I>tzname</I>, <I>timezone</I>, and <I>daylight</I> を設定する必要はない。
+関数 <B>asctime</B>()  は、要素別の時刻 <I>tm</I> を <B>ctime</B>()
+と同じ形式のヌル終端された文字列へ変換します。戻り値は静的に割り当てられた文字列へのポインタです。この文字列は、日付・時刻関数のいずれかが呼び出されると上書きされることがあります。リエントラント版である
+<B>asctime_r</B>() も同様ですが、文字列はユーザーが用意したバッファに格納される。バッファのサイズは 少なくとも 26 バイト以上必要です。
 <P>
 
-関数 <B>gmtime</B>()  は、カレンダー時刻 <I>timep</I> を 協定世界時 (UTC) での要素別の時刻へ変換する。
-年が整数型に収まらない場合、NULL を返す。 返り値は静的に確保された構造体を指しており、この後で 日付や時刻に関する関数のいずれかが呼び出されると
-上書きされる可能性がある。 <B>gmtime_r</B>()  も同様だが、 データはユーザーが用意した構造体に格納される。
+関数 <B>mktime</B>() は、(ローカルタイムで記述されている) 要素別の時刻を カレンダー時刻へ変換します。この際、呼び出し元がフィールド
+<I>tm_wday</I> と <I>tm_yday</I> で指定した値は無視します。<B>mktime</B>() は、フィールド <I>tm_isdst</I>
+で指定された値により、 <I>tm</I> 構造体で渡された時刻で夏時間 (daylight saving time; DST)
+が有効になっているかを知ります。正の値は夏時間が有効です。値が 0 の場合は、DST が無効です。負の値であれば、 <B>mktime</B>()  は
+(タイムゾーン情報とシステムのデータベースを使って)  指定された時刻で夏時間が有効かどうかを判断する必要があることを意味します。
 <P>
 
-関数 <B>localtime</B>()  は、カレンダー時刻 <I>timep</I> を ユーザーが指定したタイムゾーンでの時刻要素別の表現へ変換する。
-この関数は <B><A HREF="../man3/tzset.3.html">tzset</A></B>(3)  を呼び出したかのように振舞い、 大域変数 <I>tzname</I> に現在のタイムゾーンの情報を設定する。
-また、<I>timezone</I> に協定世界時 (UTC) とローカル標準時との 時差の秒数を設定し、 一年の一部で夏時間が適用される場合は
-<I>daylight</I> に 0 が設定される。 返り値は静的に確保された構造体を指しており、この後で 日付や時刻に関する関数のいずれかが呼び出されると
-上書きされる可能性がある。 <B>localtime_r</B>()  も同様だが、 データはユーザーが用意した構造体に格納される。 この関数は
-<I>tzname</I>, <I>timezone</I>, and <I>daylight</I> を設定する必要はない。
+<B>mktime</B>()  は <I>tm</I> 構造体の各フィールドを以下のように修正します。<I>tm_wday</I> と <I>tm_yday</I>
+には他のフィールドの内容から求めた値を設定します。構造体の要素が有効な範囲にない場合、正規化されます(たとえば、10 月 40 日は 11 月 9
+日に変更されます)。<I>tm_isdst</I> には (最初の値にかかわらず) 正の値か 0 が設定されます。正の値 または 0
+は指定された時間で夏時間が有効/無効であることを示します。 関数 <B>mktime</B>()  を呼び出すと、 大域変数
+<I>tzname</I>、<I>timezone</I> と <I>daylight</I> が現在のタイムゾーンに設定されます。
 <P>
 
-関数 <B>asctime</B>()  は、要素別の時刻 <I>tm</I> を <B>ctime</B>()  と同じ形式のヌル終端された文字列へ変換する。
-返り値は静的に割り当てられた文字列へのポインターである。この文字列は、 日付・時刻関数のいずれかが呼び出されると上書きされることがある。
-リエントラント版である <B>asctime_r</B>()  も同様だが、 文字列はユーザーが用意したバッファーに格納される。バッファーのサイズは 少なくとも
-26 バイト以上でなければならない。
-<P>
-
-関数 <B>mktime</B>()  は、(ローカルタイムで記述されている) 要素別の時刻を カレンダー時刻へ変換する。この際、呼び出し元がフィールド
-<I>tm_wday</I> と <I>tm_yday</I> で指定した値は無視される。 <B>mktime</B>()  は、フィールド <I>tm_isdst</I>
-で指定された値により、 <I>tm</I> 構造体で渡された時刻で夏時間 (daylight saving time; DST) が有効になって いるかを知る。
-正の値は夏時間が有効であることを意味する。 負の値であれば、 <B>mktime</B>()  は (タイムゾーン情報とシステムのデータベースを使って)
-指定された時刻で夏時間が有効かどうかを判断する必要があることを意味する。
-<P>
-
-<B>mktime</B>()  は <I>tm</I> 構造体の各フィールドを以下のように修正する。 <I>tm_wday</I> と <I>tm_yday</I>
-には他のフィールドの内容から求めた値を設定する。 構造体の要素が有効な範囲にない場合、正規化される (例えば、10 月 40 日は 11 月 9
-日に変更される)。 <I>tm_isdst</I> には (最初の値にかかわらず) 正の値か 0 が設定される。
-正の値は指定された時間で夏時間が有効であることを示し、 0 は無効であることを示す。 関数 <B>mktime</B>()  を呼び出すと、 大域変数
-<I>tzname</I> が現在のタイムゾーンに設定される。
-<P>
-
-要素別の時刻をカレンダー時刻 (紀元 (Epoch) からの秒数) で表現できない場合、 <B>mktime</B>()  は <I>(time_t)&nbsp;(-1)</I> を返し、要素別の時刻の構造体メンバーを変更しない。
-<A NAME="lbAE">&nbsp;</A>
+要素別の時刻をカレンダー時刻 (紀元 (Epoch) からの秒数) で表現できない場合、 <B>mktime</B>()  は <I>(time_t)&nbsp;(-1)</I> を返し、要素別の時刻の構造体メンバーを変更しません。
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
-On success, <B>gmtime</B>()  and <B>localtime</B>()  return a pointer to a <I>struct&nbsp;tm</I>.
+成功すると、 <B>gmtime</B>() と <B>localtime</B>() は <I>struct\ tm</I> へのポインタを返します。
 <P>
 
-On success, <B>gmtime_r</B>()  and <B>localtime_r</B>()  return the address of the
-structure pointed to by <I>result</I>.
+成功すると、 <B>gmtime_r</B>() と <B>localtime_r</B>() は <I>result</I>
+によってポイントされる構造体のアドレスを返します。
 <P>
 
-On success, <B>asctime</B>()  and <B>ctime</B>()  return a pointer to a string.
+成功すると、<B>asctime</B>() と <B>ctime</B>() は、文字列へのポインタを返します。
 <P>
 
-On success, <B>asctime_r</B>()  and <B>ctime_r</B>()  return a pointer to the string
-pointed to by <I>buf</I>.
+成功すると、<B>asctime_r</B>()  and <B>ctime_r</B>() は、<I>buf</I> によってポイントされる文字列へのポインタを返します。
 <P>
 
-On success, <B>mktime</B>()  returns the calendar time (seconds since the
-Epoch), expressed as a value of type <I>time_t</I>.
+成功すると、<B>mktime</B>() は、カレンダー時間 (エポックからの秒数) を タイプ <I>time_t</I>で表現する値で返します。
 <P>
 
-On error, <B>mktime</B>()  returns the value <I>(time_t)&nbsp;-1</I>.  The remaining
-functions return NULL on error.  On error, <I>errno</I> is set to indicate the
-cause of the error.
-<A NAME="lbAF">&nbsp;</A>
+エラーの場合、<B>mktime</B>() は値として <I>(time_t)\ -1</I> を返し、<I>tm-&gt;tm_wday</I>
+メンバは変更されません。その他の関数は、エラーの場合に NULL を返します。エラーの場合、<I>errno</I> はエラーを示すように設定されます。
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
 <DT><B>EOVERFLOW</B><DD>
-The result cannot be represented.
+結果を表示できません。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>属性</H2>
 
-この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
-
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照してください。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>asctime</B>()
-</TD><TD>Thread safety</TD><TD>MT-Unsafe race:asctime locale<BR></TD></TR>
+</TD><TD>Thread safety</TD><TD>
+
+
+MT-Unsafe race:asctime locale
+<BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>asctime_r</B>()
-</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TD><TD>Thread safety</TD><TD>
+
+
+MT-Safe locale
+<BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>ctime</B>()
 </TD><TD>Thread safety</TD><TD>
-MT-Unsafe race:tmbuf
-<BR>
 
+
+MT-Unsafe race:tmbuf
 race:asctime env locale
 <BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>ctime_r</B>(),
 <B>gmtime_r</B>(),
 <B>localtime_r</B>(),
 <B>mktime</B>()
-</TD><TD>Thread safety</TD><TD>MT-Safe env locale<BR></TD></TR>
+</TD><TD>Thread safety</TD><TD>
+
+
+MT-Safe env locale
+<BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>gmtime</B>(),
 <B>localtime</B>()
-</TD><TD>Thread safety</TD><TD>MT-Unsafe race:tmbuf env locale<BR></TD></TR>
+</TD><TD>Thread safety</TD><TD>
+
+
+MT-Unsafe race:tmbuf env locale
+<BR></TD></TR>
 </TABLE>
 
-
-<A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
-
-POSIX.1-2001.  C89 と C99 では <B>asctime</B>(), <B>ctime</B>(), <B>gmtime</B>(),
-<B>localtime</B>(), <B>mktime</B>()  が規定されている。 POSIX.1-2008 は、 <B>asctime</B>(),
-<B>asctime_r</B>(), <B>ctime</B>(), <B>ctime_r</B>()  を廃止予定としている。 代わりに、 <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)
-の使用が推奨されている。
 <A NAME="lbAI">&nbsp;</A>
-<H2>注意</H2>
+<H2>バージョン</H2>
+
+POSIX では、<B>ctime_r</B>() のパラメータを <I>restrict</I> とは指定していません。これは glibc に固有のものです。
+<P>
+
+glibc を含む多くの実装では、 <I>tm_mday</I> に 0 を指定すると前月の最終日を意味していると解釈されます。
+<P>
+
+
+
+POSIX.1 によると、 <B>localtime</B>() はあたかも <B><A HREF="../man3/tzset.3.html">tzset</A></B>(3)
+が呼ばれたかのように振舞うことが要求されますが、<B>localtime_r</B>() にはこの要件はありません。移植性が必要なコードでは、
+<B>localtime_r</B>() の前に <B><A HREF="../man3/tzset.3.html">tzset</A></B>(3) を呼び出しておくべきです。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>標準</H2>
+
+<DL COMPACT>
+<DT><B>asctime</B>()<DD>
+
+<B>ctime</B>()
+
+<B>gmtime</B>()
+
+<B>localtime</B>()
+
+<B>mktime</B>()
+C23, POSIX.1-2024.
+<DT><B>gmtime_r</B>()<DD>
+
+<B>localtime_r</B>()
+POSIX.1-2024.
+<DT><B>asctime_r</B>()<DD>
+
+<B>ctime_r</B>()
+なし。
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>履歴</H2>
+
+<DL COMPACT>
+<DT><B>gmtime</B>()<DD>
+
+<B>localtime</B>()
+
+<B>mktime</B>()
+C89, POSIX.1-1988.
+<DT><B>asctime</B>()<DD>
+
+<B>ctime</B>()
+C89, POSIX.1-1988.  Marked obsolescent in C23 and in POSIX.1-2008
+(recommending <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)).
+<DT><B>gmtime_r</B>()<DD>
+
+<B>localtime_r</B>()
+POSIX.1-1996.
+<DT><B>asctime_r</B>()<DD>
+
+<B>ctime_r</B>()
+POSIX.1-1996.  Marked obsolescent in POSIX.1-2008.  Removed in POSIX.1-2024
+(recommending <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)).
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H2>CAVEATS</H2>
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>Thread safety</H3>
 
 <B>asctime</B>(), <B>ctime</B>(), <B>gmtime</B>(), <B>localtime</B>()  の 4
-つの関数は静的データへのポインターを返すので、スレッドセーフではない。 これらの関数のスレッドセーフ版である <B>asctime_r</B>(),
-<B>ctime_r</B>(), <B>gmtime_r</B>(), <B>localtime_r</B>()  は SUSv2 で規定されている。
+つの関数は静的データへのポインターを返すので、スレッドセーフではありません。これらの関数のスレッドセーフ版である <B>asctime_r</B>(),
+<B>ctime_r</B>(), <B>gmtime_r</B>(), <B>localtime_r</B>()  は SUSv2 で規定されています。
 <P>
 
 POSIX.1-2001 では、「関数 <B>asctime</B>(), <B>ctime</B>(), <B>gmtime</B>(), <B>localtime</B>()
-は、要素別の時刻の構造体か <I>char</I> 型の配列かのどちらかの静的オブジェクトを返すものとする。
-これらの関数のいずれかを実行すると、他の関数のどれかがこれらの 静的オブジェクトのどちらかに格納して返した情報が上書きされるかも
-しれない。」となっている。 このことは glibc の実装で起こりうる。
+は、要素別の時刻の構造体か <I>char</I>
+型の配列かのどちらかの静的オブジェクトを返すべきである。これらのオブジェクト型のいずれかへのポインタを返す関数を実行すると、これらのいずれかへの以前の呼び出しで返された値が指す同じ型のオブジェクト内の情報が上書きされる可能性がある。」となっています。このことは
+glibc の実装で起こりえます。
+<A NAME="lbAN">&nbsp;</A>
+<H3>mktime()</H3>
+
+<I>(time_t) -1</I> は有効な時刻(紀元の1秒前)を表すことができます。<B>mktime</B>()
+が失敗したかどうかを判断するには、<I>tm-&gt;tm_wday</I>
+フィールドを使用する必要があります。プログラム例については、「使用例」を参照してください。
 <P>
 
-glibc を含む多くの実装では、 <I>tm_mday</I> に 0 を指定すると前月の最終日を意味していると解釈される。
+<B>mktime</B>() における非負の <I>tm_isdst</I>
+の扱いは十分に規定されておらず、指定された時間に対して正しくない値を渡すと、不特定の結果が生成されます。<B>mktime</B>() は、DST
+がいつ有効であるかを認識する数少ない関数の1つであるため、正しい値を提供することは困難な場合があります。これに対する1つの回避策は、<B>mktime</B>()
+を2回呼び出すことです。1回は <I>tm_isdst</I> を 0 に設定し、もう1回は <I>tm_isdst</I>
+を正の値に設定して、それを変更した呼び出しからの結果を破棄します。どちらの呼び出しも <I>tm_isdst</I> を変更しない場合、指定された時間はおそらく
+DST
+が開始または終了するフォールバック期間中に発生し、両方の結果は有効ですが、2つの異なる時間を表します。両方の呼び出しがそれを変更する場合、それはフォールフォワード遷移、または指定された時間が存在しないその他の理由を示している可能性があります。
 <P>
 
-glibc では、 <I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I> がインクルードされる前に <B>_BSD_SOURCE</B> が定義されると、 <I>struct
-tm</I> に以下のフィールドが追加される。
+タイムゾーンと夏時間の指定は地方政府に任されており、頻繁に変更され、<I>mktime</I>
+が結果を文書化する機能を超えた不連続性が含まれる場合があります。たとえば、タイムゾーン定義の変更により、対応する DST
+が変更されずに時計の時刻が繰り返されたりスキップされたりする可能性があります。
+<A NAME="lbAO">&nbsp;</A>
+<H2>例</H2>
+
+以下のプログラムは、無効な時刻とあいまいな時刻をそれぞれ <B>EINVAL</B> と <B>ENOTUNIQ</B> で検出できるラッパーを定義します。
+<P>
+
+次のシェルセッションは、プログラムの実行例を示しています。
 <P>
 
 
 <PRE>
- const char *tm_zone;      /* Timezone abbreviation */
+$&nbsp;<B>TZ=UTC ./a.out 1969 12 31 23 59 59 0</B>;
+-1
+$
+$&nbsp;<B>export TZ=Europe/Madrid</B>;
+$
+$&nbsp;<B>./a.out 2147483647 2147483647 00 00 00 00 -1</B>;
+a.out: mktime: Value too large for defined data type
+$
+$&nbsp;<B>./a.out 2024 08 23 00 17 53 -1</B>;
+1724365073
+$&nbsp;<B>./a.out 2024 08 23 00 17 53 0</B>;
+a.out: my_mktime: Invalid argument
+1724368673
+$&nbsp;<B>./a.out 2024 08 23 00 17 53 1</B>;
+1724365073
+$
+$&nbsp;<B>./a.out 2024 02 23 00 17 53 -1</B>;
+1708643873
+$&nbsp;<B>./a.out 2024 02 23 00 17 53 0</B>;
+1708643873
+$&nbsp;<B>./a.out 2024 02 23 00 17 53 1</B>;
+a.out: my_mktime: Invalid argument
+1708640273
+$
+$&nbsp;<B>./a.out 2023 03 26 02 17 53 -1</B>;
+a.out: my_mktime: Invalid argument
+1679793473
+$
+$&nbsp;<B>./a.out 2023 10 29 02 17 53 -1</B>;
+a.out: my_mktime: Name not unique on network
+1698542273
+$&nbsp;<B>./a.out 2023 10 29 02 17 53 0</B>;
+1698542273
+$&nbsp;<B>./a.out 2023 10 29 02 17 53 1</B>;
+1698538673
+$
+$&nbsp;<B>./a.out 2023 02 29 12 00 00 -1</B>;
+a.out: my_mktime: Invalid argument
+1677668400
+</PRE>
+
+<A NAME="lbAP">&nbsp;</A>
+<H3>プログラムのソース: mktime.c</H3>
+
+
+
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+
+#define is_signed(T)  ((T) -1 &lt; 1)
+
+static time_t my_mktime(struct tm *tp);
+
+int
+main(int argc, char *argv[])
+{
+    char       **p;
+    time_t     t;
+    struct tm  tm;
+
+    if (argc != 8) {
+        fprintf(stderr, &quot;Usage: %s yyyy mm dd HH MM SS isdst\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    p = &amp;argv[1];
+    tm.tm_year  = atoi(*p++) - 1900;
+    tm.tm_mon   = atoi(*p++) - 1;
+    tm.tm_mday  = atoi(*p++);
+    tm.tm_hour  = atoi(*p++);
+    tm.tm_min   = atoi(*p++);
+    tm.tm_sec   = atoi(*p++);
+    tm.tm_isdst = atoi(*p++);
+
+    errno = 0;
+    tm.tm_wday = -1;
+    t = my_mktime(&amp;tm);
+    if (tm.tm_wday == -1)
+        err(EXIT_FAILURE, &quot;mktime&quot;);
+    if (errno == EINVAL || errno == ENOTUNIQ)
+        warn(&quot;my_mktime&quot;);
+
+    if (is_signed(time_t))
+        printf(&quot;%jd\n&quot;, (intmax_t) t);
+    else
+        printf(&quot;%ju\n&quot;, (uintmax_t) t);
+
+    exit(EXIT_SUCCESS);
+}
+
+static time_t
+my_mktime(struct tm *tp)
+{
+    int            e, isdst;
+    time_t         t;
+    struct tm      tm;
+    unsigned char  wday[sizeof(tp-&gt;tm_wday)];
+
+    e = errno;
+
+    tm = *tp;
+    isdst = tp-&gt;tm_isdst;
+
+    memcpy(wday, &amp;tp-&gt;tm_wday, sizeof(wday));
+    tp-&gt;tm_wday = -1;
+    t = mktime(tp);
+    if (tp-&gt;tm_wday == -1) {
+        memcpy(&amp;tp-&gt;tm_wday, wday, sizeof(wday));
+        return -1;
+    }
+
+    if (isdst == -1)
+        tm.tm_isdst = tp-&gt;tm_isdst;
+
+    if (   tm.tm_sec   != tp-&gt;tm_sec
+        || tm.tm_min   != tp-&gt;tm_min
+        || tm.tm_hour  != tp-&gt;tm_hour
+        || tm.tm_mday  != tp-&gt;tm_mday
+        || tm.tm_mon   != tp-&gt;tm_mon
+        || tm.tm_year  != tp-&gt;tm_year
+        || tm.tm_isdst != tp-&gt;tm_isdst)
+    {
+        errno = EINVAL;
+        return t;
+    }
+
+    if (isdst != -1)
+        goto out;
+
+    tm = *tp;
+    tm.tm_isdst = !tm.tm_isdst;
+
+    tm.tm_wday = -1;
+    mktime(&amp;tm);
+    if (tm.tm_wday == -1)
+        goto out;
+
+    if (tm.tm_isdst != tp-&gt;tm_isdst) {
+        errno = ENOTUNIQ;
+        return t;
+    }
+out:
+    errno = e;
+    return t;
+}
 </PRE>
 
 
-<P>
 
-これは BSD 拡張であり、4.3BSD-Reno から現れた。
-<P>
-
-
-
-POSIX.1-2001 によると、 <B>localtime</B>()  はあたかも <B><A HREF="../man3/tzset.3.html">tzset</A></B>(3)
-が呼ばれたかのように振舞うことが要求されているが、 <B>localtime_r</B>()  にはこの要件はない。 移植性が必要なコードでは、
-<B>localtime_r</B>()  の前に <B><A HREF="../man3/tzset.3.html">tzset</A></B>(3)  を呼び出しておくべきである。
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../../0MultiFileIdx/man1/date.1.html">date</A></B>(1), <B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2), <B><A HREF="../man2/time.2.html">time</A></B>(2), <B><A HREF="../man2/utime.2.html">utime</A></B>(2), <B><A HREF="../man3/clock.3.html">clock</A></B>(3),
 <B><A HREF="../man3/difftime.3.html">difftime</A></B>(3), <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3), <B><A HREF="../man3/strptime.3.html">strptime</A></B>(3), <B><A HREF="../man3/timegm.3.html">timegm</A></B>(3), <B><A HREF="../man3/tzset.3.html">tzset</A></B>(3),
 <B><A HREF="../man7/time.7.html">time</A></B>(7)
-<A NAME="lbAK">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">属性</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">注意</A><DD>
-<DT><A HREF="#lbAJ">関連項目</A><DD>
-<DT><A HREF="#lbAK">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
+<DT><A HREF="#lbAJ">標準</A><DD>
+<DT><A HREF="#lbAK">履歴</A><DD>
+<DT><A HREF="#lbAL">CAVEATS</A><DD>
+<DL>
+<DT><A HREF="#lbAM">Thread safety</A><DD>
+<DT><A HREF="#lbAN">mktime()</A><DD>
+</DL>
+<DT><A HREF="#lbAO">例</A><DD>
+<DL>
+<DT><A HREF="#lbAP">プログラムのソース: mktime.c</A><DD>
+</DL>
+<DT><A HREF="#lbAQ">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by
