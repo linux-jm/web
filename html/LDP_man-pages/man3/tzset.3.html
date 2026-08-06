@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of TZSET</TITLE>
+<HTML><HEAD><TITLE>Man page of tzset</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>TZSET</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated:  2017-09-15<BR><A HREF="#index">Index</A>
+<H1>tzset</H1>
+Section: C Library Functions (3)<BR>Updated:  2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/tzset.3">roff page</A><HR>
 
@@ -16,12 +16,16 @@ Section: Linux Programmer's Manual (3)<BR>Updated:  2017-09-15<BR><A HREF="#inde
 
 tzset, tzname, timezone, daylight - 時刻の変換情報を初期化する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,&nbsp;<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</B>
 
-<B>void tzset (void);</B>
+<B>void tzset(void);</B>
 
 <B>extern char *</B><I>tzname</I><B>[2];</B>
 <B>extern long </B><I>timezone</I><B>;</B>
@@ -35,39 +39,52 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 
 <P>
 
-<BR>&nbsp;<B>tzset</B>():&nbsp;_POSIX_C_SOURCE
-<BR>
+<B>tzset</B>():
+<PRE>
+    _POSIX_C_SOURCE
+</PRE>
 
-<BR>&nbsp;<I>tzname</I>:&nbsp;_POSIX_C_SOURCE
-<BR>
-
-<I>timezone</I>,
-<I>daylight</I>:
-_XOPEN_SOURCE
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Glibc&nbsp;since&nbsp;2.19:&nbsp;*/&nbsp;_DEFAULT_SOURCE
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Glibc&nbsp;versions&nbsp;&lt;=&nbsp;2.19:&nbsp;*/&nbsp;_SVID_SOURCE
-<A NAME="lbAD">&nbsp;</A>
-<H2>説明</H2>
-
-The <B>tzset</B>()  function initializes the <I>tzname</I> variable from the <B>TZ</B>
-environment variable.  This function is automatically called by the other
-time conversion functions that depend on the timezone.  In a System-V-like
-environment, it will also set the variables <I>timezone</I> (seconds West of
-UTC) and <I>daylight</I> (to 0 if this timezone does not have any daylight
-saving time rules, or to nonzero if there is a time, past, present or future
-when daylight saving time applies).
 <P>
 
-<B>TZ</B> 環境変数が設定されていない場合には、 システムのタイムゾーンが使用される。 ステムのタイムゾーンを設定するには、 <B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5)
-形式のファイルを <I>/etc/localtime</I> にコピーしたりリンクしたりする。
-これらのファイルがあるタイムゾーンデータベースはシステムのタイムゾーンディレクトリ (<B>ファイル</B> の節を参照) に置かれている。
+<I>tzname</I>:
+<PRE>
+    _POSIX_C_SOURCE
+</PRE>
+
+<P>
+
+<I>timezone</I>, <I>daylight</I>:
+<PRE>
+    _XOPEN_SOURCE
+        || /* glibc &gt;= 2.19: */ _DEFAULT_SOURCE
+        || /* glibc &lt;= 2.19: */ _SVID_SOURCE
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
+
+<B>tzset</B>()  関数は <B>TZ</B> 環境変数を用いて <I>tzname</I>
+変数を初期化します。この関数は、タイムゾーンに依存する他の時刻変換関数から自動的に呼び出されます。 System V 的な環境では、この関数は変数
+<I>timezone</I> (UTC からの西向きの秒数) と <I>daylight</I> (このタイムゾーンにサマータイムに関するルールがなければ 0、
+サマータイム期間が一年のどこかにあれば 0 以外) も設定します。
+<P>
+
+このタイムゾーンが &quot;America/New_York&quot; のような地理的タイムゾーンである場合、<B>tzset</B>()
+機能はこれらの変数を未指定の値に初期化します(下記参照)。
+<P>
+
+<B>TZ</B> 環境変数が設定されていない場合には、 システムのタイムゾーンが使用されます。システムのタイムゾーンを設定するには、 <B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5)
+形式のファイルを <I>/etc/localtime</I>
+にコピーしたりリンクしたりします。これらのファイルがあるタイムゾーンデータベースは、システムのタイムゾーンディレクトリ (<B>ファイル</B> の節を参照)
+に置かれています。
 <P>
 
 <B>TZ</B> 環境変数が存在しているが、その値が空だったり、 以下に示す形式のどれにもあてはまらない場合は、 協定世界時 (Coordinated
-Universal Time: UTC) が用いられる。
+Universal Time: UTC) が用いられます。
 <P>
 
-<B>TZ</B> の値は以下の 2 つの形式のいずれかを取ることができる。 最初の形式は、 使用するタイムゾーンを表す文字列を直接指定する方法である。
+空でない値 <B>TZ</B> は、2
+つの形式のいずれかになります。どちらの形式でも、前にコロンを付けることができますが、コロンは無視されます。最初の形式は、使用するタイムゾーンを直接表す文字列です:
 <P>
 
 
@@ -78,15 +95,12 @@ Universal Time: UTC) が用いられる。
 
 <P>
 
-There are no spaces in the specification.  The <I>std</I> string specifies an
-abbreviation for the timezone and must be three or more alphabetic
-characters.  When enclosed between the less-than (&lt;) and greater-than
-(&gt;) signs, the characters set is expanded to include the plus (+) sign,
-the minus (-)  sign, and digits.  The <I>offset</I> string immediately follows
-<I>std</I> and specifies the time value to be added to the local time to get
-Coordinated Universal Time (UTC).  The <I>offset</I> is positive if the local
-timezone is west of the Prime Meridian and negative if it is east.  The hour
-must be between 0 and 24, and the minutes and seconds 00 and 59:
+この指定方法ではスペースは一切使用しません。 <I>std</I> 文字列はタイムゾーンの省略形を指定します。アルファベットからなる 3
+文字以上の文字列でなければなりません。小なり記号 (&lt;) と大なり記号 (&gt;) で囲むと、プラス (+) 記号、マイナス (-)
+記号、および数字が含まれるように文字セットが拡張されます。 <I>offset</I> 文字列は <I>std</I> の直後に続き、 協定世界時 (UTC)
+を得るために ローカルな時刻に追加する時間を指定します。<I>offset</I> は、ローカルタイムゾーンがグリニッジ子午線 (Prime Meridian)
+の西なら正の値、東なら負の値を取ります。時間 (hour) は 0 から 24 の間で、分 (minute) と秒 (second) は 0 から 59
+の間でなければなりません。
 <P>
 
 
@@ -97,82 +111,80 @@ must be between 0 and 24, and the minutes and seconds 00 and 59:
 
 <P>
 
-<I>dst</I> 文字列と <I>offset</I> は、 対応するサマータイムゾーンの名前とオフセットを指定する。
-オフセットが省略されると、デフォルトでは標準の一時間前となる。
+<I>dst</I> 文字列と <I>offset</I> は、
+対応するサマータイムゾーンの名前とオフセットを指定します。オフセットが省略されると、デフォルトでは標準の一時間前となります。
 <P>
 
-<I>start</I> フィールドはサマータイムが有効になる時刻、 <I>end</I> フィールドは標準に戻る時刻である。
-これらのフィールドは以下の形式で指定する。
+<I>start</I> フィールドはサマータイムが有効になる時刻、 <I>end</I> フィールドは標準に戻る時刻です。これらのフィールドは以下の形式で指定します。
 <DL COMPACT>
 <DT>J<I>n</I><DD>
-年の通日 (Julian day) で日にちを指定する。
-<I>n</I> は 1 から 365 の間の数値。閏日は計算に入らない。
-この形式では、2 月 29 日を表現することはできず、
-2 月 28 日が第 59 日で、3 月 1 日が常に第 60 日となる。
+年の通日 (Julian day) で日にちを指定します。<I>n</I> は 1 から 365 の間の数値で閏日は計算に入りません。この形式では、2 月 29
+日を表現することはできず、2 月 28 日が第 59 日で、3 月 1 日が常に第 60 日となります。
 <DT><I>n</I><DD>
-年の通日 (Julian day) で日にちを指定する。
-<I>n</I> は 1 から 365 の間の数値。
-閏年の場合も、2 月 29 日も日にちの計算に含められる。
+年の、ゼロベースでの通日 (Julian day) で日にちを指定します。
+<I>n</I> は 0 から 365 の間の数値。
+閏年の場合、2 月 29 日も日にちの計算に含められます。
 <DT>M<I>m</I>.<I>w</I>.<I>d</I><DD>
-<I>m</I> は月 (1 &lt;= <I>m</I> &lt;= 12) を、 <I>w</I> は月のうちの週 (1 &lt;= <I>w</I> &lt;= 5)
-を、 <I>d</I> は週のうちの日にち (0 &lt;= <I>d</I> &lt;= 6) を示す。 <I>w</I> = 1 は所属する <I>d</I>
-が存在する最初の週、 <I>w</I> = 5 は最後の週である。 <I>d</I> = 0 は日曜日である。
+これは、<I>d</I> は週のうちの日にち (0&nbsp;&lt;=&nbsp;<I>d</I>&nbsp;&lt;=&nbsp;6) を、<I>w</I> は月のうちの週 (1&nbsp;&lt;=&nbsp;<I>w</I>&nbsp;&lt;=&nbsp;5) を、<I>m</I> は月 (1&nbsp;&lt;=&nbsp;<I>m</I>&nbsp;&lt;=&nbsp;12) を示します。一週目とは所属する
+<I>d</I> が存在する最初の週、 <I>w</I> = 5 は最後の週です。<I>d</I> = 0 は日曜日です。
 </DL>
 <P>
 
-<I>time</I> フィールドは、ローカルタイムを切り替える時刻を、 変更前のローカルタイムで表したものである。 省略された場合のデフォルトは
-02:00:00 である。
+<I>time</I> フィールドは、現在有効な現地時間で、他の時間に変更する時期を指定します。<I>offset</I>
+と同じ書式を使用しますが、指定した日の前後の時間を表すために、時間を [<B>-167</B>,&nbsp;<B>167</B>]
+の範囲にすることができます。省略した場合、既定値は 02:00:00 になります。
 <P>
 
-ニュージーランドの例である。 ニュージーランドでは、標準のタイムゾーン (NZST) は UTC より 12時間進んでおり、 サマータイム (NZDT)
-は UTC の 13時間進んでいる。 サマータイムは 10月の第一日曜から 3月の第三日曜までであり、 ローカルタイムの切り替えはデフォルトの
-02:00:00 に行われる。
+ニュージーランドの例です。ニュージーランドでは、標準のタイムゾーン (NZST) は UTC より 12時間進んでおり、 サマータイム (NZDT) は
+UTC の 13時間進んでいます。サマータイムは 9月の最終日曜から 4月最初の日曜までであり、ローカルタイムの切り替えの既定値は 02:00:00
+です。
 <P>
 
 
 <PRE>
- TZ=&quot;NZST-12:00:00NZDT-13:00:00,M10.1.0,M3.3.0&quot;
+TZ=&quot;NZST-12:00:00NZDT-13:00:00,M9.5.0,M4.1.0/3&quot;
 </PRE>
 
 
 <P>
 
-2 番目の形式は、タイムゾーンの情報をファイルから読み込むように指定する。
+2番目---または &quot;geographic&quot;---形式は、タイムゾーン情報をファイルから読み込むように指定します:
 <P>
 
 
 <PRE>
- :[filespec]
+filespec
 </PRE>
 
 
 <P>
 
-ファイルの指定 <I>filespec</I> が省略された場合、 もしくは指定された値が解釈できない場合、 協定標準時 (UTC; Coordinated
-Universal Time) が使用される。 指定された場合、 <I>filespec</I> はタイムゾーン情報を読み出す <B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5)
-形式のファイルを指定する。 <I>filespec</I> が '/' で始まっていない場合には、 システムタイムゾーンディレクトリからの相対パスで
-ファイルが指定されたことになる。 コロンが省略された場合には、 上記の <B>TZ</B> の各形式での解釈を試みる。
+<I>filespec</I> は、タイムゾーン情報を読み出す <B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5) 形式のファイルを指定します。<I>filespec</I> が
+'<B>/</B>'
+で始まらない場合、ファイル指定はシステムのタイムゾーンディレクトリから相対的になります。指定されたファイルの読み込みや解釈ができない場合は、協定世界時
+(UTC) が使用されます。ただし、<I>filespec</I> 形式は将来拡張される可能性があるため、アプリケーションは UTC を表すランダムな
+<B>TZ</B> 値に依存すべきではありません。
 <P>
 
-例を挙げておく。もう一度ニュージーランドの例である。
+例を挙げます。もう一度ニュージーランドの例です:
 <P>
 
 
 <PRE>
- TZ=&quot;:Pacific/Auckland&quot;
+TZ=&quot;Pacific/Auckland&quot;
 </PRE>
 
 
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>環境変数</H2>
 
 <DL COMPACT>
 <DT><B>TZ</B><DD>
-この変数が設定された場合、 その値がシステムで設定されたタイムゾーンより優先して使用される。
+この変数が設定された場合、 その値がシステムで設定されたタイムゾーンより優先して使用されます。
 <DT><B>TZDIR</B><DD>
-この変数が設定された場合、 その値がシステムで設定されたタイムゾーンデータベースのディレクトリパスより優先して使用される。
+この変数が設定された場合、 その値がシステムで設定されたタイムゾーンデータベースのディレクトリパスより優先して使用されます。
 </DL>
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ファイル</H2>
 
 <DL COMPACT>
@@ -181,59 +193,80 @@ Universal Time) が使用される。 指定された場合、 <I>filespec</I> �
 <DT><BR>&nbsp;<I>/usr/share/zoneinfo/</I><DD>
 システムのタイムゾーンデータベースのディレクトリ。
 <DT><BR>&nbsp;<I>/usr/share/zoneinfo/posixrules</I><DD>
-TZ 文字列で dst タイムゾーンが他に何の指定なしで単独で指定された場合、 このファイルが start/end のルールに使用される。
-このファイルは <B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5) 形式である。 デフォルトでは、 ゾーン情報の Makefile でこのファイルは
-<I>America/New_York</I> にハードリンクされる。
+TZ 文字列で dst タイムゾーンが他に何の指定なしで単独で指定された場合、 このファイルが start/end のルールに使用されます。
+このファイルは <B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5) 形式です。既定では、 ゾーン情報の Makefile でこのファイルは <I>America/New_York</I>
+にハードリンクされます。
 </DL>
 <P>
 
-上記は現在の標準のファイルの場所だが、 glibc のコンパイル時に変更できる。
-<A NAME="lbAG">&nbsp;</A>
+上記は現在の標準のファイルの場所ですが、 glibc のコンパイル時に変更できます。
+<A NAME="lbAH">&nbsp;</A>
 <H2>属性</H2>
 
-この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照してください。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <BR>&nbsp;<B>tzset</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe env locale<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
-
-<BR>&nbsp;POSIX.1-2001,&nbsp;POSIX.1-2008,&nbsp;SVr4,&nbsp;4.3BSD.
 <A NAME="lbAI">&nbsp;</A>
-<H2>注意</H2>
+<H2>標準</H2>
+
+POSIX.1-2024.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>履歴</H2>
+
+<DL COMPACT>
+<DT><BR>&nbsp;<B>tzset</B>()<DD>
+
+<I>tzname</I>
+POSIX.1-1988, SVr4, 4.3BSD.
+<DT><I>timezone</I><DD>
+
+<I>daylight</I>
+POSIX.1-2001 (XSI), SVr4, 4.3BSD.
+</DL>
+<P>
 
 4.3BSD には <B>char *timezone(</B><I>zone</I><B>, </B><I>dst</I><B>)</B> というルーチンがあり、これは 最初の引数 (UTC
-からの西向きの分数) に対応するタイムゾーンの名前を返す。 二番目の引数が 0 の場合は標準の名前が用いられ、
-それ以外はサマータイム版の名前が用いられる。
-<A NAME="lbAJ">&nbsp;</A>
+からの西向きの分数) に対応するタイムゾーンの名前を返します。 二番目の引数が 0
+の場合は標準の名前が用いられ、それ以外はサマータイム版の名前が用いられます。
+<A NAME="lbAK">&nbsp;</A>
+<H2>CAVEATS</H2>
+
+<I>tzname</I>、<I>timezone</I>、および <I>daylight</I>
+の値は指定されていないことが多く、これらの値にアクセスするとマルチスレッドアプリケーションで未定義の動作が発生する可能性があるため、コードは代わりに、内訳の時間構造
+<B>tm</B>(3タイプ) の <I>tm_gmtoff</I> と <I>tm_zone</I> のメンバーからタイムゾーンのオフセットと略語を取得する必要があります。
+<A NAME="lbAL">&nbsp;</A>
+<H2>バグ</H2>
+
+この機能はエラーを報告しないため、 TZ の値が有効なタイムゾーンを表しているかどうかを知る方法はありません。
+<A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../../0MultiFileIdx/man1/date.1.html">date</A></B>(1), <B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2), <B><A HREF="../man2/time.2.html">time</A></B>(2), <B><A HREF="../man3/ctime.3.html">ctime</A></B>(3), <B><A HREF="../man3/getenv.3.html">getenv</A></B>(3),
 <B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5)
-<A NAME="lbAK">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">環境変数</A><DD>
-<DT><A HREF="#lbAF">ファイル</A><DD>
-<DT><A HREF="#lbAG">属性</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">注意</A><DD>
-<DT><A HREF="#lbAJ">関連項目</A><DD>
-<DT><A HREF="#lbAK">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">環境変数</A><DD>
+<DT><A HREF="#lbAG">ファイル</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">標準</A><DD>
+<DT><A HREF="#lbAJ">履歴</A><DD>
+<DT><A HREF="#lbAK">CAVEATS</A><DD>
+<DT><A HREF="#lbAL">バグ</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by
