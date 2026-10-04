@@ -1,0 +1,280 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of rrsync</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>rrsync</H1>
+Section: ユーザコマンド (1)<BR>Updated: 21 Sep 2026<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/rsync/release/man1/rrsync.1">roff page</A><HR>
+
+
+
+<P>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+<P>
+
+rrsync - 制限付き rsync ユーザを ssh ログイン経由でセットアップするスクリプト
+<P>
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<P>
+
+<PRE>
+rrsync [-ro|-wo] [-munge] [-absolute] [-no-del] [-no-lock] [-no-overwrite] DIR
+</PRE>
+
+<P>
+
+オプションではない単一の引数は、使用を制限された <I>DIR</I> を指定します。ユーザのホームディレクトリからの相対パス、または絶対パスを指定できます。
+<P>
+
+このマニュアルページのオンライン版 (トピックの相互リンクを含む) は、
+
+
+です。
+<P>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<P>
+
+ユーザの ssh ログインを制限して、rsync 転送の実行のみを許可するには、次の 2 つの簡単な方法のいずれかを使用できます。
+<P>
+
+<DL COMPACT>
+<DT>o<DD>
+rrsync スクリプトの実行を強制します。
+<DT>o<DD>
+rsync daemon-over-ssh コマンドの実行を強制します。
+</DL>
+<P>
+
+これらの設定は両方とも、対話型シェルの代わりにコマンドを強制的に実行できる ssh の機能を使用します。ただし、ユーザのホームシェルが bash
+の場合は、 &quot;BASH のセキュリティ問題&quot;  節 を参照して潜在的な問題を確認してください。
+<P>
+
+rrsync スクリプトを使用するには、ユーザの <B>~/.ssh/authorized_keys</B> ファイルを編集し、制限する各 ssh-key
+行の前に、次のような接頭辞を追加します (後にスペースを 1 つ追加します):
+<DL COMPACT><DT><DD>
+<P>
+
+<PRE>
+command=&quot;rrsync DIR&quot;
+command=&quot;rrsync -ro DIR&quot;
+command=&quot;rrsync -munge -no-del DIR&quot;
+</PRE>
+
+</DL>
+
+<P>
+
+次に、rrsync スクリプトに必要なオプション制限があることを確認します。複数の設定が必要な場合は、スクリプトを一意の名前でローカルの bin
+ディレクトリにコピーすることもできます。転送をさらに制限する場合は、<I>DIR</I> の前に 1 つまたは複数の rrsync オプションを指定できます。
+<P>
+
+rsync デーモンのセットアップを使用するには、ユーザの <B>~/.ssh/authorized_keys</B> ファイルを編集し、制限する必要がある各
+ssh-key 行の前に、次のいずれかのような接頭辞 (スペースが続く) を追加します。
+<DL COMPACT><DT><DD>
+<P>
+
+<PRE>
+command=&quot;rsync --server --daemon .&quot;
+command=&quot;rsync --server --daemon --config=/PATH/TO/rsyncd.conf .&quot;
+</PRE>
+
+</DL>
+
+<P>
+
+次に、rsyncd.conf ファイルが、1つ以上のモジュール名と適切なパスおよびオプション制限を使用して作成されていることを確認します。もし
+rsync の <B>--config</B> オプションが省略された場合、<B>~/rsyncd.conf</B> を既定値とします。rsync
+デーモンの設定方法の詳細については、<B><A HREF="../man5/rsyncd.conf.5.html">rsyncd.conf</A></B>(5) マニュアルページを参照してください。
+<P>
+
+rrsync を使用する場合、許可されたキーごとに制限されたディレクトリが
+1つだけ存在できます。一方、デーモンのセットアップでは、構成ファイル内に複数のモジュール名を含めることができ、それぞれに独自のパス設定があります。
+<P>
+
+このマニュアルページの残りの部分は、rrsync スクリプトを使用するためのものです。
+<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<P>
+
+<DL COMPACT>
+<DT><B>-ro</B><DD>
+DIR からの読み取りのみを許可します。<B>-no-del</B> および <B>-no-lock</B> を仮定します。
+<DT><B>-wo</B><DD>
+DIR への書き込みのみを許可します。
+<DT><B>-munge</B><DD>
+rsync の<B>--munge-links</B> サーバ側を有効にします。
+<DT><B>-absolute</B><DD>
+ファイル転送のための引数が、絶対サーバパスを使用して、制限されたディレクトリを指定できるようにします。たとえば、<B>rrsync&nbsp;-absolute&nbsp;/path/to/root</B> と指定すると、転送のための引数 <B>/path/to/root/dir1</B> は <B>dir1</B>
+のエイリアスとして受け付けられます。
+<DT><B>-no-del</B><DD>
+rsync の <B>--delete*</B> と <B>--remove*</B> オプションを無効にします。
+<DT><B>-no-lock</B><DD>
+(ユーザ毎の) 単独での実行時におけるロックチェックを防止します。<B>-munge</B> で便利です。
+<DT><B>-no-overwrite</B><DD>
+サーバ上で <B>--ignore-existing</B> を強制します。サーバが受信側の場合に、既存のファイルが上書きされないようにします。
+<DT><DD>
+<B>--ignore-existing</B> は転送中のファイルのみを保護するため、制限されたdir:<B>--log-file</B>,
+<B>--partial-dir</B>, <B>--delay-updates</B>,およびバックアップモード (<B>-b</B>,
+<B>--backup-dir</B>の公開されたバックアップは、バックアップ名をすでに占有しているものを置き換えます)
+内の<I>別の</I>既存のファイルに到達できるオプションも拒否されます。したがって、このオプションでは、明示的な
+<B>--partial-dir</B>、<B>--delay-updates</B> およびサーバ側ロギングを使用した再開可能なアップロードは使用できません。
+<DT><B>-help</B>, <B>-h</B><DD>
+このヘルプメッセージを出力して終了します。
+</DL>
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>セキュリティの制限</H2>
+
+<P>
+
+rrsync スクリプトは、送信されたパス引数を検証し、指定された DIR 内に収まるように制限しようとします。
+<P>
+
+rrsync スクリプトは (既定で)  rsync の <B>--copy-links</B> オプションを拒否するため、コピーが DIR
+内のシンボリックリンクを間接参照して DIR 外のファイルにアクセスすることはできません。
+<P>
+
+rrsync スクリプトは、rsync の <B>--protect-args</B> (<B>-s</B>)
+オプションを拒否します。これは、スクリプトがチェックできないオプションがサーバ側に送信される可能性があるためです。<B>--protect-args</B>
+をサポートしたい場合は、daemon-over-ssh セットアップを使用します。
+<P>
+
+rrsync スクリプトは、実際の rsync が server コマンドを実行するときに使用する rsync
+のオプションのサブセットのみを受け入れます。いくつかの追加の便利なオプションも含まれており、BackupPC
+と対話したり、便利なユーザオーバーライドを受け入れたりするのに役立ちます。
+<P>
+
+オプション処理をカスタマイズしたい場合は、スクリプト (またはそのコピー) を手動で編集できます。
+<P>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>BASHのセキュリティ問題</H2>
+
+<P>
+
+ユーザがホームシェルとして bash を設定している場合、bash はあまりにも便利で、強制されたコマンドを実行する前にユーザのログイン bashrc
+ファイルが実行しようとするかもしれません。これは、ユーザが自分のホームにある bashrc
+ファイルを、制限付きコピーや共有ホームディレクトリなどを使って、何らかの方法で更新できる場合には問題になります。
+<P>
+
+この問題を回避する簡単な方法の 1つは、ユーザを dash
+などのより単純なシェルに切り替えることです。新しいホームシェルを選択するときは、セキュリティの問題を回避できるかどうかが不明であるため、偽装している
+bash を選択していないことを確認してください。
+<P>
+
+もう 1
+つの修正方法は、ユーザのホームディレクトリが共有マウントではないこと、および制限されたディレクトリ以外にファイルをコピーする手段がないことを確認することです。そのためには、サーバ側で強制的にシンボリックリンクの破棄を有効にする必要があるかもしれません。
+<P>
+
+openssh の将来のバージョンでは、強制コマンドの処理方法が変更され、ユーザのホームシェルを使用しなくなる可能性があります。
+<P>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>例</H2>
+
+<P>
+
+<B>~/.ssh/authorized_keys</B> ファイルには、次のような行が含まれている場合があります:
+<DL COMPACT><DT><DD>
+<P>
+
+<PRE>
+command=&quot;rrsync client/logs&quot; ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAzG...
+command=&quot;rrsync -ro results&quot; ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAmk...
+</PRE>
+
+</DL>
+
+<P>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>ファイル</H2>
+
+<P>
+
+~/.ssh/authorized_keys
+<P>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>関連項目</H2>
+
+<P>
+
+<B>rsync</B>(1), <B><A HREF="../man5/rsyncd.conf.5.html">rsyncd.conf</A></B>(5)
+<P>
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>バージョン</H2>
+
+<P>
+
+このマニュアルページは、バージョン 3.5.1 の rsync に対応しています。
+<P>
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>著作権</H2>
+
+<P>
+
+rsync は、GNU General Public License の下で配布されます。詳細は、COPYING ファイルを参照してください。
+<P>
+
+rsync に関する Web サイトは、
+
+
+にあります。このサイトの github
+プロジェクトは、
+
+
+です。
+<P>
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>著者</H2>
+
+<P>
+
+元の rrsync perl スクリプトは Joe Smith によって書かれました。後に多くの人々がそれに貢献しました。Python バージョンは
+Wayne Davison によって作成されました。
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">セキュリティの制限</A><DD>
+<DT><A HREF="#lbAG">BASHのセキュリティ問題</A><DD>
+<DT><A HREF="#lbAH">例</A><DD>
+<DT><A HREF="#lbAI">ファイル</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
+<DT><A HREF="#lbAK">バージョン</A><DD>
+<DT><A HREF="#lbAL">著作権</A><DD>
+<DT><A HREF="#lbAM">著者</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+</BODY>
+</HTML>
