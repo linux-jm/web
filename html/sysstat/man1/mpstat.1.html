@@ -1,0 +1,239 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MPSTAT</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
+</HEAD>
+<BODY>
+
+<H1>MPSTAT</H1>
+Section: Linuxユーザーズマニュアル (1)<BR>Updated: 2025年 7月<BR><A HREF="#index">Index</A>
+<A HREF="../../../index.html">JM Home Page</A>
+<A HREF="../../../manual/sysstat/release/man1/mpstat.1">roff page</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>名前</H2>
+
+mpstat - プロセッサ関連の統計情報を報告します。
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>書式</H2>
+
+<B>mpstat [ -A ] [ --dec={ 0 | 1 | 2 } ] [ -H ] [ -n ] [ -U ] [ -u ] [ -T ] [ -V ] [ -I {</B> <I>keyword</I><B>[,...] | ALL } ] [ -N { </B><I>node_list </I><B>| ALL } ] [ -o JSON ] [ -P {</B> <I>cpu_list </I><B>| ALL } ] [ </B><I>interval </I><B>[ </B><I>count </I><B>] ]</B>
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>説明</H2>
+
+<B>mpstat</B> コマンドは、使用可能な各プロセッサのアクティビティを標準出力に書き込みます。プロセッサ
+0が最初のプロセッサです。すべてのプロセッサ間のグローバル平均アクティビティも報告されます。<B>mpstat</B> コマンドは、SMP マシンと UP
+マシンの両方で使用できますが、後者では、グローバル平均アクティビティのみが出力されます。アクティビティを選択していない場合は、既定のレポートは CPU
+使用率レポートになります。
+<P>
+
+<I>interval</I> パラメータは、各レポート間の時間間隔を秒単位で指定します。値がゼロ (またはパラメータなし) は、システムの起動 (ブート)
+以降のプロセッサ統計情報がレポートされることを示します。<I>count </I> パラメータは、<I>interval</I>
+パラメータがゼロに設定されていない場合は、<I>interval</I> パラメータと組み合わせて指定できます。<I>count</I> の値は、<I>interval </I>秒間隔で生成されるレポートの数を決定します。<I>count </I>パラメータを指定せずに <I>interval</I>
+パラメータを指定した場合、<B>mpstat</B>コマンドはレポートを継続的に生成します。
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>オプション</H2>
+
+<DL COMPACT>
+<DT><B>-A</B><DD>
+このオプションは、<B>-n -u -I ALL</B> と同じです。このオプションは、<B>-N ALL -P ALL</B>
+が指定されていることを仮定しますが、これらのオプションがコマンド行で明示的に設定されている場合を除きます。
+<DT><B>--dec={ 0 | 1 | 2 }</B><DD>
+小数点以下の桁数を指定します (0～2、既定値は2)。
+<DT><B>-H</B><DD>
+また、物理的にホットプラグされた vCPU の統計を検出して表示します。
+<DT><B>-I { </B><I>keyword</I><B>[,...] | ALL }</B><DD>
+割り込み情報の統計をレポートします。<I>keyword </I>が取り得る値は、<B>CPU</B>、<B>SCPU</B>、および <B>SUM</B> です。
+</DL>
+<P>
+
+<DL COMPACT><DT><DD>
+<B>CPU</B> キーワードを指定すると、CPU が 1秒間に受信した個々の割り込みの数が表示されます。割り込みは、<I>/proc/interrupts </I>
+ファイルにリストされているものです。
+<P>
+
+<B>SCPU</B> キーワードを指定すると、1つまたは複数のソフトウェア割り込みが 1秒間に受信した各 CPU の数が表示されます。このオプションはカーネル
+2.6.31 以降でのみ動作します。ソフトウェア割り込みは、<I>/proc/softirqs </I>ファイルにリストされているものです。
+<P>
+
+<B>SUM </B>キーワードを指定して <B>mpstat</B> コマンドを実行すると、プロセッサごとの割り込みの総数が表示されます。次の値が表示されます:
+<P>
+<DL COMPACT>
+<DT>CPU<DD>
+プロセッサ番号。キーワード <B>all</B> は、統計情報がすべてのプロセッサ間の平均として計算されることを示します。
+<P>
+<DT>intr/s<DD>
+1つまたは複数の CPU が 1秒間に受信した割り込みの合計値を表示します。
+</DL>
+</DL>
+
+<DL COMPACT>
+<DT><DD>
+<B>ALL</B> キーワードは、上記のすべてのキーワードを指定するのと同じであるため、すべての割り込み統計情報が表示されます。
+<DT><B>-N { </B><I>node_list </I><B>| ALL }</B><DD>
+統計情報を報告する NUMA ノードを指定します。<I>node_list</I> はカンマで区切られた値のリストまたは値の範囲です (例:
+<B>0,2,4-7,12-</B>)。ノード <B>all</B> は、すべてのノードの全体平均ということに注意してください。<B>ALL</B>
+キーワードは、すべてのノードについて統計情報がレポートされることを示します。
+<DT><B>-n</B><DD>
+NUMA ノードの配置に基づいて、CPU 統計のサマリーをレポートします。次の値が表示されます:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>NODE<DD>
+論理 NUMA ノード番号。キーワード <B>all</B> は、統計情報がすべてのノード間の平均として計算されることを示します。
+</DL>
+</DL>
+
+<DT><DD>
+他のすべてのフィールドは、オプション <B>-u </B>で表示されるものと同じです (下記参照)。
+<DT><B>-o JSON</B><DD>
+統計情報を JSON (JavaScript Object Notation) 形式で表示します。JSON
+出力フィールドの順序は未定義であり、将来新しいフィールドが追加される可能性があります。
+<DT><B>-P { </B><I>cpu_list </I><B>| ALL }</B><DD>
+統計情報を報告するプロセッサを指定します。<I>cpu_list</I> はカンマで区切られた値のリストまたは値の範囲です
+(例:<B>0,2,4-7,12-</B>)。プロセッサ 0が最初のプロセッサであり、プロセッサ <B>all</B>
+はすべてのプロセッサ間のグローバル平均であることに注意してください。<B>ALL</B>
+キーワードは、すべてのプロセッサについて統計情報がレポートされることを示します。オフラインのプロセッサは表示されません。
+<DT><B>-T</B><DD>
+CPU レポートにトポロジ要素を表示します (下記のオプション <B>-u</B> を参照)。次の要素が表示されます:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>CORE<DD>
+論理コア番号。
+<DT>SOCK<DD>
+論理ソケット番号。
+<DT>NODE<DD>
+論理 NUMA ノード番号。
+</DL>
+</DL>
+
+<DT><B>-U</B><DD>
+エポックからのタイムスタンプ (UTC-Coordinated Universal Time) を秒単位で表示します。
+<DT><B>-u</B><DD>
+CPU使用率をレポートします。次の値が表示されます:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>CPU<DD>
+プロセッサ番号。キーワード<I>all</I> は、統計情報がすべてのプロセッサ間の平均として計算されることを示します。
+<DT>%usr<DD>
+ユーザーレベル (アプリケーション) での実行中に発生する CPU 使用率の割合を示します。
+<DT>%nice<DD>
+nice 優先度を使用してユーザレベルでの実行中に発生した CPU 使用率の割合を表示します。
+<DT>%sys<DD>
+システムレベル (カーネル) での実行中に発生した CPU
+使用率の割合を表示します。これには、ハードウェアのサービスおよびソフトウェア割り込みに費やされる時間は含まれないことに注意してください。
+<DT>%iowait<DD>
+CPU がアイドル状態で、システムに未処理のディスク I/O 要求があった時間の割合を表示します。
+<DT>%irq<DD>
+CPU がハードウェア割り込みを処理するために費やした時間の割合を表示します。
+<DT>%soft<DD>
+CPU がソフトウェア割り込みを処理するために費やした時間の割合を表示します。
+<DT>%steal<DD>
+ハイパーバイザーが別の仮想プロセッサーにサービスを提供している間に、1つまたは複数の仮想 CPU による強制待機に費やされた時間割合を表示します。
+<DT>%guest<DD>
+仮想プロセッサを実行するために 1つまたは複数の CPU によって消費された時間の割合を表示します。
+<DT>%gnice<DD>
+nice されたゲストを実行するために 1つまたは複数の CPU が費やした時間の割合を表示します。
+<DT>%idle<DD>
+CPU がアイドル状態で、システムに未処理のディスク I/O 要求がなかった時間の割合を表示します。
+</DL>
+</DL>
+
+<DT><B>-V</B><DD>
+バージョン番号を出力して終了します。
+<P>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>環境変数</H2>
+
+<B>mpstat</B> コマンドは、次の環境変数を参照します。
+<DL COMPACT>
+<DT><B>S_COLORS</B><DD>
+出力がターミナルに接続されている場合、既定では、端末ごとに統計情報がカラーで表示されます。この変数を使用して、設定を変更します。取り得る値は、<I>never</I>、<I>always </I>または<I>auto</I> (後者は既定の設定と同等ですです。
+<BR>
+
+値の表示に使用されている色 (赤、黄、またはその他の色)
+は、単に色が原因で何らかの問題が発生していることを示すものではありません。異なる値の範囲を示しているだけです。
+<DT><B>S_COLORS_SGR</B><DD>
+端末に関する統計情報の表示に使用する色およびその他の属性を指定します。その値は、コロンで区切られたケイパビリティのリストで、既定値は
+<B>I=32;22:N=34;1:W=35;1:X=31;1:Z=34;22</B> です。サポートされる機能は次のとおりです:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>I=</B><DD>
+CPU番号用の SGR (Select Graphic Rendition) 部分文字列。
+<DT><B>N=</B><DD>
+ゼロ以外の統計値を表示する SGR 部分文字列。
+<DT><B>W=</B> (又は <B>M=</B>)<DD>
+75%から 90% (またはメトリックの意味に応じて 10%から 25%) の範囲の割合に対する SGR 部分文字列。
+<DT><B>X=</B> (又は <B>H=</B>)<DD>
+割合が 90%以上のSGR 部分文字列 (あるいはメトリックの意味に応じて10%以下)。
+<DT><B>Z=</B><DD>
+ゼロ値を表示する SGR 部分文字列。
+</DL>
+</DL>
+
+<DT><B>S_TIME_FORMAT</B><DD>
+この変数が存在し、その値が <B>ISO</B> の場合、レポートヘッダーに日付を印刷するときに、現在のロケールが無視されます。<B>mpstat</B>
+コマンドは、代わりに ISO 8601 形式 (YYYY-MM-DD) を使用します。タイムスタンプも ISO 8601 形式に準拠します。
+<P>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>使用例</H2>
+
+<DL COMPACT>
+<DT><B>mpstat 2 5</B><DD>
+すべてのプロセッサのグローバル統計情報のレポートを 2秒間隔で 5つ表示します。
+<DT><B>mpstat -P ALL 2 5</B><DD>
+すべてのプロセッサに関する統計情報のレポートを 2秒間隔で 5つ表示します。
+<P>
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バグ</H2>
+
+<B>mpstat </B>コマンドが作動するためには、<I>/proc </I>ファイルシステムがマウントされている必要があります。
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>ファイル</H2>
+
+<I>/proc </I>には、システム統計を含むさまざまなファイルが含まれています。
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>著者</H2>
+
+Sebastien Godard (sysstat &lt;at&gt; orange.fr)
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>関連項目</H2>
+
+<B><A HREF="../man1/sar.1.html">sar</A></B>(1), <B><A HREF="../man1/pidstat.1.html">pidstat</A></B>(1), <B><A HREF="../man1/iostat.1.html">iostat</A></B>(1), <B><A HREF="../../procps/man8/vmstat.8.html">vmstat</A></B>(8)
+<P>
+
+<I><A HREF="https://github.com/sysstat/sysstat">https://github.com/sysstat/sysstat</A></I>
+<BR>
+
+<I><A HREF="https://sysstat.github.io/">https://sysstat.github.io/</A></I>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">名前</A><DD>
+<DT><A HREF="#lbAC">書式</A><DD>
+<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAE">オプション</A><DD>
+<DT><A HREF="#lbAF">環境変数</A><DD>
+<DT><A HREF="#lbAG">使用例</A><DD>
+<DT><A HREF="#lbAH">バグ</A><DD>
+<DT><A HREF="#lbAI">ファイル</A><DD>
+<DT><A HREF="#lbAJ">著者</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="../../man/man1/man2html.1.html">man2html</A>,
+using the manual pages.<BR>
+</BODY>
+</HTML>
