@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of MQ_RECEIVE</TITLE>
+<HTML><HEAD><TITLE>Man page of mq_receive</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>MQ_RECEIVE</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<H1>mq_receive</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/mq_receive.3">roff page</A><HR>
 
@@ -16,25 +16,28 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-08-13<BR><A HREF="#index
 
 mq_receive, mq_timedreceive - メッセージキューからメッセージを受信する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+リアルタイムライブラリ (<I>librt</I>,~<I>-lrt</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/mqueue.h">mqueue.h</A>&gt;</B>
 
-<B>ssize_t mq_receive(mqd_t </B><I>mqdes</I><B>, char *</B><I>msg_ptr</I><B>,</B>
+<B>ssize_t mq_receive(</B>size_t msg_len;
+<B>                   mqd_t </B><I>mqdes</I><B>, char </B><I>msg_ptr</I><B>[</B><I>msg_len</I><B>],</B>
 <B>                   size_t </B><I>msg_len</I><B>, unsigned int *</B><I>msg_prio</I><B>);</B>
 
 <B>#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</B>
 <B>#include &lt;<A HREF="file:///usr/include/mqueue.h">mqueue.h</A>&gt;</B>
 
-<B>ssize_t mq_timedreceive(mqd_t </B><I>mqdes</I><B>, char *</B><I>msg_ptr</I><B>,</B>
-<B>                   size_t </B><I>msg_len</I><B>, unsigned int *</B><I>msg_prio</I><B>,</B>
-<B>                   const struct timespec *</B><I>abs_timeout</I><B>);</B>
+<B>ssize_t mq_timedreceive(</B>size_t msg_len;
+<B>                   mqd_t </B><I>mqdes</I><B>, char *restrict </B><I>msg_ptr</I><B>[</B><I>msg_len</I><B>],</B>
+<B>                   size_t </B><I>msg_len</I><B>, unsigned int *restrict </B><I>msg_prio</I><B>,</B>
+<B>                   const struct timespec *restrict </B><I>abs_timeout</I><B>);</B>
 </PRE>
 
-<P>
-
-<I>-lrt</I> でリンクする。
 <P>
 
 
@@ -44,12 +47,11 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 <B>mq_timedreceive</B>():
-<DL COMPACT><DT><DD>
-_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
-</DL>
+<PRE>
+    _POSIX_C_SOURCE &gt;= 200112L
+</PRE>
 
-
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>mq_receive</B>()  は、メッセージキュー記述子 <I>mqdes</I> で参照されるメッセージキューから最も高い優先度を持つ
@@ -68,27 +70,16 @@ queue is empty and the <B>O_NONBLOCK</B> flag is not enabled for the message
 queue description, then <I>abs_timeout</I> points to a structure which specifies
 how long the call will block.  This value is an absolute timeout in seconds
 and nanoseconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC), specified
-in the following structure:
-<P>
-
-
-<PRE>
-struct timespec {
-    time_t tv_sec;        /* 秒 */
-    long   tv_nsec;       /* ナノ秒 */
-};
-</PRE>
-
-
+in a <B>timespec</B>(3)  structure.
 <P>
 
 メッセージがキューになく、関数呼び出し時にすでにタイムアウト時刻が 過ぎている場合、 <B>mq_timedreceive</B>()  はすぐに返る。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 成功すると、 <B>mq_receive</B>()  と <B>mq_timedreceive</B>()  は受信したメッセージのバイト数を返す。
 エラーの場合、-1 を返し、 <I>errno</I> にエラーを示す値を設定する。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
@@ -106,52 +97,55 @@ The descriptor specified in <I>mqdes</I> was invalid or not opened for reading.
 <DT><B>ETIMEDOUT</B><DD>
 メッセージが転送される前に関数呼び出しがタイムアウトした。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>mq_receive</B>(),
 <B>mq_timedreceive</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
-
-POSIX.1-2001, POSIX.1-2008.
 <A NAME="lbAI">&nbsp;</A>
-<H2>注意</H2>
+<H2>VERSIONS</H2>
 
 Linux では、 <B>mq_timedreceive</B>()  はシステムコールである。 <B>mq_receive</B>()  はライブラリ関数で、
 <B>mq_timedreceive</B>()  システムコールを用いて実装されている。
 <A NAME="lbAJ">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2008.
+<A NAME="lbAK">&nbsp;</A>
+<H2>歴史</H2>
+
+POSIX.1-2001.
+<A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/mq_close.3.html">mq_close</A></B>(3), <B><A HREF="../man3/mq_getattr.3.html">mq_getattr</A></B>(3), <B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3), <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3),
-<B><A HREF="../man3/mq_send.3.html">mq_send</A></B>(3), <B><A HREF="../man3/mq_unlink.3.html">mq_unlink</A></B>(3), <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7), <B><A HREF="../man7/time.7.html">time</A></B>(7)
-<A NAME="lbAK">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<B><A HREF="../man3/mq_send.3.html">mq_send</A></B>(3), <B><A HREF="../man3/mq_unlink.3.html">mq_unlink</A></B>(3), <B>timespec</B>(3), <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7),
+<B><A HREF="../man7/time.7.html">time</A></B>(7)
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">属性</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">注意</A><DD>
-<DT><A HREF="#lbAJ">関連項目</A><DD>
-<DT><A HREF="#lbAK">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">VERSIONS</A><DD>
+<DT><A HREF="#lbAJ">標準規格</A><DD>
+<DT><A HREF="#lbAK">歴史</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

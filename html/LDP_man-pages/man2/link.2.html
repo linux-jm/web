@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of LINK</TITLE>
+<HTML><HEAD><TITLE>Man page of link</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>LINK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<H1>link</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-11<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/link.2">roff page</A><HR>
 
@@ -16,6 +16,10 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index
 
 link, linkat - ファイルの新しい名前を作成する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
@@ -23,7 +27,7 @@ link, linkat - ファイルの新しい名前を作成する
 
 <B>int link(const char *</B><I>oldpath</I><B>, const char *</B><I>newpath</I><B>);</B>
 
-<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;           </B>/* AT_* 定数の定義 */
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;           </B>/* Definition of <B>AT_*</B> constants */
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
 <B>int linkat(int </B><I>olddirfd</I><B>, const char *</B><I>oldpath</I><B>,</B>
@@ -38,20 +42,14 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 <B>linkat</B>():
+<PRE>
+    Since glibc 2.10:
+        _POSIX_C_SOURCE &gt;= 200809L
+    Before glibc 2.10:
+        _ATFILE_SOURCE
+</PRE>
 
-
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT>glibc 2.10 以降:<DD>
-_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
-<DT>glibc 2.10 より前:<DD>
-_ATFILE_SOURCE
-</DL>
-</DL>
-
-
-
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>link</B>()  は存在するファイルへの新しいリンク (link)  (ハードリンク (hard link) ともいう) を作成する。
@@ -62,7 +60,7 @@ _ATFILE_SOURCE
 
 この新しい名前は全ての操作において古い名前と完全に同じように使用される; 両方の名前は同じファイルを参照しており (それで同じ許可
 (permission) や所有者 (ownership) となるので)、 どちらの名前が本来のものであるか判別できない。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H3>linkat()</H3>
 
 <B>linkat</B>() システムコールは <B>link</B>() と全く同様に動作するが、以下で説明する点が異なる。
@@ -113,15 +111,17 @@ linkat(AT_FDCWD, &quot;/proc/self/fd/&lt;fd&gt;&quot;, newdirfd,
 </DL>
 <P>
 
-カーネル 2.6.18 より前では、 <I>flags</I> 引数は未使用で、 0 を指定しなければならなかった。
+Before Linux 2.6.18, the <I>flags</I> argument was unused, and had to be
+specified as 0.
 <P>
 
 <B>linkat</B>() の必要性についての説明については <B><A HREF="../man2/openat.2.html">openat</A></B>(2) を参照。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>返り値</H2>
 
-成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
-<A NAME="lbAG">&nbsp;</A>
+On success, zero is returned.  On error, -1 is returned, and <I>errno</I> is set
+to indicate the error.
+<A NAME="lbAH">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
@@ -158,23 +158,27 @@ to it.  For example, on an <B>ext4</B>(5)  filesystem that does not employ the
 <DT><B>EPERM</B><DD>
 <I>oldpath</I> と <I>newpath</I> を含んでいるファイルシステムがハードリンクをサポートしていない。
 <DT><B>EPERM</B> (Linux 3.6 以降)<DD>
-呼び出し元にこのファイルへのハードリンクを作成する許可がなかった (<B><A HREF="../man5/proc.5.html">proc</A></B>(5) の
-<I>/proc/sys/fs/protected_hardlinks</I> の説明を参照)。
+The caller does not have permission to create a hard link to this file (see
+the description of <I>/proc/sys/fs/protected_hardlinks</I> in
+<B>proc_sys_fs</B>(5)).
 <DT><B>EPERM</B><DD>
-<I>oldpath</I> is marked immutable or append-only.  (See <B>ioctl_iflags</B>(2).)
+<I>oldpath</I> is marked immutable or append-only.  (See
+<B>FS_IOC_SETFLAGS</B>(2const).)
 <DT><B>EROFS</B><DD>
 ファイルが読み込み専用のファイルシステムに存在する。
 <DT><B>EXDEV</B><DD>
-<I>oldpath</I> と <I>newpath</I> が同じマウントされたファイルシステムに存在しない。 (Linux は 1
-つのファイルシステムを複数のマウント位置に マウントすることを許可している。 しかし <B>link</B>()  は、たとえ同じファイルシステムであっても、
-別々のマウント位置を跨いでは動作しない。)
+<I>oldpath</I> and <I>newpath</I> are not on the same mounted filesystem.  (Linux
+permits a filesystem to be mounted at multiple points, but <B>link</B>()  does
+not work across different mounts, even if the same filesystem is mounted on
+both.)
 </DL>
 <P>
 
 <B>linkat</B>() では以下のエラーも発生する。
 <DL COMPACT>
 <DT><B>EBADF</B><DD>
-<I>olddirfd</I> か <I>newdirfd</I> が有効なファイルディスクリプターでない。
+<I>oldpath</I> (<I>newpath</I>)  is relative but <I>olddirfd</I> (<I>newdirfd</I>)  is
+neither <B>AT_FDCWD</B> nor a valid file descriptor.
 <DT><B>EINVAL</B><DD>
 無効なフラグ値が <I>flags</I> に指定された。
 <DT><B>ENOENT</B><DD>
@@ -203,13 +207,9 @@ open(path, O_TMPFILE | O_EXCL, mode);
 <I>flags</I> に <B>AT_EMPTY_PATH</B> が指定され、 <I>oldpath</I> が空文字列で、 <I>olddirfd</I>
 がディレクトリを参照している。
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>バージョン</H2>
 
-<B>linkat</B>()  はカーネル 2.6.16 で Linux に追加された。 ライブラリによるサポートはバージョン 2.4 で glibc
-に追加された。
-<A NAME="lbAI">&nbsp;</A>
-<H2>準拠</H2>
 
 
 
@@ -217,77 +217,81 @@ open(path, O_TMPFILE | O_EXCL, mode);
 
 
 
-<B>link</B>(): SVr4, 4.3BSD, POSIX.1-2001 (但し「注意」を参照), POSIX.1-2008.
-<P>
 
-<B>linkat</B>(): POSIX.1-2008.
+
+
+POSIX.1-2001 says that <B>link</B>()  should dereference <I>oldpath</I> if it is a
+symbolic link.  However, since Linux 2.0, Linux does not do so: if
+<I>oldpath</I> is a symbolic link, then <I>newpath</I> is created as a (hard) link
+to the same symbolic link file (i.e., <I>newpath</I> becomes a symbolic link to
+the same file that <I>oldpath</I> refers to).  Some other implementations behave
+in the same manner as Linux.  POSIX.1-2008 changes the specification of
+<B>link</B>(), making it implementation-dependent whether or not <I>oldpath</I> is
+dereferenced if it is a symbolic link.  For precise control over the
+treatment of symbolic links when creating a link, use <B>linkat</B>().
 <A NAME="lbAJ">&nbsp;</A>
-<H2>注意</H2>
-
-<B>link</B>()  でファイルシステムを超えてハードリンクを作成することはできない。 このような場合は <B><A HREF="../man2/symlink.2.html">symlink</A></B>(2)  を使用すること。
-<P>
-
-
-
-
-
-
-
-
-
-
-
-POSIX.1-2001 では、 <I>oldpath</I> がシンボリックリンクである場合、 <B>link</B>()  は <I>oldpath</I>
-の参照を解決すべきであると記述されている。 しかし、カーネル 2.0 以降の Linux ではそのようになっていない。 <I>oldpath</I>
-がシンボリックリンクである場合、 <I>newpath</I> は同じシンボリックリンクファイルへの (ハード) リンクとして作成される (つまり
-<I>newpath</I> は <I>oldpath</I> が参照していた同じファイルへのシンボリックリンクになる)。 他のいくつかの実装でも Linux
-と同じように動作する。 POSIX.1-2008 では <B>link</B>()  の仕様が変更され、 <I>oldpath</I>
-がシンボリックリンクの場合にシンボリックリンクの参照を 解決するかどうかは実装依存となった。
-リンク作成時のシンボリックリンクの扱いについての詳細な制御を行う場合には <B>linkat</B>() を使用すること。
-<A NAME="lbAK">&nbsp;</A>
-<H3>glibc での注意</H3>
+<H3>glibc</H3>
 
 <B>linkat</B>() が利用できない古いカーネルでは、 <B>AT_SYMLINK_FOLLOW</B> が指定されていない場合、 glibc ラッパー関数は
 <B>link</B>() を使用するモードにフォールバックする。 <I>oldpath</I> と <I>newpath</I> が相対パスの場合、 glibc は
 <I>olddirfd</I> と <I>newdirfd</I> 引数に対応する <I>/proc/self/fd</I>
 のシンボリックリンクに基づいてそれぞれパス名を構成する。
+<A NAME="lbAK">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2024.
 <A NAME="lbAL">&nbsp;</A>
+<H2>歴史</H2>
+
+<DL COMPACT>
+<DT><B>link</B>()<DD>
+
+
+
+
+
+
+4.3BSD, SVr4, POSIX.1-1988 (but see VERSIONS).
+<DT><B>linkat</B>()<DD>
+POSIX.1-2008, glibc 2.4, Linux 2.6.16.
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H2>注意</H2>
+
+<B>link</B>()  でファイルシステムを超えてハードリンクを作成することはできない。 このような場合は <B><A HREF="../man2/symlink.2.html">symlink</A></B>(2)  を使用すること。
+<A NAME="lbAN">&nbsp;</A>
 <H2>バグ</H2>
 
 NFS ファイルシステムでは、NFS サーバーがリンクを作成した後に、 それを伝える前に死んだ場合には返り値が不正な場合がある。
 リンクが作成できたかどうか見つけるためには <B><A HREF="../man2/stat.2.html">stat</A></B>(2)  を使用すること。
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../../0MultiFileIdx/man1/ln.1.html">ln</A></B>(1), <B><A HREF="../man2/open.2.html">open</A></B>(2), <B><A HREF="../man2/rename.2.html">rename</A></B>(2), <B><A HREF="../man2/stat.2.html">stat</A></B>(2), <B><A HREF="../man2/symlink.2.html">symlink</A></B>(2), <B><A HREF="../man2/unlink.2.html">unlink</A></B>(2),
 <B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7), <B><A HREF="../man7/symlink.7.html">symlink</A></B>(7)
-<A NAME="lbAN">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
 <DL>
-<DT><A HREF="#lbAE">linkat()</A><DD>
+<DT><A HREF="#lbAF">linkat()</A><DD>
 </DL>
-<DT><A HREF="#lbAF">返り値</A><DD>
-<DT><A HREF="#lbAG">エラー</A><DD>
-<DT><A HREF="#lbAH">バージョン</A><DD>
-<DT><A HREF="#lbAI">準拠</A><DD>
-<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
 <DL>
-<DT><A HREF="#lbAK">glibc での注意</A><DD>
+<DT><A HREF="#lbAJ">glibc</A><DD>
 </DL>
-<DT><A HREF="#lbAL">バグ</A><DD>
-<DT><A HREF="#lbAM">関連項目</A><DD>
-<DT><A HREF="#lbAN">この文書について</A><DD>
+<DT><A HREF="#lbAK">標準規格</A><DD>
+<DT><A HREF="#lbAL">歴史</A><DD>
+<DT><A HREF="#lbAM">注意</A><DD>
+<DT><A HREF="#lbAN">バグ</A><DD>
+<DT><A HREF="#lbAO">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

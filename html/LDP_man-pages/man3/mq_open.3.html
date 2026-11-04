@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of MQ_OPEN</TITLE>
+<HTML><HEAD><TITLE>Man page of mq_open</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>MQ_OPEN</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<H1>mq_open</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/mq_open.3">roff page</A><HR>
 
@@ -16,6 +16,10 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-08-13<BR><A HREF="#index
 
 mq_open - メッセージキューをオープンする
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+リアルタイムライブラリ (<I>librt</I>,~<I>-lrt</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
@@ -28,10 +32,7 @@ mq_open - メッセージキューをオープンする
 <B>              struct mq_attr *</B><I>attr</I><B>);</B>
 </PRE>
 
-<P>
-
-<I>-lrt</I> でリンクする。
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>mq_open</B>()  は、新しい POSIX メッセージキューを作成するか、既存のキューを オープンする。キューは <I>name</I> で識別される。
@@ -83,11 +84,11 @@ allow.  This structure is defined as follows:
 
 <PRE>
 struct mq_attr {
-    long mq_flags;       /* フラグ (mq_open() では無視される) */
-    long mq_maxmsg;      /* キューの最大メッセージ数 */
-    long mq_msgsize;     /* 最大メッセージサイズ (バイト単位) */
-    long mq_curmsgs;     /* キューに現在入っているメッセージ数
-                            (mq_open() では無視される) */
+    long mq_flags;       /* Flags (ignored for mq_open()) */
+    long mq_maxmsg;      /* Max. # of messages on queue */
+    long mq_msgsize;     /* Max. message size (bytes) */
+    long mq_curmsgs;     /* # of messages currently in queue
+                            (ignored for mq_open()) */
 };
 </PRE>
 
@@ -100,13 +101,13 @@ Only the <I>mq_maxmsg</I> and <I>mq_msgsize</I> fields are employed when calling
 
 <I>attr</I> が NULL の場合、キューは実装で定義されたデフォルト属性で作成される。 Linux 3.5 以降では、2 つの <I>/proc</I>
 ファイルがあり、これらのデフォルト値を制御できる。 詳細は <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7) を参照。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 成功すると、 <B>mq_open</B>()  はメッセージキュー記述子 (message queue descriptor) を返す。
 メッセージキュー記述子は他のメッセージキュー関連の関数で使用される。 エラーの場合、 <B>mq_open</B>()  は <I>(mqd_t)&nbsp;-1</I>
 を返し、 <I>errno</I> にエラーを示す値を設定する。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
@@ -151,23 +152,21 @@ descriptors has been reached (see the description of <B>RLIMIT_NOFILE</B> in
 新しいメッセージキューを作成するのに十分な空間がない。 このエラーはおそらく <I>queues_max</I> 上限に抵触したため起こったのだろう。
 <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7)  を参照。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>mq_open</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
-
-POSIX.1-2001, POSIX.1-2008.
 <A NAME="lbAI">&nbsp;</A>
-<H2>注意</H2>
+<H2>VERSIONS</H2>
 
 <A NAME="lbAJ">&nbsp;</A>
 <H3>C ライブラリとカーネルの違い</H3>
@@ -179,38 +178,43 @@ kernel system call expects <I>name</I> to contain no preceding slash, so the C
 library function passes <I>name</I> without the preceding slash (i.e.,
 <I>name+1</I>)  to the system call.
 <A NAME="lbAK">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2008.
+<A NAME="lbAL">&nbsp;</A>
+<H2>歴史</H2>
+
+POSIX.1-2001.
+<A NAME="lbAM">&nbsp;</A>
 <H2>バグ</H2>
 
-2.6.14 より前のカーネルには、 プロセスの umask が <I>mode</I> で指定された許可設定に適用されなかった。
-<A NAME="lbAL">&nbsp;</A>
+Before Linux 2.6.14, the process umask was not applied to the permissions
+specified in <I>mode</I>.
+<A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/mq_close.3.html">mq_close</A></B>(3), <B><A HREF="../man3/mq_getattr.3.html">mq_getattr</A></B>(3), <B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3), <B><A HREF="../man3/mq_receive.3.html">mq_receive</A></B>(3),
 <B><A HREF="../man3/mq_send.3.html">mq_send</A></B>(3), <B><A HREF="../man3/mq_unlink.3.html">mq_unlink</A></B>(3), <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7)
-<A NAME="lbAM">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">属性</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">VERSIONS</A><DD>
 <DL>
 <DT><A HREF="#lbAJ">C ライブラリとカーネルの違い</A><DD>
 </DL>
-<DT><A HREF="#lbAK">バグ</A><DD>
-<DT><A HREF="#lbAL">関連項目</A><DD>
-<DT><A HREF="#lbAM">この文書について</A><DD>
+<DT><A HREF="#lbAK">標準規格</A><DD>
+<DT><A HREF="#lbAL">歴史</A><DD>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

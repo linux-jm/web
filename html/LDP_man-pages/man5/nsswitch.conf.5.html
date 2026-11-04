@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of NSSWITCH.CONF</TITLE>
+<HTML><HEAD><TITLE>Man page of nsswitch.conf</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>NSSWITCH.CONF</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+<H1>nsswitch.conf</H1>
+Section: File Formats (5)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man5/nsswitch.conf.5">roff page</A><HR>
 
@@ -67,7 +67,9 @@ NIS+ と NFS によって用いられる secure_rpc の公開鍵と秘密鍵。
 
 The GNU C Library ignores databases with unknown names.  Some applications
 use this to implement special handling for their own databases.  For
-example, <B><A HREF="../../sudo/man8/sudo.8.html">sudo</A></B>(8)  consults the <B>sudoers</B> database.
+example, <B><A HREF="../../sudo/man8/sudo.8.html">sudo</A></B>(8)  consults the <B>sudoers</B> database.  Delegation of
+subordinate user/group IDs can be configured using the <B>subid</B> database.
+Refer to <B>subuid</B>(5)  and <B>subgid</B>(5)  for more details.
 <P>
 
 以下は <I>/etc/nsswitch.conf</I> ファイルの例である。
@@ -93,27 +95,26 @@ services:       nis [NOTFOUND=return] files
 最初の列はデータベース名である。
 残りの列で以下を指定する。
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 1 個以上のサービス指定 (例: &quot;files&quot;, &quot;db&quot;, &quot;nis&quot;)。この行に記載された
 サービスの順序で、結果が得られるまで、指定されたサービスに対する
 問い合わせが順番に行われる。
-<DT>*<DD>
+<DT>&bull;<DD>
 特定の結果が直前のサービスで得られた場合に実行されるアクション
 (例: &quot;[NOTFOUND=return]&quot;)。アクションは省略可能である。
 </DL>
 <P>
 
-利用しているシステムでどのサービス指定が利用できるかは、共有ライブラリ
-があるかどうかに依存しており、そのためサービス指定は拡張できるように
-なっている。<I>/lib/libnss_SERVICE.so.</I><B>X</B> という名前のライブラリが
-<I>SERVICE</I> という名前のサービスを提供する。標準のインストールを行った
-場合、&quot;files&quot;, &quot;db&quot;, &quot;nis&quot;, &quot;nisplus&quot; が利用できる。
-データベース <B>hosts</B> の場合には、追加で &quot;dns&quot; も指定できる。
-データベース <B>passwd</B>, <B>group</B>, <B>shadow</B> の場合には、追加で
-&quot;compat&quot; (下記の <B>互換モード</B> を参照)。バージョン番号 <B>X</B> は、
-glibc 2.0 の場合は 1、glibc 2.1 の場合は 2 で、それ以降も同様である。
-追加のライブラリがインストールされているシステムでは、&quot;hesiod&quot;,
-&quot;ldap&quot;, &quot;winbind&quot;, &quot;wins&quot; などの追加のサービスが利用できる。
+The service specifications supported on your system depend on the presence
+of shared libraries, and are therefore extensible.  Libraries called
+<I>/lib/libnss_SERVICE.so.</I><B>X</B> will provide the named <I>SERVICE</I>.  On a
+standard installation, you can use &quot;files&quot;, &quot;db&quot;, &quot;nis&quot;, and &quot;nisplus&quot;.  For
+the <B>hosts</B> database, you can additionally specify &quot;dns&quot;.  For the
+<B>passwd</B>, <B>group</B>, and <B>shadow</B> databases, you can additionally specify
+&quot;compat&quot; (see <B>Compatibility mode</B> below).  The version number <B>X</B> may be
+1 for glibc 2.0, or 2 for glibc 2.1 and later.  On systems with additional
+libraries installed, you may have access to further services such as
+&quot;hesiod&quot;, &quot;ldap&quot;, &quot;winbind&quot;, and &quot;wins&quot;.
 <P>
 
 サービス指定の次にアクションを指定することもできる。アクションを
@@ -307,9 +308,12 @@ databases:
 <A NAME="lbAF">&nbsp;</A>
 <H2>注意</H2>
 
-<I>nsswitch.conf</I> を利用するプロセスは、ファイルは一度しか読み込まない。
-その後で nsswitch.conf が書き換えられても、そのプロセスは古い設定のままで
-動作を継続する。
+
+
+Starting with glibc 2.33, <B>nsswitch.conf</B> is automatically reloaded if the
+file is changed.  In earlier versions, the entire file was read only once
+within each process.  If the file was later changed, the process would
+continue using the old configuration.
 <P>
 
 伝統的には、サービス情報の情報源は一つだけであり、
@@ -324,11 +328,6 @@ Solaris 2 の C ライブラリで使った機構が基になっている。
 <H2>関連項目</H2>
 
 <B><A HREF="../man1/getent.1.html">getent</A></B>(1), <B><A HREF="../man5/nss.5.html">nss</A></B>(5)
-<A NAME="lbAH">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
@@ -342,7 +341,6 @@ Solaris 2 の C ライブラリで使った機構が基になっている。
 <DT><A HREF="#lbAE">ファイル</A><DD>
 <DT><A HREF="#lbAF">注意</A><DD>
 <DT><A HREF="#lbAG">関連項目</A><DD>
-<DT><A HREF="#lbAH">この文書について</A><DD>
 </DL>
 <HR>
 This document was created by

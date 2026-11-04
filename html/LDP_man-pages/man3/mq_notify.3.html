@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of MQ_NOTIFY</TITLE>
+<HTML><HEAD><TITLE>Man page of mq_notify</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>MQ_NOTIFY</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<H1>mq_notify</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/mq_notify.3">roff page</A><HR>
 
@@ -16,18 +16,20 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index
 
 mq_notify - メッセージ到着時に通知を行うよう登録する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+リアルタイムライブラリ (<I>librt</I>,~<I>-lrt</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/mqueue.h">mqueue.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;           </B>/* Definition of SIGEV_* constants */
 
 <B>int mq_notify(mqd_t </B><I>mqdes</I><B>, const struct sigevent *</B><I>notification</I><B>);</B>
 </PRE>
 
-<P>
-
-<I>-lrt</I> でリンクする。
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>mq_notify</B>()  を使うと、メッセージキューディスクリプター <I>mqdes</I>
@@ -35,8 +37,8 @@ mq_notify - メッセージ到着時に通知を行うよう登録する
 その解除を行ったりできる。
 <P>
 
-<I>sevp</I> 引数は <I>sigevent</I> 構造体へのポインターである。 この構造体の定義と一般的な詳細については <B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7)
-を参照。
+The <I>sevp</I> argument is a pointer to a <I>sigevent</I> structure.  For the
+definition and general details of this structure, see <B>sigevent</B>(3type).
 <P>
 
 <I>sevp</I> が NULL でないポインターであれば、 <B>mq_notify</B>()
@@ -52,12 +54,14 @@ mq_notify - メッセージ到着時に通知を行うよう登録する
 
 
 
-<I>sigev_signo</I> で指定されたシグナルを送って、プロセスに通知する。 一般的な詳細については <B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7)  を参照。
-<I>siginfo_t</I> 構造体の <I>si_code</I> フィールドには <B>SI_MESGQ</B> が設定される。 さらに、 <I>si_pid</I>
-にはメッセージを送信したプロセスの PID が、 <I>si_uid</I> には送信プロセスの実ユーザー ID が設定される。
+Notify the process by sending the signal specified in <I>sigev_signo</I>.  See
+<B>sigevent</B>(3type)  for general details.  The <I>si_code</I> field of the
+<I>siginfo_t</I> structure will be set to <B>SI_MESGQ</B>.  In addition, <I>si_pid</I>
+will be set to the PID of the process that sent the message, and <I>si_uid</I>
+will be set to the real user ID of the sending process.
 <DT><B>SIGEV_THREAD</B><DD>
-メッセージの配送時には、 <I>sigev_notify_function</I> があたかも新しいスレッドの開始関数であるかのように起動される。 詳細は
-<B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7)  を参照。
+Upon message delivery, invoke <I>sigev_notify_function</I> as if it were the
+start function of a new thread.  See <B>sigevent</B>(3type)  for details.
 </DL>
 <P>
 
@@ -82,11 +86,11 @@ mq_notify - メッセージ到着時に通知を行うよう登録する
 <B>mq_notify</B>()  を再度呼び出すのは、読み出していないメッセージを全部読み出して キューが空になる前にすべきである
 (キューからのメッセージ読み出しをキューが空になった時に 停止 (block) せずに行うには、キューを非停止モード (non-blocking
 mode)  に設定しておくとよい)。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 成功すると、 <B>mq_notify</B>()  は 0 を返す。エラーの場合、-1 を返し、 <I>errno</I> をエラーを示す値に設定する。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
@@ -106,26 +110,21 @@ mode)  に設定しておくとよい)。
 
 POSIX.1-2008 では、 <I>sevp</I> が NULL で、呼び出し元のプロセスがキュー <I>mqdes</I>
 に関する通知を受信するように登録されていない場合、エラー <B>EINVAL</B> を生成するような実装を行っても「よい」ことになっている。
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>mq_notify</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<P>
-<A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
-
-POSIX.1-2001.
 <A NAME="lbAI">&nbsp;</A>
-<H2>注意</H2>
-
-
+<H2>VERSIONS</H2>
 
 <A NAME="lbAJ">&nbsp;</A>
 <H3>C ライブラリとカーネルの違い</H3>
@@ -141,24 +140,33 @@ implementation.)  The implementation involves the use of a raw <B><A HREF="../ma
 socket and creates a new thread for each notification that is delivered to
 the process.
 <A NAME="lbAK">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2008.
+<A NAME="lbAL">&nbsp;</A>
+<H2>歴史</H2>
+
+POSIX.1-2001.
+<A NAME="lbAM">&nbsp;</A>
 <H2>例</H2>
 
 以下のプログラムは、 コマンドライン引数で指定された名前のメッセージキューへの 通知要求を登録し、通知はスレッドの作成によって行われる。
 そのスレッドは、そのキューからメッセージを一つ読み出してから、 プロセスを終了する関数を実行する。
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
+
+
 <PRE>
-#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/mqueue.h">mqueue.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 
-#define handle_error(msg) \
-    do { perror(msg); exit(EXIT_FAILURE); } while (0)
-
-static void                     /* スレッド開始関数 */
+static void                     /* Thread start function */
 tfunc(union sigval sv)
 {
     struct mq_attr attr;
@@ -166,22 +174,21 @@ tfunc(union sigval sv)
     void *buf;
     mqd_t mqdes = *((mqd_t *) sv.sival_ptr);
 
-    /* 最大メッセージサイズを決定し、
-       メッセージ受信用のバッファーを確保する */
+    /* Determine max. msg size; allocate buffer to receive msg */
 
     if (mq_getattr(mqdes, &amp;attr) == -1)
-        handle_error(&quot;mq_getattr&quot;);
+        err(EXIT_FAILURE, &quot;mq_getattr&quot;);
     buf = malloc(attr.mq_msgsize);
     if (buf == NULL)
-        handle_error(&quot;malloc&quot;);
+        err(EXIT_FAILURE, &quot;malloc&quot;);
 
     nr = mq_receive(mqdes, buf, attr.mq_msgsize, NULL);
     if (nr == -1)
-        handle_error(&quot;mq_receive&quot;);
+        err(EXIT_FAILURE, &quot;mq_receive&quot;);
 
     printf(&quot;Read %zd bytes from MQ\n&quot;, nr);
     free(buf);
-    exit(EXIT_SUCCESS);         /* プロセスを終了する */
+    exit(EXIT_SUCCESS);         /* Terminate the process */
 }
 
 int
@@ -197,51 +204,49 @@ main(int argc, char *argv[])
 
     mqdes = mq_open(argv[1], O_RDONLY);
     if (mqdes == (mqd_t) -1)
-        handle_error(&quot;mq_open&quot;);
+        err(EXIT_FAILURE, &quot;mq_open&quot;);
 
     sev.sigev_notify = SIGEV_THREAD;
     sev.sigev_notify_function = tfunc;
     sev.sigev_notify_attributes = NULL;
-    sev.sigev_value.sival_ptr = &amp;mqdes;   /* スレッド関数に渡す引数 */
+    sev.sigev_value.sival_ptr = &amp;mqdes;   /* Arg. to thread func.  */
     if (mq_notify(mqdes, &amp;sev) == -1)
-        handle_error(&quot;mq_notify&quot;);
+        err(EXIT_FAILURE, &quot;mq_notify&quot;);
 
-    pause();    /* プロセスはスレッド関数により終了される */
+    pause();    /* Process will be terminated by thread function */
 }
 </PRE>
 
-<A NAME="lbAM">&nbsp;</A>
+
+
+<A NAME="lbAO">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/mq_close.3.html">mq_close</A></B>(3), <B><A HREF="../man3/mq_getattr.3.html">mq_getattr</A></B>(3), <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3), <B><A HREF="../man3/mq_receive.3.html">mq_receive</A></B>(3),
-<B><A HREF="../man3/mq_send.3.html">mq_send</A></B>(3), <B><A HREF="../man3/mq_unlink.3.html">mq_unlink</A></B>(3), <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7), <B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7)
-<A NAME="lbAN">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<B><A HREF="../man3/mq_send.3.html">mq_send</A></B>(3), <B><A HREF="../man3/mq_unlink.3.html">mq_unlink</A></B>(3), <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7), <B>sigevent</B>(3type)
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">属性</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">VERSIONS</A><DD>
 <DL>
 <DT><A HREF="#lbAJ">C ライブラリとカーネルの違い</A><DD>
 </DL>
-<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAK">標準規格</A><DD>
+<DT><A HREF="#lbAL">歴史</A><DD>
+<DT><A HREF="#lbAM">例</A><DD>
 <DL>
-<DT><A HREF="#lbAL">プログラムのソース</A><DD>
+<DT><A HREF="#lbAN">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAM">関連項目</A><DD>
-<DT><A HREF="#lbAN">この文書について</A><DD>
+<DT><A HREF="#lbAO">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

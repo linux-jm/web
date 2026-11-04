@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of SYSCALL</TITLE>
+<HTML><HEAD><TITLE>Man page of syscall</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>SYSCALL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<H1>syscall</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-02<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/syscall.2">roff page</A><HR>
 
@@ -16,11 +16,15 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index
 
 syscall - 間接システムコール
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;</B>      /* Definition of <B>SYS_*</B> constants */
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
-<B>#include &lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;   </B>/* SYS_xxx の定義用 */
 
 <B>long syscall(long </B><I>number</I><B>, ...);</B>
 </PRE>
@@ -30,21 +34,17 @@ syscall - 間接システムコール
 
 glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
 
+<P>
+
 <BR>&nbsp;<B>syscall</B>():
+<PRE>
+    Since glibc 2.19:
+        _DEFAULT_SOURCE
+    Before glibc 2.19:
+        _BSD_SOURCE || _SVID_SOURCE
+</PRE>
 
-
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT>glibc 2.19 以降:<DD>
-<BR>&nbsp;_DEFAULT_SOURCE
-<DT>glibc 2.19 より前:<DD>
-<BR>&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
-</DL>
-</DL>
-
-
-
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>syscall</B>() は、システムコールを起動する小さなライブラリ関数で、 <I>number</I>
@@ -57,16 +57,29 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 システムコールのシンボル定数は、ヘッダーファイル <I>&lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;</I> に書かれている。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 返り値は呼び出されたシステムコールによって定義される。 一般に、返り値 0 は成功を表す。 -1 はエラーを表し、エラー番号は <I>errno</I>
 に入れられる。
-<A NAME="lbAF">&nbsp;</A>
-<H2>注意</H2>
+<A NAME="lbAG">&nbsp;</A>
+<H2>エラー</H2>
+
+<DL COMPACT>
+<DT><B>ENOSYS</B><DD>
+The requested system call number is not implemented.
+</DL>
+<P>
+
+Other errors are specific to the invoked system call.
+<A NAME="lbAH">&nbsp;</A>
+<H2>歴史</H2>
 
 <B>syscall</B>()  は 4BSD で最初に登場した。
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
+<H2>注意</H2>
+
+<A NAME="lbAJ">&nbsp;</A>
 <H3>アーキテクチャー固有の要件</H3>
 
 各アーキテクチャーの ABI には、 システムコールの引数のカーネルへの渡し方に関する独自の要件がある。
@@ -134,7 +147,7 @@ shim layer to hide the issue from user space.
 This does not affect syscalls that manually split and assemble 64-bit values
 such as <B><A HREF="../man2/_llseek.2.html">_llseek</A></B>(2), <B><A HREF="../man2/preadv.2.html">preadv</A></B>(2), <B><A HREF="../man2/preadv2.2.html">preadv2</A></B>(2), <B><A HREF="../man2/pwritev.2.html">pwritev</A></B>(2), and
 <B><A HREF="../man2/pwritev2.2.html">pwritev2</A></B>(2).  Welcome to the wonderful world of historical baggage.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>アーキテクチャー毎の呼び出し規約</H3>
 
 各アーキテクチャーには、それぞれ独自のシステムコール起動方法とカーネルへの引数の渡し方がある。 各種のアーキテクチャーの詳細を以下の 2
@@ -159,6 +172,7 @@ and the register used to signal an error.
 <TR VALIGN=top><TD>blackfin&nbsp;&nbsp;</TD><TD>excpt 0x0&nbsp;&nbsp;</TD><TD>P0&nbsp;&nbsp;</TD><TD>R0&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>i386&nbsp;&nbsp;</TD><TD>int $0x80&nbsp;&nbsp;</TD><TD>eax&nbsp;&nbsp;</TD><TD>eax&nbsp;&nbsp;</TD><TD>edx&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>ia64&nbsp;&nbsp;</TD><TD>break 0x100000&nbsp;&nbsp;</TD><TD>r15&nbsp;&nbsp;</TD><TD>r8&nbsp;&nbsp;</TD><TD>r9&nbsp;</TD><TD>r10&nbsp;&nbsp;</TD><TD>1, 6<BR></TD></TR>
+<TR VALIGN=top><TD>loongarch&nbsp;&nbsp;</TD><TD>syscall 0&nbsp;&nbsp;</TD><TD>a7&nbsp;&nbsp;</TD><TD>a0&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>m68k&nbsp;&nbsp;</TD><TD>trap #0&nbsp;&nbsp;</TD><TD>d0&nbsp;&nbsp;</TD><TD>d0&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>microblaze&nbsp;&nbsp;</TD><TD>brki r14,8&nbsp;&nbsp;</TD><TD>r12&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>mips&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>v0&nbsp;&nbsp;</TD><TD>v0&nbsp;&nbsp;</TD><TD>v1&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>1, 6<BR></TD></TR>
@@ -169,12 +183,12 @@ and the register used to signal an error.
 <TR VALIGN=top><TD>riscv&nbsp;&nbsp;</TD><TD>ecall&nbsp;&nbsp;</TD><TD>a7&nbsp;&nbsp;</TD><TD>a0&nbsp;&nbsp;</TD><TD>a1&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>s390&nbsp;&nbsp;</TD><TD>svc 0&nbsp;&nbsp;</TD><TD>r1&nbsp;&nbsp;</TD><TD>r2&nbsp;&nbsp;</TD><TD>r3&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>3<BR></TD></TR>
 <TR VALIGN=top><TD>s390x&nbsp;&nbsp;</TD><TD>svc 0&nbsp;&nbsp;</TD><TD>r1&nbsp;&nbsp;</TD><TD>r2&nbsp;&nbsp;</TD><TD>r3&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>3<BR></TD></TR>
-<TR VALIGN=top><TD>superh&nbsp;&nbsp;</TD><TD>trap #0x17&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>r0&nbsp;&nbsp;</TD><TD>r1&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>4, 6<BR></TD></TR>
+<TR VALIGN=top><TD>superh&nbsp;&nbsp;</TD><TD>trapa #31&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>r0&nbsp;&nbsp;</TD><TD>r1&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>4, 6<BR></TD></TR>
 <TR VALIGN=top><TD>sparc/32&nbsp;&nbsp;</TD><TD>t 0x10&nbsp;&nbsp;</TD><TD>g1&nbsp;&nbsp;</TD><TD>o0&nbsp;&nbsp;</TD><TD>o1&nbsp;</TD><TD>psr/csr&nbsp;&nbsp;</TD><TD>1, 6<BR></TD></TR>
 <TR VALIGN=top><TD>sparc/64&nbsp;&nbsp;</TD><TD>t 0x6d&nbsp;&nbsp;</TD><TD>g1&nbsp;&nbsp;</TD><TD>o0&nbsp;&nbsp;</TD><TD>o1&nbsp;</TD><TD>psr/csr&nbsp;&nbsp;</TD><TD>1, 6<BR></TD></TR>
 <TR VALIGN=top><TD>tile&nbsp;&nbsp;</TD><TD>swint1&nbsp;&nbsp;</TD><TD>R10&nbsp;&nbsp;</TD><TD>R00&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>R01&nbsp;&nbsp;</TD><TD>1<BR></TD></TR>
-<TR VALIGN=top><TD>x86-64&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>rdx&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>5<BR></TD></TR>
-<TR VALIGN=top><TD>x32&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>rdx&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>5<BR></TD></TR>
+<TR VALIGN=top><TD>x86-64&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>eax&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>rdx&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>5<BR></TD></TR>
+<TR VALIGN=top><TD>x32&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>eax&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>rdx&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>5<BR></TD></TR>
 <TR VALIGN=top><TD>xtensa&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 </TABLE>
 
@@ -194,9 +208,8 @@ in field 0 of the condition register (<I>cr0</I>)  is used.
 <DT>[3]<DD>
 s390 と s390x では、 <I>NR</I> (システムコール番号) が 256 未満の場合 <I>svc&nbsp;NR</I> で NR が直接渡される場合がある。
 <DT>[4]<DD>
-On SuperH, the trap number controls the maximum number of arguments passed.
-A <I>trap&nbsp;#0x10</I> can be used with only 0-argument system calls, a <I>trap&nbsp;#0x11</I> can be used with 0- or 1-argument system calls, and so on up to
-<I>trap #0x17</I> for 7-argument system calls.
+On SuperH additional trap numbers are supported for historic reasons, but
+<B>trapa</B>#31 is the recommended &quot;unified&quot; ABI.
 <DT>[5]<DD>
 The x32 ABI shares syscall table with x86-64 ABI, but there are some
 nuances:
@@ -204,7 +217,7 @@ nuances:
 <DL COMPACT>
 <DT>&bull;<DD>
 In order to indicate that a system call is called under the x32 ABI, an
-additional bit, <B>__X32_SYSCALL_BIT</B>, is bitwise-ORed with the system call
+additional bit, <B>__X32_SYSCALL_BIT</B>, is bitwise ORed with the system call
 number.  The ABI used by a process affects some process behaviors, including
 signal handling or system call restarting.
 <DT>&bull;<DD>
@@ -213,8 +226,8 @@ Since x32 has different sizes for <I>long</I> and pointer types, layouts of some
 structures are different.  In order to handle this, additional system calls
 are added to the system call table, starting from number 512 (without the
 <B>__X32_SYSCALL_BIT</B>).  For example, <B>__NR_readv</B> is defined as 19 for the
-x86-64 ABI and as <I>__X32_SYSCALL_BIT</I> | <B>515</B> for the x32 ABI.  Most of
-these additional system calls are actually identical to the system calls
+x86-64 ABI and as <I>__X32_SYSCALL_BIT</I> | 515 for the x32 ABI.  Most
+of these additional system calls are actually identical to the system calls
 used for providing i386 compat.  There are some notable exceptions, however,
 such as <B><A HREF="../man2/preadv2.2.html">preadv2</A></B>(2), which uses <I>struct iovec</I> entities with 4-byte
 pointers and sizes (&quot;compat_iovec&quot; in kernel terms), but passes an 8-byte
@@ -248,6 +261,7 @@ defined in the System V ABI.
 <TR VALIGN=top><TD>blackfin</TD><TD>R0&nbsp;&nbsp;</TD><TD>R1&nbsp;&nbsp;</TD><TD>R2&nbsp;&nbsp;</TD><TD>R3&nbsp;&nbsp;</TD><TD>R4&nbsp;&nbsp;</TD><TD>R5&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>i386</TD><TD>ebx&nbsp;&nbsp;</TD><TD>ecx&nbsp;&nbsp;</TD><TD>edx&nbsp;&nbsp;</TD><TD>esi&nbsp;&nbsp;</TD><TD>edi&nbsp;&nbsp;</TD><TD>ebp&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>ia64</TD><TD>out0&nbsp;&nbsp;</TD><TD>out1&nbsp;&nbsp;</TD><TD>out2&nbsp;&nbsp;</TD><TD>out3&nbsp;&nbsp;</TD><TD>out4&nbsp;&nbsp;</TD><TD>out5&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>loongarch</TD><TD>a0&nbsp;&nbsp;</TD><TD>a1&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>a4&nbsp;&nbsp;</TD><TD>a5&nbsp;&nbsp;</TD><TD>a6&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>m68k</TD><TD>d1&nbsp;&nbsp;</TD><TD>d2&nbsp;&nbsp;</TD><TD>d3&nbsp;&nbsp;</TD><TD>d4&nbsp;&nbsp;</TD><TD>d5&nbsp;&nbsp;</TD><TD>a0&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>microblaze</TD><TD>r5&nbsp;&nbsp;</TD><TD>r6&nbsp;&nbsp;</TD><TD>r7&nbsp;&nbsp;</TD><TD>r8&nbsp;&nbsp;</TD><TD>r9&nbsp;&nbsp;</TD><TD>r10&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>mips/o32</TD><TD>a0&nbsp;&nbsp;</TD><TD>a1&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>1<BR></TD></TR>
@@ -278,54 +292,55 @@ mips/o32 のシステムコールの規約では、 ユーザースタックに�
 </DL>
 <P>
 
-これらの表にはすべての呼び出し規約が記載されているわけではない点に注意すること ---
-アーキテクチャーによっては、ここに記載されていない他のレジスターが見境なく上書きされる場合もある。
-<A NAME="lbAI">&nbsp;</A>
+Note that these tables don't cover the entire calling convention---some
+architectures may indiscriminately clobber other registers not listed here.
+<A NAME="lbAL">&nbsp;</A>
 <H2>例</H2>
+
+
 
 <PRE>
 #define _GNU_SOURCE
-#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 
 int
-main(int argc, char *argv[])
+main(void)
 {
     pid_t tid;
 
-     tid = syscall(SYS_gettid);
+    tid = syscall(SYS_gettid);
     syscall(SYS_tgkill, getpid(), tid, SIGHUP);
 }
 </PRE>
 
-<A NAME="lbAJ">&nbsp;</A>
+
+
+<A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man2/_syscall.2.html">_syscall</A></B>(2), <B><A HREF="../man2/intro.2.html">intro</A></B>(2), <B><A HREF="../man2/syscalls.2.html">syscalls</A></B>(2), <B><A HREF="../man3/errno.3.html">errno</A></B>(3), <B><A HREF="../man7/vdso.7.html">vdso</A></B>(7)
-<A NAME="lbAK">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">注意</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">歴史</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
 <DL>
-<DT><A HREF="#lbAG">アーキテクチャー固有の要件</A><DD>
-<DT><A HREF="#lbAH">アーキテクチャー毎の呼び出し規約</A><DD>
+<DT><A HREF="#lbAJ">アーキテクチャー固有の要件</A><DD>
+<DT><A HREF="#lbAK">アーキテクチャー毎の呼び出し規約</A><DD>
 </DL>
-<DT><A HREF="#lbAI">例</A><DD>
-<DT><A HREF="#lbAJ">関連項目</A><DD>
-<DT><A HREF="#lbAK">この文書について</A><DD>
+<DT><A HREF="#lbAL">例</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

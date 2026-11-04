@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of TRUNCATE</TITLE>
+<HTML><HEAD><TITLE>Man page of truncate</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>TRUNCATE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated:  2019-03-06<BR><A HREF="#index">Index</A>
+<H1>truncate</H1>
+Section: System Calls (2)<BR>Updated: 2026-04-12<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/truncate.2">roff page</A><HR>
 
@@ -16,56 +16,54 @@ Section: Linux Programmer's Manual (2)<BR>Updated:  2019-03-06<BR><A HREF="#inde
 
 truncate, ftruncate - 指定した長さにファイルを切り詰める
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
-<BR>
-
-<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-<P>
 
 <B>int truncate(const char *</B><I>path</I><B>, off_t </B><I>length</I><B>);</B>
-<BR>
-
 <B>int ftruncate(int </B><I>fd</I><B>, off_t </B><I>length</I><B>);</B>
+</PRE>
+
 <P>
 
 
 glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)  参照):
 
-
 <P>
 
 <B>truncate</B>():
-<DL COMPACT><DT><DD>
+<PRE>
 
-
-_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.12&nbsp;以降:&nbsp;*/&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以前:&nbsp;*/&nbsp;_BSD_SOURCE
-</DL>
+    _XOPEN_SOURCE &gt;= 500
+        || /* Since glibc 2.12: */ _POSIX_C_SOURCE &gt;= 200809L
+        || /* glibc &lt;= 2.19: */ _BSD_SOURCE
+</PRE>
 
 <P>
 
 <B>ftruncate</B>():
-<DL COMPACT><DT><DD>
+<PRE>
 
+    _XOPEN_SOURCE &gt;= 500
+        || /* Since glibc 2.3.5: */ _POSIX_C_SOURCE &gt;= 200112L
+        || /* glibc &lt;= 2.19: */ _BSD_SOURCE
+</PRE>
 
-_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.3.5&nbsp;以降:&nbsp;*/&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;glibc&nbsp;2.19&nbsp;以前:&nbsp;*/&nbsp;_BSD_SOURCE
-</DL>
-
-
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>truncate</B>()  は <I>path</I> で指定されるファイルを、 <B>ftruncate</B>()  は <I>fd</I> で参照されるファイルを
 <I>length</I> バイトの長さになるように延長する、もしくは切り詰める。
 <P>
 
-もし切り詰める前のファイルが <I>length</I> より長ければ、length バイトを越える部分のデータは失われる。 もし切り詰める前のファイルが
-<I>length</I> より短かければ、伸張される。 伸張された部分を読んだ場合はヌルバイト ('\0') の列が返される。
+If the file previously was larger than this size, the extra data is lost.
+If the file previously was shorter, it is extended, and the extended part
+reads as null bytes ('\0').
 <P>
 
 ファイルオフセットは変更されない。
@@ -77,11 +75,12 @@ _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
 
 <B>ftruncate</B>()  の場合、ファイルは書き込み用に開いていなければならない。 <B>truncate</B>()
 の場合、ファイルは書き込み可能でなければならない。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
-成功した場合は 0 が返される。エラーの場合は -1 が返され、 <I>errno</I> が適切に設定される。
-<A NAME="lbAF">&nbsp;</A>
+On success, zero is returned.  On error, -1 is returned, and <I>errno</I> is set
+to indicate the error.
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <B>truncate</B>()  では以下のエラーコードが定義されている。
@@ -92,7 +91,10 @@ _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
 <DT><B>EFAULT</B><DD>
 引数 <I>path</I> がプロセスに割り当てられているアドレス空間外を指している。
 <DT><B>EFBIG</B><DD>
-引数 <I>length</I> が最大ファイルサイズより大きい。(XSI)
+The argument <I>length</I> is larger than the maximum file size.  (XSI)
+<DT><B>ENOSPC</B><DD>
+There is not enough space left on the device for extending the file size to
+the given <I>length</I>.
 <DT><B>EINTR</B><DD>
 完了待ちで停止 (block) している間に、呼び出しが シグナルハンドラーにより割り込まれた。 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  と <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
 を参照。
@@ -139,38 +141,8 @@ The file descriptor <I>fd</I> is not open for writing.  POSIX permits, and
 portable applications should handle, either error for this case.  (Linux
 produces <B>EINVAL</B>.)
 </DL>
-<A NAME="lbAG">&nbsp;</A>
-<H2>準拠</H2>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-POSIX.1-2001, POSIX.1-2008, 4.4BSD, SVr4 (これらのコールは 4.2BSD で初めて登場した)。
 <A NAME="lbAH">&nbsp;</A>
-<H2>注意</H2>
-
-<B>ftruncate</B>()  can also be used to set the size of a POSIX shared memory
-object; see <B><A HREF="../man3/shm_open.3.html">shm_open</A></B>(3).
-<P>
+<H2>バージョン</H2>
 
 
 
@@ -185,6 +157,40 @@ XSI 非準拠のシステムの場合、POSIX 標準は <B>ftruncate</B>() に�
 VFAT がある。
 <P>
 
+いくつかの 32 ビットアーキテクチャーでは、これらのシステムコールの呼び出し時のシグネチャーが違っています。理由は <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
+で説明されている通りです。
+<A NAME="lbAI">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2024.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>歴史</H2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<BR>&nbsp;POSIX.1-2001,&nbsp;SVr4,&nbsp;4.3BSD.
+<P>
+
 元々の Linux の <B>truncate</B>() と <B>ftruncate</B>() システムコールは
 大きなファイルオフセットを扱えるように設計されていなかった。
 その結果、大きなファイルファイルを扱うことができる <B>truncate64</B>() と <B>ftruncate64</B>()
@@ -192,11 +198,12 @@ VFAT がある。
 ただし、glibc を使ったアプリケーションではこれらの詳細は気にする必要はない。
 glibc のラッパー関数は新しいシステムコールが利用できる場合にはそれらを利用する
 ようになっているからである。
-<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
 
-いくつかの 32 ビットアーキテクチャーでは、これらのシステムコールの呼び出し時のシグネチャーが違っています。理由は <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
-で説明されている通りです。
-<A NAME="lbAI">&nbsp;</A>
+<B>ftruncate</B>()  can also be used to set the size of a POSIX shared memory
+object; see <B><A HREF="../man3/shm_open.3.html">shm_open</A></B>(3).
+<A NAME="lbAL">&nbsp;</A>
 <H2>バグ</H2>
 
 
@@ -204,30 +211,27 @@ glibc のラッパー関数は新しいシステムコールが利用できる�
 glibc 2.12 のヘッダーファイルにはバグがあり、 <B>ftruncate</B>()  の宣言を公開するのに必要な
 <B>_POSIX_C_SOURCE</B> の最小値が 200112L ではなく 200809L となっていた。 このバグは、これ以降のバージョンの
 glibc では修正されている。
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>
 
 <BR>&nbsp;<B><A HREF="../../GNU_coreutils/man1/truncate.1.html">truncate</A></B>(1),&nbsp;<B><A HREF="../man2/open.2.html">open</A></B>(2),&nbsp;<B><A HREF="../man2/stat.2.html">stat</A></B>(2),&nbsp;<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)
-<A NAME="lbAK">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">準拠</A><DD>
-<DT><A HREF="#lbAH">注意</A><DD>
-<DT><A HREF="#lbAI">バグ</A><DD>
-<DT><A HREF="#lbAJ">関連項目</A><DD>
-<DT><A HREF="#lbAK">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">標準規格</A><DD>
+<DT><A HREF="#lbAJ">歴史</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DT><A HREF="#lbAL">バグ</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

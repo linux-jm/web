@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of GETADDRINFO_A</TITLE>
+<HTML><HEAD><TITLE>Man page of getaddrinfo_a</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>GETADDRINFO_A</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<H1>getaddrinfo_a</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/getaddrinfo_a.3">roff page</A><HR>
 
@@ -16,26 +16,26 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index
 
 getaddrinfo_a, gai_suspend, gai_error, gai_cancel - 非同期のネットワークアドレスとサービスの変換
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+非同期名前検索ライブラリ (<I>libanl</I>,~<I>-lanl</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
 <B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</B>
 
-<B>int getaddrinfo_a(int </B><I>mode</I><B>, struct gaicb *</B><I>list[]</I><B>,</B>
-<B>                int </B><I>nitems</I><B>, struct sigevent *</B><I>sevp</I><B>);</B>
-
-<B>int gai_suspend(const struct gaicb * const </B><I>list[]</I><B>, int </B><I>nitems</I><B>,</B>
-<B>                const struct timespec *</B><I>timeout</I><B>);</B>
+<B>int getaddrinfo_a(int </B><I>mode</I><B>, struct gaicb *</B><I>list</I><B>[restrict </B><I>n</I><B>],</B>
+<B>                  int </B><I>n</I><B>, struct sigevent *restrict </B><I>sevp</I><B>);</B>
+<B>int gai_suspend(const struct gaicb *const </B><I>list</I><B>[</B><I>n</I><B>], int </B><I>n</I><B>,</B>
+<B>                  const struct timespec *</B><I>timeout</I><B>);</B>
 
 <B>int gai_error(struct gaicb *</B><I>req</I><B>);</B>
-
 <B>int gai_cancel(struct gaicb *</B><I>req</I><B>);</B>
-
-<I>-lanl</I> でリンクする。
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>getaddrinfo_a</B>() 関数は <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3) と同じ処理を実行するが、 複数の名前検索を非同期で実行でき、
@@ -51,9 +51,10 @@ getaddrinfo_a, gai_suspend, gai_error, gai_cancel - 非同期のネットワー�
 </DL>
 <P>
 
-配列 <I>list</I> は処理すべき検索要求を指定する。 <I>nitems</I> 引数は <I>list</I> の要素数を指定する。
-要求された検索命令は並列に開始される。 <I>list</I> の NULL 要素は無視される。 各要求は以下のように定義された <I>gaicb</I>
-構造体で規定される。
+The array <I>list</I> specifies the look-up requests to process.  The <I>n</I>
+argument specifies the number of elements in <I>list</I>.  The requested look-up
+operations are started in parallel.  NULL elements in <I>list</I> are ignored.
+Each request is described by a <I>gaicb</I> structure, defined as follows:
 <P>
 
 
@@ -76,9 +77,11 @@ struct gaicb {
 <I>addrinfo</I> 構造体については <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3) に説明がある。
 <P>
 
-<I>mode</I> に <B>GAI_NOWAIT</B> が指定された場合、 解決した要求に関する通知を <I>sevp</I> 引数が指す <I>sigevent</I>
-構造体を使って受け取ることができる。 この構造体の定義と一般的な説明については <B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7) を参照。
-<I>sevp-&gt;sigev_notify</I> フィールドには以下の値を指定できる。
+When <I>mode</I> is specified as <B>GAI_NOWAIT</B>, notifications about resolved
+requests can be obtained by employing the <I>sigevent</I> structure pointed to
+by the <I>sevp</I> argument.  For the definition and general details of this
+structure, see <B>sigevent</B>(3type).  The <I>sevp-&gt;sigev_notify</I> field can
+have the following values:
 <DL COMPACT>
 <DT><B>SIGEV_NONE</B><DD>
 通知は行わない。
@@ -87,11 +90,12 @@ struct gaicb {
 
 
 
-検索が完了した際に、 プロセスに対してシグナル <I>sigev_signo</I> を生成する。 一般的な説明は <B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7) を参照。
-<I>siginfo_t</I> 構造体の <I>si_code</I> フィールドには <B>SI_ASYNCNL</B> がセットされる。
+When a look-up completes, generate the signal <I>sigev_signo</I> for the
+process.  See <B>sigevent</B>(3type)  for general details.  The <I>si_code</I> field
+of the <I>siginfo_t</I> structure will be set to <B>SI_ASYNCNL</B>.
 <DT><B>SIGEV_THREAD</B><DD>
-検索が完了した際に、 <I>sigev_notify_function</I> を新しいスレッドの開始関数であるかのように起動する。 詳細は
-<B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7) を参照。
+When a look-up completes, invoke <I>sigev_notify_function</I> as if it were the
+start function of a new thread.  See <B>sigevent</B>(3type)  for details.
 </DL>
 <P>
 
@@ -99,14 +103,16 @@ struct gaicb {
 <I>list</I> を指すようにしておくと役立つことがある。
 <P>
 
-<B>gai_suspend</B>() 関数は呼び出し元のスレッドの実行を中断し、 配列 <I>list</I> 内の一つ以上の要求が完了するのを待つ。
-<I>nitems</I> 引数は配列 <I>list</I> の大きさを指定する。 呼び出しは以下のいずれかの状況になるまで停止する。
+The <B>gai_suspend</B>()  function suspends execution of the calling thread,
+waiting for the completion of one or more requests in the array <I>list</I>.
+The <I>n</I> argument specifies the size of the array <I>list</I>.  The call blocks
+until one of the following occurs:
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 <I>list</I> 内の一つ以上の操作が完了した。
-<DT>*<DD>
+<DT>&bull;<DD>
 呼び出しが補足されたシグナルに割り込まれた。
-<DT>*<DD>
+<DT>&bull;<DD>
 <I>timeout</I> で指定された期間が経過した。 この引数は、秒とナノ秒でタイムアウトを指定する (<I>timespec</I> 構造体の詳細は
 <B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2) を参照)。 <I>timeout</I> が NULL の場合、 (上記のイベントのいずれかが発生するまで)
 呼び出しは無限に停止する。
@@ -125,7 +131,7 @@ struct gaicb {
 <B>EAI_CANCELED</B> が設定され、 通常の非同期通知が実行される。 要求が現在処理中でキャンセルできない場合もある。 この場合
 <B>gai_cancel</B>() が呼ばれなかったかのように処理が行われる。 <I>req</I> が NULL の場合、
 そのプロセスが行ったすべての処理中の要求をキャンセルしようとする。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 <B>getaddrinfo_a</B>() 関数はすべての要求が正常にキューに追加されると 0 を返す。 または、以下のいずれかの 0
@@ -170,13 +176,15 @@ struct gaicb {
 <P>
 
 <B><A HREF="../man3/gai_strerror.3.html">gai_strerror</A></B>(3) 関数を使うと、 これらのエラーコードを、 エラーレポートに適した人間が読みやすい文字列に翻訳してくれる。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明は <B>attributes</B>(7) を参照のこと。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>getaddrinfo_a</B>(),
 <B>gai_suspend</B>(),
 <B>gai_error</B>(),
@@ -184,20 +192,22 @@ struct gaicb {
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<P>
-<A NAME="lbAG">&nbsp;</A>
-<H2>準拠</H2>
-
-これらの関数は GNU 拡張である。 バージョン 2.2.3 で初めて glibc に登場した。
 <A NAME="lbAH">&nbsp;</A>
-<H2>注意</H2>
+<H2>標準規格</H2>
+
+GNU.
+<A NAME="lbAI">&nbsp;</A>
+<H2>歴史</H2>
+
+glibc 2.2.3.
+<P>
 
 <B>getaddrinfo_a</B>() インターフェースは <B><A HREF="../man3/lio_listio.3.html">lio_listio</A></B>(3) インターフェースの後にモデル化された。
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>例</H2>
 
 ここでは二つの例を示す。 一つは複数の要求を同期処理で並行して解決する例で、 もう一つは非同期機能を使った複雑な例である。
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>同期型の例</H3>
 
 以下のプログラムは単に複数のホスト名の解決を並行で行う。 <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
@@ -206,10 +216,10 @@ struct gaicb {
 
 
 <PRE>
-$ <B>./a.out <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A> enoent.linuxfoundation.org gnu.cz</B>
-<A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A>: 128.30.2.36
+$<B> ./a.out mirrors.kernel.org enoent.linuxfoundation.org gnu.org</B>;
+mirrors.kernel.org: 139.178.88.99
 enoent.linuxfoundation.org: Name or service not known
-gnu.cz: 87.236.197.13
+gnu.org: 209.51.188.116
 </PRE>
 
 
@@ -218,12 +228,17 @@ gnu.cz: 87.236.197.13
 プログラムのソースコードは以下のとおりである。
 <P>
 
+
+
 <PRE>
 #define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+
+#define MALLOC(n, type)  ((type *) reallocarray(NULL, n, sizeof(type)))
 
 int
 main(int argc, char *argv[])
@@ -238,12 +253,11 @@ main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    for (int i = 0; i &lt; argc - 1; i++) {
-        reqs[i] = malloc(sizeof(*reqs[0]));
-        if (reqs[i] == NULL) {
-            perror(&quot;malloc&quot;);
-            exit(EXIT_FAILURE);
-        }
+    for (size_t i = 0; i &lt; argc - 1; i++) {
+        reqs[i] = MALLOC(1, struct gaicb);
+        if (reqs[i] == NULL)
+            err(EXIT_FAILURE, &quot;malloc&quot;);
+
         memset(reqs[i], 0, sizeof(*reqs[0]));
         reqs[i]-&gt;ar_name = argv[i + 1];
     }
@@ -255,15 +269,15 @@ main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    for (int i = 0; i &lt; argc - 1; i++) {
+    for (size_t i = 0; i &lt; argc - 1; i++) {
         printf(&quot;%s: &quot;, reqs[i]-&gt;ar_name);
         ret = gai_error(reqs[i]);
         if (ret == 0) {
             res = reqs[i]-&gt;ar_result;
 
             ret = getnameinfo(res-&gt;ai_addr, res-&gt;ai_addrlen,
-                    host, sizeof(host),
-                    NULL, 0, NI_NUMERICHOST);
+                              host, sizeof(host),
+                              NULL, 0, NI_NUMERICHOST);
             if (ret != 0) {
                 fprintf(stderr, &quot;getnameinfo() failed: %s\n&quot;,
                         gai_strerror(ret));
@@ -279,7 +293,9 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAK">&nbsp;</A>
+
+
+<A NAME="lbAL">&nbsp;</A>
 <H3>非同期型の例</H3>
 
 この例は <B>getaddrinfo_a</B>() の簡単な対話式のフロントエンドである。 通知機能は使っていない。
@@ -290,20 +306,20 @@ main(int argc, char *argv[])
 
 
 <PRE>
-$ <B>./a.out</B>
-&gt; a <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A> enoent.linuxfoundation.org gnu.cz
+$<B> ./a.out</B>;
+&gt; a mirrors.kernel.org enoent.linuxfoundation.org gnu.org
 &gt; c 2
-[2] gnu.cz: Request not canceled
+[2] gnu.org: Request not canceled
 &gt; w 0 1
-[00] <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A>: Finished
+[00] mirrors.kernel.org: Finished
 &gt; l
-[00] <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A>: 216.165.129.139
+[00] mirrors.kernel.org: 139.178.88.99
 [01] enoent.linuxfoundation.org: Processing request in progress
-[02] gnu.cz: 87.236.197.13
+[02] gnu.org: 209.51.188.116
 &gt; l
-[00] <A HREF="ftp://ftp.us.kernel.org">ftp.us.kernel.org</A>: 216.165.129.139
+[00] mirrors.kernel.org: 139.178.88.99
 [01] enoent.linuxfoundation.org: Name or service not known
-[02] gnu.cz: 87.236.197.13
+[02] gnu.org: 209.51.188.116
 </PRE>
 
 
@@ -312,22 +328,47 @@ $ <B>./a.out</B>
 プログラムのソースは以下のとおりである。
 <P>
 
+
+
 <PRE>
 #define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/assert.h">assert.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 
+#define CALLOC(n, type)  ((type *) calloc(n, sizeof(type)))
+
+#define REALLOCF(ptr, n, type)                                          \
+({                                                                      \
+    static_assert(__builtin_types_compatible_p(typeof(ptr), type *));   \
+                                                                        \
+    (type *) reallocarrayf(ptr, n, sizeof(type));                       \
+})
+
 static struct gaicb **reqs = NULL;
-static int nreqs = 0;
+static size_t nreqs = 0;
+
+static inline void *
+reallocarrayf(void *p, size_t n, size_t size)
+{
+    void  *q;
+
+    q = reallocarray(p, n, size);
+    if (q == NULL &amp;&amp; n != 0 &amp;&amp; size != 0)
+        free(p);
+    return q;
+}
 
 static char *
 getcmd(void)
 {
     static char buf[256];
 
-    fputs(&quot;&gt; &quot;, stdout); fflush(stdout);
+    fputs(&quot;&gt; &quot;, stdout);
+    fflush(stdout);
     if (fgets(buf, sizeof(buf), stdin) == NULL)
         return NULL;
 
@@ -337,23 +378,28 @@ getcmd(void)
     return buf;
 }
 
-/* Add requests for specified hostnames */
+/* Add requests for specified hostnames.  */
 static void
 add_requests(void)
 {
-    int nreqs_base = nreqs;
+    size_t nreqs_base = nreqs;
     char *host;
     int ret;
 
     while ((host = strtok(NULL, &quot; &quot;))) {
         nreqs++;
-        reqs = realloc(reqs, sizeof(reqs[0]) * nreqs);
+        reqs = REALLOCF(reqs, nreqs, struct gaicb *);
+        if (reqs == NULL)
+            err(EXIT_FAILURE, &quot;reallocf&quot;);
 
-        reqs[nreqs - 1] = calloc(1, sizeof(*reqs[0]));
+        reqs[nreqs - 1] = CALLOC(1, struct gaicb);
+        if (reqs[nreqs - 1] == NULL)
+            err(EXIT_FAILURE, &quot;calloc&quot;);
+
         reqs[nreqs - 1]-&gt;ar_name = strdup(host);
     }
 
-    /* Queue nreqs_base..nreqs requests. */
+    /* Queue nreqs_base..nreqs requests.  */
 
     ret = getaddrinfo_a(GAI_NOWAIT, &amp;reqs[nreqs_base],
                         nreqs - nreqs_base, NULL);
@@ -364,14 +410,20 @@ add_requests(void)
     }
 }
 
-/* Wait until at least one of specified requests completes */
+/* Wait until at least one of specified requests completes.  */
 static void
 wait_requests(void)
 {
     char *id;
-    int ret, n;
-    struct gaicb const **wait_reqs = calloc(nreqs, sizeof(*wait_reqs));
-                /* NULL elements are ignored by gai_suspend(). */
+    int ret;
+    size_t n;
+    struct gaicb const **wait_reqs;
+
+    wait_reqs = CALLOC(nreqs, const struct gaicb *);
+    if (wait_reqs == NULL)
+        err(EXIT_FAILURE, &quot;calloc&quot;);
+
+                /* NULL elements are ignored by gai_suspend().  */
 
     while ((id = strtok(NULL, &quot; &quot;)) != NULL) {
         n = atoi(id);
@@ -390,7 +442,7 @@ wait_requests(void)
         return;
     }
 
-    for (int i = 0; i &lt; nreqs; i++) {
+    for (size_t i = 0; i &lt; nreqs; i++) {
         if (wait_reqs[i] == NULL)
             continue;
 
@@ -398,17 +450,18 @@ wait_requests(void)
         if (ret == EAI_INPROGRESS)
             continue;
 
-        printf(&quot;[%02d] %s: %s\n&quot;, i, reqs[i]-&gt;ar_name,
+        printf(&quot;[%02zu] %s: %s\n&quot;, i, reqs[i]-&gt;ar_name,
                ret == 0 ? &quot;Finished&quot; : gai_strerror(ret));
     }
 }
 
-/* Cancel specified requests */
+/* Cancel specified requests.  */
 static void
 cancel_requests(void)
 {
     char *id;
-    int ret, n;
+    int ret;
+    size_t n;
 
     while ((id = strtok(NULL, &quot; &quot;)) != NULL) {
         n = atoi(id);
@@ -424,7 +477,7 @@ cancel_requests(void)
     }
 }
 
-/* List all requests */
+/* List all requests.  */
 static void
 list_requests(void)
 {
@@ -432,8 +485,8 @@ list_requests(void)
     char host[NI_MAXHOST];
     struct addrinfo *res;
 
-    for (int i = 0; i &lt; nreqs; i++) {
-        printf(&quot;[%02d] %s: &quot;, i, reqs[i]-&gt;ar_name);
+    for (size_t i = 0; i &lt; nreqs; i++) {
+        printf(&quot;[%02zu] %s: &quot;, i, reqs[i]-&gt;ar_name);
         ret = gai_error(reqs[i]);
 
         if (!ret) {
@@ -455,7 +508,7 @@ list_requests(void)
 }
 
 int
-main(int argc, char *argv[])
+main(void)
 {
     char *cmdline;
     char *cmd;
@@ -489,35 +542,32 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAL">&nbsp;</A>
+
+
+<A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3), <B><A HREF="../man3/inet.3.html">inet</A></B>(3), <B><A HREF="../man3/lio_listio.3.html">lio_listio</A></B>(3), <B><A HREF="../man7/hostname.7.html">hostname</A></B>(7), <B><A HREF="../man7/ip.7.html">ip</A></B>(7),
-<B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7)
-<A NAME="lbAM">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<B>sigevent</B>(3type)
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">属性</A><DD>
-<DT><A HREF="#lbAG">準拠</A><DD>
-<DT><A HREF="#lbAH">注意</A><DD>
-<DT><A HREF="#lbAI">例</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">標準規格</A><DD>
+<DT><A HREF="#lbAI">歴史</A><DD>
+<DT><A HREF="#lbAJ">例</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">同期型の例</A><DD>
-<DT><A HREF="#lbAK">非同期型の例</A><DD>
+<DT><A HREF="#lbAK">同期型の例</A><DD>
+<DT><A HREF="#lbAL">非同期型の例</A><DD>
 </DL>
-<DT><A HREF="#lbAL">関連項目</A><DD>
-<DT><A HREF="#lbAM">この文書について</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

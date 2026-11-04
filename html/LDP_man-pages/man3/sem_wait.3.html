@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of SEM_WAIT</TITLE>
+<HTML><HEAD><TITLE>Man page of sem_wait</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>SEM_WAIT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<H1>sem_wait</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/sem_wait.3">roff page</A><HR>
 
@@ -16,21 +16,21 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index
 
 sem_wait, sem_timedwait, sem_trywait - セマフォをロックする
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+POSIX スレッドライブラリ (<I>libpthread</I>,~<I>-lpthread</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/semaphore.h">semaphore.h</A>&gt;</B>
 
 <B>int sem_wait(sem_t *</B><I>sem</I><B>);</B>
-
 <B>int sem_trywait(sem_t *</B><I>sem</I><B>);</B>
-
-<B>int sem_timedwait(sem_t *</B><I>sem</I><B>, const struct timespec *</B><I>abs_timeout</I><B>);</B>
+<B>int sem_timedwait(sem_t *restrict </B><I>sem</I><B>,</B>
+<B>                  const struct timespec *restrict </B><I>abs_timeout</I><B>);</B>
 </PRE>
 
-<P>
-
-<I>-pthread</I> とリンクする。
 <P>
 
 
@@ -38,8 +38,12 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 
 <P>
 
-<B>sem_timedwait</B>(): _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
-<A NAME="lbAD">&nbsp;</A>
+<B>sem_timedwait</B>():
+<PRE>
+    _POSIX_C_SOURCE &gt;= 200112L
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>sem_wait</B>()  は <I>sem</I> が指すセマフォの値を 1 減らす (ロックする)。 セマフォの値が 0
@@ -51,21 +55,11 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 するのではなくエラーで復帰する (<I>errno</I> に <B>EAGAIN</B> がセットされる) 点が異なる。
 <P>
 
-<B>sem_timedwait</B>()  は <B>sem_wait</B>()  と同じだが、セマフォ値の減算をすぐに実行できなかった場合に
-関数呼び出しが停止する時間の上限を <I>abs_timeout</I> で指定する点が異なる。 <I>abs_timeout</I>
-引数は、タイムアウト時刻を指定する構造体へのポインターである。 この構造体には、タイムアウト時刻を時刻紀元 (Epoch; 1970-01-01
-00:00:00 +0000 (UTC)) からの 経過時間 (秒＋ナノ秒) で指定する。 構造体は以下のように定義されている:
-<P>
-
-
-<PRE>
-struct timespec {
-    time_t tv_sec;      /* Seconds */
-    long   tv_nsec;     /* Nanoseconds [0 .. 999999999] */
-};
-</PRE>
-
-
+<B>sem_timedwait</B>()  is the same as <B>sem_wait</B>(), except that <I>abs_timeout</I>
+specifies a limit on the amount of time that the call should block if the
+decrement cannot be immediately performed.  The <I>abs_timeout</I> argument
+points to a <B>timespec</B>(3)  structure that specifies an absolute timeout in
+seconds and nanoseconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC).
 <P>
 
 関数呼び出し時点ですでにタイムアウトに指定した時刻が過ぎており、 かつセマフォをすぐにロックできなかった場合は、 <B>sem_timedwait</B>()
@@ -74,57 +68,56 @@ struct timespec {
 
 セマフォ操作がすぐに実行できるときは、 <I>abs_timeout</I> がどんな値であっても <B>sem_timedwait</B>()
 が失敗することは決してない。さらにいうと、この場合には <I>abs_timeout</I> の正当性の検査は行われない。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 成功すると、これらの関数は 0 を返す。 エラーの場合、セマフォの値を変更せずに、-1 を返し、 <I>errno</I> にエラーを示す値をセットする。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
+<DT><B>EAGAIN</B><DD>
+(<B>sem_trywait</B>())  The operation could not be performed without blocking
+(i.e., the semaphore currently has the value zero).
 <DT><B>EINTR</B><DD>
 呼び出しはシグナルハンドラーにより中断された。 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)  参照。
 <DT><B>EINVAL</B><DD>
 <I>sem</I> は有効なセマフォではない。
-</DL>
-<P>
-
-<B>sem_trywait</B>()  の場合には、上記に加えて以下のエラーも起こる。
-<DL COMPACT>
-<DT><B>EAGAIN</B><DD>
-停止 (block) せずにロック操作を完了できなかった (つまり、 セマフォの現在の値が 0 であった)。
-</DL>
-<P>
-
-<B>sem_timedwait</B>()  の場合、以下のエラーも起こる。
-<DL COMPACT>
 <DT><B>EINVAL</B><DD>
-<I>abs_timeout.tv_nsecs</I> の値が 0 未満、もしくは 1,000,000,000 以上である。
+(<B>sem_timedwait</B>())  The value of <I>abs_timeout.tv_nsecs</I> is less than 0,
+or greater than or equal to 1000 million.
 <DT><B>ETIMEDOUT</B><DD>
 
 
 
 
-セマフォのロックに成功する前に時間切れとなった。
+(<B>sem_timedwait</B>())  The call timed out before the semaphore could be
+locked.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>sem_wait</B>(),
 <B>sem_trywait</B>(),
 <B>sem_timedwait</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
-
-POSIX.1-2001, POSIX.1-2008.
 <A NAME="lbAI">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>歴史</H2>
+
+POSIX.1-2001.
+<A NAME="lbAK">&nbsp;</A>
 <H2>例</H2>
 
 以下に示す (ちょっとした) プログラムは名前なしセマフォの操作を行う。 プログラムはコマンドライン引数を 2 つ取る。 最初の引数には、
@@ -145,24 +138,25 @@ sem_timedwait() timed out
 </PRE>
 
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
+
+
 <PRE>
-#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/semaphore.h">semaphore.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/semaphore.h">semaphore.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+
 #include &lt;<A HREF="file:///usr/include/assert.h">assert.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
 
 sem_t sem;
-
-#define handle_error(msg) \
-    do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 static void
 handler(int sig)
@@ -188,31 +182,31 @@ main(int argc, char *argv[])
     }
 
     if (sem_init(&amp;sem, 0, 0) == -1)
-        handle_error(&quot;sem_init&quot;);
+        err(EXIT_FAILURE, &quot;sem_init&quot;);
 
-    /* Establish SIGALRM handler; set alarm timer using argv[1] */
+    /* Establish SIGALRM handler; set alarm timer using argv[1].  */
 
     sa.sa_handler = handler;
     sigemptyset(&amp;sa.sa_mask);
     sa.sa_flags = 0;
     if (sigaction(SIGALRM, &amp;sa, NULL) == -1)
-        handle_error(&quot;sigaction&quot;);
+        err(EXIT_FAILURE, &quot;sigaction&quot;);
 
     alarm(atoi(argv[1]));
 
     /* Calculate relative interval as current time plus
-       number of seconds given argv[2] */
+       number of seconds given argv[2].  */
 
     if (clock_gettime(CLOCK_REALTIME, &amp;ts) == -1)
-        handle_error(&quot;clock_gettime&quot;);
+        err(EXIT_FAILURE, &quot;clock_gettime&quot;);
 
     ts.tv_sec += atoi(argv[2]);
 
-    printf(&quot;main() about to call sem_timedwait()\n&quot;);
+    printf(&quot;%s() about to call sem_timedwait()\n&quot;, __func__);
     while ((s = sem_timedwait(&amp;sem, &amp;ts)) == -1 &amp;&amp; errno == EINTR)
-        continue;       /* Restart if interrupted by handler */
+        continue;       /* Restart if interrupted by handler.  */
 
-    /* Check what happened */
+    /* Check what happened.  */
 
     if (s == -1) {
         if (errno == ETIMEDOUT)
@@ -226,34 +220,32 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAK">&nbsp;</A>
+
+
+<A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>
 
-<B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2), <B><A HREF="../man3/sem_getvalue.3.html">sem_getvalue</A></B>(3), <B><A HREF="../man3/sem_post.3.html">sem_post</A></B>(3), <B><A HREF="../man7/sem_overview.7.html">sem_overview</A></B>(7),
-<B><A HREF="../man7/time.7.html">time</A></B>(7)
-<A NAME="lbAL">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2), <B><A HREF="../man3/sem_getvalue.3.html">sem_getvalue</A></B>(3), <B><A HREF="../man3/sem_post.3.html">sem_post</A></B>(3), <B>timespec</B>(3),
+<B><A HREF="../man7/sem_overview.7.html">sem_overview</A></B>(7), <B><A HREF="../man7/time.7.html">time</A></B>(7)
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">属性</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">例</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">標準規格</A><DD>
+<DT><A HREF="#lbAJ">歴史</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">プログラムのソース</A><DD>
+<DT><A HREF="#lbAL">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAK">関連項目</A><DD>
-<DT><A HREF="#lbAL">この文書について</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

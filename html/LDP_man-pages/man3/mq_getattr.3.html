@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of MQ_GETATTR</TITLE>
+<HTML><HEAD><TITLE>Man page of mq_getattr</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>MQ_GETATTR</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<H1>mq_getattr</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/mq_getattr.3">roff page</A><HR>
 
@@ -16,21 +16,21 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index
 
 mq_getattr, mq_setattr - メッセージキューの属性を設定/取得する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+リアルタイムライブラリ (<I>librt</I>,~<I>-lrt</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/mqueue.h">mqueue.h</A>&gt;</B>
 
 <B>int mq_getattr(mqd_t </B><I>mqdes</I><B>, struct mq_attr *</B><I>attr</I><B>);</B>
-
-<B>int mq_setattr(mqd_t </B><I>mqdes</I><B>, const struct mq_attr *</B><I>newattr</I><B>,</B>
-<B>                 struct mq_attr *</B><I>oldattr</I><B>);</B>
+<B>int mq_setattr(mqd_t </B><I>mqdes</I><B>, const struct mq_attr *restrict </B><I>newattr</I><B>,</B>
+<B>               struct mq_attr *restrict </B><I>oldattr</I><B>);</B>
 </PRE>
 
-<P>
-
-<I>-lrt</I> でリンクする。
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>mq_getattr</B>()  と <B>mq_setattr</B>()  は、メッセージキュー記述子 <I>mqdes</I>
@@ -44,10 +44,10 @@ mq_getattr, mq_setattr - メッセージキューの属性を設定/取得する
 
 <PRE>
 struct mq_attr {
-    long mq_flags;       /* フラグ: 0 か O_NONBLOCK */
-    long mq_maxmsg;      /* キューの最大メッセージ数 */
-    long mq_msgsize;     /* 最大メッセージサイズ (バイト単位) */
-    long mq_curmsgs;     /* キューに現在入っているメッセージ数 */
+    long mq_flags;       /* Flags: 0 or O_NONBLOCK */
+    long mq_maxmsg;      /* Max. # of messages on queue */
+    long mq_msgsize;     /* Max. message size (bytes) */
+    long mq_curmsgs;     /* # of messages currently in queue */
 };
 </PRE>
 
@@ -73,12 +73,12 @@ struct mq_attr {
 構造体で与えられた情報を使って、メッセージキューの属性を設定する。 変更することができる属性は、 <I>mq_flags</I> の <B>O_NONBLOCK</B>
 フラグの設定だけである。 <I>newattr</I> の他のフィールドは無視される。 <I>oldattr</I> フィールドが NULL 以外の場合、
 <B>mq_getattr</B>()  が返すのと同じ情報を格納した <I>mq_attr</I> 構造体を <I>oldattr</I> が指すバッファーに入れて返す。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 成功すると、 <I>mq_getattr ()</I> と <I>mq_setattr ()</I> は 0 を返す。エラーの場合、-1 を返し、 <I>errno</I>
 にエラーを示す値を設定する。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
@@ -87,28 +87,34 @@ struct mq_attr {
 <DT><B>EINVAL</B><DD>
 <I>newattr-&gt;mq_flags</I> に <B>O_NONBLOCK</B> 以外のビットがセットされていた。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>mq_getattr</B>(),
 <B>mq_setattr</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
-
-POSIX.1-2001, POSIX.1-2008.
 <A NAME="lbAI">&nbsp;</A>
-<H2>注意</H2>
+<H2>VERSIONS</H2>
 
 Linux では、 <B>mq_getattr</B>()  と <B>mq_setattr</B>()  はライブラリ関数であり、
 <B><A HREF="../man2/mq_getsetattr.2.html">mq_getsetattr</A></B>(2)  システムコールを用いて実装されている。
 <A NAME="lbAJ">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2008.
+<A NAME="lbAK">&nbsp;</A>
+<H2>歴史</H2>
+
+POSIX.1-2001.
+<A NAME="lbAL">&nbsp;</A>
 <H2>例</H2>
 
 下記のプログラムを使うと、 <I>attr</I> 引数に NULL を指定して <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3)
@@ -118,7 +124,7 @@ Linux では、 <B>mq_getattr</B>()  と <B>mq_setattr</B>()  はライブラリ
 
 
 <PRE>
-$ <B>./a.out /testq</B>
+$<B> ./a.out /testq</B>;
 Maximum # of messages on queue:   10
 Maximum message size:             8192
 </PRE>
@@ -132,29 +138,29 @@ Linux 3.5 以降では、 (<B><A HREF="../man7/mq_overview.7.html">mq_overview</
 
 
 <PRE>
-$ <B>uname -sr</B>
+$<B> uname -sr</B>;
 Linux 3.8.0
-$ <B>cat /proc/sys/fs/mqueue/msg_default</B>
+$<B> cat /proc/sys/fs/mqueue/msg_default</B>;
 10
-$ <B>cat /proc/sys/fs/mqueue/msgsize_default</B>
+$<B> cat /proc/sys/fs/mqueue/msgsize_default</B>;
 8192
 </PRE>
 
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
+
+
 <PRE>
-#include &lt;<A HREF="file:///usr/include/mqueue.h">mqueue.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/mqueue.h">mqueue.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-
-#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-                        } while (0)
 
 int
 main(int argc, char *argv[])
@@ -167,52 +173,50 @@ main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    mqd = mq_open(argv[1], O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, NULL);
+    mqd = mq_open(argv[1], O_CREAT | O_EXCL, 0600, NULL);
     if (mqd == (mqd_t) -1)
-        errExit(&quot;mq_open&quot;);
+        err(EXIT_FAILURE, &quot;mq_open&quot;);
 
     if (mq_getattr(mqd, &amp;attr) == -1)
-        errExit(&quot;mq_getattr&quot;);
+        err(EXIT_FAILURE, &quot;mq_getattr&quot;);
 
     printf(&quot;Maximum # of messages on queue:   %ld\n&quot;, attr.mq_maxmsg);
     printf(&quot;Maximum message size:             %ld\n&quot;, attr.mq_msgsize);
 
     if (mq_unlink(argv[1]) == -1)
-        errExit(&quot;mq_unlink&quot;);
+        err(EXIT_FAILURE, &quot;mq_unlink&quot;);
 
     exit(EXIT_SUCCESS);
 }
 </PRE>
 
-<A NAME="lbAL">&nbsp;</A>
+
+
+<A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/mq_close.3.html">mq_close</A></B>(3), <B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3), <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3), <B><A HREF="../man3/mq_receive.3.html">mq_receive</A></B>(3),
 <B><A HREF="../man3/mq_send.3.html">mq_send</A></B>(3), <B><A HREF="../man3/mq_unlink.3.html">mq_unlink</A></B>(3), <B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7)
-<A NAME="lbAM">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">属性</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">注意</A><DD>
-<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">VERSIONS</A><DD>
+<DT><A HREF="#lbAJ">標準規格</A><DD>
+<DT><A HREF="#lbAK">歴史</A><DD>
+<DT><A HREF="#lbAL">例</A><DD>
 <DL>
-<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+<DT><A HREF="#lbAM">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAL">関連項目</A><DD>
-<DT><A HREF="#lbAM">この文書について</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

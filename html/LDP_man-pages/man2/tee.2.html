@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of TEE</TITLE>
+<HTML><HEAD><TITLE>Man page of tee</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>TEE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<H1>tee</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/tee.2">roff page</A><HR>
 
@@ -16,18 +16,22 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index
 
 tee - パイプの中身を複製する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
 <B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
 
-<B>ssize_t tee(int </B><I>fd_in</I><B>, int </B><I>fd_out</I><B>, size_t </B><I>len</I><B>, unsigned int </B><I>flags</I><B>);</B>
+<B>ssize_t tee(int </B><I>fd_in</I><B>, int </B><I>fd_out</I><B>, size_t </B><I>size</I><B>, unsigned int </B><I>flags</I><B>);</B>
 </PRE>
 
 
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 
@@ -42,9 +46,10 @@ tee - パイプの中身を複製する
 
 
 
-<B>tee</B>()  は、ファイルディスクリプター <I>fd_in</I> が参照するパイプからファイルディスクリプター <I>fd_out</I>
-が参照するパイプへ最大 <I>len</I> バイトのデータを複製する。 この操作では、複製されるデータは <I>fd_in</I>
-からは消費されない。したがって、これらのデータをこの後の <B><A HREF="../man2/splice.2.html">splice</A></B>(2)  でコピーすることができる。
+<B>tee</B>()  duplicates up to <I>size</I> bytes of data from the pipe referred to
+by the file descriptor <I>fd_in</I> to the pipe referred to by the file
+descriptor <I>fd_out</I>.  It does not consume the data that is duplicated from
+<I>fd_in</I>; therefore, that data can be copied by a subsequent <B><A HREF="../man2/splice.2.html">splice</A></B>(2).
 <P>
 
 <I>flags</I> is a bit mask that is composed by ORing together zero or more of
@@ -59,7 +64,7 @@ the following values:
 <DT><B>SPLICE_F_GIFT</B><DD>
 <B>tee</B>()  では未使用。 <B><A HREF="../man2/vmsplice.2.html">vmsplice</A></B>(2)  参照。
 </DL>
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 成功して完了すると、 <B>tee</B>()  は入出力間で複製されたバイト数を返す。 返り値 0 はデータの転送が行われなかったことを示す。
@@ -68,7 +73,7 @@ the following values:
 <P>
 
 エラーの場合、 <B>tee</B>()  は -1 を返し、 <I>errno</I> にエラーを示す値を設定する。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
@@ -82,21 +87,20 @@ operation would block.
 <DT><B>ENOMEM</B><DD>
 メモリー不足。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
-<H2>バージョン</H2>
-
-<B>tee</B>() システムコールは Linux 2.6.17 で初めて登場した。
-ライブラリによるサポートは glibc バージョン 2.5 で追加された。
 <A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
+<H2>標準規格</H2>
 
-このシステムコールは Linux 固有である。
+Linux.
 <A NAME="lbAI">&nbsp;</A>
+<H2>歴史</H2>
+
+Linux 2.6.17, glibc 2.5.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>注意</H2>
 
 概念としては、 <B>tee</B>()  は二つのパイプ間でデータのコピーを行う。 しかし、実際には実データのコピーは行われない。 内部では、
 <B>tee</B>()  は入力側に対する参照だけを作成することで出力側にデータを 追加する。
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>例</H2>
 
 以下の例は、 <B>tee</B>()  システムコールを使って、 基本的な <B><A HREF="../../0MultiFileIdx/man1/tee.1.html">tee</A></B>(1)  プログラムを実装したものである。 以下は利用例である。
@@ -104,31 +108,34 @@ operation would block.
 
 
 <PRE>
-$ <B>date |./a.out out.log | cat</B>
+$<B> date | ./a.out out.log | cat</B>;
 Tue Oct 28 10:06:00 CET 2014
-$ <B>cat out.log</B>
+$<B> cat out.log</B>;
 Tue Oct 28 10:06:00 CET 2014
 </PRE>
 
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>プログラムのソース</H3>
+
+
 
 
 <PRE>
 #define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;
 
 int
 main(int argc, char *argv[])
 {
-    int fd;
-    int len, slen;
+    int      fd;
+    ssize_t  size, ssize;
 
     if (argc != 2) {
         fprintf(stderr, &quot;Usage: %s &lt;file&gt;\n&quot;, argv[0]);
@@ -141,69 +148,65 @@ main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    do {
+    for (;;) {
         /*
          * tee stdin to stdout.
          */
-        len = tee(STDIN_FILENO, STDOUT_FILENO,
+        size = tee(STDIN_FILENO, STDOUT_FILENO,
                   INT_MAX, SPLICE_F_NONBLOCK);
-
-        if (len &lt; 0) {
+        if (size &lt; 0) {
             if (errno == EAGAIN)
                 continue;
             perror(&quot;tee&quot;);
             exit(EXIT_FAILURE);
-        } else
-            if (len == 0)
-                break;
+        }
+        if (size == 0)
+            break;
 
         /*
          * Consume stdin by splicing it to a file.
          */
-        while (len &gt; 0) {
-            slen = splice(STDIN_FILENO, NULL, fd, NULL,
-                          len, SPLICE_F_MOVE);
-            if (slen &lt; 0) {
+        while (size &gt; 0) {
+            ssize = splice(STDIN_FILENO, NULL, fd, NULL,
+                          size, SPLICE_F_MOVE);
+            if (ssize &lt; 0) {
                 perror(&quot;splice&quot;);
-                break;
+                exit(EXIT_FAILURE);
             }
-            len -= slen;
+            size -= ssize;
         }
-    } while (1);
+    }
 
     close(fd);
     exit(EXIT_SUCCESS);
 }
 </PRE>
 
-<A NAME="lbAL">&nbsp;</A>
+
+
+<A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man2/splice.2.html">splice</A></B>(2), <B><A HREF="../man2/vmsplice.2.html">vmsplice</A></B>(2), <B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)
-<A NAME="lbAM">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">バージョン</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">注意</A><DD>
-<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">標準規格</A><DD>
+<DT><A HREF="#lbAI">歴史</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
 <DL>
-<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+<DT><A HREF="#lbAL">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAL">関連項目</A><DD>
-<DT><A HREF="#lbAM">この文書について</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

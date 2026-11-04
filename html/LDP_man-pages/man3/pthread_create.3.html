@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of PTHREAD_CREATE</TITLE>
+<HTML><HEAD><TITLE>Man page of pthread_create</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>PTHREAD_CREATE</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<H1>pthread_create</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-10<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/pthread_create.3">roff page</A><HR>
 
@@ -16,19 +16,22 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index
 
 pthread_create - 新しいスレッドを作成する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+POSIX スレッドライブラリ (<I>libpthread</I>,~<I>-lpthread</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
 
-<B>int pthread_create(pthread_t *</B><I>thread</I><B>, const pthread_attr_t *</B><I>attr</I><B>,</B>
-<B>                   void *(*</B><I>start_routine</I><B>) (void *), void *</B><I>arg</I><B>);</B>
+<B>int pthread_create(pthread_t *restrict </B><I>thread</I><B>,</B>
+<B>                   const pthread_attr_t *_Nullable restrict </B><I>attr</I><B>,</B>
+<B>                   typeof(void *(void *_Nullable)) *</B><I>start_routine</I><B>,</B>
+<B>                   void *_Nullable restrict </B><I>arg</I><B>);</B>
 </PRE>
 
-<P>
-
-<I>-pthread</I> を付けてコンパイルとリンクを行う。
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>pthread_create</B>() 関数は、呼び出したプロセス内に新しいスレッドを作成する。
@@ -39,17 +42,17 @@ pthread_create - 新しいスレッドを作成する
 
 新しく作成されたスレッドは、以下のいずれかで終了する。
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 スレッドが <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3) を呼び出す。
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3) を呼び出す際には終了ステータス値を指定する。
 この値は <B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3) を呼び出した同じプロセス内の
 別のスレッドで参照できる。
-<DT>*<DD>
+<DT>&bull;<DD>
 スレッドが <I>start_routine</I>() から返る。これは、
 <I>return</I> 文に渡した値で <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3) を呼び出すのと等価である。
-<DT>*<DD>
+<DT>&bull;<DD>
 スレッドがキャンセルされる (<B><A HREF="../man3/pthread_cancel.3.html">pthread_cancel</A></B>(3) 参照)。
-<DT>*<DD>
+<DT>&bull;<DD>
 プロセス内のいずれかのスレッドで <B><A HREF="../man3/exit.3.html">exit</A></B>(3) が呼ばれるか、
 メインスレッドで <I>main</I>() 内で return が実行される。
 この場合は、プロセス内の全てのスレッドが終了される。
@@ -83,19 +86,19 @@ pthreads 関数の呼び出しでスレッドを参照するのに使用され�
 
 新しいスレッドの CPU 時間時計の初期値は 0 である
 (<B><A HREF="../man3/pthread_getcpuclockid.3.html">pthread_getcpuclockid</A></B>(3) 参照)。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H3>Linux 固有の詳細</H3>
 
 新しいスレッドは、呼び出したスレッドの
 ケーパビリティセット (<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7) 参照) と
 CPU affinity マスク (<B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2) 参照) の
 コピーをを継承しない。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>返り値</H2>
 
 成功すると、 <B>pthread_create</B>() は 0 を返す。
 エラーの場合は、エラー番号が返され、 <I>*thread</I> の内容は不定である。
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
@@ -115,31 +118,34 @@ CPU affinity マスク (<B><A HREF="../man2/sched_setaffinity.2.html">sched_seta
 <I>attr</I> に指定されたスケジューリングポリシーとパラメーターを
 設定する許可がない。
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>pthread_create</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<P>
-<A NAME="lbAI">&nbsp;</A>
-<H2>準拠</H2>
-
-POSIX.1-2001, POSIX.1-2008.
 <A NAME="lbAJ">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2008.
+<A NAME="lbAK">&nbsp;</A>
+<H2>歴史</H2>
+
+POSIX.1-2001.
+<A NAME="lbAL">&nbsp;</A>
 <H2>注意</H2>
 
-<B>pthread_create</B>() が <I>*thread</I> で返すスレッド ID についての
-詳しい情報は <B><A HREF="../man3/pthread_self.3.html">pthread_self</A></B>(3) を参照のこと。
-リアルタイムスケジューリングポリシーが使用されない限り、
-<B>pthread_create</B>() の呼び出し後に、
-どのスレッドが---呼び出したスレッドか新しいスレッドか---
-次に実行されるかは決まっていない。
+See <B><A HREF="../man3/pthread_self.3.html">pthread_self</A></B>(3)  for further information on the thread ID returned in
+<I>*thread</I> by <B>pthread_create</B>().  Unless real-time scheduling policies are
+being employed, after a call to <B>pthread_create</B>(), it is indeterminate
+which thread---the caller or the new thread---will next execute.
 <P>
 
 スレッドは <I>join 可能</I>か <I>detached (切り離された状態)</I> のどちらかに
@@ -165,29 +171,15 @@ Using <B><A HREF="../man3/pthread_attr_setstacksize.3.html">pthread_attr_setstac
 explicitly set in the <I>attr</I> argument used to create a thread, in order to
 obtain a stack size other than the default.  If the <B>RLIMIT_STACK</B> resource
 limit is set to &quot;unlimited&quot;, a per-architecture value is used for the stack
-size.  Here is the value for a few architectures:
-<DL COMPACT><DT><DD>
-<TABLE BORDER>
-<TR VALIGN=top><TD><B>Architecture</B></TD><TD><B>Default stack size</B><BR></TD></TR>
-<TR VALIGN=top><TD>i386</TD><TD ALIGN=right>2 MB<BR></TD></TR>
-<TR VALIGN=top><TD>IA-64</TD><TD ALIGN=right>32 MB<BR></TD></TR>
-<TR VALIGN=top><TD>PowerPC</TD><TD ALIGN=right>4 MB<BR></TD></TR>
-<TR VALIGN=top><TD>S/390</TD><TD ALIGN=right>2 MB<BR></TD></TR>
-<TR VALIGN=top><TD>Sparc-32</TD><TD ALIGN=right>2 MB<BR></TD></TR>
-<TR VALIGN=top><TD>Sparc-64</TD><TD ALIGN=right>4 MB<BR></TD></TR>
-<TR VALIGN=top><TD>x86_64</TD><TD ALIGN=right>2 MB<BR></TD></TR>
-</TABLE>
-
-</DL>
-
-<A NAME="lbAK">&nbsp;</A>
+size: 2 MB on most architectures; 4 MB on POWER and Sparc-64.
+<A NAME="lbAM">&nbsp;</A>
 <H2>バグ</H2>
 
 廃止予定の LinuxThreads 実装では、プロセス内の各スレッドは異なる
 プロセス ID を持つ。これは POSIX スレッドの規格に違反しており、
 他の多くの標準非準拠の点の原因になっている。
 <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7) を参照のこと。
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>例</H2>
 
 以下のプログラムは、 <B>pthread_create</B>() や
@@ -231,24 +223,21 @@ Joined with thread 3; returned value was SERVUS
 </PRE>
 
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
+
+
 <PRE>
+#include &lt;<A HREF="file:///usr/include/ctype.h">ctype.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/ctype.h">ctype.h</A>&gt;
-
-#define handle_error_en(en, msg) \
-        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
-
-#define handle_error(msg) \
-        do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 struct thread_info {    /* Used as argument to thread_start() */
     pthread_t thread_id;        /* ID returned by pthread_create() */
@@ -257,7 +246,7 @@ struct thread_info {    /* Used as argument to thread_start() */
 };
 
 /* Thread start function: display address near top of our stack,
-   and return upper-cased copy of argv_string */
+   and return upper-cased copy of argv_string.  */
 
 static void *
 thread_start(void *arg)
@@ -266,11 +255,11 @@ thread_start(void *arg)
     char *uargv;
 
     printf(&quot;Thread %d: top of stack near %p; argv_string=%s\n&quot;,
-            tinfo-&gt;thread_num, &amp;p, tinfo-&gt;argv_string);
+           tinfo-&gt;thread_num, (void *) &amp;tinfo, tinfo-&gt;argv_string);
 
     uargv = strdup(tinfo-&gt;argv_string);
     if (uargv == NULL)
-        handle_error(&quot;strdup&quot;);
+        err(EXIT_FAILURE, &quot;strdup&quot;);
 
     for (char *p = uargv; *p != '\0'; p++)
         *p = toupper(*p);
@@ -281,12 +270,14 @@ thread_start(void *arg)
 int
 main(int argc, char *argv[])
 {
-    int s, opt, num_threads;
-    pthread_attr_t attr;
-    size_t stack_size;
-    void *res;
+    int                 s, opt;
+    void                *res;
+    size_t              num_threads;
+    ssize_t             stack_size;
+    pthread_attr_t      attr;
+    struct thread_info  *tinfo;
 
-    /* The &quot;-s&quot; option specifies a stack size for our threads */
+    /* The &quot;-s&quot; option specifies a stack size for our threads.  */
 
     stack_size = -1;
     while ((opt = getopt(argc, argv, &quot;s:&quot;)) != -1) {
@@ -304,55 +295,55 @@ main(int argc, char *argv[])
 
     num_threads = argc - optind;
 
-    /* Initialize thread creation attributes */
+    /* Initialize thread creation attributes.  */
 
     s = pthread_attr_init(&amp;attr);
     if (s != 0)
-        handle_error_en(s, &quot;pthread_attr_init&quot;);
+        errc(EXIT_FAILURE, s, &quot;pthread_attr_init&quot;);
 
     if (stack_size &gt; 0) {
         s = pthread_attr_setstacksize(&amp;attr, stack_size);
         if (s != 0)
-            handle_error_en(s, &quot;pthread_attr_setstacksize&quot;);
+            errc(EXIT_FAILURE, s, &quot;pthread_attr_setstacksize&quot;);
     }
 
-    /* Allocate memory for pthread_create() arguments */
+    /* Allocate memory for pthread_create() arguments.  */
 
-    struct thread_info *tinfo = calloc(num_threads, sizeof(*tinfo));
+    tinfo = calloc(num_threads, sizeof(*tinfo));
     if (tinfo == NULL)
-        handle_error(&quot;calloc&quot;);
+        err(EXIT_FAILURE, &quot;calloc&quot;);
 
-    /* Create one thread for each command-line argument */
+    /* Create one thread for each command-line argument.  */
 
-    for (int tnum = 0; tnum &lt; num_threads; tnum++) {
+    for (size_t tnum = 0; tnum &lt; num_threads; tnum++) {
         tinfo[tnum].thread_num = tnum + 1;
         tinfo[tnum].argv_string = argv[optind + tnum];
 
         /* The pthread_create() call stores the thread ID into
-           corresponding element of tinfo[] */
+           corresponding element of tinfo[].  */
 
         s = pthread_create(&amp;tinfo[tnum].thread_id, &amp;attr,
                            &amp;thread_start, &amp;tinfo[tnum]);
         if (s != 0)
-            handle_error_en(s, &quot;pthread_create&quot;);
+            errc(EXIT_FAILURE, s, &quot;pthread_create&quot;);
     }
 
     /* Destroy the thread attributes object, since it is no
-       longer needed */
+       longer needed.  */
 
     s = pthread_attr_destroy(&amp;attr);
     if (s != 0)
-        handle_error_en(s, &quot;pthread_attr_destroy&quot;);
+        errc(EXIT_FAILURE, s, &quot;pthread_attr_destroy&quot;);
 
-    /* Now join with each thread, and display its returned value */
+    /* Now join with each thread, and display its returned value.  */
 
-    for (int tnum = 0; tnum &lt; num_threads; tnum++) {
+    for (size_t tnum = 0; tnum &lt; num_threads; tnum++) {
         s = pthread_join(tinfo[tnum].thread_id, &amp;res);
         if (s != 0)
-            handle_error_en(s, &quot;pthread_join&quot;);
+            errc(EXIT_FAILURE, s, &quot;pthread_join&quot;);
 
         printf(&quot;Joined with thread %d; returned value was %s\n&quot;,
-                tinfo[tnum].thread_num, (char *) res);
+               tinfo[tnum].thread_num, (char *) res);
         free(res);      /* Free memory allocated by thread */
     }
 
@@ -361,7 +352,9 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAN">&nbsp;</A>
+
+
+<A NAME="lbAP">&nbsp;</A>
 <H2>関連項目</H2>
 
 
@@ -370,34 +363,30 @@ main(int argc, char *argv[])
 <B><A HREF="../man3/pthread_detach.3.html">pthread_detach</A></B>(3), <B><A HREF="../man3/pthread_equal.3.html">pthread_equal</A></B>(3), <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3),
 <B><A HREF="../man3/pthread_getattr_np.3.html">pthread_getattr_np</A></B>(3), <B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3), <B><A HREF="../man3/pthread_self.3.html">pthread_self</A></B>(3),
 <B>pthread_setattr_default_np</B>(3), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
-<A NAME="lbAO">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
 <DL>
-<DT><A HREF="#lbAE">Linux 固有の詳細</A><DD>
+<DT><A HREF="#lbAF">Linux 固有の詳細</A><DD>
 </DL>
-<DT><A HREF="#lbAF">返り値</A><DD>
-<DT><A HREF="#lbAG">エラー</A><DD>
-<DT><A HREF="#lbAH">属性</A><DD>
-<DT><A HREF="#lbAI">準拠</A><DD>
-<DT><A HREF="#lbAJ">注意</A><DD>
-<DT><A HREF="#lbAK">バグ</A><DD>
-<DT><A HREF="#lbAL">例</A><DD>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">属性</A><DD>
+<DT><A HREF="#lbAJ">標準規格</A><DD>
+<DT><A HREF="#lbAK">歴史</A><DD>
+<DT><A HREF="#lbAL">注意</A><DD>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">例</A><DD>
 <DL>
-<DT><A HREF="#lbAM">プログラムのソース</A><DD>
+<DT><A HREF="#lbAO">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAN">関連項目</A><DD>
-<DT><A HREF="#lbAO">この文書について</A><DD>
+<DT><A HREF="#lbAP">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of GETIFADDRS</TITLE>
+<HTML><HEAD><TITLE>Man page of getifaddrs</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>GETIFADDRS</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<H1>getifaddrs</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/getifaddrs.3">roff page</A><HR>
 
@@ -16,6 +16,10 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index
 
 getifaddrs, freeifaddrs - インターフェースのアドレスを取得する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
@@ -23,11 +27,10 @@ getifaddrs, freeifaddrs - インターフェースのアドレスを取得する
 <B>#include &lt;<A HREF="file:///usr/include/ifaddrs.h">ifaddrs.h</A>&gt;</B>
 
 <B>int getifaddrs(struct ifaddrs **</B><I>ifap</I><B>);</B>
-
 <B>void freeifaddrs(struct ifaddrs *</B><I>ifa</I><B>);</B>
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>getifaddrs</B>() 関数は、ローカルシステムのネットワークインターフェース情報を表す構造体の連結リストを作成し、
@@ -93,22 +96,17 @@ struct ifaddrs {
 <P>
 
 <B>getifaddrs</B>() が返すデータは動的に確保される。 必要なくなった際には <B>freeifaddrs</B>() を使って解放すべきである。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
-成功すると、 <B>getifaddrs</B> は 0 を返す。 エラーの場合、 -1 が返り、 <I>errno</I> が適切に設定される。
-<A NAME="lbAF">&nbsp;</A>
+On success, <B>getifaddrs</B>()  returns zero; on error, -1 is returned, and
+<I>errno</I> is set to indicate the error.
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <B>getifaddrs</B>() は失敗する場合があり、その場合には <I>errno</I> には <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man2/bind.2.html">bind</A></B>(2),
 <B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2), <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2), <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2), <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3), <B><A HREF="../man3/realloc.3.html">realloc</A></B>(3)
 に対して規定されているエラーのいずれかが設定される。
-<A NAME="lbAG">&nbsp;</A>
-<H2>バージョン</H2>
-
-<B>getifaddrs</B>() 関数は glibc 2.3 で初めて登場したが、 glibc 2.3.3 より前のバージョンの実装では IPv4
-アドレスだけがサポートされていた。 IPv6 のサポートは glibc 2.3.3 で追加された。 IPv4 以外のアドレスファミリーが
-<B>getifaddrs</B> で利用できるのは、 netlink をサポートするカーネルの場合だけである。
 <A NAME="lbAH">&nbsp;</A>
 <H2>属性</H2>
 
@@ -116,29 +114,42 @@ struct ifaddrs {
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>getifaddrs</B>(),
 <B>freeifaddrs</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<P>
 <A NAME="lbAI">&nbsp;</A>
-<H2>準拠</H2>
+<H2>標準規格</H2>
 
-
-
-
-
-
-
-
-
-POSIX.1 にはない。 この関数は BSDi で初めて登場し、 BSD 系のシステムに存在するが、
-ドキュメント上はかなり動作が異なり、アドレス毎ではなくインターフェース毎に 1 エントリーを返す。 このことは、
-インターフェースがアドレスを持たない場合には <I>ifa_addr</I> や他のフィールドは実際に NULL になり、 インターフェースに IP
-アドレスが割り当てられている場合には リンクレベルのアドレスは返されない、ということを意味する。 また、 <I>ifa_broadaddr</I> と
-<I>ifa_dstaddr</I> のどちらを選択するかを決める方法は、 システムにより異なる。
+None.
 <A NAME="lbAJ">&nbsp;</A>
+<H2>歴史</H2>
+
+
+
+
+
+
+
+
+
+This function first appeared in BSDi and is present on the BSD systems, but
+with slightly different semantics documented---returning one entry per
+interface, not per address.  This means <I>ifa_addr</I> and other fields can
+actually be NULL if the interface has no address, and no link-level address
+is returned if the interface has an IP address assigned.  Also, the way of
+choosing either <I>ifa_broadaddr</I> or <I>ifa_dstaddr</I> differs on various
+systems.
+<P>
+
+<B>getifaddrs</B>()  first appeared in glibc 2.3, but before glibc 2.3.3, the
+implementation supported only IPv4 addresses; IPv6 support was added in
+glibc 2.3.3.  Support of address families other than IPv4 is available only
+on kernels that support netlink.
+<A NAME="lbAK">&nbsp;</A>
 <H2>注意</H2>
 
 Linux では、 返されるアドレスは通常インターフェースに割り当てられた IPv4 アドレスと IPv6 アドレスになるが、
@@ -147,7 +158,7 @@ Linux では、 返されるアドレスは通常インターフェースに割�
 <I>&lt;<A HREF="file:///usr/include/linux/if_link.h">linux/if_link.h</A>&gt;</I> で定義される <I>struct rtnl_link_stats</I> (Linux 2.4
 以前では <I>&lt;<A HREF="file:///usr/include/linux/netdevice.h">linux/netdevice.h</A>&gt;</I> で定義される <I>struct net_device_stats</I>)
 へのポインターが格納される。 この構造体には、インターフェースの様々な属性や統計情報が入る。
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>例</H2>
 
 以下のプログラムは <B>getifaddrs</B>(), <B>freeifaddrs</B>(), <B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3) の使用例である。
@@ -156,7 +167,7 @@ Linux では、 返されるアドレスは通常インターフェースに割�
 
 
 <PRE>
-$ <B>./a.out</B>
+$<B> ./a.out</B>;
 lo       AF_PACKET (17)
                 tx_packets =        524; rx_packets =        524
                 tx_bytes   =      38788; rx_bytes   =      38788
@@ -177,7 +188,7 @@ wlp3s0   AF_INET6 (10)
 </PRE>
 
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
@@ -204,7 +215,7 @@ int main(int argc, char *argv[])
     }
 
     /* Walk through linked list, maintaining head pointer so we
-       can free list later */
+       can free list later.  */
 
     for (struct ifaddrs *ifa = ifaddr; ifa != NULL;
              ifa = ifa-&gt;ifa_next) {
@@ -214,7 +225,7 @@ int main(int argc, char *argv[])
         family = ifa-&gt;ifa_addr-&gt;sa_family;
 
         /* Display interface name and family (including symbolic
-           form of the latter for the common families) */
+           form of the latter for the common families).  */
 
         printf(&quot;%-8s %s (%d)\n&quot;,
                ifa-&gt;ifa_name,
@@ -223,7 +234,7 @@ int main(int argc, char *argv[])
                (family == AF_INET6) ? &quot;AF_INET6&quot; : &quot;???&quot;,
                family);
 
-        /* For an AF_INET* interface address, display the address */
+        /* For an AF_INET* interface address, display the address.  */
 
         if (family == AF_INET || family == AF_INET6) {
             s = getnameinfo(ifa-&gt;ifa_addr,
@@ -253,35 +264,30 @@ int main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2), <B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2), <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man7/packet.7.html">packet</A></B>(7), <B><A HREF="../../net-tools/man8/ifconfig.8.html">ifconfig</A></B>(8)
-<A NAME="lbAN">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
 <DT><A HREF="#lbAH">属性</A><DD>
-<DT><A HREF="#lbAI">準拠</A><DD>
-<DT><A HREF="#lbAJ">注意</A><DD>
-<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAI">標準規格</A><DD>
+<DT><A HREF="#lbAJ">歴史</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DT><A HREF="#lbAL">例</A><DD>
 <DL>
-<DT><A HREF="#lbAL">プログラムのソース</A><DD>
+<DT><A HREF="#lbAM">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAM">関連項目</A><DD>
-<DT><A HREF="#lbAN">この文書について</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of SEND</TITLE>
+<HTML><HEAD><TITLE>Man page of send</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>SEND</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<H1>send</H1>
+Section: System Calls (2)<BR>Updated: 2025-10-29<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/send.2">roff page</A><HR>
 
@@ -16,21 +16,24 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index
 
 send, sendto, sendmsg - ソケットへメッセージを送る
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
-<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
 <B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
 
-<B>ssize_t send(int </B><I>sockfd</I><B>, const void *</B><I>buf</I><B>, size_t </B><I>len</I><B>, int </B><I>flags</I><B>);</B>
-
-<B>ssize_t sendto(int </B><I>sockfd</I><B>, const void *</B><I>buf</I><B>, size_t </B><I>len</I><B>, int </B><I>flags</I><B>,</B>
+<B>ssize_t send(</B>size_t size;
+<B>               int </B><I>sockfd</I><B>, const void </B><I>buf</I><B>[</B><I>size</I><B>], size_t </B><I>size</I><B>, int </B><I>flags</I><B>);</B>
+<B>ssize_t sendto(</B>size_t size;
+<B>               int </B><I>sockfd</I><B>, const void </B><I>buf</I><B>[</B><I>size</I><B>], size_t </B><I>size</I><B>, int </B><I>flags</I><B>,</B>
 <B>               const struct sockaddr *</B><I>dest_addr</I><B>, socklen_t </B><I>addrlen</I><B>);</B>
-
 <B>ssize_t sendmsg(int </B><I>sockfd</I><B>, const struct msghdr *</B><I>msg</I><B>, int </B><I>flags</I><B>);</B>
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 システムコール <B>send</B>(), <B>sendto</B>(), <B>sendmsg</B>()  は、もう一方のソケットへメッセージを転送するのに使用される。
@@ -42,13 +45,23 @@ send, sendto, sendmsg - ソケットへメッセージを送る
 また、
 <P>
 
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;send(sockfd,&nbsp;buf,&nbsp;len,&nbsp;flags);
+
+<PRE>
+send(sockfd, buf, size, flags);
+</PRE>
+
+
 <P>
 
 は以下と等価である。
 <P>
 
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sendto(sockfd,&nbsp;buf,&nbsp;len,&nbsp;flags,&nbsp;NULL,&nbsp;0);
+
+<PRE>
+sendto(sockfd, buf, size, flags, NULL, 0);
+</PRE>
+
+
 <P>
 
 引数 <I>sockfd</I> は、データを送信するパケットのファイルディスクリプターである。
@@ -62,9 +75,10 @@ NULL と 0 でない場合は <B>EISCONN</B> エラーも返される)。 また
 <I>msg.msg_namelen</I> で指定される。
 <P>
 
-<B>send</B>()  と <B>sendto</B>()  では、メッセージは <I>buf</I> に格納されており、その長さは <I>len</I> であると解釈される。
-<B>sendmsg</B>()  では、メッセージは 配列 <I>msg.msg_iov</I> の各要素が指す位置に格納されている。 <B>sendmsg</B>()
-では、補助データ (制御情報とも呼ばれる) を送信することもできる。
+For <B>send</B>()  and <B>sendto</B>(), the message is found in <I>buf</I> and has size
+<I>size</I>.  For <B>sendmsg</B>(), the message is pointed to by the elements of the
+array <I>msg.msg_iov</I>.  The <B>sendmsg</B>()  call also allows sending ancillary
+data (also known as control information).
 <P>
 
 メッセージ長が長過ぎるために、そのソケットが使用するプロトコルでは、 メッセージをソケットに渡されたままの形で送信することができない場合、
@@ -77,7 +91,7 @@ NULL と 0 でない場合は <B>EISCONN</B> エラーも返される)。 また
 メッセージがソケットの送信バッファーに入れることができない場合、 <B>send</B>()  は通常は停止 (block) する (ソケットが非停止
 (nonblocking) I/O モード でない場合)。非停止モードの場合にはエラー <B>EAGAIN</B> か <B>EWOULDBLOCK</B>
 で失敗する。 いつデータをさらに送信できるようになるかを知るために、 <B><A HREF="../man2/select.2.html">select</A></B>(2)  コールを使用することができる。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H3>フラグ引数</H3>
 
 
@@ -98,7 +112,7 @@ Enables nonblocking operation; if the operation would block, <B>EAGAIN</B> or
 <B>O_NONBLOCK</B> flag (via the <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  <B>F_SETFL</B> operation), but differs
 in that <B>MSG_DONTWAIT</B> is a per-call option, whereas <B>O_NONBLOCK</B> is a
 setting on the open file description (see <B><A HREF="../man2/open.2.html">open</A></B>(2)), which will affect all
-threads in the calling process and as well as other processes that hold file
+threads in the calling process as well as other processes that hold file
 descriptors referring to the same open file description.
 <DT><B>MSG_EOR</B> (Linux 2.2 以降)<DD>
 レコードの終了を指示する (<B>SOCK_SEQPACKET</B> のようにこの概念に対応しているソケット種別のときに有効)。
@@ -120,8 +134,22 @@ a process attribute that affects all threads in the process.
 <DT><B>MSG_OOB</B><DD>
 <I>帯域外 (out-of-band)</I> データをサポートするソケット (例えば <B>SOCK_STREAM</B>)  で <I>帯域外</I>
 データを送る。下位プロトコルも <I>帯域外</I> データをサポートしている必要がある。
+<DT><B>MSG_FASTOPEN</B> (since Linux 3.7)<DD>
+Attempts TCP Fast Open (RFC7413) and sends data in the SYN like a
+combination of <B><A HREF="../man2/connect.2.html">connect</A></B>(2)  and <B><A HREF="../man2/write.2.html">write</A></B>(2), by performing an implicit
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2)  operation.  It blocks until the data is buffered and the
+handshake has completed.  For a non-blocking socket, it returns the number
+of bytes buffered and sent in the SYN packet.  If the cookie is not
+available locally, it returns <B>EINPROGRESS</B>, and sends a SYN with a Fast
+Open cookie request automatically.  The caller needs to write the data again
+when the socket is connected.  On errors, it sets the same <I>errno</I> as
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2)  if the handshake fails.  This flag requires enabling TCP Fast
+Open client support on sysctl <I>net.ipv4.tcp_fastopen</I>.
+<DT><DD>
+Refer to <B>TCP_FASTOPEN_CONNECT</B> socket option in <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)  for an
+alternative approach.
 </DL>
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H3>sendmsg()</H3>
 
 <B>sendmsg</B>() で利用されている <I>msghdr</I> 構造体は以下の通り。
@@ -130,13 +158,13 @@ a process attribute that affects all threads in the process.
 
 <PRE>
 struct msghdr {
-    void         *msg_name;       /* 追加のアドレス */
-    socklen_t     msg_namelen;    /* アドレスのサイズ */
-    struct iovec *msg_iov;        /* scatter/gather 配列 */
-    size_t        msg_iovlen;     /* msg_iov の要素数 */
-    void         *msg_control;    /* 補助データ (後述) */
-    size_t        msg_controllen; /* 補助データバッファー長 */
-    int           msg_flags;      /* フラグ (未使用) */
+    void         *msg_name;       /* Optional address */
+    socklen_t     msg_namelen;    /* Size of address */
+    struct iovec *msg_iov;        /* Scatter/gather array */
+    size_t        msg_iovlen;     /* # elements in msg_iov */
+    void         *msg_control;    /* Ancillary data, see below */
+    size_t        msg_controllen; /* Ancillary data buffer size */
+    int           msg_flags;      /* Flags (unused) */
 };
 </PRE>
 
@@ -153,7 +181,7 @@ struct msghdr {
 <P>
 
 You may send control information (ancillary data) using the <I>msg_control</I>
-and <I>msg_controllen</I> members.  The maximum control buffer length the kernel
+and <I>msg_controllen</I> members.  The maximum control buffer size the kernel
 can process is limited per socket by the value in
 <I>/proc/sys/net/core/optmem_max</I>; see <B><A HREF="../man7/socket.7.html">socket</A></B>(7).  For further information
 on the use of ancillary data in various socket domains, see <B><A HREF="../man7/unix.7.html">unix</A></B>(7)  and
@@ -167,11 +195,12 @@ on the use of ancillary data in various socket domains, see <B><A HREF="../man7/
 
 
 フィールド <I>msg_flags</I> は無視される。
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>返り値</H2>
 
-成功した場合、これらのシステムコールは送信されたバイト数を返す。 エラーの場合、 -1 を返し、 <I>errno</I> を適切に設定にする。
-<A NAME="lbAH">&nbsp;</A>
+On success, these calls return the number of bytes sent.  On error, -1 is
+returned, and <I>errno</I> is set to indicate the error.
+<A NAME="lbAI">&nbsp;</A>
 <H2>エラー</H2>
 
 これらはソケット層で発生する一般的なエラーである。これ以外に、下層の プロトコルモジュールで生成されたエラーが返されるかもしれない。
@@ -232,16 +261,8 @@ Another Fast Open is in progress.
 接続指向のソケットでローカル側が閉じられている。 この場合、 <B>MSG_NOSIGNAL</B> が設定されていなければ、プロセスには <B>SIGPIPE</B>
 も同時に送られる。
 </DL>
-<A NAME="lbAI">&nbsp;</A>
-<H2>準拠</H2>
-
-4.4BSD, SVr4, POSIX.1-2001.  (これらのインターフェースは 4.2BSD で最初に登場した)。
-<P>
-
-POSIX.1-2001 には、 <B>MSG_OOB</B> と <B>MSG_EOR</B> フラグだけが記載されている。 POSIX.1-2008 では
-<B>MSG_NOSIGNAL</B> が規格に追加されている。 <B>MSG_CONFIRM</B> フラグは Linux での拡張である。
 <A NAME="lbAJ">&nbsp;</A>
-<H2>注意</H2>
+<H2>バージョン</H2>
 
 
 
@@ -258,49 +279,62 @@ POSIX.1-2001 には、 <B>MSG_OOB</B> と <B>MSG_EOR</B> フラグだけが記�
 According to POSIX.1-2001, the <I>msg_controllen</I> field of the <I>msghdr</I>
 structure should be typed as <I>socklen_t</I>, and the <I>msg_iovlen</I> field
 should be typed as <I>int</I>, but glibc currently types both as <I>size_t</I>.
+<A NAME="lbAK">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2024.
 <P>
+
+<B>MSG_CONFIRM</B> is a Linux extension.
+<A NAME="lbAL">&nbsp;</A>
+<H2>歴史</H2>
+
+4.4BSD, SVr4, POSIX.1-2001.  (4.2BSD で最初に登場した)。
+<P>
+
+POSIX.1-2001 describes only the <B>MSG_OOB</B> and <B>MSG_EOR</B> flags.
+POSIX.1-2008 adds a specification of <B>MSG_NOSIGNAL</B>.
+<A NAME="lbAM">&nbsp;</A>
+<H2>注意</H2>
 
 <B><A HREF="../man2/sendmmsg.2.html">sendmmsg</A></B>(2)  には、一度の呼び出しでの複数のデータグラムの送信に使用できる
 Linux 固有の システムコールに関する情報が書かれている。
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>バグ</H2>
 
 Linux は <B>ENOTCONN</B> を返す状況で <B>EPIPE</B> を返すことがある。
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>例</H2>
 
 <B>sendto</B>()  の利用例が <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)  に記載されている。
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2), <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2), <B><A HREF="../man2/recv.2.html">recv</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/sendfile.2.html">sendfile</A></B>(2),
 <B><A HREF="../man2/sendmmsg.2.html">sendmmsg</A></B>(2), <B><A HREF="../man2/shutdown.2.html">shutdown</A></B>(2), <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3),
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7), <B><A HREF="../man7/ipv6.7.html">ipv6</A></B>(7), <B><A HREF="../man7/socket.7.html">socket</A></B>(7), <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7), <B><A HREF="../man7/udp.7.html">udp</A></B>(7), <B><A HREF="../man7/unix.7.html">unix</A></B>(7)
-<A NAME="lbAN">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
 <DL>
-<DT><A HREF="#lbAE">フラグ引数</A><DD>
-<DT><A HREF="#lbAF">sendmsg()</A><DD>
+<DT><A HREF="#lbAF">フラグ引数</A><DD>
+<DT><A HREF="#lbAG">sendmsg()</A><DD>
 </DL>
-<DT><A HREF="#lbAG">返り値</A><DD>
-<DT><A HREF="#lbAH">エラー</A><DD>
-<DT><A HREF="#lbAI">準拠</A><DD>
-<DT><A HREF="#lbAJ">注意</A><DD>
-<DT><A HREF="#lbAK">バグ</A><DD>
-<DT><A HREF="#lbAL">例</A><DD>
-<DT><A HREF="#lbAM">関連項目</A><DD>
-<DT><A HREF="#lbAN">この文書について</A><DD>
+<DT><A HREF="#lbAH">返り値</A><DD>
+<DT><A HREF="#lbAI">エラー</A><DD>
+<DT><A HREF="#lbAJ">バージョン</A><DD>
+<DT><A HREF="#lbAK">標準規格</A><DD>
+<DT><A HREF="#lbAL">歴史</A><DD>
+<DT><A HREF="#lbAM">注意</A><DD>
+<DT><A HREF="#lbAN">バグ</A><DD>
+<DT><A HREF="#lbAO">例</A><DD>
+<DT><A HREF="#lbAP">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of SCHED_RR_GET_INTERVAL</TITLE>
+<HTML><HEAD><TITLE>Man page of sched_rr_get_interval</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>SCHED_RR_GET_INTERVAL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated:  2017-09-15<BR><A HREF="#index">Index</A>
+<H1>sched_rr_get_interval</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/sched_rr_get_interval.2">roff page</A><HR>
 
@@ -16,33 +16,25 @@ Section: Linux Programmer's Manual (2)<BR>Updated:  2017-09-15<BR><A HREF="#inde
 
 sched_rr_get_interval - 指定されたプロセスの SCHED_RR 間隔を取得する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
-<B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
-<P>
-
-<BR>&nbsp;<B>int&nbsp;sched_rr_get_interval(pid_t&nbsp;</B><I>pid</I><B>,&nbsp;struct&nbsp;timespec&nbsp;*</B><I>tp</I><B>);</B>
-<A NAME="lbAD">&nbsp;</A>
-<H2>説明</H2>
-
-<B>sched_rr_get_interval</B>() は <I>tp</I> で指定された <I>timespec</I> 構造体に
-<I>pid</I> で指定されたプロセスのラウンドロビン時間量 (round robin time
-quantum) を書き込む。指定されたプロセスは <B>SCHED_RR</B> スケジューリング
-ポリシーで動作しているはずである。
-<P>
-
-<I>timespec</I> 構造体は以下の通りである:
-<P>
-
-
 <PRE>
-struct timespec {
-    time_t tv_sec;    /* seconds */
-    long   tv_nsec;   /* nanoseconds */
-};
+<B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
+
+<B>int sched_rr_get_interval(pid_t </B><I>pid</I><B>, struct timespec *</B><I>tp</I><B>);</B>
 </PRE>
 
+<A NAME="lbAE">&nbsp;</A>
+<H2>説明</H2>
 
+<B>sched_rr_get_interval</B>()  writes into the <B>timespec</B>(3)  structure
+pointed to by <I>tp</I> the round-robin time quantum for the process identified
+by <I>pid</I>.  The specified process should be running under the <B>SCHED_RR</B>
+scheduling policy.
 <P>
 
 
@@ -63,35 +55,45 @@ struct timespec {
 
 <I>pid</I> が 0 の場合、呼び出したプロセスの時間量 (time quantum) が
 <I>*tp</I> に書き込まれる。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
-成功した場合は <B>sched_rr_get_interval</B>()  は 0 を返す。 エラーの場合は -1 が返され、 <I>errno</I>
-が適切に設定される。
-<A NAME="lbAF">&nbsp;</A>
+On success, <B>sched_rr_get_interval</B>()  returns 0.  On error, -1 is
+returned, and <I>errno</I> is set to indicate the error.
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
 <DT><B>EFAULT</B><DD>
 情報をユーザー空間にコピーする時に問題が起きた。
 <DT><B>EINVAL</B><DD>
-PID が不正である。
+Invalid <I>pid</I>.
 <DT><B>ENOSYS</B><DD>
 システムコールがまだ実装されていない (かなり古いカーネルにおいてのみ)。
 <DT><B>ESRCH</B><DD>
 プロセス ID が <I>pid</I> のプロセスが見つからなかった。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
-<H2>準拠</H2>
-
-<BR>&nbsp;POSIX.1-2001,&nbsp;POSIX.1-2008.
 <A NAME="lbAH">&nbsp;</A>
-<H2>注意</H2>
+<H2>バージョン</H2>
 
-POSIX システムで <B>sched_rr_get_interval</B>() は <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> に
-<B>_POSIX_PRIORITY_SCHEDULING</B> が定義されている場合にのみ使用可能である。
 <A NAME="lbAI">&nbsp;</A>
-<H3>Linux での注意</H3>
+<H3>Linux</H3>
+
+
+
+Linux 3.9 で、 <B>SCHED_RR</B> の時間量の調整 (と参照) を行う新しい機構が追加された。
+<I>/proc/sys/kernel/sched_rr_timeslice_ms</I> ファイルでミリ秒単位の時間量の値が参照でき、 デフォルト値は 100
+である。 このファイルに 0 を書き込むと、 時間量をデフォルト値に戻すことができる。
+<A NAME="lbAJ">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2024.
+<A NAME="lbAK">&nbsp;</A>
+<H2>歴史</H2>
+
+<BR>&nbsp;POSIX.1-2001.
+<A NAME="lbAL">&nbsp;</A>
+<H3>Linux</H3>
 
 
 
@@ -100,7 +102,8 @@ POSIX ではラウンドロビン時間量の大きさを制御する仕組み�
 値 (すなわち、高い nice 値) を割り当てると時間量は長くなり、 正の nice 値 (すなわち、低い nice 値)
 を割り当てると時間量は短くなる。 デフォルトの時間量は 0.1 秒である。 nice 値の変更が時間量にどの程度影響を与えるかは
 カーネルのバージョンにより多少異なる。時間量を調整するこのメソッドは Linux 2.6.24 以降で削除された。
-<P>
+<A NAME="lbAM">&nbsp;</A>
+<H2>注意</H2>
 
 
 
@@ -114,37 +117,34 @@ POSIX ではラウンドロビン時間量の大きさを制御する仕組み�
 
 
 
-
-
-Linux 3.9 で、 <B>SCHED_RR</B> の時間量の調整 (と参照) を行う新しい機構が追加された。
-<I>/proc/sys/kernel/sched_rr_timeslice_ms</I> ファイルでミリ秒単位の時間量の値が参照でき、 デフォルト値は 100
-である。 このファイルに 0 を書き込むと、 時間量をデフォルト値に戻すことができる。
-<A NAME="lbAJ">&nbsp;</A>
+POSIX システムで <B>sched_rr_get_interval</B>() は <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> に
+<B>_POSIX_PRIORITY_SCHEDULING</B> が定義されている場合にのみ使用可能である。
+<A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>
 
-<B><A HREF="../man7/sched.7.html">sched</A></B>(7)
-<A NAME="lbAK">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<B>timespec</B>(3), <B><A HREF="../man7/sched.7.html">sched</A></B>(7)
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">準拠</A><DD>
-<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
 <DL>
-<DT><A HREF="#lbAI">Linux での注意</A><DD>
+<DT><A HREF="#lbAI">Linux</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">関連項目</A><DD>
-<DT><A HREF="#lbAK">この文書について</A><DD>
+<DT><A HREF="#lbAJ">標準規格</A><DD>
+<DT><A HREF="#lbAK">歴史</A><DD>
+<DL>
+<DT><A HREF="#lbAL">Linux</A><DD>
+</DL>
+<DT><A HREF="#lbAM">注意</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

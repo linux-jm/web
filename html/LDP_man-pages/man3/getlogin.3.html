@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of GETLOGIN</TITLE>
+<HTML><HEAD><TITLE>Man page of getlogin</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>GETLOGIN</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated:  2019-03-06<BR><A HREF="#index">Index</A>
+<H1>getlogin</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/getlogin.3">roff page</A><HR>
 
@@ -16,21 +16,24 @@ Section: Linux Programmer's Manual (3)<BR>Updated:  2019-03-06<BR><A HREF="#inde
 
 getlogin, getlogin_r, cuserid - ユーザー名を取得する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
-<P>
 
 <B>char *getlogin(void);</B>
-<BR>
-
-<B>int getlogin_r(char *</B><I>buf</I><B>, size_t </B><I>bufsize</I><B>);</B>
-<P>
+<B>int getlogin_r(</B>size_t bufsize;
+<B>               char </B><I>buf</I><B>[</B><I>bufsize</I><B>], size_t </B><I>bufsize</I><B>);</B>
 
 <B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
-<P>
 
 <B>char *cuserid(char *</B><I>string</I><B>);</B>
+</PRE>
+
 <P>
 
 
@@ -38,21 +41,24 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 
 <P>
 
+<B>getlogin_r</B>():
+<PRE>
 
+    _POSIX_C_SOURCE &gt;= 199506L
+</PRE>
 
-<BR>&nbsp;<B>getlogin_r</B>():&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;199506L
 <P>
 
 <BR>&nbsp;<B>cuserid</B>():
 <PRE>
-    glibc 2.24 以降:
+    Since glibc 2.24:
         (_XOPEN_SOURCE &amp;&amp; ! (_POSIX_C_SOURCE &gt;= 200112L)
-        || _GNU_SOURCE
-    glibc 2.23 以前:
+            || _GNU_SOURCE
+    Up to and including glibc 2.23:
         _XOPEN_SOURCE
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>getlogin</B>()  は、現在のプロセスの制御端末にログインしているユーザー名の文字列への
@@ -79,12 +85,13 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 
 たいていの目的では、ユーザーの特定には環境変数 <B>LOGNAME</B> を調べ るほうが便利である。LOGNAME 変数はユーザーが自由に設定できるので
 より柔軟な対応が可能になる。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
-<B>getlogin</B>()  は成功した場合はユーザー名へのポインターを返す。 失敗した場合は NULL を返し、 <I>errno</I>
-にエラーの原因を示す値を設定する。 <B>getlogin_r</B>()  は成功すると 0 を返し、失敗すると 0 以外を返す。
-<A NAME="lbAF">&nbsp;</A>
+<B>getlogin</B>()  returns a pointer to the username when successful, and NULL
+on failure, with <I>errno</I> set to indicate the error.  <B>getlogin_r</B>()
+returns 0 when successful, and nonzero on failure.
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 POSIX では以下のエラーが規定されている:
@@ -97,7 +104,8 @@ reached.
 <DT><B>ENXIO</B><DD>
 呼び出し元プロセスには制御端末がない。
 <DT><B>ERANGE</B><DD>
-(getlogin_r)  (終端のヌルバイト ('\0') も含めた) ユーザー名の長さが <I>bufsize</I> よりも長い。
+(getlogin_r)  The length of the username, including the terminating null
+byte (<B>'\0'</B>), is larger than <I>bufsize</I>.
 </DL>
 <P>
 
@@ -110,7 +118,7 @@ passwd 構造体を割り当てるのに十分なメモリーがない。
 <DT><B>ENOTTY</B><DD>
 標準入力が端末を参照していない (「バグ」の節を参照)。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>ファイル</H2>
 
 <DL COMPACT>
@@ -119,53 +127,80 @@ passwd 構造体を割り当てるのに十分なメモリーがない。
 <DT><I>/var/run/utmp</I><DD>
 (伝統的には <I>/etc/utmp</I> が使われている; libc の中には <I>/var/adm/utmp</I> を使うものもある)
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>getlogin</B>()
 </TD><TD>Thread safety</TD><TD>
-MT-Unsafe race:getlogin race:utent
-<BR>
 
+
+MT-Unsafe race:getlogin race:utent
 sig:ALRM timer locale
 <BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>getlogin_r</B>()
 </TD><TD>Thread safety</TD><TD>
-MT-Unsafe race:utent sig:ALRM timer
-<BR>
 
+
+MT-Unsafe race:utent sig:ALRM timer
 locale
 <BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>cuserid</B>()
-</TD><TD>Thread safety</TD><TD>MT-Unsafe race:cuserid/!string locale<BR></TD></TR>
+</TD><TD>Thread safety</TD><TD>
+
+
+MT-Unsafe race:cuserid/!string locale
+<BR></TD></TR>
 </TABLE>
 
 <P>
+
 In the above table, <I>utent</I> in <I>race:utent</I> signifies that if any of the
 functions <B><A HREF="../man3/setutent.3.html">setutent</A></B>(3), <B><A HREF="../man3/getutent.3.html">getutent</A></B>(3), or <B><A HREF="../man3/endutent.3.html">endutent</A></B>(3)  are used in
 parallel in different threads of a program, then data races could occur.
 <B>getlogin</B>()  and <B>getlogin_r</B>()  call those functions, so we use
 race:utent to remind users.
-<A NAME="lbAI">&nbsp;</A>
-<H2>準拠</H2>
-
-<B>getlogin</B>()  and <B>getlogin_r</B>(): POSIX.1-2001, POSIX.1-2008.
-<P>
-
-System V にも <B>cuserid</B>()  があるが、 これは実効ユーザー ID ではなく、実ユーザー ID を使用する。
-<B>cuserid</B>()  関数は 1988 年版の POSIX には含まれていたが、 1990 年版では削除された。 SUSv2
-に存在したが、POSIX.1-2001 で削除された。
-<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>バージョン</H2>
 
 OpenBSD には <B>getlogin</B>()  と <B>setlogin</B>()  があり、 セッションに対応したユーザー名がある。制御端末がない
 セッションの場合であっても、対応するユーザー名がある。
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
+<H2>標準規格</H2>
+
+<DL COMPACT>
+<DT><B>getlogin</B>()<DD>
+<DT><B>getlogin_r</B>()<DD>
+POSIX.1-2008.
+<DT><B>cuserid</B>()<DD>
+None.
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H2>標準規格</H2>
+
+<DL COMPACT>
+<DT><B>getlogin</B>()<DD>
+<DT><B>getlogin_r</B>():<DD>
+POSIX.1-2001.  OpenBSD.
+<DT><B>cuserid</B>()<DD>
+System V, POSIX.1-1988.  Removed in POSIX.1-1990.  SUSv2.  Removed in
+POSIX.1-2001.
+<DT><DD>
+System V has a <B>cuserid</B>()  function which uses the real user ID rather
+than the effective user ID.
+</DL>
+<A NAME="lbAM">&nbsp;</A>
 <H2>バグ</H2>
 
 残念ながら、 <B>getlogin</B>() をだますのはそれほど難しいことではない。別のプログラムが utmp ファイルを
@@ -182,31 +217,28 @@ glibc は POSIX 仕様には従っておらず、 <I>/dev/tty</I> ではなく <
 <B>cuserid</B>()  が何を行っているのか、実際のところを知っている者は誰もいない; 移植性が求められるプログラムでは <B>cuserid</B>()
 は使うべきではない。 というかどんなプログラムでも使うべきではない: 代わりに <I>getpwuid(geteuid())</I> を用いるべきである
 (これが意図していることならば、だが)。 <B>cuserid</B>()  は「使わない」こと。
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>
 
 <BR>&nbsp;<B><A HREF="../../0MultiFileIdx/man1/logname.1.html">logname</A></B>(1),&nbsp;<B><A HREF="../man2/geteuid.2.html">geteuid</A></B>(2),&nbsp;<B><A HREF="../man2/getuid.2.html">getuid</A></B>(2),&nbsp;<B><A HREF="../man5/utmp.5.html">utmp</A></B>(5)
-<A NAME="lbAL">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">ファイル</A><DD>
-<DT><A HREF="#lbAH">属性</A><DD>
-<DT><A HREF="#lbAI">準拠</A><DD>
-<DT><A HREF="#lbAJ">バグ</A><DD>
-<DT><A HREF="#lbAK">関連項目</A><DD>
-<DT><A HREF="#lbAL">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">ファイル</A><DD>
+<DT><A HREF="#lbAI">属性</A><DD>
+<DT><A HREF="#lbAJ">バージョン</A><DD>
+<DT><A HREF="#lbAK">標準規格</A><DD>
+<DT><A HREF="#lbAL">標準規格</A><DD>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

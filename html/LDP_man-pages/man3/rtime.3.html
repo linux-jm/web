@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of RTIME</TITLE>
+<HTML><HEAD><TITLE>Man page of rtime</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>RTIME</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<H1>rtime</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/rtime.3">roff page</A><HR>
 
@@ -16,6 +16,10 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-12-21<BR><A HREF="#index
 
 rtime - リモートマシンから時刻を取得する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
@@ -25,7 +29,7 @@ rtime - リモートマシンから時刻を取得する
 <B>          struct rpc_timeval *</B><I>timeout</I><B>);</B>
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 この関数は RFC&nbsp;868 に記述されているタイムサーバプロトコルを使用し、 リモートマシンから時刻を取得する。
@@ -37,12 +41,13 @@ rtime - リモートマシンから時刻を取得する
 
 <I>timeout</I> が NULL でない場合、udp/time ソケット (ポート 37) が使用される。 それ以外の場合、tcp/time ソケット
 (ポート 37) が使用される。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
-成功した場合は、0 が返されて、得られた 32 ビットの時刻値は <I>timep-&gt;tv_sec</I> に格納される。 エラーの場合は、-1
-が返されて、 <I>errno</I> が適切に設定される。
-<A NAME="lbAF">&nbsp;</A>
+On success, 0 is returned, and the obtained 32-bit time value is stored in
+<I>timep-&gt;tv_sec</I>.  In case of error -1 is returned, and <I>errno</I> is set
+to indicate the error.
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 内部で使用している関数 (<B><A HREF="../man2/sendto.2.html">sendto</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2), <B><A HREF="../man2/connect.2.html">connect</A></B>(2),
@@ -53,18 +58,20 @@ rtime - リモートマシンから時刻を取得する
 <DT><B>ETIMEDOUT</B><DD>
 timeout で定義された待ち時間の期限が切れた。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>rtime</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>注意</H2>
 
 IPv4 のみがサポートされている。
@@ -94,11 +101,11 @@ IPv4 のみがサポートされている。
 
 <I>in.timed</I> のバージョンによっては TCP しかサポートしていないものもある。 <I>use_tcp</I> を 1
 に設定して、例にあるプログラムを試すこと。
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>バグ</H2>
 
 glibc 2.2.5 以前の <B>rtime</B>()  は、64 ビットマシンで正確に動作しない。
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>例</H2>
 
 この例ではポート 37 がアップされてオープンされている必要がある。 <I>/etc/inetd.conf</I> の time
@@ -109,26 +116,30 @@ glibc 2.2.5 以前の <B>rtime</B>()  は、64 ビットマシンで正確に動
 のローカル時刻である。
 <P>
 
+
+
 <PRE>
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+
 #include &lt;<A HREF="file:///usr/include/rpc/auth_des.h">rpc/auth_des.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
 
 static int use_tcp = 0;
-static char *servername = &quot;linux&quot;;
+static const char servername[] = &quot;linux&quot;;
 
 int
 main(void)
 {
-    struct sockaddr_in name;
-    struct rpc_timeval time1 = {0,0};
-    struct rpc_timeval timeout = {1,0};
-    struct hostent *hent;
-    int ret;
+    int                 ret;
+    time_t              t;
+    struct hostent      *hent;
+    struct rpc_timeval  time1 = {0, 0};
+    struct rpc_timeval  timeout = {1, 0};
+    struct sockaddr_in  name;
 
     memset(&amp;name, 0, sizeof(name));
     sethostent(1);
@@ -139,7 +150,7 @@ main(void)
     if (ret &lt; 0)
         perror(&quot;rtime error&quot;);
     else {
-        time_t t = time1.tv_sec;
+        t = time1.tv_sec;
         printf(&quot;%s\n&quot;, ctime(&amp;t));
     }
 
@@ -147,7 +158,9 @@ main(void)
 }
 </PRE>
 
-<A NAME="lbAK">&nbsp;</A>
+
+
+<A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>
 
 
@@ -155,27 +168,22 @@ main(void)
 
 
 <B>ntpdate</B>(1), <B><A HREF="../../netkit/man8/inetd.8.html">inetd</A></B>(8)
-<A NAME="lbAL">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">属性</A><DD>
-<DT><A HREF="#lbAH">注意</A><DD>
-<DT><A HREF="#lbAI">バグ</A><DD>
-<DT><A HREF="#lbAJ">例</A><DD>
-<DT><A HREF="#lbAK">関連項目</A><DD>
-<DT><A HREF="#lbAL">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">バグ</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of MPOOL</TITLE>
+<HTML><HEAD><TITLE>Man page of mpool</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>MPOOL</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+<H1>mpool</H1>
+Section: C Library Functions (3)<BR>Updated: 2025-05-17<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/mpool.3">roff page</A><HR>
 
@@ -17,6 +17,10 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index
 
 mpool - 共有メモリーバッファープール
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
@@ -25,29 +29,25 @@ mpool - 共有メモリーバッファープール
 
 <B>MPOOL *mpool_open(DBT *</B><I>key</I><B>, int </B><I>fd</I><B>, pgno_t </B><I>pagesize</I><B>, pgno_t </B><I>maxcache</I><B>);</B>
 
-<B>void mpool_filter(MPOOL *</B><I>mp</I><B>, void (*pgin)(void *, pgno_t, void *),</B>
-<B>                  void (*</B><I>pgout</I><B>)(void *, pgno_t, void *),</B>
+<B>void mpool_filter(MPOOL *</B><I>mp</I><B>,</B>
+<B>                  typeof(void (void *, pgno_t, void *)) *</B><I>pgin</I><B>,</B>
+<B>                  typeof(void (void *, pgno_t, void *)) *</B><I>pgout</I><B>,</B>
 <B>                  void *</B><I>pgcookie</I><B>);</B>
 
 <B>void *mpool_new(MPOOL *</B><I>mp</I><B>, pgno_t *</B><I>pgnoaddr</I><B>);</B>
-
 <B>void *mpool_get(MPOOL *</B><I>mp</I><B>, pgno_t </B><I>pgno</I><B>, unsigned int </B><I>flags</I><B>);</B>
-
 <B>int mpool_put(MPOOL *</B><I>mp</I><B>, void *</B><I>pgaddr</I><B>, unsigned int </B><I>flags</I><B>);</B>
 
 <B>int mpool_sync(MPOOL *</B><I>mp</I><B>);</B>
-
 <B>int mpool_close(MPOOL *</B><I>mp</I><B>);</B>
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
-<I>大事な注意</I>:
-このページは、バージョン 2.1 までの glibc が提供するインターフェースに
-ついて説明している。バージョン 2.2 以降の glibc では、もはやこれらの
-インターフェースは提供されていない。おそらく、このページではなく、
-<I>libdb</I> ライブラリが提供する API をお探しなのだろう。
+<I>Note well</I>: This page documents interfaces provided up until glibc 2.1.
+Since glibc 2.2, glibc no longer provides these interfaces.  Probably, you
+are looking for the APIs provided by the <I>libdb</I> library instead.
 <P>
 
 <I>mpool</I> は、ファイルに対するページ指向のバッファー管理を実装した ライブラリインターフェイスである。
@@ -97,7 +97,7 @@ NULL が返され、 <I>errno</I> がセットされる。
 
 関数 <B>mpool_close</B>()  はメモリープールクッキーの示す割り当て済みのメモリーを解放する。
 変更されたページはファイルに<B>書き出されない</B>。 <I>mpool_close ()</I> は成功すると 0 を、エラーがあると -1 を返す。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>エラー</H2>
 
 関数 <B>mpool_open</B>()  は失敗するとライブラリルーチン <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)  で指定されているエラーに応じた <I>errno</I>
@@ -121,31 +121,26 @@ NULL が返され、 <I>errno</I> がセットされる。
 
 関数 <B>mpool_close</B>()  は失敗するとライブラリルーチン <B><A HREF="../man3/free.3.html">free</A></B>(3)  で指定されているエラーに応じた <I>errno</I>
 をセットする。
-<A NAME="lbAF">&nbsp;</A>
-<H2>準拠</H2>
-
-POSIX.1 にはない。 BSD 系に存在する。
 <A NAME="lbAG">&nbsp;</A>
+<H2>標準規格</H2>
+
+BSD.
+<A NAME="lbAH">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/btree.3.html">btree</A></B>(3), <B><A HREF="../man3/dbopen.3.html">dbopen</A></B>(3), <B><A HREF="../man3/hash.3.html">hash</A></B>(3), <B><A HREF="../man3/recno.3.html">recno</A></B>(3)
-<A NAME="lbAH">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">エラー</A><DD>
-<DT><A HREF="#lbAF">準拠</A><DD>
-<DT><A HREF="#lbAG">関連項目</A><DD>
-<DT><A HREF="#lbAH">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">エラー</A><DD>
+<DT><A HREF="#lbAG">標準規格</A><DD>
+<DT><A HREF="#lbAH">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

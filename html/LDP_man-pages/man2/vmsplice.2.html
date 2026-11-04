@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of VMSPLICE</TITLE>
+<HTML><HEAD><TITLE>Man page of vmsplice</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>VMSPLICE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<H1>vmsplice</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/vmsplice.2">roff page</A><HR>
 
@@ -16,20 +16,23 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index
 
 vmsplice - ユーザーページをパイプに継ぎ合わせる
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#define _GNU_SOURCE</B>         /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
 <B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
-<B>#include &lt;<A HREF="file:///usr/include/sys/uio.h">sys/uio.h</A>&gt;</B>
 
 <B>ssize_t vmsplice(int </B><I>fd</I><B>, const struct iovec *</B><I>iov</I><B>,</B>
-<B>                 unsigned long </B><I>nr_segs</I><B>, unsigned int </B><I>flags</I><B>);</B>
+<B>                 size_t </B><I>nr_segs</I><B>, unsigned int </B><I>flags</I><B>);</B>
 </PRE>
 
 
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 
@@ -57,19 +60,8 @@ ranges of user memory described by <I>iov</I> from a pipe.  The file descriptor
 <I>fd</I> must refer to a pipe.
 <P>
 
-ポインター <I>iov</I> は <I>iovec</I> 構造体の配列を指す。 <I>iovec</I> 構造体は <I>&lt;<A HREF="file:///usr/include/sys/uio.h">sys/uio.h</A>&gt;</I>
-で以下のように定義されている:
-<P>
-
-
-<PRE>
-struct iovec {
-    void  *iov_base;        /* 開始アドレス */
-    size_t iov_len;         /* バイト数 */
-};
-</PRE>
-
-
+The pointer <I>iov</I> points to an array of <I>iovec</I> structures as described in
+<B>iovec</B>(3type).
 <P>
 
 <I>flags</I> 引数には、以下の値の 0 個以上をビット毎の論理和の形で指定する。
@@ -103,12 +95,12 @@ struct iovec {
 <B>SPLICE_F_MOVE</B> でそのページのコピーを行わなければならない。 データはメモリー上でページ境界にあっていなければならず、
 長さもページ境界の倍数でなければならない。
 </DL>
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 成功して完了すると、 <B>vmsplice</B>()  はパイプに転送したバイト数を返す。 エラーの場合、 <B>vmplice</B>()  は -1 を返し、
 <I>errno</I> をエラーを示す値に設定する。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
@@ -122,16 +114,15 @@ struct iovec {
 <DT><B>ENOMEM</B><DD>
 メモリー不足。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
-<H2>バージョン</H2>
-
-<B>vmsplice</B>() システムコールは Linux 2.6.17 で初めて登場した。
-ライブラリによるサポートは glibc バージョン 2.5 で追加された。
 <A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
+<H2>標準規格</H2>
 
-このシステムコールは Linux 固有である。
+Linux.
 <A NAME="lbAI">&nbsp;</A>
+<H2>歴史</H2>
+
+Linux 2.6.17, glibc 2.5.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>注意</H2>
 
 
@@ -143,34 +134,28 @@ struct iovec {
 
 
 <B>vmsplice</B>()  really supports true splicing only from user memory to a
-pipe.  In the opposite direction, it actually just copies the data to
-userspace.  But this makes the interface nice and symmetric and enables
-people to build on <B>vmsplice</B>()  with room for future improvement in
-performance.
-<A NAME="lbAJ">&nbsp;</A>
+pipe.  In the opposite direction, it actually just copies the data to user
+space.  But this makes the interface nice and symmetric and enables people
+to build on <B>vmsplice</B>()  with room for future improvement in performance.
+<A NAME="lbAK">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man2/splice.2.html">splice</A></B>(2), <B><A HREF="../man2/tee.2.html">tee</A></B>(2), <B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)
-<A NAME="lbAK">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">バージョン</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">注意</A><DD>
-<DT><A HREF="#lbAJ">関連項目</A><DD>
-<DT><A HREF="#lbAK">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">標準規格</A><DD>
+<DT><A HREF="#lbAI">歴史</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

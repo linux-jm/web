@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of RPC</TITLE>
+<HTML><HEAD><TITLE>Man page of rpc</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>RPC</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<H1>rpc</H1>
+Section: C Library Functions (3)<BR>Updated: 2025-09-21<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/rpc.3">roff page</A><HR>
 
@@ -16,6 +16,10 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index
 
 rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式と説明</H2>
 
 
@@ -35,6 +39,7 @@ rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 
 これらのルーティンを使用するには、ヘッダーファイル <I>&lt;<A HREF="file:///usr/include/rpc/rpc.h">rpc/rpc.h</A>&gt;</I> をインクルードすること。
 <P>
+
 下記のプロトタイプでは次の型を使用している。
 <P>
 
@@ -42,10 +47,10 @@ rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 <PRE>
 <B>typedef int </B><I>bool_t</I><B>;</B>
 
-<B>typedef bool_t (*</B><I>xdrproc_t</I><B>) (XDR *, void *, ...);</B>
+<B>typedef typeof(bool_t (XDR *, void *, ...))  *</B><I>xdrproc_t</I><B>;</B>
 
-<B>typedef bool_t (*</B><I>resultproc_t</I><B>) (caddr_t </B><I>resp</I><B>,</B>
-<B>                                struct sockaddr_in *</B><I>raddr</I><B>);</B>
+<B>typedef typeof(bool_t (caddr_t </B><I>resp</I><B>, struct sockaddr_in *</B><I>raddr</I><B>)</B>
+<B>    *</B><I>resultproc_t</I><B>;</B>
 </PRE>
 
 </DL>
@@ -78,19 +83,17 @@ rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 <P>
 
 <PRE>
-<B>AUTH *authunix_create(char *</B><I>host</I><B>, int </B><I>uid</I><B>, int </B><I>gid</I><B>,</B>
-<B>                      int </B><I>len</I><B>, int *</B><I>aup_gids</I><B>);</B>
+<B>AUTH *authunix_create(char *</B><I>host</I><B>, uid_t </B><I>uid</I><B>, gid_t </B><I>gid</I><B>,</B>
+<B>                      int </B><I>n</I><B>, gid_t </B><I>aup_gids</I><B>[</B><I>n</I><B>]);</B>
 </PRE>
 
 <DL COMPACT>
 <DT><DD>
-認証情報を含んだ RPC 認証ハンドルを作成して返す。 <I>host</I> パラメーターは情報が作成されたマシンの名前である。 <I>uid</I>
-はそのユーザーのユーザー
-<FONT SIZE="-1">ID</FONT>
-、 <I>gid</I> はそのユーザーの現在のグループ
-<FONT SIZE="-1">ID</FONT>
-である。 <I>len</I> と
-<I>aup_gids</I> はそのユーザーが所属するグループの配列を参照している。 他のユーザーになりすますことは簡単である。
+Create and return an RPC authentication handle that contains authentication
+information.  The parameter <I>host</I> is the name of the machine on which the
+information was created; <I>uid</I> is the user's user ID; <I>gid</I> is the user's
+current group ID; <I>n</I> and <I>aup_gids</I> refer to a counted array of groups to
+which the user belongs.  It is easy to impersonate a user.
 </DL>
 <P>
 
@@ -107,7 +110,7 @@ rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 <PRE>
 <B>int callrpc(char *</B><I>host</I><B>, unsigned long </B><I>prognum</I><B>,</B>
 <B>            unsigned long </B><I>versnum</I><B>, unsigned long </B><I>procnum</I><B>,</B>
-<B>            xdrproc_t </B><I>inproc</I><B>, char *</B><I>in</I><B>,</B>
+<B>            xdrproc_t </B><I>inproc</I><B>, const char *</B><I>in</I><B>,</B>
 <B>            xdrproc_t </B><I>outproc</I><B>, char *</B><I>out</I><B>);</B>
 </PRE>
 
@@ -185,15 +188,17 @@ rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 <P>
 
 <PRE>
-<B>CLIENT *clnt_create(char *</B><I>host</I><B>, unsigned long </B><I>prog</I><B>,</B>
-<B>                    unsigned long </B><I>vers</I><B>, char *</B><I>proto</I><B>);</B>
+<B>CLIENT *clnt_create(const char *</B><I>host</I><B>, unsigned long </B><I>prog</I><B>,</B>
+<B>                    unsigned long </B><I>vers</I><B>, const char *</B><I>proto</I><B>);</B>
 </PRE>
 
 <DL COMPACT>
 <DT><DD>
-一般的なクライアントの作成ルーティンである。 <I>host</I> はサーバのあるリモートホストの名前を指定する。 <I>proto</I>
-どのような通信プロトコルを使用するかを指定する。現在ここに 使用できる値は "udp" と "tcp" である。
-デフォルトの時間切れが設定されるが、 <B>clnt_control</B>()  を使用して変更可能である。
+Generic client creation routine.  <I>host</I> identifies the name of the remote
+host where the server is located.  <I>proto</I> indicates which kind of
+transport protocol to use.  The currently supported values for this field
+are "udp" and "tcp".  Default timeouts are set, but can be
+modified using <B>clnt_control</B>().
 <DT><DD>
 警告: UDP を使用した場合には欠点がある。 UDP に基づいた RPC メッセージは 最大でも 8 KByte のエンコードデータしか保持する
 ことができないため、大きな引数や巨大な結果を取るプロシージャーに は使用することができない。
@@ -211,8 +216,8 @@ rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 <DT><DD>
 
 <PRE>
-<B>CLSET_TIMEOUT</B>  <I>struct timeval</I> // 時間切れを設定する
-<B>CLGET_TIMEOUT</B>  <I>struct timeval</I> // 時間切れを取得する
+CLSET_TIMEOUT  struct timeval // set total timeout
+CLGET_TIMEOUT  struct timeval // get total timeout
 </PRE>
 
 
@@ -222,7 +227,8 @@ rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 <DT><DD>
 
 <PRE>
-<B>CLGET_SERVER_ADDR</B>  <I>struct sockaddr_in </I> // サーバアドレスを取得する
+CLGET_SERVER_ADDR  struct sockaddr_in
+                // get server's address
 </PRE>
 
 
@@ -231,8 +237,8 @@ rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 <DT><DD>
 
 <PRE>
-<B>CLSET_RETRY_TIMEOUT</B>  <I>struct timeval</I> // 再送間隔を設定する
-<B>CLGET_RETRY_TIMEOUT</B>  <I>struct timeval</I> // 再送間隔を取得する
+CLSET_RETRY_TIMEOUT  struct timeval // set the retry timeout
+CLGET_RETRY_TIMEOUT  struct timeval // get the retry timeout
 </PRE>
 
 
@@ -264,7 +270,7 @@ rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 <P>
 
 <PRE>
-<B>void clnt_pcreateerror(char *</B><I>s</I><B>);</B>
+<B>void clnt_pcreateerror(const char *</B><I>s</I><B>);</B>
 </PRE>
 
 <DL COMPACT>
@@ -286,7 +292,7 @@ rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 <P>
 
 <PRE>
-<B>clnt_perror(CLIENT *</B><I>clnt</I><B>, char *</B><I>s</I><B>);</B>
+<B>clnt_perror(CLIENT *</B><I>clnt</I><B>, const char *</B><I>s</I><B>);</B>
 </PRE>
 
 <DL COMPACT>
@@ -297,7 +303,7 @@ rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 <P>
 
 <PRE>
-<B>char *clnt_spcreateerror(char *</B><I>s</I><B>);</B>
+<B>char *clnt_spcreateerror(const char *</B><I>s</I><B>);</B>
 </PRE>
 
 <DL COMPACT>
@@ -326,7 +332,7 @@ rpc - 遠隔手続き呼び出し(RPC)のためのライブラリルーティン
 <P>
 
 <PRE>
-<B>char *clnt_sperror(CLIENT *</B><I>rpch</I><B>, char *</B><I>s</I><B>);</B>
+<B>char *clnt_sperror(CLIENT *</B><I>rpch</I><B>, const char *</B><I>s</I><B>);</B>
 </PRE>
 
 <DL COMPACT>
@@ -432,9 +438,10 @@ NULL を返す。
 
 <DL COMPACT>
 <DT><DD>
-<B>portmap</B> サービスのためのユーザーインターフェースであり、 IP アドレス <I>*addr</I> にあるホストの現在の RPC
-プログラムからポート番号へのマッピングの一覧を返す。 このルーティンが NULL を返す場合もある。 `<B>rpcinfo -p</B>'
-コマンドはこのルーティンを使用している。
+A user interface to the <B>portmap</B> service, which returns a list of the
+current RPC program-to-port mappings on the host located at IP address
+<I>*addr</I>.  This routine can return NULL.  The command <I>rpcinfo~-p</I> uses
+this routine.
 </DL>
 <P>
 
@@ -464,17 +471,19 @@ IPPROTO_UDP か IPPROTO_TCP である。 返り値ゼロはマッピングが存
 
 <DL COMPACT>
 <DT><DD>
-<B>portmap</B> サービスのためのユーザーインターフェースで、 IP アドレス <I>*addr</I> のホストの <B>portmap</B> を参照して、
-RPC 呼び出しを生成し、そのホスト上のプロシージャーを呼び出す。 パラメーター <I>*portp</I>
-はプロシージャーが成功した場合にはプログラムのポート番号に修正される。 他のパラメーターの定義については <B>callrpc</B>()  や
-<B>clnt_call</B>()  で説明してある。 このプロシージャーは "ping" のみに使用すべきである。
-<B>clnt_broadcast</B>()  も参照すること。
+A user interface to the <B>portmap</B> service, which instructs <B>portmap</B> on
+the host at IP address <I>*addr</I> to make an RPC call on your behalf to a
+procedure on that host.  The parameter <I>*portp</I> will be modified to the
+program's port number if the procedure succeeds.  The definitions of other
+parameters are discussed in <B>callrpc</B>()  and <B>clnt_call</B>().  This
+procedure should be used for a "ping" and nothing else.  See also
+<B>clnt_broadcast</B>().
 </DL>
 <P>
 
 <PRE>
 <B>bool_t pmap_set(unsigned long </B><I>prognum</I><B>, unsigned long </B><I>versnum</I><B>,</B>
-<B>                unsigned int </B><I>protocol</I><B>, unsigned short </B><I>port</I><B>);</B>
+<B>                int </B><I>protocol</I><B>, unsigned short </B><I>port</I><B>);</B>
 </PRE>
 
 <DL COMPACT>
@@ -500,7 +509,7 @@ RPC 呼び出しを生成し、そのホスト上のプロシージャーを呼�
 
 <PRE>
 <B>int registerrpc(unsigned long </B><I>prognum</I><B>, unsigned long </B><I>versnum</I><B>,</B>
-<B>                unsigned long </B><I>procnum</I><B>, char *(*</B><I>procname</I><B>)(char *),</B>
+<B>                unsigned long </B><I>procnum</I><B>, typeof(char *(char *)) *</B><I>procname</I><B>,</B>
 <B>                xdrproc_t </B><I>inproc</I><B>, xdrproc_t </B><I>outproc</I><B>);</B>
 </PRE>
 
@@ -623,7 +632,7 @@ RPC サービス通信ハンドル <I>xprt</I> に関連付けられたプロシ
 <PRE>
 <B>bool_t svc_register(SVCXPRT *</B><I>xprt</I><B>, unsigned long </B><I>prognum</I><B>,</B>
 <B>                    unsigned long </B><I>versnum</I><B>,</B>
-<B>                    void (*</B><I>dispatch</I><B>)(svc_req *, SVCXPRT *),</B>
+<B>                    typeof(void (struct svc_req *, SVCXPRT *)) *</B><I>dispatch</I><B>,</B>
 <B>                    unsigned long </B><I>protocol</I><B>);</B>
 </PRE>
 
@@ -723,7 +732,8 @@ RPC パッケージに要求されたプログラムが登録されていない�
 <P>
 
 <PRE>
-<B>void svcerr_progvers(SVCXPRT *</B><I>xprt</I><B>);</B>
+<B>void svcerr_progvers(SVCXPRT *</B><I>xprt</I><B>, unsigned long </B><I>low_vers</I><B>,</B>
+<B>                     unsigned long </B><I>high_vers</I><B>);</B>
 </PRE>
 
 <DL COMPACT>
@@ -941,153 +951,81 @@ RPC サービス通信ハンドルを生成した後に、それら自身を RPC
 RPC サービス通信ハンドルを破壊する前に、それを RPC 通信パッケージから登録解除する必要がある。 このルーティンは大域変数 <I>svc_fds</I>
 を修正する。サービスの実装者は通常、このルーティンは必要ない。
 </DL>
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
-
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>auth_destroy</B>(),
 <B>authnone_create</B>(),
-<BR>
-
 <B>authunix_create</B>(),
-<BR>
-
 <B>authunix_create_default</B>(),
-<BR>
-
 <B>callrpc</B>(),
 <B>clnt_broadcast</B>(),
-<BR>
-
 <B>clnt_call</B>(),
 <B>clnt_destroy</B>(),
-<BR>
-
 <B>clnt_create</B>(),
 <B>clnt_control</B>(),
-<BR>
-
 <B>clnt_freeres</B>(),
 <B>clnt_geterr</B>(),
-<BR>
-
 <B>clnt_pcreateerror</B>(),
 <B>clnt_perrno</B>(),
-<BR>
-
 <B>clnt_perror</B>(),
-<BR>
-
 <B>clnt_spcreateerror</B>(),
-<BR>
-
 <B>clnt_sperrno</B>(),
 <B>clnt_sperror</B>(),
-<BR>
-
 <B>clntraw_create</B>(),
 <B>clnttcp_create</B>(),
-<BR>
-
 <B>clntudp_create</B>(),
-<BR>
-
 <B>clntudp_bufcreate</B>(),
-<BR>
-
 <B>get_myaddress</B>(),
 <B>pmap_getmaps</B>(),
-<BR>
-
 <B>pmap_getport</B>(),
 <B>pmap_rmtcall</B>(),
-<BR>
-
 <B>pmap_set</B>(),
 <B>pmap_unset</B>(),
-<BR>
-
 <B>registerrpc</B>(),
 <B>svc_destroy</B>(),
-<BR>
-
 <B>svc_freeargs</B>(),
 <B>svc_getargs</B>(),
-<BR>
-
 <B>svc_getcaller</B>(),
 <B>svc_getreqset</B>(),
-<BR>
-
 <B>svc_getreq</B>(),
 <B>svc_register</B>(),
-<BR>
-
 <B>svc_run</B>(),
 <B>svc_sendreply</B>(),
-<BR>
-
 <B>svc_unregister</B>(),
 <B>svcerr_auth</B>(),
-<BR>
-
 <B>svcerr_decode</B>(),
 <B>svcerr_noproc</B>(),
-<BR>
-
 <B>svcerr_noprog</B>(),
 <B>svcerr_progvers</B>(),
-<BR>
-
 <B>svcerr_systemerr</B>(),
 <B>svcerr_weakauth</B>(),
-<BR>
-
 <B>svcfd_create</B>(),
 <B>svcraw_create</B>(),
-<BR>
-
 <B>svctcp_create</B>(),
-<BR>
-
 <B>svcudp_bufcreate</B>(),
-<BR>
-
 <B>svcudp_create</B>(),
 <B>xdr_accepted_reply</B>(),
-<BR>
-
 <B>xdr_authunix_parms</B>(),
-<BR>
-
 <B>xdr_callhdr</B>(),
-<BR>
-
 <B>xdr_callmsg</B>(),
 <B>xdr_opaque_auth</B>(),
-<BR>
-
 <B>xdr_pmap</B>(),
 <B>xdr_pmaplist</B>(),
-<BR>
-
 <B>xdr_rejected_reply</B>(),
-<BR>
-
 <B>xdr_replymsg</B>(),
-<BR>
-
 <B>xprt_register</B>(),
 <B>xprt_unregister</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>関連項目</H2>
 
 
@@ -1114,21 +1052,16 @@ rpcgen Programming Guide
 
 <I>RPC: Remote Procedure Call Protocol Specification</I>, RFC&nbsp;1050, Sun
 Microsystems, Inc., USC-ISI.
-<A NAME="lbAF">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式と説明</A><DD>
-<DT><A HREF="#lbAD">属性</A><DD>
-<DT><A HREF="#lbAE">関連項目</A><DD>
-<DT><A HREF="#lbAF">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式と説明</A><DD>
+<DT><A HREF="#lbAE">属性</A><DD>
+<DT><A HREF="#lbAF">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

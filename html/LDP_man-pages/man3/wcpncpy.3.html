@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of WCPNCPY</TITLE>
+<HTML><HEAD><TITLE>Man page of wcpncpy</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>WCPNCPY</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<H1>wcpncpy</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/wcpncpy.3">roff page</A><HR>
 
@@ -16,12 +16,19 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index
 
 wcpncpy - 固定長のワイド文字文字列をコピーし、その末尾を指すポインターを返す
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/wchar.h">wchar.h</A>&gt;</B>
 
-<B>wchar_t *wcpncpy(wchar_t *</B><I>dest</I><B>, const wchar_t *</B><I>src</I><B>, size_t </B><I>n</I><B>);</B>
+<B>wchar_t *wcpncpy(</B>size_t n;
+<B>                 wchar_t </B><I>dest</I><B>[restrict </B><I>n</I><B>],</B>
+<B>                 const wchar_t *restrict </B><I>src</I><B>,</B>
+<B>                 size_t </B><I>n</I><B>);</B>
 </PRE>
 
 <P>
@@ -32,74 +39,70 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 <B>wcpncpy</B>():
+<PRE>
+    Since glibc 2.10:
+        _POSIX_C_SOURCE &gt;= 200809L
+    Before glibc 2.10:
+        _GNU_SOURCE
+</PRE>
 
-
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT>glibc 2.10 以降:<DD>
-_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
-<DT>glibc 2.10 より前:<DD>
-_GNU_SOURCE
-</DL>
-</DL>
-
-
-
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
-<B>wcpncpy</B>()  関数は、 <B><A HREF="../man3/stpncpy.3.html">stpncpy</A></B>(3)  関数に対応するワイド文字関数である。 この関数は、<I>src</I>
-が指すワイド文字文字列から <I>dest</I> が指す ワイド文字文字列に、終端のヌルワイド文字 (L'\0') を含めて 最大 <I>n</I>
-文字をコピーする。 ちょうど <I>n</I> 個のワイド文字が <I>dest</I> にコピーされる。 つまり、<I>wcslen(src)</I> の長さが <I>n</I>
-より小さければ、 <I>dest</I> が指す配列中の残りのワイド文字は L'\0' 文字で埋められる。 <I>wcslen(src)</I> の長さが
-<I>n</I> 以上ならば、<I>dest</I> が指す 文字列は L'\0' で終端されない。
+The <B>wcpncpy</B>()  function is the wide-character equivalent of the
+<B><A HREF="../man3/stpncpy.3.html">stpncpy</A></B>(3)  function.  It copies at most <I>n</I> wide characters from the
+wide-character string pointed to by <I>src</I>, including the terminating null
+wide (L'\0'), to the array pointed to by <I>dest</I>.  Exactly <I>n</I>
+wide characters are written at <I>dest</I>.  If the length <I>wcslen(src)</I> is
+smaller than <I>n</I>, the remaining wide characters in the array pointed to by
+<I>dest</I> are filled with L'\0' characters.  If the length
+<I>wcslen(src)</I> is greater than or equal to <I>n</I>, the string pointed to by
+<I>dest</I> will not be L'\0' terminated.
 <P>
 
 これらの文字列は重なっていてはならない。
 <P>
 
 プログラマは、少なくとも <I>n</I> 個のワイド文字が入る領域を <I>dest</I> に確保しなければならない。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
-<B>wcpncpy</B>()  は、最後に書き込まれたワイド文字へのポインター、 すなわち <I>dest</I>+<I>n</I>-1 を返す。
-<A NAME="lbAF">&nbsp;</A>
+<B>wcpncpy</B>()  returns a pointer to one past the last non-null wide character
+written, that is, <I>dest~+~wcsnlen(src,~n)</I>.
+<A NAME="lbAG">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>wcpncpy</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAG">&nbsp;</A>
-<H2>準拠</H2>
+<A NAME="lbAH">&nbsp;</A>
+<H2>標準規格</H2>
 
 POSIX.1-2008.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/stpncpy.3.html">stpncpy</A></B>(3), <B><A HREF="../man3/wcsncpy.3.html">wcsncpy</A></B>(3)
-<A NAME="lbAI">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">属性</A><DD>
-<DT><A HREF="#lbAG">準拠</A><DD>
-<DT><A HREF="#lbAH">関連項目</A><DD>
-<DT><A HREF="#lbAI">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">標準規格</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

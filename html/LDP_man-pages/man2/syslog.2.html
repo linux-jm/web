@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of SYSLOG</TITLE>
+<HTML><HEAD><TITLE>Man page of syslog</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>SYSLOG</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated:  2020-08-13<BR><A HREF="#index">Index</A>
+<H1>syslog</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/syslog.2">roff page</A><HR>
 
@@ -16,19 +16,25 @@ Section: Linux Programmer's Manual (2)<BR>Updated:  2020-08-13<BR><A HREF="#inde
 
 syslog, klogctl - カーネルのメッセージリングバッファーを読んだり消去したりする; console_loglevel の設定を行う
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
-<B>int syslog(int </B><I>type</I><B>, char *</B><I>bufp</I><B>, int </B><I>len</I><B>);</B>
-<B>/* glibc ではラッパー関数は提供されていない */</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;</B>     /* Definition of <B>SYS_*</B> constants */
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int syscall(SYS_syslog, int </B><I>type</I><B>, char *</B><I>bufp</I><B>, int </B><I>size</I><B>);</B>
 
  /* glibc インターフェース */
 <B>#include &lt;<A HREF="file:///usr/include/sys/klog.h">sys/klog.h</A>&gt;</B>
 
-<B>int klogctl(int </B><I>type</I><B>, char *</B><I>bufp</I><B>, int </B><I>len</I><B>);</B>
+<B>int klogctl(int </B><I>type</I><B>, char *</B><I>bufp</I><B>, int </B><I>size</I><B>);</B>
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <I>注意</I>: おそらく、あなたが探しているのは、 <B><A HREF="../../sysklogd/man8/syslogd.8.html">syslogd</A></B>(8) と通信する C ライブラリ関数の <B>syslog</B>() でしょう。詳細は
@@ -38,19 +44,21 @@ syslog, klogctl - カーネルのメッセージリングバッファーを読�
 このページはカーネルの <B>syslog</B>() システムコールについて説明している。 <B>syslog</B>() システムコールはカーネルの
 <I>printk</I>() バッファーを制御するために使用される。 このシステムコールに対する glibc ラッパー関数は <B>klogctl</B>()
 と呼ばれている。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H3>カーネルログバッファー (kernel log buffer)</H3>
 
 
 
 
 
-カーネルは長さ <B>LOG_BUF_LEN</B> の巡回式のバッファーを持っており、 それにはカーネル関数の <B>printk</B>()
-の引数として与えられた メッセージが (そのログレベルにかかわらず) 格納される。 初期のカーネルでは <B>LOG_BUF_LEN</B> の値は 4096
-であった。 カーネル 1.3.54 からは 8192、 カーネル 2.1.113 からは 16384 になり、 カーネル 2.4.23 以降および
-2.6 以降ではカーネル設定オプション (<B>CONFIG_LOG_BUF_SHIFT</B>、 デフォルト値はアーキテクチャー依存)
-で値を設定できるようになっている。 Linux 2.6.6 以降では、コマンド 10 (下記参照) でバッファーのサイズを問い合わせできる。
-<A NAME="lbAF">&nbsp;</A>
+The kernel has a cyclic buffer of size <B>LOG_BUF_LEN</B> in which messages
+given as arguments to the kernel function <B>printk</B>()  are stored
+(regardless of their log level).  In early kernels, <B>LOG_BUF_LEN</B> had the
+value 4096; from Linux 1.3.54, it was 8192; from Linux 2.1.113, it was
+16384; since Linux 2.4.23/2.6, the value is a kernel configuration option
+(<B>CONFIG_LOG_BUF_SHIFT</B>, default value dependent on the architecture).
+Since Linux 2.6.6, the size can be queried with command type 10 (see below).
+<A NAME="lbAG">&nbsp;</A>
 <H3>コマンド</H3>
 
 <I>type</I> 引数はこの関数が行う動作を決定する。 以下のリストに示す値を <I>type</I> に指定できる。
@@ -72,8 +80,8 @@ syslog, klogctl - カーネルのメッセージリングバッファーを読�
 リングバッファーに残っているメッセージをすべて読み出し、クリアする。 この呼び出しは <I>type</I> 3
 と全く同じことを行い、追加で「リングバッファー消去」 (&quot;clear ring buffer&quot;) コマンドも実行する。
 <DT><B>SYSLOG_ACTION_CLEAR</B> (5)<DD>
-「リングバッファー消去」 (
-は無視される。
+The call executes just the &quot;clear ring buffer&quot; command.  The <I>bufp</I> and
+<I>size</I> arguments are ignored.
 <DT><DD>
 このコマンドは実際にリングバッファーをクリアするわけではなく、 コマンド 3 (<B>SYSLOG_ACTION_READ_ALL</B>) と 4
 (<B>SYSLOG_ACTION_READ_CLEAR</B> で返す内容を決定するカーネルの管理変数を設定する。 このコマンドはコマンド 2
@@ -86,7 +94,7 @@ syslog, klogctl - カーネルのメッセージリングバッファーを読�
 より前では、 このコマンドは <I>console_loglevel</I> を <I>minimum_console_loglevel</I>
 に設定するだけであった。 下記の <I>/proc/sys/kernel/printk</I> の議論を参照。
 <DT><DD>
-引数 <I>bufp</I> と <I>len</I> は無視される。
+The <I>bufp</I> and <I>size</I> arguments are ignored.
 <DT><B>SYSLOG_ACTION_CONSOLE_ON</B> (7)<DD>
 
 
@@ -95,16 +103,18 @@ syslog, klogctl - カーネルのメッセージリングバッファーを読�
 <I>default_console_loglevel</I> に設定するだけであった。 下記の <I>/proc/sys/kernel/printk</I>
 の議論を参照。
 <DT><DD>
-引数 <I>bufp</I> と <I>len</I> は無視される。
+The <I>bufp</I> and <I>size</I> arguments are ignored.
 <DT><B>SYSLOG_ACTION_CONSOLE_LEVEL</B> (8)<DD>
-<I>console_loglevel</I> を <I>len</I> で指定された値に設定する。 <I>len</I> は 1 以上 8 以下の整数でなければならない。
-カーネルにより、暗黙のうちに <I>len</I> に <I>minimum_console_loglevel</I> で指定される最小値が適用される。
-詳細は「ログレベル」の節を参照のこと。 引数 <I>bufp</I> は無視される。
+The call sets <I>console_loglevel</I> to the value given in <I>size</I>, which must
+be an integer between 1 and 8 (inclusive).  The kernel silently enforces a
+minimum value of <I>minimum_console_loglevel</I> for <I>size</I>.  See the <I>log level</I> section for details.  The <I>bufp</I> argument is ignored.
 <DT><B>SYSLOG_ACTION_SIZE_UNREAD</B> (9) (Linux 2.4.10 以降)<DD>
-コマンド 2 (<B>SYSLOG_ACTION_READ</B>) でカーネルログバッファーから読み出せるバイト数を返す。 引数 <I>bufp</I> と
-<I>len</I> は無視される。
+The call returns the number of bytes currently available to be read from the
+kernel log buffer via command 2 (<B>SYSLOG_ACTION_READ</B>).  The <I>bufp</I> and
+<I>size</I> arguments are ignored.
 <DT><B>SYSLOG_ACTION_SIZE_BUFFER</B> (10) (Linux 2.6.6 以降)<DD>
-カーネルログバッファーの全体のサイズを返す。 引数 <I>bufp</I> と <I>len</I> は無視される。
+This command returns the total size of the kernel log buffer.  The <I>bufp</I>
+and <I>size</I> arguments are ignored.
 </DL>
 <P>
 
@@ -112,18 +122,15 @@ syslog, klogctl - カーネルのメッセージリングバッファーを読�
 
 
 
-コマンド種別 3 と 10 以外のコマンドは全て特権が必要である。
-バージョン 2.6.37 より前の Linux カーネルでは、
-コマンド種別 3 と 10 は非特権プロセスも呼び出すことができる。
-Linux 2.6.37 以降では、<I>/proc/sys/kernel/dmesg_restrict</I> が値 0 の場合に限り、
-非特権プロセスはこれらのコマンドを呼び出すことができる。
-Linux 2.6.37 より前では、「特権を持つ (privileged)」とは呼び出し者が
-<B>CAP_SYS_ADMIN</B> ケーパビリティを持つことを意味する。
-Linux 2.6.37 以降では、「特権を持つ」とは呼び出し者が
-<B>CAP_SYS_ADMIN</B> ケーパビリティか
-(新しい) <B>CAP_SYSLOG</B> ケーパビリティのいずれかを持つことを意味する
-(この目的で <B>CAP_SYS_ADMIN</B> ケーパビリティを使うのは今は非推奨である)。
-<A NAME="lbAG">&nbsp;</A>
+All commands except 3 and 10 require privilege.  In Linux kernels before
+Linux 2.6.37, command types 3 and 10 are allowed to unprivileged processes;
+since Linux 2.6.37, these commands are allowed to unprivileged processes
+only if <I>/proc/sys/kernel/dmesg_restrict</I> has the value 0.  Before Linux
+2.6.37, &quot;privileged&quot; means that the caller has the <B>CAP_SYS_ADMIN</B>
+capability.  Since Linux 2.6.37, &quot;privileged&quot; means that the caller has
+either the <B>CAP_SYS_ADMIN</B> capability (now deprecated for this purpose) or
+the (new)  <B>CAP_SYSLOG</B> capability.
+<A NAME="lbAH">&nbsp;</A>
 <H3>/proc/sys/kernel/printk</H3>
 
 <I>/proc/sys/kernel/printk</I> は書き込み可能なファイルで、 エラーメッセージのログ出力を行う際にカーネルの
@@ -132,18 +139,21 @@ Linux 2.6.37 以降では、「特権を持つ」とは呼び出し者が
 <DT><I>console_loglevel</I><DD>
 
 
-メッセージのログレベルがこの値よりも小さい場合のみ、メッセージだけがコンソールに出力される。 このフィールドのデフォルト値は
-<B>DEFAULT_CONSOLE_LOGLEVEL</B> (7) だが、 カーネルのコマンドラインに &quot;quiet&quot; という単語が含まれている場合は 4
-に設定され、 &quot;debug&quot; という単語が含まれている場合は 10 に設定され、 カーネルフォールトが発生した場合には 15 に設定される (但し、10
-や 15 という数字に意味はなく、8 と同等である)。 <I>console_loglevel</I> の値は <I>type</I> が 8 の
-<B>syslog</B>() の呼び出しによって設定でき、 設定できる値の範囲は 1-8 である。
+Only messages with a log level lower than this value will be printed to the
+console.  The default value for this field is <B>DEFAULT_CONSOLE_LOGLEVEL</B>
+(7), but it is set to 4 if the kernel command line contains the word
+&quot;quiet&quot;, 10 if the kernel command line contains the word &quot;debug&quot;, and to 15
+in case of a kernel fault (the 10 and 15 are just silly, and equivalent to
+8).  The value of <I>console_loglevel</I> can be set (to a value in the range
+1-8) by a <B>syslog</B>()  call with a <I>type</I> of 8.
 <DT><I>default_message_loglevel</I><DD>
 
 
-この値は、明示的にログレベルが指定されていない <I>printk()</I> メッセージのログレベルとして使用される。 Linux 2.6.38 以前では、
-このフィールドのデフォルト値は 4 (<B>KERN_WARNING</B>) にハードコードされていた。 Linux 2.6.39 以降では、
-デフォルト値はカーネルの設定オプション <B>CONFIG_DEFAULT_MESSAGE_LOGLEVEL</B> で定義されており、 デフォルト値は 4
-である。
+This value will be used as the log level for <I>printk()</I> messages that do
+not have an explicit level.  Up to and including Linux 2.6.38, the
+hard-coded default value for this field was 4 (<B>KERN_WARNING</B>); since Linux
+2.6.39, the default value is defined by the kernel configuration option
+<B>CONFIG_DEFAULT_MESSAGE_LOGLEVEL</B>, which defaults to 4.
 <DT><I>minimum_console_loglevel</I><DD>
 このフィールドの値は <I>console_loglevel</I> に設定できる最小値である。
 <DT><I>default_console_loglevel</I><DD>
@@ -153,7 +163,7 @@ Linux 2.6.37 以降では、「特権を持つ」とは呼び出し者が
 
 <I>console_loglevel</I> のデフォルト値である。
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H3>ログレベル</H3>
 
 すべての <I>printk</I>() メッセージにはそれぞれログレベルがある。 ログレベルがメッセージの一部として明示的に指定されなかった場合は、
@@ -161,19 +171,24 @@ Linux 2.6.37 以降では、「特権を持つ」とは呼び出し者が
 <TABLE>
 <TR VALIGN=top><TD><B>カーネル定数</B></TD><TD><B>レベル値</B></TD><TD><B>意味</B><BR></TD></TR>
 <TR VALIGN=top><TD><B>KERN_EMERG</B></TD><TD ALIGN=center>0</TD><TD>システムが使用不可<BR></TD></TR>
-<TR VALIGN=top><TD><B>KERN_ALERT</B></TD><TD ALIGN=center>1</TD><TD>直ちに対応しなければならない<BR></TD></TR>
+<TR VALIGN=top><TD><B>KERN_ALERT</B></TD><TD ALIGN=center>1</TD><TD>
+直ちに対応しなければならない
+<BR></TD></TR>
 <TR VALIGN=top><TD><B>KERN_CRIT</B></TD><TD ALIGN=center>2</TD><TD>危険な状況<BR></TD></TR>
 <TR VALIGN=top><TD><B>KERN_ERR</B></TD><TD ALIGN=center>3</TD><TD>エラー状況<BR></TD></TR>
 <TR VALIGN=top><TD><B>KERN_WARNING</B></TD><TD ALIGN=center>4</TD><TD>警告状況<BR></TD></TR>
-<TR VALIGN=top><TD><B>KERN_NOTICE</B></TD><TD ALIGN=center>5</TD><TD>通常だが重要な状況<BR></TD></TR>
+<TR VALIGN=top><TD><B>KERN_NOTICE</B></TD><TD ALIGN=center>5</TD><TD>
+通常だが重要な状況
+<BR></TD></TR>
 <TR VALIGN=top><TD><B>KERN_INFO</B></TD><TD ALIGN=center>6</TD><TD>参考情報<BR></TD></TR>
 <TR VALIGN=top><TD><B>KERN_DEBUG</B></TD><TD ALIGN=center>7</TD><TD>デバッグレベルのメッセージ<BR></TD></TR>
 </TABLE>
 
 <P>
+
 カーネルの <I>printk()</I> ルーチンは、メッセージのログレベルが <I>console_loglevel</I> よりも小さい値の場合にのみ、
 メッセージをコンソールに出力する。
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>返り値</H2>
 
 <I>type</I> が 2, 3, 4 の場合、成功すると <B>syslog</B>()  は読み出したバイト数を返す。 <I>type</I> が 9 の場合、
@@ -182,13 +197,14 @@ Linux 2.6.37 以降では、「特権を持つ」とは呼び出し者が
 <P>
 
 エラーの場合は、-1&nbsp;が返り、 <I>errno</I> にエラーを示す値が設定される。
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
 <DT><B>EINVAL</B><DD>
-不正な引数 (具体的には、 <I>type</I> が正しくない、もしくは <I>type</I> が 2, 3, 4 の場合に <I>buf</I> が NULL か
-<I>len</I> が 0 未満である、もしくは <I>type</I> が 8 の場合に <I>level</I> が 1 以上 8 以下の範囲に入っていない)。
+Bad arguments (e.g., bad <I>type</I>; or for <I>type</I> 2, 3, or 4, <I>buf</I> is NULL,
+or <I>size</I> is less than zero; or for <I>type</I> 8, the <I>level</I> is outside the
+range 1 to 8).
 <DT><B>ENOSYS</B><DD>
 カーネルの設定オプション <B>CONFIG_PRINTK</B> を無効にしてカーネルがコンパイルされているため、 <B>syslog</B>()
 システムコールが利用できない。
@@ -198,12 +214,12 @@ Linux 2.6.37 以降では、「特権を持つ」とは呼び出し者が
 <DT><B>ERESTARTSYS</B><DD>
 システムコールがシグナルによって割り込まれ、何も読み出せなかった。 (トレース中にしか発生することはない)
 </DL>
-<A NAME="lbAK">&nbsp;</A>
-<H2>準拠</H2>
-
-このシステムコールは Linux 特有であり、移植を意図したプログラムでは 使用してはいけない。
 <A NAME="lbAL">&nbsp;</A>
-<H2>注意</H2>
+<H2>標準規格</H2>
+
+Linux.
+<A NAME="lbAM">&nbsp;</A>
+<H2>歴史</H2>
 
 
 
@@ -215,35 +231,30 @@ Linux 2.6.37 以降では、「特権を持つ」とは呼び出し者が
 
 かなり初期の頃から、同じ名前を持つシステムコールとライブラリルーチンが
 全く異なる別物であるのは不幸なことだと指摘されてきた。
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>
 
 <BR>&nbsp;<B><A HREF="../../util-linux/man1/dmesg.1.html">dmesg</A></B>(1),&nbsp;<B><A HREF="../man3/syslog.3.html">syslog</A></B>(3),&nbsp;<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
-<A NAME="lbAN">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
 <DL>
-<DT><A HREF="#lbAE">カーネルログバッファー (kernel log buffer)</A><DD>
-<DT><A HREF="#lbAF">コマンド</A><DD>
-<DT><A HREF="#lbAG">/proc/sys/kernel/printk</A><DD>
-<DT><A HREF="#lbAH">ログレベル</A><DD>
+<DT><A HREF="#lbAF">カーネルログバッファー (kernel log buffer)</A><DD>
+<DT><A HREF="#lbAG">コマンド</A><DD>
+<DT><A HREF="#lbAH">/proc/sys/kernel/printk</A><DD>
+<DT><A HREF="#lbAI">ログレベル</A><DD>
 </DL>
-<DT><A HREF="#lbAI">返り値</A><DD>
-<DT><A HREF="#lbAJ">エラー</A><DD>
-<DT><A HREF="#lbAK">準拠</A><DD>
-<DT><A HREF="#lbAL">注意</A><DD>
-<DT><A HREF="#lbAM">関連項目</A><DD>
-<DT><A HREF="#lbAN">この文書について</A><DD>
+<DT><A HREF="#lbAJ">返り値</A><DD>
+<DT><A HREF="#lbAK">エラー</A><DD>
+<DT><A HREF="#lbAL">標準規格</A><DD>
+<DT><A HREF="#lbAM">歴史</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

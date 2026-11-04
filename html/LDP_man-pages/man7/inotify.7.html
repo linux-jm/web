@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of INOTIFY</TITLE>
+<HTML><HEAD><TITLE>Man page of inotify</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>INOTIFY</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<H1>inotify</H1>
+Section: Environments, Tables, and Troff Macros (7)<BR>Updated: 2026-02-14<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man7/inotify.7">roff page</A><HR>
 
@@ -25,22 +25,22 @@ inotify - ファイルシステムイベントを監視する
 
 この API では以下のシステムコールが使用される。
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 <B><A HREF="../man2/inotify_init.2.html">inotify_init</A></B>(2)  は inotify インスタンスを作成し、inotify インスタンスを参照する
 ファイルディスクリプターを返す。 より新しい <B><A HREF="../man2/inotify_init1.2.html">inotify_init1</A></B>(2)  も <B><A HREF="../man2/inotify_init.2.html">inotify_init</A></B>(2)  と同様だが、
 こちらにはいくつかの追加の機能を利用するための <I>flags</I> 引数がある。
-<DT>*<DD>
+<DT>&bull;<DD>
 <B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)  は inotify インスタンスに関連づけられた「監視対象 (watch) リスト」を操作する。
 監視対象リストの各アイテム (&quot;watch&quot;) は、 ファイルまたはディレクトリのパス名と、 そのパス名で参照されるファイルに対して
 カーネルが監視する複数のイベントの集合を指定する。 <B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)
 は新しい監視アイテムの作成や既存の監視対象の変更ができる。 各監視対象は一意の「監視対象ディスクリプター」を持つ。 これは監視対象を作成したときに
 <B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)  から返される整数である。
-<DT>*<DD>
+<DT>&bull;<DD>
 監視しているファイルやディレクトリでイベントが起こると、 それらのイベントはアプリケーションから inotify ファイルディスクリプターから
 <B><A HREF="../man2/read.2.html">read</A></B>(2) を使って構造化データとして読み出すことができる (下記参照)。
-<DT>*<DD>
+<DT>&bull;<DD>
 <B><A HREF="../man2/inotify_rm_watch.2.html">inotify_rm_watch</A></B>(2)  は inotify の監視対象リストからアイテムを削除する。
-<DT>*<DD>
+<DT>&bull;<DD>
 inotify インスタンスを指している 全てのファイルディスクリプターが (<B><A HREF="../man2/close.2.html">close</A></B>(2) を使って) クローズされた場合、
 その下層にあるオブジェクトとそのリソースは、 カーネルで再利用するために解放される。 関連が切られた監視対象は自動的に解放される。
 </DL>
@@ -69,12 +69,12 @@ inotify インスタンスを指している 全てのファイルディスク�
 
 
 struct inotify_event {
-    int      wd;       /* 監視対象ディスクリプター */
-    uint32_t mask;     /* イベントを示すマスク */
-    uint32_t cookie;   /* 関連するイベント群を関連づける
-                          一意なクッキー (<A HREF="../man2/rename.2.html">rename</A>(2) 用) */
-    uint32_t len;      /* 'name' フィールドのサイズ */
-    char     name[];   /* ヌルで終端された任意の名前 */
+    int      wd;       /* Watch descriptor */
+    uint32_t mask;     /* Mask describing event */
+    uint32_t cookie;   /* Unique cookie associating related
+                          events (for <A HREF="../man2/rename.2.html">rename</A>(2)) */
+    uint32_t len;      /* Size of name field */
+    char     name[];   /* Optional null-terminated name */
 };
 </PRE>
 
@@ -95,24 +95,29 @@ struct inotify_event {
 他のイベント種別の場合には、 <I>cookie</I> は 0 に設定する。
 <P>
 
-<I>name</I> フィールドは監視しているディレクトリ内のファイルに対して イベントが返される場合のためにだけ存在する。
-監視するディレクトリ内のファイル名を表す。 このファイル名はヌルで終端され、 その後の読み込みで適切なアドレス境界に調整するために、 さらにヌルバイト
-('\0') が含まれる場合もある。
+The <I>name</I> field is present only when an event is returned for a file
+inside a watched directory; it identifies the filename within the watched
+directory.  This filename is null-terminated, and may include further null
+bytes ('\0')  to align subsequent reads to a suitable address
+boundary.
 <P>
 
-<I>len</I> フィールドはヌルバイトを含む <I>name</I> の全てのバイト数を表す。
-よって、 <I>inotify_event</I> 構造体のサイズは
-<I>sizeof(struct inotify_event)+len</I> である。
+The <I>len</I> field counts all of the bytes in <I>name</I>, including the null
+bytes; the size of each <I>inotify_event</I> structure is thus <I>sizeof(struct inotify_event)+size</I>.
 <P>
 
-<B><A HREF="../man2/read.2.html">read</A></B>(2) に渡されたバッファーが小さすぎて次のイベントに関する情報を返せ
-ない場合の動作はカーネルのバージョンにより異なる。 2.6.21 より前のカー
-ネルでは、 <B><A HREF="../man2/read.2.html">read</A></B>(2) は 0 を返す。 2.6.21 以降のカーネルでは、
-<B><A HREF="../man2/read.2.html">read</A></B>(2) はエラー <B>EINVAL</B> で失敗する。
-バッファーサイズとして
+The behavior when the buffer given to <B><A HREF="../man2/read.2.html">read</A></B>(2)  is too small to return
+information about the next event depends on the kernel version: before Linux
+2.6.21, <B><A HREF="../man2/read.2.html">read</A></B>(2)  returns 0; since Linux 2.6.21, <B><A HREF="../man2/read.2.html">read</A></B>(2)  fails with
+the error <B>EINVAL</B>.  Specifying a buffer of size
 <P>
 
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;sizeof(struct&nbsp;inotify_event)&nbsp;+&nbsp;NAME_MAX&nbsp;+&nbsp;1
+
+<PRE>
+sizeof(struct inotify_event) + NAME_MAX + 1
+</PRE>
+
+
 <P>
 
 を指定すれば、少なくとも 1 イベントで読み出しを行うには十分である。
@@ -136,9 +141,10 @@ struct inotify_event {
 
 
 
-メタデータが変更された。 メタデータとは、例えば、アクセス許可 (<B><A HREF="../man2/chmod.2.html">chmod</A></B>(2))、タイムスタンプ (<B><A HREF="../man2/utimensat.2.html">utimensat</A></B>(2)
-など)、拡張属性 (<B><A HREF="../man2/setxattr.2.html">setxattr</A></B>(2))、 リンクカウント (Linux 2.6.25 以降; <B><A HREF="../man2/link.2.html">link</A></B>(2) のリンク先や
-<B><A HREF="../man2/unlink.2.html">unlink</A></B>(2) など)、ユーザー/グループ ID (<B><A HREF="../man2/chown.2.html">chown</A></B>(2) など) などである。
+Metadata changed---for example, permissions (e.g., <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2)),
+timestamps (e.g., <B><A HREF="../man2/utimensat.2.html">utimensat</A></B>(2)), extended attributes (<B><A HREF="../man2/setxattr.2.html">setxattr</A></B>(2)),
+link count (since Linux 2.6.25; e.g., for the target of <B><A HREF="../man2/link.2.html">link</A></B>(2)  and for
+<B><A HREF="../man2/unlink.2.html">unlink</A></B>(2)), and user/group ID (e.g., <B><A HREF="../man2/chown.2.html">chown</A></B>(2)).
 <DT><B>IN_CLOSE_WRITE</B> (+)<DD>
 書き込みのためにオープンされたファイルがクローズされた。
 <DT><B>IN_CLOSE_NOWRITE</B> (*)<DD>
@@ -174,9 +180,9 @@ activity on any link to the file (in the same or a different directory).
 
 ディレクトリを監視する場合:
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 上記でアスタリスク (*) が付いたイベントは、 ディレクトリ自身とディレクトリ内のオブジェクトのどちらに対しても発生する。
-<DT>*<DD>
+<DT>&bull;<DD>
 上記でプラス記号 (+) が付いたイベントは、 ディレクトリ内のオブジェクトに対してのみ発生する (ディレクトリ自身に対しては発生しない)。
 </DL>
 <P>
@@ -338,15 +344,15 @@ without this flag may clobber existing watch masks.
 作成可能な監視対象の数の実 UID 単位の上限を指定する。
 </DL>
 <A NAME="lbAH">&nbsp;</A>
-<H2>バージョン</H2>
+<H2>標準規格</H2>
 
-inotify は 2.6.13 の Linux カーネルに組込まれた。 これに必要なライブラリのインターフェースは、 glibc のバージョン 2.4
-に追加された (<B>IN_DONT_FOLLOW</B>, <B>IN_MASK_ADD</B>, <B>IN_ONLYDIR</B> は glibc バージョン 2.5
-で追加された)。
+Linux.
 <A NAME="lbAI">&nbsp;</A>
-<H2>準拠</H2>
+<H2>歴史</H2>
 
-inotify API は Linux 独自のものである。
+Inotify was merged into Linux 2.6.13.  The required library interfaces were
+added in glibc 2.4.  (<B>IN_DONT_FOLLOW</B>, <B>IN_MASK_ADD</B>, and <B>IN_ONLYDIR</B>
+were added in glibc 2.5.)
 <A NAME="lbAJ">&nbsp;</A>
 <H2>注意</H2>
 
@@ -375,7 +381,7 @@ inotify ファイルディスクリプターの読み込みで返されるイベ
 
 The set of watch descriptors that is being monitored via an inotify file
 descriptor can be viewed via the entry for the inotify file descriptor in
-the process's <I>/proc/[pid]/fdinfo</I> directory.  See <B><A HREF="../man5/proc.5.html">proc</A></B>(5)  for further
+the process's <I>/proc/</I>pid<I>/fdinfo</I> directory.  See <B><A HREF="../man5/proc.5.html">proc</A></B>(5)  for further
 details.  The <B>FIONREAD</B> <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)  returns the number of bytes available
 to read from an inotify file descriptor.
 <A NAME="lbAK">&nbsp;</A>
@@ -453,11 +459,13 @@ cookie 値によって対応を取ることができる。 しかし、対応を
 (inotify ファイルディスクリプターの再作成とキャッシュの再構成はこの状況に対処するのに有用な方法なのだが)。
 <P>
 
-また、アプリケーションは、 <B>IN_MOVED_FROM</B> イベントが今行った <B><A HREF="../man2/read.2.html">read</A></B>(2)
-の呼び出しで返されたバッファーのちょうど一番最後のイベントで、 <B>IN_MOVED_TO</B> イベントは次の <B><A HREF="../man2/read.2.html">read</A></B>(2)
-を行わないと取得できない可能性も考慮に入れる必要がある。 2 つ目の <B><A HREF="../man2/read.2.html">read</A></B>(2) は (短い) タイムアウトで行うべきである。 これは、
-<B>IN_MOVED_FROM</B>-<B>IN_MOVED_TO</B> のイベントペアのキューへの挿入はアトミックではなく、 また <B>IN_MOVED_TO</B>
-イベントが全く発生しない可能性もあるという事実を考慮に入れておく必要があるからである。
+Applications should also allow for the possibility that the <B>IN_MOVED_FROM</B>
+event was the last event that could fit in the buffer returned by the
+current call to <B><A HREF="../man2/read.2.html">read</A></B>(2), and the accompanying <B>IN_MOVED_TO</B> event might
+be fetched only on the next <B><A HREF="../man2/read.2.html">read</A></B>(2), which should be done with a (small)
+timeout to allow for the fact that insertion of the
+<B>IN_MOVED_FROM</B>+<B>IN_MOVED_TO</B> event pair is not atomic, and also the
+possibility that there may not be any <B>IN_MOVED_TO</B> event.
 <A NAME="lbAM">&nbsp;</A>
 <H2>バグ</H2>
 
@@ -473,7 +481,7 @@ Since Linux 3.19, calls to <B><A HREF="../man2/fallocate.2.html">fallocate</A></
 
 
 
-2.6.16 以前のカーネルでは <B>IN_ONESHOT</B> <I>mask</I> フラグが働かない。
+Before Linux 2.6.16, the <B>IN_ONESHOT</B> <I>mask</I> flag does not work.
 <P>
 
 元々は設計/実装時の意図通り、 イベントが一つ発生し watch が削除された際に <B>IN_ONESHOT</B> フラグでは <B>IN_IGNORED</B>
@@ -483,26 +491,34 @@ Since Linux 3.19, calls to <B><A HREF="../man2/fallocate.2.html">fallocate</A></
 
 
 
-カーネル 2.6.25 より前では、 連続する同一のイベントを一つにまとめることを意図したコード (古い方のイベントがまだ読み込まれていない場合に、
-最新の 2 つのイベントを一つにまとめられる可能性がある) が、 最新のイベントが「最も古い」読み込まれていないイベントとまとめられるか
-をチェックするようになっていた。
+Before Linux 2.6.25, the kernel code that was intended to coalesce
+successive identical events (i.e., the two most recent events could
+potentially be coalesced if the older had not yet been read)  instead
+checked if the most recent event could be coalesced with the <I>oldest</I>
+unread event.
 <P>
 
 
 
-<B><A HREF="../man2/inotify_rm_watch.2.html">inotify_rm_watch</A></B>(2) の呼び出しにより監視対象ディスクリプターが削除された場合
-(なお、監視対象ファイルの削除や監視対象ファイルが含まれるファイルシステムのアンマウントによっても監視対象ディスクリプターは削除される)、
-この監視対象ディスクリプター関連の処理待ちの未読み出しイベントは、 読み出し可能なままとなる。 監視対象ディスクリプターは
-<B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2) によって後で割り当てられるため、 カーネルは利用可能な監視対象ディスクリプターの範囲 (0 から
-<B>INT_MAX</B>) から昇順にサイクリックに割り当てを行う。未使用の監視対象ディスクリプターを割り当てる際、 その監視対象ディスクリプター番号に
-inotify キューで処理待ちの未読み出しイベントがあるかの確認は行われない。 したがって、監視対象ディスクリプターが再割り当てされた際に、
-その監視対象ディスクリプターの一つ前の使用時に発生した処理待ちの未読み出しイベントが存在するということが起こりうる。
-その結果、アプリケーションはこれらのイベントを読み出す可能性があり、
-これらのイベントが新しく再利用された監視対象ディスクリプターに関連付けられたファイルに属するものかを解釈する必要が出て来る。
-実際のところ、このバグを踏む可能性は極めて低い。 それは、このバグを踏むためには、アプリケーションが <B>INT_MAX</B>
-個の監視対象ディスクリプターが一周させて、 キューに未読み出しイベントが残っている監視対象ディスクリプターを解放し、
-その監視対象ディスクリプターを再利用する必要があるからである。 この理由と、実世界のアプリケーションで発生したというバグ報告がないことから、 Linux
-3.15 時点では、この計算上は起こりうるバグを取り除くためのカーネルの変更は行われていない。
+When a watch descriptor is removed by calling <B><A HREF="../man2/inotify_rm_watch.2.html">inotify_rm_watch</A></B>(2)  (or
+because a watch file is deleted or the filesystem that contains it is
+unmounted), any pending unread events for that watch descriptor remain
+available to read.  As watch descriptors are subsequently allocated with
+<B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2), the kernel cycles through the range of possible
+watch descriptors (1 to <B>INT_MAX</B>)  incrementally.  When allocating a free
+watch descriptor, no check is made to see whether that watch descriptor
+number has any pending unread events in the inotify queue.  Thus, it can
+happen that a watch descriptor is reallocated even when pending unread
+events exist for a previous incarnation of that watch descriptor number,
+with the result that the application might then read those events and
+interpret them as belonging to the file associated with the newly recycled
+watch descriptor.  In practice, the likelihood of hitting this bug may be
+extremely low, since it requires that an application cycle through
+<B>INT_MAX</B> watch descriptors, release a watch descriptor while leaving
+unread events for that watch descriptor in the queue, and then recycle that
+watch descriptor.  For this reason, and because there have been no reports
+of the bug occurring in real-world applications, as of Linux 3.15, no kernel
+changes have yet been made to eliminate this possible bug.
 <A NAME="lbAN">&nbsp;</A>
 <H2>例</H2>
 
@@ -519,7 +535,7 @@ inotify キューで処理待ちの未読み出しイベントがあるかの確
 
 
 <PRE>
-$ <B>./a.out /tmp /home/user/temp</B>
+$<B> ./a.out /tmp /home/user/temp</B>;
 Press enter key to terminate.
 Listening for events.
 IN_OPEN: /home/user/temp/foo [file]
@@ -546,51 +562,51 @@ Listening for events stopped.
 
 /* Read all available inotify events from the file descriptor 'fd'.
    wd is the table of watch descriptors for the directories in argv.
-   argc is the length of wd and argv.
+   argc is the size of wd and argv.
    argv is the list of watched directories.
-   Entry 0 of wd and argv is unused. */
+   Entry 0 of wd and argv is unused.  */
 
 static void
 handle_events(int fd, int *wd, int argc, char* argv[])
 {
     /* Some systems cannot read integer variables if they are not
-       properly aligned. On other systems, incorrect alignment may
-       decrease performance. Hence, the buffer used for reading from
+       properly aligned.  On other systems, incorrect alignment may
+       decrease performance.  Hence, the buffer used for reading from
        the inotify file descriptor should have the same alignment as
-       struct inotify_event. */
+       struct inotify_event.  */
 
     char buf[4096]
         __attribute__ ((aligned(__alignof__(struct inotify_event))));
     const struct inotify_event *event;
-    ssize_t len;
+    ssize_t size;
 
-    /* Loop while events can be read from inotify file descriptor. */
+    /* Loop while events can be read from inotify file descriptor.  */
 
     for (;;) {
 
-        /* Read some events. */
+        /* Read some events.  */
 
-        len = read(fd, buf, sizeof(buf));
-        if (len == -1 &amp;&amp; errno != EAGAIN) {
+        size = read(fd, buf, sizeof(buf));
+        if (size == -1 &amp;&amp; errno != EAGAIN) {
             perror(&quot;read&quot;);
             exit(EXIT_FAILURE);
         }
 
         /* If the nonblocking read() found no events to read, then
-           it returns -1 with errno set to EAGAIN. In that case,
-           we exit the loop. */
+           it returns -1 with errno set to EAGAIN.  In that case,
+           we exit the loop.  */
 
-        if (len &lt;= 0)
+        if (size &lt;= 0)
             break;
 
-        /* バッファー内の全イベントを処理する */
+        /* Loop over all events in the buffer.  */
 
-        for (char *ptr = buf; ptr &lt; buf + len;
+        for (char *ptr = buf; ptr &lt; buf + size;
                 ptr += sizeof(struct inotify_event) + event-&gt;len) {
 
             event = (const struct inotify_event *) ptr;
 
-            /* Print event type */
+            /* Print event type.  */
 
             if (event-&gt;mask &amp; IN_OPEN)
                 printf(&quot;IN_OPEN: &quot;);
@@ -599,21 +615,21 @@ handle_events(int fd, int *wd, int argc, char* argv[])
             if (event-&gt;mask &amp; IN_CLOSE_WRITE)
                 printf(&quot;IN_CLOSE_WRITE: &quot;);
 
-            /* Print the name of the watched directory */
+            /* Print the name of the watched directory.  */
 
-            for (int i = 1; i &lt; argc; ++i) {
+            for (size_t i = 1; i &lt; argc; ++i) {
                 if (wd[i] == event-&gt;wd) {
                     printf(&quot;%s/&quot;, argv[i]);
                     break;
                 }
             }
 
-            /* Print the name of the file */
+            /* Print the name of the file.  */
 
             if (event-&gt;len)
                 printf(&quot;%s&quot;, event-&gt;name);
 
-            /* Print type of filesystem object */
+            /* Print type of filesystem object.  */
 
             if (event-&gt;mask &amp; IN_ISDIR)
                 printf(&quot; [directory]\n&quot;);
@@ -639,7 +655,7 @@ main(int argc, char* argv[])
 
     printf(&quot;Press ENTER key to terminate.\n&quot;);
 
-    /* Create the file descriptor for accessing the inotify API */
+    /* Create the file descriptor for accessing the inotify API.  */
 
     fd = inotify_init1(IN_NONBLOCK);
     if (fd == -1) {
@@ -647,7 +663,7 @@ main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    /* Allocate memory for watch descriptors */
+    /* Allocate memory for watch descriptors.  */
 
     wd = calloc(argc, sizeof(int));
     if (wd == NULL) {
@@ -669,24 +685,20 @@ main(int argc, char* argv[])
         }
     }
 
-    /* ポーリングの準備 */
+    /* Prepare for polling.  */
 
     nfds = 2;
 
-    /* コンソールの入力 */
-
-    fds[0].fd = STDIN_FILENO;
+    fds[0].fd = STDIN_FILENO;       /* Console input */
     fds[0].events = POLLIN;
 
-    /* Inotify input */
-
-    fds[1].fd = fd;
+    fds[1].fd = fd;                 /* Inotify input */
     fds[1].events = POLLIN;
 
-    /* Wait for events and/or terminal input */
+    /* Wait for events and/or terminal input.  */
 
     printf(&quot;Listening for events.\n&quot;);
-    while (1) {
+    for (;;) {
         poll_num = poll(fds, nfds, -1);
         if (poll_num == -1) {
             if (errno == EINTR)
@@ -699,7 +711,7 @@ main(int argc, char* argv[])
 
             if (fds[0].revents &amp; POLLIN) {
 
-                /* Console input is available. Empty stdin and quit */
+                /* Console input is available.  Empty stdin and quit.  */
 
                 while (read(STDIN_FILENO, &amp;buf, 1) &gt; 0 &amp;&amp; buf != '\n')
                     continue;
@@ -708,7 +720,7 @@ main(int argc, char* argv[])
 
             if (fds[1].revents &amp; POLLIN) {
 
-                /* Inotify events are available */
+                /* Inotify events are available.  */
 
                 handle_events(fd, wd, argc, argv);
             }
@@ -717,7 +729,7 @@ main(int argc, char* argv[])
 
     printf(&quot;Listening for events stopped.\n&quot;);
 
-    /* Close inotify file descriptor */
+    /* Close inotify file descriptor.  */
 
     close(fd);
 
@@ -734,12 +746,7 @@ main(int argc, char* argv[])
 <B><A HREF="../man2/stat.2.html">stat</A></B>(2), <B><A HREF="../man7/fanotify.7.html">fanotify</A></B>(7)
 <P>
 
-Linux カーネルソース内の <I>Documentation/filesystems/inotify.txt</I>
-<A NAME="lbAR">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<I>Documentation/filesystems/inotify.rst</I> in the Linux kernel source tree
 <P>
 
 <HR>
@@ -753,8 +760,8 @@ Linux カーネルソース内の <I>Documentation/filesystems/inotify.txt</I>
 <DT><A HREF="#lbAF">例</A><DD>
 <DT><A HREF="#lbAG">/proc インターフェース</A><DD>
 </DL>
-<DT><A HREF="#lbAH">バージョン</A><DD>
-<DT><A HREF="#lbAI">準拠</A><DD>
+<DT><A HREF="#lbAH">標準規格</A><DD>
+<DT><A HREF="#lbAI">歴史</A><DD>
 <DT><A HREF="#lbAJ">注意</A><DD>
 <DL>
 <DT><A HREF="#lbAK">制限と警告</A><DD>
@@ -767,7 +774,6 @@ Linux カーネルソース内の <I>Documentation/filesystems/inotify.txt</I>
 <DT><A HREF="#lbAP">プログラムソース</A><DD>
 </DL>
 <DT><A HREF="#lbAQ">関連項目</A><DD>
-<DT><A HREF="#lbAR">この文書について</A><DD>
 </DL>
 <HR>
 This document was created by
