@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of NETLINK</TITLE>
+<HTML><HEAD><TITLE>Man page of netlink</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>NETLINK</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<H1>netlink</H1>
+Section: Environments, Tables, and Troff Macros (7)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man7/netlink.7">roff page</A><HR>
 
@@ -29,10 +29,12 @@ netlink - カーネルとユーザー空間の通信 (AF_NETLINK)
 <A NAME="lbAD">&nbsp;</A>
 <H2>説明</H2>
 
-netlink はカーネルモジュールとユーザー空間のプロセス間で 情報をやりとりするために用いられる。 netlink は、ユーザープロセスに対しては
-標準的なソケットベースのインターフェースを、 カーネルモジュールにはカーネルの内部 API を提供する。 カーネル内部のインターフェースについてはこの
-man ページでは記述しない。 また、netlink キャラクターデバイスを用いた obsolete な netlink
-インターフェースもあるが、これもこの文書では解説しない。 これは過去互換性のためだけに用意されている。
+Netlink is used to transfer information between the kernel and user-space
+processes.  It consists of a standard sockets-based interface for user space
+processes and an internal kernel API for kernel modules.  The internal
+kernel interface is not documented in this manual page.  There is also an
+obsolete netlink interface via netlink character devices; this interface is
+not documented here, and is provided only for backward compatibility.
 <P>
 
 netlink はデータグラム指向のサービスである。 <I>socket_type</I> には <B>SOCK_RAW</B> と <B>SOCK_DGRAM</B>
@@ -43,9 +45,10 @@ netlink はデータグラム指向のサービスである。 <I>socket_type</I
 ファミリーは以下の通り。
 <DL COMPACT>
 <DT><B>NETLINK_ROUTE</B><DD>
-ルーティングとリンクの更新を受信する。 (IPv4 と IPv6 両方の) ルーティングテーブル・ IP アドレス・リンクパラメーター・近傍設定
-(neighbor setup)・ キューイングルール (queueing dicipline)・トラフィッククラス・
-パケットのクラス分類の修正に用いることができるだろう (<B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)  を見よ)。
+Receives routing and link updates and may be used to modify the routing
+tables (both IPv4 and IPv6), IP addresses, link parameters, neighbor setups,
+queueing disciplines, traffic classes, and packet classifiers (see
+<B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)).
 <DT><B>NETLINK_W1</B> (Linux 2.6.13 から 2.16.17 まで)<DD>
 単線 (1-wire) のサブシステムからのメッセージ。
 <DT><B>NETLINK_USERSOCK</B><DD>
@@ -87,8 +90,9 @@ Open-iSCSI.
 <DT><B>NETLINK_CONNECTOR</B> (Linux 2.6.14 以降)<DD>
 
 
-カーネルコネクタ。より詳しい情報は Linux カーネルソースの <I>Documentation/driver-api/connector.rst</I>
-(カーネル 5.2 以前では <I>/Documentation/connector/connector.*</I>) を参照すること。
+Kernel connector.  See <I>Documentation/driver-api/connector.rst</I> (or
+<I>/Documentation/connector/connector.*</I> in Linux 5.2 and earlier)  in the
+Linux kernel source tree for further information.
 <DT><B>NETLINK_NETFILTER</B> (Linux 2.6.14 以降)<DD>
 
 
@@ -140,27 +144,41 @@ netlink メッセージはバイトストリームからなり、 一つ以上�
 
 <PRE>
 struct nlmsghdr {
-    __u32 nlmsg_len;    /* ヘッダーを含むメッセージの長さ */
-    __u16 nlmsg_type;   /* メッセージの内容のタイプ */
-    __u16 nlmsg_flags;  /* 追加フラグ */
-    __u32 nlmsg_seq;    /* シーケンス番号 */
-    __u32 nlmsg_pid;    /* 送信者のポート ID */
+    __u32 nlmsg_len;    /* Size of message including header */
+    __u16 nlmsg_type;   /* Type of message content */
+    __u16 nlmsg_flags;  /* Additional flags */
+    __u32 nlmsg_seq;    /* Sequence number */
+    __u32 nlmsg_pid;    /* Sender port ID */
 };
 </PRE>
 
 
 <P>
 
-<I>nlmsg_type</I> は標準のメッセージタイプのどれか一つである: <B>NLMSG_NOOP</B> メッセージは無視される。
-<B>NLMSG_ERROR</B> メッセージはエラーを示し、ペイロードには <I>nlmsgerr</I> 構造体が入る。 <B>NLMSG_DONE</B>
-メッセージはマルチパートメッセージの終了を伝える。
+<I>nlmsg_type</I> can be one of the standard message types: <B>NLMSG_NOOP</B>
+message is to be ignored, <B>NLMSG_ERROR</B> message signals an error and the
+payload contains an <I>nlmsgerr</I> structure, <B>NLMSG_DONE</B> message terminates
+a multipart message.  Error messages get the original request appended,
+unless the user requests to cap the error message, and get extra error data
+if requested.
 <P>
 
 
 <PRE>
 struct nlmsgerr {
-    int error;        /* 負または 0 の errno は応答を表す */
-    struct nlmsghdr msg;  /* エラーを起こしたメッセージのヘッダー */
+    int error;        /* Negative errno or 0 for acknowledgements */
+    struct nlmsghdr msg;  /* Message header that caused the error */
+    /*
+     * followed by the message contents
+     * unless NETLINK_CAP_ACK was set
+     * or the ACK indicates success (error == 0).
+     * For example Generic Netlink message with attributes.
+     * message size is aligned with NLMSG_ALIGN()
+     */
+    /*
+     * followed by TLVs defined in enum nlmsgerr_attrs
+     * if NETLINK_EXT_ACK was set
+     */
 };
 </PRE>
 
@@ -170,15 +188,21 @@ struct nlmsgerr {
 ある netlink ファミリーで指定できるメッセージタイプは、 通常もっと多い。これらに関しては適切な man ページを見てほしい。 たとえば
 <B>NETLINK_ROUTE</B> に関しては <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)  に書いてある。
 <TABLE>
-<TR VALIGN=top><TD COLSPAN=2><I>nlmsg_flags</I> の標準フラグビット<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2>Standard flag bits in nlmsg_flags<BR></TD></TR>
 <TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
-<TR VALIGN=top><TD><B>NLM_F_REQUEST</B></TD><TD>要求メッセージ全てでセットされなければならない。<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_REQUEST</B></TD><TD>
+要求メッセージ全てでセットされなければならない。
+<BR></TD></TR>
 <TR VALIGN=top><TD><B>NLM_F_MULTI</B></TD><TD>
 このメッセージはマルチパートメッセージの一部である。
 マルチパートメッセージは <B>NLMSG_DONE</B> で終端する。
 <BR></TD></TR>
-<TR VALIGN=top><TD><B>NLM_F_ACK</B></TD><TD>成功した場合の応答を要求する。<BR></TD></TR>
-<TR VALIGN=top><TD><B>NLM_F_ECHO</B></TD><TD>この要求をエコーする。<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_ACK</B></TD><TD>
+成功した場合の応答を要求する。
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_ECHO</B></TD><TD>
+この要求をエコーする。
+<BR></TD></TR>
 </TABLE>
 
 
@@ -186,17 +210,20 @@ struct nlmsgerr {
 <TABLE>
 <TR VALIGN=top><TD COLSPAN=2>GET 要求における追加フラグビット<BR></TD></TR>
 <TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
-<TR VALIGN=top><TD><B>NLM_F_ROOT</B></TD><TD>単一のエントリーではなくテーブル全体を返す。<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_ROOT</B></TD><TD>
+単一のエントリーではなくテーブル全体を返す。
+<BR></TD></TR>
 <TR VALIGN=top><TD><B>NLM_F_MATCH</B></TD><TD>
 メッセージの内容で渡された基準 (criteria) にマッチする全てのエントリーを返す。
 まだ実装されていない。
 <BR></TD></TR>
-<TR VALIGN=top><TD><B>NLM_F_ATOMIC</B></TD><TD>テーブルのアトミックなスナップショットを返す。<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_ATOMIC</B></TD><TD>
+テーブルのアトミックなスナップショットを返す。
+<BR></TD></TR>
 <TR VALIGN=top><TD><B>NLM_F_DUMP</B></TD><TD>
-便利なマクロ。
-<BR>
-
-(NLM_F_ROOT|NLM_F_MATCH) と等価.
+Convenience macro;
+equivalent to
+(NLM_F_ROOT|NLM_F_MATCH).
 <BR></TD></TR>
 </TABLE>
 
@@ -209,10 +236,18 @@ struct nlmsgerr {
 <TABLE>
 <TR VALIGN=top><TD COLSPAN=2>NEW 要求における追加フラグビット<BR></TD></TR>
 <TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
-<TR VALIGN=top><TD><B>NLM_F_REPLACE</B></TD><TD>現存のオブジェクトを置換する。<BR></TD></TR>
-<TR VALIGN=top><TD><B>NLM_F_EXCL</B></TD><TD>すでにオブジェクトがあったら置換しない。<BR></TD></TR>
-<TR VALIGN=top><TD><B>NLM_F_CREATE</B></TD><TD>まだオブジェクトがなければ作成する。<BR></TD></TR>
-<TR VALIGN=top><TD><B>NLM_F_APPEND</B></TD><TD>オブジェクトリストの最後に追加する。<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_REPLACE</B></TD><TD>
+現存のオブジェクトを置換する。
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_EXCL</B></TD><TD>
+すでにオブジェクトがあったら置換しない。
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_CREATE</B></TD><TD>
+まだオブジェクトがなければ作成する。
+<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_APPEND</B></TD><TD>
+オブジェクトリストの最後に追加する。
+<BR></TD></TR>
 </TABLE>
 
 <P>
@@ -227,11 +262,14 @@ struct nlmsgerr {
 <I>nlmsg_seq</I> と <I>nlmsg_pid</I> は netlink のコアには見えない (opaque)。
 <P>
 
-netlink は信頼性の高いプロトコルではない。 netlink はメッセージを行き先に届けるために最善を尽くすが、
-メモリーが足りなかったりエラーが起こったりすると メッセージを取りこぼすこともある。 信頼性の高い転送を行いたいときは、
-送信者は受信者に応答を要求することもできる。 これには <B>NLM_F_ACK</B> フラグをセットする。 応答は <B>NLMSG_ERROR</B>
-パケットのエラーフィールドを 0 にしたものになる。 アプリケーションは自分自身のメッセージを受けたときには、 応答を生成しなければならない。
-カーネルは失敗したパケットに対して、 <B>NLMSG_ERROR</B> メッセージを送ろうとする。 ユーザープロセスはこの慣習にも従う必要がある。
+Netlink is not a reliable protocol.  It tries its best to deliver a message
+to its destination(s), but may drop messages when an out-of-memory condition
+or other error occurs.  For reliable transfer the sender can request an
+acknowledgement from the receiver by setting the <B>NLM_F_ACK</B> flag.  An
+acknowledgement is an <B>NLMSG_ERROR</B> packet with the error field set to 0.
+The application must generate acknowledgements for received messages
+itself.  The kernel tries to send an <B>NLMSG_ERROR</B> message for every failed
+packet.  A user process should follow this convention too.
 <P>
 
 しかし、どのような場合でもカーネルからユーザーへの 信頼性の高い転送は不可能である。 ソケットバッファーが満杯の場合、カーネルは netlink
@@ -291,8 +329,6 @@ Linux 3.0 の時点では、
 <B>NETLINK_KOBJECT_UEVENT</B>, <B>NETLINK_GENERIC</B>, <B>NETLINK_ROUTE</B>,
 <B>NETLINK_SELINUX</B> グループでは他のユーザーがメッセージを受信することができる。
 他のユーザーがメッセージを送信できるグループは存在しない。
-<P>
-
 <A NAME="lbAF">&nbsp;</A>
 <H3>ソケットオプション</H3>
 
@@ -308,7 +344,8 @@ To set or get a netlink socket option, call <B><A HREF="../man2/getsockopt.2.htm
 
 Enable <B>nl_pktinfo</B> control messages for received packets to get the
 extended destination group number.
-<DT><B>NETLINK_ADD_MEMBERSHIP</B>,&nbsp;<B>NETLINK_DROP_MEMBERSHIP</B> (Linux 2.6.14 以降)<DD>
+<DT><B>NETLINK_ADD_MEMBERSHIP</B><DD>
+<DT><B>NETLINK_DROP_MEMBERSHIP</B> (Linux 2.6.14 以降)<DD>
 
 
 
@@ -346,16 +383,16 @@ When set, this socket will receive netlink notifications from all network
 namespaces that have an <I>nsid</I> assigned into the network namespace where
 the socket has been opened.  The <I>nsid</I> is sent to user space via an
 ancillary data.
-<DT><B>NETLINK_CAP_ACK</B> (Linux 4.2 以降)<DD>
+<DT><B>NETLINK_CAP_ACK</B> (Linux 4.3 以降)<DD>
 
 
 
 
-The kernel may fail to allocate the necessary room for the acknowledgment
+The kernel may fail to allocate the necessary room for the acknowledgement
 message back to user space.  This option trims off the payload of the
 original netlink message.  The netlink message header is still included, so
 the user can guess from the sequence number which message triggered the
-acknowledgment.
+acknowledgement.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>バージョン</H2>
@@ -403,7 +440,7 @@ bind(fd, (struct sockaddr *) &amp;sa, sizeof(sa));
 
 
 <PRE>
-struct nlmsghdr *nh;    /* 送信する nlmsghdr とペイロード */
+struct nlmsghdr *nh;    /* The nlmsghdr with payload to send */
 struct sockaddr_nl sa;
 struct iovec iov = { nh, nh-&gt;nlmsg_len };
 struct msghdr msg;
@@ -427,7 +464,7 @@ sendmsg(fd, &amp;msg, 0);
 
 
 <PRE>
-int len;
+int size;
 /* 8192 to avoid message truncation on platforms with
    page size &gt; 4096 */
 struct nlmsghdr buf[8192/sizeof(struct nlmsghdr)];
@@ -437,19 +474,19 @@ struct msghdr msg;
 struct nlmsghdr *nh;
 
 msg = { &amp;sa, sizeof(sa), &amp;iov, 1, NULL, 0, 0 };
-len = recvmsg(fd, &amp;msg, 0);
+size = recvmsg(fd, &amp;msg, 0);
 
-for (nh = (struct nlmsghdr *) buf; NLMSG_OK (nh, len);
-     nh = NLMSG_NEXT (nh, len)) {
-    /* マルチパートメッセージの終わり */
+for (nh = (struct nlmsghdr *) buf; NLMSG_OK (nh, size);
+     nh = NLMSG_NEXT (nh, size)) {
+    /* The end of multipart message */
     if (nh-&gt;nlmsg_type == NLMSG_DONE)
         return;
 
     if (nh-&gt;nlmsg_type == NLMSG_ERROR)
-        /* 何らかのエラー処理を行う */
+        /* Do some error handling */
     ...
 
-    /* ペイロードの解析を続ける */
+    /* Continue with parsing payload */
     ...
 }
 </PRE>
@@ -467,17 +504,12 @@ libnetlink に関する情報
 </A>
 <P>
 
-<A HREF="http://www.infradead.org/\(titgr/libnl/">
+<A HREF="http://www.infradead.org/\[ti]tgr/libnl/">
 libnl に関する情報
 </A>
 <P>
 
 RFC 3549 &quot;Linux Netlink as an IP Services Protocol&quot;
-<A NAME="lbAL">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
@@ -495,7 +527,6 @@ RFC 3549 &quot;Linux Netlink as an IP Services Protocol&quot;
 <DT><A HREF="#lbAI">バグ</A><DD>
 <DT><A HREF="#lbAJ">例</A><DD>
 <DT><A HREF="#lbAK">関連項目</A><DD>
-<DT><A HREF="#lbAL">この文書について</A><DD>
 </DL>
 <HR>
 This document was created by

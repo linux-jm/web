@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of RANDOM</TITLE>
+<HTML><HEAD><TITLE>Man page of random</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>RANDOM</H1>
-Section: Linux Programmer's Manual (4)<BR>Updated:  2017-09-15<BR><A HREF="#index">Index</A>
+<H1>random</H1>
+Section: Devices and Network Interfaces (4)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man4/random.4">roff page</A><HR>
 
@@ -18,10 +18,12 @@ random, urandom - カーネル乱数ソースデバイス
 <A NAME="lbAC">&nbsp;</A>
 <H2>書式</H2>
 
+<PRE>
 #include &lt;<A HREF="file:///usr/include/linux/random.h">linux/random.h</A>&gt;
-<P>
 
 <B>int ioctl(</B><I>fd</I><B>, RND</B><I>request</I><B>, </B><I>param</I><B>);</B>
+</PRE>
+
 <A NAME="lbAD">&nbsp;</A>
 <H2>説明</H2>
 
@@ -62,10 +64,14 @@ blocking if necessary.  <I>/dev/random</I> is suitable for applications that
 need high quality randomness, and can afford indeterminate delays.
 <P>
 
-エントロピープールが空の時は、<I>/dev/random</I> からの読み出しは、 更なる環境ノイズが得られるまで、ブロックされる。 <B><A HREF="../man2/open.2.html">open</A></B>(2)
-が <I>/dev/random</I> に対して <B>O_NONBLOCK</B> フラグ付きで呼ばれると、 それ以降の <B><A HREF="../man2/read.2.html">read</A></B>(2)
-は要求したバイト数のデータが利用可能になるまで停止しない。 その代わり、 利用可能なデータが返される。 利用可能なバイトが全くない場合、
-<B><A HREF="../man2/read.2.html">read</A></B>(2) は -1 を返し、 <I>errno</I> に <B>EAGAIN</B> が設定される。
+When the entropy pool is empty, reads from <I>/dev/random</I> will block until
+additional environmental noise is gathered.  Since Linux 5.6, the
+<B>O_NONBLOCK</B> flag is ignored as <I>/dev/random</I> will no longer block except
+during early boot process.  In earlier versions, if <B><A HREF="../man2/open.2.html">open</A></B>(2)  is called
+for <I>/dev/random</I> with the <B>O_NONBLOCK</B> flag, a subsequent <B><A HREF="../man2/read.2.html">read</A></B>(2)
+will not block if the requested number of bytes is not available.  Instead,
+the available bytes are returned.  If no byte is available, <B><A HREF="../man2/read.2.html">read</A></B>(2)  will
+return -1 and <I>errno</I> will be set to <B>EAGAIN</B>.
 <P>
 
 The <B>O_NONBLOCK</B> flag has no effect when opening <I>/dev/urandom</I>.  When
@@ -81,7 +87,7 @@ interrupted by a signal handler.
 
 
 Since Linux 3.16, a <B><A HREF="../man2/read.2.html">read</A></B>(2)  from <I>/dev/urandom</I> will return at most 32&nbsp;MB.  A <B><A HREF="../man2/read.2.html">read</A></B>(2)  from <I>/dev/random</I> will return at most 512 bytes (340
-bytes on Linux kernels before version 2.6.12).
+bytes before Linux 2.6.12).
 <P>
 
 <I>/dev/random</I> や <I>/dev/urandom</I> に書き込みを行うと、 書き込まれたデータでエントロピープールが更新される。 しかし、
@@ -176,8 +182,8 @@ bits (see below).
 <A NAME="lbAG">&nbsp;</A>
 <H3>/proc インターフェース</H3>
 
-ディレクトリ <I>/proc/sys/kernel/random</I> にあるファイル (2.3.16 以降で存在する) で、 <I>/dev/random</I>
-デバイスに関する追加の情報を参照できる。
+The files in the directory <I>/proc/sys/kernel/random</I> (present since Linux
+2.3.16) provide additional information about the <I>/dev/random</I> device:
 <DL COMPACT>
 <DT><I>entropy_avail</I><DD>
 この読み込み専用のファイルは使用可能なエントロピーをビット単位で表示する。値は 0 から 4096 までの範囲の数字である。
@@ -201,7 +207,8 @@ is 64.
 ファイル <I>write_wakeup_threshold</I> はエントロピーのビット数を保持しており、この値以下になったら <I>/dev/random</I>
 への書き込みアクセスのために <B><A HREF="../man2/select.2.html">select</A></B>(2)  または <B><A HREF="../man2/poll.2.html">poll</A></B>(2)  を実行するプロセスを起こす。
 この値はファイルに書き込みを行うことによって変更できる。
-<DT><I>uuid</I> and <I>boot_id</I><DD>
+<DT><I>uuid</I><DD>
+<DT><I>boot_id</I><DD>
 
 
 これらの読み込み専用のファイルは 6fd5a44b-35f4-4ad4-a9b9-6b9be13e1fe9 のような ランダムな文字列を保持している。
@@ -240,7 +247,8 @@ Linux 2.6.9 で削除された。
 <DT><DD>
 <I>entropy_count</I> はエントロピーカウントに加算 (または減算) する値である。 <I>buf</I> は大きさが <I>buf_size</I>
 のバッファーで、この内容がエントロピープールに追加される。
-<DT><B>RNDZAPENTCNT</B>, <B>RNDCLEARPOOL</B><DD>
+<DT><B>RNDZAPENTCNT</B><DD>
+<DT><B>RNDCLEARPOOL</B><DD>
 すべてのプールのエントロピーカウントを 0 にし、何らかのシステムデータ (現在の時刻など) をプールに追加する。
 </DL>
 <A NAME="lbAI">&nbsp;</A>
@@ -273,11 +281,6 @@ the entropy pool being initialized.
 <P>
 
 RFC&nbsp;1750, &quot;Randomness Recommendations for Security&quot;
-<A NAME="lbAM">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
@@ -296,7 +299,6 @@ RFC&nbsp;1750, &quot;Randomness Recommendations for Security&quot;
 <DT><A HREF="#lbAJ">注意</A><DD>
 <DT><A HREF="#lbAK">バグ</A><DD>
 <DT><A HREF="#lbAL">関連項目</A><DD>
-<DT><A HREF="#lbAM">この文書について</A><DD>
 </DL>
 <HR>
 This document was created by

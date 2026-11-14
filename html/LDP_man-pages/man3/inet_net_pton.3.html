@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of INET_NET_PTON</TITLE>
+<HTML><HEAD><TITLE>Man page of inet_net_pton</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>INET_NET_PTON</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<H1>inet_net_pton</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/inet_net_pton.3">roff page</A><HR>
 
@@ -16,21 +16,25 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index
 
 inet_net_pton, inet_net_ntop - インターネットのネットワーク番号の変換
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+リゾルバライブラリ (<I>libresolv</I>,~<I>-lresolv</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;</B>
 
-<B>int inet_net_pton(int </B><I>af</I><B>, const char *</B><I>pres</I><B>,</B>
-<B>                  void *</B><I>netp</I><B>, size_t </B><I>nsize</I><B>);</B>
-
-<B>char *inet_net_ntop(int </B><I>af</I><B>, const void *</B><I>netp</I><B>, int </B><I>bits</I><B>,</B>
-<B>                    char *</B><I>pres</I><B>, size_t </B><I>psize</I><B>);</B>
+<B>int inet_net_pton(</B>size_t nsize;
+<B>                  int </B><I>af</I><B>, const char *</B><I>pres</I><B>,</B>
+<B>                  void </B><I>netp</I><B>[</B><I>nsize</I><B>], size_t </B><I>nsize</I><B>);</B>
+<B>char *inet_net_ntop(</B>int bits, size_t psize;
+<B>                  int </B><I>af</I><B>,</B>
+<B>                  const void </B><I>netp</I><B>[(</B><I>bits</I><B> - CHAR_BIT + 1) / CHAR_BIT],</B>
+<B>                  int </B><I>bits</I><B>,</B>
+<B>                  char </B><I>pres</I><B>[</B><I>psize</I><B>], size_t </B><I>psize</I><B>);</B>
 </PRE>
 
-<P>
-
-<I>-lresolv</I> でリンクする。
 <P>
 
 
@@ -39,32 +43,29 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 <B>inet_net_pton</B>(), <B>inet_net_ntop</B>():
+<PRE>
+    glibc 2.20 以降:
+        _DEFAULT_SOURCE
+    glibc 2.20 より前:
+        _BSD_SOURCE || _SVID_SOURCE
+</PRE>
 
-<DL COMPACT><DT><DD>
-
-<DL COMPACT>
-<DT>glibc 2.20 以降:<DD>
-_DEFAULT_SOURCE
-<DT>glibc 2.20 より前:<DD>
-_BSD_SOURCE || _SVID_SOURCE
-
-</DL>
-</DL>
-
-
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 これらの関数は (印字可能な) 表記形式とネットワーク形式 (バイナリー形式) 間の変換を行う。
 <P>
 
 どちらの関数でも <I>af</I> は変換を行うアドレスファミリーを指定する。 サポートされている値は <B>AF_INET</B> だけである。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H3>inet_net_pton()</H3>
 
-<B>inet_net_pton</B>() 関数は、 表記形式でインターネットネットワーク番号を格納した NULL 終端された文字列である <I>pres</I>
-をネットワーク形式に変換する。 ネットワークバイトオーダーの変換結果は <I>netp</I> が指すバッファーに格納される (<I>netp</I> 引数は通常
-<I>in_addr</I> 構造体を指している)。 <I>nsize</I> 引数は <I>netp</I> で利用可能なバイト数を示す。
+The <B>inet_net_pton</B>()  function converts <I>pres</I>, a null-terminated string
+containing an Internet network number in presentation format to network
+format.  The result of the conversion, which is in network byte order, is
+placed in the buffer pointed to by <I>netp</I>.  (The <I>netp</I> argument typically
+points to an <I>in_addr</I> structure.)  The <I>nsize</I> argument specifies the
+number of bytes available in <I>netp</I>.
 <P>
 
 成功すると <B>inet_net_pton</B>() は <I>netp</I> に格納した結果のネットワーク番号フィールドのビット数を返す。
@@ -73,7 +74,7 @@ _BSD_SOURCE || _SVID_SOURCE
 
 <I>注意</I>: <I>netp</I> が指すバッファーは <B>inet_net_pton</B>() の呼び出し前に 0 で埋めるべきである。
 呼び出しではネットワーク番号で必要なバイトだけが書き込まれ、 そのバイト数は完全なネットワークアドレスのバイト数よりも少ないこともある。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H3>inet_net_ntop()</H3>
 
 <B>inet_net_ntop</B>() 関数は <I>netp</I> が指すバッファーのネットワーク番号を表記形式に変換する。 <I>*netp</I>
@@ -83,16 +84,16 @@ _BSD_SOURCE || _SVID_SOURCE
 NULL 終端された表記形式の文字列は <I>pres</I> が指すバッファーに格納される。 <I>psize</I> 引数は <I>pres</I>
 で利用可能なバイト数を指定する。 表記形式は CIDR 形式、 つまり、 ネットワークアドレスを表すドット区切りの 10 進数に、
 スラッシュとネットワーク番号のビットサイズが続く形式である。
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>返り値</H2>
 
-成功すると <B>inet_net_pton</B>() はネットワーク番号のビット数を返す。 エラーの場合、 -1 を返し、 <I>errno</I>
-にエラーを示す値を設定する。
+On success, <B>inet_net_pton</B>()  returns the number of bits in the network
+number.  On error, it returns -1, and <I>errno</I> is set to indicate the error.
 <P>
 
-成功すると <B>inet_net_ntop</B>() は <I>pres</I> を返す。 エラーの場合、 NULL を返し、 <I>errno</I>
-にエラーを示す値がセットされる。
-<A NAME="lbAH">&nbsp;</A>
+On success, <B>inet_net_ntop</B>()  returns <I>pres</I>.  On error, it returns NULL,
+and <I>errno</I> is set to indicate the error.
+<A NAME="lbAI">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
@@ -103,14 +104,14 @@ NULL 終端された表記形式の文字列は <I>pres</I> が指すバッフ�
 <DT><B>ENOENT</B><DD>
 (<B>inet_net_pton</B>() の場合) <I>pres</I> が正しい表記形式ではなかった。
 </DL>
-<A NAME="lbAI">&nbsp;</A>
-<H2>準拠</H2>
-
-関数 <B>inet_net_pton</B>() と <B>inet_net_ntop</B>() は非標準だが、多くのシステムで利用可能である。
 <A NAME="lbAJ">&nbsp;</A>
+<H2>標準規格</H2>
+
+なし。
+<A NAME="lbAK">&nbsp;</A>
 <H2>注意</H2>
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>inet_net_pton() の入力の表記形式</H3>
 
 ネットワーク番号は、 16 進数値、またはドット区切りの 10 進数表記で指定できる。
@@ -125,10 +126,15 @@ NULL 終端された表記形式の文字列は <I>pres</I> が指すバッフ�
 ドット区切りの 10 進数表記では、 最大 4 つのオクテットをドット区切りの 10 進数で指定する。 したがって、 以下の形式を指定できる。
 <P>
 
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;a.b.c.d
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;a.b.c
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;a.b
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;a
+
+<PRE>
+a.b.c.d
+a.b.c
+a.b
+a
+</PRE>
+
+
 <P>
 
 
@@ -143,29 +149,29 @@ NULL 終端された表記形式の文字列は <I>pres</I> が指すバッフ�
 
 16 進数とドット区切りの 10 進数形式のどちらの場合も、 ネットワーク番号の後ろにスラッシュと 0 から 32
 の範囲の数字をオプションで付けることができる。 この数字はネットワーク番号のビット単位のサイズを示すものである。
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>inet_net_pton() の返り値</H3>
 
 <B>inet_net_pton</B>() の返り値はネットワーク番号フィールドのビット数である。
 入力の表記形式の文字列がスラッシュとサイズの明示的な値で終わっている場合、 指定されたサイズが <B>inet_net_pton</B>() の返り値となる。
 そうでない場合は、 返り値 <I>bits</I> が以下のようにして推測される。
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 ネットワーク番号の最上位バイトが 240 以上の場合、 <I>bits</I> は 32 となる。
-<DT>*<DD>
+<DT>&bull;<DD>
 それ以外で、 ネットワーク番号の最上位バイトが 224 以上の場合、 <I>bits</I> は 4 となる。
-<DT>*<DD>
+<DT>&bull;<DD>
 それ以外で、 ネットワーク番号の最上位バイトが 192 以上の場合、 <I>bits</I> は 24 となる。
-<DT>*<DD>
+<DT>&bull;<DD>
 それ以外で、 ネットワーク番号の最上位バイトが 128 以上の場合、 <I>bits</I> は 16 となる。
-<DT>*<DD>
+<DT>&bull;<DD>
 それ以外の場合、 <I>bits</I> は 8 となる。
 </DL>
 <P>
 
 上記の手順から得られる <I>bits</I> の値が 8 以上だが、 ネットワーク番号で指定されたオクテット数が <I>bits/8</I> より大きい場合、
 <I>bits</I> には実際に指定されたオクテット数を 8 倍した値が設定される。
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>例</H2>
 
 以下のプログラムは <B>inet_net_pton</B>() と <B>inet_net_ntop</B>() の使用例を示すものである。
@@ -185,7 +191,7 @@ NULL 終端された表記形式の文字列は <I>pres</I> が指すバッフ�
 
 
 <PRE>
-$ <B>./a.out 193.168</B>
+$<B> ./a.out 193.168</B>;
 inet_net_pton() returned: 24
 inet_net_ntop() yielded:  193.168.0/24
 Raw address:              c1a80000
@@ -199,7 +205,7 @@ Raw address:              c1a80000
 
 
 <PRE>
-$ <B>./a.out 193.168 0xffffffff</B>
+$<B> ./a.out 193.168 0xffffffff</B>;
 inet_net_pton() returned: 24
 inet_net_ntop() yielded:  193.168.0/24
 Raw address:              c1a800ff
@@ -214,7 +220,7 @@ Raw address:              c1a800ff
 
 
 <PRE>
-$ <B>./a.out 193.168.1.128</B>
+$<B> ./a.out 193.168.1.128</B>;
 inet_net_pton() returned: 32
 inet_net_ntop() yielded:  193.168.1.128/32
 Raw address:              c1a80180
@@ -229,25 +235,25 @@ Raw address:              c1a80180
 
 
 <PRE>
-$ <B>./a.out 193.168.1.128/24</B>
+$<B> ./a.out 193.168.1.128/24</B>;
 inet_net_pton() returned: 24
 inet_net_ntop() yielded:  193.168.1/24
 Raw address:              c1a80180
 </PRE>
 
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
+
+
 <PRE>
-/* &quot;-lresolv&quot; でリンクする */
+/* Link with &quot;-lresolv&quot; */
 
 #include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-
-#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-                        } while (0)
 
 int
 main(int argc, char *argv[])
@@ -263,34 +269,34 @@ main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    /* argv[2] (数値) が指定されると、その数字を使って inet_net_pton()
-       に渡す出力バッファーを初期化する。これにより inet_net_pton() が
-       ネットワーク番号に必要なバイトだけを書き込むことを確認できるよう
-       にする。 argv[2] が指定されなかった場合、バッファーは 0 で初期化
-       する (これが推奨される方法である)。 */
+    /* If argv[2] is supplied (a numeric value), use it to initialize
+       the output buffer given to inet_net_pton(), so that we can see
+       that inet_net_pton() initializes only those bytes needed for
+       the network number.  If argv[2] is not supplied, then initialize
+       the buffer to zero (as is recommended practice).  */
 
     addr.s_addr = (argc &gt; 2) ? strtod(argv[2], NULL) : 0;
 
-    /* argv[1] の表記形式のネットワーク番号をバイナリー形式に変換する */
+    /* Convert presentation network number in argv[1] to binary.  */
 
     bits = inet_net_pton(AF_INET, argv[1], &amp;addr, sizeof(addr));
     if (bits == -1)
-        errExit(&quot;inet_net_ntop&quot;);
+        err(EXIT_FAILURE, &quot;inet_net_ntop&quot;);
 
     printf(&quot;inet_net_pton() returned: %d\n&quot;, bits);
 
-    /* inet_net_pton() が返した 'bits' を使って、
-       バイナリー形式を表記形式に変換する */
+    /* Convert binary format back to presentation, using 'bits'
+       returned by inet_net_pton().  */
 
     if (inet_net_ntop(AF_INET, &amp;addr, bits, buf, sizeof(buf)) == NULL)
-        errExit(&quot;inet_net_ntop&quot;);
+        err(EXIT_FAILURE, &quot;inet_net_ntop&quot;);
 
     printf(&quot;inet_net_ntop() yielded:  %s\n&quot;, buf);
 
-    /* 'addr' を名前の形で (ネットワークバイトオーダーで) 表示する。
-       これにより inet_net_ntop() が表示しないバイトを確認できる。
-       これらのバイトの一部は inet_net_ntop() では変更されない場合があり、
-       その場合 argv[2] で指定された初期値のままになる。 */
+    /* Display 'addr' in raw form (in network byte order), so we can
+       see bytes not displayed by inet_net_ntop(); some of those bytes
+       may not have been touched by inet_net_ntop(), and so will still
+       have any initial value that was specified in argv[2].  */
 
     printf(&quot;Raw address:              %x\n&quot;, htonl(addr.s_addr));
 
@@ -298,41 +304,38 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAO">&nbsp;</A>
+
+
+<A NAME="lbAP">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/inet.3.html">inet</A></B>(3), <B><A HREF="../man5/networks.5.html">networks</A></B>(5)
-<A NAME="lbAP">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
 <DL>
-<DT><A HREF="#lbAE">inet_net_pton()</A><DD>
-<DT><A HREF="#lbAF">inet_net_ntop()</A><DD>
+<DT><A HREF="#lbAF">inet_net_pton()</A><DD>
+<DT><A HREF="#lbAG">inet_net_ntop()</A><DD>
 </DL>
-<DT><A HREF="#lbAG">返り値</A><DD>
-<DT><A HREF="#lbAH">エラー</A><DD>
-<DT><A HREF="#lbAI">準拠</A><DD>
-<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAH">返り値</A><DD>
+<DT><A HREF="#lbAI">エラー</A><DD>
+<DT><A HREF="#lbAJ">標準規格</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
 <DL>
-<DT><A HREF="#lbAK">inet_net_pton() の入力の表記形式</A><DD>
-<DT><A HREF="#lbAL">inet_net_pton() の返り値</A><DD>
+<DT><A HREF="#lbAL">inet_net_pton() の入力の表記形式</A><DD>
+<DT><A HREF="#lbAM">inet_net_pton() の返り値</A><DD>
 </DL>
-<DT><A HREF="#lbAM">例</A><DD>
+<DT><A HREF="#lbAN">例</A><DD>
 <DL>
-<DT><A HREF="#lbAN">プログラムのソース</A><DD>
+<DT><A HREF="#lbAO">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAO">関連項目</A><DD>
-<DT><A HREF="#lbAP">この文書について</A><DD>
+<DT><A HREF="#lbAP">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

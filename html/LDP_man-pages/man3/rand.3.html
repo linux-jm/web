@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of RAND</TITLE>
+<HTML><HEAD><TITLE>Man page of rand</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>RAND</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<H1>rand</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/rand.3">roff page</A><HR>
 
@@ -16,16 +16,19 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index
 
 rand, srand - 乱数を生成する関数
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
 
 <B>int rand(void);</B>
-
-<B>int rand_r(unsigned int *</B><I>seedp</I><B>);</B>
-
 <B>void srand(unsigned int </B><I>seed</I><B>);</B>
+
+<B>[[deprecated]] int rand_r(unsigned int *</B><I>seedp</I><B>);</B>
 </PRE>
 
 <P>
@@ -36,20 +39,18 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 <B>rand_r</B>():
-<DL COMPACT><DT><DD>
-glibc 2.24 以降:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;199506L
-<BR>
+<PRE>
+    Since glibc 2.24:
+        _POSIX_C_SOURCE &gt;= 199506L
+    glibc 2.23 and earlier
+        _POSIX_C_SOURCE
+</PRE>
 
-glibc 2.23 以前
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;_POSIX_C_SOURCE
-</DL>
-
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
-<B>rand</B>() 関数は 0 以上 <B>RAND_MAX</B> 以下
-(数学的に書くと [0,&nbsp;<B>RAND_MAX</B>]) の範囲の疑似乱数整数を返す。
+The <B>rand</B>()  function returns a pseudo-random integer in the range 0 to
+<B>RAND_MAX</B> inclusive (i.e., the mathematical range [<B>0</B>,~<B>RAND_MAX</B>]).
 <P>
 
 <B>srand</B>()  関数は、 <B>rand</B>()  関数で作られる疑似乱数整数系列の新しい種として、 その引数の値を使用する。
@@ -64,42 +65,38 @@ glibc 2.23 以前
 <B>rand_r</B>() 関数を使用する。
 <P>
 
-<B>rand</B>() と同様、 <B>rand_r</B>() は [0,&nbsp;<B>RAND_MAX</B>] の範囲の疑似乱数整数を返す。
-<I>seedp</I> 引数は、<B>rand_r</B>() の呼び出し間で状態を保持するために使用される
-<I>unsigned int</I> へのポインターである。
-<I>seedp</I> が指す整数に同じ初期値を <B>rand_r</B>() を呼び出し、
-呼び出し間でその値が変更されなければ、同じ疑似乱数系列が得られる。
+Like <B>rand</B>(), <B>rand_r</B>()  returns a pseudo-random integer in the range
+[<B>0</B>,~<B>RAND_MAX</B>].  The <I>seedp</I> argument is a pointer to an <I>unsigned int</I> that is used to store state between calls.  If <B>rand_r</B>()  is called
+with the same initial value for the integer pointed to by <I>seedp</I>, and that
+value is not modified between calls, then the same pseudo-random sequence
+will result.
 <P>
 
 <B>rand_r</B>() の <I>seedp</I> 引数が指す値により提供される状態は非常に小さな空間
 なので、この関数は弱い疑似乱数生成器になってしまう。
 代わりに <B><A HREF="../man3/drand48_r.3.html">drand48_r</A></B>(3) を使ってみるとよい。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 関数 <B>rand</B>() と <B>rand_r</B>() は 0 以上 <B>RAND_MAX</B> 以下の数を返す。
 関数 <B>srand</B>() は値を返さない。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>rand</B>(),
 <B>rand_r</B>(),
 <B>srand</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAG">&nbsp;</A>
-<H2>準拠</H2>
-
-関数 <B>rand</B>()  と <B>srand</B>()  は SVr4, 4.3BSD, C89, C99, POSIX.1-2001 に準拠している。
-関数 <B>rand_r</B>()  は POSIX.1-2001 に由来する。 POSIX.1-2008 は、 <B>rand_r</B>()
-を廃止予定としている。
 <A NAME="lbAH">&nbsp;</A>
-<H2>注意</H2>
+<H2>バージョン</H2>
 
 <B>rand</B>()  と <B>srand</B>()  の Linux C Library 版は、 <B><A HREF="../man3/random.3.html">random</A></B>(3)  と <B><A HREF="../man3/srandom.3.html">srandom</A></B>(3)
 の両関数と同じ乱数生成 アルゴリズムを使用している。そのため、下位のビットは上位のビットと 同じくらいにランダムである。 しかし、旧版の
@@ -107,6 +104,26 @@ glibc 2.23 以前
 ランダムになっていない。移植性を高める場合でも、精度の高い乱数が必要な アプリケーションではこの関数は使用してはいけない (代わりに
 <B><A HREF="../man3/random.3.html">random</A></B>(3)  を使うこと)。
 <A NAME="lbAI">&nbsp;</A>
+<H2>標準規格</H2>
+
+<DL COMPACT>
+<DT><B>rand</B>()<DD>
+<DT><B>srand</B>()<DD>
+C11, POSIX.1-2008.
+<DT><B>rand_r</B>()<DD>
+POSIX.1-2008.
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>歴史</H2>
+
+<DL COMPACT>
+<DT><B>rand</B>()<DD>
+<DT><B>srand</B>()<DD>
+SVr4, 4.3BSD, C89, POSIX.1-2001.
+<DT><B>rand_r</B>()<DD>
+POSIX.1-2001.  Obsolete in POSIX.1-2008.
+</DL>
+<A NAME="lbAK">&nbsp;</A>
 <H2>例</H2>
 
 POSIX 1003.1-2003 では、 <B>rand</B>()  と <B>srand</B>()
@@ -117,10 +134,10 @@ POSIX 1003.1-2003 では、 <B>rand</B>()  と <B>srand</B>()
 <PRE>
 static unsigned long next = 1;
 
-/* RAND_MAX を 32767 と仮定 */
+/* RAND_MAX assumed to be 32767 */
 int myrand(void) {
     next = next * 1103515245 + 12345;
-    return((unsigned)(next/65536) % 32768);
+    return((unsigned) (next/65536) % 32768);
 }
 
 void mysrand(unsigned int seed) {
@@ -131,20 +148,23 @@ void mysrand(unsigned int seed) {
 
 <P>
 
-以下のプログラムを使うと、特定の乱数の種が与えられた場合に
-<B>rand</B>() が生成する疑似乱数系列を表示することができる。
+The following program can be used to display the pseudo-random sequence
+produced by <B>rand</B>()  when given a particular seed.  When the seed is
+<I>-1</I>, the program uses a random seed.
 <P>
 
 
+
+
 <PRE>
-#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 
 int
 main(int argc, char *argv[])
 {
-    int r, nloops;
-    unsigned int seed;
+    int           r;
+    unsigned int  seed, nloops;
 
     if (argc != 3) {
         fprintf(stderr, &quot;Usage: %s &lt;seed&gt; &lt;nloops&gt;\n&quot;, argv[0]);
@@ -154,8 +174,13 @@ main(int argc, char *argv[])
     seed = atoi(argv[1]);
     nloops = atoi(argv[2]);
 
+    if (seed == -1) {
+        seed = arc4random();
+        printf(&quot;seed: %u\n&quot;, seed);
+    }
+
     srand(seed);
-    for (int j = 0; j &lt; nloops; j++) {
+    for (unsigned int j = 0; j &lt; nloops; j++) {
         r =  rand();
         printf(&quot;%d\n&quot;, r);
     }
@@ -165,30 +190,28 @@ main(int argc, char *argv[])
 </PRE>
 
 
-<A NAME="lbAJ">&nbsp;</A>
+
+
+<A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/drand48.3.html">drand48</A></B>(3), <B><A HREF="../man3/random.3.html">random</A></B>(3)
-<A NAME="lbAK">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">属性</A><DD>
-<DT><A HREF="#lbAG">準拠</A><DD>
-<DT><A HREF="#lbAH">注意</A><DD>
-<DT><A HREF="#lbAI">例</A><DD>
-<DT><A HREF="#lbAJ">関連項目</A><DD>
-<DT><A HREF="#lbAK">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">標準規格</A><DD>
+<DT><A HREF="#lbAJ">歴史</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

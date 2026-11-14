@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of NETDEVICE</TITLE>
+<HTML><HEAD><TITLE>Man page of netdevice</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>NETDEVICE</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<H1>netdevice</H1>
+Section: Environments, Tables, and Troff Macros (7)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man7/netdevice.7">roff page</A><HR>
 
@@ -18,10 +18,11 @@ netdevice - Linux ネットワークデバイスへの低レベルアクセス
 <A NAME="lbAC">&nbsp;</A>
 <H2>書式</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/sys/ioctl.h">sys/ioctl.h</A>&gt;</B>
-<BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/net/if.h">net/if.h</A>&gt;</B>
+</PRE>
+
 <A NAME="lbAD">&nbsp;</A>
 <H2>説明</H2>
 
@@ -35,7 +36,7 @@ Linux はネットワークデバイスを設定するための標準的な ioct
 
 <PRE>
 struct ifreq {
-    char ifr_name[IFNAMSIZ]; /* Interface name */
+    char ifr_name[IFNAMSIZ];  /* Interface name */
     union {
         struct sockaddr ifr_addr;
         struct sockaddr ifr_dstaddr;
@@ -57,8 +58,24 @@ struct ifreq {
 
 <P>
 
-通常、ユーザーによる設定対象デバイスの指定は、 <I>ifr_name</I> にインターフェースの名前をセットすることによって行う。
-他の構造体の全てのメンバは、メモリーを共有する。
+<B>AF_INET6</B> is an exception.  It passes an <I>in6_ifreq</I> structure:
+<P>
+
+
+<PRE>
+struct in6_ifreq {
+    struct in6_addr     ifr6_addr;
+    u32                 ifr6_prefixlen;
+    int                 ifr6_ifindex;  /* Interface index */
+};
+</PRE>
+
+
+<P>
+
+Normally, the user specifies which device to affect by setting <I>ifr_name</I>
+to the name of the interface or <I>ifr6_ifindex</I> to the index of the
+interface.  All other members of the structure may share memory.
 <A NAME="lbAE">&nbsp;</A>
 <H3>ioctl</H3>
 
@@ -70,7 +87,8 @@ struct ifreq {
 として返す唯一の ioctl である。
 <DT><B>SIOCGIFINDEX</B><DD>
 インターフェースの interface index を取得し、 <I>ifr_ifindex</I> に入れて返す。
-<DT><B>SIOCGIFFLAGS</B>, <B>SIOCSIFFLAGS</B><DD>
+<DT><B>SIOCGIFFLAGS</B><DD>
+<DT><B>SIOCSIFFLAGS</B><DD>
 
 
 デバイスの active フラグワードを取得または設定する。 <I>ifr_flags</I> には以下の値のビットマスクが入る。
@@ -109,7 +127,8 @@ arp プロトコルがない。 L2 宛先アドレスが設定されていない
 active フラグワードの設定は特権が必要な操作である。
 読み出しはどんなプロセスからも可能である。
 <DL COMPACT>
-<DT><B>SIOCGIFPFLAGS</B>, <B>SIOCSIFPFLAGS</B><DD>
+<DT><B>SIOCGIFPFLAGS</B><DD>
+<DT><B>SIOCSIFPFLAGS</B><DD>
 デバイスの拡張 (プライベート) フラグを取得または設定する。
 <I>ifr_flags</I> には以下の値のビットマスクが入る。
 <TABLE>
@@ -129,38 +148,51 @@ active フラグワードの設定は特権が必要な操作である。
 
 拡張 (プライベート) インターフェースフラグの設定には特権が必要である。
 <DL COMPACT>
-<DT><B>SIOCGIFADDR</B>, <B>SIOCSIFADDR</B><DD>
-<I>ifr_addr</I> を用いてデバイスのアドレスの設定/取得を行う。
-インターフェースのアドレスの設定は特権が必要な操作である。
-互換性確保のため、設定/取得ができるのは <B>AF_INET</B> アドレスだけである。
-<DT><B>SIOCGIFDSTADDR</B>, <B>SIOCSIFDSTADDR</B><DD>
+<DT><B>SIOCGIFADDR</B><DD>
+<DT><B>SIOCSIFADDR</B><DD>
+<DT><B>SIOCDIFADDR</B><DD>
+Get, set, or delete the address of the device using <I>ifr_addr</I>, or
+<I>ifr6_addr</I> with <I>ifr6_prefixlen</I>.  Setting or deleting the interface
+address is a privileged operation.  For compatibility, <B>SIOCGIFADDR</B>
+returns only <B>AF_INET</B> addresses, <B>SIOCSIFADDR</B> accepts <B>AF_INET</B> and
+<B>AF_INET6</B> addresses, and <B>SIOCDIFADDR</B> deletes only <B>AF_INET6</B>
+addresses.  A <B>AF_INET</B> address can be deleted by setting it to zero via
+<B>SIOCSIFADDR</B>.
+<DT><B>SIOCGIFDSTADDR</B><DD>
+<DT><B>SIOCSIFDSTADDR</B><DD>
 point-to-point デバイスの宛先アドレスを <I>ifr_dstaddr</I> を用いて
 設定/取得する。互換性確保のため、
 設定/取得ができるのは <B>AF_INET</B> アドレスだけである。
 宛先アドレスの設定は特権が必要な操作である。
-<DT><B>SIOCGIFBRDADDR</B>, <B>SIOCSIFBRDADDR</B><DD>
+<DT><B>SIOCGIFBRDADDR</B><DD>
+<DT><B>SIOCSIFBRDADDR</B><DD>
 デバイスのブロードキャストアドレスを <I>ifr_brdaddr</I> を用いて
 設定/取得する。互換性確保のため、
 設定/取得ができるのは <B>AF_INET</B> アドレスだけである。
 ブロードキャストアドレスの設定は特権が必要な操作である。
-<DT><B>SIOCGIFNETMASK</B>, <B>SIOCSIFNETMASK</B><DD>
+<DT><B>SIOCGIFNETMASK</B><DD>
+<DT><B>SIOCSIFNETMASK</B><DD>
 デバイスのネットワークマスクを <I>ifr_netmask</I> を用いて
 設定/取得する。互換性確保のため、
 設定/取得ができるのは <B>AF_INET</B> アドレスだけである。
 ネットワークマスクの設定は特権が必要な操作である。
-<DT><B>SIOCGIFMETRIC</B>, <B>SIOCSIFMETRIC</B><DD>
+<DT><B>SIOCGIFMETRIC</B><DD>
+<DT><B>SIOCSIFMETRIC</B><DD>
 デバイスのメトリックを <I>ifr_metric</I> を用いて取得・設定する。 これはまだ実装されていない。読み出そうとすると <I>ifr_metric</I>
 に 0 をセットして返り、設定しようとすると <B>EOPNOTSUPP</B> が返る。
-<DT><B>SIOCGIFMTU</B>, <B>SIOCSIFMTU</B><DD>
+<DT><B>SIOCGIFMTU</B><DD>
+<DT><B>SIOCSIFMTU</B><DD>
 デバイスの MTU (Maximum Transfer Unit) を <I>ifr_mtu</I> を用いて取得・設定する。 MTU
 の設定は特権が必要な操作である。 MTU の値を小さくしすぎるとカーネルがクラッシュするかもしれない。
-<DT><B>SIOCGIFHWADDR</B>, <B>SIOCSIFHWADDR</B><DD>
+<DT><B>SIOCGIFHWADDR</B><DD>
+<DT><B>SIOCSIFHWADDR</B><DD>
 デバイスのハードウェアアドレスを <I>ifr_hwaddr</I> を用いて取得・設定する。 ハードウェアアドレスは <I>sockaddr</I>
 構造体に設定される。 <I>sa_family</I> には ARPHRD_* デバイスタイプが入り、 <I>sa_data</I> にはバイト 0 から始まる L2
 ハードウェアアドレスが入る。 ハードウェアアドレスの設定は特権が必要な操作である。
 <DT><B>SIOCSIFHWBROADCAST</B><DD>
 デバイスのハードウェアブロードキャストアドレスを <I>ifr_hwaddr</I> の値に設定する。この操作には特権が必要である。
-<DT><B>SIOCGIFMAP</B>, <B>SIOCSIFMAP</B><DD>
+<DT><B>SIOCGIFMAP</B><DD>
+<DT><B>SIOCSIFMAP</B><DD>
 インターフェースのハードウェアのパラメーターを <I>ifr_map</I> を用いて取得・設定する。 パラメーターの設定は特権が必要な操作である。
 <DT><DD>
 
@@ -178,10 +210,12 @@ struct ifmap {
 
 <DT><DD>
 ifmap 構造体の解釈はデバイスドライバとアーキテクチャーに依存する。
-<DT><B>SIOCADDMULTI</B>, <B>SIOCDELMULTI</B><DD>
+<DT><B>SIOCADDMULTI</B><DD>
+<DT><B>SIOCDELMULTI</B><DD>
 デバイスのリンク層のマルチキャストフィルターから、 <I>ifr_hwaddr</I> のアドレスを追加・削除する。これらの操作には特権が必要である。
 別の方法が <B><A HREF="../man7/packet.7.html">packet</A></B>(7)  で解説されている。
-<DT><B>SIOCGIFTXQLEN</B>, <B>SIOCSIFTXQLEN</B><DD>
+<DT><B>SIOCGIFTXQLEN</B><DD>
+<DT><B>SIOCSIFTXQLEN</B><DD>
 デバイスの送信キューの長さを <I>ifr_qlen</I> に取得・設定する。送信キューの長さの設定には特権が必要である。
 <DT><B>SIOCSIFNAME</B><DD>
 <I>ifr_name</I> で指定したインターフェースの名前を <I>ifr_newname</I> に変更する。この操作には特権が必要である。インターフェースが
@@ -193,10 +227,10 @@ up していない 時にのみ使用できる。
 
 <PRE>
 struct ifconf {
-    int                 ifc_len; /* バッファーサイズ */
+    int               ifc_len; /* size of buffer */
     union {
-        char           *ifc_buf; /* バッファーアドレス */
-        struct ifreq   *ifc_req; /* 構造体の配列 */
+        char         *ifc_buf; /* buffer address */
+        struct ifreq *ifc_req; /* array of structures */
     };
 };
 </PRE>
@@ -214,6 +248,10 @@ struct ifconf {
 <B>SIOCGIFCONF</B> を呼び出して必要なバッファーサイズを決定するか、 返された <I>ifc_len</I> と元の値の差分が
 <I>sizeof(struct ifreq)</I> よりも小さい場合は必ずバッファーを大きくして再度呼び出すか、 のいずれかを行うことが推奨される。
 <DT><DD>
+
+
+
+
 
 
 
@@ -253,7 +291,11 @@ socket addresses are IP-specific and perhaps should rather be documented in
 で知ることができる。
 <P>
 
-ローカル IPV6 IP アドレスは <I>/proc/net</I> か <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)  で知ることができる。
+<B>AF_INET6</B> IPv6 addresses can be read from <I>/proc/net/if_inet6</I> or via
+<B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7).  Adding a new IPv6 address and deleting an existing IPv6
+address can be done via <B>SIOCSIFADDR</B> and <B>SIOCDIFADDR</B> or via
+<B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7).  Retrieving or changing destination IPv6 addresses of a
+point-to-point interface is possible only via <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7).
 <A NAME="lbAG">&nbsp;</A>
 <H2>バグ</H2>
 
@@ -273,11 +315,6 @@ glibc 2.1 では <I>&lt;<A HREF="file:///usr/include/net/if.h">net/if.h</A>&gt;<
 <H2>関連項目</H2>
 
 <B><A HREF="../man5/proc.5.html">proc</A></B>(5), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/ip.7.html">ip</A></B>(7), <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)
-<A NAME="lbAI">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
@@ -292,7 +329,6 @@ glibc 2.1 では <I>&lt;<A HREF="file:///usr/include/net/if.h">net/if.h</A>&gt;<
 <DT><A HREF="#lbAF">注意</A><DD>
 <DT><A HREF="#lbAG">バグ</A><DD>
 <DT><A HREF="#lbAH">関連項目</A><DD>
-<DT><A HREF="#lbAI">この文書について</A><DD>
 </DL>
 <HR>
 This document was created by

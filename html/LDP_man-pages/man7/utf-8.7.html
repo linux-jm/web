@@ -7,7 +7,7 @@
 <BODY>
 
 <H1>UTF-8</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+Section: Environments, Tables, and Troff Macros (7)<BR>Updated: 2026-02-22<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man7/utf-8.7">roff page</A><HR>
 
@@ -18,20 +18,18 @@ UTF-8 - ASCII と互換性のある多バイト Unicode の符号化
 <A NAME="lbAC">&nbsp;</A>
 <H2>説明</H2>
 
-ユニコード (Unicode) 3.0 文字集合は 16 ビットのコード空間を占める。
-最も単純な Unicode の符号化方法 (UCS-2)
-では、文字は 16 ビットワード (16 ビット文字の列) で構成される。
-この列には、
-'\0' や '/' のような (ファイル名や C のライブラリ関数の引数の内部で)
-特殊な意味を持つ 16 ビット文字が含まれることがある。
-さらに、ほとんどの UNIX ツールは ASCII ファイルを入力として期待するので、
-大幅な変更なしには 16 ビットワードを文字として読むことができない。
-これらの理由から、UCS-2 はファイル名・テキストファイル・環境変数などに用いる、
-外部用の Unicode 符号としては不適切である。
-Unicode のスーパーセットである
-ISO 10646 Universal Character Set (UCS)
-は \(em 31 ビットのような \(em もっと大きなコード空間を占めるが、
-その最も単純な符号化である UCS-4 にも (32 ビットワードの列として) 同じ問題がある。
+The Unicode 3.0 character set occupies a 16-bit code space.  The most
+obvious Unicode encoding (known as UCS-2)  consists of a sequence of 16-bit
+words.  Such strings can contain---as part of many 16-bit
+characters---bytes such as '\0' or '/', which have a
+special meaning in filenames and other C library function arguments.  In
+addition, the majority of UNIX tools expect ASCII files and can't read
+16-bit words as characters without major modifications.  For these reasons,
+UCS-2 is not a suitable external encoding of Unicode in filenames, text
+files, environment variables, and so on.  The ISO/IEC 10646 Universal
+Character Set (UCS), a superset of Unicode, occupies an even larger code
+space---31&nbsp;bits---and the obvious UCS-4 encoding for it (a sequence of
+32-bit words) has the same problems.
 <P>
 
 Unicode と UCS の UTF-8 符号化にはこれらの問題がないので、
@@ -41,31 +39,30 @@ UNIX 形式の OS 上で Unicode 文字集合を使用するための一般的�
 
 UTF-8 符号化は以下のような素晴しい性質を備えている:
 <DL COMPACT>
-<DT>*<DD>
-UCS 文字のうち 0x00000000 から 0x0000007f まで (古典的な US-ASCII の文字) は
-(ASCII との互換性のために) 単純に 0x00 から 0x7f のバイトに符号化する。
-これは 7 ビット ASCII 文字のみを含むファイルや文字列に関しては、
-ASCII と UTF-8 で同じ符号化を行なうことを意味する。
-<DT>*<DD>
-0x7f より大きいのすべての
-UCS 文字は、 0x80 から 0xfd までの範囲のバイトのみを含む
-多バイト文字列に符号化される。
-したがって文字列に
-ASCII バイトが含まれることがなく、'\0' や '/' の問題は発生しない。
-<DT>*<DD>
+<DT>&bull;<DD>
+UCS characters 0x00000000 to 0x0000007f (the classic US-ASCII characters)
+are encoded simply as bytes 0x00 to 0x7f (ASCII compatibility).  This means
+that files and strings which contain only 7-bit ASCII characters have the
+same encoding under both ASCII and UTF-8.
+<DT>&bull;<DD>
+All UCS characters greater than 0x7f are encoded as a multibyte sequence
+consisting only of bytes in the range 0x80 to 0xfd, so no ASCII byte can
+appear as part of another character and there are no problems with, for
+example, '\0' or '/'.
+<DT>&bull;<DD>
 UCS-4 文字列では辞書的ソートの順序が保たれる。
-<DT>*<DD>
-2^31 ビットのすべての UCS コード が UTF-8 を使用して符号化できる。
-<DT>*<DD>
+<DT>&bull;<DD>
+All possible 2^31 UCS codes can be encoded using UTF-8.
+<DT>&bull;<DD>
 UTF-8 符号化ではバイト 0xc0, 0xc1, 0xfe, 0xff が使用されることはない。
-<DT>*<DD>
+<DT>&bull;<DD>
 ASCII でない UCS 文字の多バイト列の最初のバイトは、
 常に 0xc2 から 0xfd の範囲で表現され、
 その文字が何バイトで構成されているかを示す。
 多バイト列の残りの部分のバイトは、それぞれ 0x80 から 0xbf の範囲にある。
 これにより同期が容易になり、ステートレスな符号化が可能になり、
 バイトの紛失に対して堅固になる。
-<DT>*<DD>
+<DT>&bull;<DD>
 UTF-8 を使用した UCS 文字の符号化は最大 6 バイトの長さになる。
 しかし、Unicode 規格では 0x10ffff より先の文字を指定しないので、
 Unicode 文字は UTF-8 では 4 バイトまでにしかならない。
@@ -95,9 +92,10 @@ Unicode 文字は UTF-8 では 4 バイトまでにしかならない。
 (big-endian)。その文字を表現するのに最も短いバイト列のみが使用できる。
 <P>
 
-0xd800-0xdfff (UTF-16 サロゲート) や 0xfffe, 0xffff (UCS の noncharacter) という
-UCS コードの値は、 UTF-8 に準拠したストリームに入れるべきではない。 RFC 3629 では U+10FFFF
-より上のコードポイントは使用すべきではないとされている。これにより、文字は 4 バイト以内に限定される。
+The UCS code values 0xd800-0xdfff (UTF-16 surrogates) as well as 0xfffe
+and 0xffff (UCS noncharacters) should not appear in conforming UTF-8
+streams.  According to RFC 3629 no point above U+10FFFF should be used,
+which limits characters to four bytes.
 <A NAME="lbAF">&nbsp;</A>
 <H3>例</H3>
 
@@ -148,35 +146,41 @@ setlocale(LC_CTYPE, &quot;&quot;)
 <P>
 
 <DL COMPACT><DT><DD>
-strcmp(nl_langinfo(CODESET), &quot;UTF-8&quot;) == 0
+streq(nl_langinfo(CODESET), &quot;UTF-8&quot;)
 </DL>
 
 <P>
 
-という式を評価することで、
-UTF-8 ロケールが選択されていて、プレーンテキストの標準入出力・端末間通信・
-プレーンテキストファイルの内容・ファイル名・環境変数が
-UTF-8 で符号化されているかをチェックすることができる。
+to determine whether a UTF-8 locale has been selected and whether therefore
+all plaintext standard input and output, terminal communication, plaintext
+file content, filenames, and environment variables are encoded in UTF-8.
 <P>
 
-US-ASCII や ISO 8859
-といったシングルバイトの符号化が習慣になっているプログラマーは、
-これまでの 2 つの仮定が
-UTF-8 ロケールにおいては最早有効ではなくなったことを知っておくべきだ。
-1 番目の変更点は、1 バイトが必ずしも 1 つの文字に対応しないという点である。
-2 番目の変更点は、最近の端末エミュレータは
-UTF-8 モードにおいて中国語・日本語・韓国朝鮮語の
-全角文字やスペースが入らない (nonspacing)
-合成文字 (combining characters) に対応しているので、
-ASCII のときのように 1 文字出力した後で
-カーソルを必ずしも 1 つだけ進めるわけではないという点である。
-今日では、文字やカーソルの位置を数えるのに
-<B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3) や <B><A HREF="../man3/wcswidth.3.html">wcswidth</A></B>(3)
-といったライブラリ関数を使うべきである。
+Programmers accustomed to single-byte encodings such as US-ASCII or
+ISO/IEC~8859 have to be aware that two assumptions made so far are no
+longer valid in UTF-8 locales.  Firstly, a single byte does not necessarily
+correspond any more to a single character.  Secondly, since modern terminal
+emulators in UTF-8 mode also support Chinese, Japanese, and Korean
+double-width characters as well as nonspacing combining characters,
+outputting a single character does not necessarily advance the cursor by one
+position as it did in ASCII.  Library functions such as <B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3)  and
+<B><A HREF="../man3/wcswidth.3.html">wcswidth</A></B>(3)  should be used today to count characters and cursor
+positions.
 <P>
 
-(VT100 端末などで使われる) ISO 2022 符号化形式から
-UTF-8 へ切替える公式なエスケープシーケンスは ESC % G (&quot; では、規格に準拠するプログラムは
+The official ESC sequence to switch from an ISO/IEC~2022 encoding scheme
+(as used for instance by VT100 terminals) to UTF-8 is ESC % G
+(&quot;\x1b%G&quot;).  The corresponding return sequence from UTF-8 to
+ISO/IEC~2022 is ESC % @ (&quot;\x1b%@&quot;).  Other ISO/IEC~2022 sequences
+(such as for switching the G0 and G1 sets) are not applicable in UTF-8 mode.
+<A NAME="lbAH">&nbsp;</A>
+<H3>セキュリティ</H3>
+
+Unicode と UCS の規格では、
+UTF-8 の生成者はできるだけ短い形式を用いるよう要求している。
+例えば、先頭バイトが 0xc0 であるような 2 バイト列を
+生成するのは準拠しているとはいえない。
+Unicode 3.1 では、規格に準拠するプログラムは
 最短の表現形式ではない入力を受け付けない、という要求事項が追加された。
 これはセキュリティ上の理由による。
 ユーザー入力がセキュリティ上の危険に対しチェックされる場合、
@@ -184,7 +188,7 @@ UTF-8 へ切替える公式なエスケープシーケンスは ESC % G (&quot; 
 最短に符号化されてないこれらの文字を見過ごしてしまうかもしれないからである。
 なぜなら、最短ではない UTF-8 符号化では、これらの文字を表現するような様々な
 ASCII 以外の形式が存在するためである。
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H3>標準</H3>
 
 
@@ -192,16 +196,11 @@ ASCII 以外の形式が存在するためである。
 
 
 ISO/IEC 10646-1:2000, Unicode 3.1, RFC&nbsp;3629, Plan 9.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man1/locale.1.html">locale</A></B>(1), <B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3), <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3), <B><A HREF="../man7/charsets.7.html">charsets</A></B>(7),
 <B><A HREF="../man7/unicode.7.html">unicode</A></B>(7)
-<A NAME="lbAJ">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
@@ -214,10 +213,10 @@ ISO/IEC 10646-1:2000, Unicode 3.1, RFC&nbsp;3629, Plan 9.
 <DT><A HREF="#lbAE">符号化</A><DD>
 <DT><A HREF="#lbAF">例</A><DD>
 <DT><A HREF="#lbAG">アプリケーションにおける注意</A><DD>
-<DT><A HREF="#lbAH">標準</A><DD>
+<DT><A HREF="#lbAH">セキュリティ</A><DD>
+<DT><A HREF="#lbAI">標準</A><DD>
 </DL>
-<DT><A HREF="#lbAI">関連項目</A><DD>
-<DT><A HREF="#lbAJ">この文書について</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of STRSEP</TITLE>
+<HTML><HEAD><TITLE>Man page of strsep</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>STRSEP</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<H1>strsep</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-25<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/strsep.3">roff page</A><HR>
 
@@ -16,12 +16,16 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index
 
 strsep - 文字列からトークンを取り出す
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;</B>
 
-<B>char *strsep(char **</B><I>stringp</I><B>, const char *</B><I>delim</I><B>);</B>
+<B>char *strsep(char **restrict </B><I>stringp</I><B>, const char *restrict </B><I>delim</I><B>);</B>
 </PRE>
 
 <P>
@@ -32,78 +36,143 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 <B>strsep</B>():
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以降:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;glibc&nbsp;2.19&nbsp;以前:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE
-<A NAME="lbAD">&nbsp;</A>
+<PRE>
+    Since glibc 2.19:
+        _DEFAULT_SOURCE
+    glibc 2.19 and earlier:
+        _BSD_SOURCE
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
-<I>*stringp</I> が NULL の場合、 <B>strsep</B>()  関数は何もせずに NULL を返す。 さもなければ、文字列
-<I>stringp</I> を <I>delim</I> に含まれるいずれかのバイトで区切ったトークンのうち最初のものを返す。 トークンは、区切り文字をヌルバイト
-('\0') で上書きすることで 終端される。 <I>*stringp</I> は切り出されたトークンの次の位置を示すように更新される。
-区切り文字が見つからない場合、<I>*stringp</I> 文字列全体がトークンとして 扱われ、<I>*stringp</I> は NULL となる。
-<A NAME="lbAE">&nbsp;</A>
+If <I>*stringp</I> is NULL, the <B>strsep</B>()  function returns NULL and does
+nothing else.  Otherwise, this function finds the first token in the string
+<I>*stringp</I> that is delimited by one of the bytes in the string <I>delim</I>.
+This token is terminated by overwriting the delimiter with a null byte
+('\0'), and <I>*stringp</I> is updated to point past the token.  In
+case no delimiter was found, the token is taken to be the entire string
+<I>*stringp</I>, and <I>*stringp</I> is made NULL.
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 <B>strsep</B>()  関数は、トークンへのポインターを返す。 つまり、元の <I>*stringp</I> の値を返す。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>strsep</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAG">&nbsp;</A>
-<H2>準拠</H2>
+<A NAME="lbAH">&nbsp;</A>
+<H2>標準規格</H2>
+
+BSD.
+<A NAME="lbAI">&nbsp;</A>
+<H2>歴史</H2>
 
 4.4BSD.
-<A NAME="lbAH">&nbsp;</A>
-<H2>注意</H2>
+<P>
 
-<B>strsep</B>()  関数は、 <B><A HREF="../man3/strtok.3.html">strtok</A></B>(3)  関数が空のフィールドを 扱えないために、その代替品として導入された。 しかしながら、
-<B><A HREF="../man3/strtok.3.html">strtok</A></B>(3)  関数は C89/C99 に準拠しており、より移植性がある。
-<A NAME="lbAI">&nbsp;</A>
-<H2>バグ</H2>
+The <B>strsep</B>()  function was introduced as a replacement for <B><A HREF="../man3/strtok.3.html">strtok</A></B>(3),
+since the latter cannot handle empty fields.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>警告</H2>
 
 この関数を使う時は注意すること。 もし使うなら、以下のことに注意すること。
 <DL COMPACT>
-<DT>*<DD>
-この関数は最初の引数を変更する。
-<DT>*<DD>
-この関数は定数文字列には使えない。
-<DT>*<DD>
+<DT>&bull;<DD>
 区切り文字自体は失われてしまう。
 </DL>
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+The program below is a port of the one found in <B><A HREF="../man3/strtok.3.html">strtok</A></B>(3), which,
+however, doesn't discard multiple delimiters or empty tokens:
+<P>
+
+
+<PRE>
+$<B> ./a.out 'a/bbb///cc;xxx:yyy:' ':;' '/'</B>
+1: a/bbb///cc
+         --&gt; a
+         --&gt; bbb
+         --&gt;
+         --&gt;
+         --&gt; cc
+2: xxx
+         --&gt; xxx
+3: yyy
+         --&gt; yyy
+4:
+         --&gt;
+</PRE>
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    char *token, *subtoken;
+
+    if (argc != 4) {
+        fprintf(stderr, &quot;Usage: %s string delim subdelim\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    for (unsigned int j = 1; (token = strsep(&amp;argv[1], argv[2])); j++) {
+        printf(&quot;%u: %s\n&quot;, j, token);
+
+        while ((subtoken = strsep(&amp;token, argv[3])))
+            printf(&quot;\t --&gt; %s\n&quot;, subtoken);
+    }
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+
+
+<A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>
 
-<B><A HREF="../man3/index.3.html">index</A></B>(3), <B><A HREF="../man3/memchr.3.html">memchr</A></B>(3), <B><A HREF="../man3/rindex.3.html">rindex</A></B>(3), <B><A HREF="../man3/strchr.3.html">strchr</A></B>(3), <B><A HREF="../man3/string.3.html">string</A></B>(3),
-<B><A HREF="../man3/strpbrk.3.html">strpbrk</A></B>(3), <B><A HREF="../man3/strspn.3.html">strspn</A></B>(3), <B><A HREF="../man3/strstr.3.html">strstr</A></B>(3), <B><A HREF="../man3/strtok.3.html">strtok</A></B>(3)
-<A NAME="lbAK">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<B><A HREF="../man3/memchr.3.html">memchr</A></B>(3), <B><A HREF="../man3/strchr.3.html">strchr</A></B>(3), <B><A HREF="../man3/string.3.html">string</A></B>(3), <B><A HREF="../man3/strpbrk.3.html">strpbrk</A></B>(3), <B><A HREF="../man3/strspn.3.html">strspn</A></B>(3),
+<B><A HREF="../man3/strstr.3.html">strstr</A></B>(3), <B><A HREF="../man3/strtok.3.html">strtok</A></B>(3)
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">属性</A><DD>
-<DT><A HREF="#lbAG">準拠</A><DD>
-<DT><A HREF="#lbAH">注意</A><DD>
-<DT><A HREF="#lbAI">バグ</A><DD>
-<DT><A HREF="#lbAJ">関連項目</A><DD>
-<DT><A HREF="#lbAK">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">標準規格</A><DD>
+<DT><A HREF="#lbAI">歴史</A><DD>
+<DT><A HREF="#lbAJ">警告</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DL>
+<DT><A HREF="#lbAL">プログラムのソース</A><DD>
+</DL>
+<DT><A HREF="#lbAM">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

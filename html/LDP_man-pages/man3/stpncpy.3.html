@@ -1,27 +1,37 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of STPNCPY</TITLE>
+<HTML><HEAD><TITLE>Man page of stpncpy</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>STPNCPY</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<H1>stpncpy</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-25<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/stpncpy.3">roff page</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>名前</H2>
 
-stpncpy - 固定長の文字列をコピーして、その最後へのポインターを返す
+stpncpy, strncpy - fill a fixed-size buffer with non-null bytes from a
+string, padding with null bytes as needed
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;</B>
 
-<B>char *stpncpy(char *</B><I>dest</I><B>, const char *</B><I>src</I><B>, size_t </B><I>n</I><B>);</B>
+<B>char *strncpy(</B>size_t dsize;
+<B>              char </B><I>dst</I><B>[restrict </B><I>dsize</I><B>], const char *restrict </B><I>src</I><B>,</B>
+<B>              size_t </B><I>dsize</I><B>);</B>
+<B>char *stpncpy(</B>size_t dsize;
+<B>              char </B><I>dst</I><B>[restrict </B><I>dsize</I><B>], const char *restrict </B><I>src</I><B>,</B>
+<B>              size_t </B><I>dsize</I><B>);</B>
 </PRE>
 
 <P>
@@ -32,75 +42,176 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 <B>stpncpy</B>():
+<PRE>
+    Since glibc 2.10:
+        _POSIX_C_SOURCE &gt;= 200809L
+    Before glibc 2.10:
+        _GNU_SOURCE
+</PRE>
 
-
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT>glibc 2.10 以降:<DD>
-_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
-<DT>glibc 2.10 より前:<DD>
-_GNU_SOURCE
-</DL>
-</DL>
-
-
-
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
-<B>stpncpy</B>()  関数は <I>src</I> が指している文字列から終端のヌルバイト ('\0')  を含めて最大 <I>n</I> バイトを
-<I>dest</I> にコピーする。長さ <I>strlen(src)</I> が <I>n</I> より小さい場合には <I>dest</I> の残りの 部分にはヌルバイト
-('\0') 文字が埋められる。 長さ <I>strlen(src)</I> が <I>n</I> 以上ならば、 <I>dest</I>
-が指す文字列はヌルで終端されていない。
-<P>
+These functions copy non-null bytes from the string pointed to by <I>src</I>
+into the array pointed to by <I>dst</I>.  If the source has too few non-null
+bytes to fill the destination, the functions pad the destination with
+trailing null bytes.  If the destination buffer, limited by its size, isn't
+large enough to hold the copy, the resulting character sequence is
+truncated.  For the difference between the two functions, see RETURN VALUE.
+<DL COMPACT>
+<DT><B>strncpy</B>()<DD>
+It is equivalent to
+<DT><DD>
 
-二つの文字列は重なってはならない。
-<P>
+<PRE>
+stpncpy(dst, src, dsize), dst
+</PRE>
 
-プログラマーは <I>dest</I> に少なくとも <I>n</I> バイトの空きがあることを 保証しなければならない。
-<A NAME="lbAE">&nbsp;</A>
+
+<DT><B>stpncpy</B>()<DD>
+It is equivalent to
+<DT><DD>
+
+<PRE>
+memset(mempcpy(dst, src, strnlen(src, dsize)), '\0',
+       dsize - strnlen(src, dsize))
+</PRE>
+
+
+</DL>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
-<B>stpncpy</B>()  は <I>dest</I> の終端のヌルバイトを指すポインターを返すか、 <I>dest</I> がヌルバイトで終端されていない場合には
-<I>dest</I>+<I>n</I> を返す。
-<A NAME="lbAF">&nbsp;</A>
+<DL COMPACT>
+<DT><B>strncpy</B>()<DD>
+returns <I>dst</I>.
+<DT><B>stpncpy</B>()<DD>
+returns a pointer to one past the last non-null character written, that is,
+<I>dest~+~strnlen(src,~n)</I>.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
-<B>stpncpy</B>()
+
+
+<B>stpncpy</B>(),
+<B>strncpy</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAG">&nbsp;</A>
-<H2>準拠</H2>
-
-この関数は POSIX.1-2008 に追加された。 それ以前は GNU による拡張であった。 この関数は 1993 年に GNU C
-ライブラリのバージョン 1.07 で初めて登場した。
 <A NAME="lbAH">&nbsp;</A>
+<H2>標準規格</H2>
+
+<DL COMPACT>
+<DT><B>strncpy</B>()<DD>
+C11, POSIX.1-2008.
+<DT><B>stpncpy</B>()<DD>
+POSIX.1-2008.
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>歴史</H2>
+
+<DL COMPACT>
+<DT><B>strncpy</B>()<DD>
+C89, POSIX.1-2001, SVr4, 4.3BSD.
+<DT><B>stpncpy</B>()<DD>
+glibc 1.07.  POSIX.1-2008.
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>警告</H2>
+
+The name of these functions is confusing.  These functions produce a
+null-padded character sequence, not a string (see <B>string_copying</B>(7)).
+For example:
+<P>
+
+
+<PRE>
+strncpy(buf, &quot;1&quot;, 5);       // { '1',   0,   0,   0,   0 }
+strncpy(buf, &quot;1234&quot;, 5);    // { '1', '2', '3', '4',   0 }
+strncpy(buf, &quot;12345&quot;, 5);   // { '1', '2', '3', '4', '5' }
+strncpy(buf, &quot;123456&quot;, 5);  // { '1', '2', '3', '4', '5' }
+</PRE>
+
+
+<P>
+
+It's impossible to distinguish truncation by the result of the call, from a
+character sequence that just fits the destination buffer; truncation should
+be detected by comparing the length of the input string with the size of the
+destination buffer.
+<P>
+
+If you're going to use this function in chained calls, it would be useful to
+develop a similar function that accepts a pointer to the end (one after the
+last element) of the destination buffer instead of its size.
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+
+int
+main(void)
+{
+    char    *p;
+    char    buf1[20];
+    char    buf2[20];
+    size_t  len;
+
+    if (sizeof(buf2) &lt; strlen(&quot;Hello world!&quot;))
+        errx(&quot;strncpy: truncating character sequence&quot;);
+    strncpy(buf2, &quot;Hello world!&quot;, sizeof(buf2));
+    len = strnlen(buf2, sizeof(buf2));
+
+    printf(&quot;[len = %zu]: &quot;, len);
+    fwrite(buf2, 1, len, stdout);
+    putchar('\n');
+
+    if (sizeof(buf1) &lt; strlen(&quot;Hello world!&quot;))
+        errx(&quot;stpncpy: truncating character sequence&quot;);
+    p = stpncpy(buf1, &quot;Hello world!&quot;, sizeof(buf1));
+    len = p - buf1;
+
+    printf(&quot;[len = %zu]: &quot;, len);
+    fwrite(buf1, 1, len, stdout);
+    putchar('\n');
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+
+
+<A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>
 
-<B><A HREF="../man3/strncpy.3.html">strncpy</A></B>(3), <B><A HREF="../man3/wcpncpy.3.html">wcpncpy</A></B>(3)
-<A NAME="lbAI">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
+<B><A HREF="../man3/wcpncpy.3.html">wcpncpy</A></B>(3), <B>string_copying</B>(7)
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">属性</A><DD>
-<DT><A HREF="#lbAG">準拠</A><DD>
-<DT><A HREF="#lbAH">関連項目</A><DD>
-<DT><A HREF="#lbAI">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">標準規格</A><DD>
+<DT><A HREF="#lbAI">歴史</A><DD>
+<DT><A HREF="#lbAJ">警告</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
+<DT><A HREF="#lbAL">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of STRCMP</TITLE>
+<HTML><HEAD><TITLE>Man page of strcmp</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>STRCMP</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2014-01-20<BR><A HREF="#index">Index</A>
+<H1>strcmp</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-03-16<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/strcmp.3">roff page</A><HR>
 
@@ -16,69 +16,211 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2014-01-20<BR><A HREF="#index
 
 strcmp, strncmp - 二つの文字列を比べる
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;</B>
 
 <B>int strcmp(const char *</B><I>s1</I><B>, const char *</B><I>s2</I><B>);</B>
-
-<B>int strncmp(const char *</B><I>s1</I><B>, const char *</B><I>s2</I><B>, size_t </B><I>n</I><B>);</B>
+<B>int strncmp(const char </B>s1<B>[], const char </B>s2<B>[], size_t </B>n<B>);</B>
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
-<B>strcmp</B>()  関数は二つの文字列 <I>s1</I> と <I>s2</I> を較べる。 この関数は、 <I>s1</I> が <I>s2</I> に較べて
-1)小さい、2)等しい、3)大きい場合に、 ゼロよりも 1)小さい、2)等しい、3)大きい整数を返す。
-<P>
+<DL COMPACT>
+<DT><B>strcmp</B>()<DD>
+The <B>strcmp</B>()  function compares the two strings <I>s1</I> and <I>s2</I>, as if by
+calling <B><A HREF="../man3/memcmp.3.html">memcmp</A></B>(3).
+<DT><DD>
+The locale is not taken into account (for a locale-aware comparison, see
+<B><A HREF="../man3/strcoll.3.html">strcoll</A></B>(3)).
+<DT><DD>
+It is equivalent to
+<DT><DD>
 
+<PRE>
+memcmp(s1, s2, MIN(strlen(s1),strlen(s2))+1)
+</PRE>
+
+
+<DT><B>strncmp</B>()<DD>
 <B>strncmp</B>() 関数は、<I>s1</I> と <I>s2</I> の最初の <I>n</I> バイトだけを比較する
 ことを除けば、strcmp()と同様である。
-<A NAME="lbAE">&nbsp;</A>
+<DT><DD>
+It is equivalent to
+<DT><DD>
+
+<PRE>
+memcmp(s1, s2, MIN(MIN(strnlen(s1,n),strnlen(s2,n))+1, n))
+</PRE>
+
+
+</DL>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 <B>strcmp</B>()  関数と <B>strncmp</B>()  関数は整数を返す。
 この整数は、ゼロよりも、1)小さい、2)等しい、3)大きいのいずれかである。 それぞれは、<I>s1</I>（または、この文字列の最初の <I>n</I> バイト）が
 <I>s2</I> よりも、1)小さい、2)等しい、3)大きいに対応している。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>属性</H2>
 
-<A NAME="lbAG">&nbsp;</A>
-<H3>マルチスレッディング (<A HREF="../man7/pthreads.7.html">pthreads</A>(7) 参照)</H3>
+この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
+<TR VALIGN=top><TD>
 
-関数 <B>strcmp</B>() と <B>strncmp</B>() はスレッドセーフである。
+
+<B>strcmp</B>(),
+<B>strncmp</B>()
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
 <A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
+<H2>バージョン</H2>
 
-SVr4, 4.3BSD, C89, C99.
+POSIX.1 specifies only that:
+<DL COMPACT><DT><DD>
+<P>
+
+The sign of a nonzero return value shall be determined by the sign of the
+difference between the values of the first pair of bytes (both interpreted
+as type <I>unsigned char</I>)  that differ in the strings being compared.
+</DL>
+
+<P>
+
+In glibc, as in most other implementations, the return value is the
+arithmetic result of subtracting the last compared byte in <I>s2</I> from the
+last compared byte in <I>s1</I>.  (If the two characters are equal, this
+difference is 0.)
 <A NAME="lbAI">&nbsp;</A>
+<H2>標準規格</H2>
+
+C11, POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>歴史</H2>
+
+POSIX.1-2001, C89, SVr4, 4.3BSD.
+<A NAME="lbAK">&nbsp;</A>
+<H2>例</H2>
+
+The program below can be used to demonstrate the operation of <B>strcmp</B>()
+(when given two arguments) and <B>strncmp</B>()  (when given three arguments).
+First, some examples using <B>strcmp</B>():
+<P>
+
+
+<PRE>
+$<B> ./string_comp ABC ABC</B>;
+&lt;str1&gt; and &lt;str2&gt; are equal
+$<B> ./string_comp ABC AB</B>;      # 'C' is ASCII 67; 'C' - '\0' = 67
+&lt;str1&gt; is greater than &lt;str2&gt; (67)
+$<B> ./string_comp ABA ABZ</B>;     # 'A' is ASCII 65; 'Z' is ASCII 90
+&lt;str1&gt; is less than &lt;str2&gt; (-25)
+$<B> ./string_comp ABJ ABC</B>;
+&lt;str1&gt; is greater than &lt;str2&gt; (7)
+$<B> ./string_comp $'\201' A</B>;   # 0201 - 0101 = 0100 (or 64 decimal)
+&lt;str1&gt; is greater than &lt;str2&gt; (64)
+</PRE>
+
+
+<P>
+
+The last example uses <B><A HREF="../../GNU_bash/man1/bash.1.html">bash</A></B>(1)-specific syntax to produce a string
+containing an 8-bit ASCII code; the result demonstrates that the string
+comparison uses unsigned characters.
+<P>
+
+And then some examples using <B>strncmp</B>():
+<P>
+
+
+<PRE>
+$<B> ./string_comp ABC AB 3</B>;
+&lt;str1&gt; is greater than &lt;str2&gt; (67)
+$<B> ./string_comp ABC AB 2</B>;
+&lt;str1&gt; and &lt;str2&gt; are equal in the first 2 bytes
+</PRE>
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>プログラムのソース</H3>
+
+
+
+
+<PRE>
+/* string_comp.c
+
+   Licensed under GNU General Public License v2 or later.
+*/
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    int res;
+
+    if (argc &lt; 3) {
+        fprintf(stderr, &quot;Usage: %s &lt;str1&gt; &lt;str2&gt; [&lt;n&gt;]\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    if (argc == 3)
+        res = strcmp(argv[1], argv[2]);
+    else
+        res = strncmp(argv[1], argv[2], atoi(argv[3]));
+
+    if (res == 0) {
+        printf(&quot;&lt;str1&gt; and &lt;str2&gt; are equal&quot;);
+        if (argc &gt; 3)
+            printf(&quot; in the first %d bytes\n&quot;, atoi(argv[3]));
+        printf(&quot;\n&quot;);
+    } else if (res &lt; 0) {
+        printf(&quot;&lt;str1&gt; is less than &lt;str2&gt; (%d)\n&quot;, res);
+    } else {
+        printf(&quot;&lt;str1&gt; is greater than &lt;str2&gt; (%d)\n&quot;, res);
+    }
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+
+
+<A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>
 
-<B><A HREF="../man3/bcmp.3.html">bcmp</A></B>(3), <B><A HREF="../man3/memcmp.3.html">memcmp</A></B>(3), <B><A HREF="../man3/strcasecmp.3.html">strcasecmp</A></B>(3), <B><A HREF="../man3/strcoll.3.html">strcoll</A></B>(3), <B><A HREF="../man3/string.3.html">string</A></B>(3),
-<B><A HREF="../man3/strncasecmp.3.html">strncasecmp</A></B>(3), <B><A HREF="../man3/strverscmp.3.html">strverscmp</A></B>(3), <B><A HREF="../man3/wcscmp.3.html">wcscmp</A></B>(3), <B><A HREF="../man3/wcsncmp.3.html">wcsncmp</A></B>(3)
-<A NAME="lbAJ">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 3.79 の一部
-である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="http://www.kernel.org/doc/man-pages/">http://www.kernel.org/doc/man-pages/</A> に書かれている。
+<B><A HREF="../man3/memcmp.3.html">memcmp</A></B>(3), <B><A HREF="../man3/strcasecmp.3.html">strcasecmp</A></B>(3), <B><A HREF="../man3/strcoll.3.html">strcoll</A></B>(3), <B>streq</B>(3), <B><A HREF="../man3/string.3.html">string</A></B>(3),
+<B><A HREF="../man3/strncasecmp.3.html">strncasecmp</A></B>(3), <B><A HREF="../man3/strverscmp.3.html">strverscmp</A></B>(3), <B><A HREF="../man3/wcscmp.3.html">wcscmp</A></B>(3), <B><A HREF="../man3/wcsncmp.3.html">wcsncmp</A></B>(3),
+<B><A HREF="../man7/ascii.7.html">ascii</A></B>(7)
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">属性</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">標準規格</A><DD>
+<DT><A HREF="#lbAJ">歴史</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
 <DL>
-<DT><A HREF="#lbAG">マルチスレッディング (pthreads(7) 参照)</A><DD>
+<DT><A HREF="#lbAL">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">関連項目</A><DD>
-<DT><A HREF="#lbAJ">この文書について</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

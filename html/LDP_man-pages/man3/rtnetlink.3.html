@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of RTNETLINK</TITLE>
+<HTML><HEAD><TITLE>Man page of rtnetlink</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>RTNETLINK</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<H1>rtnetlink</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/rtnetlink.3">roff page</A><HR>
 
@@ -16,76 +16,68 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index
 
 rtnetlink - rtnetlink メッセージを操作するマクロ
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/asm/types.h">asm/types.h</A>&gt;</B>
-<BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/linux/netlink.h">linux/netlink.h</A>&gt;</B>
-<BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/linux/rtnetlink.h">linux/rtnetlink.h</A>&gt;</B>
-<BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
-<P>
 
-<B>rtnetlink_socket = socket(AF_NETLINK, int </B><I>socket_type</I><B>,
-NETLINK_ROUTE);</B>
-<P>
+<B>rtnetlink_socket = socket(AF_NETLINK, int </B><I>socket_type</I><B>, NETLINK_ROUTE);</B>
 
-<B>int RTA_OK(struct rtattr *</B><I>rta</I><B>, int </B><I>rtabuflen</I><B>);</B>
-<P>
+<B>int RTA_OK(struct rtattr *</B><I>rta</I><B>, int </B><I>size</I><B>);</B>
 
 <B>void *RTA_DATA(struct rtattr *</B><I>rta</I><B>);</B>
-<P>
-
 <B>unsigned int RTA_PAYLOAD(struct rtattr *</B><I>rta</I><B>);</B>
-<P>
 
-<B>struct rtattr *RTA_NEXT(struct rtattr *</B><I>rta</I><B>, unsigned int
-</B><I>rtabuflen</I><B>);</B>
-<P>
+<B>struct rtattr *RTA_NEXT(struct rtattr *</B><I>rta</I><B>, unsigned int </B><I>size</I><B>);</B>
 
-<B>unsigned int RTA_LENGTH(unsigned int </B><I>length</I><B>);</B>
-<P>
+<B>unsigned int RTA_LENGTH(unsigned int </B><I>size</I><B>);</B>
+<B>unsigned int RTA_SPACE(unsigned int </B><I>size</I><B>);</B>
+</PRE>
 
-<B>unsigned int RTA_SPACE(unsigned int </B><I>length</I><B>);</B>
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 全ての <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)  メッセージは <B><A HREF="../man7/netlink.7.html">netlink</A></B>(7)  メッセージヘッダーと追加属性からなる。
 属性の操作は、必ずここに挙げたマクロだけを使って行うべきである。
 <P>
 
-<B>RTA_OK(</B><I>rta</I><B>, </B><I>attrlen</I><B>)</B> は <I>rta</I> が有効なルーティング属性へのポインターであれば真を返す。
-<I>attrlen</I> は属性バッファーの実働時の長さ (running length) である。 真でなければ、例え <I>attrlen</I>
-がゼロでなくても、 メッセージ中にはもうそれ以上属性は無いと考えなければならない。
+<B>RTA_OK(</B><I>rta</I><B>, </B><I>size</I><B>)</B> returns true if <I>rta</I> points to a valid
+routing attribute; <I>size</I> is the running size of the attribute buffer.
+When not true then you must assume there are no more attributes in the
+message, even if <I>size</I> is nonzero.
 <P>
 
 <B>RTA_DATA(</B><I>rta</I><B>)</B> はこの属性データの先頭へのポインターを返す。
 <P>
 
-<B>RTA_PAYLOAD(</B><I>rta</I><B>)</B> はこの属性データの長さを返す。
+<B>RTA_PAYLOAD(</B><I>rta</I><B>)</B> はこの属性データのサイズを返す。
 <P>
 
-<B>RTA_NEXT(</B><I>rta</I><B>, </B><I>attrlen</I><B>)</B> は <I>rta</I> の次にある属性を取得する。 このマクロを呼ぶと
-<I>attrlen</I> が更新される。 <B>RTA_OK</B> を使って、返されたポインターが正しいかをチェックすべきである。
+<B>RTA_NEXT(</B><I>rta</I><B>, </B><I>size</I><B>)</B> gets the next attribute after <I>rta</I>.
+Calling this macro will update <I>size</I>.  You should use <B>RTA_OK</B> to check
+the validity of the returned pointer.
 <P>
 
-<B>RTA_LENGTH(</B><I>len</I><B>)</B> は <I>len</I> バイトのデータ + ヘッダーに必要な長さを返す。
+<B>RTA_LENGTH(</B><I>len</I><B>)</B> は <I>size</I> バイトのデータ + ヘッダーに必要なサイズを返す。
 <P>
 
-<B>RTA_SPACE(</B><I>len</I><B>)</B> は <I>len</I> バイトのデータを持つメッセージに必要とされる容量を返す。
-<A NAME="lbAE">&nbsp;</A>
-<H2>準拠</H2>
-
-これらのマクロは非標準で、Linux での拡張である。
+<B>RTA_SPACE(</B><I>size</I><B>)</B> は <I>size</I> バイトのデータを持つメッセージに必要とされる容量を返す。
 <A NAME="lbAF">&nbsp;</A>
+<H2>標準規格</H2>
+
+Linux.
+<A NAME="lbAG">&nbsp;</A>
 <H2>バグ</H2>
 
 このマニュアルは完全ではない。
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>例</H2>
 
 
@@ -117,7 +109,7 @@ req.nh.nlmsg_type = RTM_NEWLINK;
 req.if.ifi_family = AF_UNSPEC;
 req.if.ifi_index = INTERFACE_INDEX;
 req.if.ifi_change = 0xffffffff; /* ??? */
-rta = (struct rtattr *)(((char *) &amp;req) +
+rta = (struct rtattr *) ((char *) &amp;req +
                          NLMSG_ALIGN(req.nh.nlmsg_len));
 rta-&gt;rta_type = IFLA_MTU;
 rta-&gt;rta_len = RTA_LENGTH(sizeof(mtu));
@@ -128,28 +120,23 @@ send(rtnetlink_sk, &amp;req, req.nh.nlmsg_len, 0);
 </PRE>
 
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/netlink.3.html">netlink</A></B>(3), <B><A HREF="../man7/netlink.7.html">netlink</A></B>(7), <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)
-<A NAME="lbAI">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">準拠</A><DD>
-<DT><A HREF="#lbAF">バグ</A><DD>
-<DT><A HREF="#lbAG">例</A><DD>
-<DT><A HREF="#lbAH">関連項目</A><DD>
-<DT><A HREF="#lbAI">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">標準規格</A><DD>
+<DT><A HREF="#lbAG">バグ</A><DD>
+<DT><A HREF="#lbAH">例</A><DD>
+<DT><A HREF="#lbAI">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

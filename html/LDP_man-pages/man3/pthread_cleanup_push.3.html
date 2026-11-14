@@ -1,42 +1,43 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of PTHREAD_CLEANUP_PUSH</TITLE>
+<HTML><HEAD><TITLE>Man page of pthread_cleanup_push</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>PTHREAD_CLEANUP_PUSH</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<H1>pthread_cleanup_push</H1>
+Section: C Library Functions (3)<BR>Updated: 2025-08-20<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/pthread_cleanup_push.3">roff page</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>名前</H2>
 
-pthread_cleanup_push, pthread_cleanup_pop - スレッドの
-キャンセルクリーンアップハンドラーの push/pop を行う
+pthread_cleanup_push, pthread_cleanup_pop - push and pop thread cancelation
+clean-up handlers
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+POSIX スレッドライブラリ (<I>libpthread</I>,~<I>-lpthread</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
 
-<B>void pthread_cleanup_push(void (*</B><I>routine</I><B>)(void *),</B>
-<B>                          void *</B><I>arg</I><B>);</B>
+<B>void pthread_cleanup_push(typeof(void (void *)) *</B><I>routine</I><B>, void *</B><I>arg</I><B>);</B>
 <B>void pthread_cleanup_pop(int </B><I>execute</I><B>);</B>
-
-<I>-pthread</I> でコンパイルしてリンクする。
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
-これらの関数は、呼び出したスレッドのスレッドキャンセル時のクリーンアッ
-プハンドラーのスタックの操作を行う。クリーンアップハンドラーは、スレッドが
-キャンセルされた場合 (や以下で説明する他の種々の状況において) 自動的に
-実行される関数である。例えば、mutex のロック解除を行い、プロセス内の
-他のスレッドが利用できるようにする関数などが考えられる。
+These functions manipulate the calling thread's stack of thread-cancelation
+clean-up handlers.  A clean-up handler is a function that is automatically
+executed when a thread is canceled (or in various other circumstances
+described below); it might, for example, unlock a mutex so that it becomes
+available to other threads in the process.
 <P>
 
 <B>pthread_cleanup_push</B>() 関数は、 <I>routine</I> をクリーンアップ
@@ -49,32 +50,31 @@ pthread_cleanup_push, pthread_cleanup_pop - スレッドの
 <I>execute</I> が 0 以外の場合にはそのルーチンを追加で実行する。
 <P>
 
-キャンセルクリーンアップハンドラーは、以下に示す場合に
-スタックから取り出され実行される。
+A cancelation clean-up handler is popped from the stack and executed in the
+following circumstances:
 <DL COMPACT>
-<DT>1.<DD>
+<DT>&bull;<DD>
 スレッドがキャンセルされた際に、スタックに登録された全てのクリーン
 アップハンドラーが取り出されて、実行される。クリーンアップハンドラーの
 実行は、スタックに登録されたのと逆の順序で行われる。
-<DT>2.<DD>
+<DT>&bull;<DD>
 スレッドが <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3) を呼び出して終了する際に、全てのクリーン
 アップハンドラーが上の項目で述べたのと同様に実行される。
 (スレッドがスレッド開始関数からの <I>return</I> の実行により終了する場合に
 は、クリーンアップハンドラーは<I>呼び出されない</I>。)
-<DT>3.<DD>
+<DT>&bull;<DD>
 スレッドが 0 以外の <I>execute</I> 引数で <B>pthread_cleanup_pop</B>() を
 呼び出した際に、スタックの一番上のクリーンアップハンドラーが取り出されて
 実行される。
 </DL>
 <P>
 
-POSIX.1 では、 <B>pthread_cleanup_push</B>() と <B>pthread_cleanup_pop</B>() を
-それぞれ '<B>{</B>' と '<B>}</B>' を含むテキストに展開するマクロと
-して実装することを許容している。
-このため、呼び出し側では、これらの関数の呼び出しが同じ関数の中で対と
-なり、かつ文法的に同じネストレベル (nesting level) になることを保証
-しなければならない。 (言い換えると、クリーンアップハンドラーは、コード
-の特定のセクションの実行の中でのみ設定するものであると言える。)
+POSIX.1 permits <B>pthread_cleanup_push</B>()  and <B>pthread_cleanup_pop</B>()  to
+be implemented as macros that expand to text containing '<B>{</B>' and
+'<B>}</B>', respectively.  For this reason, the caller must ensure that
+calls to these functions are paired within the same function, and at the
+same lexical nesting level.  (In other words, a clean-up handler is
+established only during the execution of a specified section of code.)
 <P>
 
 <B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3) (<B><A HREF="../man3/siglongjmp.3.html">siglongjmp</A></B>(3)) の呼び出しは、
@@ -85,43 +85,36 @@ POSIX.1 では、 <B>pthread_cleanup_push</B>() と <B>pthread_cleanup_pop</B>()
 <B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3) (<B><A HREF="../man3/siglongjmp.3.html">siglongjmp</A></B>(3)) の呼び出しも、jump バッファーがハンドラー
 内で <B><A HREF="../man3/setjmp.3.html">setjmp</A></B>(3) (<B><A HREF="../man3/sigsetjmp.3.html">sigsetjmp</A></B>(3)) で設定されていない限り、どのような
 結果になるかは不定である。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 これらの関数は値を返さない。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
-
-
-
-
 エラーはない。
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>pthread_cleanup_push</B>(),
 <B>pthread_cleanup_pop</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<P>
-<A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
-
-POSIX.1-2001, POSIX.1-2008.
 <A NAME="lbAI">&nbsp;</A>
-<H2>注意</H2>
+<H2>バージョン</H2>
 
-Linux では、関数 <B>pthread_cleanup_push</B>() と <B>pthread_cleanup_pop</B>()
-は、それぞれ '<B>{</B>' と '<B>}</B>' を含むテキストに展開する
-マクロとして実装されている。このことは、これらの関数を対で呼び出した
-スコープ内で宣言された変数は、そのスコープの中でしか参照できない
-ということを意味している。
+On glibc, the <B>pthread_cleanup_push</B>()  and <B>pthread_cleanup_pop</B>()
+functions <I>are</I> implemented as macros that expand to text containing
+'<B>{</B>' and '<B>}</B>', respectively.  This means that variables
+declared within the scope of paired calls to these functions will be visible
+within only that scope.
 <P>
 
 
@@ -132,16 +125,23 @@ POSIX.1 には、括弧を含む <B>pthread_cleanup_push</B>() と
 不定であると書かれている。
 移植性が必要なアプリケーションではこれを行うのは避けるべきである。
 <A NAME="lbAJ">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2008.
+<A NAME="lbAK">&nbsp;</A>
+<H2>歴史</H2>
+
+POSIX.1-2001.  glibc 2.0.
+<A NAME="lbAL">&nbsp;</A>
 <H2>例</H2>
 
-以下のプログラムは、このページで説明した関数の簡単な使用例を示すもので
-ある。このプログラムは <B>pthread_cleanup_push</B>() と
-<B>pthread_cleanup_pop</B>() で囲まれたループを実行するスレッドを作成する。
-このループではグローバル変数 <I>cnt</I> を 1 秒に 1 ずつ増やしていく。
-指定されたコマンドライン引数の内容に基づいて、メインスレッドはもう一
-つのスレッドにキャンセル要求を送ったり、もう一つのスレッドがループを
-抜けて (<I>return</I> を呼び出して) 正常終了するようにグローバル変数を
-設定したりする。
+The program below provides a simple example of the use of the functions
+described in this page.  The program creates a thread that executes a loop
+bracketed by <B>pthread_cleanup_push</B>()  and <B>pthread_cleanup_pop</B>().  This
+loop increments a global variable, <I>cnt</I>, once each second.  Depending on
+what command-line arguments are supplied, the main thread sends the other
+thread a cancelation request, or sets a global variable that causes the
+other thread to exit its loop and terminate normally (by doing a <I>return</I>).
 <P>
 
 以下のシェルセッションでは、メインスレッドはもう一つのスレッドに
@@ -150,7 +150,7 @@ POSIX.1 には、括弧を含む <B>pthread_cleanup_push</B>() と
 
 
 <PRE>
-$ <B>./a.out</B>
+$<B> ./a.out</B>;
 New thread started
 cnt = 0
 cnt = 1
@@ -162,9 +162,9 @@ Thread was canceled; cnt = 0
 
 <P>
 
-上記の実行例から、スレッドがキャンセルされ、
-キャンセルクリーンアップハンドラーが呼び出され、
-グローバル変数 <I>cnt</I> の値が 0 にリセットされていることが確認できる。
+From the above, we see that the thread was canceled, and that the
+cancelation clean-up handler was called and it reset the value of the global
+variable <I>cnt</I> to 0.
 <P>
 
 次の実行例では、メインプログラムはグローバル変数を設定して、
@@ -173,7 +173,7 @@ Thread was canceled; cnt = 0
 
 
 <PRE>
-$ <B>./a.out x</B>
+$<B> ./a.out x</B>;
 New thread started
 cnt = 0
 cnt = 1
@@ -195,7 +195,7 @@ Thread terminated normally; cnt = 2
 
 
 <PRE>
-$ <B>./a.out x 1</B>
+$<B> ./a.out x 1</B>;
 New thread started
 cnt = 0
 cnt = 1
@@ -208,20 +208,20 @@ Thread terminated normally; cnt = 0
 
 上記では、スレッドはキャンセルされていないが、クリーンアップハンドラーが実行されたことが分かる。これは <B>pthread_cleanup_pop</B>()
 の引数に 0 以外を渡したからである。
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
+
+
 <PRE>
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-
-#define handle_error_en(en, msg) \
-        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
 
 static int done = 0;
 static int cleanup_pop_arg = 0;
@@ -237,19 +237,19 @@ cleanup_handler(void *arg)
 static void *
 thread_start(void *arg)
 {
-    time_t start, curr;
+    time_t curr;
 
     printf(&quot;New thread started\n&quot;);
 
     pthread_cleanup_push(cleanup_handler, NULL);
 
-    curr = start = time(NULL);
+    curr = time(NULL);
 
     while (!done) {
-        pthread_testcancel();           /* A cancellation point */
+        pthread_testcancel();           /* A cancelation point */
         if (curr &lt; time(NULL)) {
             curr = time(NULL);
-            printf(&quot;cnt = %d\n&quot;, cnt);  /* A cancellation point */
+            printf(&quot;cnt = %d\n&quot;, cnt);  /* A cancelation point */
             cnt++;
         }
     }
@@ -267,7 +267,7 @@ main(int argc, char *argv[])
 
     s = pthread_create(&amp;thr, NULL, thread_start, NULL);
     if (s != 0)
-        handle_error_en(s, &quot;pthread_create&quot;);
+        errc(EXIT_FAILURE, s, &quot;pthread_create&quot;);
 
     sleep(2);           /* Allow new thread to run a while */
 
@@ -280,12 +280,12 @@ main(int argc, char *argv[])
         printf(&quot;Canceling thread\n&quot;);
         s = pthread_cancel(thr);
         if (s != 0)
-            handle_error_en(s, &quot;pthread_cancel&quot;);
+            errc(EXIT_FAILURE, s, &quot;pthread_cancel&quot;);
     }
 
     s = pthread_join(thr, &amp;res);
     if (s != 0)
-        handle_error_en(s, &quot;pthread_join&quot;);
+        errc(EXIT_FAILURE, s, &quot;pthread_join&quot;);
 
     if (res == PTHREAD_CANCELED)
         printf(&quot;Thread was canceled; cnt = %d\n&quot;, cnt);
@@ -295,35 +295,33 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAL">&nbsp;</A>
+
+
+<A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/pthread_cancel.3.html">pthread_cancel</A></B>(3), <B><A HREF="../man3/pthread_cleanup_push_defer_np.3.html">pthread_cleanup_push_defer_np</A></B>(3),
 <B><A HREF="../man3/pthread_setcancelstate.3.html">pthread_setcancelstate</A></B>(3), <B><A HREF="../man3/pthread_testcancel.3.html">pthread_testcancel</A></B>(3), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
-<A NAME="lbAM">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">属性</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">注意</A><DD>
-<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
+<DT><A HREF="#lbAJ">標準規格</A><DD>
+<DT><A HREF="#lbAK">歴史</A><DD>
+<DT><A HREF="#lbAL">例</A><DD>
 <DL>
-<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+<DT><A HREF="#lbAM">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAL">関連項目</A><DD>
-<DT><A HREF="#lbAM">この文書について</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of UTMP</TITLE>
+<HTML><HEAD><TITLE>Man page of utmp</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>UTMP</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<H1>utmp</H1>
+Section: File Formats (5)<BR>Updated: 2025-09-21<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man5/utmp.5">roff page</A><HR>
 
@@ -18,7 +18,10 @@ utmp, wtmp - ログイン記録
 <A NAME="lbAC">&nbsp;</A>
 <H2>書式</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;</B>
+</PRE>
+
 <A NAME="lbAD">&nbsp;</A>
 <H2>説明</H2>
 
@@ -42,13 +45,13 @@ utmp, wtmp - ログイン記録
 #define EMPTY         0 /* Record does not contain valid info
                            (formerly known as UT_UNKNOWN on Linux) */
 #define RUN_LVL       1 /* Change in system run-level (see
-                           <B>init</B>(1)) */
-#define BOOT_TIME     2 /* Time of system boot (in <I>ut_tv</I>) */
+                           <B>init</B>(1))&nbsp;*/
+#define BOOT_TIME     2 /* Time of system boot (in ut_tv) */
 #define NEW_TIME      3 /* Time after system clock change
-                           (in <I>ut_tv</I>) */
+                           (in ut_tv) */
 #define OLD_TIME      4 /* Time before system clock change
-                           (in <I>ut_tv</I>) */
-#define INIT_PROCESS  5 /* Process spawned by <B>init</B>(1) */
+                           (in ut_tv) */
+#define INIT_PROCESS  5 /* Process spawned by <B>init</B>(1)&nbsp;*/
 #define LOGIN_PROCESS 6 /* Session leader process for user login */
 #define USER_PROCESS  7 /* Normal process */
 #define DEAD_PROCESS  8 /* Terminated process */
@@ -75,11 +78,10 @@ struct utmp {
                                      messages */
     struct  exit_status ut_exit;  /* Exit status of a process
                                      marked as DEAD_PROCESS; not
-                                     used by Linux init(1) */
-    /* ut_session と ut_tv フィールドは、32ビットでコンパイルされた場合と
-       64ビットでコンパイルされた場合で同じサイズでなければならない。
-       こうすることで、32ビットと64ビットのアプリケーションで、
-       データファイルと共有メモリーを共有することができるようになる。 */
+                                     used by Linux <B>init</B>(1)&nbsp;*/
+    /* The ut_session and ut_tv fields must be the same size when
+       compiled 32- and 64-bit.  This allows data files and shared
+       memory to be shared between 32- and 64-bit applications.  */
 #if __WORDSIZE == 64 &amp;&amp; defined __WORDSIZE_COMPAT32
     int32_t ut_session;           /* Session ID (<B><A HREF="../man2/getsid.2.html">getsid</A></B>(2)),
                                      used for windowing */
@@ -110,9 +112,10 @@ struct utmp {
 
 <P>
 
-この構造体からユーザーの使っている端末のスペシャルファイル名、 ユーザーのログイン名、 (<B><A HREF="../man2/time.2.html">time</A></B>(2)
-形式での)ログイン時刻がわかる。文字列フィールドは、 フィールドの長さより文字列が短い場合には、ヌルバイト ('\0')
-によって終端される。
+This structure gives the name of the special file associated with the user's
+terminal, the user's login name, and the time of login in the form of
+<B><A HREF="../man2/time.2.html">time</A></B>(2).  String fields are terminated by a null byte ('\0')
+if they are shorter than the size of the field.
 <P>
 
 最初のエントリーは <B>init</B>(1)  コマンドが <B><A HREF="../../SysVinit/man5/inittab.5.html">inittab</A></B>(5)  を処理することで作られる。 あるエントリーを処理する前に、
@@ -135,23 +138,28 @@ struct utmp {
 <B>DEAD_PROCESS</B> に設定し、 <I>ut_user</I>, <I>ut_host</I>, <I>ut_time</I> をヌルバイトでクリアする。
 <P>
 
-<B>xterm</B>(1)  コマンドや他の端末エミュレータは 直接 <B>USER_PROCESS</B> のレコードを作り、 端末名のサフィックス文字列
-(<I>/dev/[pt]ty</I> に続く文字列)  を使って <I>ut_id</I> の値を生成する。 この id を持つエントリーが
-<B>DEAD_PROCESS</B> であった場合には再利用し、 それ以外の場合には新しいエントリーが作られる。 可能な場合にはプロセス終了時に
-<B>DEAD_PROCESS</B> と設定し、 さらに <I>ut_line</I>, <I>ut_time</I>, <I>ut_user</I>, <I>ut_host</I>
-をヌルバイトでクリアすることが奨励されている。
+<B>xterm</B>(1)  and other terminal emulators directly create a <B>USER_PROCESS</B>
+record and generate the <I>ut_id</I> by using the string that suffix part of the
+terminal name (the characters following <I>/dev/</I>[pt]<I>ty</I>).  If they find a
+<B>DEAD_PROCESS</B> for this ID, they recycle it, otherwise they create a new
+entry.  If they can, they will mark it as <B>DEAD_PROCESS</B> on exiting and it
+is advised that they null <I>ut_line</I>, <I>ut_time</I>, <I>ut_user</I>, and <I>ut_host</I>
+as well.
 <P>
 
 <B><A HREF="../../netkit/man8/telnetd.8.html">telnetd</A></B>(8)  は <B>LOGIN_PROCESS</B> を設定するだけでよく、 残りの処理は通常通り <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1)
 に任せればよい。 telnet のセッションが終了した後、前述のように <B><A HREF="../../netkit/man8/telnetd.8.html">telnetd</A></B>(8)  が utmp のエントリーを初期化する。
 <P>
 
-<I>wtmp</I> ファイルには、すべてのログインとログアウトが記録される。 そのフォーマットは、ログアウト済の端末でユーザー名がヌルとなること以外は
-<I>utmp</I> とまったく同じである。 ユーザー名が <B>shutdown</B> もしくは <B>reboot</B> の端末名 <B>~</B> は、システムの停止
-(shutdown) または再起動 (reboot)  を意味する。またその端末名が <B>|</B> と <B>}</B> の対は <B><A HREF="../../0MultiFileIdx/man1/date.1.html">date</A></B>(1)
-コマンドで変更した新／旧のシステム時刻を記録している。 <I>wtmp</I> ファイルは <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1), <B>init</B>(1)
-やいくつかのバージョンの <B>getty</B>(8)  (<B>mingetty</B>(8)  または <B><A HREF="../../util-linux/man8/agetty.8.html">agetty</A></B>(8))  により管理されている。
-これらのプログラムはどれもファイルを新たに作成しないので、 ファイルを削除することで情報の記録 (record-keeping) を止めることができる。
+The <I>wtmp</I> file records all logins and logouts.  Its format is exactly like
+<I>utmp</I> except that a null username indicates a logout on the associated
+terminal.  Furthermore, the terminal name <B>~</B> with username <B>shutdown</B>
+or <B>reboot</B> indicates a system shutdown or reboot and the pair of terminal
+names <B>|</B>/<B>}</B> logs the old/new system time when <B><A HREF="../../0MultiFileIdx/man1/date.1.html">date</A></B>(1)  changes it.
+<I>wtmp</I> is maintained by <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1), <B>init</B>(1), and some versions of
+<B>getty</B>(8)  (e.g., <B>mingetty</B>(8)  or <B><A HREF="../../util-linux/man8/agetty.8.html">agetty</A></B>(8)).  None of these
+programs creates the file, so if it is removed, record-keeping is turned
+off.
 <A NAME="lbAE">&nbsp;</A>
 <H2>ファイル</H2>
 
@@ -160,18 +168,22 @@ struct utmp {
 
 <I>/var/log/wtmp</I>
 <A NAME="lbAF">&nbsp;</A>
-<H2>準拠</H2>
+<H2>バージョン</H2>
 
-<P>
-
-POSIX.1 では、 <I>utmp</I> 構造体ではなく、 <I>utmpx</I> 構造体を規定している。 <I>utmpx</I>
-構造体で規定されているのは、フィールド <I>ut_type</I>, <I>ut_pid</I>, <I>ut_line</I>, <I>ut_id</I>, <I>ut_user</I>,
-<I>ut_tv</I> である。 POSIX.1 では、フィールド <I>ut_line</I> と <I>ut_user</I> の長さは規定されていない。
+POSIX.1 does not specify a <I>utmp</I> structure, but rather one named <I>utmpx</I>
+(as part of the XSI extension), with specifications for the fields
+<I>ut_type</I>, <I>ut_pid</I>, <I>ut_line</I>, <I>ut_id</I>, <I>ut_user</I>, and <I>ut_tv</I>.
+POSIX.1 does not specify the lengths of the <I>ut_line</I> and <I>ut_user</I>
+fields.
 <P>
 
 Linux では、 <I>utmpx</I> 構造体の定義は <I>utmp</I> 構造体と同じである。
 <A NAME="lbAG">&nbsp;</A>
-<H3>過去のシステムとの比較</H3>
+<H2>標準規格</H2>
+
+Linux.
+<A NAME="lbAH">&nbsp;</A>
+<H2>歴史</H2>
 
 Linux での utmp のエントリーは v7/BSD や System V のいずれにも準拠しておらず、 その両方が混在したものである。
 <P>
@@ -196,10 +208,8 @@ Linux (System V 系)では、設定ファイルを必要とせず セッショ�
 
 <B>UT_UNKNOWN</B> は Linux で作られたもののようである。 System V には <I>ut_host</I> も <I>ut_addr_v6</I>
 も存在しない。
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>注意</H2>
-
-<P>
 
 ファイルを削除することで utmp への記録を止められる 他の様々なシステムとは違い、Linux では utmp ファイルを必ずおいて おく必要がある。
 <B><A HREF="../../0MultiFileIdx/man1/who.1.html">who</A></B>(1)  コマンドが機能しないようにしたい場合には、 utmp ファイルの全ユーザーに対する読み取り許可を設定しないようにする。
@@ -208,12 +218,14 @@ Linux (System V 系)では、設定ファイルを必要とせず セッショ�
 ファイルのフォーマットはマシンに依存するので、ファイルが作られた マシンもしくは同一アーキテクチャーのマシン上でのみ処理することを推奨する。
 <P>
 
-注意すべき点としては、 <I>biarch</I> なプラットフォーム、つまり 32ビットと 64ビットの両方の アプリケーションを実行できるシステム
-(x86-64, ppc64, s390x など) では、 <I>ut_tv</I> のサイズは 32ビットモードと 64ビットモードで同じである。
-<I>ut_session</I> と <I>ut_time</I> も、存在する場合には同様に同じサイズ である。これにより、32ビットアプリケーションと
-64ビットアプリケーション の間でデータファイルと共有メモリーを共有することが可能になる。 そのためには、 <I>ut_session</I> を
-<I>int32_t</I> 型に、 <I>ut_tv</I> を 2つの <I>int32_t</I> 型のフィールド <I>tv_sec</I>, <I>tv_usec</I>
-を持つ構造体に変更すればよい <I>ut_tv</I> は <I>struct timeval</I> と同じサイズとは限らないので、
+Note that on <I>biarch</I> platforms, that is, systems which can run both 32-bit
+and 64-bit applications (x86-64, ppc64, s390x, etc.), <I>ut_tv</I> is the same
+size in 32-bit mode as in 64-bit mode.  The same goes for <I>ut_session</I> and
+<I>ut_time</I> if they are present.  This allows data files and shared memory to
+be shared between 32-bit and 64-bit applications.  This is achieved by
+changing the type of <I>ut_session</I> to <I>int32_t</I>, and that of <I>ut_tv</I> to a
+struct with two <I>int32_t</I> fields <I>tv_sec</I> and <I>tv_usec</I>.  Since <I>ut_tv</I>
+may not be the same as <I>struct~timeval</I>, then instead of the call:
 <P>
 
 
@@ -252,17 +264,12 @@ ut.ut_tv.tv_usec = tv.tv_usec;
 
 
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B>ac</B>(1), <B><A HREF="../../0MultiFileIdx/man1/date.1.html">date</A></B>(1), <B>init</B>(1), <B><A HREF="../../0MultiFileIdx/man1/last.1.html">last</A></B>(1), <B><A HREF="../../shadow/man1/login.1.html">login</A></B>(1), <B><A HREF="../../0MultiFileIdx/man1/logname.1.html">logname</A></B>(1),
 <B>lslogins</B>(1), <B><A HREF="../../0MultiFileIdx/man1/users.1.html">users</A></B>(1), <B>utmpdump</B>(1), <B><A HREF="../../0MultiFileIdx/man1/who.1.html">who</A></B>(1), <B><A HREF="../man3/getutent.3.html">getutent</A></B>(3),
 <B><A HREF="../man3/getutmp.3.html">getutmp</A></B>(3), <B><A HREF="../man3/login.3.html">login</A></B>(3), <B><A HREF="../man3/logout.3.html">logout</A></B>(3), <B><A HREF="../man3/logwtmp.3.html">logwtmp</A></B>(3), <B><A HREF="../man3/updwtmp.3.html">updwtmp</A></B>(3)
-<A NAME="lbAJ">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
@@ -272,13 +279,11 @@ ut.ut_tv.tv_usec = tv.tv_usec;
 <DT><A HREF="#lbAC">書式</A><DD>
 <DT><A HREF="#lbAD">説明</A><DD>
 <DT><A HREF="#lbAE">ファイル</A><DD>
-<DT><A HREF="#lbAF">準拠</A><DD>
-<DL>
-<DT><A HREF="#lbAG">過去のシステムとの比較</A><DD>
-</DL>
-<DT><A HREF="#lbAH">注意</A><DD>
-<DT><A HREF="#lbAI">関連項目</A><DD>
-<DT><A HREF="#lbAJ">この文書について</A><DD>
+<DT><A HREF="#lbAF">バージョン</A><DD>
+<DT><A HREF="#lbAG">標準規格</A><DD>
+<DT><A HREF="#lbAH">歴史</A><DD>
+<DT><A HREF="#lbAI">注意</A><DD>
+<DT><A HREF="#lbAJ">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

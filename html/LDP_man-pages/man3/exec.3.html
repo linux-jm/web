@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of EXEC</TITLE>
+<HTML><HEAD><TITLE>Man page of exec</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>EXEC</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2019-08-02<BR><A HREF="#index">Index</A>
+<H1>exec</H1>
+Section: C Library Functions (3)<BR>Updated: 2025-05-17<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/exec.3">roff page</A><HR>
 
@@ -16,6 +16,10 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2019-08-02<BR><A HREF="#index
 
 execl, execlp, execle, execv, execvp, execvpe - ファイルを実行する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
@@ -23,16 +27,15 @@ execl, execlp, execle, execv, execvp, execvpe - ファイルを実行する
 
 <B>extern char **environ;</B>
 
-<B>int execl(const char *</B><I>pathname</I><B>, const char *</B><I>arg</I><B>, ...</B>
-<B>/* (char  *) NULL */);</B>
+<B>int execl(const char *</B><I>path</I><B>, const char *</B><I>arg</I><B>, ...</B>
+<B>/*, (char *) NULL */);</B>
 <B>int execlp(const char *</B><I>file</I><B>, const char *</B><I>arg</I><B>, ...</B>
-<B>/* (char  *) NULL */);</B>
-<B>int execle(const char *</B><I>pathname</I><B>, const char *</B><I>arg</I><B>, ...</B>
+<B>/*, (char *) NULL */);</B>
+<B>int execle(const char *</B><I>path</I><B>, const char *</B><I>arg</I><B>, ...</B>
 <B>                /*, (char *) NULL, char *const </B><I>envp</I><B>[] */);</B>
-<B>int execv(const char *</B><I>pathname</I><B>, char *const </B><I>argv</I><B>[]);</B>
+<B>int execv(const char *</B><I>path</I><B>, char *const </B><I>argv</I><B>[]);</B>
 <B>int execvp(const char *</B><I>file</I><B>, char *const </B><I>argv</I><B>[]);</B>
-<B>int execvpe(const char *</B><I>file</I><B>, char *const </B><I>argv</I><B>[],</B>
-<B>                char *const </B><I>envp</I><B>[]);</B>
+<B>int execvpe(const char *</B><I>file</I><B>, char *const </B><I>argv</I><B>[], char *const </B><I>envp</I><B>[]);</B>
 </PRE>
 
 <P>
@@ -42,8 +45,12 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 
 <P>
 
-<B>execvpe</B>(): _GNU_SOURCE
-<A NAME="lbAD">&nbsp;</A>
+<B>execvpe</B>():
+<PRE>
+    _GNU_SOURCE
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 The <B>exec</B>()  family of functions replaces the current process image with a
@@ -59,7 +66,7 @@ details about the replacement of the current process image.)
 
 The functions can be grouped based on the letters following the &quot;exec&quot;
 prefix.
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H3>l - execl(), execlp(), execle()</H3>
 
 <I>const char&nbsp;*arg</I> とそれに続く省略部分は <I>arg0</I>, <I>arg1</I>, ..., <I>argn</I> とみなされる。
@@ -72,7 +79,7 @@ prefix.
 
 By contrast with the 'l' functions, the 'v' functions (below) specify the
 command-line arguments of the executed program as a vector.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H3> v - execv(), execvp(), execvpe()</H3>
 
 The <I>char&nbsp;*const argv[]</I> argument is an array of pointers to
@@ -80,18 +87,18 @@ null-terminated strings that represent the argument list available to the
 new program.  The first argument, by convention, should point to the
 filename associated with the file being executed.  The array of pointers
 <I>must</I> be terminated by a null pointer.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H3> e - execle(), execvpe()</H3>
 
-The environment of the caller is specified via the argument <I>envp</I>.  The
-<I>envp</I> argument is an array of pointers to null-terminated strings and
-<I>must</I> be terminated by a null pointer.
+The environment of the new process image is specified via the argument
+<I>envp</I>.  The <I>envp</I> argument is an array of pointers to null-terminated
+strings and <I>must</I> be terminated by a null pointer.
 <P>
 
 All other <B>exec</B>()  functions (which do not include 'e' in the suffix)
 take the environment for the new process image from the external variable
 <I>environ</I> in the calling process.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H3>p - execlp(), execvp(), execvpe()</H3>
 
 These functions duplicate the actions of the shell in searching for an
@@ -101,7 +108,11 @@ pathnames specified in the <B>PATH</B> environment variable.  If this variable
 isn't defined, the path list defaults to a list that includes the
 directories returned by <I>confstr(_CS_PATH)</I> (which typically returns the
 value &quot;/bin:/usr/bin&quot;)  and possibly also the current working directory; see
-NOTES for further details.
+VERSIONS for further details.
+<P>
+
+<B>execvpe</B>()  searches for the program using the value of <B>PATH</B> from the
+caller's environment, not from the <I>envp</I> argument.
 <P>
 
 指定されたファイル名がスラッシュを含む場合、 <B>PATH</B> は無視され、指定されたパス名のファイルが実行される。
@@ -123,18 +134,14 @@ NOTES for further details.
 All other <B>exec</B>()  functions (which do not include 'p' in the suffix)
 take as their first argument a (relative or absolute) pathname that
 identifies the program to be executed.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>返り値</H2>
 
 <B>exec</B>()  群の関数が復帰するのは、エラーが発生した場合のみである。 返り値は -1 で、 <I>errno</I> にエラーの内容がセットされる。
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>エラー</H2>
 
 これら全ての関数は失敗する場合がある。その場合、 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  に対して規定されたエラーが <I>errno</I> に設定される。
-<A NAME="lbAK">&nbsp;</A>
-<H2>バージョン</H2>
-
-<B>execvpe</B>()  関数は glibc 2.11 で初めて登場した。
 <A NAME="lbAL">&nbsp;</A>
 <H2>属性</H2>
 
@@ -142,11 +149,15 @@ identifies the program to be executed.
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>execl</B>(),
 <B>execle</B>(),
 <B>execv</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>execlp</B>(),
 <B>execvp</B>(),
 <B>execvpe</B>()
@@ -154,14 +165,7 @@ identifies the program to be executed.
 </TABLE>
 
 <A NAME="lbAM">&nbsp;</A>
-<H2>準拠</H2>
-
-POSIX.1-2001, POSIX.1-2008.
-<P>
-
-<B>execvpe</B>()  関数は GNU による拡張である。
-<A NAME="lbAN">&nbsp;</A>
-<H2>注意</H2>
+<H2>バージョン</H2>
 
 
 
@@ -186,7 +190,35 @@ beneficial, and won't be reverted.
 
 伝統的に、関数 <B>execlp</B>()  と <B>execvp</B>()  は、上で説明したエラーと、これら 2 つの関数自身が返す <B>ENOMEM</B> と
 <B>E2BIG</B> 以外の全てのエラーを無視していたが、 今では、上で説明した以外のエラーが発生した場合でも、 返ってくるよう変更された。
+<A NAME="lbAN">&nbsp;</A>
+<H2>標準規格</H2>
+
+<DL COMPACT>
+<DT><B>environ</B><DD>
+<DT><B>execl</B>()<DD>
+<DT><B>execlp</B>()<DD>
+<DT><B>execle</B>()<DD>
+<DT><B>execv</B>()<DD>
+<DT><B>execvp</B>()<DD>
+POSIX.1-2008.
+<DT><B>execvpe</B>()<DD>
+GNU.
+</DL>
 <A NAME="lbAO">&nbsp;</A>
+<H2>歴史</H2>
+
+<DL COMPACT>
+<DT><B>environ</B><DD>
+<DT><B>execl</B>()<DD>
+<DT><B>execlp</B>()<DD>
+<DT><B>execle</B>()<DD>
+<DT><B>execv</B>()<DD>
+<DT><B>execvp</B>()<DD>
+POSIX.1-2001.
+<DT><B>execvpe</B>()<DD>
+glibc 2.11.
+</DL>
+<A NAME="lbAP">&nbsp;</A>
 <H2>バグ</H2>
 
 
@@ -196,49 +228,44 @@ beneficial, and won't be reverted.
 Before glibc 2.24, <B>execl</B>()  and <B>execle</B>()  employed <B><A HREF="../man3/realloc.3.html">realloc</A></B>(3)
 internally and were consequently not async-signal-safe, in violation of the
 requirements of POSIX.1.  This was fixed in glibc 2.24.
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H3>アーキテクチャー固有の詳細</H3>
 
 On sparc and sparc64, <B>execv</B>()  is provided as a system call by the kernel
 (with the prototype shown above)  for compatibility with SunOS.  This
 function is <I>not</I> employed by the <B>execv</B>()  wrapper function on those
 architectures.
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H2>関連項目</H2>
 
 <BR>&nbsp;<B>sh</B>(1),&nbsp;<B><A HREF="../man2/execve.2.html">execve</A></B>(2),&nbsp;<B><A HREF="../man2/execveat.2.html">execveat</A></B>(2),&nbsp;<B><A HREF="../man2/fork.2.html">fork</A></B>(2),&nbsp;<B>ptrace</B>(2),
 <B><A HREF="../man3/fexecve.3.html">fexecve</A></B>(3), <B><A HREF="../man3/system.3.html">system</A></B>(3), <B><A HREF="../man7/environ.7.html">environ</A></B>(7)
-<A NAME="lbAR">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
 <DL>
-<DT><A HREF="#lbAE">l - execl(), execlp(), execle()</A><DD>
-<DT><A HREF="#lbAF"> v - execv(), execvp(), execvpe()</A><DD>
-<DT><A HREF="#lbAG"> e - execle(), execvpe()</A><DD>
-<DT><A HREF="#lbAH">p - execlp(), execvp(), execvpe()</A><DD>
+<DT><A HREF="#lbAF">l - execl(), execlp(), execle()</A><DD>
+<DT><A HREF="#lbAG"> v - execv(), execvp(), execvpe()</A><DD>
+<DT><A HREF="#lbAH"> e - execle(), execvpe()</A><DD>
+<DT><A HREF="#lbAI">p - execlp(), execvp(), execvpe()</A><DD>
 </DL>
-<DT><A HREF="#lbAI">返り値</A><DD>
-<DT><A HREF="#lbAJ">エラー</A><DD>
-<DT><A HREF="#lbAK">バージョン</A><DD>
+<DT><A HREF="#lbAJ">返り値</A><DD>
+<DT><A HREF="#lbAK">エラー</A><DD>
 <DT><A HREF="#lbAL">属性</A><DD>
-<DT><A HREF="#lbAM">準拠</A><DD>
-<DT><A HREF="#lbAN">注意</A><DD>
-<DT><A HREF="#lbAO">バグ</A><DD>
+<DT><A HREF="#lbAM">バージョン</A><DD>
+<DT><A HREF="#lbAN">標準規格</A><DD>
+<DT><A HREF="#lbAO">歴史</A><DD>
+<DT><A HREF="#lbAP">バグ</A><DD>
 <DL>
-<DT><A HREF="#lbAP">アーキテクチャー固有の詳細</A><DD>
+<DT><A HREF="#lbAQ">アーキテクチャー固有の詳細</A><DD>
 </DL>
-<DT><A HREF="#lbAQ">関連項目</A><DD>
-<DT><A HREF="#lbAR">この文書について</A><DD>
+<DT><A HREF="#lbAR">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

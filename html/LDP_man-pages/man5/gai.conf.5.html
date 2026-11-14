@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of GAI.CONF</TITLE>
+<HTML><HEAD><TITLE>Man page of gai.conf</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>GAI.CONF</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<H1>gai.conf</H1>
+Section: File Formats (5)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man5/gai.conf.5">roff page</A><HR>
 
@@ -25,28 +25,32 @@ gai.conf - <A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A>(3) 設定ファ�
 ファイルでこれが実現できるようになっている。
 <P>
 
-設定ファイルの各行は、キーワードとそのパラメーターで構成される。 ホワイトスペースはどこにあっても全て無視される。 '#'
-で始まる行はコメントで、 無視される。
+Each line in the configuration file consists of a keyword and its
+parameters.  White spaces in any place are ignored.  Lines starting with
+'#' are comments and are ignored.
 <P>
 
 現在のところ、認識されるキーワードは以下の通りである。
 <DL COMPACT>
-<DT><B>label</B> <I>netmask</I> <I>precedence</I><DD>
+<DT><B>label~</B><I>netmask~label</I><DD>
 The value is added to the label table used in the RFC&nbsp;3484 sorting.  If any
 <B>label</B> definition is present in the configuration file, the default table
 is not used.  All the label definitions of the default table which are to be
 maintained have to be duplicated.  Following the keyword, the line has to
-contain a network mask and a precedence value.
-<DT><B>precedence</B> <I>netmask</I> <I>precedence</I><DD>
+contain a network mask and a label value.
+<DT><B>precedence~</B><I>netmask~precedence</I><DD>
 このキーワードは <B>label</B> に似ているが、 指定された値を RFC&nbsp;3484 で規定された優先度テーブルに追加する点が異なる。
 繰り返しになるが、 設定ファイルに <B>precedence</B> が一つでもあれば、デフォルトテーブルは使用されない。
-<DT><B>reload</B> &lt;<B>yes</B>|<B>no</B>&gt;<DD>
-このキーワードは、 設定ファイルが前回の読み出し以降に変更されているかをプロセスが確認するかを制御する。 値が &quot;<B>yes</B>&quot; であれば、
-ファイルが再読み込みされる。 再読み込みはマルチスレッドアプリケーションで問題を起こす可能性があり、 一般にはよい考えとは言えない。 デフォルトは
-&quot;<B>no</B>&quot; である。
-<DT><B>scopev4</B> <I>mask</I> <I>value</I><DD>
-IPv4 アドレス用の RFC&nbsp;3484 スコープテーブルに別のルールを追加する。 デフォルトでは、 RFC&nbsp;3438 のセクション 3.2
-で説明されているスコープ ID が使用される。 これらのデフォルト値の変更が必要になることはまずないだろう。
+<DT><B>reload~</B>&lt;<B>yes</B>|<B>no</B>&gt;<DD>
+This keyword controls whether a process checks whether the configuration
+file has been changed since the last time it was read.  If the value is
+&quot;<B>yes</B>&quot;, the file is reread.  This might cause problems in
+multithreaded applications and is generally a bad idea.  The default is
+&quot;<B>no</B>&quot;.
+<DT><B>scopev4~</B><I>mask~value</I><DD>
+Add another rule to the RFC&nbsp;3484 scope table for IPv4 address.  By default,
+the scope IDs described in section 3.2 in RFC&nbsp;3484 are used.  Changing
+these defaults should hardly ever be necessary.
 </DL>
 <A NAME="lbAD">&nbsp;</A>
 <H2>ファイル</H2>
@@ -57,7 +61,7 @@ IPv4 アドレス用の RFC&nbsp;3484 スコープテーブルに別のルール
 
 
 
-<I>gai.conf</I> ファイルは glibc バージョン 2.5 以降でサポートされている。
+<I>gai.conf</I> ファイルは glibc 2.5 以降でサポートされている。
 <A NAME="lbAF">&nbsp;</A>
 <H2>例</H2>
 
@@ -79,6 +83,23 @@ precedence ::ffff:0:0/96  10
 </PRE>
 
 
+<P>
+
+glibc includes some extra rules in the label table for site-local addresses,
+ULA, and Teredo tunnels.  Its default label table is:
+
+<PRE>
+label ::1/128        0
+label ::/0           1
+label 2002::/16      2
+label ::/96          3
+label ::ffff:0:0/96  4
+label fec0::/10      5
+label fc00::/7       6
+label 2001:0::/32    7
+</PRE>
+
+
 
 
 
@@ -89,11 +110,6 @@ precedence ::ffff:0:0/96  10
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3), RFC&nbsp;3484
-<A NAME="lbAH">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
@@ -105,7 +121,6 @@ precedence ::ffff:0:0/96  10
 <DT><A HREF="#lbAE">バージョン</A><DD>
 <DT><A HREF="#lbAF">例</A><DD>
 <DT><A HREF="#lbAG">関連項目</A><DD>
-<DT><A HREF="#lbAH">この文書について</A><DD>
 </DL>
 <HR>
 This document was created by

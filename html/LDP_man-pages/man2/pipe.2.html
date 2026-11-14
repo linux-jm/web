@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of PIPE</TITLE>
+<HTML><HEAD><TITLE>Man page of pipe</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>PIPE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<H1>pipe</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/pipe.2">roff page</A><HR>
 
@@ -16,28 +16,35 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2020-06-09<BR><A HREF="#index
 
 pipe, pipe2 - パイプを生成する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
-/* On Alpha, IA-64, MIPS, SuperH, and SPARC/SPARC64; see NOTES */
-<B>struct fd_pair {</B>
-<B>long fd[2];</B>
-<B>};</B>
-<B>struct fd_pair pipe();</B>
-
-/* On all other architectures */
 <B>int pipe(int </B><I>pipefd</I><B>[2]);</B>
 
-<B>#define _GNU_SOURCE</B>             /* <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) 参照 */
-<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>              /* O_* 定数の定義の取得 */
+<B>#define _GNU_SOURCE</B>             /* See <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) */
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>              /* Definition of <B>O_*</B> constants */
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
 <B>int pipe2(int </B><I>pipefd</I><B>[2], int </B><I>flags</I><B>);</B>
+
+/* On Alpha, IA-64, MIPS, SuperH, and SPARC/SPARC64, pipe() has the
+   following prototype; see VERSIONS */
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>struct fd_pair {</B>
+<B>long fd[2];</B>
+<B>};</B>
+<B>struct fd_pair pipe(void);</B>
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>pipe</B>()  はパイプを生成する。 パイプは、プロセス間通信に使用できる単方向のデータチャネルである。 配列 <I>pipefd</I>
@@ -59,14 +66,14 @@ pipe, pipe2 - パイプを生成する
 <B><A HREF="../man2/read.2.html">read</A></B>(2) では一度に一つパケットが読み出される。 以下の点に注意すること。
 <DL COMPACT><DT><DD>
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 <B>PIPE_BUF</B> バイト (<B><A HREF="../man7/pipe.7.html">pipe</A></B>(7) 参照) より大きいデータを書き込んだ場合、複数のパケットに分割される。
 定数 <B>PIPE_BUF</B> は <I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I> で定義されている。
-<DT>*<DD>
+<DT>&bull;<DD>
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 で次のパケットよりも小さなバッファーサイズを指定した場合、要求されたバイト数のデータが読み出され、そのパケットの超過分のバイトは破棄される。
 可能性のある最大サイズのパケットを読み出すには、<B>PIPE_BUF</B> のバッファーサイズを指定すれば十分である (上の項目を参照)。
-<DT>*<DD>
+<DT>&bull;<DD>
 長さ 0 のパケットはサポートされていない。 (バッファーサイズ 0 を指定した <B><A HREF="../man2/read.2.html">read</A></B>(2) は何も行わず 0 を返す)。
 </DL>
 </DL>
@@ -84,12 +91,20 @@ file descriptor using <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2).
 Set the <B>O_NONBLOCK</B> file status flag on the open file descriptions
 referred to by the new file descriptors.  Using this flag saves extra calls
 to <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  to achieve the same result.
+<DT><B>O_NOTIFICATION_PIPE</B><DD>
+
+
+Since Linux 5.8, general notification mechanism is built on the top of the
+pipe where kernel splices notification messages into pipes opened by user
+space.  The owner of the pipe has to tell the kernel which sources of events
+to watch and filters can also be applied to select which subevents should be
+placed into the pipe.
 </DL>
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
-On success, zero is returned.  On error, -1 is returned, <I>errno</I> is set
-appropriately, and <I>pipefd</I> is left unchanged.
+On success, zero is returned.  On error, -1 is returned, <I>errno</I> is set to
+indicate the error, and <I>pipefd</I> is left unchanged.
 <P>
 
 
@@ -98,7 +113,7 @@ On Linux (and other systems), <B>pipe</B>()  does not modify <I>pipefd</I> on
 failure.  A requirement standardizing this behavior was added in
 POSIX.1-2008 TC2.  The Linux-specific <B>pipe2</B>()  system call likewise does
 not modify <I>pipefd</I> on failure.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
@@ -114,20 +129,12 @@ reached.
 <DT><B>ENFILE</B><DD>
 The user hard limit on memory that can be allocated for pipes has been
 reached and the caller is not privileged; see <B><A HREF="../man7/pipe.7.html">pipe</A></B>(7).
+<DT><B>ENOPKG</B><DD>
+(<B>pipe2</B>())  <B>O_NOTIFICATION_PIPE</B> was passed in <I>flags</I> and support for
+notifications (<B>CONFIG_WATCH_QUEUE</B>)  is not compiled into the kernel.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
-<H2>バージョン</H2>
-
-<B>pipe2</B>()  はバージョン 2.6.27 で Linux に追加された。 glibc によるサポートはバージョン 2.9 以降で利用できる。
 <A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
-
-<BR>&nbsp;<B>pipe</B>():&nbsp;POSIX.1-2001,&nbsp;POSIX.1-2008.
-<P>
-
-<B>pipe2</B>()  は Linux 固有である。
-<A NAME="lbAI">&nbsp;</A>
-<H2>注意</H2>
+<H2>バージョン</H2>
 
 
 
@@ -141,7 +148,20 @@ call doesn't take any arguments and returns a pair of file descriptors as
 the return value on success.  The glibc <B>pipe</B>()  wrapper function
 transparently deals with this.  See <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)  for information regarding
 registers used for storing second file descriptor.
+<A NAME="lbAI">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2024.
 <A NAME="lbAJ">&nbsp;</A>
+<H2>歴史</H2>
+
+<DL COMPACT>
+<DT><B>pipe</B>()<DD>
+POSIX.1-2001.
+<DT><B>pipe2</B>()<DD>
+POSIX.1-2024.  Linux 2.6.27, glibc 2.9.
+</DL>
+<A NAME="lbAK">&nbsp;</A>
 <H2>例</H2>
 
 
@@ -150,89 +170,94 @@ registers used for storing second file descriptor.
 子プロセスは同じパイプを参照するファイルディスクリプター集合のコピーを 継承する。 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  の後、各プロセスはパイプ
 (<B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)  を参照) に必要がなくなったファイルディスクリプターをクローズする。 親プロセスはプログラムのコマンドライン引数に含まれる
 文字列をパイプへ書き込み、 子プロセスはこの文字列をパイプから 1 バイトずつ読み込んで標準出力にエコーする。
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
+
+
 <PRE>
-#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 
 int
 main(int argc, char *argv[])
 {
-    int pipefd[2];
-    pid_t cpid;
-    char buf;
+    int    pipefd[2];
+    char   buf;
+    pid_t  cpid;
 
     if (argc != 2) {
         fprintf(stderr, &quot;Usage: %s &lt;string&gt;\n&quot;, argv[0]);
         exit(EXIT_FAILURE);
     }
 
-    if (pipe(pipefd) == -1) {
-        perror(&quot;pipe&quot;);
-        exit(EXIT_FAILURE);
-    }
+    if (pipe(pipefd) == -1)
+        err(EXIT_FAILURE, &quot;pipe&quot;);
 
     cpid = fork();
-    if (cpid == -1) {
-        perror(&quot;fork&quot;);
-        exit(EXIT_FAILURE);
-    }
+    if (cpid == -1)
+        err(EXIT_FAILURE, &quot;fork&quot;);
 
-    if (cpid == 0) {    /* 子プロセスがパイプから読み込む */
-        close(pipefd[1]);  /* 使用しない write 側はクローズする */
+    if (cpid == 0) {    /* Child reads from pipe */
+        if (close(pipefd[1]) == -1)  /* Close unused write end */
+            err(EXIT_FAILURE, &quot;close&quot;);
 
-        while (read(pipefd[0], &amp;buf, 1) &gt; 0)
-            write(STDOUT_FILENO, &amp;buf, 1);
+        while (read(pipefd[0], &amp;buf, 1) &gt; 0) {
+            if (write(STDOUT_FILENO, &amp;buf, 1) != 1)
+                err(EXIT_FAILURE, &quot;write&quot;);
+        }
 
-        write(STDOUT_FILENO, &quot;\n&quot;, 1);
-        close(pipefd[0]);
+        if (write(STDOUT_FILENO, &quot;\n&quot;, 1) != 1)
+            err(EXIT_FAILURE, &quot;write&quot;);
+        if (close(pipefd[0]) == -1)
+            err(EXIT_FAILURE, &quot;close&quot;);
         _exit(EXIT_SUCCESS);
 
-    } else {            /* 親プロセスは argv[1] をパイプへ書き込む */
-        close(pipefd[0]);          /* 使用しない read 側はクローズする */
-        write(pipefd[1], argv[1], strlen(argv[1]));
-        close(pipefd[1]);          /* 読み込み側が EOF に出会う */
-        wait(NULL);                /* 子プロセスを待つ */
+    } else {            /* Parent writes argv[1] to pipe */
+        if (close(pipefd[0]) == -1)  /* Close unused read end */
+            err(EXIT_FAILURE, &quot;close&quot;);
+        if (write(pipefd[1], argv[1], strlen(argv[1])) != strlen(argv[1]))
+            err(EXIT_FAILURE, &quot;write&quot;);
+        if (close(pipefd[1]) == -1)  /* Reader will see EOF */
+            err(EXIT_FAILURE, &quot;close&quot;);
+        if (wait(NULL) == -1)        /* Wait for child */
+            err(EXIT_FAILURE, &quot;wait&quot;);
         exit(EXIT_SUCCESS);
     }
 }
 </PRE>
 
-<A NAME="lbAL">&nbsp;</A>
+
+
+<A NAME="lbAM">&nbsp;</A>
 <H2>関連項目</H2>
 
 <BR>&nbsp;<B><A HREF="../man2/fork.2.html">fork</A></B>(2),&nbsp;<B><A HREF="../man2/read.2.html">read</A></B>(2),&nbsp;<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2),&nbsp;<B><A HREF="../man2/splice.2.html">splice</A></B>(2),&nbsp;<B><A HREF="../man2/tee.2.html">tee</A></B>(2),
 <B><A HREF="../man2/vmsplice.2.html">vmsplice</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man3/popen.3.html">popen</A></B>(3), <B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)
-<A NAME="lbAM">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">バージョン</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">注意</A><DD>
-<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">標準規格</A><DD>
+<DT><A HREF="#lbAJ">歴史</A><DD>
+<DT><A HREF="#lbAK">例</A><DD>
 <DL>
-<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+<DT><A HREF="#lbAL">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAL">関連項目</A><DD>
-<DT><A HREF="#lbAM">この文書について</A><DD>
+<DT><A HREF="#lbAM">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

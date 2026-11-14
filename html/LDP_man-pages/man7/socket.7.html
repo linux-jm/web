@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of SOCKET</TITLE>
+<HTML><HEAD><TITLE>Man page of socket</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>SOCKET</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2020-08-13<BR><A HREF="#index">Index</A>
+<H1>socket</H1>
+Section: Environments, Tables, and Troff Macros (7)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man7/socket.7">roff page</A><HR>
 
@@ -18,11 +18,12 @@ socket - Linux のソケットインターフェース
 <A NAME="lbAC">&nbsp;</A>
 <H2>書式</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
-<P>
 
-<I>sockfd</I><B> = socket(int </B><I>socket_family</I><B>, int </B><I>socket_type</I><B>, int
-</B><I>protocol</I><B>);</B>
+<I>sockfd</I><B> = socket(int </B><I>socket_family</I><B>, int </B><I>socket_type</I><B>, int </B><I>protocol</I><B>);</B>
+</PRE>
+
 <A NAME="lbAD">&nbsp;</A>
 <H2>説明</H2>
 
@@ -99,8 +100,12 @@ POLLOUT
 <B><A HREF="../man2/connect.2.html">connect</A></B>(2)
 が終了した。
 <BR></TD></TR>
-<TR VALIGN=top><TD>Read/Write</TD><TD>POLLERR</TD><TD>非同期的 (asynchronous) なエラーが起こった。<BR></TD></TR>
-<TR VALIGN=top><TD>Read/Write</TD><TD>POLLHUP</TD><TD>接続先が片方向を切断した。<BR></TD></TR>
+<TR VALIGN=top><TD>Read/Write</TD><TD>POLLERR</TD><TD>
+非同期的 (asynchronous) なエラーが起こった。
+<BR></TD></TR>
+<TR VALIGN=top><TD>Read/Write</TD><TD>POLLHUP</TD><TD>
+接続先が片方向を切断した。
+<BR></TD></TR>
 <TR VALIGN=top><TD>Exception</TD><TD>POLLPRI</TD><TD>
 緊急データ (urgent data) が到着した。この場合は
 <B>SIGURG</B>
@@ -167,14 +172,15 @@ POLLOUT
 <DT><B>SO_ACCEPTCONN</B><DD>
 このソケットが <B><A HREF="../man2/listen.2.html">listen</A></B>(2)  によって接続待ち受け状態に設定されているかどうかを示す値を返す。 値 0 は listen
 状態のソケットでないことを、 値 1 は listen 状態のソケットであることを示す。このソケットオプションは読み込み専用である。
-<DT><B>SO_ATTACH_FILTER</B> (since Linux 2.2), <B>SO_ATTACH_BPF</B> (since Linux 3.19)<DD>
+<DT><B>SO_ATTACH_FILTER</B> (Linux 2.2 以降)<DD>
+<DT><B>SO_ATTACH_BPF</B> (Linux 3.19 以降)<DD>
 Attach a classic BPF (<B>SO_ATTACH_FILTER</B>)  or an extended BPF
 (<B>SO_ATTACH_BPF</B>)  program to the socket for use as a filter of incoming
 packets.  A packet will be dropped if the filter program returns zero.  If
 the filter program returns a nonzero value which is less than the packet's
-data length, the packet will be truncated to the length returned.  If the
-value returned by the filter is greater than or equal to the packet's data
-length, the packet is allowed to proceed unmodified.
+data size, the packet will be truncated to the size returned.  If the value
+returned by the filter is greater than or equal to the packet's data size,
+the packet is allowed to proceed unmodified.
 <DT><DD>
 The argument for <B>SO_ATTACH_FILTER</B> is a <I>sock_fprog</I> structure, defined
 in <I>&lt;<A HREF="file:///usr/include/linux/filter.h">linux/filter.h</A>&gt;</I>:
@@ -199,8 +205,9 @@ may be called on the same socket, but the previous filter will always be
 replaced such that a socket never has more than one filter defined.
 <DT><DD>
 Both classic and extended BPF are explained in the kernel source file
-<I>Documentation/networking/filter.txt</I>
-<DT><B>SO_ATTACH_REUSEPORT_CBPF</B>, <B>SO_ATTACH_REUSEPORT_EBPF</B><DD>
+<I>Documentation/networking/filter.rst</I>
+<DT><B>SO_ATTACH_REUSEPORT_CBPF</B><DD>
+<DT><B>SO_ATTACH_REUSEPORT_EBPF</B><DD>
 For use with the <B>SO_REUSEPORT</B> option, these options allow the user to set
 a classic BPF (<B>SO_ATTACH_REUSEPORT_CBPF</B>)  or an extended BPF
 (<B>SO_ATTACH_REUSEPORT_EBPF</B>)  program which defines how packets are
@@ -208,17 +215,32 @@ assigned to the sockets in the reuseport group (that is, all sockets which
 have <B>SO_REUSEPORT</B> set and are using the same local address to receive
 packets).
 <DT><DD>
-The BPF program must return an index between 0 and N-1 representing the
-socket which should receive the packet (where N is the number of sockets in
-the group).  If the BPF program returns an invalid index, socket selection
-will fall back to the plain <B>SO_REUSEPORT</B> mechanism.
+The classic BPF program must return an index between 0 and N-1 representing
+the socket which should receive the packet (where N is the number of sockets
+in the group).  If the BPF program returns an invalid index, socket
+selection will fall back to the plain <B>SO_REUSEPORT</B> mechanism.
 <DT><DD>
 Sockets are numbered in the order in which they are added to the group (that
 is, the order of <B><A HREF="../man2/bind.2.html">bind</A></B>(2)  calls for UDP sockets or the order of
-<B><A HREF="../man2/listen.2.html">listen</A></B>(2)  calls for TCP sockets).  New sockets added to a reuseport
-group will inherit the BPF program.  When a socket is removed from a
-reuseport group (via <B><A HREF="../man2/close.2.html">close</A></B>(2)), the last socket in the group will be
-moved into the closed socket's position.
+<B><A HREF="../man2/listen.2.html">listen</A></B>(2)  calls for TCP sockets).
+<DT><DD>
+The extended BPF program can be of two types:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>BPF_PROG_TYPE_SOCKET_FILTER</B><DD>
+In this case, the extended BPF program must return an index between 0 and
+N-1, like a classic BPF program.
+<DT><B>BPF_PROG_TYPE_SK_REUSEPORT</B> (Linux 4.19 以降)<DD>
+In this case, it must return an action (<B>SK_PASS</B> or <B>SK_DROP</B>)  and the
+<B>bpf_sk_select_reuseport</B> helper can be used to select the socket which
+should receive the packet.
+</DL>
+</DL>
+
+<DT><DD>
+New sockets added to a reuseport group will inherit the BPF program.  When a
+socket is removed from a reuseport group (via <B><A HREF="../man2/close.2.html">close</A></B>(2)), the last socket
+in the group will be moved into the closed socket's position.
 <DT><DD>
 These options may be set repeatedly at any time on any socket in the group
 to replace the current BPF program used by all sockets in the group.
@@ -230,12 +252,14 @@ type as <B>SO_ATTACH_BPF</B>.
 UDP support for this feature is available since Linux 4.5; TCP support is
 available since Linux 4.6.
 <DT><B>SO_BINDTODEVICE</B><DD>
-このソケットを、引数で渡したインターフェース名で指定される ("eth0" のような) 特定のデバイスにバインドする。
-名前が空文字列だったり、オプションの長さ (optlen) が 0 の場合には、 ソケットのバインドが削除される。
-渡すオプションは、インターフェース名が 入ったヌル文字で終端された可変長の文字列である。 文字列の最大のサイズは <B>IFNAMSIX</B> である。
-ソケットがインターフェースにバインドされると、 その特定のインターフェースから受信されたパケットだけを処理する。
-このオプションはいくつかのソケットタイプ、 特に <B>AF_INET</B> に対してのみ動作する点に注意すること。 パケットソケットではサポートされていない
-(通常の <B><A HREF="../man2/bind.2.html">bind</A></B>(2) を使うこと)。
+Bind this socket to a particular device like "eth0", as specified in
+the passed interface name.  If the name is an empty string or the option
+size is zero, the socket device binding is removed.  The passed option is a
+variable-size null-terminated interface name string with the maximum size of
+<B>IFNAMSIZ</B>.  If a socket is bound to an interface, only packets received
+from that particular interface are processed by the socket.  Note that this
+works only for some socket types, particularly <B>AF_INET</B> sockets.  It is
+not supported for packet sockets (use normal <B><A HREF="../man2/bind.2.html">bind</A></B>(2)  there).
 <DT><DD>
 Linux 3.8 より前のバージョンでは、このソケットオプションは <B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2)
 で設定することはできたが、取得することができなかった。 Linux 3.8 以降では、読み出すことができる。 <I>optlen</I> 引数には、
@@ -255,7 +279,8 @@ Linux 2.6 ではプログラムがこのオプションを使用すると (print
 <DT><B>SO_DEBUG</B><DD>
 ソケットのデバッグ機能を有効にする。 <B>CAP_NET_ADMIN</B> 権限を持つプロセスか、実効ユーザー ID が 0 のプロセスでしか
 利用できない。
-<DT><B>SO_DETACH_FILTER</B> (Linux 2.2 以降), <B>SO_DETACH_BPF</B> (Linux 3.19 以降)<DD>
+<DT><B>SO_DETACH_FILTER</B> (Linux 2.2 以降)<DD>
+<DT><B>SO_DETACH_BPF</B> (Linux 3.19 以降)<DD>
 These two options, which are synonyms, may be used to remove the classic or
 extended BPF program attached to a socket with either <B>SO_ATTACH_FILTER</B> or
 <B>SO_ATTACH_BPF</B>.  The option value is ignored.
@@ -326,7 +351,7 @@ particular CPU, the typical use case is to employ one listening process per
 RX queue, with the incoming flow being handled by a listener on the same CPU
 that is handling the RX queue.  This provides optimal NUMA behavior and
 keeps CPU caches hot.
-<DT><B>SO_INCOMING_NAPI_ID</B> (gettable since Linux 4.12)<DD>
+<DT><B>SO_INCOMING_NAPI_ID</B> (Linux 4.12 から gettable)<DD>
 
 
 Returns a system-level unique ID called NAPI ID that is associated with a RX
@@ -336,8 +361,8 @@ This can be used by an application to split the incoming flows among worker
 threads based on the RX queue on which the packets associated with the flows
 are received.  It allows each worker thread to be associated with a NIC HW
 receive queue and service all the connection requests received on that RX
-queue.  This mapping between a app thread and a HW NIC queue streamlines the
-flow of data from the NIC to the application.
+queue.  This mapping between an app thread and a HW NIC queue streamlines
+the flow of data from the NIC to the application.
 <DT><B>SO_KEEPALIVE</B><DD>
 接続志向のソケットに対する keep-alive メッセージの送信を有効にする。 ブール値の整数フラグをとる。
 <DT><B>SO_LINGER</B><DD>
@@ -379,9 +404,11 @@ option will fail with the error <B>EPERM</B>.
 
 
 
-このソケットから送信される各パケットにマークをセットする (netfilter の MARK ターゲットと似ているが、ソケット単位である点が異なる)。
-マークの変更は、 netfilter なしでのマークに基づいてのルーティングや、 パケットフィルタリングに使うことができる。
-このオプションを変更するには <B>CAP_NET_ADMIN</B> ケーパビリティが必要である。
+Set the mark for each packet sent through this socket (similar to the
+netfilter MARK target but socket-based).  Changing the mark can be used for
+mark-based routing without netfilter or for packet filtering.  Setting this
+option requires the <B>CAP_NET_ADMIN</B> or <B>CAP_NET_RAW</B> (since Linux 5.17)
+capability.
 <DT><B>SO_OOBINLINE</B><DD>
 
 
@@ -404,9 +431,11 @@ option will fail with the error <B>EPERM</B>.
 このオプションを有効にすると、帯域外データ (out-of-band data) は 受信データストリーム中に置かれる。有効にしなければ、
 帯域外データは受信時に <B>MSG_OOB</B> フラグがセットされている場合に限って渡される。
 <DT><B>SO_PASSCRED</B><DD>
-<B>SCM_CREDENTIALS</B> 制御メッセージの受信を有効/無効にする。詳細は <B><A HREF="../man7/unix.7.html">unix</A></B>(7)  を参照のこと。
+Enable or disable the receiving of the <B>SCM_CREDENTIALS</B> control message.
+For more information, see <B><A HREF="../man7/unix.7.html">unix</A></B>(7).
 <DT><B>SO_PASSSEC</B><DD>
-<B>SCM_SECURITY</B> 制御メッセージの受信を有効/無効にする。詳細は <B><A HREF="../man7/unix.7.html">unix</A></B>(7)  を参照のこと。
+Enable or disable the receiving of the <B>SCM_SECURITY</B> control message.  For
+more information, see <B><A HREF="../man7/unix.7.html">unix</A></B>(7).
 <DT><B>SO_PEEK_OFF</B> (Linux 3.4 以降)<DD>
 
 
@@ -431,7 +460,12 @@ offset&quot; が指すキュー内の相対的な位置が狂わないように�
 <DT><DD>
 以下の例は <B>SO_PEEK_OFF</B> の利用例を示している。ストリームソケットのキューに以下の入力データが入っているものとする。
 <DT><DD>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;aabbccddeeff
+
+<PRE>
+aabbccddeeff
+</PRE>
+
+
 <DT><DD>
 以下の順序で <B><A HREF="../man2/recv.2.html">recv</A></B>(2) の呼び出しを行うと、コメントに書かれた結果となる。
 <DT><DD>
@@ -450,9 +484,7 @@ recv(fd, buf, 2, MSG_PEEK);  // Peeks &quot;ee&quot;; offset set to 8
 <DT><B>SO_PEERCRED</B><DD>
 Return the credentials of the peer process connected to this socket.  For
 further details, see <B><A HREF="../man7/unix.7.html">unix</A></B>(7).
-<DT><B>SO_PEERSEC</B> (Linux 2.6.2 以降)<DD>
-Return the security context of the peer socket connected to this socket.
-For further details, see <B><A HREF="../man7/unix.7.html">unix</A></B>(7)  and <B><A HREF="../man7/ip.7.html">ip</A></B>(7).
+<DT><B>SO_PEERSEC</B>(2const)<DD>
 <DT><B>SO_PRIORITY</B><DD>
 
 
@@ -484,7 +516,8 @@ For further details, see <B><A HREF="../man7/unix.7.html">unix</A></B>(7)  and <
 <DT><B>SO_RCVBUFFORCE</B> (Linux 2.6.14 以降)<DD>
 このソケットオプションを使うと、特権プロセス (<B>CAP_NET_ADMIN</B> を持つプロセス) は <B>SO_RCVBUF</B>
 と同じことを実行できる。 ただし、上限 <I>rmem_max</I> を上書きすることができる。
-<DT><B>SO_RCVLOWAT</B> と <B>SO_SNDLOWAT</B><DD>
+<DT><B>SO_RCVLOWAT</B><DD>
+<DT><B>SO_SNDLOWAT</B><DD>
 Specify the minimum number of bytes in the buffer until the socket layer
 will pass the data to the protocol (<B>SO_SNDLOWAT</B>)  or the user on
 receiving (<B>SO_RCVLOWAT</B>).  These two values are initialized to 1.
@@ -501,7 +534,8 @@ readable when even a single byte of data was available.  A subsequent read
 from the socket would then block until <B>SO_RCVLOWAT</B> bytes are available.
 Since Linux 2.6.28, <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), and <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  indicate a
 socket as readable only if at least <B>SO_RCVLOWAT</B> bytes are available.
-<DT><B>SO_RCVTIMEO</B> と <B>SO_SNDTIMEO</B><DD>
+<DT><B>SO_RCVTIMEO</B><DD>
+<DT><B>SO_SNDTIMEO</B><DD>
 
 
 
@@ -510,13 +544,18 @@ socket as readable only if at least <B>SO_RCVLOWAT</B> bytes are available.
 
 
 
-送信・受信のタイムアウトを指定する。これを越えるとエラーを報告する。 引数は <I>struct timeval</I> である。
-入出力関数がタイムアウト時間の間ブロックされ、かつデータの送信または 受信が行われていた場合は、転送されたデータ量が関数の返り値となる。
-何もデータが転送されずにタイムアウトに達した場合は、 -1 を返し、 <I>errno</I> に <B>EAGAIN</B> か <B>EWOULDBLOCK</B> か
-<B>EINPROGRESS</B> (<B><A HREF="../man2/connect.2.html">connect</A></B>(2) の場合) が設定され、 あたかもソケットに非ブロッキングが指定されたように見える。
-タイムアウト値に (デフォルト値である) 0 に設定すると、 操作は決してタイムアウトしなくなる。 タイムアウトが影響を及ぼすのは、 ソケット I/O
-を実行するシステムコールだけ (例えば <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2), <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2))
-である。 <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)  などにはタイムアウトは影響を及ぼさない。
+Specify the receiving or sending timeouts until reporting an error.  The
+argument is a <I>struct timeval</I>.  If an input or output function blocks for
+this period of time, and data has been sent or received, the return value of
+that function will be the amount of data transferred; if no data has been
+transferred and the timeout has been reached, then -1 is returned with
+<I>errno</I> set to <B>EAGAIN</B> or <B>EWOULDBLOCK</B>, or <B>EINPROGRESS</B> (for
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2))  just as if the socket was specified to be nonblocking.  If
+the timeout is set to zero (the default), then the operation will never
+timeout.  Timeouts only have effect for system calls that perform socket I/O
+(e.g., <B><A HREF="../man2/accept.2.html">accept</A></B>(2), <B><A HREF="../man2/connect.2.html">connect</A></B>(2), <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2), <B><A HREF="../man2/send.2.html">send</A></B>(2),
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)); timeouts have no effect for <B><A HREF="../man2/select.2.html">select</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2),
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2), and so on.
 <DT><B>SO_REUSEADDR</B><DD>
 
 
@@ -590,16 +629,14 @@ for backwards compatibility.
 <DT><B>SO_TIMESTAMP</B><DD>
 Enable or disable the receiving of the <B>SO_TIMESTAMP</B> control message.  The
 timestamp control message is sent with level <B>SOL_SOCKET</B> and a
-<I>cmsg_type</I> of <B>SCM_TIMESTAMP</B>.  The <I>cmsg_data</I> field is a <I>struct
-timeval</I> indicating the reception time of the last packet passed to the user
+<I>cmsg_type</I> of <B>SCM_TIMESTAMP</B>.  The <I>cmsg_data</I> field is a <I>struct timeval</I> indicating the reception time of the last packet passed to the user
 in this call.  See <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)  for details on control messages.
 <DT><B>SO_TIMESTAMPNS</B> (Linux 2.6.22 以降)<DD>
 
 
 Enable or disable the receiving of the <B>SO_TIMESTAMPNS</B> control message.
 The timestamp control message is sent with level <B>SOL_SOCKET</B> and a
-<I>cmsg_type</I> of <B>SCM_TIMESTAMPNS</B>.  The <I>cmsg_data</I> field is a <I>struct
-timespec</I> indicating the reception time of the last packet passed to the
+<I>cmsg_type</I> of <B>SCM_TIMESTAMPNS</B>.  The <I>cmsg_data</I> field is a <I>struct timespec</I> indicating the reception time of the last packet passed to the
 user in this call.  The clock used for the timestamp is <B>CLOCK_REALTIME</B>.
 See <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)  for details on control messages.
 <DT><DD>
@@ -656,14 +693,16 @@ core のソケットのネットワーキングパラメーターには、 <I>/p
 ソケットの送信バッファーサイズのデフォルト値 (バイト単位)。
 <DT><I>wmem_max</I><DD>
 <B>SO_SNDBUF</B> ソケットオプションを用いてユーザーが設定できる ソケットの送信バッファーサイズの最大値 (バイト単位)。
-<DT><I>message_cost</I> と <I>message_burst</I><DD>
+<DT><I>message_cost</I><DD>
+<DT><I>message_burst</I><DD>
 トークンバケットフィルターを設定する。 これは外部のネットワークイベントによって引き起こされた 負荷限界の警告メッセージに用いられる。
 <DT><I>netdev_max_backlog</I><DD>
 グローバルな入力キューにおける最大のパケット数。
 <DT><I>optmem_max</I><DD>
 
 
-ソケットあたりの、補助データ (ancillary data) とユーザー制御データ (iovecs のようなもの) との和の最大長。
+Maximum size of ancillary data and user control data like the iovecs per
+socket.
 </DL>
 <A NAME="lbAJ">&nbsp;</A>
 <H3>ioctl</H3>
@@ -742,11 +781,6 @@ Linux では、 <B>SO_REUSEADDR</B> オプションでポートの再利用が�
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2), <B><A HREF="../man2/socket.2.html">socket</A></B>(2), <B>pcap</B>(3), <B>address_families</B>(7),
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/ddp.7.html">ddp</A></B>(7), <B><A HREF="../man7/ip.7.html">ip</A></B>(7), <B><A HREF="../man7/ipv6.7.html">ipv6</A></B>(7), <B><A HREF="../man7/packet.7.html">packet</A></B>(7),
 <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7), <B><A HREF="../man7/udp.7.html">udp</A></B>(7), <B><A HREF="../man7/unix.7.html">unix</A></B>(7), <B>tcpdump</B>(8)
-<A NAME="lbAN">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
@@ -766,7 +800,6 @@ Linux では、 <B>SO_REUSEADDR</B> オプションでポートの再利用が�
 <DT><A HREF="#lbAK">バージョン</A><DD>
 <DT><A HREF="#lbAL">注意</A><DD>
 <DT><A HREF="#lbAM">関連項目</A><DD>
-<DT><A HREF="#lbAN">この文書について</A><DD>
 </DL>
 <HR>
 This document was created by

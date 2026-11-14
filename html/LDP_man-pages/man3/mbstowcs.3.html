@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of MBSTOWCS</TITLE>
+<HTML><HEAD><TITLE>Man page of mbstowcs</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>MBSTOWCS</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<H1>mbstowcs</H1>
+Section: C Library Functions (3)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/mbstowcs.3">roff page</A><HR>
 
@@ -16,70 +16,91 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-11-01<BR><A HREF="#index
 
 mbstowcs - マルチバイト文字列をワイド文字列に変換する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
 
-<B>size_t mbstowcs(wchar_t *</B><I>dest</I><B>, const char *</B><I>src</I><B>, size_t </B><I>n</I><B>);</B>
+<B>size_t mbstowcs(</B>size_t dsize;
+<B>                wchar_t </B><I>dest</I><B>[restrict </B><I>dsize</I><B>], const char *restrict </B><I>src</I><B>,</B>
+<B>                size_t </B><I>dsize</I><B>);</B>
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
-If <I>dest</I> is not NULL, the <B>mbstowcs</B>()  function converts the multibyte
-string <I>src</I> to a wide-character string starting at <I>dest</I>.  At most <I>n</I>
-wide characters are written to <I>dest</I>.  The sequence of characters in the
-string <I>src</I> shall begin in the initial shift state.  The conversion can
-stop for three reasons:
+If <I>dest</I> is not NULL, convert the multibyte string <I>src</I> to a
+wide-character string starting at <I>dest</I>.  At most <I>dsize</I> wide characters
+are written to <I>dest</I>.  The sequence of characters in the string <I>src</I>
+shall begin in the initial shift state.  The conversion can stop for three
+reasons:
 <DL COMPACT>
-<DT>1.<DD>
+<DT>&bull;<DD>
 不正なマルチバイト列に遭遇した。この場合には <I>(size_t)&nbsp;-1</I> を返す。
-<DT>2.<DD>
-<I>n</I> 文字の L'\0' 以外のワイド文字を <I>dest</I> に格納した場合。 この場合は <I>*src</I>
-が次に変換されるマルチバイト列を指すようにして、 <I>dest</I> に書き込まれたワイド文字の数を返す。しかしこの指している 場所のシフト状態は失われる。
-<DT>3.<DD>
-マルチバイト文字列が終端のヌル文字 ('\0') まで含めて完全に変換された場合。この場合は終端のヌルワイド文字を除いて <I>dest</I>
-に書き込まれた文字数を返す。
+<DT>&bull;<DD>
+<I>dsize</I> non-L'\0' wide characters have been stored at <I>dest</I>.
+In this case, the number of wide characters written to <I>dest</I> is returned,
+but the shift state at this point is lost.
+<DT>&bull;<DD>
+The multibyte string has been completely converted, including the
+terminating null character ('\0').  In this case, the number of
+wide characters written to <I>dest</I>, excluding the terminating null wide
+character, is returned.
 </DL>
 <P>
 
-プログラマーは <I>dest</I> に最低でも <I>n</I> ワイド文字を書き込むこ とができる空間があることを保証しなければならない。
+If <I>dest</I> is NULL, <I>dsize</I> is ignored, and the conversion proceeds as
+above, except that the converted wide characters are not written out to
+memory, and that no length limit exists.
 <P>
 
-<I>dest</I> が NULL の場合、<I>n</I> は無視され、上記と同様の変換が 行われるが、変換されたワイド文字はメモリーに書き込まれず、変換先の上限
-が存在しない。
+In order to avoid the case 2 above, the programmer should make sure <I>dsize</I>
+is greater than or equal to <I>mbstowcs(NULL,src,0)+1</I>.
 <P>
 
-上記の 2. の場合を避けるためにプログラマーは <I>n</I> が <I>mbstowcs(NULL,src,0)+1</I> 以上であることを保証すべきである。
-<A NAME="lbAE">&nbsp;</A>
+The programmer must ensure that there is room for at least <I>dsize</I> wide
+characters at <I>dest</I>.
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
-<B>mbstowcs</B>()  関数はワイド文字列に変換完了したワイド文字の数を返す。
-終端のヌルワイド文字は含まない。不正なマルチバイト列に遭遇した場合には <I>(size_t)&nbsp;-1</I> を返す。
-<A NAME="lbAF">&nbsp;</A>
+The number of wide characters that make up the converted part of the
+wide-character string, not including the terminating null wide character.
+If an invalid multibyte sequence was encountered, <I>(size_t)&nbsp;-1</I> is
+returned.
+<A NAME="lbAG">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>mbstowcs</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAG">&nbsp;</A>
-<H2>準拠</H2>
-
-POSIX.1-2001, POSIX.1-2008, C99.
 <A NAME="lbAH">&nbsp;</A>
-<H2>注意</H2>
-
-<B>mbstowcs</B>()  の動作は現在のロケールの <B>LC_CTYPE</B> カテゴリーに依存している。
-<P>
+<H2>バージョン</H2>
 
 <B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3)  関数は同じ機能のより良いインターフェースを提供する。
 <A NAME="lbAI">&nbsp;</A>
+<H2>標準規格</H2>
+
+C11, POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>歴史</H2>
+
+POSIX.1-2001, C99.
+<A NAME="lbAK">&nbsp;</A>
+<H2>注意</H2>
+
+<B>mbstowcs</B>()  の動作は現在のロケールの <B>LC_CTYPE</B> カテゴリーに依存している。
+<A NAME="lbAL">&nbsp;</A>
 <H2>例</H2>
 
 下記のプログラムは <B>mbstowcs</B>() といくつかのワイド文字分類関数の使用方法を示したものである。実行例は以下のようになる。
@@ -102,17 +123,19 @@ Wide character string is: Grüße! (6 characters)
 </PRE>
 
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
+
+
 <PRE>
-#include &lt;<A HREF="file:///usr/include/wctype.h">wctype.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/locale.h">locale.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/wchar.h">wchar.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/wchar.h">wchar.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/wctype.h">wctype.h</A>&gt;
 
 int
 main(int argc, char *argv[])
@@ -125,7 +148,7 @@ main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    /* Apply the specified locale */
+    /* Apply the specified locale.  */
 
     if (setlocale(LC_ALL, argv[1]) == NULL) {
         perror(&quot;setlocale&quot;);
@@ -133,7 +156,7 @@ main(int argc, char *argv[])
     }
 
     /* Calculate the length required to hold argv[2] converted to
-       a wide character string */
+       a wide character string.  */
 
     mbslen = mbstowcs(NULL, argv[2], 0);
     if (mbslen == (size_t) -1) {
@@ -141,14 +164,14 @@ main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    /* Describe the source string to the user */
+    /* Describe the source string to the user.  */
 
     printf(&quot;Length of source string (excluding terminator):\n&quot;);
     printf(&quot;    %zu bytes\n&quot;, strlen(argv[2]));
     printf(&quot;    %zu multibyte characters\n\n&quot;, mbslen);
 
     /* Allocate wide character string of the desired size.  Add 1
-       to allow for terminating null wide character (L'\0'). */
+       to allow for terminating null wide character (L'\0').  */
 
     wcs = calloc(mbslen + 1, sizeof(*wcs));
     if (wcs == NULL) {
@@ -157,7 +180,7 @@ main(int argc, char *argv[])
     }
 
     /* Convert the multibyte character string in argv[2] to a
-       wide character string */
+       wide character string.  */
 
     if (mbstowcs(wcs, argv[2], mbslen + 1) == (size_t) -1) {
         perror(&quot;mbstowcs&quot;);
@@ -165,10 +188,10 @@ main(int argc, char *argv[])
     }
 
     printf(&quot;Wide character string is: %ls (%zu characters)\n&quot;,
-            wcs, mbslen);
+           wcs, mbslen);
 
     /* Now do some inspection of the classes of the characters in
-       the wide character string */
+       the wide character string.  */
 
     for (wchar_t *wp = wcs; *wp != 0; wp++) {
         printf(&quot;    %lc &quot;, (wint_t) *wp);
@@ -192,33 +215,32 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAK">&nbsp;</A>
+
+
+<A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man3/mblen.3.html">mblen</A></B>(3), <B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3), <B><A HREF="../man3/mbtowc.3.html">mbtowc</A></B>(3), <B><A HREF="../man3/wcstombs.3.html">wcstombs</A></B>(3), <B><A HREF="../man3/wctomb.3.html">wctomb</A></B>(3)
-<A NAME="lbAL">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">属性</A><DD>
-<DT><A HREF="#lbAG">準拠</A><DD>
-<DT><A HREF="#lbAH">注意</A><DD>
-<DT><A HREF="#lbAI">例</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">属性</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
+<DT><A HREF="#lbAI">標準規格</A><DD>
+<DT><A HREF="#lbAJ">歴史</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
+<DT><A HREF="#lbAL">例</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">プログラムのソース</A><DD>
+<DT><A HREF="#lbAM">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAK">関連項目</A><DD>
-<DT><A HREF="#lbAL">この文書について</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

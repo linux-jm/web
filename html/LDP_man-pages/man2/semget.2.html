@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of SEMGET</TITLE>
+<HTML><HEAD><TITLE>Man page of semget</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>SEMGET</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<H1>semget</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/semget.2">roff page</A><HR>
 
@@ -16,18 +16,20 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index
 
 semget - System V セマフォ集合の識別子を取得する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
-<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-<B>#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
 <B>#include &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;</B>
 </PRE>
 
 <P>
 
 <B>int semget(key_t </B><I>key</I><B>,</B> <B>int </B><I>nsems</I><B>,</B> <B>int </B><I>semflg</I><B>);</B>
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 The <B>semget</B>()  system call returns the System&nbsp;V semaphore set identifier
@@ -45,10 +47,12 @@ identifier of a previously created semaphore set (when <I>semflg</I> is zero and
 <B><A HREF="../man2/open.2.html">open</A></B>(2)  に <B>O_CREAT | O_EXCL</B> が指定された場合の動作と同じである)。
 <P>
 
-セマフォ集合作成時に、引数 <I>semflg</I> の下位 9 ビットは、そのセマフォ集合の (所有者 (owner)、グループ (group)、 他人
-(others) に対する) アクセス許可の定義として使用される。 これらのビットは <B><A HREF="../man2/open.2.html">open</A></B>(2)  の引数 <I>mode</I>
-と同じ形式で同じ意味である (但し、実行 (execute) 許可はセマフォでは意味を持たず、 書き込み (write) 許可はセマフォ値の変更
-(alter) 許可として機能する)。
+Upon creation, the least significant 9 bits of the argument <I>semflg</I> define
+the permissions (for owner, group, and others)  for the semaphore set.
+These bits have the same format, and the same meaning, as the <I>mode</I>
+argument of <B><A HREF="../man2/open.2.html">open</A></B>(2)  (though the execute permissions are not meaningful
+for semaphores, and write permissions mean permission to alter semaphore
+values).
 <P>
 
 新規のセマフォ集合を作成する際、 <B>semget</B>()  はセマフォ集合の情報を保持するデータ構造体 <I>semid_ds</I> を次のように初期化する
@@ -78,14 +82,15 @@ identifier of a previously created semaphore set (when <I>semflg</I> is zero and
 
 
 セマフォ集合が既に存在した場合は、アクセス許可の検査が行われる。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
-成功した場合、セマフォ集合の識別子 (非負の整数) が返り値となる。 失敗した場合は -1 が返され、 <I>errno</I> にエラーを示す値が設定される。
-<A NAME="lbAF">&nbsp;</A>
+On success, <B>semget</B>()  returns the semaphore set identifier (a nonnegative
+integer).  On failure, -1 is returned, and <I>errno</I> is set to indicate the
+error.
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
-失敗した場合は <I>errno</I> には以下の値のどれかが設定される:
 <DL COMPACT>
 <DT><B>EACCES</B><DD>
 A semaphore set exists for <I>key</I>, but the calling process does not have
@@ -111,31 +116,26 @@ capability in the user namespace that governs its IPC namespace.
 セマフォ集合を作成しようとすると、システムのセマフォ集合の 最大数 (<B>SEMMNI</B>)  か、システム全体のセマフォの最大数 (<B>SEMMNS</B>)
 のいずれかを超えてしまう。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
-<H2>準拠</H2>
+<A NAME="lbAH">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2024.
+<A NAME="lbAI">&nbsp;</A>
+<H2>歴史</H2>
 
 
 
 
 
 SVr4, POSIX.1-2001.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>注意</H2>
-
-
-
-
-
-Linux や POSIX の全てのバージョンでは、 <I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I> と <I>&lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</I>
-のインクルードは必要ない。しかしながら、いくつかの古い実装ではこれらのヘッダーファイルのインクルードが必要であり、 SVID
-でもこれらのインクルードをするように記載されている。このような古いシステムへの移植性を意図したアプリケーションではこれらのファイルをインクルードする必要があるかもしれない。
-<P>
 
 
 
 <B>IPC_PRIVATE</B> はフラグフィールドに指定するものではなく、 <I>key_t</I> 型である。 この特別な値が <I>key</I> に指定されると、
 <B>semget</B>()  <I>semflg</I> の下位 9 ビット以外は全て無視し、 (成功した場合は) 新しいセマフォ集合を作成する。
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>セマフォの初期化</H3>
 
 
@@ -155,7 +155,7 @@ Linux や POSIX の全てのバージョンでは、 <I>&lt;<A HREF="file:///usr
 <B><A HREF="../man2/semctl.2.html">semctl</A></B>(2) の <B>SETVAL</B> か <B>SETALL</B> 操作を使って初期化することができる。
 複数箇所からセマフォ集合の操作が行われる場面では、 誰が最初に集合を初期化すればよいか分からない。 この状況を避けるには、 <B><A HREF="../man2/semctl.2.html">semctl</A></B>(2)
 の <B>IPC_STAT</B> 操作で取得できるセマフォのデータ構造体の <I>sem_otime</I> が 0 以外になっているかをチェックすればよい。
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>セマフォの上限</H3>
 
 セマフォ集合のリソースに関する上限のうち、 <B>semget</B>()  に影響を及ぼすものを以下に挙げる:
@@ -165,26 +165,26 @@ Linux や POSIX の全てのバージョンでは、 <I>&lt;<A HREF="file:///usr
 
 
 
-System-wide limit on the number of semaphore sets.  On Linux systems before
-version 3.19, the default value for this limit was 128.  Since Linux 3.19,
-the default value is 32,000.  On Linux, this limit can be read and modified
-via the fourth field of <I>/proc/sys/kernel/sem</I>.
+System-wide limit on the number of semaphore sets.  Before Linux 3.19, the
+default value for this limit was 128.  Since Linux 3.19, the default value
+is 32,000.  On Linux, this limit can be read and modified via the fourth
+field of <I>/proc/sys/kernel/sem</I>.
 <DT><B>SEMMSL</B><DD>
 
 
-Maximum number of semaphores per semaphore ID.  On Linux systems before
-version 3.19, the default value for this limit was 250.  Since Linux 3.19,
-the default value is 32,000.  On Linux, this limit can be read and modified
-via the first field of <I>/proc/sys/kernel/sem</I>.
+Maximum number of semaphores per semaphore ID.  Before Linux 3.19, the
+default value for this limit was 250.  Since Linux 3.19, the default value
+is 32,000.  On Linux, this limit can be read and modified via the first
+field of <I>/proc/sys/kernel/sem</I>.
 <DT><B>SEMMNS</B><DD>
 システム全体のセマフォ数の上限値: 方針依存 (Linux では、この上限値は <I>/proc/sys/kernel/sem</I> の第 2
 フィールドであり、読み出しも変更もできる)。 システム全体のセマフォ数には、 <B>SEMMSL</B> と <B>SEMMNI</B> の積という上限もある。
 </DL>
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>バグ</H2>
 
 <B>IPC_PRIVATE</B> という名前を選んだのはおそらく失敗であろう。 <B>IPC_NEW</B> の方がより明確にその機能を表しているだろう。
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>例</H2>
 
 The program shown below uses <B>semget</B>()  to create a new semaphore set or
@@ -204,12 +204,12 @@ sets using <B>ipcs</B>(1):
 
 
 <PRE>
-$ <B>touch mykey mykey2</B>
-$ <B>./t_semget -c mykey p 1</B>
+$<B> touch mykey mykey2</B>;
+$<B> ./t_semget -c mykey p 1</B>;
 ID = 9
-$ <B>./t_semget -c mykey2 p 2</B>
+$<B> ./t_semget -c mykey2 p 2</B>;
 ID = 10
-$ <B>ipcs -s</B>
+$<B> ipcs -s</B>;
 
 ------ Semaphore Arrays --------
 key        semid      owner      perms      nsems
@@ -227,7 +227,7 @@ already existing semaphore set:
 
 
 <PRE>
-$ <B>./t_semget -c mykey p 1</B>
+$<B> ./t_semget -c mykey p 1</B>;
 ID = 9
 </PRE>
 
@@ -240,17 +240,19 @@ is given different <I>pathname</I> arguments that have the same inode number:
 
 
 <PRE>
-$ <B>ln mykey link</B>
-$ <B>ls -i1 link mykey</B>
+$<B> ln mykey link</B>;
+$<B> ls -i1 link mykey</B>;
 2233197 link
 2233197 mykey
-$ <B>./t_semget link p 1</B>       # Generates same key as 'mykey'
+$<B> ./t_semget link p 1</B>;       # Generates same key as 'mykey'
 ID = 9
 </PRE>
 
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>プログラムのソース</H3>
+
+
 
 
 <PRE>
@@ -258,12 +260,10 @@ ID = 9
 
    Licensed under GNU General Public License v2 or later.
 */
-#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 
 static void
@@ -279,8 +279,8 @@ usage(const char *pname)
 int
 main(int argc, char *argv[])
 {
-    int semid, nsems, flags, opt;
-    key_t key;
+    int    semid, nsems, flags, opt;
+    key_t  key;
 
     flags = 0;
     while ((opt = getopt(argc, argv, &quot;cx&quot;)) != -1) {
@@ -314,39 +314,37 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAN">&nbsp;</A>
+
+
+<A NAME="lbAP">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man2/semctl.2.html">semctl</A></B>(2), <B><A HREF="../man2/semop.2.html">semop</A></B>(2), <B><A HREF="../man3/ftok.3.html">ftok</A></B>(3), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
 <B><A HREF="../man7/sem_overview.7.html">sem_overview</A></B>(7), <B>sysvipc</B>(7)
-<A NAME="lbAO">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">準拠</A><DD>
-<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">標準規格</A><DD>
+<DT><A HREF="#lbAI">歴史</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
 <DL>
-<DT><A HREF="#lbAI">セマフォの初期化</A><DD>
-<DT><A HREF="#lbAJ">セマフォの上限</A><DD>
+<DT><A HREF="#lbAK">セマフォの初期化</A><DD>
+<DT><A HREF="#lbAL">セマフォの上限</A><DD>
 </DL>
-<DT><A HREF="#lbAK">バグ</A><DD>
-<DT><A HREF="#lbAL">例</A><DD>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">例</A><DD>
 <DL>
-<DT><A HREF="#lbAM">プログラムのソース</A><DD>
+<DT><A HREF="#lbAO">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAN">関連項目</A><DD>
-<DT><A HREF="#lbAO">この文書について</A><DD>
+<DT><A HREF="#lbAP">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

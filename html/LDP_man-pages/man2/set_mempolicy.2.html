@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of SET_MEMPOLICY</TITLE>
+<HTML><HEAD><TITLE>Man page of set_mempolicy</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>SET_MEMPOLICY</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index">Index</A>
+<H1>set_mempolicy</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/set_mempolicy.2">roff page</A><HR>
 
@@ -16,6 +16,10 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2020-12-21<BR><A HREF="#index
 
 set_mempolicy - スレッドとその子スレッドの NUMA メモリーの デフォルトポリシーを設定する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+NUMA (Non-Uniform Memory Access) ポリシーライブラリ (<I>libnuma</I>,~<I>-lnuma</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
@@ -23,11 +27,9 @@ set_mempolicy - スレッドとその子スレッドの NUMA メモリーの デ
 
 <B>long set_mempolicy(int </B><I>mode</I><B>, const unsigned long *</B><I>nodemask</I><B>,</B>
 <B>                   unsigned long </B><I>maxnode</I><B>);</B>
-
-<I>-lnuma</I> でリンクする。
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>set_mempolicy</B>()  は、呼び出し元スレッドの NUMA ポリシーを <I>policy</I> に設定する。 NUMA
@@ -49,20 +51,28 @@ NUMA (非対称メモリーアクセス) マシンでは、CPU により メモ�
 アプリケーションが初めてページにアクセスした際に行われる。
 <P>
 
-<I>mode</I> 引数には、 <B>MPOL_DEFAULT</B>, <B>MPOL_BIND</B>, <B>MPOL_INTERLEAVE</B>,
-<B>MPOL_PREFERRED</B>, <B>MPOL_LOCAL</B> (詳細は下記参照) のいずれか一つを指定しなければならない。
-<B>MPOL_DEFAULT</B> 以外のポリシーモードの場合、呼び出し元は <I>nodemask</I>
-引数でそのポリシーモードを適用するノードを指定する必要がある。
+The <I>mode</I> argument must specify one of <B>MPOL_DEFAULT</B>, <B>MPOL_BIND</B>,
+<B>MPOL_INTERLEAVE</B>, <B>MPOL_WEIGHTED_INTERLEAVE</B>, <B>MPOL_PREFERRED</B>,
+<B>MPOL_PREFERRED_MANY</B>, or <B>MPOL_LOCAL</B> (which are described in detail
+below).  All modes except <B>MPOL_DEFAULT</B> require the caller to specify the
+node or nodes to which the mode applies, via the <I>nodemask</I> argument.
 <P>
 
 <I>mode</I> 引数には、追加で <I>モードフラグ</I> を含めることもできる。 サポートされている <I>モードフラグ</I> は以下の通りである。
 <DL COMPACT>
+<DT><B>MPOL_F_NUMA_BALANCING</B> (Linux 5.12 以降)<DD>
+
+
+When <I>mode</I> is <B>MPOL_BIND</B>, enable the kernel NUMA balancing for the task
+if it is supported by the kernel.  If the flag isn't supported by the
+kernel, or is used with <I>mode</I> other than <B>MPOL_BIND</B>, -1 is returned and
+<I>errno</I> is set to <B>EINVAL</B>.
+<DT><B>MPOL_F_RELATIVE_NODES</B> (Linux 2.6.26 以降)<DD>
+空でない <I>nodemask</I> は、そのプロセスの現在の CPU 集合で許可されているノード ID 集合 における相対的なノード ID である。
 <DT><B>MPOL_F_STATIC_NODES</B> (Linux 2.6.26 以降)<DD>
 空でない <I>nodemask</I> は、物理ノード ID である。 Linux では、そのプロセスが異なる CPU 集合コンテキスト (cpuset
 context)  に移動した場合でも、そのプロセスの現在の CPU 集合コンテキストで 許可されているノード集合が変化した場合でも、
 <I>nodemask</I> をマッピングし直すことはない。
-<DT><B>MPOL_F_RELATIVE_NODES</B> (Linux 2.6.26 以降)<DD>
-空でない <I>nodemask</I> は、そのプロセスの現在の CPU 集合で許可されているノード ID 集合 における相対的なノード ID である。
 </DL>
 <P>
 
@@ -83,11 +93,12 @@ NULL 値の <I>nodemask</I> もしくは値が 0 の <I>maxnode</I> はノード
 <I>mode</I> 引数には、以下の値のいずれかひとつを含めなければならない。
 <DL COMPACT>
 <DT><B>MPOL_DEFAULT</B><DD>
-このモードは、デフォルトではないスレッドのメモリーポリシーを削除することを 指定するものである。これにより、メモリーポリシーはシステムの
-デフォルトポリシーに「戻る」ことになる。 システムのデフォルトポリシーは「ローカルからの割り当て (local allocation)」、
-つまりメモリー割り当てのきっかけとなった CPU のノードのメモリーが割り当てられる。 <I>nodemask</I> には NULL
-を指定しなければならない。 「自ノード (local node)」に空きメモリーが全くない場合、システムは 「近くの (near by)
-ノード」からメモリーを割り当てようと試みる。
+This mode specifies that any nondefault thread memory policy be removed, so
+that the memory policy &quot;falls back&quot; to the system default policy.  The
+system default policy is &quot;local allocation&quot;---that is, allocate memory on
+the node of the CPU that triggered the allocation.  <I>nodemask</I> must be
+specified as NULL.  If the &quot;local node&quot; contains no free memory, the system
+will attempt to allocate memory from a &quot;near by&quot; node.
 <DT><B>MPOL_BIND</B><DD>
 このモードは厳密なポリシーで、メモリー割り当ては <I>nodemask</I> に指定されたノードに限定される。 <I>nodemask</I> に 2
 個以上のノードが指定された場合、ページの割り当ては ノード ID が数字として最小のノードから開始され、
@@ -106,11 +117,30 @@ NULL 値の <I>nodemask</I> もしくは値が 0 の <I>maxnode</I> はノード
 このモードでは、ページ割り当てを <I>nodemask</I> に指定されたノードの間でノード ID の数字順で交互に行う。
 このポリシーでは、複数のノードにページを広げて配置し、これらのページへのメモリー アクセスを分散することで、遅延ではなく、帯域を最適化する。
 ただし、一つのページへのアクセスに関しては依然として一つのノードのメモリー帯域 が上限となる。
+<DT><B>MPOL_WEIGHTED_INTERLEAVE</B> (Linux 6.9 以降)<DD>
+
+
+This mode interleaves page allocations across the nodes specified in
+<I>nodemask</I> according to the weights in
+<I>/sys/kernel/mm/mempolicy/weighted_interleave</I>.  For example, if bits 0, 2,
+and 5 are set in <I>nodemask</I>, and the contents of
+<I>/sys/kernel/mm/mempolicy/weighted_interleave/node0</I>,
+<I>/sys/</I>...<I>/node2</I>, and <I>/sys/</I>...<I>/node5</I> are 4, 7, and 9,
+respectively, then pages in this region will be allocated on nodes 0, 2, and
+5 in a 4:7:9 ratio.
 <DT><B>MPOL_PREFERRED</B><DD>
 このモードは、割り当て時に優先されるノード (preferred node) を設定する。 カーネルはまず優先ノードからページ割り当てを行おうとし、
 優先ノードに空きメモリーが少ない場合に「近くの (near by)」ノードから 割り当てを行う。 <I>nodemask</I> に複数のノード ID
 が指定された場合は、 <I>nodemask</I> 内の最初のノードが優先ノードとして選択される。 引数 <I>nodemask</I>, <I>maxnode</I>
 で空集合が指定された場合は、ポリシーは (上述のシステムの デフォルトポリシーと同様に) 「ローカルからの割り当て」となる。
+<DT><B>MPOL_PREFERRED_MANY</B> (Linux 5.15 以降)<DD>
+
+
+This mode specifies a preference for nodes from which the kernel will try to
+allocate from.  This differs from <B>MPOL_PREFERRED</B> in that it accepts a set
+of nodes versus a single node.  This policy is intended to benefit page
+allocations where specific memory types (i.e., non-volatile, high-bandwidth,
+or accelerator memory)  are of greater importance than node location.
 <DT><B>MPOL_LOCAL</B> (Linux 3.8 以降)<DD>
 
 
@@ -131,35 +161,39 @@ context.
 
 スレッドのメモリーポリシーは <B><A HREF="../man2/execve.2.html">execve</A></B>(2)  の前後で保持され、 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  や <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
 を使って作成された子スレッドに継承される。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 成功すると、 <B>set_mempolicy</B>()  は 0 を返す。エラーの場合、-1 を返し、 <I>errno</I> にエラーを示す値を設定する。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
 <DT><B>EFAULT</B><DD>
 <I>nodemask</I> と <I>maxnode</I> で指定されたメモリー領域の一部または全部が、 呼び出し元がアクセス可能なアドレス空間外を指している。
 <DT><B>EINVAL</B><DD>
-<I>mode</I> が不正である。 <I>mode</I> が <B>MPOL_DEFAULT</B> で、 <I>nodemask</I> が空ではない。 <I>mode</I> が
-<B>MPOL_BIND</B> か <B>MPOL_INTERLEAVE</B> で、 <I>nodemask</I> が空である。 <I>maxnode</I>
-で実際に意味があるビット数より多くのビット数が指定された。 <I>nodemask</I> に、サポートされている最大ノード ID
-より大きいノードが指定された。 <I>nodemask</I> に、オンラインで、かつそのプロセスの現在の CPU 集合コンテキストで
-許可されているノードが一つも含まれていないか、 メモリーを含むノードが一つも指定されていない。 <I>mode</I> 引数に
-<B>MPOL_F_STATIC_NODES</B> と <B>MPOL_F_RELATIVE_NODES</B> の両方が指定された。
+<I>mode</I> is invalid.  Or, <I>mode</I> is <B>MPOL_DEFAULT</B> and <I>nodemask</I> is
+nonempty, or <I>mode</I> is <B>MPOL_BIND</B> or <B>MPOL_INTERLEAVE</B> and <I>nodemask</I>
+is empty.  Or, <I>maxnode</I> specifies more than a page worth of bits.  Or,
+<I>nodemask</I> specifies one or more node IDs that are greater than the maximum
+supported node ID.  Or, none of the node IDs specified by <I>nodemask</I> are
+on-line and allowed by the process's current cpuset context, or none of the
+specified nodes contain memory.  Or, the <I>mode</I> argument specified both
+<B>MPOL_F_STATIC_NODES</B> and <B>MPOL_F_RELATIVE_NODES</B>.  Or, the
+<B>MPOL_F_NUMA_BALANCING</B> isn't supported by the kernel, or is used with
+<I>mode</I> other than <B>MPOL_BIND</B>.
 <DT><B>ENOMEM</B><DD>
 利用可能なカーネルメモリーが十分でなかった。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
-<H2>バージョン</H2>
-
-<B>set_mempolicy</B>() システムコールはバージョン 2.6.7 で Linux カーネルに追加された。
 <A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
+<H2>標準規格</H2>
 
-このシステムコールは Linux 固有である。
+Linux.
 <A NAME="lbAI">&nbsp;</A>
+<H2>歴史</H2>
+
+Linux 2.6.7.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>注意</H2>
 
 ページがスワップアウトされる場合には、 メモリポリシーの設定は推奨されない。 スワップアウトされたページがページインする際にも、
@@ -167,31 +201,26 @@ context.
 <P>
 
 ライブラリによるサポートについては <B><A HREF="../man7/numa.7.html">numa</A></B>(7)  を参照。
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man2/get_mempolicy.2.html">get_mempolicy</A></B>(2), <B><A HREF="../man2/getcpu.2.html">getcpu</A></B>(2), <B><A HREF="../man2/mbind.2.html">mbind</A></B>(2), <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2), <B>numa</B>(3),
 <B>cpuset</B>(7), <B><A HREF="../man7/numa.7.html">numa</A></B>(7), <B>numactl</B>(8)
-<A NAME="lbAK">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">バージョン</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">注意</A><DD>
-<DT><A HREF="#lbAJ">関連項目</A><DD>
-<DT><A HREF="#lbAK">この文書について</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">標準規格</A><DD>
+<DT><A HREF="#lbAI">歴史</A><DD>
+<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAK">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

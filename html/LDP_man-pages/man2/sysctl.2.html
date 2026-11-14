@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of SYSCTL</TITLE>
+<HTML><HEAD><TITLE>Man page of sysctl</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>SYSCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<H1>sysctl</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-10<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/sysctl.2">roff page</A><HR>
 
@@ -22,7 +22,7 @@ sysctl - システムパラメーターを読み書きする
  <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 <B>#include &lt;<A HREF="file:///usr/include/linux/sysctl.h">linux/sysctl.h</A>&gt;</B>
 
-<B>int _sysctl(struct __sysctl_args *</B><I>args</I><B>);</B>
+<B>[[deprecated]] int _sysctl(struct __sysctl_args *</B><I>args</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -39,7 +39,7 @@ sysctl - システムパラメーターを読み書きする
 <PRE>
 struct __sysctl_args {
     int    *name;    /* integer vector describing variable */
-    int     nlen;    /* length of this vector */
+    int     nlen;    /* number of elements of this vector */
     void   *oldval;  /* 0 or address where to store old value */
     size_t *oldlenp; /* available room for old value,
                         overwritten by actual size of old value */
@@ -61,7 +61,8 @@ struct __sysctl_args {
 <H2>エラー</H2>
 
 <DL COMPACT>
-<DT><B>EACCES</B> か <B>EPERM</B><DD>
+<DT><B>EACCES</B><DD>
+<DT><B>EPERM</B><DD>
 「ディレクトリ」のどれかに検索許可がなかったか、 <I>oldval</I> が 0 でないのに読み込み許可がなかったか、 <I>newval</I> が 0
 でないのに書き込み許可がなかった。
 <DT><B>EFAULT</B><DD>
@@ -70,16 +71,18 @@ struct __sysctl_args {
 <I>name</I> が見つからなかった。
 </DL>
 <A NAME="lbAG">&nbsp;</A>
-<H2>バージョン</H2>
+<H2>標準規格</H2>
 
-This system call first appeared in Linux 1.3.57.  It was removed in Linux
-5.5; glibc support was removed in version 2.32.
+Linux.
 <A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
+<H2>歴史</H2>
 
-このコールは Linux 特有であり、移植を意図したプログラムで使用しては いけない。これは 4.4BSD に由来している。Linux は
-<I>/proc/sys</I> に写し(mirror)をもっており、項目の名前の付け方が Linux と 4.4BSD では 異っている。しかし
-<B>sysctl</B>()  関数の宣言は両方で同じである。
+4.4BSD, Linux 1.3.57.  Removed in Linux 5.5, glibc 2.32.
+<P>
+
+Only Linux has the <I>/proc/sys</I> mirror, and the object naming schemes differ
+between Linux and 4.4BSD, but the declaration of the <B>sysctl</B>()  function
+is the same in both.
 <A NAME="lbAI">&nbsp;</A>
 <H2>注意</H2>
 
@@ -105,30 +108,34 @@ wrapper for this system call, necessitating the use of <B><A HREF="../man2/sysca
 <A NAME="lbAK">&nbsp;</A>
 <H2>例</H2>
 
+
+
 <PRE>
 #define _GNU_SOURCE
-#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdcountof.h">stdcountof.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+
 #include &lt;<A HREF="file:///usr/include/linux/sysctl.h">linux/sysctl.h</A>&gt;
 
-int _sysctl(struct __sysctl_args *args );
+int _sysctl(struct __sysctl_args *args);
 
 #define OSNAMESZ 100
 
 int
 main(void)
 {
-    struct __sysctl_args args;
-    char osname[OSNAMESZ];
-    size_t osnamelth;
-    int name[] = { CTL_KERN, KERN_OSTYPE };
+    int                   name[] = { CTL_KERN, KERN_OSTYPE };
+    char                  osname[OSNAMESZ];
+    size_t                osnamelth;
+    struct __sysctl_args  args;
 
-     memset(&amp;args, 0, sizeof(args));
+    memset(&amp;args, 0, sizeof(args));
     args.name = name;
-    args.nlen = sizeof(name)/sizeof(name[0]);
+    args.nlen = countof(name);
     args.oldval = osname;
     args.oldlenp = &amp;osnamelth;
 
@@ -138,20 +145,17 @@ main(void)
         perror(&quot;_sysctl&quot;);
         exit(EXIT_FAILURE);
     }
-    printf(&quot;This machine is running %*s\n&quot;, osnamelth, osname);
+    printf(&quot;This machine is running %*s\n&quot;, (int) osnamelth, osname);
     exit(EXIT_SUCCESS);
 }
 </PRE>
+
+
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man5/proc.5.html">proc</A></B>(5)
-<A NAME="lbAM">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
@@ -162,13 +166,12 @@ main(void)
 <DT><A HREF="#lbAD">説明</A><DD>
 <DT><A HREF="#lbAE">返り値</A><DD>
 <DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">バージョン</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
+<DT><A HREF="#lbAG">標準規格</A><DD>
+<DT><A HREF="#lbAH">歴史</A><DD>
 <DT><A HREF="#lbAI">注意</A><DD>
 <DT><A HREF="#lbAJ">バグ</A><DD>
 <DT><A HREF="#lbAK">例</A><DD>
 <DT><A HREF="#lbAL">関連項目</A><DD>
-<DT><A HREF="#lbAM">この文書について</A><DD>
 </DL>
 <HR>
 This document was created by

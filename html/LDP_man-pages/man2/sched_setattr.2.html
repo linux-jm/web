@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of SCHED_SETATTR</TITLE>
+<HTML><HEAD><TITLE>Man page of sched_setattr</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>SCHED_SETATTR</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<H1>sched_setattr</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/sched_setattr.2">roff page</A><HR>
 
@@ -16,24 +16,33 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index
 
 sched_setattr, sched_getattr - スケジューリングポリシーと属性の設定と取得を行なう
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
-<B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>            /* Definition of <B>SCHED_*</B> constants */
+<B>#include &lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;</B>      /* Definition of <B>SYS_*</B> constants */
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
- <B>int sched_setattr(pid_t </B><I>pid</I><B>, struct sched_attr *</B><I>attr</I><B>,</B>
-<B>                  unsigned int </B><I>flags</I><B>);</B>
-
- <B>int sched_getattr(pid_t </B><I>pid</I><B>, struct sched_attr *</B><I>attr</I><B>,</B>
-<B>                  unsigned int </B><I>size</I><B>, unsigned int </B><I>flags</I><B>);</B>
+<B>int syscall(SYS_sched_setattr, pid_t </B><I>pid</I><B>, struct sched_attr *</B><I>attr</I><B>,</B>
+<B>            unsigned int </B><I>flags</I><B>);</B>
+<B>int syscall(SYS_sched_getattr, pid_t </B><I>pid</I><B>, struct sched_attr *</B><I>attr</I><B>,</B>
+<B>            unsigned int </B><I>size</I><B>, unsigned int </B><I>flags</I><B>);</B>
 </PRE>
 
 
 
-<A NAME="lbAD">&nbsp;</A>
+<P>
+
+<I>Note</I>: glibc provides no wrappers for these system calls, necessitating
+the use of <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H3>sched_setattr()</H3>
 
 <B>sched_setattr</B>() システムコールは、 <I>pid</I> で指定された ID
@@ -81,17 +90,21 @@ Linux では以下のポリシーも提供されている。
 
 <PRE>
 struct sched_attr {
-    u32 size;              /* この構造体のサイズ */
-    u32 sched_policy;      /* ポリシー (SCHED_*) */
-    u64 sched_flags;       /* フラグ */
-    s32 sched_nice;        /* nice 値 (SCHED_OTHER,
+    u32 size;              /* Size of this structure */
+    u32 sched_policy;      /* Policy (SCHED_*) */
+    u64 sched_flags;       /* Flags */
+    s32 sched_nice;        /* Nice value (SCHED_OTHER,
                               SCHED_BATCH) */
-    u32 sched_priority;    /* 静的優先度 (SCHED_FIFO,
+    u32 sched_priority;    /* Static priority (SCHED_FIFO,
                               SCHED_RR) */
-    /* 残りのフィールドは SCHED_DEADLINE 用である */
+    /* For SCHED_DEADLINE */
     u64 sched_runtime;
     u64 sched_deadline;
     u64 sched_period;
+
+    /* Utilization hints */
+    u32 sched_util_min;
+    u32 sched_util_max;
 };
 </PRE>
 
@@ -145,6 +158,15 @@ than thread-directed.  This is probably a bug.  On the one hand,
 other hand, if the process-directed signal is delivered to a thread inside
 the process other than the one that had a run-time overrun, the application
 has no way of knowing which thread overran.
+<DT><B>SCHED_FLAG_UTIL_CLAMP_MIN</B><DD>
+<DT><B>SCHED_FLAG_UTIL_CLAMP_MAX</B> (両方とも Linux 5.3 以降)<DD>
+These flags indicate that the <I>sched_util_min</I> or <I>sched_util_max</I> fields,
+respectively, are present, representing the expected minimum and maximum
+utilization of the thread.
+<DT><DD>
+The utilization attributes provide the scheduler with boundaries within
+which it should schedule the thread, potentially informing its decisions
+regarding task placement and frequency selection.
 </DL>
 </DL>
 
@@ -163,6 +185,27 @@ nice 値を指定する。 nice 値は -20 (高優先度) から +19 (低優先�
 このフィールドは、 デッドラインスケジューリングの &quot;Deadline&quot; パラメーターを指定する。 この値はナノ秒単位で表現される。
 <DT><I>sched_period</I><DD>
 このフィールドは、 デッドラインスケジューリングの &quot;Period&quot; パラメーターを指定する。 この値はナノ秒単位で表現される。
+<DT><I>sched_util_min</I><DD>
+<DT><I>sched_util_max</I> (両方とも Linux 5.3 以降)<DD>
+These fields specify the expected minimum and maximum utilization,
+respectively.  They are ignored unless their corresponding
+<B>SCHED_FLAG_UTIL_CLAMP_MIN</B> or <B>SCHED_FLAG_UTIL_CLAMP_MAX</B> is set in
+<I>sched_flags</I>.
+<DT><DD>
+Utilization is a value in the range [0, 1024], representing the percentage
+of CPU time used by a task when running at the maximum frequency on the
+highest capacity CPU of the system.  This is a fixed point representation,
+where 1024 corresponds to 100%, and 0 corresponds to 0%.  For example, a 20%
+utilization task is a task running for 2ms every 10ms at maximum frequency
+and is represented by a utilization value of <I>0.2~*~1024~=~205</I>.
+<DT><DD>
+A task with a minimum utilization value larger than 0 is more likely
+scheduled on a CPU with a capacity big enough to fit the specified value.  A
+task with a maximum utilization value smaller than 1024 is more likely
+scheduled on a CPU with no more capacity than the specified value.
+<DT><DD>
+A task utilization boundary can be reset by setting its field to
+<B>UINT32_MAX</B> (since Linux 5.11).
 </DL>
 <P>
 
@@ -171,7 +214,7 @@ nice 値を指定する。 nice 値は -20 (高優先度) から +19 (低優先�
 
 
 <I>flags</I> 引数は、このインターフェースの将来の拡張のために用意されている。 現在の実装では 0 を指定しなければならない。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H3>sched_getattr()</H3>
 
 <B>sched_getattr</B>() システムコールは、 <I>pid</I> で指定された ID
@@ -197,12 +240,12 @@ interface.
 <P>
 
 <I>flags</I> 引数は、このインターフェースの将来の拡張のために用意されている。 現在の実装では 0 を指定しなければならない。
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>返り値</H2>
 
-成功した場合は <B>sched_setattr</B>()  と <B>sched_getattr</B>()  は 0 を返す。 エラーの場合は -1 が返され、
-エラーの原因を示す値が <I>errno</I> に設定される。
-<A NAME="lbAH">&nbsp;</A>
+On success, <B>sched_setattr</B>()  and <B>sched_getattr</B>()  return 0.  On error,
+-1 is returned, and <I>errno</I> is set to indicate the error.
+<A NAME="lbAI">&nbsp;</A>
 <H2>エラー</H2>
 
 <B>sched_getattr</B>() と <B>sched_setattr</B>() の両方が以下の理由で失敗する。
@@ -231,35 +274,50 @@ ID が <I>pid</I> のスレッドが見つからなかった。
 <DT><B>EBUSY</B><DD>
 <B>SCHED_DEADLINE</B> の流入制御の失敗については <B><A HREF="../man7/sched.7.html">sched</A></B>(7) を参照。
 <DT><B>EINVAL</B><DD>
-<I>attr.sched_policy</I> が認識できるポリシーではない。 <I>attr.sched_flags</I> に
-<B>SCHED_FLAG_RESET_ON_FORK</B> 以外のフラグが含まれている。 <I>attr.sched_priority</I> が無効である。
-<I>attr.sched_policy</I> が <B>SCHED_DEADLINE</B> で、 <I>attr</I>
-に指定されたデッドラインスケジューリングパラメーターが無効である。
+<I>attr.sched_policy</I> が認識できるポリシーではない。
+<DT><B>EINVAL</B><DD>
+<I>attr.sched_flags</I> contains a flag other than <B>SCHED_FLAG_RESET_ON_FORK</B>.
+<DT><B>EINVAL</B><DD>
+<I>attr.sched_priority</I> is invalid.
+<DT><B>EINVAL</B><DD>
+<I>attr.sched_policy</I> is <B>SCHED_DEADLINE</B>, and the deadline scheduling
+parameters in <I>attr</I> are invalid.
+<DT><B>EINVAL</B><DD>
+<I>attr.sched_flags</I> contains <B>SCHED_FLAG_UTIL_CLAMP_MIN</B> or
+<B>SCHED_FLAG_UTIL_CLAMP_MAX</B>, and <I>attr.sched_util_min</I> or
+<I>attr.sched_util_max</I> are out of bounds.
+<DT><B>EOPNOTSUPP</B><DD>
+<B>SCHED_FLAG_UTIL_CLAMP</B> was provided, but the kernel was not built with
+<B>CONFIG_UCLAMP_TASK</B> support.
 <DT><B>EPERM</B><DD>
 呼び出した元が適切な特権を持っていない。
 <DT><B>EPERM</B><DD>
 <I>pid</I> で指定されたスレッドの CPU affinity マスクにシステムの全ての CPU のうち含まれていないものがある
 (<B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2) を参照)。
 </DL>
-<A NAME="lbAI">&nbsp;</A>
-<H2>バージョン</H2>
-
-
-
-これらのシステムコールは Linux 3.14 で初めて登場した。
 <A NAME="lbAJ">&nbsp;</A>
-<H2>準拠</H2>
+<H2>標準規格</H2>
 
-これらのシステムコールは非標準の Linux による拡張である。
+Linux.
 <A NAME="lbAK">&nbsp;</A>
+<H2>歴史</H2>
+
+
+
+Linux 3.14.
+<A NAME="lbAL">&nbsp;</A>
 <H2>注意</H2>
+
+glibc does not provide wrappers for these system calls; call them using
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
+<P>
 
 <B>sched_setattr</B>() は、<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2), <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2),
 <B><A HREF="../man2/nice.2.html">nice</A></B>(2) の機能および <B>setpriority</B> の一部機能を持つ (ただし、<B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2)
 の、指定されたユーザーに所属するすべてのプロセスまたは指定されたグループのすべてのプロセスの優先度を設定する機能は除く)。 同様に、
 <B>sched_getattr</B>() は <B><A HREF="../man2/sched_getscheduler.2.html">sched_getscheduler</A></B>(2), <B><A HREF="../man2/sched_getparam.2.html">sched_getparam</A></B>(2) の機能および
 <B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2) の一部機能を持つ。
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>バグ</H2>
 
 
@@ -280,10 +338,10 @@ ID が <I>pid</I> のスレッドが見つからなかった。
 
 
 
-In Linux versions up to 5.3, <B>sched_getattr</B>()  failed with the error
-<B>EFBIG</B> if the in-kernel <I>sched_attr</I> structure was larger than the
-<I>size</I> passed by user space.
-<A NAME="lbAM">&nbsp;</A>
+Up to Linux 5.3, <B>sched_getattr</B>()  failed with the error <B>EFBIG</B> if the
+in-kernel <I>sched_attr</I> structure was larger than the <I>size</I> passed by user
+space.
+<A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>
 
 
@@ -296,31 +354,26 @@ In Linux versions up to 5.3, <B>sched_getattr</B>()  failed with the error
 <B><A HREF="../man3/pthread_setschedparam.3.html">pthread_setschedparam</A></B>(3), <B><A HREF="../man3/pthread_setschedprio.3.html">pthread_setschedprio</A></B>(3), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
 <B>cpuset</B>(7), <B><A HREF="../man7/sched.7.html">sched</A></B>(7)
 
-<A NAME="lbAN">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
 <DL>
-<DT><A HREF="#lbAE">sched_setattr()</A><DD>
-<DT><A HREF="#lbAF">sched_getattr()</A><DD>
+<DT><A HREF="#lbAF">sched_setattr()</A><DD>
+<DT><A HREF="#lbAG">sched_getattr()</A><DD>
 </DL>
-<DT><A HREF="#lbAG">返り値</A><DD>
-<DT><A HREF="#lbAH">エラー</A><DD>
-<DT><A HREF="#lbAI">バージョン</A><DD>
-<DT><A HREF="#lbAJ">準拠</A><DD>
-<DT><A HREF="#lbAK">注意</A><DD>
-<DT><A HREF="#lbAL">バグ</A><DD>
-<DT><A HREF="#lbAM">関連項目</A><DD>
-<DT><A HREF="#lbAN">この文書について</A><DD>
+<DT><A HREF="#lbAH">返り値</A><DD>
+<DT><A HREF="#lbAI">エラー</A><DD>
+<DT><A HREF="#lbAJ">標準規格</A><DD>
+<DT><A HREF="#lbAK">歴史</A><DD>
+<DT><A HREF="#lbAL">注意</A><DD>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

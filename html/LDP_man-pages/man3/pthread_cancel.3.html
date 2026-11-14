@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of PTHREAD_CANCEL</TITLE>
+<HTML><HEAD><TITLE>Man page of pthread_cancel</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>PTHREAD_CANCEL</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index">Index</A>
+<H1>pthread_cancel</H1>
+Section: C Library Functions (3)<BR>Updated: 2025-09-21<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man3/pthread_cancel.3">roff page</A><HR>
 
@@ -16,110 +16,108 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2020-06-09<BR><A HREF="#index
 
 pthread_cancel - スレッドにキャンセル要求を送る
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+POSIX スレッドライブラリ (<I>libpthread</I>,~<I>-lpthread</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;</B>
 
 <B>int pthread_cancel(pthread_t </B><I>thread</I><B>);</B>
-
-<I>-pthread</I> でコンパイルしてリンクする。
 </PRE>
 
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
-<B>pthread_cancel</B>() 関数は指定されたスレッド <I>thread</I> にキャンセル要求
-を送信する。対象のスレッドがキャンセル要求に反応するかどうか、いつ反応
-するかは対象のスレッドの制御下にある 2 つの属性、cancelability
-<I>state</I> と <I>type</I>により決まる。
+The <B>pthread_cancel</B>()  function sends a cancelation request to the thread
+<I>thread</I>.  Whether and when the target thread reacts to the cancelation
+request depends on two attributes that are under the control of that thread:
+its cancelability <I>state</I> and <I>type</I>.
 <P>
 
-あるスレッドの cancelability state は <B><A HREF="../man3/pthread_setcancelstate.3.html">pthread_setcancelstate</A></B>(3) で
-設定され、<I>enabled</I> と <I>disabled</I> のいずれとなる (<I>enabled</I> が新しい
-スレッドのデフォルト値である)。スレッドがキャンセルを無効にしていた場合、
-キャンセル要求はそのスレッドがキャンセルを有効にするまでキューに入れら
-れたままになる。スレッドがキャンセルを有効にしていた場合、
-cancelability type によって、いつキャンセルが発生するかが決まる。
+A thread's cancelability state, determined by <B><A HREF="../man3/pthread_setcancelstate.3.html">pthread_setcancelstate</A></B>(3),
+can be <I>enabled</I> (the default for new threads) or <I>disabled</I>.  If a thread
+has disabled cancelation, then a cancelation request remains queued until
+the thread enables cancelation.  If a thread has enabled cancelation, then
+its cancelability type determines when cancelation occurs.
 <P>
 
-スレッドのキャンセル種別 (cancelability type) は
-<B><A HREF="../man3/pthread_setcanceltype.3.html">pthread_setcanceltype</A></B>(3) で設定され、<I>asynchronous</I> か <I>deferred</I>
-のいずれかとなる(<I>deferred</I> が新しいスレッドのデフォルト値である)。
-非同期キャンセル (asynchronous cancelability) は、そのスレッドはいつで
-もキャンセルされることを意味する (通常はすぐにキャンセルされるが、
-システムがそのことを保証しているわけではない)。遅延キャンセル
-(deferred cancelability) では、そのスレッドが <I>取り消しポイント
-(cancellation point)</I> となっている関数を次に呼び出すまでキャンセルが
-遅延される。取り消しポイントに設定されていたり設定
-したりできる関数のリストは <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7) に記載している。
+A thread's cancelation type, determined by <B><A HREF="../man3/pthread_setcanceltype.3.html">pthread_setcanceltype</A></B>(3), may
+be either <I>asynchronous</I> or <I>deferred</I> (the default for new threads).
+Asynchronous cancelability means that the thread can be canceled at any time
+(usually immediately, but the system does not guarantee this).  Deferred
+cancelability means that cancelation will be delayed until the thread next
+calls a function that is a <I>cancelation point</I>.  A list of functions that
+are or may be cancelation points is provided in <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7).
 <P>
 
-キャンセル要求が実行されると、
-<I>thread</I> では以下のステップが (この順序で) 行われる。
+When a cancelation request is acted on, the following steps occur for
+<I>thread</I> (in this order):
 <DL COMPACT>
-<DT>1.<DD>
-キャンセルクリーンアップハンドラーが (push されたのと逆順で)
-取り出され (pop され)、呼び出される。
-(<B><A HREF="../man3/pthread_cleanup_push.3.html">pthread_cleanup_push</A></B>(3) 参照)
-<DT>2.<DD>
+<DT>(1)<DD>
+Cancelation clean-up handlers are popped (in the reverse of the order in
+which they were pushed) and called.  (See <B><A HREF="../man3/pthread_cleanup_push.3.html">pthread_cleanup_push</A></B>(3).)
+<DT>(2)<DD>
 スレッド固有データのデストラクタ (destructor) が呼び出される。
 呼び出し順序は規定されていない。
 (<B><A HREF="../../glibc-linuxthreads/man3/pthread_key_create.3.html">pthread_key_create</A></B>(3) 参照)
-<DT>3.<DD>
+<DT>(3)<DD>
 スレッドが終了される。 (<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3) 参照)
 </DL>
 <P>
 
-上記のステップは <B>pthread_cancel</B>() の呼び出しとは非同期に行われる。
-<B>pthread_cancel</B>() の返却ステータスは単にキャンセル要求が正常に
-キューに入れられたかどうかを呼び出し元に示すだけのものである。
+The above steps happen asynchronously with respect to the
+<B>pthread_cancel</B>()  call; the return status of <B>pthread_cancel</B>()  merely
+informs the caller whether the cancelation request was successfully queued.
 <P>
 
-キャンセルされたスレッドが終了された後に、
-<B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3) でそのスレッドを join すると、
-そのスレッドの終了ステータスとして <B>PTHREAD_CANCELED</B> が得られる。
-(スレッドの join はキャンセルが完了したかを知る唯一の方法である)
-<A NAME="lbAE">&nbsp;</A>
+After a canceled thread has terminated, a join with that thread using
+<B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3)  obtains <B>PTHREAD_CANCELED</B> as the thread's exit
+status.  (Joining with a thread is the only way to know that cancelation has
+completed.)
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 成功すると、 <B>pthread_cancel</B>() は 0 を返す。
 エラーの場合、0 以外のエラー番号を返す。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
 <DT><B>ESRCH</B><DD>
-
-
-
-
 ID が <I>thread</I> のスレッドが見つからなかった。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>属性</H2>
 
 この節で使用されている用語の説明については、 <B>attributes</B>(7) を参照。
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>pthread_cancel</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<P>
-<A NAME="lbAH">&nbsp;</A>
-<H2>準拠</H2>
-
-POSIX.1-2001, POSIX.1-2008.
 <A NAME="lbAI">&nbsp;</A>
-<H2>注意</H2>
+<H2>バージョン</H2>
 
-Linux では、キャンセルはシグナルを使って実装されている。NPTL スレッド実装では、
-最初のリアルタイムシグナル (つまり、シグナル 32)がこのために使用される。
-LinuxThreads では、リアルタイムシグナルが利用可能な場合は2 番目のリアルタイム
-シグナルが使用され、そうでない場合は <B>SIGUSR2</B> が使用される。
+On Linux, cancelation is implemented using signals.  Under the NPTL
+threading implementation, the first real-time signal (i.e., signal 32) is
+used for this purpose.  On LinuxThreads, the second real-time signal is
+used, if real-time signals are available, otherwise <B>SIGUSR2</B> is used.
 <A NAME="lbAJ">&nbsp;</A>
+<H2>標準規格</H2>
+
+POSIX.1-2008.
+<A NAME="lbAK">&nbsp;</A>
+<H2>歴史</H2>
+
+glibc 2.0 POSIX.1-2001.
+<A NAME="lbAL">&nbsp;</A>
 <H2>例</H2>
 
 以下のプログラムは、スレッドを一つ作成してから、そのスレッドをキャンセルする。
@@ -131,54 +129,53 @@ LinuxThreads では、リアルタイムシグナルが利用可能な場合は2
 
 <PRE>
 $ ./a.out
-thread_func(): started; cancellation disabled
-main(): sending cancellation request
-thread_func(): about to enable cancellation
+thread_func(): started; cancelation disabled
+main(): sending cancelation request
+thread_func(): about to enable cancelation
 main(): thread was canceled
 </PRE>
 
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
+
+
 <PRE>
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/pthread.h">pthread.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-
-#define handle_error_en(en, msg) \
-        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
 
 static void *
 thread_func(void *ignored_argument)
 {
     int s;
 
-    /* Disable cancellation for a while, so that we don't
-       immediately react to a cancellation request */
+    /* Disable cancelation for a while, so that we don't
+       immediately react to a cancelation request.  */
 
     s = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
     if (s != 0)
-        handle_error_en(s, &quot;pthread_setcancelstate&quot;);
+        errc(EXIT_FAILURE, s, &quot;pthread_setcancelstate&quot;);
 
-    printf(&quot;thread_func(): started; cancellation disabled\n&quot;);
+    printf(&quot;%s(): started; cancelation disabled\n&quot;, __func__);
     sleep(5);
-    printf(&quot;thread_func(): about to enable cancellation\n&quot;);
+    printf(&quot;%s(): about to enable cancelation\n&quot;, __func__);
 
     s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     if (s != 0)
-        handle_error_en(s, &quot;pthread_setcancelstate&quot;);
+        errc(EXIT_FAILURE, s, &quot;pthread_setcancelstate&quot;);
 
-    /* sleep() is a cancellation point */
+    /* sleep() is a cancelation point.  */
 
     sleep(1000);        /* Should get canceled while we sleep */
 
-    /* Should never get here */
+    /* Should never get here.  */
 
-    printf(&quot;thread_func(): not canceled!\n&quot;);
+    printf(&quot;%s(): not canceled!\n&quot;, __func__);
     return NULL;
 }
 
@@ -189,34 +186,37 @@ main(void)
     void *res;
     int s;
 
-    /* Start a thread and then send it a cancellation request */
+    /* Start a thread and then send it a cancelation request.  */
 
     s = pthread_create(&amp;thr, NULL, &amp;thread_func, NULL);
     if (s != 0)
-        handle_error_en(s, &quot;pthread_create&quot;);
+        errc(EXIT_FAILURE, s, &quot;pthread_create&quot;);
 
     sleep(2);           /* Give thread a chance to get started */
 
-    printf(&quot;main(): sending cancellation request\n&quot;);
+    printf(&quot;%s(): sending cancelation request\n&quot;, __func__);
     s = pthread_cancel(thr);
     if (s != 0)
-        handle_error_en(s, &quot;pthread_cancel&quot;);
+        errc(EXIT_FAILURE, s, &quot;pthread_cancel&quot;);
 
-    /* Join with thread to see what its exit status was */
+    /* Join with thread to see what its exit status was.  */
 
     s = pthread_join(thr, &amp;res);
     if (s != 0)
-        handle_error_en(s, &quot;pthread_join&quot;);
+        errc(EXIT_FAILURE, s, &quot;pthread_join&quot;);
 
     if (res == PTHREAD_CANCELED)
-        printf(&quot;main(): thread was canceled\n&quot;);
+        printf(&quot;%s(): thread was canceled\n&quot;, __func__);
     else
-        printf(&quot;main(): thread wasn't canceled (shouldn't happen!)\n&quot;);
+        printf(&quot;%s(): thread wasn't canceled (shouldn't happen!)\n&quot;,
+               __func__);
     exit(EXIT_SUCCESS);
 }
 </PRE>
 
-<A NAME="lbAL">&nbsp;</A>
+
+
+<A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>
 
 
@@ -224,30 +224,26 @@ main(void)
 <B><A HREF="../man3/pthread_cleanup_push.3.html">pthread_cleanup_push</A></B>(3), <B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3), <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3),
 <B><A HREF="../man3/pthread_join.3.html">pthread_join</A></B>(3), <B><A HREF="../../glibc-linuxthreads/man3/pthread_key_create.3.html">pthread_key_create</A></B>(3), <B><A HREF="../man3/pthread_setcancelstate.3.html">pthread_setcancelstate</A></B>(3),
 <B><A HREF="../man3/pthread_setcanceltype.3.html">pthread_setcanceltype</A></B>(3), <B><A HREF="../man3/pthread_testcancel.3.html">pthread_testcancel</A></B>(3), <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
-<A NAME="lbAM">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">属性</A><DD>
-<DT><A HREF="#lbAH">準拠</A><DD>
-<DT><A HREF="#lbAI">注意</A><DD>
-<DT><A HREF="#lbAJ">例</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">属性</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
+<DT><A HREF="#lbAJ">標準規格</A><DD>
+<DT><A HREF="#lbAK">歴史</A><DD>
+<DT><A HREF="#lbAL">例</A><DD>
 <DL>
-<DT><A HREF="#lbAK">プログラムのソース</A><DD>
+<DT><A HREF="#lbAM">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAL">関連項目</A><DD>
-<DT><A HREF="#lbAM">この文書について</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

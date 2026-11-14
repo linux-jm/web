@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of EVENTFD</TITLE>
+<HTML><HEAD><TITLE>Man page of eventfd</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>EVENTFD</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index">Index</A>
+<H1>eventfd</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-16<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/eventfd.2">roff page</A><HR>
 
@@ -16,13 +16,19 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2020-11-01<BR><A HREF="#index
 
 eventfd - イベント通知用のファイルディスクリプターを生成する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/sys/eventfd.h">sys/eventfd.h</A>&gt;</B>
-<P>
 
 <B>int eventfd(unsigned int </B><I>initval</I><B>, int </B><I>flags</I><B>);</B>
-<A NAME="lbAD">&nbsp;</A>
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>eventfd</B>()  は &quot;eventfd オブジェクト&quot; を生成する。 eventfd
@@ -48,7 +54,8 @@ extra calls to <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)  to achieve th
 </DL>
 <P>
 
-バージョン 2.6.26 以前の Linux では、 <I>flags</I> 引数は未使用であり、0 を指定しなければならない。
+Up to Linux 2.6.26, the <I>flags</I> argument is unused, and must be specified
+as zero.
 <P>
 
 The following operations can be performed on the file descriptor returned by
@@ -58,19 +65,20 @@ The following operations can be performed on the file descriptor returned by
 <B><A HREF="../man2/read.2.html">read</A></B>(2) は成功すると、8 バイトの整数を返す。 渡されたバッファーの大きさが 8 バイト未満の場合、 <B><A HREF="../man2/read.2.html">read</A></B>(2)  はエラー
 <B>EINVAL</B> で失敗する。
 <DT><DD>
-<B><A HREF="../man2/read.2.html">read</A></B>(2) が返す値は、ホストバイトオーダ、つまり、そのホストマシンにおける整数の通常のバイトオーダである。
+The value returned by <B><A HREF="../man2/read.2.html">read</A></B>(2)  is in host byte order---that is, the
+native byte order for integers on the host machine.
 <DT><DD>
 <B><A HREF="../man2/read.2.html">read</A></B>(2) の動作は、 eventfd カウンターの現在の値が 0 以外であるかと、 eventfd ファイルディスクリプターを作成する際に
 <B>EFD_SEMAPHORE</B> フラグが指定されたか、により変化する。
 <DL COMPACT><DT><DD>
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 <B>EFD_SEMAPHORE</B> が指定されておらず、eventfd カウンターが 0 以外の値の場合、 <B><A HREF="../man2/read.2.html">read</A></B>(2) はカウンター値を格納した
 8 バイトの値を返し、 カウンター値は 0 にリセットされる。
-<DT>*<DD>
+<DT>&bull;<DD>
 <B>EFD_SEMAPHORE</B> が指定されていて eventfd カウンターが 0 以外の値の場合、 <B><A HREF="../man2/read.2.html">read</A></B>(2) は値 1 の 8
 バイト値を返し、カウンター値は 1 減算される。
-<DT>*<DD>
+<DT>&bull;<DD>
 <B><A HREF="../man2/read.2.html">read</A></B>(2) を呼び出した時点で eventfd カウンターが 0 の場合、 <B><A HREF="../man2/read.2.html">read</A></B>(2) はカウンターが 0 以外になるまで停止
 (block) する (0 以外になった時点で <B><A HREF="../man2/read.2.html">read</A></B>(2) は上記で述べた通り実行を再開する)、 もしくはファイルディスクリプターが非停止
 (nonblocking) に設定されている場合はエラー <B>EAGAIN</B> で失敗する。
@@ -86,23 +94,28 @@ The following operations can be performed on the file descriptor returned by
 <DT><DD>
 渡されたバッファーの大きさが 8 バイト未満の場合、もしくは 値 0xffffffffffffffff を書き込もうとした場合、 <B><A HREF="../man2/write.2.html">write</A></B>(2)
 はエラー <B>EINVAL</B> で失敗する。
-<DT><B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2) (と同様の操作)<DD>
+<DT><B><A HREF="../man2/poll.2.html">poll</A></B>(2)<DD>
+<DT><B><A HREF="../man2/select.2.html">select</A></B>(2)<DD>
+<DT>(and similar)<DD>
 返されたファイルディスクリプターは、 <B><A HREF="../man2/poll.2.html">poll</A></B>(2)  (<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  も同じ) や <B><A HREF="../man2/select.2.html">select</A></B>(2)
 をサポートしており、以下のような動作をする。
 <DL COMPACT><DT><DD>
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 カウンターが 0 より大きい値の場合、 ファイルディスクリプターは読み出し可能となる (<B><A HREF="../man2/select.2.html">select</A></B>(2)  の <I>readfds</I> 引数や
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2)  の <B>POLLIN</B> フラグ)。
-<DT>*<DD>
+<DT>&bull;<DD>
 少なくとも値 &quot;1&quot; を、停止 (block) を伴わずに書き込める場合、 ファイルディスクリプターは書き込み可能となる (<B><A HREF="../man2/select.2.html">select</A></B>(2)
 の <I>writefds</I> 引数や <B><A HREF="../man2/poll.2.html">poll</A></B>(2)  の <B>POLLOUT</B> フラグ)。
-<DT>*<DD>
-カウンター値のオーバーフローが検出された場合、 <B><A HREF="../man2/select.2.html">select</A></B>(2)  はファイルディスクリプターは読み出し可能と書き込み可能の両方を通知し、
-<B><A HREF="../man2/poll.2.html">poll</A></B>(2)  は <B>POLLERR</B> イベントを返す。 上述の通り、 <B><A HREF="../man2/write.2.html">write</A></B>(2)
-でカウンターがオーバーフローすることは決してない。 しかしながら、 KAIO サブシステムによって 2^64 回の eventfd &quot;signal
-posts&quot; が 実行された場合にはオーバーフローが起こり得る (理論的にはあり得るが、実用的にはあり得ない)。 オーバーフローが発生した場合、
-<B><A HREF="../man2/read.2.html">read</A></B>(2)  は <I>uint64_t</I> の最大値 (すなわち 0xffffffffffffffff) を返す。
+<DT>&bull;<DD>
+If an overflow of the counter value was detected, then <B><A HREF="../man2/select.2.html">select</A></B>(2)
+indicates the file descriptor as being both readable and writable, and
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)  returns a <B>POLLERR</B> event.  As noted above, <B><A HREF="../man2/write.2.html">write</A></B>(2)  can
+never overflow the counter.  However an overflow can occur if 2^64
+eventfd &quot;signal posts&quot; were performed by the KAIO subsystem (theoretically
+possible, but practically unlikely).  If an overflow has occurred, then
+<B><A HREF="../man2/read.2.html">read</A></B>(2)  will return that maximum <I>uint64_t</I> value (i.e.,
+0xffffffffffffffff).
 </DL>
 </DL>
 
@@ -118,12 +131,12 @@ eventfd ファイルディスクリプターは、これ以外のファイルデ
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2) で生成された子プロセスは、 <B>eventfd</B>() で生成されたファイルディスクリプターのコピーを継承する。
 複製されたファイルディスクリプターは同じ eventfd オブジェクトに関連付けられる。 close-on-exec フラグが設定されていない場合、
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2) の前後で <B>eventfd</B>() で生成されたファイルディスクリプターは保持される。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
 成功すると、 <B>eventfd</B>()  は新規の eventfd ファイルディスクリプターを返す。 エラーの場合、-1 を返し、 <I>errno</I>
 にエラーを示す値を設定する。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
@@ -148,15 +161,6 @@ eventfd ファイルディスクリプターは、これ以外のファイルデ
 <DT><B>ENOMEM</B><DD>
 新しい eventfd ファイルディスクリプターを生成するのに十分なメモリーがなかった。
 </DL>
-<A NAME="lbAG">&nbsp;</A>
-<H2>バージョン</H2>
-
-
-
-<B>eventfd</B>()  はカーネル 2.6.22 以降の Linux で利用可能である。 正しく動作する glibc 側のサポートはバージョン
-2.8 以降で提供されている。 <B>eventfd2</B>()  システムコール (「注意」参照) は カーネル 2.6.27 以降の Linux
-で利用可能である。 バージョン 2.9 以降では、glibc の <B>eventfd</B>()  のラッパー関数は、カーネルが対応していれば
-<B>eventfd2</B>()  システムコールを利用する。
 <A NAME="lbAH">&nbsp;</A>
 <H2>属性</H2>
 
@@ -164,16 +168,59 @@ eventfd ファイルディスクリプターは、これ以外のファイルデ
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>インターフェース</B></TD><TD><B>属性</B></TD><TD><B>値</B><BR></TD></TR>
 <TR VALIGN=top><TD>
+
+
 <B>eventfd</B>()
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<P>
 <A NAME="lbAI">&nbsp;</A>
-<H2>準拠</H2>
+<H2>バージョン</H2>
 
-<B>eventfd</B>()  と <B>eventfd2</B>()  は Linux 固有である。
 <A NAME="lbAJ">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+下層にある Linux システムコールは二種類あり、 <B>eventfd</B>()  と、もっと新しい <B>eventfd2</B>()  である。
+<B>eventfd</B>()  は <I>flags</I> 引数を実装していない。 <B>eventfd2</B>()  では上記の値の <I>flags</I>
+が実装されている。 glibc のラッパー関数は、 <B>eventfd2</B>()  が利用可能であれば、これを使用する。
+<A NAME="lbAK">&nbsp;</A>
+<H3>glibc の追加機能</H3>
+
+GNU C ライブラリは、eventfd ファイルディスクリプターの読み出しと書き込みに
+を関する詳細のいくつか抽象化するために、一つの型と、二つの関数を追加で 定義している。
+<P>
+
+
+<PRE>
+typedef uint64_t eventfd_t;
+
+int eventfd_read(int fd, eventfd_t *value);
+int eventfd_write(int fd, eventfd_t value);
+</PRE>
+
+
+<P>
+
+これらの関数は、eventfd ファイルディスクリプターに対する読み出しと 書き込みの操作を実行し、正しいバイト数が転送された場合には 0
+を返し、そうでない場合は -1 を返す。
+<A NAME="lbAL">&nbsp;</A>
+<H2>標準規格</H2>
+
+Linux, GNU.
+<A NAME="lbAM">&nbsp;</A>
+<H2>歴史</H2>
+
+<DL COMPACT>
+<DT><B>eventfd</B>()<DD>
+
+
+Linux 2.6.22, glibc 2.8.
+<DT><B>eventfd2</B>()<DD>
+Linux 2.6.27 (see VERSIONS).  Since glibc 2.9, the <B>eventfd</B>()  wrapper
+will employ the <B>eventfd2</B>()  system call, if it is supported by the
+kernel.
+</DL>
+<A NAME="lbAN">&nbsp;</A>
 <H2>注意</H2>
 
 アプリケーションは、パイプをイベントを通知するためだけに使用している 全ての場面において、パイプの代わりに eventfd ファイルディスクリプターを
@@ -194,38 +241,10 @@ eventfd ファイルディスクリプターの重要な点は、 eventfd ファ
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)  経由で多重することはできなかった)。
 <P>
 
-
-
 The current value of an eventfd counter can be viewed via the entry for the
-corresponding file descriptor in the process's <I>/proc/[pid]/fdinfo</I>
+corresponding file descriptor in the process's <I>/proc/</I>pid<I>/fdinfo</I>
 directory.  See <B><A HREF="../man5/proc.5.html">proc</A></B>(5)  for further details.
-<A NAME="lbAK">&nbsp;</A>
-<H3>C ライブラリとカーネルの違い</H3>
-
-下層にある Linux システムコールは二種類あり、 <B>eventfd</B>()  と、もっと新しい <B>eventfd2</B>()  である。
-<B>eventfd</B>()  は <I>flags</I> 引数を実装していない。 <B>eventfd2</B>()  では上記の値の <I>flags</I>
-が実装されている。 glibc のラッパー関数は、 <B>eventfd2</B>()  が利用可能であれば、これを使用する。
-<A NAME="lbAL">&nbsp;</A>
-<H3>glibc の追加機能</H3>
-
-GNU C ライブラリは、eventfd ファイルディスクリプターの読み出しと書き込みに
-を関する詳細のいくつか抽象化するために、一つの型と、二つの関数を追加で 定義している。
-<P>
-
-
-<PRE>
-typedef uint64_t eventfd_t;
-
-int eventfd_read(int fd, eventfd_t *value);
-int eventfd_write(int fd, eventfd_t value);
-</PRE>
-
-
-<P>
-
-これらの関数は、eventfd ファイルディスクリプターに対する読み出しと 書き込みの操作を実行し、正しいバイト数が転送された場合には 0
-を返し、そうでない場合は -1 を返す。
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>例</H2>
 
 以下のプログラムは eventfd ファイルディスクリプターを生成し、 その後 fork を実行して子プロセスを生成する。 親プロセスが少しの間
@@ -250,27 +269,27 @@ Parent read 28 (0x1c) from efd
 </PRE>
 
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>プログラムのソース</H3>
 
 
-<PRE>
-#include &lt;<A HREF="file:///usr/include/sys/eventfd.h">sys/eventfd.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/inttypes.h">inttypes.h</A>&gt;           /* Definition of PRIu64 &amp; PRIx64 */
-#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;             /* Definition of uint64_t */
 
-#define handle_error(msg) \
-    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/inttypes.h">inttypes.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/eventfd.h">sys/eventfd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 
 int
 main(int argc, char *argv[])
 {
-    int efd;
-    uint64_t u;
-    ssize_t s;
+    int       efd;
+    uint64_t  u;
+    ssize_t   s;
 
     if (argc &lt; 2) {
         fprintf(stderr, &quot;Usage: %s &lt;num&gt;...\n&quot;, argv[0]);
@@ -279,17 +298,17 @@ main(int argc, char *argv[])
 
     efd = eventfd(0, 0);
     if (efd == -1)
-        handle_error(&quot;eventfd&quot;);
+        err(EXIT_FAILURE, &quot;eventfd&quot;);
 
     switch (fork()) {
     case 0:
-        for (int j = 1; j &lt; argc; j++) {
+        for (size_t j = 1; j &lt; argc; j++) {
             printf(&quot;Child writing %s to efd\n&quot;, argv[j]);
             u = strtoull(argv[j], NULL, 0);
                     /* strtoull() allows various bases */
             s = write(efd, &amp;u, sizeof(uint64_t));
             if (s != sizeof(uint64_t))
-                handle_error(&quot;write&quot;);
+                err(EXIT_FAILURE, &quot;write&quot;);
         }
         printf(&quot;Child completed write loop\n&quot;);
 
@@ -301,51 +320,49 @@ main(int argc, char *argv[])
         printf(&quot;Parent about to read\n&quot;);
         s = read(efd, &amp;u, sizeof(uint64_t));
         if (s != sizeof(uint64_t))
-            handle_error(&quot;read&quot;);
-        printf(&quot;Parent read %&quot;PRIu64&quot; (%#&quot;PRIx64&quot;) from efd\n&quot;, u, u);
+            err(EXIT_FAILURE, &quot;read&quot;);
+        printf(&quot;Parent read %w64u (%#w64x) from efd\n&quot;, u, u);
         exit(EXIT_SUCCESS);
 
     case -1:
-        handle_error(&quot;fork&quot;);
+        err(EXIT_FAILURE, &quot;fork&quot;);
     }
 }
 </PRE>
 
-<A NAME="lbAO">&nbsp;</A>
+
+
+<A NAME="lbAQ">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man2/futex.2.html">futex</A></B>(2), <B><A HREF="../man2/pipe.2.html">pipe</A></B>(2), <B><A HREF="../man2/poll.2.html">poll</A></B>(2), <B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/select.2.html">select</A></B>(2),
 <B><A HREF="../man2/signalfd.2.html">signalfd</A></B>(2), <B><A HREF="../man2/timerfd_create.2.html">timerfd_create</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7),
 <B><A HREF="../man7/sem_overview.7.html">sem_overview</A></B>(7)
-<A NAME="lbAP">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">バージョン</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
 <DT><A HREF="#lbAH">属性</A><DD>
-<DT><A HREF="#lbAI">準拠</A><DD>
-<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAI">バージョン</A><DD>
 <DL>
-<DT><A HREF="#lbAK">C ライブラリとカーネルの違い</A><DD>
-<DT><A HREF="#lbAL">glibc の追加機能</A><DD>
+<DT><A HREF="#lbAJ">C ライブラリとカーネルの違い</A><DD>
+<DT><A HREF="#lbAK">glibc の追加機能</A><DD>
 </DL>
-<DT><A HREF="#lbAM">例</A><DD>
+<DT><A HREF="#lbAL">標準規格</A><DD>
+<DT><A HREF="#lbAM">歴史</A><DD>
+<DT><A HREF="#lbAN">注意</A><DD>
+<DT><A HREF="#lbAO">例</A><DD>
 <DL>
-<DT><A HREF="#lbAN">プログラムのソース</A><DD>
+<DT><A HREF="#lbAP">プログラムのソース</A><DD>
 </DL>
-<DT><A HREF="#lbAO">関連項目</A><DD>
-<DT><A HREF="#lbAP">この文書について</A><DD>
+<DT><A HREF="#lbAQ">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

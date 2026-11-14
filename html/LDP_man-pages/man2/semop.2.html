@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of SEMOP</TITLE>
+<HTML><HEAD><TITLE>Man page of semop</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>SEMOP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
+<H1>semop</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/semop.2">roff page</A><HR>
 
@@ -16,17 +16,18 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index
 
 semop, semtimedop - System V セマフォの操作
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
 <PRE>
-<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-<B>#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
 <B>#include &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;</B>
 
 <B>int semop(int </B><I>semid</I><B>, struct sembuf *</B><I>sops</I><B>, size_t </B><I>nsops</I><B>);</B>
-
 <B>int semtimedop(int </B><I>semid</I><B>, struct sembuf *</B><I>sops</I><B>, size_t </B><I>nsops</I><B>,</B>
-<B>               const struct timespec *</B><I>timeout</I><B>);</B>
+<B>               const struct timespec *_Nullable </B><I>timeout</I><B>);</B>
 </PRE>
 
 <P>
@@ -36,8 +37,12 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 
 <P>
 
-<B>semtimedop</B>(): _GNU_SOURCE
-<A NAME="lbAD">&nbsp;</A>
+<B>semtimedop</B>():
+<PRE>
+    _GNU_SOURCE
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 System&nbsp;V セマフォ集合 (semaphore set) のメンバーの各セマフォは 以下の関連情報を持っている:
@@ -49,6 +54,7 @@ unsigned short  semval;   /* semaphore value */
 unsigned short  semzcnt;  /* # waiting for zero */
 unsigned short  semncnt;  /* # waiting for increase */
 pid_t           sempid;   /* PID of process that last
+                             modified the semaphore value */
 </PRE>
 
 
@@ -81,9 +87,12 @@ short          sem_flg;  /* 操作フラグ */
 そして操作は三種類あり、 <I>sem_op</I> の値で区別される。
 <P>
 
-<I>sem_op</I> が正の整数の場合、その値をセマフォの値 (<I>semval</I>) に加算する。 さらに、この操作で <B>SEM_UNDO</B>
-が指定されていた場合は、 システムはこのセマフォのの調整値 (<I>semadj</I>) から値 <I>sem_op</I> を減算する。 この操作は必ず実行でき、
-スレッドの停止は起こらない。 呼び出し元プロセスは対象のセマフォ集合を変更する許可がなければならない。
+If <I>sem_op</I> is a positive integer, the operation adds this value to the
+semaphore value (<I>semval</I>).  Furthermore, if <B>SEM_UNDO</B> is specified for
+this operation, the system subtracts the value <I>sem_op</I> from the semaphore
+adjustment (<I>semadj</I>)  value for this semaphore.  This operation can always
+proceed---it never forces a thread to wait.  The calling process must have
+alter permission on the semaphore set.
 <P>
 
 <I>sem_op</I> が 0 の場合、「ゼロまで待つ」操作である。この場合、プロセスは そのセマフォ集合に対する読み込み許可がなければならない。
@@ -127,7 +136,7 @@ short          sem_flg;  /* 操作フラグ */
 
 操作が成功した場合、 <I>sops</I> が指す配列によって操作対象となった各セマフォの <I>sempid</I> メンバーには呼び出し元のプロセス ID
 が設定される。さらに <I>sem_otime</I> に現在時刻が設定される。
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H3>semtimedop()</H3>
 
 <B>semtimedop</B>() 関数の振る舞いは <B>semop</B>() と全く同じだが、呼び出し元
@@ -143,15 +152,14 @@ short          sem_flg;  /* 操作フラグ */
 
 <B>semtimedop</B>() がシグナルにより割り込まれた場合、呼び出しはエラー <B>EINTR</B> で失敗し、 <I>timeout</I>
 の内容は変更されないままとなる点に注意すること。
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>返り値</H2>
 
-成功した場合、 <B>semop</B>()  と <B>semtimedop</B>()  は 0 を返す。そうでなければ -1 を返し、 エラーを示す
-<I>errno</I> を設定する。
-<A NAME="lbAG">&nbsp;</A>
+On success, <B>semop</B>()  and <B>semtimedop</B>()  return 0.  On failure, they
+return -1, and set <I>errno</I> to indicate the error.
+<A NAME="lbAH">&nbsp;</A>
 <H2>エラー</H2>
 
-失敗した場合、 <I>errno</I> に以下のどれかが設定される:
 <DL COMPACT>
 <DT><B>E2BIG</B><DD>
 <I>nsops</I> 引数が <B>SEMOPM</B> より大きい。 <B>SEMOPM</B> は一回のシステムコールで許される操作の最大個数である。
@@ -178,28 +186,23 @@ capability in the user namespace that governs its IPC namespace.
 ある操作で <I>sem_op+semval</I> が <B>SEMVMX</B> より大きい。 <B>SEMVMX</B> は <I>semval</I>
 の最大値で、その値は実装依存である。
 </DL>
-<A NAME="lbAH">&nbsp;</A>
-<H2>バージョン</H2>
-
-<B>semtimedop</B>()  は Linux 2.5.52 で初めて登場し、 それからカーネル 2.4.22 にも移植された。
-<B>semtimedop</B>()  の glibc でのサポートはバージョン 2.3.3 で初めて登場した。
 <A NAME="lbAI">&nbsp;</A>
-<H2>準拠</H2>
+<H2>標準規格</H2>
 
-
-
-POSIX.1-2001, POSIX.1-2008, SVr4.
+POSIX.1-2024.
 <A NAME="lbAJ">&nbsp;</A>
+<H2>歴史</H2>
+
+<DL COMPACT>
+<DT><B>semop</B>()<DD>
+SVr4, POSIX.1-2001.
+<DT><B>semtimedop</B>()<DD>
+
+
+SVr4, Linux 2.5.52 (backported into Linux 2.4.22), glibc 2.3.3.
+</DL>
+<A NAME="lbAK">&nbsp;</A>
 <H2>注意</H2>
-
-
-
-
-
-Linux や POSIX の全てのバージョンでは、 <I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I> と <I>&lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</I>
-のインクルードは必要ない。しかしながら、いくつかの古い実装ではこれらのヘッダーファイルのインクルードが必要であり、 SVID
-でもこれらのインクルードをするように記載されている。このような古いシステムへの移植性を意図したアプリケーションではこれらのファイルをインクルードする必要があるかもしれない。
-<P>
 
 あるプロセスの <I>sem_undo</I> 構造体は <B><A HREF="../man2/fork.2.html">fork</A></B>(2)  で生成された子プロセスには継承されないが、 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 システムコールの場合は継承される。
@@ -209,18 +212,22 @@ Linux や POSIX の全てのバージョンでは、 <I>&lt;<A HREF="file:///usr
 <B>SA_RESTART</B> フラグがセットされていても再開することはない
 <P>
 
-セマフォの調整値 (<I>semadj</I>) は、プロセス毎のセマフォ毎の整数で、 <B>SEM_UNDO</B>
-フラグを指定して行われた、セマフォに対するすべての操作の合計値を反転したものである。 各プロセスは <I>semadj</I> の値のリストを保持する ---
-リストのそれぞれの値は <B>SEM_UNDO</B> を使って操作が行われた個々のセマフォに対応する。 プロセスが終了する際、 セマフォ毎の
-<I>semadj</I> の各々の値が対応するセマフォに加算される。 これにより、そのプロセスがそのセマフォに対して行った操作の影響が取り消される
-(ただし、下記の「バグ」を参照)。 <B><A HREF="../man2/semctl.2.html">semctl</A></B>(2) の <B>SETVAL</B> や <B>SETALL</B> を使ってセマフォの値が直接設定された場合、
-すべてのプロセスの対応する <I>semadj</I> の値がクリアされる。 <B><A HREF="../man2/clone.2.html">clone</A></B>(2) の <B>CLONE_SYSVSEM</B> フラグを使うと、
-複数のプロセスがひとつの <I>semadj</I> リストを共有できる。 詳細は <B><A HREF="../man2/clone.2.html">clone</A></B>(2) を参照。
+A semaphore adjustment (<I>semadj</I>)  value is a per-process, per-semaphore
+integer that is the negated sum of all operations performed on a semaphore
+specifying the <B>SEM_UNDO</B> flag.  Each process has a list of <I>semadj</I>
+values---one value for each semaphore on which it has operated using
+<B>SEM_UNDO</B>.  When a process terminates, each of its per-semaphore <I>semadj</I>
+values is added to the corresponding semaphore, thus undoing the effect of
+that process's operations on the semaphore (but see BUGS below).  When a
+semaphore's value is directly set using the <B>SETVAL</B> or <B>SETALL</B> request
+to <B><A HREF="../man2/semctl.2.html">semctl</A></B>(2), the corresponding <I>semadj</I> values in all processes are
+cleared.  The <B><A HREF="../man2/clone.2.html">clone</A></B>(2)  <B>CLONE_SYSVSEM</B> flag allows more than one
+process to share a <I>semadj</I> list; see <B><A HREF="../man2/clone.2.html">clone</A></B>(2)  for details.
 <P>
 
 あるセマフォの <I>semval</I>, <I>sempid</I>, <I>semzcnt</I>, <I>semnct</I> の値はいずれも、適切な操作を指定して
 <B><A HREF="../man2/semctl.2.html">semctl</A></B>(2)  を呼び出すことで取得できる。
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>セマフォの上限</H3>
 
 セマフォ集合のリソースに関する制限のうち、 <B>semop</B>()  に影響を及ぼすものを以下に挙げる:
@@ -246,7 +253,7 @@ array.
 
 以下の値に関しては実装依存の制限はない。 終了時の調整 (adjust on exit) の最大値 (<B>SEMAEM</B>)、
 システム全体のアンドゥ構造体の最大数 (<B>SEMMNU</B>)、 プロセスあたりのアンドゥ構造体の最大数。
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>バグ</H2>
 
 プロセスが終了する際、プロセスに対応する <I>semadj</I> の集合を使って、 <B>SEM_UNDO</B>
@@ -266,9 +273,11 @@ array.
 
 
 
-カーネル 2.6.x (x &lt;= 10) には、ある状況においてセマフォ値が 0 になるのを 待っているスレッドが、セマフォ値が実際に 0
-になったときに起床 (wake up)  されない、というバグがある。このバグはカーネル 2.6.11 で修正されている。
-<A NAME="lbAM">&nbsp;</A>
+In Linux 2.6.x, x &lt;= 10, there is a bug that in some circumstances
+prevents a thread that is waiting for a semaphore value to become zero from
+being woken up when the value does actually become zero.  This bug is fixed
+in Linux 2.6.11.
+<A NAME="lbAN">&nbsp;</A>
 <H2>例</H2>
 
 以下の部分的なコードは、 セマフォ 0 の値が 0 になるのを待ってから、 セマフォの値を 1 加算する処理を、 <B>semop</B>()
@@ -280,7 +289,7 @@ array.
 struct sembuf sops[2];
 int semid;
 
-/* Code to set <I>semid</I> omitted */
+/* Code to set semid omitted */
 
 sops[0].sem_num = 0;        /* Operate on semaphore 0 */
 sops[0].sem_op = 0;         /* Wait for value to equal 0 */
@@ -300,39 +309,34 @@ if (semop(semid, sops, 2) == -1) {
 <P>
 
 A further example of the use of <B>semop</B>()  can be found in <B><A HREF="../man2/shmop.2.html">shmop</A></B>(2).
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2), <B><A HREF="../man2/semctl.2.html">semctl</A></B>(2), <B><A HREF="../man2/semget.2.html">semget</A></B>(2), <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/sem_overview.7.html">sem_overview</A></B>(7), <B>sysvipc</B>(7), <B><A HREF="../man7/time.7.html">time</A></B>(7)
-<A NAME="lbAO">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
 <DL>
-<DT><A HREF="#lbAE">semtimedop()</A><DD>
+<DT><A HREF="#lbAF">semtimedop()</A><DD>
 </DL>
-<DT><A HREF="#lbAF">返り値</A><DD>
-<DT><A HREF="#lbAG">エラー</A><DD>
-<DT><A HREF="#lbAH">バージョン</A><DD>
-<DT><A HREF="#lbAI">準拠</A><DD>
-<DT><A HREF="#lbAJ">注意</A><DD>
+<DT><A HREF="#lbAG">返り値</A><DD>
+<DT><A HREF="#lbAH">エラー</A><DD>
+<DT><A HREF="#lbAI">標準規格</A><DD>
+<DT><A HREF="#lbAJ">歴史</A><DD>
+<DT><A HREF="#lbAK">注意</A><DD>
 <DL>
-<DT><A HREF="#lbAK">セマフォの上限</A><DD>
+<DT><A HREF="#lbAL">セマフォの上限</A><DD>
 </DL>
-<DT><A HREF="#lbAL">バグ</A><DD>
-<DT><A HREF="#lbAM">例</A><DD>
-<DT><A HREF="#lbAN">関連項目</A><DD>
-<DT><A HREF="#lbAO">この文書について</A><DD>
+<DT><A HREF="#lbAM">バグ</A><DD>
+<DT><A HREF="#lbAN">例</A><DD>
+<DT><A HREF="#lbAO">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by

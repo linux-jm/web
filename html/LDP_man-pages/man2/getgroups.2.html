@@ -1,13 +1,13 @@
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of GETGROUPS</TITLE>
+<HTML><HEAD><TITLE>Man page of getgroups</TITLE>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <LINK REL="stylesheet" TYPE="text/css" HREF="../../../jm.css">
 </HEAD>
 <BODY>
 
-<H1>GETGROUPS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+<H1>getgroups</H1>
+Section: System Calls (2)<BR>Updated: 2026-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../../../index.html">JM Home Page</A>
 <A HREF="../../../manual/LDP_man-pages/release/man2/getgroups.2">roff page</A><HR>
 
@@ -16,20 +16,22 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index
 
 getgroups, setgroups - 補助グループ ID のリストを取得/設定する
 <A NAME="lbAC">&nbsp;</A>
+<H2>ライブラリ</H2>
+
+標準 C ライブラリ (<I>libc</I>,~<I>-lc</I>)
+<A NAME="lbAD">&nbsp;</A>
 <H2>書式</H2>
 
-<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-<BR>
-
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
-<P>
 
-<B>int getgroups(int </B><I>size</I><B>, gid_t </B><I>list</I><B>[]);</B>
-<P>
+<B>int getgroups(int </B><I>size</I><B>, gid_t </B><I>list</I><B>[_Nullable </B><I>size</I><B>]);</B>
+
 <B>#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</B>
-<P>
 
-<B>int setgroups(size_t </B><I>size</I><B>, const gid_t *</B><I>list</I><B>);</B>
+<B>int setgroups(size_t </B><I>size</I><B>, const gid_t </B><I>list</I><B>[</B><I>size</I><B>]);</B>
+</PRE>
+
 <P>
 
 
@@ -38,11 +40,14 @@ glibc 向けの機能検査マクロの要件 (<B><A HREF="../man7/feature_test_
 <P>
 
 <B>setgroups</B>():
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.19:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.19&nbsp;and&nbsp;earlier:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE
-<A NAME="lbAD">&nbsp;</A>
+<PRE>
+    Since glibc 2.19:
+        _DEFAULT_SOURCE
+    glibc 2.19 and earlier:
+        _BSD_SOURCE
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
 <H2>説明</H2>
 
 <B>getgroups</B>()  は呼び出し元プロセスの補助グループ (supplementary group) ID を <I>list</I> に返す。
@@ -67,18 +72,20 @@ its supplementary groups with the call:
 
 
 <PRE>
-setgroups(0, NULL);
+setgroups(0, (gid_t [0]){});
 </PRE>
 
 
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>返り値</H2>
 
-<B>getgroups</B>()  は、成功すると補助グループ ID の数を返す。 エラーの場合 -1 を返し、 <I>errno</I> を適切に設定する。
+On success, <B>getgroups</B>()  returns the number of supplementary group IDs.
+On error, -1 is returned, and <I>errno</I> is set to indicate the error.
 <P>
 
-<B>setgroups</B>()  は、成功すると 0 を返す。 エラーの場合 -1 を返し、 <I>errno</I> を適切に設定する。
-<A NAME="lbAF">&nbsp;</A>
+On success, <B>setgroups</B>()  returns 0.  On error, -1 is returned, and
+<I>errno</I> is set to indicate the error.
+<A NAME="lbAG">&nbsp;</A>
 <H2>エラー</H2>
 
 <DL COMPACT>
@@ -106,17 +113,48 @@ The calling process has insufficient privilege (the caller does not have the
 <B>CAP_SETGID</B> capability in the user namespace in which it resides).
 <DT><B>EPERM</B> (Linux 3.19 以降)<DD>
 The use of <B>setgroups</B>()  is denied in this user namespace.  See the
-description of <I>/proc/[pid]/setgroups</I> in <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
+description of <I>/proc/</I>pid<I>/setgroups</I> in <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
 </DL>
-<A NAME="lbAG">&nbsp;</A>
-<H2>準拠</H2>
+<A NAME="lbAH">&nbsp;</A>
+<H2>バージョン</H2>
 
-<B>getgroups</B>(): SVr4, 4.3BSD, POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
+<H3>C ライブラリとカーネルの違い</H3>
+
+At the kernel level, user IDs and group IDs are a per-thread attribute.
+However, POSIX requires that all threads in a process share the same
+credentials.  The NPTL threading implementation handles the POSIX
+requirements by providing wrapper functions for the various system calls
+that change process UIDs and GIDs.  These wrapper functions (including the
+one for <B>setgroups</B>())  employ a signal-based technique to ensure that when
+one thread changes credentials, all of the other threads in the process also
+change their credentials.  For details, see <B>nptl</B>(7).
+<A NAME="lbAJ">&nbsp;</A>
+<H2>標準規格</H2>
+
+<DL COMPACT>
+<DT><B>getgroups</B>()<DD>
+POSIX.1-2024.
+<DT><B>setgroups</B>()<DD>
+なし。
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>歴史</H2>
+
+<DL COMPACT>
+<DT><B>getgroups</B>()<DD>
+4.3BSD, SVr4, POSIX.1-1988.
+<DT><B>setgroups</B>()<DD>
+SVr4, 4.3BSD.  Since <B>setgroups</B>()  requires privilege, it is not covered
+by POSIX.1.
+</DL>
 <P>
 
-<B>setgroups</B>(): SVr4, 4.3BSD.  Since <B>setgroups</B>()  requires privilege, it
-is not covered by POSIX.1.
-<A NAME="lbAH">&nbsp;</A>
+元々の Linux の <B>getgroups</B>() システムコールは 16 ビットのグループ ID だけ
+に対応していた。その後、Linux 2.4 で、32 ビットの ID に対応した
+<B>getgroups</B>() が追加された。glibc の <B>getgroups</B> のラッパー関数はカーネル
+バージョンによるこの違いを吸収している。
+<A NAME="lbAL">&nbsp;</A>
 <H2>注意</H2>
 
 プロセスは、実効グループ ID に加え、最大 <B>NGROUPS_MAX</B> までの補助グループ ID を持つことができる。 定数
@@ -138,52 +176,97 @@ ngroups_max = sysconf(_SC_NGROUPS_MAX);
 
 <B>getgroups</B>() の返り値の最大値は、この値より大きくなることはない。 Linux 2.6.4 以降では、補助グループ ID の最大数も
 Linux 固有の読み込み専用のファイル <I>/proc/sys/kernel/ngroups_max</I> 経由で公開されている。
-<P>
+<A NAME="lbAM">&nbsp;</A>
+<H2>例</H2>
 
 
 
-元々の Linux の <B>getgroups</B>() システムコールは 16 ビットのグループ ID だけ
-に対応していた。その後、Linux 2.4 で、32 ビットの ID に対応した
-<B>getgroups</B>() が追加された。glibc の <B>getgroups</B> のラッパー関数はカーネル
-バージョンによるこの違いを吸収している。
-<A NAME="lbAI">&nbsp;</A>
-<H3>C ライブラリとカーネルの違い</H3>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/err.h">err.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stddef.h">stddef.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 
-At the kernel level, user IDs and group IDs are a per-thread attribute.
-However, POSIX requires that all threads in a process share the same
-credentials.  The NPTL threading implementation handles the POSIX
-requirements by providing wrapper functions for the various system calls
-that change process UIDs and GIDs.  These wrapper functions (including the
-one for <B>setgroups</B>())  employ a signal-based technique to ensure that when
-one thread changes credentials, all of the other threads in the process also
-change their credentials.  For details, see <B>nptl</B>(7).
-<A NAME="lbAJ">&nbsp;</A>
+#define MALLOC(n, T)  ((T *) reallocarray(NULL, n, sizeof(T)))
+
+static gid_t *agetgroups(size_t *ngids);
+
+int
+main(void)
+{
+    gid_t   *gids;
+    size_t  n;
+
+    gids = agetgroups(&amp;n);
+    if (gids == NULL)
+        err(EXIT_FAILURE, &quot;agetgroups&quot;);
+
+    if (n != 0) {
+        printf(&quot;%jd&quot;, (intmax_t) gids[0]);
+        for (size_t i = 1; i &lt; n; i++)
+            printf(&quot; %jd&quot;, (intmax_t) gids[i]);
+    }
+    puts(&quot;&quot;);
+
+    free(gids);
+    exit(EXIT_SUCCESS);
+}
+
+static gid_t *
+agetgroups(size_t *ngids)
+{
+    int    n;
+    gid_t  *gids;
+
+    n = getgroups(0, NULL);
+    if (n == -1)
+        return NULL;
+
+    gids = MALLOC(n, gid_t);
+    if (gids == NULL)
+        return NULL;
+
+    n = getgroups(n, gids);
+    if (n == -1) {
+        free(gids);
+        return NULL;
+    }
+
+    *ngids = n;
+    return gids;
+}
+</PRE>
+
+
+
+<A NAME="lbAN">&nbsp;</A>
 <H2>関連項目</H2>
 
 <B><A HREF="../man2/getgid.2.html">getgid</A></B>(2), <B><A HREF="../man2/setgid.2.html">setgid</A></B>(2), <B><A HREF="../man3/getgrouplist.3.html">getgrouplist</A></B>(3), <B><A HREF="../man3/group_member.3.html">group_member</A></B>(3),
 <B><A HREF="../man3/initgroups.3.html">initgroups</A></B>(3), <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7), <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)
-<A NAME="lbAK">&nbsp;</A>
-<H2>この文書について</H2>
-
-この man ページは Linux <I>man-pages</I> プロジェクトのリリース 5.10 の一部である。プロジェクトの説明とバグ報告に関する情報は
-<A HREF="https://www.kernel.org/doc/man-pages/">https://www.kernel.org/doc/man-pages/</A> に書かれている。
 <P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">名前</A><DD>
-<DT><A HREF="#lbAC">書式</A><DD>
-<DT><A HREF="#lbAD">説明</A><DD>
-<DT><A HREF="#lbAE">返り値</A><DD>
-<DT><A HREF="#lbAF">エラー</A><DD>
-<DT><A HREF="#lbAG">準拠</A><DD>
-<DT><A HREF="#lbAH">注意</A><DD>
+<DT><A HREF="#lbAC">ライブラリ</A><DD>
+<DT><A HREF="#lbAD">書式</A><DD>
+<DT><A HREF="#lbAE">説明</A><DD>
+<DT><A HREF="#lbAF">返り値</A><DD>
+<DT><A HREF="#lbAG">エラー</A><DD>
+<DT><A HREF="#lbAH">バージョン</A><DD>
 <DL>
 <DT><A HREF="#lbAI">C ライブラリとカーネルの違い</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">関連項目</A><DD>
-<DT><A HREF="#lbAK">この文書について</A><DD>
+<DT><A HREF="#lbAJ">標準規格</A><DD>
+<DT><A HREF="#lbAK">歴史</A><DD>
+<DT><A HREF="#lbAL">注意</A><DD>
+<DT><A HREF="#lbAM">例</A><DD>
+<DT><A HREF="#lbAN">関連項目</A><DD>
 </DL>
 <HR>
 This document was created by
